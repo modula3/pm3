@@ -210,7 +210,7 @@ HandleNPS ()
     c = yytext[0];
     do {
 	/* Check for a comment start whether we're in or out of a comment. */
-	if ((commentLevel == 0 && (c == '(' || c == '<')) ||
+	if ((commentLevel == 0 && (c == '(' /*|| c == '<'*/)) ||
 	    (commentLevel > 0 && c == commentChar)) {
 	    c2 = input();
 	    if (c2 == '*') {

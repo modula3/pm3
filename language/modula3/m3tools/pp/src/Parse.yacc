@@ -171,14 +171,16 @@ typedef enum {NonOptimal, OptimalBreak, OptimalNoBreak} Formatter_BreakType;
 
 %token AMPERSAND ASSIGN ASTERISK BAR COLON COMMA DOT DOTDOT
 %token EQUAL GREATER GREQUAL LESS LSEQUAL MINUS SHARP PERIOD PLUS
-%token RARROW RBRACE RBRACKET RPAREN SEMICOLON SLASH
+%token RARROW RPRAGMA RBRACE RBRACKET RPAREN SEMICOLON SLASH
 %token SUBTYPE UPARROW 
-%token LPAREN LBRACKET LBRACE
+%token LPAREN LBRACKET LBRACE /*LPRAGMA*/
 
 %token IDENT CARD_CONST REAL_CONST CHAR_CONST STR_CONST
 
 /* Various kinds of pragmas */
 %token PR_EXTERNAL PR_INLINE PR_OBSOLETE PR_UNUSED
+%token PR_FATAL PR_NOWARN PR_ASSERT PR_TRACE
+%token PR_LINE PR_PRAGMA PR_CALLBACK
 
 /* reserved words */ 
 %token AND ANY ARRAY AS BGN BITS BRANDED BY CASE CONST 
@@ -226,7 +228,7 @@ ModUnit:
       declaration_nl
     | import_nl
     | CompilationUnit NL
-    | B Inc Begin stmts VZ Dec End SP Ident E NL
+    | B Inc begin_trace stmts VZ Dec End SP Ident E NL
     ;
 
 DefUnit_list:
@@ -243,6 +245,10 @@ DefUnit:
 CompilationUnit:
       interface
     | Unsafe SP interface
+/* causes additional shift/reduce conflicts
+    | external_pragma SP interface
+    | external_pragma SP Unsafe SP interface
+*/
     | module
     | Unsafe SP module
     | generic_interface
@@ -311,11 +317,11 @@ import_module:
     ;
 
 block:
-      declaration_nl_list B Inc Begin stmts NL Dec End Z E
+      declaration_nl_list B decl_pragma Inc begin_trace stmts NL Dec End Z E
     ;
 
 named_block:
-      declaration_nl_list B Inc Begin stmts NL Dec End SP Ident E
+      declaration_nl_list B decl_pragma Inc begin_trace stmts NL Dec End SP Ident E
     ;
 
 declaration_nl_list:
@@ -323,6 +329,8 @@ declaration_nl_list:
     | declaration_nl_list declaration_nl 
     ;
 
+/* to avoid reduce/reduce conflicts we will not make use of the knowledge
+   which pragmas are allowed for each kind of declaration */
 declaration_nl:
       B decl_pragma procedure_head SP Equal BL B0 named_block Z Semi E E BL
     | B decl_pragma procedure_head Semi E BL
@@ -340,10 +348,13 @@ declaration_nl:
 
 decl_pragma:
       /* empty */
-    | decl_pragma Pr_External A
-    | decl_pragma Pr_Inline   A
-    | decl_pragma Pr_Obsolete A
-    | decl_pragma Pr_Unused   A
+    | decl_pragma external_pragma NL
+    | decl_pragma inline_pragma NL
+    | decl_pragma callback_pragma NL
+    | decl_pragma obsolete_pragma NL
+    | decl_pragma unused_pragma NL
+    | decl_pragma fatal_pragma NL
+    | decl_pragma pragma_pragma NL
     ;
 
 const_decl_list:
@@ -373,15 +384,15 @@ var_decl_list:
     ;
 
 var_decl:
-      Inc G  G id_list                    EF
-             G Colon SP type Z Dec Semi1  E
-             G NPS                        E  E
-    | Inc G  G id_list                    EF
-             G Colon SP type SP           EF
-             G Assign SP expr Z Dec Semi  E  E
-    | Inc G  G id_list                    EF
-             G SP                         EF
-             G Assign SP expr Z Dec Semi  E  E
+      Inc G  G id_list                              EF
+             G Colon SP type Z var_trace Dec Semi1  E
+             G NPS                                  E  E
+    | Inc G  G id_list                              EF
+             G Colon SP type SP                     EF
+             G Assign SP expr Z var_trace Dec Semi  E  E
+    | Inc G  G id_list                              EF
+             G SP                                   EF
+             G Assign SP expr Z var_trace Dec Semi  E  E
     ;
 
 exception_decl_list:
@@ -428,11 +439,16 @@ formal_semi_list:
     ;
 
 formal_semi:
-      G B decl_pragma EF B mode EF B id_list EF type_and_or_val_semi E
+      G B formal_pragma EF B mode EF B id_list EF type_and_or_val_semi var_trace E
     ;
 
 formal:
-      G B decl_pragma EF B mode EF B id_list EF type_and_or_val      E
+      G B formal_pragma EF B mode EF B id_list EF type_and_or_val      var_trace E
+    ;
+
+formal_pragma:
+      /* empty */
+    | formal_pragma unused_pragma A
     ;
 
 mode:
@@ -458,8 +474,7 @@ type_and_or_val:
 
 stmts:
       /* empty */
-    | V stmt_list        E
-    | V stmt_list Z Semi E
+    | V stmt_list E
     ;
 
 /* Statement list with G E around it only if non-empty. */
@@ -470,13 +485,27 @@ stmts_group:
 
 /* Non-empty statement list. */
 stmts1:
-      stmt_list        E
-    | stmt_list Z Semi E
+      stmt_list E
     ;
 
 stmt_list:
-      B stmt
-    | stmt_list Z Semi E V B stmt
+      stmt_inner_list B stmt_end
+    ;
+
+stmt_inner_list:
+      /* empty */
+    | stmt_inner_list B stmt_inner E V
+    ;
+
+stmt_inner:
+      stmt Z Semi
+    | stmt_pragma
+    ;
+
+stmt_end:
+      stmt
+    | stmt Z Semi
+    | stmt_pragma
     ;
 
 stmt:
@@ -498,6 +527,12 @@ stmt:
     | typecase_stmt
     | while_stmt
     | with_stmt
+    ;
+
+stmt_pragma:
+      assert_pragma
+    | nowarn_pragma
+    | line_pragma
     ;
 
 assignment_stmt:
@@ -545,7 +580,7 @@ eval_stmt:
 for_stmt:      
       /* We need the B2/E here and not for similar statements because of
 	 the top-level A's. */
-      B2 For SP Ident A Assign SP expr A To SP expr by Do E
+      B2 For SP Ident var_trace A Assign SP expr A To SP expr by Do E
            stmts SPNL End
     ;
 
@@ -608,8 +643,8 @@ handler_list:
     ;
 
 handler:
-      B B2 qid_list A Lparen Ident Z Rparen SP Rarrow E stmts_group E
-    | B B2 qid_list                         SP Rarrow E stmts_group E
+      B B2 qid_list A Lparen Ident var_trace Z Rparen SP Rarrow E stmts_group E
+    | B B2 qid_list                                   SP Rarrow E stmts_group E
     ;
 
 typecase_stmt:
@@ -623,8 +658,8 @@ tcase_list:
     ;
 
 tcase:
-      B type_list                        SP Rarrow stmts_group E
-    | B type_list SP Lparen Ident Rparen SP Rarrow stmts_group E
+      B type_list                                  SP Rarrow stmts_group E
+    | B type_list SP Lparen Ident var_trace Rparen SP Rarrow stmts_group E
     ;
 
 while_stmt:
@@ -641,7 +676,7 @@ binding_list:
     ;
 
 binding:
-      G G Ident SP E G Equal SP expr
+      G G Ident var_trace SP E G Equal SP expr
     ;
 
 opt_qid_list:
@@ -795,6 +830,49 @@ override_semi:
 override:
       G  B Ident EF B SP Assign SP qid      E  E
     ;
+
+/*--------------------- pragmas ------------------------*/
+
+external_pragma:
+      Pr_External SP Rpragma
+    | Pr_External SP Ident SP Rpragma
+    | Pr_External SP Colon Ident SP Rpragma
+    | Pr_External SP Ident Colon Ident SP Rpragma
+    ;
+
+line_pragma:
+      Pr_Line     SP Card_const Rpragma
+    | Pr_Line     SP Card_const SP Str_const Rpragma
+    ;
+
+vtrace_pragma:     Pr_Trace      SP qid   SP Rpragma ;
+strace_pragma:     B Pr_Trace stmts E SP Rpragma ;
+
+var_trace:
+      /*empty*/
+    | SP vtrace_pragma
+    ;
+
+begin_trace:
+      Begin
+    | Begin V strace_pragma
+    ;
+
+assert_pragma:     Pr_Assert     SP expr           SP Rpragma ;
+fatal_pragma:      Pr_Fatal      SP fatal_exc_list SP Rpragma ;
+pragma_pragma:     Pr_Pragma     SP id_list        SP Rpragma ;
+
+fatal_exc_list:
+      qid_list
+    | Any
+    ;
+
+inline_pragma:     Pr_Inline     SP Rpragma ;
+unused_pragma:     Pr_Unused     SP Rpragma ;
+obsolete_pragma:   Pr_Obsolete   SP Rpragma ;
+nowarn_pragma:     Pr_Nowarn     SP Rpragma ;
+callback_pragma:   Pr_Callback   SP Rpragma ;
+
 
 /*--------------------- expressions ------------------------*/
 
@@ -983,6 +1061,7 @@ Rarrow:        RARROW { PR ("=>");} NPS ;
 Rbrace:        RBRACE { PR ("}");} NPS ;
 Rbracket:      RBRACKET { PR ("]");} NPS ;
 Rparen:        RPAREN { PR (")");} NPS ;
+Rpragma:       RPRAGMA { PR ("*>");} NPS ;
 Semi:          SEMICOLON { PR (";");} NPS ;
 Semi1:         SEMICOLON { PR (";");} ;
 Slash:         SLASH { PR ("/");} NPS ;
@@ -994,14 +1073,29 @@ Lparen:        LPAREN { PR ("("); } NPS ;
 Lparen2:       LPAREN { PR ("("); } NPS ;
 Lbracket:      LBRACKET { PR ("["); } NPS ;
 Lbrace:        LBRACE { PR ("{"); } NPS ;
+/*Lpragma:       LPRAGMA { PR ("<*");} NPS ;*/
 
 /* CommentPragmaAfterOpen:  * empty * | SP InitialNPS A ; */
 /* CommentPragmaAfterOpen2: * empty * |    InitialNPS ; */
 
+/*
 Pr_External:   PR_EXTERNAL { PF (&lexbuf[$1], fonts->fixedComment);} NPS ;
 Pr_Inline:     PR_INLINE { PF (&lexbuf[$1], fonts->fixedComment);} NPS ;
 Pr_Obsolete:   PR_OBSOLETE { PF (&lexbuf[$1], fonts->fixedComment);} NPS ;
 Pr_Unused:     PR_UNUSED { PF (&lexbuf[$1], fonts->fixedComment);} NPS ;
+*/
+
+Pr_External:   PR_EXTERNAL { PF ("<* EXTERNAL", fonts->fixedComment);} NPS ;
+Pr_Inline:     PR_INLINE   { PF ("<* INLINE",   fonts->fixedComment);} NPS ;
+Pr_Assert:     PR_ASSERT   { PF ("<* ASSERT",   fonts->fixedComment);} NPS ;
+Pr_Trace:      PR_TRACE    { PF ("<* TRACE",    fonts->fixedComment);} NPS ;
+Pr_Fatal:      PR_FATAL    { PF ("<* FATAL",    fonts->fixedComment);} NPS ;
+Pr_Unused:     PR_UNUSED   { PF ("<* UNUSED",   fonts->fixedComment);} NPS ;
+Pr_Obsolete:   PR_OBSOLETE { PF ("<* OBSOLETE", fonts->fixedComment);} NPS ;
+Pr_Nowarn:     PR_NOWARN   { PF ("<* NOWARN",   fonts->fixedComment);} NPS ;
+Pr_Line:       PR_LINE     { PF ("<* LINE",     fonts->fixedComment);} NPS ;
+Pr_Pragma:     PR_PRAGMA   { PF ("<* PRAGMA",   fonts->fixedComment);} NPS ;
+Pr_Callback:   PR_CALLBACK { PF ("<* CALLBACK", fonts->fixedComment);} NPS ;
 
 Ident:         IDENT { PRID (&lexbuf[$1]);} NPS ;
 IdentP:	       IDENT { PF (&lexbuf[$1], fonts->procName);} NPS ;

@@ -14,7 +14,21 @@
 %%
 
 "("/"*"		{ return (HandleNPS()); }
-"<"/"*"		{ return (HandleNPS()); }
+"<*"[ \t\f\n\r]*"EXTERNAL"      {BufferLexeme(1); return(PR_EXTERNAL);}
+"<*"[ \t\f\n\r]*"INLINE"        {BufferLexeme(1); return(PR_INLINE);}
+"<*"[ \t\f\n\r]*"ASSERT"        {BufferLexeme(1); return(PR_ASSERT);}
+"<*"[ \t\f\n\r]*"TRACE"         {BufferLexeme(1); return(PR_TRACE);}
+"<*"[ \t\f\n\r]*"FATAL"         {BufferLexeme(1); return(PR_FATAL);}
+"<*"[ \t\f\n\r]*"UNUSED"        {BufferLexeme(1); return(PR_UNUSED);}
+"<*"[ \t\f\n\r]*"OBSOLETE"      {BufferLexeme(1); return(PR_OBSOLETE);}
+"<*"[ \t\f\n\r]*"NOWARN"        {BufferLexeme(1); return(PR_NOWARN);}
+"<*"[ \t\f\n\r]*"LINE"          {BufferLexeme(1); return(PR_LINE);}
+"<*"[ \t\f\n\r]*"PRAGMA"        {BufferLexeme(1); return(PR_PRAGMA);}
+"<*"[ \t\f\n\r]*"CALLBACK"      {BufferLexeme(1); return(PR_CALLBACK);}
+%{
+/*"<*"		{BufferLexeme(1); return(LPRAGMA);}*/
+%}
+"*>"		{BufferLexeme(1); return(RPRAGMA);}
 [ \t\f\n\r]	{ return (HandleNPS()); }
 "+"		{BufferLexeme(1); return(PLUS);}
 "-"		{BufferLexeme(1); return(MINUS);}
