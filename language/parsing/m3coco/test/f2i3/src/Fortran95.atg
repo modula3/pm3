@@ -220,10 +220,10 @@ PRODUCTIONS
           xConstant =
             xNamedConstantUse |
             xUnsignedArithmeticConstant |
-            '+' xUnsignedArithmeticConstant |
-            '-' xUnsignedArithmeticConstant |
+            "+" xUnsignedArithmeticConstant |
+            "-" xUnsignedArithmeticConstant |
             xScon |
-            xIcon '_' xScon | xNamedConstantUse '_' xScon |
+            xIcon "_" xScon | xNamedConstantUse "_" xScon |
             xLogicalConstant |
             xStructureConstructor |
             xBozLiteralConstant .
@@ -241,33 +241,33 @@ PRODUCTIONS
           (* R310 recognized semantically *)
 
           (* R708 *)
-          xPowerOp = '**' .
+          xPowerOp = "**" .
 
           (* R709 *)
-          xMultOp = '*' | '/' .
+          xMultOp = "*" | "/" .
 
           (* R710 *)
-          xAddOp = '+' | '-' .
-          xSign = '+' | '-' .
+          xAddOp = "+" | "-" .
+          xSign = "+" | "-" .
 
           (* R712 *)
-          xConcatOp = '//' .
+          xConcatOp = "//" .
 
           (* R714 *)
-          xRelOp = '.eq.' | '.ne.' | '.lt.' | '.le.' | '.gt.' | '.ge.' |
-            '==' | '/=' | '<' | '<=' | '>' | '>=' .
+          xRelOp = ".eq." | ".ne." | ".lt." | ".le." | ".gt." | ".ge." |
+            "==" | "/=" | "<" | "<=" | ">" | ">=" .
 
           (* R719 *)
-          xNotOp = '.not.' .
+          xNotOp = ".not." .
 
           (* R720 *)
-          xAndOp = '.and.' .
+          xAndOp = ".and." .
 
           (* R721 *)
-          xOrOp = '.or.' .
+          xOrOp = ".or." .
 
           (* R722 *)
-          xEquivOp = '.eqv.' | '.neqv.' .
+          xEquivOp = ".eqv." | ".neqv." .
 
           (* R311 *)
           xDefinedOperator =
@@ -300,8 +300,8 @@ PRODUCTIONS
           (* R404 *)
           xUnsignedArithmeticConstant =
             xIcon | xRcon | xDcon | xComplexConst |
-            xIcon '_' xKindParam |
-            xRcon '_' xKindParam | xDcon '_' xKindParam .
+            xIcon "_" xKindParam |
+            xRcon "_" xKindParam | xDcon "_" xKindParam .
 
           (* R405 *)
           xKindParam = xIcon | xNamedConstantUse .
@@ -326,7 +326,7 @@ PRODUCTIONS
           (* R414-R416 components of symbols recognized by the lexical analyzer *)
 
           (* R417 *)
-          xComplexConst = '(' xExpr ',' xExpr ')' .
+          xComplexConst = "(" xExpr "," xExpr ")" .
 
           (* R418 chain rule deleted *)
 
@@ -336,8 +336,8 @@ PRODUCTIONS
 
           (* R421 *)
           xLogicalConstant =
-            '.true.' | '.false.' |
-            '.true.' '_' xKindParam | '.false.' '_' xKindParam .
+            ".true." | ".false." |
+            ".true." "_" xKindParam | ".false." "_" xKindParam .
 
           (* R422 This does not enforce the required sequence *)
           xDerivedTypeDef =
@@ -348,76 +348,76 @@ PRODUCTIONS
 
           (* R423 *)
           xDerivedTypeStmt =
-            xLblDef 'type' xTypeName xEOS |
-            xLblDef 'type' ':' ':' xTypeName xEOS |
-            xLblDef 'type' ',' xAccessSpec ':' ':' xTypeName xEOS .
+            xLblDef "type" xTypeName xEOS |
+            xLblDef "type" ":" ":" xTypeName xEOS |
+            xLblDef "type" "," xAccessSpec ":" ":" xTypeName xEOS .
 
           (* R424 *)
           xPrivateSequenceStmt =
-            xLblDef 'private' xEOS |
-            xLblDef 'sequence' xEOS .
+            xLblDef "private" xEOS |
+            xLblDef "sequence" xEOS .
 
           (* R425 *)
           xComponentDefStmt =
-            xLblDef xTypeSpec ',' xComponentAttrSpecList ':' ':' xComponentDeclList xEOS |
-            xLblDef xTypeSpec ':' ':' xComponentDeclList xEOS |
+            xLblDef xTypeSpec "," xComponentAttrSpecList ":" ":" xComponentDeclList xEOS |
+            xLblDef xTypeSpec ":" ":" xComponentDeclList xEOS |
             xLblDef xTypeSpec xComponentDeclList xEOS .
 
           (* R426 *)
           xComponentAttrSpecList =
-            xComponentAttrSpec | xComponentAttrSpecList ',' xComponentAttrSpec .
+            xComponentAttrSpec | xComponentAttrSpecList "," xComponentAttrSpec .
           xComponentAttrSpec =
-            'pointer' | 'dimension' '(' xComponentArraySpec ')' .
+            "pointer" | "dimension" "(" xComponentArraySpec ")" .
 
           (* R427 *)
           xComponentArraySpec = xExplicitShapeSpecList | xDeferredShapeSpecList .
 
           (* R428 *)
           xComponentDeclList =
-            xComponentDecl | xComponentDeclList ',' xComponentDecl .
+            xComponentDecl | xComponentDeclList "," xComponentDecl .
           xComponentDecl =
-            xComponentName '(' xComponentArraySpec ')' '*' xCharLength
+            xComponentName "(" xComponentArraySpec ")" "*" xCharLength
               xComponentInitialization |
-            xComponentName '(' xComponentArraySpec ')' xComponentInitialization |
-            xComponentName '*' xCharLength xComponentInitialization |
+            xComponentName "(" xComponentArraySpec ")" xComponentInitialization |
+            xComponentName "*" xCharLength xComponentInitialization |
             xComponentName xComponentInitialization |
-            xComponentName '(' xComponentArraySpec ')' '*' xCharLength |
-            xComponentName '(' xComponentArraySpec ')' |
-            xComponentName '*' xCharLength |
+            xComponentName "(" xComponentArraySpec ")" "*" xCharLength |
+            xComponentName "(" xComponentArraySpec ")" |
+            xComponentName "*" xCharLength |
             xComponentName .
 
           (* R429 *)
           xComponentInitialization =
-            '=' xExpr |
-            '=>' 'null' '(' ')' .
+            "=" xExpr |
+            "=>" "null" "(" ")" .
 
           (* R430 *)
           xEndTypeStmt =
-            xLblDef 'endtype' [ xTypeName ] xEOS |
-            xLblDef 'end' 'type' [ xTypeName ] xEOS .
+            xLblDef "endtype" [ xTypeName ] xEOS |
+            xLblDef "end" "type" [ xTypeName ] xEOS .
 
           (* R431 *)
-          xStructureConstructor = xTypeName '(' xExprList ')' .
-          xExprList = xExpr | xExprList ',' xExpr .
+          xStructureConstructor = xTypeName "(" xExprList ")" .
+          xExprList = xExpr | xExprList "," xExpr .
 
           (* R432 *)
-          xArrayConstructor = '(/' xAcValueList '/)' .
+          xArrayConstructor = "(/" xAcValueList "/)" .
 
           (* R433 Why xAcValueList1? *)
           xAcValueList = xExpr | xAcValueList1 .
           xAcValueList1 =
-            xExpr ',' xExpr |
-            xExpr ',' xAcImpliedDo |
+            xExpr "," xExpr |
+            xExpr "," xAcImpliedDo |
             xAcImpliedDo |
-            xAcValueList1 ',' xExpr |
-            xAcValueList1 ',' xAcImpliedDo .
+            xAcValueList1 "," xExpr |
+            xAcValueList1 "," xAcImpliedDo .
 
           (* R434 *)
           xAcImpliedDo =
-            '(' xExpr ',' xImpliedDoVariable '=' xExpr ',' xExpr ')' |
-            '(' xExpr ',' xImpliedDoVariable '=' xExpr ',' xExpr ',' xExpr ')' |
-            '(' xAcImpliedDo ',' xImpliedDoVariable '=' xExpr ',' xExpr ')' |
-            '(' xAcImpliedDo ',' xImpliedDoVariable '=' xExpr ',' xExpr ',' xExpr ')' .
+            "(" xExpr "," xImpliedDoVariable "=" xExpr "," xExpr ")" |
+            "(" xExpr "," xImpliedDoVariable "=" xExpr "," xExpr "," xExpr ")" |
+            "(" xAcImpliedDo "," xImpliedDoVariable "=" xExpr "," xExpr ")" |
+            "(" xAcImpliedDo "," xImpliedDoVariable "=" xExpr "," xExpr "," xExpr ")" .
 
           (* R435 chain rule deleted *)
 
@@ -431,100 +431,100 @@ PRODUCTIONS
 
           (* R501 *)
           xTypeDeclarationStmt =
-            xLblDef xTypeSpec xAttrSpecSeq ':' ':' xEntityDeclList xEOS |
-            xLblDef xTypeSpec ':' ':' xEntityDeclList xEOS |
+            xLblDef xTypeSpec xAttrSpecSeq ":" ":" xEntityDeclList xEOS |
+            xLblDef xTypeSpec ":" ":" xEntityDeclList xEOS |
             xLblDef xTypeSpec xEntityDeclList xEOS .
-          xAttrSpecSeq = ',' xAttrSpec | xAttrSpecSeq ',' xAttrSpec .
+          xAttrSpecSeq = "," xAttrSpec | xAttrSpecSeq "," xAttrSpec .
 
           (* R502 *)
           xTypeSpec =
-            'integer' |
-            'real' |
-            'doubleprecision' |
-            'complex' |
-            'logical' |
-            'character' |
-            'integer' xKindSelector |
-            'real' xKindSelector |
-            'double' 'precision' |
-            'complex' xKindSelector |
-            'character' xCharSelector |
-            'logical' xKindSelector |
-            'type' '(' xTypeName ')' .
+            "integer" |
+            "real" |
+            "doubleprecision" |
+            "complex" |
+            "logical" |
+            "character" |
+            "integer" xKindSelector |
+            "real" xKindSelector |
+            "double" "precision" |
+            "complex" xKindSelector |
+            "character" xCharSelector |
+            "logical" xKindSelector |
+            "type" "(" xTypeName ")" .
 
           (* R503 *)
           xAttrSpec =
-            'parameter' |
+            "parameter" |
             xAccessSpec |
-            'allocatable' |
-            'dimension' '(' xArraySpec ')' |
-            'external' |
-            'intent' '(' xIntentSpec ')' |
-            'intrinsic' |
-            'optional' |
-            'pointer' |
-            'save' |
-            'target' .
+            "allocatable" |
+            "dimension" "(" xArraySpec ")" |
+            "external" |
+            "intent" "(" xIntentSpec ")" |
+            "intrinsic" |
+            "optional" |
+            "pointer" |
+            "save" |
+            "target" .
 
           (* R504 *)
-          xEntityDeclList = xEntityDecl | xEntityDeclList ',' xEntityDecl .
+          xEntityDeclList = xEntityDecl | xEntityDeclList "," xEntityDecl .
           xEntityDecl =
-            xObjectName [ '(' xArraySpec ')' ] [ '*' xCharLength ]
+            xObjectName [ "(" xArraySpec ")" ] [ "*" xCharLength ]
                         [ xInitialization ] |
             xInvalidEntityDecl .
           xInvalidEntityDecl =
-            xObjectName '*' xCharLength '(' xArraySpec ')' [ xInitialization ] .
+            xObjectName "*" xCharLength "(" xArraySpec ")" [ xInitialization ] .
 
           (* R505 *)
           xInitialization =
-            '=' xExpr |
-            '=>' 'null' '(' ')' .
+            "=" xExpr |
+            "=>" "null" "(" ")" .
 
-          (* R506 Should this be 'kind=' or 'kind' '='? *)
+          (* R506 Should this be "kind=" or "kind" "="? *)
           xKindSelector =
-            '(' 'kind=' xExpr ')' |
-            '(' xExpr ')' .
+            "(" "kind=" xExpr ")" |
+            "(" xExpr ")" .
 
           (* R507 *)
           xCharSelector =
             xLengthSelector |
-            '(' 'len=' xCharLenParamValue ',' 'kind=' xExpr ')' |
-            '(' 'len=' xCharLenParamValue ',' xExpr ')' |
-            '(' 'kind=' xExpr ')' |
-            '(' 'len=' xCharLenParamValue ')' |
-            '(' xCharLenParamValue ')' .
+            "(" "len=" xCharLenParamValue "," "kind=" xExpr ")" |
+            "(" "len=" xCharLenParamValue "," xExpr ")" |
+            "(" "kind=" xExpr ")" |
+            "(" "len=" xCharLenParamValue ")" |
+            "(" xCharLenParamValue ")" .
 
           (* R508 chain rule deleted *)
           xLengthSelector =
-            '*' xCharLength .
+            "*" xCharLength .
 
           (* R509 *)
-          xCharLength = '(' xCharLenParamValue ')' | Scalar Integer Literal Constant[18] .
+          xCharLength = "(" xCharLenParamValue ")" | Scalar Integer Literal Constant[18] .
 
           (* R510 xCharLenParamValue was xTypeParamValue *)
-          xCharLenParamValue = Specification Expression[15] | '*' .
+          xCharLenParamValue = Specification Expression[15] | "*" .
 
           (* R511 *)
           xAccessSpec =
-            'public' | 'private' .
+            "public" | "private" .
 
           (* R512 *)
           xIntentSpec =
-            'in' | 'out' | 'inout' | 'in' 'out' .
+            "in" | "out" | "inout" | "in" "out" .
 
           (* R513 see 16 *)
           xArraySpec =
             xExplicitShapeSpecList | xAssumedSizeSpec |
             xAssumedShapeSpecList | xDeferredShapeSpecList .
           xAssumedShapeSpecList =
-            xLowerBound ':' |
-            xDeferredShapeSpecList ',' xLowerBound ':' |
-            xAssumedShapeSpecList ',' xAssumedShapeSpec .
+            xLowerBound ":" |
+            xDeferredShapeSpecList "," xLowerBound ":" |
+            xAssumedShapeSpecList "," xAssumedShapeSpec .
 
           (* R514 *)
           xExplicitShapeSpecList =
-            xExplicitShapeSpec | xExplicitShapeSpecList ',' xExplicitShapeSpec .
-          xExplicitShapeSpec = xLowerBound ':' xUpperBound | xUpperBound .
+            xExplicitShapeSpec | xExplicitShapeSpecList "," xExplicitShapeSpec .
+          xExplicitShapeSpec = xLowerBound ":" xUpperBound | xUpperBound .
 
           (* R515 *)
           xLowerBound = Specification Expression[15] .
@@ -534,176 +534,176 @@ PRODUCTIONS
 
           (* R517 *)
           xAssumedShapeSpec =
-            xLowerBound ':' | ':' .
+            xLowerBound ":" | ":" .
 
           (* R518 *)
           xDeferredShapeSpecList =
-            xDeferredShapeSpec | xDeferredShapeSpecList ',' xDeferredShapeSpec .
-          xDeferredShapeSpec = ':' .
+            xDeferredShapeSpec | xDeferredShapeSpecList "," xDeferredShapeSpec .
+          xDeferredShapeSpec = ":" .
 
           (* R519 *)
           xAssumedSizeSpec =
-            '*' |
-            xLowerBound ':' '*' |
-            xExplicitShapeSpecList ',' '*' |
-            xExplicitShapeSpecList ',' xLowerBound ':' '*' .
+            "*" |
+            xLowerBound ":" "*" |
+            xExplicitShapeSpecList "," "*" |
+            xExplicitShapeSpecList "," xLowerBound ":" "*" .
 
           (* R520 *)
           xIntentStmt =
-            xLblDef 'intent' '(' xIntentSpec ')' [ ':' ':' ] xIntentParList xEOS .
-          xIntentParList = xIntentPar | xIntentParList ',' xIntentPar .
+            xLblDef "intent" "(" xIntentSpec ")" [ ":" ":" ] xIntentParList xEOS .
+          xIntentParList = xIntentPar | xIntentParList "," xIntentPar .
           xIntentPar = xDummyArgName .
 
           (* R521 *)
           xOptionalStmt =
-            xLblDef 'optional' [ ':' ':' ] xOptionalParList xEOS .
-          xOptionalParList = xOptionalPar | xOptionalParList ',' xOptionalPar .
+            xLblDef "optional" [ ":" ":" ] xOptionalParList xEOS .
+          xOptionalParList = xOptionalPar | xOptionalParList "," xOptionalPar .
           xOptionalPar = xDummyArgName .
 
           (* R522 *)
           xAccessStmt =
-            xLblDef xAccessSpec [ ':' ':' ] xAccessIdList xEOS |
+            xLblDef xAccessSpec [ ":" ":" ] xAccessIdList xEOS |
             xLblDef xAccessSpec xEOS .
 
           (* R523 *)
-          xAccessIdList = xAccessId | xAccessIdList ',' xAccessId .
+          xAccessIdList = xAccessId | xAccessIdList "," xAccessId .
           xAccessId = xGenericName | xGenericSpec .
 
           (* R524 *)
           xSaveStmt =
-            xLblDef 'save' xEOS |
-            xLblDef 'save' [ ':' ':' ] xSavedEntityList xEOS .
+            xLblDef "save" xEOS |
+            xLblDef "save" [ ":" ":" ] xSavedEntityList xEOS .
 
           (* R525 *)
-          xSavedEntityList = xSavedEntity | xSavedEntityList ',' xSavedEntity .
+          xSavedEntityList = xSavedEntity | xSavedEntityList "," xSavedEntity .
           xSavedEntity = xVariableName | xSavedCommonBlock .
-          xSavedCommonBlock = '/' xCommonBlockName '/' .
+          xSavedCommonBlock = "/" xCommonBlockName "/" .
 
           (* R526 *)
           xDimensionStmt =
-            xLblDef 'dimension' [ ':' ':' ] xArrayDeclaratorList xEOS .
+            xLblDef "dimension" [ ":" ":" ] xArrayDeclaratorList xEOS .
           xArrayDeclaratorList =
-            xArrayDeclarator | xArrayDeclaratorList ',' xArrayDeclarator .
-          xArrayDeclarator = xVariableName '(' xArraySpec ')' .
+            xArrayDeclarator | xArrayDeclaratorList "," xArrayDeclarator .
+          xArrayDeclarator = xVariableName "(" xArraySpec ")" .
 
           (* R527 *)
           xAllocatableStmt =
-            xLblDef 'allocatable' [ ':' ':' ] xArrayAllocationList xEOS .
+            xLblDef "allocatable" [ ":" ":" ] xArrayAllocationList xEOS .
           xArrayAllocationList =
-            xArrayAllocation | xArrayAllocationList ',' xArrayAllocation .
+            xArrayAllocation | xArrayAllocationList "," xArrayAllocation .
           xArrayAllocation =
-            xArrayName | xArrayName '(' xDeferredShapeSpecList ')' .
+            xArrayName | xArrayName "(" xDeferredShapeSpecList ")" .
 
           (* R528 (* xObjectName renamed to xPointerName to simplify Sem. Anal. *) *)
           xPointerStmt =
-            xLblDef 'pointer' [ ':' ':' ] xPointerStmtObjectList xEOS .
+            xLblDef "pointer" [ ":" ":" ] xPointerStmtObjectList xEOS .
           xPointerStmtObjectList =
-            xPointerStmtObject | xPointerStmtObjectList ',' xPointerStmtObject .
+            xPointerStmtObject | xPointerStmtObjectList "," xPointerStmtObject .
           xPointerStmtObject =
-            xPointerName | xPointerName '(' xDeferredShapeSpecList ')' .
+            xPointerName | xPointerName "(" xDeferredShapeSpecList ")" .
           xPointerName = xIdent .
 
           (* R529 (* xObjectName renamed to xTargetName to simplify Sem. Anal. *) *)
           xTargetStmt =
-            xLblDef 'target' [ ':' ':' ] xTargetObjectList xEOS .
+            xLblDef "target" [ ":" ":" ] xTargetObjectList xEOS .
           xTargetObjectList =
-            xTargetObject | xTargetObjectList ',' xTargetObject .
-          xTargetObject = xTargetName | xTargetName '(' xArraySpec ')' .
+            xTargetObject | xTargetObjectList "," xTargetObject .
+          xTargetObject = xTargetName | xTargetName "(" xArraySpec ")" .
           xTargetName = xIdent .
 
           (* R530 *)
           xParameterStmt =
-            xLblDef 'parameter' '(' xNamedConstantDefList ')' xEOS .
+            xLblDef "parameter" "(" xNamedConstantDefList ")" xEOS .
 
           (* R531 *)
           xNamedConstantDefList =
-            xNamedConstantDef | xNamedConstantDefList ',' xNamedConstantDef .
-          xNamedConstantDef = xNamedConstant '=' Constant Expression[19] .
+            xNamedConstantDef | xNamedConstantDefList "," xNamedConstantDef .
+          xNamedConstantDef = xNamedConstant "=" Constant Expression[19] .
 
           (* R532 *)
           xDataStmt =
-            xLblDef 'data' xDatalist xEOS .
-          xDatalist = xDataStmtSet | xDatalist xDataStmtSet | xDatalist ',' xDataStmtSet .
+            xLblDef "data" xDatalist xEOS .
+          xDatalist = xDataStmtSet | xDatalist xDataStmtSet | xDatalist "," xDataStmtSet .
 
           (* R533 *)
-          xDataStmtSet = xDataStmtObjectList '/' xDataStmtValueList '/' .
+          xDataStmtSet = xDataStmtObjectList "/" xDataStmtValueList "/" .
 
           (* R534 *)
-          xDataStmtObjectList = xDataStmtObject | xDataStmtObjectList ',' xDataStmtObject .
+          xDataStmtObjectList = xDataStmtObject | xDataStmtObjectList "," xDataStmtObject .
           xDataStmtObject = xVariable | xDataImpliedDo .
 
           (* R535 xExpr must be scalar-int-expr *)
           xDataImpliedDo =
-            '(' xDataIDoObjectList ',' xImpliedDoVariable '=' xExpr ',' xExpr ')' |
-            '(' xDataIDoObjectList ',' xImpliedDoVariable '=' xExpr ',' xExpr
-              ',' xExpr ')' .
+            "(" xDataIDoObjectList "," xImpliedDoVariable "=" xExpr "," xExpr ")" |
+            "(" xDataIDoObjectList "," xImpliedDoVariable "=" xExpr "," xExpr
+              "," xExpr ")" .
 
           (* R536 xStructureComponent must be xScalarStructureComponent *)
-          xDataIDoObjectList = xDataIDoObject | xDataIDoObjectList ',' xDataIDoObject .
+          xDataIDoObjectList = xDataIDoObject | xDataIDoObjectList "," xDataIDoObject .
           xDataIDoObject = xArrayElement | xDataImpliedDo | xStructureComponent .
 
           (* R537 chain rule deleted *)
 
           (* R538 *)
-          xDataStmtValueList = xDataStmtValue | xDataStmtValueList ',' xDataStmtValue .
+          xDataStmtValueList = xDataStmtValue | xDataStmtValueList "," xDataStmtValue .
           xDataStmtValue =
             xDataStmtConstant |
-            Scalar Integer Literal Constant[18] '*' xDataStmtConstant |
-            xNamedConstantUse '*' xDataStmtConstant .
+            Scalar Integer Literal Constant[18] "*" xDataStmtConstant |
+            xNamedConstantUse "*" xDataStmtConstant .
 
           (* 539 chain rule deleted *)
 
           (* R540 only a subset of xconstant is allowed *)
           xDataStmtConstant =
-            xConstant | 'null' '(' ')' .
+            xConstant | "null" "(" ")" .
 
           (* R541 *)
           xImplicitStmt =
-            xLblDef 'implicit' xImplicitSpecList xEOS |
-            xLblDef 'implicit' 'none' xEOS .
+            xLblDef "implicit" xImplicitSpecList xEOS |
+            xLblDef "implicit" "none" xEOS .
 
           (* R542 *)
-          xImplicitSpecList = xImplicitSpec | xImplicitSpecList ',' xImplicitSpec .
+          xImplicitSpecList = xImplicitSpec | xImplicitSpecList "," xImplicitSpec .
           xImplicitSpec = xTypeSpec Letter Specifications[17] .
 
           (* R543 chain rule deleted *)
 
           (* R544 *)
           xNamelistStmt =
-            xLblDef 'namelist' xNamelistGroups xEOS .
+            xLblDef "namelist" xNamelistGroups xEOS .
           xNamelistGroups =
-            '/' xNamelistGroupName '/' xNamelistGroupObject |
-            xNamelistGroups '/' xNamelistGroupName '/' xNamelistGroupObject |
-            xNamelistGroups ',' '/' xNamelistGroupName '/' xNamelistGroupObject |
-            xNamelistGroups ',' xNamelistGroupObject .
+            "/" xNamelistGroupName "/" xNamelistGroupObject |
+            xNamelistGroups "/" xNamelistGroupName "/" xNamelistGroupObject |
+            xNamelistGroups "," "/" xNamelistGroupName "/" xNamelistGroupObject |
+            xNamelistGroups "," xNamelistGroupObject .
 
           (* R545 *)
           xNamelistGroupObject = xVariableName .
 
           (* R546 *)
           xEquivalenceStmt =
-            xLblDef 'equivalence' xEquivalenceSetList xEOS .
+            xLblDef "equivalence" xEquivalenceSetList xEOS .
 
           (* R547 *)
           xEquivalenceSetList =
-            xEquivalenceSet | xEquivalenceSetList ',' xEquivalenceSet .
-          xEquivalenceSet = '(' xEquivalenceObject ',' xEquivalenceObjectList ')' .
+            xEquivalenceSet | xEquivalenceSetList "," xEquivalenceSet .
+          xEquivalenceSet = "(" xEquivalenceObject "," xEquivalenceObjectList ")" .
 
           (* R548 *)
           xEquivalenceObjectList =
-            xEquivalenceObject | xEquivalenceObjectList ',' xEquivalenceObject .
+            xEquivalenceObject | xEquivalenceObjectList "," xEquivalenceObject .
           xEquivalenceObject = Equivalence Entity[16] .
 
           (* R549 *)
           xCommonStmt =
-            xLblDef 'common' xComlist xEOS .
+            xLblDef "common" xComlist xEOS .
           xComlist =
             xCommonBlockObject |
             xComblock xCommonBlockObject |
-            xComlist ',' xCommonBlockObject |
+            xComlist "," xCommonBlockObject |
             xComlist xComblock xCommonBlockObject |
-            xComlist ',' xComblock xCommonBlockObject .
-          xComblock = '/' '/' | '/' xCommonBlockName '/' .
+            xComlist "," xComblock xCommonBlockObject .
+          xComblock = "/" "/" | "/" xCommonBlockName "/" .
 
           (* R550 *)
           xCommonBlockObject = xVariableName | xArrayDeclarator .
@@ -716,7 +716,7 @@ PRODUCTIONS
 
           (* R601 The various forms of variables have to be recognized semantically. *)
           xVariable =
-            xDataRef [ '(' xSectionSubscriptList ')' [ xSubstringRange ] ] .
+            xDataRef [ "(" xSectionSubscriptList ")" [ xSubstringRange ] ] .
           xVariableName = xIdent .
           xScalarVariable = xVariableName | xArrayElement .
 
@@ -727,28 +727,28 @@ PRODUCTIONS
           (* R610 see 601 *)
 
           (* R611 *)
-          xSubstringRange = '(' xSubscriptTriplet ')' .
+          xSubstringRange = "(" xSubscriptTriplet ")" .
 
           (* R612 *)
           xDataRef =
             xName |
-            xDataRef [ '(' xSectionSubscriptList ')' ] '%' xName .
+            xDataRef [ "(" xSectionSubscriptList ")" ] "%" xName .
           xSFDataRef =
-            xName '%' xName |
-            xName '(' xSectionSubscriptList ')' |
-            xSFDataRef [ '(' xSectionSubscriptList ')' ] '%' xName .
+            xName "%" xName |
+            xName "(" xSectionSubscriptList ")" |
+            xSFDataRef [ "(" xSectionSubscriptList ")" ] "%" xName .
 
           (* R613 chain rule deleted. *)
 
           (* R614 *)
           xStructureComponent =
             xVariableName xFieldSelector | xStructureComponent xFieldSelector .
-          xFieldSelector = '(' xSectionSubscriptList ')' '%' xName | '%' xName .
+          xFieldSelector = "(" xSectionSubscriptList ")" "%" xName | "%" xName .
 
           (* R615 *)
           xArrayElement =
-            xVariableName '(' xSectionSubscriptList ')' |
-            xStructureComponent '(' xSectionSubscriptList ')' .
+            xVariableName "(" xSectionSubscriptList ")" |
+            xStructureComponent "(" xSectionSubscriptList ")" .
 
           (* R616 Recognized semantically? *)
 
@@ -757,19 +757,19 @@ PRODUCTIONS
 
           (* R618 Recognized semantically? *)
           xSectionSubscriptList =
-            xSectionSubscript | xSectionSubscriptList ',' xSectionSubscript .
+            xSectionSubscript | xSectionSubscriptList "," xSectionSubscript .
           xSectionSubscript = xExpr | xSubscriptTriplet .
 
           (* R619 *)
           xSubscriptTriplet =
-            ':' |
-            ':' xExpr |
-            xExpr ':' |
-            xExpr ':' xExpr |
-            xExpr ':' xExpr ':' xExpr |
-            xExpr ':' ':' xExpr |
-            ':' xExpr ':' xExpr |
-            ':' ':' xExpr .
+            ":" |
+            ":" xExpr |
+            xExpr ":" |
+            xExpr ":" xExpr |
+            xExpr ":" xExpr ":" xExpr |
+            xExpr ":" ":" xExpr |
+            ":" xExpr ":" xExpr |
+            ":" ":" xExpr .
 
           (* R620 chain rule deleted *)
 
@@ -777,15 +777,15 @@ PRODUCTIONS
 
           (* R622 *)
           xAllocateStmt =
-            xLblDef 'allocate' '(' xAllocationList ',' 'stat=' xVariable ')' xEOS |
-            xLblDef 'allocate' '(' xAllocationList ')' xEOS .
+            xLblDef "allocate" "(" xAllocationList "," "stat=" xVariable ")" xEOS |
+            xLblDef "allocate" "(" xAllocationList ")" xEOS .
 
           (* R623 chain rule deleted *)
 
           (* R624 *)
-          xAllocationList = xAllocation | xAllocationList ',' xAllocation .
+          xAllocationList = xAllocation | xAllocationList "," xAllocation .
           xAllocation = xAllocateObject | xAllocateObject xAllocatedShape .
-          xAllocatedShape = '(' xSectionSubscriptList ')' .
+          xAllocatedShape = "(" xSectionSubscriptList ")" .
           (* Need to use xSectionSubscriptList here to solve an LALR(1) conflict with the
            * xFieldSelector in R625.  (Can't tell which we have until the character
            * following the right paren, but we must reduce WITHIN the parens.)
@@ -793,14 +793,14 @@ PRODUCTIONS
 
           (* R625 *)
           xAllocateObjectList =
-            xAllocateObject | xAllocateObjectList ',' xAllocateObject .
+            xAllocateObject | xAllocateObjectList "," xAllocateObject .
           xAllocateObject =
             xVariableName | xAllocateObject xFieldSelector .
 
           (* R626 *)
           (* Omitted to solve LALR(1) conflict.  see R624
            *
-           * xAllocateShapeSpec = xExpr | xExpr ':' xExpr .
+           * xAllocateShapeSpec = xExpr | xExpr ":" xExpr .
            *)
 
           (* R627 chain rule deleted *)
@@ -809,22 +809,22 @@ PRODUCTIONS
 
           (* R629 *)
           xNullifyStmt =
-            xLblDef 'nullify' '(' xPointerObjectList ')' xEOS .
+            xLblDef "nullify" "(" xPointerObjectList ")" xEOS .
           xPointerObjectList =
-            xPointerObject | xPointerObjectList ',' xPointerObject .
+            xPointerObject | xPointerObjectList "," xPointerObject .
 
           (* R630 *)
           xPointerObject = xName | xPointerField .
           xPointerField =
-            xName '(' xSFExprList ')' '%' xName |
-            xName '(' xSFDummyArgNameList ')' '%' xName |
-            xName '%' xName |
+            xName "(" xSFExprList ")" "%" xName |
+            xName "(" xSFDummyArgNameList ")" "%" xName |
+            xName "%" xName |
             xPointerField xFieldSelector .
 
           (* R631 *)
           xDeallocateStmt =
-            xLblDef 'deallocate' '(' xAllocateObjectList',' 'stat=' xVariable ')' xEOS |
-            xLblDef 'deallocate' '(' xAllocateObjectList ')' xEOS .
+            xLblDef "deallocate" "(" xAllocateObjectList"," "stat=" xVariable ")" xEOS |
+            xLblDef "deallocate" "(" xAllocateObjectList ")" xEOS .
 
           (* It is not clear to me whether some of the subcategories of Primary
           *  are complete
@@ -842,31 +842,31 @@ PRODUCTIONS
             xScon |
             xUnsignedArithmeticConstant |
             xArrayConstructor |
-            xName  [ '(' xSectionSubscriptList ')' [ xSubstringRange ] ] |
-            xName '%' xDataRef [ '(' xSectionSubscriptList ')' [ xSubstringRange ] ] |
-            xName '(' xSectionSubscriptList ')' '%'
-              xDataRef [ '(' xSectionSubscriptList ')' [ xSubstringRange ] ] |
+            xName  [ "(" xSectionSubscriptList ")" [ xSubstringRange ] ] |
+            xName "%" xDataRef [ "(" xSectionSubscriptList ")" [ xSubstringRange ] ] |
+            xName "(" xSectionSubscriptList ")" "%"
+              xDataRef [ "(" xSectionSubscriptList ")" [ xSubstringRange ] ] |
             xFunctionReference [ xSubstringRange ] |
-            xFunctionReference '%'
-              xDataRef [ '(' xSectionSubscriptList ')' [ xSubstringRange ] ] |
-            '(' xExpr ')' .
+            xFunctionReference "%"
+              xDataRef [ "(" xSectionSubscriptList ")" [ xSubstringRange ] ] |
+            "(" xExpr ")" .
 
-          xCPrimary = xCOperand | '(' xCExpr ')' .
+          xCPrimary = xCOperand | "(" xCExpr ")" .
           xCOperand =
             xScon |
-            xName [ '(' xSectionSubscriptList ')' ] |
-            xName [ '(' xSectionSubscriptList ')' ] '%'
-              xDataRef [ '(' xSectionSubscriptList ')' ] |
+            xName [ "(" xSectionSubscriptList ")" ] |
+            xName [ "(" xSectionSubscriptList ")" ] "%"
+              xDataRef [ "(" xSectionSubscriptList ")" ] |
             xFunctionReference .
 
           xUFPrimary =
             xIcon |
             xScon |
             xFunctionReference |
-            xName [ '(' xSectionSubscriptList ')' ] |
-            xName [ '(' xSectionSubscriptList ')' ] '%'
-              xDataRef [ '(' xSectionSubscriptList ')' ] |
-            '(' xUFExpr ')' .
+            xName [ "(" xSectionSubscriptList ")" ] |
+            xName [ "(" xSectionSubscriptList ")" ] "%"
+              xDataRef [ "(" xSectionSubscriptList ")" ] |
+            "(" xUFExpr ")" .
 
           (* R702 chain rule deleted *)
 
@@ -921,10 +921,10 @@ PRODUCTIONS
           xExpr = xLevel5Expr |
             xExpr xDefinedBinaryOp xLevel5Expr .
           xSFExprList =
-            xSFExpr ':' xExpr ':' xExpr |
-            xSFExpr ':' ':' xExpr |
-            ':' xExpr ':' xExpr |
-            ':' ':' xExpr .
+            xSFExpr ":" xExpr ":" xExpr |
+            xSFExpr ":" ":" xExpr |
+            ":" xExpr ":" xExpr |
+            ":" ":" xExpr .
 
           (* R724 defined in source form *)
 
@@ -933,22 +933,22 @@ PRODUCTIONS
           (* R735 *)
           Assignment Statement[23]
           xAssignmentStmt =
-            xLblDef xName '%' xDataRef
-              [ '(' xSectionSubscriptList ')' [ xSubstringRange ] ]
-              '=' xExpr xEOS |
-            xLblDef xName '(' xSFExprList ')' '%' xDataRef
-              [ '(' xSectionSubscriptList ')' [ xSubstringRange ] ]
-              '=' xExpr xEOS |
-            xLblDef xName '(' xSFDummyArgNameList ')' '%' xDataRef
-              [ '(' xSectionSubscriptList ')' [ xSubstringRange ] ] '='
+            xLblDef xName "%" xDataRef
+              [ "(" xSectionSubscriptList ")" [ xSubstringRange ] ]
+              "=" xExpr xEOS |
+            xLblDef xName "(" xSFExprList ")" "%" xDataRef
+              [ "(" xSectionSubscriptList ")" [ xSubstringRange ] ]
+              "=" xExpr xEOS |
+            xLblDef xName "(" xSFDummyArgNameList ")" "%" xDataRef
+              [ "(" xSectionSubscriptList ")" [ xSubstringRange ] ] "="
                   xExpr xEOS .
 
           (* R736 *)
           xPointerAssignmentStmt =
-            xLblDef xName '=>' xTarget xEOS |
-            xLblDef xName '%' xDataRef '=>' xTarget xEOS |
-            xLblDef xName '(' xSFExprList ')' '%' xDataRef '=>' xTarget xEOS |
-            xLblDef xName '(' xSFDummyArgNameList ')' '%' xDataRef '=>'
+            xLblDef xName "=>" xTarget xEOS |
+            xLblDef xName "%" xDataRef "=>" xTarget xEOS |
+            xLblDef xName "(" xSFExprList ")" "%" xDataRef "=>" xTarget xEOS |
+            xLblDef xName "(" xSFDummyArgNameList ")" "%" xDataRef "=>"
               xTarget xEOS .
 
           (* R737 *)
@@ -956,7 +956,7 @@ PRODUCTIONS
 
           (* R738 *)
           xWhereStmt =
-            xLblDef 'where' '(' xMaskExpr ')' xAssignmentStmt .
+            xLblDef "where" "(" xMaskExpr ")" xAssignmentStmt .
 
           (* R739 parallels if ... then ...elseif... else ... endif construct *)
           xWhereConstruct =
@@ -985,8 +985,8 @@ PRODUCTIONS
 
           (* R740 *)
           xWhereConstructStmt =
-            xLblDef xName ':' 'where' '(' xMaskExpr ')' xEOS |
-            xLblDef 'where' '(' xMaskExpr ')' xEOS .
+            xLblDef xName ":" "where" "(" xMaskExpr ")" xEOS |
+            xLblDef "where" "(" xMaskExpr ")" xEOS .
 
           (* R741 *)
           xWhereBodyConstruct = xAssignmentStmt | xWhereStmt | xWhereConstruct .
@@ -998,16 +998,16 @@ PRODUCTIONS
 
           (* R744 *)
           xMaskedElsewhereStmt =
-            xLblDef 'elsewhere' '(' xMaskExpr ')' [ xEndName ] xEOS .
+            xLblDef "elsewhere" "(" xMaskExpr ")" [ xEndName ] xEOS .
 
           (* R745 *)
           xElsewhereStmt =
-            xLblDef 'elsewhere' [ xEndName ] xEOS .
+            xLblDef "elsewhere" [ xEndName ] xEOS .
 
           (* R746 *)
           xEndWhereStmt =
-            xLblDef 'endwhere' [ xEndName ] xEOS |
-            xLblDef 'end' 'where' [ xEndName ] xEOS .
+            xLblDef "endwhere" [ xEndName ] xEOS |
+            xLblDef "end" "where" [ xEndName ] xEOS .
 
           (* R747 *)
           xForallConstruct =
@@ -1017,19 +1017,19 @@ PRODUCTIONS
 
           (* R748 *)
           xForallConstructStmt =
-            xLblDef 'forall' xForallHeader xEOS |
-            xLblDef xName ':' 'forall' xForallHeader xEOS .
+            xLblDef "forall" xForallHeader xEOS |
+            xLblDef xName ":" "forall" xForallHeader xEOS .
 
           (* R749 *)
           xForallHeader =
-           '(' xForallTripletSpecList ')' |
-           '(' xForallTripletSpecList ',' xScalarMaskExpr ')' .
+           "(" xForallTripletSpecList ")" |
+           "(" xForallTripletSpecList "," xScalarMaskExpr ")" .
           xScalarMaskExpr = xMaskExpr .
 
           (* R750 *)
           xForallTripletSpecList =
-            xName '=' xSubscript ':' xSubscript |
-            xName '=' xSubscript ':' xSubscript ':' xExpr .
+            xName "=" xSubscript ":" xSubscript |
+            xName "=" xSubscript ":" xSubscript ":" xExpr .
 
           (* R751 *)
           xForallBodyConstruct =
@@ -1044,13 +1044,13 @@ PRODUCTIONS
 
           (* R753 *)
           xEndForallStmt =
-           xLblDef 'end' 'forall' [ xEndName ] xEOS |
-           xLblDef 'endforall' [ xEndName ] xEOS .
+           xLblDef "end" "forall" [ xEndName ] xEOS |
+           xLblDef "endforall" [ xEndName ] xEOS .
 
           (* R754 *)
           xForallStmt =
-            xLblDef 'forall' xForallHeader xAssignmentStmt xEOS |
-            xLblDef 'forall' xForallHeader xPointerAssignmentStmt xEOS .
+            xLblDef "forall" xForallHeader xAssignmentStmt xEOS |
+            xLblDef "forall" xForallHeader xPointerAssignmentStmt xEOS .
 
 (*     This macro is invoked in definition 28. *)
 
@@ -1082,30 +1082,30 @@ PRODUCTIONS
 
           (* R803 *)
           xIfThenStmt =
-            xLblDef 'if' '(' Scalar Logical Expression[22] ')' 'then' xEOS |
-            xLblDef xName ':' 'if' '(' Scalar Logical Expression[22] ')' 'then' xEOS .
+            xLblDef "if" "(" Scalar Logical Expression[22] ")" "then" xEOS |
+            xLblDef xName ":" "if" "(" Scalar Logical Expression[22] ")" "then" xEOS .
 
           (* R804 *)
           xElseIfStmt =
-            xLblDef 'elseif' '(' Scalar Logical Expression[22] ')' 'then' xEOS |
-            xLblDef 'elseif' '(' Scalar Logical Expression[22] ')' 'then'
+            xLblDef "elseif" "(" Scalar Logical Expression[22] ")" "then" xEOS |
+            xLblDef "elseif" "(" Scalar Logical Expression[22] ")" "then"
               xEndName xEOS |
-            xLblDef 'else' 'if' '(' xExpr ')' 'then' xEOS |
-            xLblDef 'else' 'if' '(' xExpr ')' 'then' xEndName xEOS .
+            xLblDef "else" "if" "(" xExpr ")" "then" xEOS |
+            xLblDef "else" "if" "(" xExpr ")" "then" xEndName xEOS .
 
           (* R805 *)
           xElseStmt =
-            xLblDef 'else' xEOS |
-            xLblDef 'else' xEndName xEOS .
+            xLblDef "else" xEOS |
+            xLblDef "else" xEndName xEOS .
 
           (* R806 *)
           xEndIfStmt =
-            xLblDef 'endif' [ xEndName ] xEOS |
-            xLblDef 'end' 'if' [ xEndName ] xEOS .
+            xLblDef "endif" [ xEndName ] xEOS |
+            xLblDef "end" "if" [ xEndName ] xEOS .
 
           (* R807 *)
           xIfStmt =
-            xLblDef 'if' '(' Scalar Logical Expression[22] ')' xActionStmt .
+            xLblDef "if" "(" Scalar Logical Expression[22] ")" xActionStmt .
 
           (* R808 *)
           xCaseConstruct =
@@ -1121,31 +1121,31 @@ PRODUCTIONS
 
           (* R809 chain rule eliminated *)
           xSelectCaseStmt =
-            xLblDef xName ':' 'selectcase' '(' xExpr ')' xEOS |
-            xLblDef 'selectcase' '(' xExpr ')' xEOS |
-            xLblDef xName ':' 'select' 'case' '(' xExpr ')' xEOS |
-            xLblDef 'select' 'case' '(' xExpr ')' xEOS .
+            xLblDef xName ":" "selectcase" "(" xExpr ")" xEOS |
+            xLblDef "selectcase" "(" xExpr ")" xEOS |
+            xLblDef xName ":" "select" "case" "(" xExpr ")" xEOS |
+            xLblDef "select" "case" "(" xExpr ")" xEOS .
 
           (* R810 *)
           xCaseStmt =
-            xLblDef 'case' xCaseSelector xEOS |
-            xLblDef 'case' xCaseSelector xName xEOS .
+            xLblDef "case" xCaseSelector xEOS |
+            xLblDef "case" xCaseSelector xName xEOS .
 
           (* R811 *)
           xEndSelectStmt =
-            xLblDef 'endselect' [ xEndName ] xEOS |
-            xLblDef 'end' 'select' [ xEndName ] xEOS .
+            xLblDef "endselect" [ xEndName ] xEOS |
+            xLblDef "end" "select" [ xEndName ] xEOS .
 
           (* R812 chain rules deleted *)
 
           (* R813 *)
-          xCaseSelector = '(' xCaseValueRangeList ')' | 'default' .
+          xCaseSelector = "(" xCaseValueRangeList ")" | "default" .
           xCaseValueRangeList =
-            xCaseValueRange | xCaseValueRangeList ',' xCaseValueRange .
+            xCaseValueRange | xCaseValueRangeList "," xCaseValueRange .
 
           (* R814 *)
           xCaseValueRange =
-             xExpr | xExpr ':' | ':' xExpr | xExpr ':' xExpr .
+             xExpr | xExpr ":" | ":" xExpr | xExpr ":" xExpr .
 
           (* R815 chain rules deleted *)
 
@@ -1164,28 +1164,28 @@ PRODUCTIONS
 
           (* R818 *)
           xLabelDoStmt =
-            xLblDef 'do' xLblRef xCommaLoopControl xEOS |
-            xLblDef 'do' xLblRef xEOS |
-            xLblDef 'do' xCommaLoopControl xEOS |
-            xLblDef 'do' xEOS |
-            xLblDef xName ':' 'do' xLblRef xCommaLoopControl xEOS |
-            xLblDef xName ':' 'do' xLblRef xEOS |
-            xLblDef xName ':' 'do' xCommaLoopControl xEOS |
-            xLblDef xName ':' 'do' xEOS .
+            xLblDef "do" xLblRef xCommaLoopControl xEOS |
+            xLblDef "do" xLblRef xEOS |
+            xLblDef "do" xCommaLoopControl xEOS |
+            xLblDef "do" xEOS |
+            xLblDef xName ":" "do" xLblRef xCommaLoopControl xEOS |
+            xLblDef xName ":" "do" xLblRef xEOS |
+            xLblDef xName ":" "do" xCommaLoopControl xEOS |
+            xLblDef xName ":" "do" xEOS .
 
           (* R819 chain rule deleted *)
 
           (* R820 chain rule deleted *)
 
           (* R821 see 40 *)
-          xCommaLoopControl = ',' xLoopControl | xLoopControl .
+          xCommaLoopControl = "," xLoopControl | xLoopControl .
           xLoopControl =
-            xVariableName '='
-              Int-Real-Dp Expression[21] ',' Int-Real-Dp Expression[21] |
-            xVariableName '='
-              Int-Real-Dp Expression[21] ',' Int-Real-Dp Expression[21] ','
+            xVariableName "="
+              Int-Real-Dp Expression[21] "," Int-Real-Dp Expression[21] |
+            xVariableName "="
+              Int-Real-Dp Expression[21] "," Int-Real-Dp Expression[21] ","
               Int-Real-Dp Expression[21] |
-            'while' '(' xExpr ')' .
+            "while" "(" xExpr ")" .
 
           (* R822 chain rule deleted *)
 
@@ -1195,47 +1195,47 @@ PRODUCTIONS
 
           (* R825 *)
           xEndDoStmt =
-            xLblDef 'enddo' [ xEndName ] xEOS |
-            xLblDef 'end' 'do' [ xEndName ] xEOS .
+            xLblDef "enddo" [ xEndName ] xEOS |
+            xLblDef "end" "do" [ xEndName ] xEOS .
 
           (* R826-R833 enforced semantically *)
 
           (* R834 *)
           xCycleStmt =
-            xLblDef 'cycle' [ xName ] xEOS .
+            xLblDef "cycle" [ xName ] xEOS .
 
           (* R835 *)
           xExitStmt =
-            xLblDef 'exit' [ xName ] xEOS .
+            xLblDef "exit" [ xName ] xEOS .
 
           (* R836 *)
           xGotoStmt =
             xLblDef GoToKw xLblRef xEOS .
 
-          GoToKw = 'goto' | 'go' 'to' .
+          GoToKw = "goto" | "go" "to" .
 
           (* R837 *)
           xComputedGotoStmt =
-            xLblDef GoToKw '(' xLblRefList ')' Integer Expression[20] xEOS |
-            xLblDef GoToKw '(' xLblRefList ')' xCommaExp xEOS .
-          xCommaExp = ',' Integer Expression[20] .
-          xLblRefList = xLblRef | xLblRefList ',' xLblRef .
+            xLblDef GoToKw "(" xLblRefList ")" Integer Expression[20] xEOS |
+            xLblDef GoToKw "(" xLblRefList ")" xCommaExp xEOS .
+          xCommaExp = "," Integer Expression[20] .
+          xLblRefList = xLblRef | xLblRefList "," xLblRef .
           xLblRef = xLabel .
 
           (* R838 *)
           xArithmeticIfStmt =
-            xLblDef 'if' '(' Int-Real-Dp Expression[21] ')'
-                   xLblRef ',' xLblRef ',' xLblRef xEOS .
+            xLblDef "if" "(" Int-Real-Dp Expression[21] ")"
+                   xLblRef "," xLblRef "," xLblRef xEOS .
 
           (* R839 *)
           xContinueStmt =
-            xLblDef 'continue' xEOS .
+            xLblDef "continue" xEOS .
 
           (* R840 *)
           xStopStmt =
-            xLblDef 'stop' xEOS |
-            xLblDef 'stop' xIcon xEOS |
-            xLblDef 'stop' xScon xEOS .
+            xLblDef "stop" xEOS |
+            xLblDef "stop" xIcon xEOS |
+            xLblDef "stop" xScon xEOS .
 
           (* R841 chain rule deleted *)
 
@@ -1246,7 +1246,7 @@ PRODUCTIONS
 (*     I/O statements[8]== *)
 
           (* R901 *)
-          xUnitIdentifier = xUFExpr | '*' .
+          xUnitIdentifier = xUFExpr | "*" .
 
           (* R902 chain rule deleted *)
 
@@ -1254,118 +1254,118 @@ PRODUCTIONS
 
           (* R904 *)
           xOpenStmt =
-            xLblDef 'open' '(' xConnectSpecList ')' xEOS .
+            xLblDef "open" "(" xConnectSpecList ")" xEOS .
 
           (* R905 *)
           xConnectSpecList =
             xUnitIdentifier |
-            xConnectSpec | xConnectSpecList ',' xConnectSpec .
+            xConnectSpec | xConnectSpecList "," xConnectSpec .
           xConnectSpec =
-            'unit=' xUnitIdentifier |
-            'err=' xLblRef |
-            'file=' xCExpr |
-            'status=' xCExpr |
-            'access=' xCExpr |
-            'form=' xCExpr |
-            'recl=' xExpr |
-            'blank=' xCExpr |
-            'iostat=' xScalarVariable |
-            'position=' xCExpr |
-            'action=' xCExpr |
-            'delim=' xCExpr |
-            'pad=' xCExpr .
+            "unit=" xUnitIdentifier |
+            "err=" xLblRef |
+            "file=" xCExpr |
+            "status=" xCExpr |
+            "access=" xCExpr |
+            "form=" xCExpr |
+            "recl=" xExpr |
+            "blank=" xCExpr |
+            "iostat=" xScalarVariable |
+            "position=" xCExpr |
+            "action=" xCExpr |
+            "delim=" xCExpr |
+            "pad=" xCExpr .
 
           (* R906 chain rule deleted *)
 
           (* R907 *)
           xCloseStmt =
-            xLblDef 'close' '(' xCloseSpecList ')' xEOS .
+            xLblDef "close" "(" xCloseSpecList ")" xEOS .
 
           (* R908 *)
           xCloseSpecList =
             xUnitIdentifier |
-            xCloseSpec | xCloseSpecList ',' xCloseSpec .
+            xCloseSpec | xCloseSpecList "," xCloseSpec .
           xCloseSpec =
-            'unit=' xUnitIdentifier |
-            'err=' xLblRef |
-            'status=' xCExpr |
-            'iostat=' xScalarVariable .
+            "unit=" xUnitIdentifier |
+            "err=" xLblRef |
+            "status=" xCExpr |
+            "iostat=" xScalarVariable .
 
           (* R909 *)
           xReadStmt =
-            xLblDef 'read' xRdCtlSpec xInputItemList xEOS |
-            xLblDef 'read' xRdCtlSpec xEOS |
-            xLblDef 'read' xRdFmtId ',' xInputItemList xEOS |
-            xLblDef 'read' xRdFmtId xEOS .
-          xRdCtlSpec = xRdUnitId | '(' xRdIoCtlSpecList ')' .
-          xRdUnitId = '(' xUFExpr ')' | '(' '*' ')' .
+            xLblDef "read" xRdCtlSpec xInputItemList xEOS |
+            xLblDef "read" xRdCtlSpec xEOS |
+            xLblDef "read" xRdFmtId "," xInputItemList xEOS |
+            xLblDef "read" xRdFmtId xEOS .
+          xRdCtlSpec = xRdUnitId | "(" xRdIoCtlSpecList ")" .
+          xRdUnitId = "(" xUFExpr ")" | "(" "*" ")" .
           xRdIoCtlSpecList =
-            xUnitIdentifier ',' xIoControlSpec |
-            xUnitIdentifier ',' xFormatIdentifier |
+            xUnitIdentifier "," xIoControlSpec |
+            xUnitIdentifier "," xFormatIdentifier |
             xIoControlSpec |
-            xRdIoCtlSpecList ',' xIoControlSpec .
+            xRdIoCtlSpecList "," xIoControlSpec .
           xRdFmtId =
-            xLblRef | '*' | xCOperand |
+            xLblRef | "*" | xCOperand |
             xCOperand xConcatOp xCPrimary |
             xRdFmtIdExpr xConcatOp xCPrimary .
-          xRdFmtIdExpr = '(' xUFExpr ')' .
+          xRdFmtIdExpr = "(" xUFExpr ")" .
 
           (* R910 *)
           xWriteStmt =
-            xLblDef 'write' '(' xIoControlSpecList ')' xOutputItemList xEOS |
-            xLblDef 'write' '(' xIoControlSpecList ')' xEOS .
+            xLblDef "write" "(" xIoControlSpecList ")" xOutputItemList xEOS |
+            xLblDef "write" "(" xIoControlSpecList ")" xEOS .
 
           (* R911 *)
           xPrintStmt =
-            xLblDef 'print' xFormatIdentifier ',' xOutputItemList xEOS |
-            xLblDef 'print' xFormatIdentifier xEOS .
+            xLblDef "print" xFormatIdentifier "," xOutputItemList xEOS |
+            xLblDef "print" xFormatIdentifier xEOS .
 
           (* R912 *)
           xIoControlSpecList =
-            xUnitIdentifier $',' |
-            xUnitIdentifier ',' xFormatIdentifier |
-            xUnitIdentifier ',' xIoControlSpec |
+            xUnitIdentifier $"," |
+            xUnitIdentifier "," xFormatIdentifier |
+            xUnitIdentifier "," xIoControlSpec |
             xIoControlSpec |
-            xIoControlSpecList ',' xIoControlSpec .
+            xIoControlSpecList "," xIoControlSpec .
           xIoControlSpec =
-            'fmt=' xFormatIdentifier |
-            'unit=' xUnitIdentifier |
-            'rec=' xExpr |
-            'end=' xLblRef |
-            'err=' xLblRef |
-            'iostat=' xScalarVariable |
-            'nml=' xNamelistGroupName |
-            'advance=' xCExpr |
-            'size=' xVariable |
-            'eor=' xLblRef .
+            "fmt=" xFormatIdentifier |
+            "unit=" xUnitIdentifier |
+            "rec=" xExpr |
+            "end=" xLblRef |
+            "err=" xLblRef |
+            "iostat=" xScalarVariable |
+            "nml=" xNamelistGroupName |
+            "advance=" xCExpr |
+            "size=" xVariable |
+            "eor=" xLblRef .
 
           (* R913 *)
-          xFormatIdentifier = xLblRef | xCExpr | '*' .
+          xFormatIdentifier = xLblRef | xCExpr | "*" .
 
           (* R914 *)
-          xInputItemList = xInputItem | xInputItemList ',' xInputItem .
+          xInputItemList = xInputItem | xInputItemList "," xInputItem .
           xInputItem = xVariable | xInputImpliedDo .
 
           (* 915 *)
           xOutputItemList = xExpr | xOutputItemList1 .
           xOutputItemList1 =
-            xExpr ',' xExpr |
-            xExpr ',' xOutputImpliedDo |
+            xExpr "," xExpr |
+            xExpr "," xOutputImpliedDo |
             xOutputImpliedDo |
-            xOutputItemList1 ',' xExpr |
-            xOutputItemList1 ',' xOutputImpliedDo .
+            xOutputItemList1 "," xExpr |
+            xOutputItemList1 "," xOutputImpliedDo .
 
           (* R916 *)
           xInputImpliedDo =
-            '(' xInputItemList ',' xImpliedDoVariable '=' xExpr ',' xExpr ')' |
-            '(' xInputItemList ',' xImpliedDoVariable '=' xExpr ',' xExpr ',' xExpr ')' .
+            "(" xInputItemList "," xImpliedDoVariable "=" xExpr "," xExpr ")" |
+            "(" xInputItemList "," xImpliedDoVariable "=" xExpr "," xExpr "," xExpr ")" .
 
           xOutputImpliedDo =
-            '(' xExpr ',' xImpliedDoVariable '=' xExpr ',' xExpr ')' |
-            '(' xExpr ',' xImpliedDoVariable '=' xExpr ',' xExpr ',' xExpr ')' |
-            '(' xOutputItemList1 ',' xImpliedDoVariable '=' xExpr ',' xExpr ')' |
-            '(' xOutputItemList1 ',' xImpliedDoVariable '=' xExpr ',' xExpr
-              ',' xExpr ')' .
+            "(" xExpr "," xImpliedDoVariable "=" xExpr "," xExpr ")" |
+            "(" xExpr "," xImpliedDoVariable "=" xExpr "," xExpr "," xExpr ")" |
+            "(" xOutputItemList1 "," xImpliedDoVariable "=" xExpr "," xExpr ")" |
+            "(" xOutputItemList1 "," xImpliedDoVariable "=" xExpr "," xExpr
+              "," xExpr ")" .
 
           (* R917 chain rule deleted *)
 
@@ -1373,65 +1373,65 @@ PRODUCTIONS
 
           (* R919 *)
           xBackspaceStmt =
-            xLblDef 'backspace' xUnitIdentifier xEOS |
-            xLblDef 'backspace' '(' xPositionSpecList ')' xEOS .
+            xLblDef "backspace" xUnitIdentifier xEOS |
+            xLblDef "backspace" "(" xPositionSpecList ")" xEOS .
 
           (* R920 *)
           xEndfileStmt =
-            xLblDef 'endfile' xUnitIdentifier xEOS |
-            xLblDef 'endfile' '(' xPositionSpecList ')' xEOS |
-            xLblDef 'end' 'file' xUnitIdentifier xEOS |
-            xLblDef 'end' 'file' '(' xPositionSpecList ')' xEOS .
+            xLblDef "endfile" xUnitIdentifier xEOS |
+            xLblDef "endfile" "(" xPositionSpecList ")" xEOS |
+            xLblDef "end" "file" xUnitIdentifier xEOS |
+            xLblDef "end" "file" "(" xPositionSpecList ")" xEOS .
 
           (* R921 *)
           xRewindStmt =
-            xLblDef 'rewind' xUnitIdentifier xEOS |
-            xLblDef 'rewind' '(' xPositionSpecList ')' xEOS .
+            xLblDef "rewind" xUnitIdentifier xEOS |
+            xLblDef "rewind" "(" xPositionSpecList ")" xEOS .
 
           (* R922 *)
           xPositionSpecList =
-            xUnitIdentifier ',' xPositionSpec | xPositionSpec |
-            xPositionSpecList ',' xPositionSpec .
+            xUnitIdentifier "," xPositionSpec | xPositionSpec |
+            xPositionSpecList "," xPositionSpec .
           xPositionSpec =
-            'unit=' xUnitIdentifier |
-            'err=' xLblRef |
-            'iostat=' xScalarVariable .
+            "unit=" xUnitIdentifier |
+            "err=" xLblRef |
+            "iostat=" xScalarVariable .
 
           (* R923 *)
           xInquireStmt =
-            xLblDef 'inquire' '(' xInquireSpecList ')' xEOS |
-            xLblDef 'inquire' '(' 'iolength=' xScalarVariable ')' xOutputItemList xEOS .
+            xLblDef "inquire" "(" xInquireSpecList ")" xEOS |
+            xLblDef "inquire" "(" "iolength=" xScalarVariable ")" xOutputItemList xEOS .
 
           (* R924 *)
           xInquireSpecList =
             xUnitIdentifier |
-            xInquireSpec | xInquireSpecList ',' xInquireSpec .
+            xInquireSpec | xInquireSpecList "," xInquireSpec .
           xInquireSpec =
-            'unit=' xUnitIdentifier |
-            'file=' xCExpr |
-            'err=' xLblRef |
-            'iostat=' xScalarVariable |
-            'exist=' xScalarVariable |
-            'opened=' xScalarVariable |
-            'number=' xScalarVariable |
-            'named=' xScalarVariable |
-            'name=' xScalarVariable |
-            'access=' xScalarVariable |
-            'sequential=' xScalarVariable |
-            'direct=' xScalarVariable |
-            'form=' xScalarVariable |
-            'formatted=' xScalarVariable |
-            'unformatted=' xScalarVariable |
-            'recl=' xExpr |
-            'nextrec=' xScalarVariable |
-            'blank=' xScalarVariable |
-            'position=' xScalarVariable |
-            'action=' xScalarVariable |
-            'read=' xScalarVariable |
-            'write=' xScalarVariable |
-            'readwrite=' xScalarVariable |
-            'delim=' xScalarVariable |
-            'pad=' xScalarVariable .
+            "unit=" xUnitIdentifier |
+            "file=" xCExpr |
+            "err=" xLblRef |
+            "iostat=" xScalarVariable |
+            "exist=" xScalarVariable |
+            "opened=" xScalarVariable |
+            "number=" xScalarVariable |
+            "named=" xScalarVariable |
+            "name=" xScalarVariable |
+            "access=" xScalarVariable |
+            "sequential=" xScalarVariable |
+            "direct=" xScalarVariable |
+            "form=" xScalarVariable |
+            "formatted=" xScalarVariable |
+            "unformatted=" xScalarVariable |
+            "recl=" xExpr |
+            "nextrec=" xScalarVariable |
+            "blank=" xScalarVariable |
+            "position=" xScalarVariable |
+            "action=" xScalarVariable |
+            "read=" xScalarVariable |
+            "write=" xScalarVariable |
+            "readwrite=" xScalarVariable |
+            "delim=" xScalarVariable |
+            "pad=" xScalarVariable .
 
 (*     This macro is invoked in definition 28. *)
 
@@ -1443,30 +1443,30 @@ PRODUCTIONS
           *  lexical analysis *)
           (* R1001 *)
           xFormatStmt =
-            xLblDef 'format' '(' [ xFmtSpec ] ')' xEOS .
+            xLblDef "format" "(" [ xFmtSpec ] ")" xEOS .
 
           (* R1002 *)
           xFmtSpec =
             xFormatedit | xFormatsep | xFormatsep xFormatedit |
             xFmtSpec xFormatsep |
             xFmtSpec xFormatsep xFormatedit |
-            xFmtSpec ',' xFormatedit |
-            xFmtSpec ',' xFormatsep |
-            xFmtSpec ',' xFormatsep xFormatedit .
+            xFmtSpec "," xFormatedit |
+            xFmtSpec "," xFormatsep |
+            xFmtSpec "," xFormatsep xFormatedit .
 
           (* R1003 *)
           xFormatedit =
             xEditElement | xIcon xEditElement | xXcon |
             xPcon | xPcon xEditElement | xPcon xIcon xEditElement .
           xEditElement =
-            xFcon | xScon | xIdent | '(' xFmtSpec ')' .
+            xFcon | xScon | xIdent | "(" xFmtSpec ")" .
 
           (* R1004 chain rule deleted *)
 
           (* R1005 chain rule deleted as lexically recognized elements *)
 
           (* R1010 *)
-          xFormatsep = '/' | ':' .
+          xFormatsep = "/" | ":" .
 
 (*     This macro is invoked in definition 28. *)
 
@@ -1478,39 +1478,39 @@ PRODUCTIONS
 
           (* R1102 *)
           xProgramStmt =
-            xLblDef 'program' xProgramName xEOS .
+            xLblDef "program" xProgramName xEOS .
 
           (* R1103 *)
           xEndProgramStmt =
-            xLblDef 'end' xEOS |
-            xLblDef 'endprogram' [ xEndName ] xEOS |
-            xLblDef 'end' 'program' [ xEndName ] xEOS .
+            xLblDef "end" xEOS |
+            xLblDef "endprogram" [ xEndName ] xEOS |
+            xLblDef "end" "program" [ xEndName ] xEOS .
 
           (* R1104 see high level syntax *)
 
           (* R1105 *)
           xModuleStmt =
-            xLblDef 'module' xModuleName xEOS .
+            xLblDef "module" xModuleName xEOS .
 
           (* R1106 *)
           xEndModuleStmt =
-            xLblDef 'end' xEOS |
-            xLblDef 'endmodule' [ xEndName ] xEOS |
-            xLblDef 'end' 'module' [ xEndName ] xEOS .
+            xLblDef "end" xEOS |
+            xLblDef "endmodule" [ xEndName ] xEOS |
+            xLblDef "end" "module" [ xEndName ] xEOS .
 
           (* R1107 *)
           xUseStmt =
-            xLblDef 'use' xName xEOS |
-            xLblDef 'use' xName ',' xRenameList xEOS |
-            xLblDef 'use' xName ',' 'only' ':' [ xOnlyList ] xEOS .
-          xRenameList = xRename | xRenameList ',' xRename .
-          xOnlyList = xOnly | xOnlyList ',' xOnly .
+            xLblDef "use" xName xEOS |
+            xLblDef "use" xName "," xRenameList xEOS |
+            xLblDef "use" xName "," "only" ":" [ xOnlyList ] xEOS .
+          xRenameList = xRename | xRenameList "," xRename .
+          xOnlyList = xOnly | xOnlyList "," xOnly .
 
           (* R1108 *)
-          xRename = xIdent '=>' xUseName .
+          xRename = xIdent "=>" xUseName .
 
           (* R1109 *)
-          xOnly = xGenericSpec | xIdent '=>' xUseName | xUseName .
+          xOnly = xGenericSpec | xIdent "=>" xUseName | xUseName .
 
           (* R1110 chain rule deleted *)
 
@@ -1520,16 +1520,16 @@ PRODUCTIONS
 
           (* R1113 *)
           xBlockDataStmt =
-            xLblDef 'blockdata' xBlockDataName xEOS |
-            xLblDef 'blockdata' xEOS .
+            xLblDef "blockdata" xBlockDataName xEOS |
+            xLblDef "blockdata" xEOS .
 
           (* R1114 *)
           xEndBlockDataStmt =
-            xLblDef 'end' xEOS |
-            xLblDef 'endblockdata' [ xEndName ] xEOS |
-            xLblDef 'end' 'blockdata' [ xEndName ] xEOS |
-            xLblDef 'endblock' 'data' [ xEndName ] xEOS |
-            xLblDef 'end' 'block' 'data' [ xEndName ] xEOS .
+            xLblDef "end" xEOS |
+            xLblDef "endblockdata" [ xEndName ] xEOS |
+            xLblDef "end" "blockdata" [ xEndName ] xEOS |
+            xLblDef "endblock" "data" [ xEndName ] xEOS |
+            xLblDef "end" "block" "data" [ xEndName ] xEOS .
 
 (*     This macro is invoked in definition 28. *)
 
@@ -1551,14 +1551,14 @@ PRODUCTIONS
 
           (* R1203 *)
           xInterfaceStmt =
-            xLblDef 'interface' xGenericName xEOS |
-            xLblDef 'interface' xGenericSpec xEOS |
-            xLblDef 'interface' xEOS .
+            xLblDef "interface" xGenericName xEOS |
+            xLblDef "interface" xGenericSpec xEOS |
+            xLblDef "interface" xEOS .
 
           (* R1204 *)
           xEndInterfaceStmt =
-            xLblDef 'endinterface' [xEndName] xEOS |
-            xLblDef 'end' 'interface' [xEndName] xEOS .
+            xLblDef "endinterface" [xEndName] xEOS |
+            xLblDef "end" "interface" [xEndName] xEOS .
 
           (* R1205 *)
           xInterfaceBody =
@@ -1576,50 +1576,50 @@ PRODUCTIONS
 
           (* R1206 *)
           xModuleProcedureStmt =
-            xLblDef 'module' 'procedure' xProcedureNameList xEOS .
+            xLblDef "module" "procedure" xProcedureNameList xEOS .
           xProcedureNameList =
-            xProcedureName | xProcedureNameList ',' xProcedureName .
+            xProcedureName | xProcedureNameList "," xProcedureName .
           xProcedureName = xIdent .
 
           (* R1207 *)
           xGenericSpec =
-            'operator' '(' xDefinedOperator ')' |
-            'assignment' '(' '=' ')' .
+            "operator" "(" xDefinedOperator ")" |
+            "assignment" "(" "=" ")" .
 
           (* R1208 *)
           xExternalStmt =
-            xLblDef 'external' xExternalNameList xEOS |
-            xLblDef 'external' ':' ':' xExternalNameList xEOS .
-          xExternalNameList = xExternalName | xExternalNameList ',' xExternalName .
+            xLblDef "external" xExternalNameList xEOS |
+            xLblDef "external" ":" ":" xExternalNameList xEOS .
+          xExternalNameList = xExternalName | xExternalNameList "," xExternalName .
 
           (* R1209 *)
           xIntrinsicStmt =
-            xLblDef 'intrinsic' xIntrinsicList xEOS |
-            xLblDef 'intrinsic' ':' ':' xIntrinsicList xEOS .
+            xLblDef "intrinsic" xIntrinsicList xEOS |
+            xLblDef "intrinsic" ":" ":" xIntrinsicList xEOS .
           xIntrinsicList =
-            xIntrinsicProcedureName | xIntrinsicList ',' xIntrinsicProcedureName .
+            xIntrinsicProcedureName | xIntrinsicList "," xIntrinsicProcedureName .
 
           (* R1210 *)
           xFunctionReference =
-            xName '(' ')' |
-            xName '(' xFunctionArgList ')' .
+            xName "(" ")" |
+            xName "(" xFunctionArgList ")" .
 
           (* R1211 *)
           xCallStmt =
-            xLblDef 'call' xSubroutineNameUse xEOS |
-            xLblDef 'call' xSubroutineNameUse '(' xSubroutineArgList ')' xEOS .
-          xSubroutineArgList: | xSubroutineArg | xSubroutineArgList ',' xSubroutineArg .
+            xLblDef "call" xSubroutineNameUse xEOS |
+            xLblDef "call" xSubroutineNameUse "(" xSubroutineArgList ")" xEOS .
+          xSubroutineArgList: | xSubroutineArg | xSubroutineArgList "," xSubroutineArg .
 
           (* R1212 *)
           (* Functions initially recognized as arrays resolved semantically *)
           xFunctionArgList =
             xFunctionArg |
-            xFunctionArgList ',' xFunctionArg |
-            xSectionSubscriptList ',' xFunctionArg .
-          xFunctionArg = xName '=' xExpr .
+            xFunctionArgList "," xFunctionArg |
+            xSectionSubscriptList "," xFunctionArg .
+          xFunctionArg = xName "=" xExpr .
           xSubroutineArg =
-            xExpr | '*' xLblRef |
-            xName '=' xExpr | xName '=' '*' xLblRef .
+            xExpr | "*" xLblRef |
+            xName "=" xExpr | xName "=" "*" xLblRef .
 
           (* R1213 chain rule deleted *)
 
@@ -1632,63 +1632,63 @@ PRODUCTIONS
           (* R1217 chain rule deleted *)
           xFunctionStmt =
             xLblDef xFunctionPrefix xFunctionName
-                '(' xFunctionPars ')' [ 'result' '(' xName ')' ]  xEOS .
+                "(" xFunctionPars ")" [ "result" "(" xName ")" ]  xEOS .
 
-          xFunctionPars: | xFunctionPar | xFunctionPars ',' xFunctionPar .
+          xFunctionPars: | xFunctionPar | xFunctionPars "," xFunctionPar .
           xFunctionPar = xDummyArgName .
 
           (* R1218 *)
           xFunctionPrefix =
-            'function' | xPrefixSpecList 'function' .
+            "function" | xPrefixSpecList "function" .
           xPrefixSpecList =
             xPrefixSpec | xPrefixSpecList xPrefixSpec .
 
           (* R1219 *)
           xPrefixSpec =
             xTypeSpec  |
-            'recursive' |
-            'pure' |
-            'elemental' .
+            "recursive" |
+            "pure" |
+            "elemental" .
 
           (* R1220 *)
           xEndFunctionStmt =
-            xLblDef 'end' xEOS |
-            xLblDef 'endfunction' [ xEndName ] xEOS |
-            xLblDef 'end' 'function' [ xEndName ] xEOS .
+            xLblDef "end" xEOS |
+            xLblDef "endfunction" [ xEndName ] xEOS |
+            xLblDef "end" "function" [ xEndName ] xEOS .
 
           (* R1221 see high level syntax *)
 
           (* R1222 *)
           xSubroutineStmt =
             xLblDef xSubroutinePrefix xSubroutineName
-              [ '(' xSubroutinePars ')' ] xEOS .
+              [ "(" xSubroutinePars ")" ] xEOS .
           xSubroutinePrefix =
-            'subroutine' | xPrefixSpecList 'subroutine' .
-          xSubroutinePars: | xSubroutinePar | xSubroutinePars ',' xSubroutinePar .
+            "subroutine" | xPrefixSpecList "subroutine" .
+          xSubroutinePars: | xSubroutinePar | xSubroutinePars "," xSubroutinePar .
 
           (* R1223 *)
-          xSubroutinePar = xDummyArgName | '*' .
+          xSubroutinePar = xDummyArgName | "*" .
 
           (* R1224 *)
           xEndSubroutineStmt =
-            xLblDef 'end' xEOS |
-            xLblDef 'endsubroutine' [ xEndName ] xEOS |
-            xLblDef 'end' 'subroutine' [ xEndName ] xEOS .
+            xLblDef "end" xEOS |
+            xLblDef "endsubroutine" [ xEndName ] xEOS |
+            xLblDef "end" "subroutine" [ xEndName ] xEOS .
 
           (* R1225 *)
           Entry Statement[14]
           xEntryStmt =
-            xLblDef 'entry' xEntryName '(' xSubroutinePars ')'
-              'result' '(' xName ')' xEOS .
+            xLblDef "entry" xEntryName "(" xSubroutinePars ")"
+              "result" "(" xName ")" xEOS .
 
           (* R1226 *)
           xReturnStmt =
-            xLblDef 'return' xEOS |
-            xLblDef 'return' xExpr xEOS .
+            xLblDef "return" xEOS |
+            xLblDef "return" xExpr xEOS .
 
           (* R1227 *)
           xContainsStmt =
-            xLblDef 'contains' xEOS.
+            xLblDef "contains" xEOS.
 
           (* R1228 *)
           (* This may turn out to be an assignment statement, but the form given here
@@ -1696,10 +1696,10 @@ PRODUCTIONS
            * function definition.
            *)
           xStmtFunctionStmt = xLblDef xName xStmtFunctionRange .
-          xStmtFunctionRange = '(' ')' '=' xExpr xEOS .
-          xStmtFunctionRange = '(' xSFDummyArgNameList ')' '=' xExpr xEOS .
+          xStmtFunctionRange = "(" ")" "=" xExpr xEOS .
+          xStmtFunctionRange = "(" xSFDummyArgNameList ")" "=" xExpr xEOS .
           xSFDummyArgNameList =
-            xSFDummyArgName | xSFDummyArgNameList ',' xSFDummyArgName .
+            xSFDummyArgName | xSFDummyArgNameList "," xSFDummyArgName .
 
 (*     This macro is invoked in definition 28. *)
 
@@ -1726,7 +1726,7 @@ PRODUCTIONS
           xObjectName = xIdent .
           xProgramName = xIdent .
           xSFDummyArgName = xIdent .
-          xSFVarName = xIdent $',' $')' .
+          xSFVarName = xIdent $"," $")" .
           xSubroutineName = xIdent .
           xSubroutineNameUse = xIdent .
           xTypeName = xIdent .
@@ -1765,20 +1765,20 @@ PRODUCTIONS
 
           (* Pause statement *)
           xPauseStmt =
-            xLblDef 'pause' xEOS |
-            xLblDef 'pause' xIcon xEOS |
-            xLblDef 'pause' xScon xEOS .
+            xLblDef "pause" xEOS |
+            xLblDef "pause" xIcon xEOS |
+            xLblDef "pause" xScon xEOS .
 
           (* Assign Statement *)
           xAssignStmt =
-            xLblDef 'assign' xLblRef 'to' xVariableName xEOS .
+            xLblDef "assign" xLblRef "to" xVariableName xEOS .
 
           (* Assigned GOTO Statement *)
           xAssignedGotoStmt =
             xLblDef GoToKw xVariableName xEOS |
-            xLblDef GoToKw xVariableName '(' xLblRefList ')' xEOS |
-            xLblDef GoToKw xVariableComma '(' xLblRefList ')' xEOS .
-          xVariableComma = xVariableName ',' .
+            xLblDef GoToKw xVariableName "(" xLblRefList ")" xEOS |
+            xLblDef GoToKw xVariableComma "(" xLblRefList ")" xEOS .
+          xVariableComma = xVariableName "," .
 
           (* H edit descriptor *)
 
@@ -1793,7 +1793,7 @@ PRODUCTIONS
           (* R1212 *)
           xSubroutineArg =
             xHcon |
-            xName '=' xHcon .
+            xName "=" xHcon .
 
 (*     This macro is invoked in definition 28. *)
 
@@ -1804,7 +1804,7 @@ PRODUCTIONS
 (*     Entry Statement[14]== *)
 
           xEntryStmt =
-            xLblDef 'entry' xEntryName [ '(' xSubroutinePars ')' ] xEOS .
+            xLblDef "entry" xEntryName [ "(" xSubroutinePars ")" ] xEOS .
 
 (*     This macro is invoked in definition 11. *)
 
@@ -1877,23 +1877,23 @@ PRODUCTIONS
 (*     Assignment Statement[23]== *)
 
           xAssignmentStmt =
-            xLblDef xName '=' xExpr xEOS |
-            xLblDef xName '(' xSFExprList ')' '=' xExpr xEOS |
-            xLblDef xName '(' xSFExprList ')' xSubstringRange '=' xExpr xEOS |
-            xLblDef xName '(' xSFDummyArgNameList ')' xSubstringRange '=' xExpr xEOS .
+            xLblDef xName "=" xExpr xEOS |
+            xLblDef xName "(" xSFExprList ")" "=" xExpr xEOS |
+            xLblDef xName "(" xSFExprList ")" xSubstringRange "=" xExpr xEOS |
+            xLblDef xName "(" xSFDummyArgNameList ")" xSubstringRange "=" xExpr xEOS .
 
           xSFExprList =
-            ':' |
-            ':' xExpr |
+            ":" |
+            ":" xExpr |
             xSFExpr |
-            xSFExpr ':' |
-            xSFExpr ':' xExpr |
-            xSFExprList ',' xSectionSubscript |
-            xSFDummyArgNameList ',' ':' |
-            xSFDummyArgNameList ',' ':' xExpr |
-            xSFDummyArgNameList ',' xSFExpr |
-            xSFDummyArgNameList ',' xSFExpr ':' |
-            xSFDummyArgNameList ',' xSFExpr ':' xExpr .
+            xSFExpr ":" |
+            xSFExpr ":" xExpr |
+            xSFExprList "," xSectionSubscript |
+            xSFDummyArgNameList "," ":" |
+            xSFDummyArgNameList "," ":" xExpr |
+            xSFDummyArgNameList "," xSFExpr |
+            xSFDummyArgNameList "," xSFExpr ":" |
+            xSFDummyArgNameList "," xSFExpr ":" xExpr .
           xSFExpr = xSFTerm | xSign xAddOperand | xSFExpr xAddOp xAddOperand .
           xSFTerm = xSFFactor | xSFTerm xMultOp xMultOperand .
           xSFFactor = xSFPrimary | xSFPrimary xPowerOp xMultOperand .
@@ -1903,7 +1903,7 @@ PRODUCTIONS
             xSFVarName |
             xSFDataRef |
             xFunctionReference |
-            '(' xExpr ')' .
+            "(" xExpr ")" .
 
 (*     This macro is invoked in definition 6. *)
 
