@@ -1,4 +1,5 @@
 
+import("m3doc")
 HtmlFile("ack")
 HtmlFile("bib")
 HtmlFile("concise-bib")
