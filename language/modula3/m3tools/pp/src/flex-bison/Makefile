@@ -5,6 +5,7 @@
 # Last modified on Fri Jul  7 09:36:57 PDT 1995 by kalsow
 
 YACC = bison -y
+#YACC = bison -yv
 
 all: lex.yy.c  y.tab.c
 
