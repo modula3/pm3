@@ -4,7 +4,12 @@
 %
 % Last modified on Tue Nov 22 07:56:33 PST 1994 by kalsow
 
-Module ("Coff")
-Module ("M3ObjFile")
-Module ("MasmObjFile")
-Module ("NTObjFile")
+import ("m3middle")
+
+if equal(TARGET,"LINUXELF")
+  include_dir("linux")
+elsif equal(TARGET,"NT386")
+  include_dir("nt")
+end
+
+Library ("m3objfile")
