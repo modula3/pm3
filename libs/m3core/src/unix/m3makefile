@@ -29,6 +29,7 @@ readonly _UnixPieces = {
   "LINUXELF"   : [ "linux" ],
   "NEXT"       : [ "ultrix-3-1.generic", "ultrix-3-1.NEXT" ],
   "NT386"      : [ ], % doesn't define a "Unix" interface
+  "NT386GNU"   : [ ], % doesn't define a "Unix" interface
   "OKI"        : [ "sysv-4.0" ],
   "SEQUENT"    : [ "ultrix-3-1.generic", "ultrix-3-1.SEQUENT" ],
   "SOLgnu"     : [ "solaris-2-x" ],

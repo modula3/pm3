@@ -28,15 +28,16 @@ CONST
     (* 13 *) "LINUXELF",
     (* 14 *) "NEXT",
     (* 15 *) "NT386",
-    (* 16 *) "OKI",
-    (* 17 *) "SEQUENT",
-    (* 18 *) "SOLgnu",
-    (* 19 *) "SOLsun",
-    (* 20 *) "SPARC",
-    (* 21 *) "SUN3",
-    (* 22 *) "SUN386",
-    (* 23 *) "UMAX",
-    (* 24 *) "VAX"
+    (* 16 *) "NT386GNU",
+    (* 17 *) "OKI",
+    (* 18 *) "SEQUENT",
+    (* 19 *) "SOLgnu",
+    (* 20 *) "SOLsun",
+    (* 21 *) "SPARC",
+    (* 22 *) "SUN3",
+    (* 23 *) "SUN386",
+    (* 24 *) "UMAX",
+    (* 25 *) "VAX"
   };
 
 VAR (*CONST*)
@@ -406,20 +407,27 @@ PROCEDURE Init (system: TEXT): BOOLEAN =
                  Aligned_procedures        := TRUE;
                  EOL                       := "\n";
 
-    | 15 => (* NT386 *)
+    | 15, 16 => (* NT386, NT386GNU *)
                  max_align                 := 32;
                  Little_endian             := TRUE;
                  PCC_bitfield_type_matters := TRUE;
                  Structure_size_boundary   := 8;
                  Bitfield_can_overlap      := FALSE;
                  First_readable_addr       := 4096;
-                 Jumpbuf_size              := 8 * Address.size;
                  Jumpbuf_align             := Address.align;
                  Fixed_frame_size          := 0;
                  Guard_page_size           := 0;
                  All_floats_legal          := TRUE;
                  Has_stack_walker          := FALSE;
-                 Setjmp                    := "_setjmp";
+
+                 IF sys = 15 THEN 
+                   Jumpbuf_size            := 8 * Address.size;
+                   Setjmp                  := "_setjmp";
+                 ELSE
+                   Jumpbuf_size            := 52 * Address.size;
+                   Setjmp                  := "setjmp";
+                 END;
+
                  Checks_integer_ops        := FALSE;
                  Global_handler_stack      := FALSE;
                  Aligned_procedures        := TRUE;
@@ -429,17 +437,17 @@ PROCEDURE Init (system: TEXT): BOOLEAN =
                     --- WKK  9/9/94 *)
 
                  CCs := NEW (REF ARRAY OF CallingConvention, 9);
-                 NTCall (0, "C",          0); (* __cdecl *)
-                 NTCall (1, "WINAPI",     1); (* __stdcall *)
-                 NTCall (2, "CALLBACK",   1); (* __stdcall *)
-                 NTCall (3, "WINAPIV",    0); (* __cdecl *)
-                 NTCall (4, "APIENTRY",   1); (* __stdcall *)
-                 NTCall (5, "APIPRIVATE", 1); (* __stdcall *)
-                 NTCall (6, "PASCAL",     1); (* __stdcall *)
-                 NTCall (7, "__cdecl",    0); (* __cdecl *)
-                 NTCall (8, "__stdcall",  1); (* __stdcall *)
+                 NTCall (0, "C",          0, sys = 16); (* __cdecl *)
+                 NTCall (1, "WINAPI",     1, sys = 16); (* __stdcall *)
+                 NTCall (2, "CALLBACK",   1, sys = 16); (* __stdcall *)
+                 NTCall (3, "WINAPIV",    0, sys = 16); (* __cdecl *)
+                 NTCall (4, "APIENTRY",   1, sys = 16); (* __stdcall *)
+                 NTCall (5, "APIPRIVATE", 1, sys = 16); (* __stdcall *)
+                 NTCall (6, "PASCAL",     1, sys = 16); (* __stdcall *)
+                 NTCall (7, "__cdecl",    0, sys = 16); (* __cdecl *)
+                 NTCall (8, "__stdcall",  1, sys = 16); (* __stdcall *)
 
-    | 16 => (* OKI *)
+    | 17 => (* OKI *)
                  max_align                 := 32;
                  Little_endian             := TRUE;
                  PCC_bitfield_type_matters := TRUE;
@@ -458,7 +466,7 @@ PROCEDURE Init (system: TEXT): BOOLEAN =
                  Aligned_procedures        := TRUE;
                  EOL                       := "\n";
 
-    | 17 => (* SEQUENT *)
+    | 18 => (* SEQUENT *)
                  max_align                 := 32;
                  Little_endian             := TRUE;
                  PCC_bitfield_type_matters := TRUE;
@@ -477,7 +485,7 @@ PROCEDURE Init (system: TEXT): BOOLEAN =
                  Aligned_procedures        := TRUE;
                  EOL                       := "\n";
 
-    | 18, 19 => (* SOLgnu, SOLsun *)
+    | 19, 20 => (* SOLgnu, SOLsun *)
                  max_align                 := 64;
                  Little_endian             := FALSE;
                  PCC_bitfield_type_matters := TRUE;
@@ -496,7 +504,7 @@ PROCEDURE Init (system: TEXT): BOOLEAN =
                  Aligned_procedures        := TRUE;
                  EOL                       := "\n";
 
-    | 20 => (* SPARC *)
+    | 21 => (* SPARC *)
                  max_align                 := 64;
                  Little_endian             := FALSE;
                  PCC_bitfield_type_matters := TRUE;
@@ -515,7 +523,7 @@ PROCEDURE Init (system: TEXT): BOOLEAN =
                  Aligned_procedures        := TRUE;
                  EOL                       := "\n";
 
-    | 21 => (* SUN3 *)
+    | 22 => (* SUN3 *)
                  max_align                 := 16;
                  Little_endian             := FALSE;
                  PCC_bitfield_type_matters := FALSE;
@@ -534,7 +542,7 @@ PROCEDURE Init (system: TEXT): BOOLEAN =
                  Aligned_procedures        := TRUE;
                  EOL                       := "\n";
 
-    | 22 => (* SUN386 *)
+    | 23 => (* SUN386 *)
                  max_align                 := 32;
                  Little_endian             := TRUE;
                  PCC_bitfield_type_matters := FALSE;
@@ -553,7 +561,7 @@ PROCEDURE Init (system: TEXT): BOOLEAN =
                  Aligned_procedures        := TRUE;
                  EOL                       := "\n";
 
-    | 23 => (* UMAX *)
+    | 24 => (* UMAX *)
                  max_align                 := 32;
                  Little_endian             := TRUE;
                  PCC_bitfield_type_matters := TRUE;
@@ -572,7 +580,7 @@ PROCEDURE Init (system: TEXT): BOOLEAN =
                  Aligned_procedures        := TRUE;
                  EOL                       := "\n";
 
-    | 24 => (* VAX *)
+    | 25 => (* VAX *)
                  Real.min.fraction     := -1.70111x+38;
                  Real.max.fraction     := -1.70111x+38;
                  Longreal.min.fraction := -1.70111x+38;
@@ -651,7 +659,7 @@ PROCEDURE Init (system: TEXT): BOOLEAN =
     RETURN TRUE;
   END Init;
 
-PROCEDURE NTCall (x: INTEGER;  nm: TEXT;  id: INTEGER) =
+PROCEDURE NTCall (x: INTEGER;  nm: TEXT;  id: INTEGER; gnuWin32: BOOLEAN) =
   BEGIN
     CCs[x] := NEW (CallingConvention,
                      name := nm,
@@ -659,6 +667,11 @@ PROCEDURE NTCall (x: INTEGER;  nm: TEXT;  id: INTEGER) =
                      args_left_to_right := FALSE,
                      results_on_left := TRUE,
                      standard_structs := FALSE);
+    IF gnuWin32 THEN
+      CCs[x].args_left_to_right := TRUE;
+      CCs[x].results_on_left := TRUE;
+      CCs[x].standard_structs := TRUE;
+    END;
   END NTCall;
 
 PROCEDURE FixI (VAR i: Int_type;  max_align: INTEGER) =

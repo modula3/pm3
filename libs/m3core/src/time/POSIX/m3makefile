@@ -25,6 +25,7 @@ readonly _DateImpls = {
   "LINUXELF"   : "DateLinux",
   "NEXT"       : "DateBsd",
   "NT386"      : "DateBsd",
+  "NT386GNU"   : "DateBsd",
   "OKI"        : "DateBsd",
   "SEQUENT"    : "DateBsd",
   "SOLgnu"     : "DatePosix",

@@ -28,6 +28,7 @@ readonly _FloatPieces = {
   "LINUXELF"   : _float_le,
   "NEXT"       : _float_be,
   "NT386"      : _float_le,
+  "NT386GNU"   : _float_le,
   "OKI"        : _float_le,
   "SEQUENT"    : _float_le,
   "SOLgnu"     : _float_be,

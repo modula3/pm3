@@ -22,6 +22,7 @@ readonly EXCEPTION_IMPL = {
   "LINUXELF"   : "ex_frame",
   "NEXT"       : "ex_frame",
   "NT386"      : "ex_frame",
+  "NT386GNU"   : "ex_frame",
   "OKI"        : "ex_frame",
   "SEQUENT"    : "ex_frame",
   "SOLgnu"     : "ex_frame",
