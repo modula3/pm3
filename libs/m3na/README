@@ -1,0 +1,7 @@
+
+This is the original 'm3na' library,
+the Modula 3 library for numerical analysis
+as provided by Harry George.
+
+It has been lifted considerably
+and is now available as package 'arithmetic'.
