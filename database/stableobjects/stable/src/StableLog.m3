@@ -123,20 +123,16 @@ PROCEDURE OutChars (log: Wr.T; READONLY chars: ARRAY OF CHAR) =
     END
   END OutChars;
 
-(* "OutInteger(log, i)" skips to the next word aligned byte in log,
-   and then stores "i" by loopholing. See "AlignWr".
-*)
+
 PROCEDURE OutInteger (log: Wr.T; i: INTEGER) =
   BEGIN
-    LOCK log DO
-      VAR
-        ip := LOOPHOLE(AlignWr(log, BYTESIZE(INTEGER)),
-                       UNTRACED REF INTEGER);
-      BEGIN
-        ip^ := i;
-        INC(log.cur, BYTESIZE(INTEGER))
-      END
-    END (*LOCK*)
+    TRY
+      Wr.PutString(log, LOOPHOLE(i, ARRAY [0..BYTESIZE(INTEGER)-1] OF CHAR));
+    EXCEPT
+      Wr.Failure (err) =>
+        StableError.Halt(
+          "Cannot write to logfile: " & RdUtils.FailureText(err))
+    END
   END OutInteger;
 
 PROCEDURE OutCardinal (log: Wr.T; card: CARDINAL) =
@@ -157,40 +153,34 @@ PROCEDURE OutBoolean (log: Wr.T; bool: BOOLEAN) =
 
 PROCEDURE OutReal (log: Wr.T; r: REAL) =
   BEGIN
-    LOCK log DO
-      VAR
-        rp := LOOPHOLE(AlignWr(log, BYTESIZE(REAL)),
-                       UNTRACED REF REAL);
-      BEGIN
-        rp^ := r;
-        INC(log.cur, BYTESIZE(REAL))
-      END
+    TRY
+      Wr.PutString(log, LOOPHOLE(r, ARRAY [0..BYTESIZE(REAL)-1] OF CHAR));
+    EXCEPT
+      Wr.Failure (err) =>
+        StableError.Halt(
+          "Cannot write to logfile: " & RdUtils.FailureText(err))
     END
   END OutReal;
 
 PROCEDURE OutLongreal (log: Wr.T; r: LONGREAL) =
   BEGIN
-    LOCK log DO
-      VAR
-        rp := LOOPHOLE(AlignWr(log, BYTESIZE(LONGREAL)),
-                       UNTRACED REF LONGREAL);
-      BEGIN
-        rp^ := r;
-        INC(log.cur, BYTESIZE(LONGREAL))
-      END
+    TRY
+      Wr.PutString(log, LOOPHOLE(r, ARRAY [0..BYTESIZE(LONGREAL)-1] OF CHAR));
+    EXCEPT
+      Wr.Failure (err) =>
+        StableError.Halt(
+          "Cannot write to logfile: " & RdUtils.FailureText(err))
     END
   END OutLongreal;
 
 PROCEDURE OutExtended (log: Wr.T; r: EXTENDED) =
   BEGIN
-    LOCK log DO
-      VAR
-        rp := LOOPHOLE(AlignWr(log, BYTESIZE(EXTENDED)),
-                       UNTRACED REF EXTENDED);
-      BEGIN
-        rp^ := r;
-        INC(log.cur, BYTESIZE(EXTENDED))
-      END
+    TRY
+      Wr.PutString(log, LOOPHOLE(r, ARRAY [0..BYTESIZE(EXTENDED)-1] OF CHAR));
+    EXCEPT
+      Wr.Failure (err) =>
+        StableError.Halt(
+          "Cannot write to logfile: " & RdUtils.FailureText(err))
     END
   END OutExtended;
 
@@ -205,23 +195,6 @@ PROCEDURE OutText(log: Wr.T; text: TEXT) =
     OutInteger(log, len);
     IF len > 0 THEN OutChars(log, SUBARRAY(text^, 0, len)) END
   END OutText;
-
-PROCEDURE AlignWr(wr: Wr.T; align: CARDINAL) : ADDRESS =
-  VAR diff := wr.cur MOD align;
-      res: ADDRESS;
-  BEGIN
-    TRY
-      (* here we rely on the alignment invariants *)
-      IF diff # 0 THEN INC(wr.cur, align-diff) END;
-      IF wr.cur = wr.hi THEN wr.seek(wr.cur) END;
-      res := ADR(wr.buff[wr.st + wr.cur - wr.lo]);
-      RETURN res
-    EXCEPT
-      Wr.Failure (err) =>
-        <*NOWARN*> StableError.Halt(
-          "Cannot write to logfile: " & RdUtils.FailureText(err))
-    END
-  END AlignWr;
 
 
 (* The following procedures are provided in support of generic reading the
@@ -267,21 +240,26 @@ PROCEDURE InChars (    log  : Rd.T;
 PROCEDURE InInteger (log: Rd.T;
                      min         := FIRST(INTEGER);
                      max         := LAST(INTEGER)   ):
-  INTEGER RAISES {Error} =
+    INTEGER RAISES {Error} =
+  VAR 
+    i: INTEGER;
   BEGIN
-    LOCK log DO
-      VAR i: INTEGER;
-      BEGIN
-        i := LOOPHOLE(AlignRd(log, BYTESIZE(INTEGER)),
-                      UNTRACED REF INTEGER)^;
-        INC(log.cur, BYTESIZE(INTEGER));
-        IF min <= i AND i <= max THEN
-          RETURN i
-        ELSE
-          RAISE Error
-        END (*IF*)
-      END
-    END (*LOCK*)
+    TRY
+      IF Rd.GetSub(log, LOOPHOLE(i, ARRAY [0..BYTESIZE(INTEGER)-1] OF CHAR))
+          # BYTESIZE(INTEGER) THEN
+        RAISE Error
+      END;
+    EXCEPT
+    | Rd.Failure (err) =>
+        StableError.Halt("Can not read log file: "
+                           & RdUtils.FailureText(err))
+    END;
+
+    IF min <= i AND i <= max THEN
+      RETURN i
+    ELSE
+      RAISE Error
+    END (*IF*)
   END InInteger;
 
 PROCEDURE InCardinal (log: Rd.T;
@@ -304,42 +282,54 @@ PROCEDURE InBoolean (log: Rd.T): BOOLEAN RAISES {Error} =
   END InBoolean;
 
 PROCEDURE InReal (log: Rd.T): REAL RAISES {Error} =
+  VAR 
+    r: REAL;
   BEGIN
-    LOCK log DO
-      VAR r: REAL;
-      BEGIN
-        r := LOOPHOLE(AlignRd(log, BYTESIZE(REAL)),
-                      UNTRACED REF REAL)^;
-        INC(log.cur, BYTESIZE(REAL));
-        RETURN r
-      END
-    END
+    TRY
+      IF Rd.GetSub(log, LOOPHOLE(r, ARRAY [0..BYTESIZE(REAL)-1] OF CHAR))
+          # BYTESIZE(REAL) THEN
+        RAISE Error
+      END;
+    EXCEPT
+    | Rd.Failure (err) =>
+        StableError.Halt("Can not read log file: "
+                           & RdUtils.FailureText(err))
+    END;
+    RETURN r;
   END InReal;
 
 PROCEDURE InLongreal (log: Rd.T): LONGREAL RAISES {Error} =
+  VAR 
+    r: LONGREAL;
   BEGIN
-    LOCK log DO
-      VAR r: LONGREAL;
-      BEGIN
-        r := LOOPHOLE(AlignRd(log, BYTESIZE(LONGREAL)),
-                      UNTRACED REF LONGREAL)^;
-        INC(log.cur, BYTESIZE(LONGREAL));
-        RETURN r
-      END
-    END
+    TRY
+      IF Rd.GetSub(log, LOOPHOLE(r, ARRAY [0..BYTESIZE(LONGREAL)-1] OF CHAR))
+          # BYTESIZE(LONGREAL) THEN
+        RAISE Error
+      END;
+    EXCEPT
+    | Rd.Failure (err) =>
+        StableError.Halt("Can not read log file: "
+                           & RdUtils.FailureText(err))
+    END;
+    RETURN r;
   END InLongreal;
 
 PROCEDURE InExtended (log: Rd.T): EXTENDED RAISES {Error} =
+  VAR 
+    r: EXTENDED;
   BEGIN
-    LOCK log DO
-      VAR r: EXTENDED;
-      BEGIN
-        r := LOOPHOLE(AlignRd(log, BYTESIZE(EXTENDED)),
-                      UNTRACED REF EXTENDED)^;
-        INC(log.cur, BYTESIZE(EXTENDED));
-        RETURN r
-      END
-    END
+    TRY
+      IF Rd.GetSub(log, LOOPHOLE(r, ARRAY [0..BYTESIZE(EXTENDED)-1] OF CHAR))
+          # BYTESIZE(EXTENDED) THEN
+        RAISE Error
+      END;
+    EXCEPT
+    | Rd.Failure (err) =>
+        StableError.Halt("Can not read log file: "
+                           & RdUtils.FailureText(err))
+    END;
+    RETURN r;
   END InExtended;
 
 PROCEDURE InText(log: Rd.T) : TEXT
@@ -359,35 +349,6 @@ PROCEDURE InText(log: Rd.T) : TEXT
       RETURN text
     END
   END InText;
-
-PROCEDURE AlignRd(rd: Rd.T; nb: CARDINAL) : ADDRESS
-    RAISES {Error} =
-  VAR diff := rd.cur MOD nb;
-      res: ADDRESS;
-  BEGIN
-    (* here we rely on the alignment invariants *)
-    IF diff # 0 THEN
-      VAR n := rd.cur + nb - diff; BEGIN
-        IF n > rd.hi THEN RAISE Error END;
-        rd.cur := n;
-      END;
-    END;
-    IF rd.cur = rd.hi THEN
-      TRY
-        VAR sres:= rd.seek(rd.cur, FALSE); BEGIN
-          IF sres = RdClass.SeekResult.Eof THEN
-            RAISE Error
-          END
-        END
-      EXCEPT
-      | Rd.Failure (err) =>
-        StableError.Halt(
-            "Can not read log file: " & RdUtils.FailureText(err))
-      END (*TRY*)
-    END; (*IF*)
-    res := ADR(rd.buff[rd.st + rd.cur - rd.lo]);
-    RETURN res
-  END AlignRd;
 
 BEGIN
 END StableLog.
