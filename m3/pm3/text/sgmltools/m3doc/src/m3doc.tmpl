@@ -6,10 +6,17 @@ end
 htmlFiles = []
 derivedHtmlFiles = {}
 no_extension = [NAMING_CONVENTIONS[17]]
+dtdDir = PKG_USE & SL & "sgml" & SL & "src" & SL & "dtd"
+
+if PLATFORM_SUPPORTS_LATEX 
+  docExt = ".ps"
+else
+  docExt = "_r.html"
+end
 
 sgmlConvCmd = [BIN_USE & SL & "sgmlconv", "-r", ".i3", "_i3.html", "-r", 
     ".ig", "_ig.html", "-r", ".m3", "_m3.html", "-r", ".mg", "_mg.html", 
-    "-r", ".doc", ".ps" ]
+    "-r", ".doc", docExt, "-dtd", dtdDir ]
 callSgmlConv = ""
 
 m3SgmlCmd = [BIN_USE & SL & "m3tosgml","-html"]
@@ -96,12 +103,13 @@ end
 readonly proc HtmlRoot (nm) is
   if USE_M3DOC
     local dest = HTML_INSTALL & SLship & PACKAGE & SLship & pkg_subdir()
-    local fn = nm & ".ps"
+    local fn = nm & docExt
     local src_file = path_of(nm & ".html")  
+
     if defined("_all")
       htmlFiles += src_file
       if stale(fn,htmlFiles)
-        local tmp1 = nm & ".root"
+        local tmp1 = nm & "_r.html"
         local tmp2 = nm & ".tex"
         local tmp3 = nm & ".dvi"
         local tmp4 = nm & ".log"
@@ -111,22 +119,24 @@ readonly proc HtmlRoot (nm) is
         local tmp8 = nm & ".ilg"
         checkExec([BIN_USE & SL & "sgmllinear", "-html", "-f", ".i3", 
             "m3tosgml", "-f", ".ig", "m3tosgml", "-f", ".m3", "m3tosgml", 
-            "-f", ".mg", "m3tosgml", src_file, tmp1],[],"")
-        checkExec([BIN_USE & SL & "sgmlconv", "-report", "-htmltex",tmp1,tmp2],
-            [],"")
-        checkExec(["latex", tmp2],[],"")
-        checkExec(["makeindex", nm],[],"")
-        checkExec(["latex", tmp2],[],"")
-        checkExec(["latex", tmp2],[],"")
-        checkExec(["dvips", "-o", fn, tmp3],[],"")
-        delete_file(tmp1)
-        delete_file(tmp2)
-        delete_file(tmp3)
-        delete_file(tmp4)
-        delete_file(tmp5)
-        delete_file(tmp6)
-        delete_file(tmp7)
-        delete_file(tmp8)
+            "-f", ".mg", "m3tosgml", "-dtd", dtdDir, src_file, tmp1],[],"")
+        if PLATFORM_SUPPORTS_LATEX
+          checkExec([BIN_USE & SL & "sgmlconv", "-report", "-htmltex", 
+              "-dtd", dtdDir, tmp1,tmp2], [],"")
+          checkExec(["latex", tmp2],[],"")
+          checkExec(["makeindex", nm],[],"")
+          checkExec(["latex", tmp2],[],"")
+          checkExec(["latex", tmp2],[],"")
+          checkExec(["dvips", "-o", fn, tmp3],[],"")
+          delete_file(tmp1)
+          delete_file(tmp2)
+          delete_file(tmp3)
+          delete_file(tmp4)
+          delete_file(tmp5)
+          delete_file(tmp6)
+          delete_file(tmp7)
+          delete_file(tmp8)
+        end
       end
     end
     deriveds(fn,no_extension)

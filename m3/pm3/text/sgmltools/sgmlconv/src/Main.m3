@@ -1924,6 +1924,12 @@ PROCEDURE ParseOptions(): BOOLEAN RAISES {UsageError} =
         replacements.addhi(arg);
         arg := Params.Get (currentParam); INC (currentParam);
         replacements.addhi(arg);
+      ELSIF Text.Equal (arg, "-dtd") THEN
+        IF currentParam >= Params.Count THEN 
+          RAISE UsageError("Missing argument for -dtd");
+        END;
+        arg := Params.Get (currentParam); INC (currentParam);
+        dtdDirs.addhi(arg);
       ELSIF Text.Equal (arg, "-path") THEN
         IF currentParam >= Params.Count THEN 
           RAISE UsageError("Missing argument for -path");
@@ -1939,6 +1945,14 @@ PROCEDURE ParseOptions(): BOOLEAN RAISES {UsageError} =
       patterns[i].from := replacements.get(2 * i);
       patterns[i].to := replacements.get((2 * i) + 1);
     END;
+
+    IF dtdDirs.size() > 0 THEN
+      options.addSearchDir := NEW(REF ARRAY OF TEXT,dtdDirs.size());
+      FOR i := 0 TO LAST(options.addSearchDir^) DO
+        options.addSearchDir[i] := dtdDirs.get(i);
+      END;
+    END;
+
     RETURN TRUE;
   END ParseOptions;
 
@@ -1949,6 +1963,7 @@ TYPE
 
 VAR
   replacements := NEW(TextSeq.T).init();
+  dtdDirs := NEW(TextSeq.T).init();
   in: Rd.T;
   out: Wr.T;
   inName, outName: TEXT;
@@ -1989,7 +2004,7 @@ BEGIN
   | UsageError(t) =>
       Wr.PutText(Stdio.stderr,
           t & "\n? usage: sgmlconv [-htmltex|-htmlhtml] [-r old new] [-path p]... " & 
-          "[-report] [infile] [outfile]\n");
+          "[-dtd dtdSearchPath] [-report] [infile] [outfile]\n");
   | Rd.Failure =>
       Wr.PutText(Stdio.stderr,"? Unable to read file\n");
   END;

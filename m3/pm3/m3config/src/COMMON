@@ -21,6 +21,7 @@ PLATFORM_SUPPORTS_DECPEX = ""
 PLATFORM_SUPPORTS_OPENGL = ""
 PLATFORM_SUPPORTS_INTERNAL_BACKEND = ""
 PLATFORM_SUPPORTS_SHARED_LIB = ""
+PLATFORM_SUPPORTS_LATEX = "T"
 X11_WITH_SHARED_MEM = "TRUE" % X11 server with shared memory extension
 INSTALL_IMPLS = "TRUE"       % install .m3 source files to ease browsing/debug
 % MAN_SECTION = "l"          % install man pages in section "l", not in 1..8

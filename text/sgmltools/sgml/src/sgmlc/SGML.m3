@@ -174,7 +174,7 @@ PROCEDURE InitParser(self: SGML.Parser;
     CopyTextArray(self.options.includeParam);
     CopyTextArray(self.options.enableWarning);
     InitWarnings(self);
-    CopyTextArray(self.options.addSearchDir,M3Config.PKG_INSTALL & 
+    CopyTextArray(self.options.addSearchDir,M3Config.PKG_USE & 
         M3Config.PATH_SEP & "sgml" & M3Config.PATH_SEP & "src" &
         M3Config.PATH_SEP & "dtd");
     CopyTextArray(self.options.activateLink);

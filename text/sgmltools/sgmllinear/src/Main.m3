@@ -771,8 +771,21 @@ PROCEDURE ParseOptions() RAISES {UsageError} =
       ELSIF Text.Equal (arg, "-v") THEN
         verbose := NEW(REF ARRAY OF TEXT,1);
         verbose[0] := "all";
+      ELSIF Text.Equal (arg, "-dtd") THEN
+        IF i >= Params.Count THEN 
+          RAISE UsageError("Missing argument for -dtd");
+        END;
+        arg := Params.Get(i); INC(i);
+        dtdDirs.addhi(arg);
       ELSE
         RAISE UsageError("Unrecognized option " & arg);
+      END;
+    END;
+
+    IF dtdDirs.size() > 0 THEN
+      options.addSearchDir := NEW(REF ARRAY OF TEXT,dtdDirs.size());
+      FOR i := 0 TO LAST(options.addSearchDir^) DO
+        options.addSearchDir[i] := dtdDirs.get(i);
       END;
     END;
 
@@ -794,6 +807,7 @@ TYPE
 VAR
   stdin, stdout, stderr: File.T;
   replacements := NEW(TextSeq.T).init();
+  dtdDirs := NEW(TextSeq.T).init();
   replace: REF ARRAY OF Filter;
   in := Stdio.stdin;
   inName := "stdin";

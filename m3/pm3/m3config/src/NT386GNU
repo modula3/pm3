@@ -3,6 +3,8 @@ readonly TARGET            = "NT386GNU"
 
 include("COMMON")
 
+PLATFORM_SUPPORTS_LATEX = ""
+
 INSTALL_ROOT = "\\usr\\pm3"
 LINK_suffix = [ "-lkernel32", "-luser32", "-lgdi32", "-ladvapi32", 
     "-lnetapi32", "-lm" ]
