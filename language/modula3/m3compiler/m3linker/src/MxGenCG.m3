@@ -555,7 +555,8 @@ PROCEDURE GenerateEntryBottom (VAR s: State) =
     *)
     <* ASSERT s.MM_RTLinker_var.var # NIL *>
     s.cg.start_call_indirect(Target.CGType.Void, Target.DefaultCall);
-    s.cg.load(s.MM_RTLinker_var.var, 40, Target.CGType.Addr);
+    s.cg.load(s.MM_RTLinker_var.var, Target.Address.bytes * 10,
+              Target.CGType.Addr);
     s.cg.call_indirect(Target.CGType.Void, Target.DefaultCall);
     (* 
          return 0;
