@@ -18,7 +18,7 @@ TYPE
     FBSD_ALPHA, FreeBSD, FreeBSD2, FreeBSD3,
     FreeBSD4, HP300, HPPA, IBMR2,
     IBMRT, IRIX5, LINUX, LINUXELF, LINUXLIBC6,
-    NEXT, NT386, NT386GNU, OKI, SEQUENT, 
+    NEXT, NT386, NT386GNU, NetBSDi386, OKI, SEQUENT, 
     SOLgnu, SOLsun, SPARC, SUN3, SUN386, Tru64v5,
     UMAX, VAX
   };
@@ -29,7 +29,7 @@ CONST
     "FBSD_ALPHA", "FreeBSD", "FreeBSD2", "FreeBSD3",
     "FreeBSD4", "HP300", "HPPA", "IBMR2",
     "IBMRT", "IRIX5", "LINUX", "LINUXELF", "LINUXLIBC6",
-    "NEXT", "NT386", "NT386GNU", "OKI", "SEQUENT",
+    "NEXT", "NT386", "NT386GNU", "NetBSDi386", "OKI", "SEQUENT",
     "SOLgnu", "SOLsun", "SPARC", "SUN3", "SUN386", "Tru64v5",
     "UMAX", "VAX"
   };
@@ -551,6 +551,25 @@ PROCEDURE Init (system: TEXT; back_integrated: BOOLEAN): BOOLEAN =
                  NTCall (6, "PASCAL",     1, sys = Systems.NT386GNU);
                  NTCall (7, "__cdecl",    0, sys = Systems.NT386GNU);
                  NTCall (8, "__stdcall",  1, sys = Systems.NT386GNU);
+
+    | Systems.NetBSDi386 =>
+                 max_align                 := 32;
+                 Little_endian             := TRUE;
+                 PCC_bitfield_type_matters := TRUE;
+                 Structure_size_boundary   := 8;
+                 Bitfield_can_overlap      := FALSE;
+                 First_readable_addr       := 4096 * Char.size;
+                 Jumpbuf_size              := 14 * Address.size;
+                 Jumpbuf_align             := Address.align;
+                 Fixed_frame_size          := 4 * Address.size;
+                 Guard_page_size           := 0 * Char.size;
+                 All_floats_legal          := TRUE;
+                 Has_stack_walker          := FALSE;
+                 Setjmp                    := "_setjmp";
+                 Checks_integer_ops        := FALSE;
+                 Global_handler_stack      := TRUE;
+                 Aligned_procedures        := TRUE;
+                 EOL                       := "\n";
 
     | Systems.OKI => 
                  max_align                 := 32;
