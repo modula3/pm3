@@ -410,7 +410,7 @@ int exportfs(access, cookie, exdata)
 
 int fcntl(filedes, request, argument)
   int filedes, request;
-  int argument;
+  long argument;
 {   int result;
 
     ENTER_CRITICAL;
