@@ -120,7 +120,9 @@ readonly PLATFORM_SUPPORTS_OPENGL = ""
 % or later.
 
 readonly proc emacs_compile (el) is
-  exec ("emacs -batch -f batch-byte-compile", el)
+  local ret = 0
+  ret = exec (["emacs", "-batch", "-f", "batch-byte-compile", el])
+  if not equal(ret, 0) error("emacs failed with error code: ", ret) end
 end
 
 %-------------------------------------------------------------------- hooks ---
@@ -156,15 +158,16 @@ CC = _ifdef ("CC", CC, [ "gcc" ])
 %   debug:  if true, debug information is required, otherwise not.
 %   shared: if true, the generated executable must be usable in a shared lib.
 proc m3_compile_c (source, object, includes, optimize, debug, shared) is
-  local args = [ "-c", source]
+  local cmd = [ CC, "-c", source]
   foreach i in includes
-    args += "-I" & i
+    cmd += "-I" & i
   end
-  if object    args += [ "-o", object ] end
-  if optimize  args += "-O2" end
-  if debug     args += "-g"  end
-  if shared    args += "-fPIC" end
-  return try_exec (VERBOSE & CC, args)
+  if object    cmd += [ "-o", object ] end
+  if optimize  cmd += "-O2" end
+  if debug     cmd += "-g"  end
+  if shared    cmd += "-fPIC" end
+  if VERBOSE write(cmd) end
+  return exec (cmd)
 end
 
 %------------------------------------------------------------------- linker ---
@@ -182,22 +185,24 @@ LINK = _ifdef ("LINK", LINK, "ld")
 %   debug: if true, the executable must contain debugging information.
 %   shared: if true, the final executable must use shared libs
 proc m3_link (prog, objects, imported_libs, debug, shared) is
-  local args = [ "-dynamic-linker", "/lib/ld-linux.so.1", 
+  local cmd = [ LINK ]
+  if not shared cmd += [ "-static" ] end
+  cmd += [ "-dynamic-linker", "/lib/ld-linux.so.1", 
     "/usr/lib/crt1.o",  "/usr/lib/crti.o", "/usr/lib/crtbegin.o"]
-  args += [ "-o", prog, objects, "-lm" ]
+  cmd += [ "-o", prog, objects, "-lm" ]
   foreach i in imported_libs
-    if not empty(i[0]) args += "-L" & i[0] end
-    args += "-l" & i[1]
+    if not empty(i[0]) cmd += "-L" & i[0] end
+    cmd += "-l" & i[1]
   end
-  args += [ "-L/usr/lib/gcc-lib/i486-linux/2.7.2.1",
+  cmd += [ "-L/usr/lib/gcc-lib/i486-linux/2.7.2.1",
                       "-L/usr/i486-linux/lib",
                       "-lgcc", "-lc", "-lgcc", "/usr/lib/crtend.o", 
                       "/usr/lib/crtn.o" ]
 
-  if not shared args = [ "-static", args ] end
-  if debug args += "-g" end
+  if debug cmd += "-g" end
 
-  return try_exec (VERBOSE & LINK, args)
+  if VERBOSE write(cmd) end
+  return exec (cmd)
 end
 
 %--------------------------------------------------------- library creation ---
@@ -225,14 +230,17 @@ RANLIB = _ifdef ("RANLIB", RANLIB, [ "touch" ])
 %   static: if true, build a static library
 %   shared: if true, build a shared library
 proc m3_make_lib (lib, objects, imported_libs, static, shared) is
-  local lib_a    = format ("lib%s.a", lib)
-  local args = [ lib_a, objects, imported_libs ]
   local ret = 0
 
   if static
-    ret = try_exec (VERBOSE & MAKELIB, args)
+    local lib_a    = format ("lib%s.a", lib)
+    local cmd = [ MAKELIB, lib_a, objects, imported_libs ]
+    if VERBOSE write(cmd) end
+    ret = exec (cmd)
     if not equal(ret, 0) return ret end
-    ret = try_exec (VERBOSE & RANLIB, lib_a)
+    cmd = [ RANLIB, lib_a ]
+    if VERBOSE write(cmd) end
+    ret = exec (cmd)
   end
 
   if shared
@@ -245,7 +253,10 @@ proc m3_make_lib (lib, objects, imported_libs, static, shared) is
 
 
     if defined ("_all")
-      ret = try_exec (VERBOSE & MAKESHLIB, args)
+      local cmd = [ MAKESHLIB ]
+      cmd += args
+      if VERBOSE write(cmd) end
+      ret = exec (cmd)
       if not equal(ret, 0) return ret end
       %exec ("gcc -shared -Wl,-soname", "-Wl," & lib_so,
       %        "-o", lib_soxx, objects)
@@ -281,9 +292,10 @@ ASM = _ifdef ("ASM", ASM, [ "as" ])
 %  shared: if true, the object file must be suitable for being incorporated
 %    into a shared library. 
 proc m3_assemble (source, object, optimize, debug, shared) is
-  local args = [ "-o", object, source ]
+  local cmd = [ ASM, "-o", object, source ]
 
-  return try_exec (VERBOSE & ASM, args)
+  if VERBOSE write(cmd) end
+  return exec (cmd)
 end
 
 %--------------------------------------------------------- Modula-3 backend ---
@@ -301,13 +313,14 @@ BACKEND = _ifdef ("BACKEND", BACKEND, [  LIB_USE & "/m3cgc1", "-fno-strength-red
 %  debug: if true, generate debug information
 %  shared: if true, generate an object that can be used to make a shlib
 proc m3_backend (source, object, optimize, debug, shared) is
-  local args = [ "-o", object, source ]
+  local cmd = [ BACKEND, "-o", object, source ]
   
-  if optimize args += "-O" end
-  if debug args += "-g" end
-  if shared args += "-fPIC" end
+  if optimize cmd += "-O" end
+  if debug cmd += "-g" end
+  if shared cmd += "-fPIC" end
 
-  return try_exec(VERBOSE & BACKEND, args)
+  if VERBOSE write(cmd) end
+  return exec(cmd)
 end
 
 M3_BACKEND_EXTERNAL = ""
@@ -366,8 +379,8 @@ end
 
 readonly proc install_file (src, dest, mode) is
   Note_install (src, dest)
-  exec ("@cp -p -d -f", src, dest)
-  % exec ("@install -c -m", mode, src, dest)
+  exec ([ "cp", "-p", "-d", "-f", src, dest ])
+  % exec (["install", "-c", "-m", mode, src, dest])
 end
 
 
