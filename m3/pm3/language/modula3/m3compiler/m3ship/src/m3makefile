@@ -14,7 +14,7 @@ implementation ("Main")
 
 HtmlFile("index")
 
-option("standalone","T")
+%option("standalone","T")
 
 Program ("m3ship")
 

@@ -205,8 +205,8 @@ PROCEDURE Lookup (<* UNUSED *> self: Oracle; name: TEXT): ScrnFont.T
  *****************************************************************************)
 
 CONST 
-  Preferred = "-*-Arial-Normal-R-*-*-*-12-*-*-P-*-iso8859-ANSI";
-
+  Preferred = "-*-Courier New-Normal-R-*-*-*-10-*-*-P-*-iso8859-ANSI";
+  (* was "-*-Arial-Normal-R-*-*-*-12-*-*-P-*-iso8859-ANSI" *)
 
 PROCEDURE BuiltIn (self: Oracle; id: Font.Predefined): ScrnFont.T =
   BEGIN

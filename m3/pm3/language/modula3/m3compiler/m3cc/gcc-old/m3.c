@@ -1,11 +1,30 @@
-/* Copyright (C) 1993, Digital Equipment Corporation                         */
-/* All rights reserved.                                                      */
-/* See the file COPYRIGHT for a full description.                            */
+/*
+ * Copyright (C) 1993, Digital Equipment Corporation
+ *
+ * (Note: Digital Equipment Corporation was acquired by Compaq Computer
+ * Corporation on June 11, 1998, along with all its copyrights.)
+ *
+ * The copyright holder grants everyone the right to distribute and/or
+ * modify this file under the terms of either: (1) the GNU General
+ * Public License as published by the Free Software Foundation, either
+ * version 2 of the License, or (at your option) any later version; or
+ * (2) the Digital License Agreement for SRC Modula-3.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the Digital License Agreement
+ * for SRC Modula-3 along with this program, in the file COPYRIGHT.
+ * If not, see the SRC Modula-3 Web pages,
+ * http://www.research.compaq.com/SRC/modula-3/html/home.html.
+ */
 
-/* Last modified on Sat Mar 23 12:52:13 PST 1996 by heydon                   */
-/*      modified on Tue Jun 20 16:52:55 PDT 1995 by kalsow                   */
-/*      modified on Wed Jun 14 08:17:29 PDT 1995 by ericv                    */
-/*      modified on Thu Dec  9 14:07:21 PST 1993 by muller                   */
 
 
 #include <varargs.h>
@@ -2056,6 +2075,7 @@ void init_decl_processing ()
 
   integer_type_node = t_int;
   sizetype = t_int;
+  /* set_sizetype(sizetype); */
   char_type_node = t_int_8;
 
   t_word_32  = make_unsigned_type (32);

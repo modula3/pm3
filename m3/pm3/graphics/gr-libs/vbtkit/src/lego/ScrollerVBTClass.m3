@@ -159,7 +159,7 @@ PROCEDURE InitShadow(v: T; st: VBT.ScreenType) =
         darkRGB.g := 0.6 * bgRGB.g;
         darkRGB.b := 0.6 * bgRGB.b;
         dark := PaintOp.FromRGB(darkRGB.r, darkRGB.g, darkRGB.b,
-          PaintOp.Mode.Accurate);
+          mode := PaintOp.Mode.Accurate, bw := PaintOp.BW.UseFg);
 
         (* For the light shadow, boost each background color component
            by 40% or halfway to white, whichever is greater. *)
@@ -167,7 +167,7 @@ PROCEDURE InitShadow(v: T; st: VBT.ScreenType) =
           MAX(MIN(1.4 * bgRGB.r, 1.0), (bgRGB.r + 1.0) / 2.0),
           MAX(MIN(1.4 * bgRGB.g, 1.0), (bgRGB.g + 1.0) / 2.0),
           MAX(MIN(1.4 * bgRGB.b, 1.0), (bgRGB.b + 1.0) / 2.0),
-          PaintOp.Mode.Accurate);
+          mode := PaintOp.Mode.Accurate, bw := PaintOp.BW.UseFg);
 
         v.shadow := Shadow.New(
           bg := v.colors.bg,
@@ -198,7 +198,7 @@ PROCEDURE InitShadow(v: T; st: VBT.ScreenType) =
       (3.0 * bgRGB.r + darkRGB.r) / 4.0,
       (3.0 * bgRGB.g + darkRGB.g) / 4.0,
       (3.0 * bgRGB.b + darkRGB.b) / 4.0,
-      PaintOp.Mode.Accurate);
+      mode := PaintOp.Mode.Accurate, bw := PaintOp.BW.UseBg);
   END InitShadow;
 
 (* Get the RGB components of a tint. *)

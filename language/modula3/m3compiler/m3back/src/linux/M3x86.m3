@@ -3522,7 +3522,7 @@ PROCEDURE check_range (u: U;  READONLY a, b: Target.Int) =
       IF u.vstack.loc(stack0) = OLoc.imm THEN
         lo := u.vstack.op(stack0).imm;
         IF (lo < inta) OR (intb < lo) THEN
-          reportfault(u, 2);
+          reportfault(u, 1);
         END;
         RETURN;
       END;
@@ -3534,7 +3534,7 @@ PROCEDURE check_range (u: U;  READONLY a, b: Target.Int) =
         IF (inta <= lo) AND (hi <= intb) THEN
           (* ok *)
         ELSIF (hi < inta) OR (intb < lo) THEN
-          reportfault(u, 2);
+          reportfault(u, 1);
         ELSIF (hi <= intb) THEN
           check_lo(u, a);
         ELSIF (lo >= inta) THEN
@@ -3544,7 +3544,7 @@ PROCEDURE check_range (u: U;  READONLY a, b: Target.Int) =
           safelab := u.cg.reserve_labels(1, TRUE);
           u.cg.immOp(Op.oCMP, u.vstack.op(stack0), intb);
           u.cg.brOp(unscond [Cond.LE], safelab);
-          reportfault(u, 2);
+          reportfault(u, 1);
           u.cg.set_label(safelab);
           u.vstack.set_upper(reg, intb);
           u.vstack.set_lower(reg, inta);
@@ -3556,7 +3556,7 @@ PROCEDURE check_range (u: U;  READONLY a, b: Target.Int) =
           u.cg.immOp(Op.oCMP, u.vstack.op(stack0), intb);
           u.cg.brOp(Cond.LE, safelab);
           u.cg.set_label(outrange);
-          reportfault(u, 2);
+          reportfault(u, 1);
           u.cg.set_label(safelab);
           u.vstack.set_upper(reg, intb);
           u.vstack.set_lower(reg, inta);

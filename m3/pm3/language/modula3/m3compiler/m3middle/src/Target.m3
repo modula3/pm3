@@ -15,7 +15,8 @@ IMPORT Text, TargetMap, M3RT;
 TYPE
   Systems = {
     AIX386, ALPHA_OSF, AP3000, ARM, DS3100,
-    FBSD_ALPHA, FreeBSD, FreeBSD2, FreeBSD3, HP300, HPPA, IBMR2,
+    FBSD_ALPHA, FreeBSD, FreeBSD2, FreeBSD3,
+    FreeBSD4, HP300, HPPA, IBMR2,
     IBMRT, IRIX5, LINUX, LINUXELF, LINUXLIBC6,
     NEXT, NT386, NT386GNU, OKI, SEQUENT, 
     SOLgnu, SOLsun, SPARC, SUN3, SUN386,
@@ -25,7 +26,8 @@ TYPE
 CONST
   SystemNames = ARRAY Systems OF TEXT {
     "AIX386", "ALPHA_OSF", "AP3000", "ARM", "DS3100",
-    "FBSD_ALPHA", "FreeBSD", "FreeBSD2", "FreeBSD3", "HP300", "HPPA", "IBMR2",
+    "FBSD_ALPHA", "FreeBSD", "FreeBSD2", "FreeBSD3",
+    "FreeBSD4", "HP300", "HPPA", "IBMR2",
     "IBMRT", "IRIX5", "LINUX", "LINUXELF", "LINUXLIBC6",
     "NEXT", "NT386", "NT386GNU", "OKI", "SEQUENT",
     "SOLgnu", "SOLsun", "SPARC", "SUN3", "SUN386",
@@ -287,7 +289,7 @@ PROCEDURE Init (system: TEXT; back_integrated: BOOLEAN): BOOLEAN =
                  Aligned_procedures        := TRUE;
                  EOL                       := "\n";
 
-    | Systems.FreeBSD, Systems.FreeBSD2, Systems.FreeBSD3 =>
+    | Systems.FreeBSD, Systems.FreeBSD2, Systems.FreeBSD3, Systems.FreeBSD4 =>
                  max_align                 := 32;
                  Little_endian             := TRUE;
                  PCC_bitfield_type_matters := TRUE;

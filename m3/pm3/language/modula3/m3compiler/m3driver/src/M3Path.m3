@@ -37,7 +37,7 @@ PROCEDURE Join (dir, base: TEXT;  k: Kind;  host: BOOLEAN): TEXT=
       len := LAST (dir^);
       IF (dir[len-1] # d_sep) AND (dir[len-1] # v_sep) THEN INC (len); END;
     END;
-    IF (k = Kind.A) OR (k = Kind.AX) THEN
+    IF (k = Kind.A) OR (k = Kind.AX) OR (k = Kind.SO) THEN
       INC (len, Text.Length(lib_prefix));
     END;
     INC (len, LAST (base^));
@@ -52,7 +52,7 @@ PROCEDURE Join (dir, base: TEXT;  k: Kind;  host: BOOLEAN): TEXT=
         result [len] := d_sep; INC (len);
       END;
     END;
-    IF (k = Kind.A) OR (k = Kind.AX) THEN
+    IF (k = Kind.A) OR (k = Kind.AX) OR (k = Kind.SO) THEN
       len := Append (result, lib_prefix, len);
     END;
     len := Append (result, base, len);

@@ -1172,7 +1172,7 @@ PROCEDURE PaintString (hdc: WinDef.HDC;
   PROCEDURE FontIdToScrnFont (st: WinScreenType.T; id: INTEGER): ScrnFont.T =
     BEGIN
       FOR i := FIRST(st.fonts^) TO LAST(st.fonts^) DO
-        IF st.fonts[i].id = id THEN
+        IF st.fonts[i] # NIL AND st.fonts[i].id = id THEN
           RETURN st.fonts[i];
         END;
       END;

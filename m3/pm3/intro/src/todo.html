@@ -8,12 +8,14 @@
 
 <H2>PM3</H2>
 
-<P>
-The following items are planned for <I>PM3</I>. Items are listed by 
-decreasing order of likelyhood of being implemented in the near future.
-Help on these items is most appreciated!
+<P>PM3 incorporates bug fixes, platform updates, and enhancements as they 
+are contributed by several programmers on the internet. Below is a list
+of items of interest just waiting for contributors.
 
 <UL>
+
+<LI>Modula-3 Bindings for the GTK, GNOME and ORBit libraries and CORBA
+stubs generators.
 
 <LI> Produce binaries for several platforms at every release through remote
 compilation servers. We have LINUXLIBC6 computers readily
@@ -124,6 +126,25 @@ be started on demand.
 
 <LI>Add some authentication and access control to network objects, probably
 along with IPv6.
+
+<LI>Here is what Harry George had to say about his m3na.
+  <UL>
+  <LI>I didn't known about SUBARRAY at the time, so sort of reinvented
+   it.  Probably could redo and make the code cleaner (and faster?)
+
+  <LI>I was experimenting with dynamic arrays -- probably to the
+   detriment of the performance.  Adding an object oriented layer on
+   top of random number generators might have been a dumb move too.  
+
+  <LI> Most array/matrix functions should accept a
+   result array/matrix as a parameter, instead of creating one on the
+   fly to return. or maybe accept one and return it as syntactic sygar.
+
+  <LI> It would be nice to have bindings for some of the std C numerical
+   libs (nag, lapack, etc.).  Or at least some of the items from
+   them.  Which of course means getting a binding-generator to work.
+   I never got cbind to go properly.
+   </UL>
 
 </UL>
 

@@ -297,6 +297,10 @@ readonly proc BootstrapTarget(target) is
     header = header & "RANLIB=touch" & CR
   end
 
+  if equal(target, "FBSD_ALPHA")
+    header = header & "CFLAGS=-mieee" & CR
+  end
+
   CreateMakefile("pm3-" & target & SL & "Makefile." & target,target,
       header, options)
   CreateMakefile("pm3-" & target & SL & "Makefile",target,

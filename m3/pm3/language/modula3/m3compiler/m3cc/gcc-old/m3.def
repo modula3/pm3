@@ -1,8 +1,29 @@
-/* Copyright (C) 1993, Digital Equipment Corporation                         */
-/* All rights reserved.                                                      */
-/* See the file COPYRIGHT for a full description.                            */
-
-/* Last modified on Mon Feb 10 16:54:48 PST 1992 by muller                   */
+/*
+ * Copyright (C) 1993, Digital Equipment Corporation
+ *
+ * (Note: Digital Equipment Corporation was acquired by Compaq Computer
+ * Corporation on June 11, 1998, along with all its copyrights.)
+ *
+ * The copyright holder grants everyone the right to distribute and/or
+ * modify this file under the terms of either: (1) the GNU General
+ * Public License as published by the Free Software Foundation, either
+ * version 2 of the License, or (at your option) any later version; or
+ * (2) the Digital License Agreement for SRC Modula-3.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the Digital License Agreement
+ * for SRC Modula-3 along with this program, in the file COPYRIGHT.
+ * If not, see the SRC Modula-3 Web pages,
+ * http://www.research.compaq.com/SRC/modula-3/html/home.html.
+ */
 
 M3CG_OP ("begin_unit",			 M3_BEGIN_UNIT)
 M3CG_OP ("end_unit",			 M3_END_UNIT)
