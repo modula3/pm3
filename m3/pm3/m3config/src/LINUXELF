@@ -112,6 +112,8 @@ readonly PLATFORM_SUPPORTS_MOTIF  = "TRUE"
 readonly PLATFORM_SUPPORTS_DECPEX = ""
 readonly PLATFORM_SUPPORTS_OPENGL = ""
 
+% Does your X11 server have the shared memory extension?
+readonly X11_WITH_SHARED_MEM = "TRUE"
 
 %-------------------------------------------------------------------- emacs ---
 % If you have emacs and want to compile ".el" files to ".elc" files,
