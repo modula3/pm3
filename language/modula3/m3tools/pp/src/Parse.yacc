@@ -847,7 +847,7 @@ line_pragma:
     | Pr_Line     SP Card_const SP Str_const Rpragma
     ;
 
-vtrace_pragma:     Pr_Trace      SP qid   SP Rpragma ;
+vtrace_pragma:       Pr_Trace SP expr SP Rpragma ;
 strace_pragma:     B Pr_Trace stmts E SP Rpragma ;
 
 var_trace:
