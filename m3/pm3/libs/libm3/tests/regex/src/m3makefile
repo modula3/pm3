@@ -1,0 +1,8 @@
+
+import ("libm3")
+import ("parseparams")
+interface ("regex")
+
+implementation("Main")
+program ("test-regex")
+

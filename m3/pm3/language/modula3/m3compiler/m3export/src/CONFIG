@@ -9,7 +9,10 @@ EXPORT_TMP_CROSS_COMPILERS = lookup("EXPORT_TMP_CROSS_COMPILERS",
     EXPORT_TMP_ROOT & "/cross-compilers")
 
 EXPORT_ROOT = lookup("EXPORT_ROOT","/home/ftp/pub/m3")
-EXPORT_VERSION = lookup("EXPORT_VERSION", EXPORT_ROOT & "/version")
+EXPORT_VERSION = lookup("EXPORT_VERSION", EXPORT_ROOT & "/pkg")
 EXPORT_SRC = lookup("EXPORT_SRC", EXPORT_ROOT & "/pkg")
 EXPORT_BOOTSTRAP = lookup("EXPORT_BOOTSTRAP", EXPORT_ROOT & "/bootstrap")
 EXPORT_BINARIES = lookup("EXPORT_BINARIES", EXPORT_ROOT & "/binaries")
+
+STORE_ROOT = lookup("STORE_ROOT","/home/m3/pm3")
+STORE_VERSION = lookup("STORE_VERSION",STORE_ROOT & "/version")

@@ -8,6 +8,32 @@ MODULE CIText;
 
 IMPORT ASCII, Text, TextF, Word;
 
+PROCEDURE Compare (t, u: T): [-1..1] =
+  BEGIN
+    WITH tEmpty = NUMBER (t^) <= 1,
+         uEmpty = NUMBER (u^) <= 1 DO
+      IF (tEmpty) THEN
+        IF (uEmpty) THEN RETURN 0 ELSE RETURN -1 END;
+      ELSIF (uEmpty) THEN
+        RETURN 1;
+      ELSE
+        WITH tn = NUMBER (t^) - 1, tu = NUMBER (u^) - 1 DO
+          FOR i := 0 TO MIN (tn, tu) DO
+            WITH diff = ORD(ASCII.Upper[t[i]]) - ORD(ASCII.Upper[u[i]]) DO
+              IF diff < 0 THEN RETURN -1;
+              ELSIF diff > 0 THEN RETURN +1;
+              END;
+            END;
+          END;
+          IF    (tn = tu) THEN RETURN 0;
+          ELSIF (tn < tu) THEN RETURN -1;
+          ELSE                 RETURN +1;
+          END;
+        END;
+      END;
+    END;
+  END Compare;
+
 PROCEDURE Equal(t, u: T): BOOLEAN =
   VAR
     lt: CARDINAL := Text.Length(t);

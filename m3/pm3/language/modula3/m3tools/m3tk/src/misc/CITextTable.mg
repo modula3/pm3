@@ -5,7 +5,7 @@
 
 GENERIC MODULE CITextTable(Tbl);
 
-IMPORT TextExtras;
+IMPORT CIText;
 
 REVEAL
   Default = Tbl.Default BRANDED OBJECT
@@ -16,12 +16,12 @@ REVEAL
 
 PROCEDURE CIEqual(<*UNUSED*> self: T; READONLY a, b: TEXT): BOOLEAN=
   BEGIN
-    RETURN TextExtras.CIEqual(a, b);
+    RETURN CIText.Equal(a, b);
   END CIEqual;
 
 PROCEDURE CIHash(<*UNUSED*> self: T; READONLY a: TEXT): INTEGER=
   BEGIN
-    RETURN TextExtras.CIHash(a);
+    RETURN CIText.Hash(a);
   END CIHash;
 
 BEGIN

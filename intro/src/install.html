@@ -22,11 +22,11 @@ should be replaced by LINUXELF, SPARC, SOLgnu... depending on your
 target platform, and <I>version</I> refers to the PM3 version.
 <P>
 The PATH environment variable must contain the directory where the
-executable programs reside, typically /usr/local/pm3-1.1/bin.
+executable programs reside, typically /usr/local/pm3/bin.
 On platforms with shared libraries (dynamically linked), the dynamic linker
 must find the shared libraries along its path. Typically, the LD_LIBRARY_PATH
 environment variable will need to include 
-/usr/local/pm3-1.1/lib/m3/<I>TARGET</I>.
+/usr/local/pm3/lib/m3/<I>TARGET</I>.
 For some platforms (LINUXELF, SPARC, SOLgnu), the shared libraries paths 
 are specified at link time and LD_LIBRARY_PATH need not contain 
 anything, if the shared libraries are at the location specified at link time.
@@ -65,10 +65,10 @@ cassis>
 In rare cases, (e.g. if the system libraries are at an unusual location),
 you may need to modify the templates in order to reflect your system
 configuration. This is achieved by examining the content
-of /usr/local/pm3-1.1/lib/m3/pkg/m3config/src/COMMON and
+of /usr/local/pm3/lib/m3/pkg/m3config/src/COMMON and
 overriding the improper variables and functions in the
 platform specific template 
-/usr/local/pm3-1.1/lib/m3/pkg/m3config/src/<I>TARGET</I>.
+/usr/local/pm3/lib/m3/pkg/m3config/src/<I>TARGET</I>.
 
 <H2>Source only Installation</H2>
 <P>

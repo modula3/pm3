@@ -6,7 +6,7 @@ MODULE HTTP;
 
 IMPORT
   App, Atom, Date, FastLex, FloatMode, Fmt, HTTPApp, Lex, Rd, RdCopy,
-  Text, TextExtras, TextRd, TextWr, Thread, Time, UnsafeRd, Word, Wr;
+  Text, CIText, TextRd, TextWr, Thread, Time, UnsafeRd, Word, Wr;
 
 VAR
   fieldMu: MUTEX := NEW(MUTEX);
@@ -148,7 +148,7 @@ PROCEDURE LookupHeaderField(self: Header;
     LOCK fieldMu DO
       fields := self.fields;
       WHILE fields # NIL DO
-        IF TextExtras.CIEqual(name, fields.field.name) THEN
+        IF CIText.Equal(name, fields.field.name) THEN
           IF value = NIL OR Text.Equal(value, fields.field.value) THEN
             RETURN fields.field
           END;
@@ -1299,7 +1299,7 @@ PROCEDURE WriteBody (header: Header; wr: Wr.T; src: Src; log: App.Log)
     field :=
       header.lookupField(FieldName[FieldType.Content_Encoding]);
     IF field # NIL THEN
-      IF TextExtras.CIEqual(field.value, "chunked") THEN
+      IF CIText.Equal(field.value, "chunked") THEN
         TRY
           LOOP
             cnt := src.fill(chars);
@@ -1391,7 +1391,7 @@ PROCEDURE ReadBody (header: Header; rd: Rd.T; dest: Dest; log: App.Log)
     field :=
       header.lookupField(FieldName[FieldType.Content_Encoding]);
     IF field # NIL THEN
-      IF TextExtras.CIEqual(field.value, "chunked") THEN
+      IF CIText.Equal(field.value, "chunked") THEN
         WHILE ReadChunk(rd, dest, log) DO END;
       ELSE
         log.log(Fmt.F("HTTP.ReadBody: Unknown Content-Encoding: %s",

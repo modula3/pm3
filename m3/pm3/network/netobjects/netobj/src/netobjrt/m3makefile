@@ -17,9 +17,6 @@ interface ("NetObjRep")
 Interface ("StubConn")
 module ("NetObjRT")
 
-module ("ListPkl")
-module("AtomPkl")
-
 Interface ("NetStream")
 Module ("StubLib")
 module ("WireRep")

@@ -19,19 +19,18 @@ compilation servers. We have NT386GNU, SPARC, and SOLgnu computers readily
 accessible.
 
 <LI>Test on NT the new release and adapt to gnu-win32 Beta 19 whenever it
-comes out. Perhaps the w2p calls in the NT386GNU template could be removed 
-which would enable much more sharing of the template with other platforms.
+comes out. It works but there seems to be a problem with the time related
+routines; TimeStamp generates a range fault which prevents many packages
+using it from working, and files are often recompiled when they should not.
+Perhaps using mingw32 together with gnu-win32 will redirect all the time
+related calls to native windows libraries and cure the problem.
 
-<LI>Add bug fixes, patches, and contributed packages. Blair's Pickle,
-Tony Hosking's Solaris stack walker, Spencer's emacs files,
-m3na, and M3 TXL are 
+<LI>Add bug fixes and contributed packages. Blair's Pickle (in progress),
+Spencer's emacs files, m3na, and M3 TXL are 
 among the items on the list. Check enumerating environment variables 
 under NT386GNU, proper deallocation
 of file handles, critical sections, and other handles in Win32 
 m3core/libm3 runtime.
-
-<LI>Do some profiling and optimisation on the integrated m3build/quake/m3
-and fast LINUXELF code generator.
 
 <LI>Decouple m3ship and m3where from m3templates. Currently m3ship is much
 too large needlessly.
@@ -42,15 +41,12 @@ is sufficient. For some other packages, the m3totex documentation may be
 reused (libm3/m3core, trestle, vbtkit, formsvbt, netobj, stable, anim3D,
 m3tk).
 
-<LI>Remove all duplicate files in <I>pm3</I>.
-Keep a single copy or each in a library.
-A modified m3browser was used to print the list of duplicate files.
-The duplicate units (same name) found were analysed to distinguish
-simple name clashes from redundancy
-<A HREF="dupl.txt">[duplicates]</A>.
+<LI>Duplicate modules in <I>pm3</I> were detected using a modified
+m3browser and removed. Some similar modules still exist and should be
+merged, see <A HREF="dupl.txt">[duplicates]</A>.
 
 <LI>Detect reusable components hidden in libraries and programs.
-Candidates include AtomPkl, FSM, MText. Find a <I>category specialist</I>
+Candidates include FSM, MText. Find a <I>category specialist</I>
 for each category to drive this effort and enhance the reusable components.
 
 <LI>Increase the use of generic modules. Text may be used for UNICODE

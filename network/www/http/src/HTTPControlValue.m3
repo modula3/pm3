@@ -6,7 +6,7 @@ MODULE HTTPControlValue EXPORTS HTTPControlValue, Main;
 
 IMPORT
   App, FloatMode, Fmt,  HTTP, HTTPControl, 
-  Lex, Rd, Text, TextRd, TextExtras, Thread, Wr;
+  Lex, Rd, Text, TextRd, CIText, Thread, Wr;
 
 <* PRAGMA LL *>
 
@@ -29,9 +29,9 @@ PROCEDURE BooleanGetText(self: BooleanValue): TEXT =
 PROCEDURE BooleanSetText(self: BooleanValue; v: TEXT; log: App.Log)
   RAISES {App.Error} =
   BEGIN
-    IF TextExtras.CIEqual("FALSE", v) THEN
+    IF CIText.Equal("FALSE", v) THEN
       self.set(FALSE);
-    ELSIF TextExtras.CIEqual("TRUE", v) THEN
+    ELSIF CIText.Equal("TRUE", v) THEN
       self.set(TRUE);
     ELSE
       log.log(Fmt.F("Bad value (%s) for boolean item: %s", v, self.label),

@@ -12,3 +12,7 @@ table ("Packing", "PackingTypeCode", "Refany")
 
 Module ("Pickle")
 Module ("PickleStubs")
+
+Module ("ListPkl")
+Module("AtomPkl")
+

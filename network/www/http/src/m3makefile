@@ -16,7 +16,6 @@ Module("HTTPPayment")
 Module("HTTPProxy")
 Module("HTTPControl")
 Module("HTTPControlValue")
-module("TextExtras")
 Module("FastLex")
 
 Library("http")

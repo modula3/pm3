@@ -14,6 +14,8 @@ CONST
 TYPE
   T = TEXT;
 
+PROCEDURE Compare(k1, k2: T): [-1..1];
+
 PROCEDURE Equal(k1, k2: T): BOOLEAN;
 
 PROCEDURE Hash(k1: T): Word.T;

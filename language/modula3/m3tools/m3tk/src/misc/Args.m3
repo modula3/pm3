@@ -25,7 +25,7 @@
 MODULE Args;
 
 IMPORT Text, ASCII, Fmt, CITextRefTbl, TextList, Convert, Params;
-IMPORT TextExtras;
+IMPORT TextExtras, CIText;
 
 
 CONST
@@ -142,7 +142,7 @@ PROCEDURE EnterKeyName(
     t, longForm: Text.T)
     RAISES {BadTemplate}=
   BEGIN
-    IF Text.Length(t) > 1 AND NOT TextExtras.CIEqual(t, longForm) THEN
+    IF Text.Length(t) > 1 AND NOT CIText.Equal(t, longForm) THEN
       RAISE BadTemplate;
     END; (* if *)
   END CheckKeyTypeValid;

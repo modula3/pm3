@@ -99,6 +99,8 @@ readonly proc BuildDirectories() is
   ret = Exec(["mkdir","-p",EXPORT_SRC],[],"")
   ret = Exec(["mkdir","-p",EXPORT_BOOTSTRAP],[],"")
   ret = Exec(["mkdir","-p",EXPORT_BINARIES],[],"")
+  ret = Exec(["mkdir","-p",STORE_ROOT],[],"")
+  ret = Exec(["mkdir","-p",STORE_VERSION],[],"")
 
   foreach platform in Platforms
     if Platforms{platform}[3] 
@@ -115,7 +117,7 @@ end
 %
 
 readonly proc ReadVersionInfo() is
-  local vdir = EXPORT_VERSION & SL
+  local vdir = STORE_VERSION & SL
 
   if not stale(vdir & "PREVIOUSVERSION",vdir & "PREVIOUSVERSION")
     previousVersionExists = "T"
@@ -151,6 +153,64 @@ readonly proc BuildDiff() is
     CheckExec(["grep","-q","[^ ]", EXPORT_TMP_SRC & "/" & 
         DiffName(currentVersion,version)], [], 
         EXPORT_TMP_SRC, "no new version required")
+  end
+end
+
+%
+% Export the source tree and add the README/Version information
+%
+
+readonly proc CVSExport() is
+  CheckExec(["cvs","export","-D",NOW,"-d",versionName,"m3/pm3"],[],
+      EXPORT_TMP_SRC,"cvs export failed")
+
+  > EXPORT_TMP_SRC & "/" & versionName & "/" & "m3config/src/VERSION" in
+    write("VERSION=\"", VersionNumber(version),"\"",CR,
+          "VERSION_DATE=\"",NOW,"\"",CR)
+  end
+
+  > EXPORT_TMP_SRC & "/" & versionName & "/" & "README" in
+    write(
+"The Polytechnique Montreal Distribution of Modula-3",CR,
+"",CR,
+"pm3 version ", VersionNumber(version), " dated ", NOW,CR,
+"",CR,
+"This distribution is based on the DEC SRC Modula-3 release 3.6. Local",CR,
+"enhancements by Louis Dubeau, Jerome Collin and myself (Michel Dagenais)",CR,
+"were added, and several packages (libraries, programs, and documentation)",CR,
+"from other sources were added as well. The online documentation may be",CR,
+"accessed before the build by pointing your favourite WWW browser to",CR,
+"intro/src/index.html.",CR,
+"",CR,
+"This file is normally part of a source code + bootstrap distribution.",CR,
+"To compile the bootstrap program, and compile and install the Modula-3",CR,
+"source, the following steps are required.",CR,
+"",CR,
+"- insure that you have the usual development tools (make, gcc, ar).",CR,
+"",CR,
+"- check, and modify if needed, the template for your platform. This",CR,
+"  template determines where the Modula-3 programs, libraries and ",CR,
+"  documentation will be installed and used, as well as default options",CR,
+"  for various needed tools. Typically you only need to change the",CR,
+"  INSTALL_ROOT variable if the default does not suit you.",CR,
+"  The template is located in m3config/src/" & target & ".",CR,
+"",CR,
+"- The file src/m3makefile is used in the following steps to build all the",CR,
+"  packages. By default, almost all the available packages are built.",CR,
+"  You may comment out some of these in src/m3makefile to save build time",CR,
+"  and disk space.",CR,
+"",CR,
+"- run \"make\", which will execute the commands in Makefile. It will",CR,
+"  build bootstrap versions of \"m3build\" and \"m3ship\" and then use",CR, 
+"  these programs to rebuild and install all the libraries and programs in",CR,
+"  the distribution.",CR,
+"",CR,
+"  If you downloaded bootstraps for several platforms, the remaining ",CR,
+"  Makefile is the last one you downloaded. In that case, you can use ",CR,
+"  the correct platform specific Makefile as Makefile.PLATFORM ",CR,
+"  (e.g. Makefile." & target & 
+") and use it with \"make -f Makefile.PLATFORM\". ",CR,
+"  Similarly the correct README is found as README.PLATFORM.",CR)
   end
 end
 
@@ -240,7 +300,7 @@ end
 %
 
 readonly proc UpdateVersionNumbers() is
-  local vdir = EXPORT_VERSION & SL
+  local vdir = STORE_VERSION & SL
 
   if previousVersionExists
     >> vdir & "OLDVERSIONS" in
@@ -261,6 +321,10 @@ readonly proc UpdateVersionNumbers() is
   > vdir & "CURRENTVERSION" in
     write("Version(\"",NOW,"\",\"",version[1],"\",\"",
         version[2],"\",\"",version[3],"\",\"",version[4],"\")",CR)
+  end
+
+  >> EXPORT_VERSION & "/" & "pm3-versions" in
+    write("Version ", VersionNumber(version), " released on ",NOW,CR)
   end
 
   > vdir & "NEXTVERSION" in
@@ -285,6 +349,23 @@ local nextVersionExists = ""
 local version = ""
 
 include("../src/CONFIG")
+
+
+% Test mode, build everything before attempting a release.
+
+if defined("PRERELEASE")
+  write("Pre release test",CR,CR)
+  CheckExec(["m3build","-DBOOTTARGET=" & TARGET,
+      "-DCACHE_CROSS_COMPILERS=" & EXPORT_TMP_CROSS_COMPILERS], [], 
+      "../../m3bootstrap","build bootstrap failed")
+  CheckExec(["mv", "boot-" & TARGET, "Makefile",path_of("../../../../..")], 
+      [], "../../m3bootstrap/" & TARGET & "/pm3-" & TARGET,
+      "move bootstrap to build binaries failed")
+  CheckExec(["make","exportall"], ["","make.stdout","make.stderr"],
+      path_of("../../../../.."),"building bootstrap failed")
+  return
+  exit(1)
+end
 
 ReadVersionInfo()
 
@@ -320,9 +401,8 @@ end
 % Export the new version
 %
 
-if DoStep("cvsExport")
-  CheckExec(["cvs","export","-D",NOW,"-d",versionName,"m3/pm3"],[],
-      EXPORT_TMP_SRC,"cvs export failed")
+if DoStep("CVSExport")
+  CVSExport()
 end
 
 %

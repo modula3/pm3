@@ -31,5 +31,4 @@ interface("SGMLRep")
 implementation("SGMLCS")
 implementation("SGML")
 module("FSM")
-module("AtomPkl")
 

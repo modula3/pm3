@@ -18,11 +18,9 @@ end
 
 include_dir     ("resources")
 
-module		("CIText")
 interface	("Element")
 table		("CITextElement", "CIText", "Element")
 module		("Lexer")
-Module		("TextExtras")
 Module  	("HTML")
 implementation	("HTMLParser")
 

@@ -24,19 +24,7 @@
 
 INTERFACE TextExtras;
 
-IMPORT ASCII;
-
 TYPE T = TEXT;
-
-PROCEDURE CIEqual(t, u: T): BOOLEAN RAISES {};
-(* Return TRUE if t and u have the same length and the same
-   (case-insensitive) contents. *)
-
-PROCEDURE Compare(t, u: T): INTEGER RAISES {};
-(* Result is <, =, > 0 accordingly as t is <, =, > u (ascii sort order) *)
-
-PROCEDURE CICompare(t, u: T): INTEGER RAISES {};
-(* Case-insensitive version of Compare. *)
 
 PROCEDURE FindChar(
     t: T;
@@ -58,7 +46,7 @@ PROCEDURE FindChar(
 
 PROCEDURE FindCharSet(
     t: T;
-    READONLY charSet: ASCII.Set;
+    READONLY charSet: SET OF [FIRST(CHAR)..LAST(CHAR)];
     VAR (* inout *) index: CARDINAL)
     : BOOLEAN
     RAISES {};
@@ -83,9 +71,5 @@ if 't4' is non NIL 't1' to 't4' must be non NIL as well.
 PROCEDURE JoinN(READONLY texts: ARRAY OF TEXT): T RAISES {};
 (* Returns the concatenation of all the elements of 'texts'. It is a checked
 runtime error if any element of 'texts' is NIL or if 'NUMBER(texts) = 0'  *)
-
-PROCEDURE CIHash(t: T): INTEGER;
-(* Case insensitive version of "Text.Hash", for case-insensitive tables. *)
-
 
 END TextExtras.

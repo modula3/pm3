@@ -22,59 +22,6 @@ MODULE TextExtras;
 IMPORT TextF;
 FROM TextF IMPORT New;
 FROM Text IMPORT Length, Sub;
-IMPORT ASCII;
-
-PROCEDURE Compare(t, u: T): INTEGER RAISES {} =
-  VAR
-    minLength := Length(t);
-    otherLength := Length(u);
-    lengthDiff := minLength - otherLength;
-    i: CARDINAL := 0;
-  BEGIN
-    IF lengthDiff > 0 THEN minLength := otherLength END;
-    WHILE i < minLength DO
-      WITH diff = ORD(t[i]) - ORD(u[i]) DO
-        IF diff # 0 THEN RETURN diff ELSE INC(i) END;
-      END;
-    END;
-    RETURN lengthDiff;
-  END Compare;
-
-
-PROCEDURE CICompare(t, u: T): INTEGER RAISES {} =
-  VAR
-    minLength := Length(t);
-    otherLength := Length(u);
-    lengthDiff := minLength - otherLength;
-    i: CARDINAL := 0;
-  BEGIN
-    IF lengthDiff > 0 THEN minLength := otherLength END;
-    WHILE i < minLength DO
-      WITH diff = ORD(ASCII.Upper[t[i]]) - ORD(ASCII.Upper[u[i]]) DO
-        IF diff # 0 THEN RETURN diff ELSE INC(i) END;
-      END;
-    END;
-    RETURN lengthDiff;
-  END CICompare;
-
-
-PROCEDURE CIEqual(t, u: T): BOOLEAN RAISES {} =
-  VAR
-    lt: CARDINAL := Length(t);
-    lu: CARDINAL := Length(u);
-    i: CARDINAL := 0;
-  BEGIN
-    IF lt = lu THEN 
-      WHILE i<lt DO
-        IF ASCII.Upper[t[i]] # ASCII.Upper[u[i]] THEN 
-          RETURN FALSE 
-        ELSE INC(i) 
-        END;
-      END;
-      RETURN TRUE;
-    ELSE RETURN FALSE
-    END;
-  END CIEqual;
 
 EXCEPTION BadFind;
 
@@ -99,7 +46,7 @@ PROCEDURE FindChar(t: T; ch: CHAR; VAR index: CARDINAL): BOOLEAN RAISES {} =
 
 PROCEDURE FindCharSet(
     t: T;
-    READONLY charSet: ASCII.Set;
+    READONLY charSet: SET OF [FIRST(CHAR)..LAST(CHAR)];
     VAR index: CARDINAL)
     : BOOLEAN
     RAISES {} =
@@ -218,19 +165,6 @@ PROCEDURE JoinN(READONLY texts: ARRAY OF TEXT): T RAISES {}=
 
     RETURN result;
   END JoinN;
-
-CONST
-    Multiplier  = -1664117991; 
-        (* = LOOPHOLE( ROUND( .6125423371 * 2^32 ), INTEGER ) *)
-
-PROCEDURE CIHash (t: T): INTEGER =
-  VAR result := 0;
-  BEGIN
-    FOR i := 0 TO NUMBER (t^) - 1 DO
-      result := result * Multiplier + ORD (ASCII.Upper[t [i]]);
-    END;
-    RETURN result;
-  END CIHash;
 
 BEGIN
 

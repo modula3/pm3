@@ -1,17 +1,6 @@
 # List of units with the same name along with the word count output
 # for the differences. Small numbers indicate small differences
 #
-diff m3tk/src/misc/TextExtras.i3 http/src/TextExtras.i3 0 0 0
-diff m3tk/src/misc/TextExtras.i3 webvbt/src/TextExtras.i3 0 0 0
-diff m3tk/src/misc/TextExtras.m3 http/src/TextExtras.m3 13 77 481
-diff m3tk/src/misc/TextExtras.m3 webvbt/src/TextExtras.m3 13 77 481
-# Identical except the m3tk version is a bit older; simplifications
-# were brought to the newer version.
-#
-diff netobj/src/netobjrt/AtomPkl.i3 sgml/src/sgmlc/AtomPkl.i3 0 0 0
-diff netobj/src/netobjrt/AtomPkl.m3 sgml/src/sgmlc/AtomPkl.m3 0 0 0
-# To share.
-#
 diff realgeometry/src/RealInterval.m3 fisheye/src/RealInterval.m3 199 937 5289
 diff realgeometry/src/RealPoint.m3 fisheye/src/RealPoint.m3 584 2514 14063
 diff realgeometry/src/RealInterval.i3 fisheye/src/RealInterval.i3 205 1341 7581
@@ -19,12 +8,8 @@ diff realgeometry/src/RealRect.i3 fisheye/src/RealRect.i3 379 2358 14606
 diff realgeometry/src/RealRect.m3 fisheye/src/RealRect.m3 690 3630 21669
 diff realgeometry/src/RealPoint.i3 fisheye/src/RealPoint.i3 274 1599 9420
 # Both sets have a common origin. In fisheye, everything raises an
-# exception. However it is not handled anywhere. Converting fisheye should
-# be OK.
-#
-diff m3browser/src/TCPPeer.i3 tcpextras/src/TCPPeer.i3 0 0 0
-diff m3browser/src/TCPPeer.m3 tcpextras/src/POSIX/TCPPeer.m3 15 82 502
-# Almost identical. Check which one to retain.
+# exception. However it is not handled anywhere. Unfortunately, points are
+# an array in one and a record in the other. Needs some work.
 #
 diff buildlectern/src/OSUtils.i3 zeus/src/OSUtils.i3 83 547 3348
 diff buildlectern/src/OSUtils.i3 postcard/src/OSUtils.i3 164 1124 7139

@@ -126,7 +126,7 @@
   "On unix the path separator is /, may be \ on some weird machines"
 )
 
-(defvar m3-www "file:/usr/local/pm3-1.1"
+(defvar m3-www "file:/usr/local/pm3"
   "Path where modula-3 packages are located"
 )
 
@@ -135,7 +135,7 @@
 )
 
 (defvar m3-source-roots 
-  (list "/usr/local/pm3-1.1/lib/m3/pkg" 
+  (list "/usr/local/pm3/lib/m3/pkg" 
 ;;    (concat (getenv "HOME") "/src/m3")
   )
   "Roots for Modula-3 packages source code, served by m3browser"

@@ -4,7 +4,7 @@
 
 MODULE HTTPPayment;
 
-IMPORT App, Fmt, HTTP, TextExtras;
+IMPORT App, Fmt, HTTP, CIText;
 
 TYPE
   PF = {PaymentProtocol, PaymentCash, PaymentAuthorization, PaymentBid,
@@ -12,19 +12,19 @@ TYPE
 
 PROCEDURE PaymentField(field: HTTP.Field): PF =
   BEGIN
-    IF TextExtras.CIEqual(field.name, ProtocolField) THEN
+    IF CIText.Equal(field.name, ProtocolField) THEN
       RETURN PF.PaymentProtocol
-    ELSIF TextExtras.CIEqual(field.name, CashField) THEN
+    ELSIF CIText.Equal(field.name, CashField) THEN
       RETURN PF.PaymentCash
-    ELSIF TextExtras.CIEqual(field.name, AuthorizationField) THEN
+    ELSIF CIText.Equal(field.name, AuthorizationField) THEN
       RETURN PF.PaymentAuthorization
-    ELSIF TextExtras.CIEqual(field.name, BidField) THEN
+    ELSIF CIText.Equal(field.name, BidField) THEN
       RETURN PF.PaymentBid
-    ELSIF TextExtras.CIEqual(field.name, ReceiptField) THEN
+    ELSIF CIText.Equal(field.name, ReceiptField) THEN
       RETURN PF.PaymentReceipt
-    ELSIF TextExtras.CIEqual(field.name, OfferField) THEN
+    ELSIF CIText.Equal(field.name, OfferField) THEN
       RETURN PF.PaymentOffer
-    ELSIF TextExtras.CIEqual(field.name, ErrorField) THEN
+    ELSIF CIText.Equal(field.name, ErrorField) THEN
       RETURN PF.PaymentError
     ELSE
       RETURN PF.NotAPaymentField

@@ -9,10 +9,10 @@ import ("tcp")
 import ("m3scan")
 import ("m3markup")
 import ("m3config")
+import ("tcpextras")
 
 module ("OS")
 module ("TCPServer")
-module ("TCPPeer")
 implementation ("Main")
 
 Program ("m3browser")

@@ -25,7 +25,7 @@ MODULE M3Args EXPORTS M3Args, M3ArgsCL;
    be called to redo the decoding.
 *)
 
-IMPORT Text, TextExtras, Args, Err, ASCII, RefList, RefListSort;
+IMPORT Text, CIText, TextExtras, Args, Err, ASCII, RefList, RefListSort;
 
 TYPE
   ArgState = OBJECT
@@ -317,7 +317,7 @@ PROCEDURE ArgsArgName(s: TEXT;
     END; (* while *)
     shortForm := Text.FromChars(SUBARRAY(shortFormArray^, 0, lindex));
     (* check and ignore if short form = long form *)
-    IF TextExtras.CIEqual(s, shortForm) THEN
+    IF CIText.Equal(s, shortForm) THEN
       lindex := 0;
     END; (* if *)
     IF lindex > 0 THEN
@@ -482,9 +482,9 @@ PROCEDURE IsDuplicated(argName, shortForm: TEXT;
             (hasShort AND IsPrefixOf(ShortFormOf(a.nameAndKind), argName)) THEN
             <*FATAL ClashingShortform*> BEGIN RAISE ClashingShortform; END;
           END; (* if *)
-        ELSIF TextExtras.CIEqual(argName, a.name) THEN
+        ELSIF CIText.Equal(argName, a.name) THEN
           IF NOT(shared AND a.shared) THEN result := TRUE; END;
-        ELSIF (hasShort AND (TextExtras.CIEqual(shortForm, 
+        ELSIF (hasShort AND (CIText.Equal(shortForm, 
                             ShortFormOf(a.nameAndKind)))) THEN
             <*FATAL ClashingShortform*> BEGIN RAISE ClashingShortform; END;
         END; (* if *)

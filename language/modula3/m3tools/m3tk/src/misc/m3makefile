@@ -14,7 +14,6 @@ Interface("M3Assert")
 Interface("Err")
 Interface("Command")
 
-Interface("TextExtras")
 Interface("RdExtras")
 Interface("FingerPrint")
 
@@ -24,7 +23,6 @@ implementation("M3Assert")
 implementation("Command")
 
 implementation("Err")
-implementation("TextExtras")
 
 Generic_interface("CITextTable")
 Generic_implementation("CITextTable")

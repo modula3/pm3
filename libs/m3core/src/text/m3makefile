@@ -9,6 +9,7 @@
 %      modified on Tue Feb 11 17:11:14 PST 1992 by muller
 
 Module("Text")
+Module("TextExtras")
 Interface("TextF")
 implementation("UnsafeHash")
 Module("TextConv")

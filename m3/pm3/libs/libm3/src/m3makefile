@@ -41,6 +41,7 @@ include_dir ("bundleintf")
 include_dir ("perftool")
 include_dir ("pqueue")
 include_dir ("sqrt")
+include_dir ("regex")
 include_dir ("pickle")
 
 import("m3doc")

@@ -83,7 +83,7 @@ fi
 #
 
 if test ${SKIP_BUILD} = "F"
-  then LD_LIBRARY_PATH=`pwd`/${TARGET}/${VERSION}/binaries/${TARGET}/usr/local/pm3-1.1/lib/m3/${TARGET}:${LD_LIBRARY_PATH}
+  then LD_LIBRARY_PATH=`pwd`/${TARGET}/${VERSION}/binaries/${TARGET}/usr/local/pm3/lib/m3/${TARGET}:${LD_LIBRARY_PATH}
   export LD_LIBRARY_PATH
 
   if (cd ${TARGET}/${VERSION} && make exportall && cd binaries && mv ${TARGET}\

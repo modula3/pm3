@@ -2325,6 +2325,14 @@ PROCEDURE BuildBootProgram ()
       Wr.PutText(wr, Target.EOL);
       Wr.PutText(wr, "\t$(CC) $(LDFLAGS) -o $@ $^ $(LIBS) $(EXTRALIBS)");
       Wr.PutText(wr, Target.EOL);
+      Wr.PutText(wr, Target.EOL);      
+
+      Wr.PutText(wr,"clean:");
+      Wr.PutText(wr, Target.EOL);      
+      Wr.PutText(wr,"\trm $(OBJS) ");
+      Wr.PutText(wr, M3Path.Escape(pgm_name));
+      Wr.PutText(wr, Target.EOL);      
+
       Wr.Close (wr);
     EXCEPT
     | Wr.Failure (args) =>
@@ -2518,6 +2526,13 @@ PROCEDURE BuildBootLibrary ()
       Wr.PutText (wr, "\t$(AR) $(ARFLAGS) $@ $^");
       Wr.PutText (wr, Target.EOL);
       Wr.PutText (wr, "\t$(RANLIB) $@");
+      Wr.PutText (wr, Target.EOL);      
+      Wr.PutText (wr, Target.EOL);      
+
+      Wr.PutText (wr,"clean:");
+      Wr.PutText (wr, Target.EOL);      
+      Wr.PutText (wr,"\trm $(OBJS) ");
+      Wr.PutText (wr, lib_name);
       Wr.PutText (wr, Target.EOL);      
 
       Wr.Close (wr);
