@@ -1,0 +1,85 @@
+% Copyright (C) 1994, Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+%
+% Last modified on Fri Feb 10 13:16:06 PST 1995 by kalsow
+%
+
+readonly m3cc_config = {
+
+  "HPPA"  : "--with-gnu-as",
+  % The HP assembler doesn't understand inline debugger info.
+
+  "IRIX5" : "--with-stabs --with-gnu-as"
+  % mips-sgi-irix5 does not support debugging using the native
+  % assembler.  If you don't have gas, delete the config options above.
+  % You will need the latest version of gas (binutils-2.5 or better).
+  % --with-stabs is necessary because Modula-3 v3.3 generates funny
+  % symbol names that can't be parsed by the ECOFF debugging
+  % directives.  [Modula-3 v3.4 and later don't generate funny
+  % symbol names. -- Bill Kalsow 1/13/94]
+
+} % m3cc_config
+
+readonly proc get_config (target) is
+  if m3cc_config contains target
+    return m3cc_config {target}
+  else
+    return ""
+  end
+end
+
+readonly proc get_overrides (nm, ov) is
+  if equal (ov, "*")
+    return ""
+  else
+    return format ("%s=\"%s\"", nm, ov)
+  end
+end
+
+% check for overrides, otherwise use the defaults from the configuration file
+if not defined ("M3CC_BUILD")   M3CC_BUILD  = TARGET     end
+if not defined ("M3CC_HOST")    M3CC_HOST   = TARGET     end
+if not defined ("M3CC_TARGET")  M3CC_TARGET = TARGET     end
+if not defined ("M3CC_CC")      M3CC_CC     = GNU_CC     end
+if not defined ("M3CC_CFLAGS")  M3CC_CFLAGS = GNU_CFLAGS end
+if not defined ("M3CC_MAKE")    M3CC_MAKE   = GNU_MAKE   end
+if not defined ("M3CC_CONFIG")  M3CC_CONFIG = get_config (M3CC_TARGET) end
+
+% figure out where we're going to build the beast
+local build_dir = "."  % let m3build set the build directory
+if not equal (M3CC_HOST, M3CC_TARGET)
+  build_dir = "../" & BUILD_DIR & "-" & M3CC_TARGET
+end
+
+% make sure the derived directory exists
+if stale (build_dir, build_dir)
+  exec ("mkdir", build_dir)
+end
+
+if not defined ("no_config")
+  % configure the sources
+  exec ("cd", build_dir, "; ../gcc/configure", M3CC_CONFIG, "--srcdir=../gcc",
+           "--host=" & gnu_platform (M3CC_HOST),
+           "--build=" & gnu_platform (M3CC_BUILD),
+           "--target=" & gnu_platform (M3CC_TARGET))
+end
+
+% misc fixups & ship commands
+pgms = "m3cgc1"
+if equal (M3CC_HOST, M3CC_TARGET)
+  LibdExport ("m3cgc1")
+  if equal (M3CC_HOST, "DS3100") or equal (M3CC_HOST, "ALPHA_OSF")
+    pgms = "m3cgc1 mips-tfile"
+    LibdExport ("mips-tfile")
+  end
+end
+
+% check for non-default flags
+ARG0 = get_overrides ("CC", M3CC_CC)
+ARG1 = get_overrides ("CFLAGS", M3CC_CFLAGS)
+
+% finally, compile it
+exec ("cd", build_dir, ";", M3CC_MAKE, ARG0, ARG1, pgms)
+
+

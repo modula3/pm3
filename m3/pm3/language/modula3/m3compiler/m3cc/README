@@ -1,0 +1,15 @@
+#
+# Last modified on Mon Jan  9 08:59:09 PST 1995 by kalsow
+#
+
+This package contains a version of gcc that's been modified to
+accept Modula-3 intermediate language input.
+
+To build the package, run "m3build".  To install the result,
+run "m3ship".
+
+To build a cross-compiling version, run "m3build -DM3CC_TARGET=xyz".
+Where "xyz" is the name of the target Modula-3 platform.  The result
+will be left in "abc-xyz/m3cgc1" where "abc" is your normal build
+directory.  The cross compiler will not be shipped by m3ship.
+If you're adding a new platform, you will need to update src/m3makefile.
