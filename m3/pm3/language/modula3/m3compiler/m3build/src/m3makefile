@@ -8,6 +8,8 @@ import ("libm3")
 import ("m3middle")
 import ("m3quake")
 
+build_standalone()
+
 implementation ("Main")
 Program ("m3build")
 
