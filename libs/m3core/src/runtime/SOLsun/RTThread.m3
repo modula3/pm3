@@ -9,6 +9,7 @@
 UNSAFE MODULE RTThread;
 
 IMPORT Usignal;
+IMPORT Word;
 
 CONST 
   SP_pos = 1;
@@ -50,9 +51,12 @@ PROCEDURE UpdateStateForNewSP (VAR s: State; offset: INTEGER) =
     INC (s [FP_pos], offset);
   END UpdateStateForNewSP;
 
-PROCEDURE UpdateFrameForNewSP (<*UNUSED*> a: ADDRESS;
-                               <*UNUSED*> offset: INTEGER) =
+PROCEDURE UpdateFrameForNewSP (a: ADDRESS; <*UNUSED*> offset: INTEGER) =
   BEGIN
+    (* saved FP *)
+    LOOPHOLE (a + 14 * ADRSIZE (Word.T), UNTRACED REF INTEGER)^ := 0;
+    (* saved PC *)
+    LOOPHOLE (a + 15 * ADRSIZE (Word.T), UNTRACED REF INTEGER)^ := 0;
   END UpdateFrameForNewSP;
 
 (*------------------------------------ manipulating the SIGVTALRM handler ---*)
