@@ -9,10 +9,10 @@ local ret = 0
 
 readonly m3cc_config = {
 
-  "HPPA"  : "--with-gnu-as",
+  "HPPA"  : [ "--with-gnu-as" ],
   % The HP assembler doesn't understand inline debugger info.
 
-  "IRIX5" : "--with-stabs --with-gnu-as"
+  "IRIX5" : [ "--with-stabs", "--with-gnu-as" ]
   % mips-sgi-irix5 does not support debugging using the native
   % assembler.  If you don't have gas, delete the config options above.
   % You will need the latest version of gas (binutils-2.5 or better).
@@ -27,7 +27,7 @@ readonly proc get_config (target) is
   if m3cc_config contains target
     return m3cc_config {target}
   else
-    return ""
+    return []
   end
 end
 
@@ -35,7 +35,7 @@ readonly proc get_overrides (nm, ov) is
   if equal (ov, "*")
     return ""
   else
-    return format ("%s=\"%s\"", nm, ov)
+    return format ("%s=%s", nm, ov)
   end
 end
 

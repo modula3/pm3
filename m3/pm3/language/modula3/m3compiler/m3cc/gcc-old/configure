@@ -598,6 +598,16 @@ for machine in $canon_build $canon_host $canon_target; do
 	a29k-*-*)			# Default a29k environment.
 		use_collect2=yes
 		;;
+	alpha-*-freebsd*)
+		tm_file=alpha/freebsd.h
+		xm_file=alpha/xm-freebsd.h
+		# On FreeBSD, the headers are already ok.
+		fixincludes=Makefile.in
+		xmake_file=alpha/x-freebsd
+		gas=yes
+		gnu_ld=yes
+		stabs=yes
+		;;
 	alpha-*-linux*ecoff*)
 		tm_file="${tm_file} alpha/linux.h"
 		xm_file="${xm_file} alpha/xm-linux.h"

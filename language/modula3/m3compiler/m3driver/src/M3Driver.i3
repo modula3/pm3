@@ -47,6 +47,7 @@ TYPE
   Interface = OBJECT
     dump_config     : BOOLEAN := FALSE;
     bootstrap_mode  : BOOLEAN := FALSE;
+    bootstrap_il    : BOOLEAN := FALSE;
     gui             : BOOLEAN := FALSE;
     do_debug        : BOOLEAN := FALSE;
     heap_stats      : BOOLEAN := FALSE;

@@ -919,7 +919,7 @@ alpha_emit_set_const_1 (target, mode, c, n)
 	for (; bits > 0; bits--)
 	  if ((temp = (alpha_emit_set_const
 		       (subtarget, mode,
-			(unsigned HOST_WIDE_INT) c >> bits, i))) != 0
+			c >> bits, i))) != 0
 	      || ((temp = (alpha_emit_set_const
 			  (subtarget, mode,
 			   ((unsigned HOST_WIDE_INT) c) >> bits, i)))
@@ -1579,7 +1579,8 @@ direct_return ()
 /* Write a version stamp.  Don't write anything if we are running as a
    cross-compiler.  Otherwise, use the versions in /usr/include/stamp.h.  */
 
-#if !defined(CROSS_COMPILE) && !defined(_WIN32) && !defined(__linux__)
+#if !defined(CROSS_COMPILE) && !defined(_WIN32) && !defined(__linux__) && \
+    !defined(__FreeBSD__)
 #include <stamp.h>
 #endif
 

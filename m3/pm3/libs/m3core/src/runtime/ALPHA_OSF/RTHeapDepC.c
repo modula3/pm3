@@ -145,7 +145,7 @@
 #include <sys/uio.h>
 #include <ufs/quota.h>		/* for quotactl(2) */
 
-extern int RT0u__inCritical;
+extern long RT0u__inCritical;
 #define ENTER_CRITICAL RT0u__inCritical++
 #define EXIT_CRITICAL  RT0u__inCritical--
 

@@ -17,7 +17,7 @@ PROCEDURE Read (f: File.T; VAR(*OUT*)buf: Buffer; len: BufferLength): INTEGER
   RAISES {OSError.E} =
   VAR ptr: BufPtr;
   BEGIN
-    IF (NUMBER (buf) <= 0) THEN RETURN 0 END;
+    IF (NUMBER (buf) <= 0 OR len <= 0) THEN RETURN 0 END;
     ptr := LOOPHOLE (ADR (buf[0]), BufPtr);
     RETURN f.read (SUBARRAY (ptr^, 0, MIN (len, NUMBER (buf))),
                    mayBlock := TRUE);

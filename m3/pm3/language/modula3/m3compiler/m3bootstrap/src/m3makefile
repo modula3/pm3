@@ -28,7 +28,7 @@ readonly proc BootstrapPkg(dir,pkg,target,host) is
       " in " & target & CR) end
 
   >> "pm3-" & target & SL & "config.tmpl" in
-    write("override(\"" & pkg & "\",\".." & SL & "..\")")
+    write("override(\"" & pkg & "\",\".." & SL & "..\")" & CR)
   end
 end
 
@@ -280,6 +280,11 @@ readonly proc BootstrapTarget(target) is
     header = header & "CC=gcc" & CR
   end
 
+  if equal(target,"LINUXLIBC6")
+    include("../../../../../m3config/src/GCWRAP")
+    header = header & "LDFLAGS=" & GCWRAPFLAGS & CR
+  end
+    
   if equal(target,"ALPHA_OSF")
     header = header & "CFLAGS=-ieee_with_no_inexact -g3" & CR
     header = header & "LDFLAGS=-ieee_with_no_inexact" & CR

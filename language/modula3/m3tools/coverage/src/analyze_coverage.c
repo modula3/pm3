@@ -26,7 +26,7 @@ long verbose_mode = FALSE;
 
 char text[100] = "";
 FILE *code;
-FILE* output_file = stdout;
+FILE* output_file;
 /*****
 long current_line, line, count, p, number;
 char c;
@@ -560,6 +560,7 @@ main (argc, argv)
   char *s;
 
   program_name = basename (argv[0]);
+  output_file = stdout;
   init_command (argc-1, argv+1);
 
   source_path = getenv ("COVERAGE_PATH");

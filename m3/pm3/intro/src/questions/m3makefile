@@ -1,6 +1,5 @@
 HtmlFile("CcallM3")
 HtmlFile("ESChecking")
-HtmlFile("bookstore")
 HtmlFile("compare")
 HtmlFile("contrib")
 HtmlFile("copyObject")

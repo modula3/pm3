@@ -15,7 +15,7 @@ IMPORT Text, TargetMap, M3RT;
 TYPE
   Systems = {
     AIX386, ALPHA_OSF, AP3000, ARM, DS3100,
-    FreeBSD, FreeBSD2, HP300, HPPA, IBMR2,
+    FBSD_ALPHA, FreeBSD, FreeBSD2, FreeBSD3, HP300, HPPA, IBMR2,
     IBMRT, IRIX5, LINUX, LINUXELF, LINUXLIBC6,
     NEXT, NT386, NT386GNU, OKI, SEQUENT, 
     SOLgnu, SOLsun, SPARC, SUN3, SUN386,
@@ -25,7 +25,7 @@ TYPE
 CONST
   SystemNames = ARRAY Systems OF TEXT {
     "AIX386", "ALPHA_OSF", "AP3000", "ARM", "DS3100",
-    "FreeBSD", "FreeBSD2", "HP300", "HPPA", "IBMR2",
+    "FBSD_ALPHA", "FreeBSD", "FreeBSD2", "FreeBSD3", "HP300", "HPPA", "IBMR2",
     "IBMRT", "IRIX5", "LINUX", "LINUXELF", "LINUXLIBC6",
     "NEXT", "NT386", "NT386GNU", "OKI", "SEQUENT",
     "SOLgnu", "SOLsun", "SPARC", "SUN3", "SUN386",
@@ -248,7 +248,46 @@ PROCEDURE Init (system: TEXT; back_integrated: BOOLEAN): BOOLEAN =
                  Aligned_procedures        := TRUE;
                  EOL                       := "\n";
 
-    | Systems.FreeBSD, Systems.FreeBSD2 =>
+    | Systems.FBSD_ALPHA =>
+                 Int_C.cg_type    := CGType.Int_C;
+                 Word_C.cg_type   := CGType.Word_C;
+                 Word_C.max.x[1]  := FF;
+
+                 Int_D.cg_type    := CGType.Int_D;
+                 Int_D.size       := 64;
+                 Int_D.align      := 64;
+                 Int_D.min.x      := IChunks { 00, 00, 00, 16_8000 };
+                 Int_D.max.x      := IChunks { FF, FF, FF, 16_7fff };
+
+                 Word_D.cg_type   := CGType.Word_D;
+                 Word_D.size      := 64;
+                 Word_D.align     := 64;
+                 Word_D.min.x     := IChunks { 00, 00, 00, 00 };
+                 Word_D.max.x     := IChunks { FF, FF, FF, FF };
+
+                 Integer          := Int_D;
+                 Address          := Word_D;
+                 Address.cg_type  := CGType.Addr;
+
+                 max_align                 := 64;
+                 Little_endian             := TRUE;
+                 PCC_bitfield_type_matters := TRUE;
+                 Structure_size_boundary   := 8;
+                 Bitfield_can_overlap      := FALSE;
+                 First_readable_addr       := 8192 * Char.size;
+                 Jumpbuf_size              := 82 * Address.size;
+                 Jumpbuf_align             := Address.align;
+                 Fixed_frame_size          := 4 * Address.size;
+                 Guard_page_size           := 8192 * Char.size;
+                 All_floats_legal          := TRUE;
+                 Has_stack_walker          := FALSE;
+                 Setjmp                    := "_setjmp";
+                 Checks_integer_ops        := FALSE;
+                 Global_handler_stack      := TRUE;
+                 Aligned_procedures        := TRUE;
+                 EOL                       := "\n";
+
+    | Systems.FreeBSD, Systems.FreeBSD2, Systems.FreeBSD3 =>
                  max_align                 := 32;
                  Little_endian             := TRUE;
                  PCC_bitfield_type_matters := TRUE;

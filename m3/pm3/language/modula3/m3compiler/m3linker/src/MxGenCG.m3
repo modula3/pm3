@@ -391,26 +391,26 @@ PROCEDURE GenerateEntryTop (VAR s: State) =
            { /* initialize RTLinker's global data */
              _LINKER* linker = (_LINKER* )&@IR_Prefix[TRUE]@RTLinker;
       *)
-      s.main_proc.id := M3ID.Add("WinMain");
+      s.main_proc.id := M3ID.Add("WinMain@16");
       s.main_proc.proc := 
           s.cg.declare_procedure(s.main_proc.id, 4, Target.CGType.Int,
                                  0, Target.DefaultCall, TRUE, NIL);
       s.self_var.id := M3ID.Add("self");
       s.self_var.var := 
           s.cg.declare_param(s.self_var.id, Target.Address.bytes, 
-                             align, Target.CGType.Addr, 0, FALSE, FALSE, 1);
+                             4, Target.CGType.Addr, 0, FALSE, FALSE, 1);
       s.prev_var.id := M3ID.Add("pref");
       s.prev_var.var := 
           s.cg.declare_param(s.prev_var.id, Target.Address.bytes,
-                             align, Target.CGType.Addr, 0, FALSE, FALSE, 1);
+                             4, Target.CGType.Addr, 0, FALSE, FALSE, 1);
       s.argv_var.id := M3ID.Add("args");
       s.argv_var.var := 
           s.cg.declare_param(s.argv_var.id, Target.Address.bytes,
-                             align, Target.CGType.Addr, 0, FALSE, FALSE, 1);
+                             4, Target.CGType.Addr, 0, FALSE, FALSE, 1);
       s.mode_var.id := M3ID.Add("mode");
       s.mode_var.var := 
           s.cg.declare_param(s.mode_var.id, Target.Integer.bytes,
-                             align, Target.CGType.Int, 0, FALSE, FALSE, 1);
+                             4, Target.CGType.Int, 0, FALSE, FALSE, 1);
       s.cg.begin_procedure(s.main_proc.proc);
       s.linker_var.var := 
           s.cg.declare_temp(Target.Address.bytes, align, Target.CGType.Addr, 
@@ -435,12 +435,12 @@ PROCEDURE GenerateEntryTop (VAR s: State) =
       s.cg.store(s.m3_link_info_var.var, 
                  Target.Address.bytes + Target.Integer.bytes, 
                  Target.CGType.Int);
-      s.cg.load(s.argc_var.var, 0, Target.CGType.Addr);
+      s.cg.load(s.argv_var.var, 0, Target.CGType.Addr);
       s.cg.store(s.m3_link_info_var.var, 
                  Target.Address.bytes + Target.Integer.bytes * 2, 
                  Target.CGType.Addr);
       
-      proc := s.cg.import_procedure(M3ID.Add("GetEnvironmentStrings"), 0, 
+      proc := s.cg.import_procedure(M3ID.Add("GetEnvironmentStrings@0"), 0, 
                             Target.CGType.Addr, Target.DefaultCall);
       s.cg.start_call_direct(proc, 0, Target.CGType.Addr);
       s.cg.call_direct(proc, Target.CGType.Addr);
@@ -555,8 +555,7 @@ PROCEDURE GenerateEntryBottom (VAR s: State) =
     *)
     <* ASSERT s.MM_RTLinker_var.var # NIL *>
     s.cg.start_call_indirect(Target.CGType.Void, Target.DefaultCall);
-    s.cg.load(s.MM_RTLinker_var.var, Target.Address.bytes * 10,
-              Target.CGType.Addr);
+    s.cg.load(s.MM_RTLinker_var.var, 40, Target.CGType.Addr);
     s.cg.call_indirect(Target.CGType.Void, Target.DefaultCall);
     (* 
          return 0;

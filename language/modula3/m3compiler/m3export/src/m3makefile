@@ -167,9 +167,9 @@ readonly proc CVSExport() is
   CheckExec(["cvs","export","-D",NOW,"-d",versionName,"m3/pm3"],[],
       EXPORT_TMP_SRC,"cvs export failed")
 
-  > EXPORT_TMP_SRC & "/" & versionName & "/" & "m3config/src/VERSION" in
-    write("VERSION=\"", VersionNumber(version),"\"",CR,
-          "VERSION_DATE=\"",NOW,"\"",CR)
+  >> EXPORT_TMP_SRC & "/" & versionName & "/" & "m3config/src/COMMON" in
+    write("M3_VERSION=\"", VersionNumber(version),"\"",CR,
+          "M3_VERSION_DATE=\"",NOW,"\"",CR)
   end
 
   > EXPORT_TMP_SRC & "/" & versionName & "/" & "README" in
@@ -258,7 +258,7 @@ readonly proc RemovePreviousVersion() is
             VersionName(previousVersion)],[],".")
 
         ret = Exec(["rm", "-r", 
-            EXPORT_SRC & "/" & "targzip" & "/" & 
+            EXPORT_ROOT & "/" & "targzip" & "/" & 
             VersionName(previousVersion) & "-" & platform & "-boot.tgz"],
             [],".")
 
@@ -291,7 +291,7 @@ readonly proc InstallNextVersion() is
   CheckExec(["tar", "cfz", versionName & "-src.tgz", versionName],[],
       EXPORT_TMP_SRC,"building src.tgz failed")
   CheckExec(["mv", EXPORT_TMP_SRC & "/" & versionName & "-src.tgz",
-      EXPORT_SRC & "/" & "targzip"],[],".","export tar source failed")
+      EXPORT_ROOT & "/" & "targzip"],[],".","export tar source failed")
 
   %
   % Move the source tree
@@ -318,7 +318,7 @@ readonly proc InstallNextVersion() is
           "building boot.tgz failed")
       CheckExec(["mv", EXPORT_TMP_BOOTSTRAP & "/" & platform & "/" & 
           versionName & "-" & platform & "-boot.tgz", 
-          EXPORT_SRC & "/" & "targzip"],
+          EXPORT_ROOT & "/" & "targzip"],
           [],".","export tar boot failed")
 
       %
@@ -817,9 +817,11 @@ if defined("PRERELEASE")
   CheckExec(["mv", "boot-" & TARGET, "Makefile",path_of("../../../../..")], 
       [], "../../m3bootstrap/" & TARGET & "/pm3-" & TARGET,
       "move bootstrap to build binaries failed")
-  CheckExec(["make","exportall","M3OPTIONS=" & M3MAKEOPTIONS], 
-      ["","make.stdout","make.stderr"],
-      path_of("../../../../.."),"building bootstrap failed")
+  if not equal(PRERELEASE,"BOOTSTRAP")
+    CheckExec(["make","exportall","M3OPTIONS=" & M3MAKEOPTIONS], 
+        ["","make.stdout","make.stderr"],
+        path_of("../../../../.."),"building bootstrap failed")
+  end
 
 % Not in pre-release test mode
 

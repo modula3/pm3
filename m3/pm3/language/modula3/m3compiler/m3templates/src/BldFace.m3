@@ -70,6 +70,9 @@ PROCEDURE Init(t: T; m: BldQuake.T):T RAISES {Error} =
       GetIt("INTERNAL_BACKEND",val);
       t.ext_pass_6 := NOT QVal.ToBool(m,val);
 
+      GetIt("BOOTSTRAP_TO_IL",val);
+      t.bootstrap_il := QVal.ToBool(m,val);
+
       GetIt("M3_BACKEND_OUTPUT",val);    
       id := QVal.ToID(m,val);
       FOR i := FIRST(outarr) TO LAST(outarr) DO

@@ -632,7 +632,7 @@ static tree scan_var (code)
 
 #define PROC(x) tree x = scan_proc ()
 
-static tree all_procs [1000];
+static tree all_procs [5000];
 
 static tree scan_proc ()
 {

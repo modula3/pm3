@@ -22,6 +22,7 @@ PLATFORM_SUPPORTS_OPENGL = ""
 PLATFORM_SUPPORTS_INTERNAL_BACKEND = ""
 PLATFORM_SUPPORTS_SHARED_LIB = ""
 PLATFORM_SUPPORTS_LATEX = ""
+BOOTSTRAP_TO_IL = ""      % Use intermediate language for bootstrapping
 X11_WITH_SHARED_MEM = "TRUE" % X11 server with shared memory extension
 INSTALL_IMPLS = "TRUE"       % install .m3 source files to ease browsing/debug
 % MAN_SECTION = "l"          % install man pages in section "l", not in 1..8
@@ -51,6 +52,7 @@ STATIC_FLAG = "-static"   % standalone executable
 DYNAMIC_FLAG = ""         % executable with shared libs
 RPATH_FLAG = "-Wl,-rpath" % run time path for shared library
 RPATH_prefix = "-Wl," % Prefix for each library path argument
+RPATH_LIB_USE_ONLY = ""   % Generate only a single rpath pointing to LIB_USE
 
 GNU_CC     = "gcc"        % C compiler for m3cc and m3gdb
 GNU_CFLAGS = "-O2"        % options for GNU_CC
@@ -86,10 +88,7 @@ GNU_WIN32_CONVENTIONS = [".i3", ".ic", ".is", ".io", ".m3", ".mc", ".ms",
 %
 
 proc pm3_version() is
-  if not defined("VERSION")
-    include("VERSION")
-  end
-  return VERSION
+  return M3_VERSION
 end
 
 %
@@ -255,14 +254,24 @@ proc setCommands () is
       LINK_CMD += STATIC_FLAG
     else
       if not empty(DYNAMIC_FLAG) LINK_CMD += DYNAMIC_FLAG end
-      if defined("TARGET_LIB_USE") and RPATH_FLAG
-        if RPATH_prefix
-          LINK_CMD += [RPATH_FLAG, RPATH_prefix & TARGET_LIB_USE]
-        else
-          LINK_CMD += RPATH_FLAG & TARGET_LIB_USE
-        end
+      if RPATH_FLAG
+	 if defined("TARGET_LIB_USE")
+	   if RPATH_prefix
+	     LINK_CMD += [RPATH_FLAG, RPATH_prefix & TARGET_LIB_USE]
+	   else
+	     LINK_CMD += RPATH_FLAG & TARGET_LIB_USE
+	   end
+	 end
+	 if RPATH_LIB_USE_ONLY
+	   if RPATH_prefix
+	     LINK_CMD += [RPATH_FLAG, RPATH_prefix & LIB_USE]
+	   else
+	     LINK_CMD += RPATH_FLAG & LIB_USE
+	   end
+	 else
+	   LINK_libpath = "T"
+	 end
       end
-      LINK_libpath = RPATH_FLAG
     end
   end
 end
@@ -564,8 +573,10 @@ readonly Platforms = {
   "AP3000"    : [ "POSIX", "32BITS", "apollo68-bsd", ""       ],
   "ARM"       : [ "POSIX", "32BITS", "arm--riscos", ""        ],
   "DS3100"    : [ "POSIX", "32BITS", "decstation", "T"        ],
+  "FBSD_ALPHA": [ "POSIX", "64BITS", "alpha-unknown-freebsd", "T" ],
   "FreeBSD"   : [ "POSIX", "32BITS", "i486-unknown-bsd", ""   ],
-  "FreeBSD2"  : [ "POSIX", "32BITS", "i486-unknown-bsd", "T"  ],
+  "FreeBSD2"  : [ "POSIX", "32BITS", "i486-unknown-freebsd", "T" ],
+  "FreeBSD3"  : [ "POSIX", "32BITS", "i486-unknown-freebsdelf", "T" ],
   "HP300"     : [ "POSIX", "32BITS", "m68k-hp-hpux", ""       ],
   "HPPA"      : [ "POSIX", "32BITS", "hppa1.1-hp-hpux", "T"   ],
   "IBMR2"     : [ "POSIX", "32BITS", "rs6000-ibm-aix3.2", "" ],
@@ -644,3 +655,6 @@ readonly Options = {
   "unfold_nested_procs" : [ "", "T", m3frontOption]
 }
 
+% Redefined in released versions
+M3_VERSION="PM3 experimental"
+M3_VERSION_DATE="Now"

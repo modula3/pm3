@@ -213,7 +213,7 @@ CONST
   DashDot = 2_1110010011100100;
 
 
-PROCEDURE Init (self: T; title: TEXT; x, y, w, h: INTEGER): T 
+PROCEDURE Init (self: T; title: TEXT; x, y, w, h: INTEGER): T =
   BEGIN
     (*** Initialize windowThreadCV ***)
     self.windowThreadCV := NEW (Thread.Condition);

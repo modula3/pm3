@@ -13,7 +13,8 @@ IMPORT Quake, M3File, TempFiles, Env, FileWr, BldQuake;
 
 CONST
   SL         = M3Config.PATH_SEP;
-  M3_VERSION = "SRC Modula-3 version XX.X";
+  M3_VERSION = "PM3 Version " & M3Config.M3_VERSION &
+               " (" & M3Config.M3_VERSION_DATE & ")";
 
 TYPE
   DefineList = REF RECORD

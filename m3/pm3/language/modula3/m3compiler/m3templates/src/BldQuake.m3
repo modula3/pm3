@@ -1598,6 +1598,43 @@ PROCEDURE DoInstallLink(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
         QVal.ToText(t, dest));
   END DoInstallLink;
 
+PROCEDURE InstallAliasLink(t: T; src, target, alias, dest: TEXT) RAISES {Error}=
+  VAR
+    val    : QValue.T;
+    link   : TEXT;
+    wr     : Wr.T;
+  BEGIN
+    IF t.get(M3ID.Add("HAVE_PKGTOOLS"), val) AND QVal.ToBool(t, val) THEN
+      RAISE Error("install_alias_link not implemented for pkgtools");
+    ELSE
+      target := target & t.SL & src;
+      link := dest & t.SL & alias;
+
+      TRY
+        wr := FileWr.OpenAppend(M3SHIP_FILE);
+    
+        U_InstallDir(t, dest, wr);
+        Wr.PutText(wr, "link_file(\""& Escape(target) & "\", \"" & Escape(link) & "\")" & t.CR);
+        Utils.CloseWriter(wr, M3SHIP_FILE);
+      EXCEPT 
+        M3Driver.Error, OSError.E, Thread.Alerted, 
+        Wr.Failure => FErr(M3SHIP_FILE);
+      END;
+    END;
+  END InstallAliasLink;
+
+PROCEDURE DoInstallAliasLink(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
+  VAR src, target, alias, dest: QValue.T;
+  BEGIN
+    <* ASSERT n_args = 4 *>
+    t.pop(dest);
+    t.pop(alias);
+    t.pop(target);
+    t.pop(src);
+    InstallAliasLink(t, QVal.ToText(t, src), QVal.ToText(t, target),
+        QVal.ToText(t, alias), QVal.ToText(t, dest));
+  END DoInstallAliasLink;
+
 
 (*--------------------------------------------------- exported interfaces ---*)
 (* installation of exported interfaces & implementations *)
@@ -2315,8 +2352,10 @@ PROCEDURE DoFindUnit(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
       IF GenUnit(t.s_sources)                 THEN RETURN END;
     
       arr := BldHooks.WhereUnitsHooks(t);
-      FOR i := FIRST(arr^) TO LAST(arr^) DO
-        IF GenUnit(arr[i]) THEN RETURN END;
+      IF (arr # NIL) THEN
+        FOR i := FIRST(arr^) TO LAST(arr^) DO
+          IF GenUnit(arr[i]) THEN RETURN END;
+        END;
       END;
 
       Wr.PutText(t.cur_wr(), "\"" & unit & "\" not found" & t.CR); <* NOWARN *>
@@ -3052,7 +3091,7 @@ PROCEDURE NewProc (nm      : TEXT;
 
 PROCEDURE InitProcs(): REF ARRAY OF ProcRec =
   VAR
-    Procs := NEW(REF ARRAY OF ProcRec, 117);
+    Procs := NEW(REF ARRAY OF ProcRec, 118);
   BEGIN
     Procs[0].proc := NewProc ("reset_cache", DoResetCache, 0, FALSE);
     Procs[1].proc := NewProc ("m3", DoM3, 0, FALSE);
@@ -3188,6 +3227,8 @@ PROCEDURE InitProcs(): REF ARRAY OF ProcRec =
     Procs[114].proc := NewProc("install_sources", DoInstallSources, 0, FALSE);
     Procs[115].proc := NewProc("_install_file", DoInstallFile, 4, FALSE);
     Procs[116].proc := NewProc("inc", DoInc, 2, TRUE);
+    Procs[117].proc := NewProc("install_alias_link", DoInstallAliasLink, 4,
+			       FALSE);
     RETURN Procs;
   END InitProcs;
 

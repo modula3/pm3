@@ -28,6 +28,8 @@ readonly M3Config_body = [
   "INTERFACE M3Config;",
   "",
   "CONST  (* misc. configuration *)",
+  "  M3_VERSION       = \"" & escape(M3_VERSION) & "\";",
+  "  M3_VERSION_DATE  = \"" & escape(M3_VERSION_DATE) & "\";",
   "  TARGET    = \"" & escape(TARGET) & "\";",
   "  OS_TYPE   = \"" & escape(OS_TYPE) & "\";",
   "  WORD_SIZE = \"" & escape(WORD_SIZE) & "\";",
@@ -72,7 +74,6 @@ import("libm3")
 
 derived_interface ("M3Config", VISIBLE)
 SrcExport("COMMON")
-SrcExport("VERSION")
 SrcExport(TARGET)
 
 Library("m3config")

@@ -65,6 +65,7 @@ VAR
   gen_static    : BOOLEAN   := FALSE;
   new_linkInfo  : BOOLEAN   := FALSE;
   bootstrap_mode: BOOLEAN   := FALSE;
+  bootstrap_il  : BOOLEAN   := FALSE;
   compile_once  : BOOLEAN   := FALSE;
   gui           : BOOLEAN   := FALSE;  (* for NT *)
   heap_stats    : BOOLEAN   := FALSE;
@@ -130,6 +131,7 @@ PROCEDURE InitFromInterface(i: Interface) RAISES {Error} =
     interface := i;
     dump_config := i.dump_config;
     bootstrap_mode := i.bootstrap_mode;
+    bootstrap_il := i.bootstrap_il;
     gui := i.gui;
     do_debug := i.do_debug;
     heap_stats := i.heap_stats;
@@ -227,6 +229,7 @@ PROCEDURE Init(wr: Wr.T) =
     gen_static    := FALSE;
     new_linkInfo  := FALSE;
     bootstrap_mode:= FALSE;
+    bootstrap_il  := FALSE;
     compile_once  := FALSE;
     gui           := FALSE;  (* for NT *)
     heap_stats    := FALSE;
@@ -417,6 +420,7 @@ PROCEDURE DumpConfiguration () =
     Msg.OutL ("lib path     := ", NIL, lib_path);
     Msg.Out  ("make mode    := ", Bool [make_mode], Wr.EOL);
     Msg.Out  ("bootstrap    := ", Bool [bootstrap_mode], Wr.EOL); 
+    Msg.Out  ("bootstrap IL := ", Bool [bootstrap_il], Wr.EOL); 
     Msg.Out  ("keep files   := ", Bool [keep_files], Wr.EOL);
     Msg.Out  ("coverage     := ", Bool [do_coverage]," ",link_coverage,Wr.EOL);
     Msg.Out  ("keep_cache   := ", Bool [keep_cache], Wr.EOL);
@@ -1102,12 +1106,16 @@ PROCEDURE PushOneM3 (f: FileInfo): BOOLEAN
     | 6,    (* +bootstrap, +pass 6, -pass 7 *)
       7 =>  (* +bootstrap, +pass 6, +pass 7 *)
         tmpC := TempCName (f);
-        IF (NOT keep_files) THEN Utils.NoteTempFile (tmpC) END;
+        IF (NOT keep_files AND NOT bootstrap_il) THEN
+	  Utils.NoteTempFile (tmpC)
+	END;
         IF Pass0 (f, tmpC) THEN
-          EVAL Pass6 (tmpC, f.object, f.name.base);
+	  IF NOT bootstrap_il THEN
+	    EVAL Pass6 (tmpC, f.object, f.name.base)
+	  END;
           need_merge := TRUE;
         END;
-        IF (NOT keep_files) THEN Utils.Remove (tmpC) END;
+        IF (NOT keep_files AND NOT bootstrap_il) THEN Utils.Remove (tmpC) END;
     END; (* CASE plan *)
     Utils.NoteNewFile (f.object);
 
@@ -2258,21 +2266,47 @@ PROCEDURE BuildBootProgram ()
     wr := Utils.OpenWriter (Makefile, fatal := TRUE);
     TRY
       Wr.PutText (wr, "# bootstrap Modula-3 makefile");
+      IF bootstrap_il THEN
+	Wr.PutText (wr, " (bootstrap_il = TRUE)");
+      ELSE
+	Wr.PutText (wr, " (bootstrap_il = FALSE)");
+      END;
       Wr.PutText (wr, Target.EOL);
       Wr.PutText (wr, Target.EOL);
 
-      Wr.PutText (wr, "%_m.o: %.ms");
-      Wr.PutText (wr, Target.EOL);
-      Wr.PutText (wr, "\t$(AS) -o $@ $(ASFLAGS) $<");
-      Wr.PutText (wr, Target.EOL);
-      Wr.PutText (wr, Target.EOL);
-      
+      IF bootstrap_il THEN
+	Wr.PutText (wr, "M3CG = m3cgc1");
+	Wr.PutText (wr, Target.EOL);
+	Wr.PutText (wr, "M3CGFLAGS = -fno-strength-reduce -quiet -fPIC -g");
+	Wr.PutText (wr, Target.EOL);
+	Wr.PutText (wr, Target.EOL);
 
-      Wr.PutText (wr, "%_i.o: %.is");
-      Wr.PutText (wr, Target.EOL);
-      Wr.PutText (wr, "\t$(AS) -o $@ $(ASFLAGS) $<");
-      Wr.PutText (wr, Target.EOL);
-      Wr.PutText (wr, Target.EOL);
+	Wr.PutText (wr, "%_m.o: %.mc");
+	Wr.PutText (wr, Target.EOL);
+	Wr.PutText (wr,
+	  "\t$(M3CG) -o - $(M3CGFLAGS) $< | $(AS) -o $@ $(ASFLAGS) -");
+	Wr.PutText (wr, Target.EOL);
+	Wr.PutText (wr, Target.EOL);
+
+	Wr.PutText (wr, "%_i.o: %.ic");
+	Wr.PutText (wr, Target.EOL);
+	Wr.PutText (wr,
+	  "\t$(M3CG) -o - $(M3CGFLAGS) $< | $(AS) -o $@ $(ASFLAGS) -");
+	Wr.PutText (wr, Target.EOL);
+	Wr.PutText (wr, Target.EOL);
+      ELSE
+	Wr.PutText (wr, "%_m.o: %.ms");
+	Wr.PutText (wr, Target.EOL);
+	Wr.PutText (wr, "\t$(AS) -o $@ $(ASFLAGS) $<");
+	Wr.PutText (wr, Target.EOL);
+	Wr.PutText (wr, Target.EOL);
+
+	Wr.PutText (wr, "%_i.o: %.is");
+	Wr.PutText (wr, Target.EOL);
+	Wr.PutText (wr, "\t$(AS) -o $@ $(ASFLAGS) $<");
+	Wr.PutText (wr, Target.EOL);
+	Wr.PutText (wr, Target.EOL);
+      END;
 
       Wr.PutText (wr, "all: ");
       Wr.PutText (wr, pgm_name);
@@ -2352,7 +2386,11 @@ PROCEDURE GenBootLine (wr: Wr.T;  f: FileInfo): TEXT
       END;
       IF ext_pass_7 THEN 
         target := base & "_i.o"; 
-        dep    := base & ".is";
+	IF bootstrap_il THEN
+	  dep := base & ".ic"
+	ELSE
+	  dep := base & ".is"
+	END;
       ELSE 
         RETURN base & "_i.o";
       END;
@@ -2364,7 +2402,11 @@ PROCEDURE GenBootLine (wr: Wr.T;  f: FileInfo): TEXT
       END;
       IF ext_pass_7 THEN 
         target   := base & "_m.o";
-        dep      := base & ".ms";
+	IF bootstrap_il THEN
+	  dep := base & ".mc"
+	ELSE
+	  dep := base & ".ms"
+	END;
       ELSE 
         RETURN base & "_m.o";
       END;
@@ -2474,21 +2516,47 @@ PROCEDURE BuildBootLibrary ()
     wr := Utils.OpenWriter (Makefile, fatal := TRUE);
     TRY
       Wr.PutText (wr, "# bootstrap Modula-3 makefile");
+      IF bootstrap_il THEN
+	Wr.PutText (wr, " (bootstrap_il = TRUE)");
+      ELSE
+	Wr.PutText (wr, " (bootstrap_il = FALSE)");
+      END;
       Wr.PutText (wr, Target.EOL);
       Wr.PutText (wr, Target.EOL);
 
-      Wr.PutText (wr, "%_m.o: %.ms");
-      Wr.PutText (wr, Target.EOL);
-      Wr.PutText (wr, "\t$(AS) -o $@ $(ASFLAGS) $<");
-      Wr.PutText (wr, Target.EOL);
-      Wr.PutText (wr, Target.EOL);
-      
+      IF bootstrap_il THEN
+	Wr.PutText (wr, "M3CG = m3cgc1");
+	Wr.PutText (wr, Target.EOL);
+	Wr.PutText (wr, "M3CGFLAGS = -fno-strength-reduce -quiet -fPIC -g");
+	Wr.PutText (wr, Target.EOL);
+	Wr.PutText (wr, Target.EOL);
 
-      Wr.PutText (wr, "%_i.o: %.is");
-      Wr.PutText (wr, Target.EOL);
-      Wr.PutText (wr, "\t$(AS) -o $@ $(ASFLAGS) $<");
-      Wr.PutText (wr, Target.EOL);
-      Wr.PutText (wr, Target.EOL);
+	Wr.PutText (wr, "%_m.o: %.mc");
+	Wr.PutText (wr, Target.EOL);
+	Wr.PutText (wr,
+	  "\t$(M3CG) -o - $(M3CGFLAGS) $< | $(AS) -o $@ $(ASFLAGS) -");
+	Wr.PutText (wr, Target.EOL);
+	Wr.PutText (wr, Target.EOL);
+
+	Wr.PutText (wr, "%_i.o: %.ic");
+	Wr.PutText (wr, Target.EOL);
+	Wr.PutText (wr,
+	  "\t$(M3CG) -o - $(M3CGFLAGS) $< | $(AS) -o $@ $(ASFLAGS) -");
+	Wr.PutText (wr, Target.EOL);
+	Wr.PutText (wr, Target.EOL);
+      ELSE
+	Wr.PutText (wr, "%_m.o: %.ms");
+	Wr.PutText (wr, Target.EOL);
+	Wr.PutText (wr, "\t$(AS) -o $@ $(ASFLAGS) $<");
+	Wr.PutText (wr, Target.EOL);
+	Wr.PutText (wr, Target.EOL);
+
+	Wr.PutText (wr, "%_i.o: %.is");
+	Wr.PutText (wr, Target.EOL);
+	Wr.PutText (wr, "\t$(AS) -o $@ $(ASFLAGS) $<");
+	Wr.PutText (wr, Target.EOL);
+	Wr.PutText (wr, Target.EOL);
+      END;
 
       Wr.PutText (wr, "all: ");
       Wr.PutText (wr, lib_name);
@@ -2691,6 +2759,18 @@ PROCEDURE ObjectName (f: FileInfo): TEXT =
       | NK.IO, NK.MO, NK.O  =>  RETURN f.source;
       ELSE RETURN NIL;
       END; 
+
+    ELSIF bootstrap_il THEN
+      CASE ext OF 
+      | NK.I3               =>  ext :=  NK.IC;
+      | NK.M3               =>  ext :=  NK.MC;
+      | NK.IS               =>  shorten := TRUE;
+      | NK.MS               =>  shorten := TRUE;
+      | NK.IC, NK.MC        =>  (* skip *)
+      | NK.C, NK.S, NK.H    =>  (* skip *)
+      | NK.IO, NK.MO, NK.O  =>  (* skip *)
+      ELSE RETURN NIL; 
+      END;
 
     ELSIF (ext_pass_7) THEN
       (* bootstrap with an assembler *)

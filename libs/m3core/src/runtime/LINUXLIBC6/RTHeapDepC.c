@@ -104,11 +104,14 @@
 #include <sys/sem.h>
 #include <sys/signal.h>
 #include <sys/socket.h>
-#include <sys/socketcall.h>
 #include <sys/uio.h>
 #include <sys/ipc.h>
 #include <dirent.h>
 #include <sys/times.h>
+
+#if __GLIBC__ >= 2 && __GLIBC_MINOR__ >= 1
+#include <asm/ipc.h>
+#endif
 
 extern int RT0u__inCritical;
 #define ENTER_CRITICAL RT0u__inCritical++
@@ -122,8 +125,27 @@ static char RTHeapDepC__c;
 #define MAKE_WRITABLE(x) if (x) { *(char*)(x) = RTHeapDepC__c = *(char*)(x); }
 #define MAKE_WRITEABLE MAKE_WRITABLE
 
-/* glibc has no socketcall() */
+/* glibc has no socketcall() nor __ipc() */
 #define socketcall(a,b) syscall(SYS_socketcall,a,b)
+#define __ipc(a,b,c,d,e) syscall(SYS_ipc,a,b,c,d,e)
+
+#define SYS_SOCKET	1
+#define SYS_BIND	2
+#define SYS_CONNECT	3
+#define SYS_LISTEN	4
+#define SYS_ACCEPT	5
+#define SYS_GETSOCKNAME	6
+#define SYS_GETPEERNAME	7
+#define SYS_SOCKETPAIR	8
+#define SYS_SEND	9
+#define SYS_RECV	10
+#define SYS_SENDTO	11
+#define SYS_RECVFROM	12
+#define SYS_SHUTDOWN	13
+#define SYS_SETSOCKOPT	14
+#define SYS_GETSOCKOPT	15
+#define SYS_SENDMSG	16
+#define SYS_RECVMSG	17
 
 /* Unless otherwise noted, all the following wrappers have the same
    structure. */
@@ -140,7 +162,7 @@ int accept(int sockfd, struct sockaddr *peer, socklen_t *paddrlen)
   args[0] = sockfd;
   args[1] = (unsigned long)peer;
   args[2] = (unsigned long)paddrlen;
-  result = socketcall(SOCKOP_accept, args);
+  result = socketcall(SYS_ACCEPT, args);
 
   EXIT_CRITICAL;
   return result;
@@ -169,13 +191,15 @@ char *file;
   return result;
 }
 
-int adjtime(const struct timeval *delta, struct timeval *olddelta)
+int __real_adjtime(const struct timeval *delta, struct timeval *olddelta);
+
+int __wrap_adjtime(const struct timeval *delta, struct timeval *olddelta)
 { int result;
 
   ENTER_CRITICAL;
   MAKE_READABLE(delta);
   MAKE_WRITABLE(olddelta);
-  result = __adjtime(delta, olddelta);
+  result = __real_adjtime(delta, olddelta);
   EXIT_CRITICAL;
   return result;
 }
@@ -269,7 +293,7 @@ int bind(int sockfd, const struct sockaddr *myaddr, socklen_t addrlen)
   args[0] = sockfd;
   args[1] = (unsigned long)myaddr;
   args[2] = addrlen;
-  result = socketcall(SOCKOP_bind, args);
+  result = socketcall(SYS_BIND, args);
 
   EXIT_CRITICAL;
   return result;
@@ -359,7 +383,7 @@ int connect(int sockfd, const struct sockaddr *saddr, socklen_t addrlen)
   args[0] = sockfd;
   args[1] = (unsigned long)saddr;
   args[2] = addrlen;
-  result = socketcall(SOCKOP_connect, args);
+  result = socketcall(SYS_CONNECT, args);
 
   EXIT_CRITICAL;
   return result;
@@ -482,22 +506,20 @@ int getdents(unsigned int fd, struct dirent *dirp, unsigned int count)
 
   ENTER_CRITICAL;
   MAKE_WRITABLE(dirp);
-  result = __getdents(fd, dirp, count);
+  result = syscall(SYS_getdents, fd, dirp, count);
   EXIT_CRITICAL;
   return result;
 }
 
-int getdirentries(fd, buf, nbytes, basep)
-int fd;
-char *buf;
-size_t nbytes;
-long *basep;
+int __real_getdirentries(int fd, char *buf, size_t nbytes, long *basep);
+
+int __wrap_getdirentries(int fd, char *buf, size_t nbytes, long *basep)
 { int result;
 
   ENTER_CRITICAL;
   MAKE_WRITABLE(buf);
   MAKE_WRITABLE(basep);
-  result = __getdirentries(fd, buf, nbytes, basep);
+  result = __real_getdirentries(fd, buf, nbytes, basep);
   EXIT_CRITICAL;
   return result;
 }
@@ -580,7 +602,7 @@ int getpeername(int sockfd, struct sockaddr *addr, socklen_t *paddrlen)
   args[0] = sockfd;
   args[1] = (unsigned long)addr;
   args[2] = (unsigned long)paddrlen;
-  result = socketcall(SOCKOP_getpeername, args);
+  result = socketcall(SYS_GETPEERNAME, args);
 
   EXIT_CRITICAL;
   return result;
@@ -622,7 +644,7 @@ int getsockname(int sockfd, struct sockaddr *addr, socklen_t *paddrlen)
   args[0] = sockfd;
   args[1] = (unsigned long)addr;
   args[2] = (unsigned long)paddrlen;
-  result = socketcall(SOCKOP_getsockname, args);
+  result = socketcall(SYS_GETSOCKNAME, args);
 
   EXIT_CRITICAL;
   return result;
@@ -642,7 +664,7 @@ int getsockopt(int fd, int level, int optname, void *optval, socklen_t *optlen)
   args[2]=optname;
   args[3]=(unsigned long)optval;
   args[4]=(unsigned long)optlen;
-  result = (socketcall (SOCKOP_getsockopt, args));
+  result = (socketcall (SYS_GETSOCKOPT, args));
 
   EXIT_CRITICAL;
   return result;
@@ -792,15 +814,6 @@ int munlock(addr, len)
   EXIT_CRITICAL;
   return result;
 }
-
-/* Taken from linux/ip.h, but normally only accessible to kernel */
-/* .. not anymore in glibc 2 */
-#ifndef __GLIBC__
-struct ipc_kludge {
-    struct msgbuf *msgp;
-    long msgtyp;
-};
-#endif
 
 #define SEMOP           1
 #define SEMGET          2
@@ -953,7 +966,9 @@ int bufsiz;
   return result;
 }
 
-ssize_t readv(int d, const struct iovec *iov, int count)
+ssize_t __real_readv(int d, const struct iovec *iov, int count);
+
+ssize_t __wrap_readv(int d, const struct iovec *iov, int count)
 { int result;
 
   ENTER_CRITICAL;
@@ -962,7 +977,7 @@ ssize_t readv(int d, const struct iovec *iov, int count)
       MAKE_WRITABLE(iov[i].iov_base);
     }
   }
-  result = __readv(d, iov, count);
+  result = __real_readv(d, iov, count);
   /*****************
   result = syscall(SYS_readv, d, iov, count);
   *****************/
@@ -982,7 +997,7 @@ int recv(int sockfd, void *buffer, size_t len, int flags)
   args[1] = (unsigned long) buffer;
   args[2] = len;
   args[3] = flags;
-  result = (socketcall (SOCKOP_recv, args));
+  result = (socketcall (SYS_RECV, args));
 
   EXIT_CRITICAL;
   return result;
@@ -1005,7 +1020,7 @@ int recvfrom(int sockfd, void *buffer, size_t len, int flags,
   args[3] = flags;
   args[4] = (unsigned long) to;
   args[5] = (unsigned long) tolen;
-  result = (socketcall (SOCKOP_recvfrom, args));
+  result = (socketcall (SYS_RECVFROM, args));
 
   EXIT_CRITICAL;
   return result;
@@ -1038,7 +1053,7 @@ int flags;
   args[0] = sockfd;
   args[1] = (unsigned long) msg;
   args[2] = flags;
-  result = (socketcall (SOCKOP_recvmsg, args));
+  result = (socketcall (SYS_RECVMSG, args));
 
   EXIT_CRITICAL;
   return result;
@@ -1082,11 +1097,36 @@ int select(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
   return result;
 }
 
+#if __GLIBC__ >= 2 && __GLIBC_MINOR__ >= 1
+
+union semun
+{
+  int val;
+  struct semid_ds *buf;
+  unsigned short int *array;
+  struct seminfo *__buf;
+};
+
+int semctl(int semid, int semnum, int cmd, ...)
+{ 
+  va_list ap;
+  union semun arg;
+  int result;
+
+  va_start(ap,cmd);
+  arg = va_arg(ap,union semun);
+  va_end(ap);
+
+#else
+
 int semctl(semid, semnum, cmd, arg)
 int semid, cmd;
 int semnum;
 union semun arg;
-{ int result;
+{ 
+  int result;
+
+#endif
 
   ENTER_CRITICAL;
   switch (cmd) {
@@ -1138,7 +1178,7 @@ int send(int sockfd, const void *buffer, size_t len, int flags)
   args[1] = (unsigned long) buffer;
   args[2] = len;
   args[3] = flags;
-  result = (socketcall (SOCKOP_send, args));
+  result = (socketcall (SYS_SEND, args));
 
   EXIT_CRITICAL;
   return result;
@@ -1168,7 +1208,7 @@ int sendmsg(int sockfd, const struct msghdr *msg, int flags)
   args[0] = sockfd;
   args[1] = (unsigned long) msg;
   args[2] = flags;
-  result = (socketcall (SOCKOP_sendmsg, args));
+  result = (socketcall (SYS_SENDMSG, args));
 
   EXIT_CRITICAL;
   return result;
@@ -1190,7 +1230,7 @@ int sendto(int sockfd, const void *buffer, size_t len, int flags,
   args[3] = flags;
   args[4] = (unsigned long) to;
   args[5] = tolen;
-  result = (socketcall (SOCKOP_sendto, args));
+  result = (socketcall (SYS_SENDTO, args));
 
   EXIT_CRITICAL;
   return result;
@@ -1287,7 +1327,7 @@ socklen_t optlen;
   args[2]=optname;
   args[3]=(unsigned long)optval;
   args[4]=optlen;
-  result = (socketcall (SOCKOP_setsockopt, args));
+  result = (socketcall (SYS_SETSOCKOPT, args));
 
   EXIT_CRITICAL;
   return result;
@@ -1386,7 +1426,7 @@ int sockvec[2];
   args[1] = type;
   args[2] = protocol;
   args[3] = (unsigned long)sockvec;
-  result = socketcall(SOCKOP_socketpair, args);
+  result = socketcall(SYS_SOCKETPAIR, args);
 
   EXIT_CRITICAL;
   return result;
@@ -1507,35 +1547,33 @@ struct ustat *buf;
   return result;
 }
 
-int utimes(file, tvp)
-const char *file;
-struct timeval *tvp;
+int __real_utimes(const char *file, struct timeval *tvp);
+
+int __wrap_utimes(const char *file, struct timeval *tvp)
 { int result;
 
   ENTER_CRITICAL;
   MAKE_READABLE(file);
   MAKE_READABLE(tvp);
-  result = __utimes(file, tvp);
+  result = __real_utimes(file, tvp);
   EXIT_CRITICAL;
   return result;
 }
 
-pid_t wait(status)
-union wait *status;
+pid_t wait(union wait *status)
 {
   return wait3(status, 0, 0);
 }
 
-pid_t wait3(status, options, rusage)
-union wait *status;
-int options;
-struct rusage *rusage;
+pid_t __real_wait3(union wait *status, int options, struct rusage *rusage);
+
+pid_t __wrap_wait3(union wait *status, int options, struct rusage *rusage)
 { int result;
 
   ENTER_CRITICAL;
   MAKE_WRITABLE(status);
   MAKE_WRITABLE(rusage);
-  result = __wait3(status, options, rusage);
+  result = __real_wait3(status, options, rusage);
   EXIT_CRITICAL;
   return result;
 }
