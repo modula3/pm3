@@ -4,7 +4,7 @@
   I cannot see how one can handle multi-lines and comments
   with this Grammar.
   I suggest preprocessing the files with regular expression search&replace.
-  I've made a horrible bash script (extractfortranheader.sh) that fulfills this task.
+  I've made a horrible bash script (f2i3.sh) that fulfills this task.
 *)
 
 COMPILER FortranPrototype
@@ -64,7 +64,7 @@ Procedure
      Declarations<paramInfo>
      TypeComments<paramInfo>
      (.
-       IO.Put("<*EXTERNAL "&ToLower(name)&"*>\n");
+       IO.Put("<*EXTERNAL "&ToLower(name)&"_ *>\n");
        IO.Put("PROCEDURE "&name&" (");
        params := TextList.ReverseD(params);
        VAR
@@ -91,7 +91,7 @@ SubroutineHead<VAR name : TEXT;>
    = "SUBROUTINE" Ident<name> .
 
 FunctionHead<VAR name,rettype : TEXT;>
-   = Type<rettype> "FUNCTION" Ident<name> .
+   = Type<rettype> "FUNCTION" Ident<name>   (. rettype := ": "&rettype .) .
 
 Signature<VAR params : TextList.T>   (. VAR formal:TEXT; .)
    = "("
@@ -170,6 +170,6 @@ ParamMode<VAR writeable:BOOLEAN>
    | "workspace"  (. writeable:=TRUE .)
    .
 
-Ident <VAR t:TEXT;> = id (. t := p.string() .).
+Ident <VAR t:TEXT;> = id (. t := p.string(); IF Text.Equal(t,"TYPE") THEN t:="TY" END .).
 
 END FortranPrototype.
