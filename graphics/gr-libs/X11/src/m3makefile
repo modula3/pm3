@@ -13,8 +13,8 @@ if PLATFORM_SUPPORTS_X
   import("libm3")
   import_X11()
 
-  if equal(TARGET, "ALPHA_OSF")
-    include_dir (TARGET)
+  if equal(TARGET, "ALPHA_OSF") or equal(TARGET, "Tru64v5")
+    include_dir ("ALPHA_OSF")
   else
     include_dir ("Vanilla")
   end

@@ -63,6 +63,8 @@
 /* the names of the lexemes.					*/
 
 #include <ctype.h>
+
+void exit(int);
 	
 #define NUMKEYWORDS (sizeof(aok)/sizeof(struct keywordEntry))
 #define HASHSIZE 200

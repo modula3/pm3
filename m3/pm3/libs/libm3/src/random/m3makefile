@@ -15,6 +15,7 @@ readonly _RandomPieces = {
   "AIX386"     : [ _LittleEndian ],
   "AP3000"     : [ _LittleEndian ],
   "ARM"        : [ _LittleEndian ],
+  "BSDI4"      : [ _LittleEndian ],
   "DS3100"     : [ _LittleEndian ],
   "DS3100_OSF" : [ _LittleEndian ],
   "FBSD_ALPHA" : [ _LittleEndian ],
@@ -40,6 +41,7 @@ readonly _RandomPieces = {
   "SPARC"      : [ _BigEndian ],
   "SUN3"       : [ _BigEndian ],
   "SUN386"     : [ _LittleEndian ],
+  "Tru64v5"    : [ _LittleEndian ],
   "UMAX"       : [ _LittleEndian ],
   "VAX"        : [ _VAX ]
 }

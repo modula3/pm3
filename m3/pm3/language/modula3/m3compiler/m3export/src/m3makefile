@@ -723,10 +723,6 @@ proc BuildRPM() is
   local dir = EXPORT_TMP_ROOT & "/" & "rpm"
   local tmplDir = versionName & "/" & "m3config" & "/" & "src"
 
-  > dir & "/" & "rpmrc" in
-    write("topdir: " & dir,CR)
-  end
-
   % Save the default install root
 
   CheckExec(["cp","-p",EXPORT_TMP_SRC & "/" & tmplDir & "/" & "COMMON",
@@ -758,7 +754,7 @@ proc BuildRPM() is
       EXPORT_TMP_SRC & "/" & tmplDir & "/" & "COMMON"],[],".","restore COMMON")
 
   CheckExec(["rpm","-ba","--buildroot",dir & "/" & "tmp",
-      "--rcfile",dir & "/" & "rpmrc",
+      "--define", "_topdir " & dir,
       versionName & ".spec"], ["/dev/null","rpm.out","rpm.err"],
       dir & "/" & "SPECS", "building rpm failed")
 end
@@ -811,7 +807,8 @@ include("../src/CONFIG")
 
 if defined("PRERELEASE")
   write("Pre release test",CR,CR)
-  CheckExec(["m3build","-DBOOTTARGET=" & TARGET,
+  CheckExec(["m3build","-T","../../../../../m3config/src",
+      "-DBOOTTARGET=" & TARGET,
       "-DCACHE_CROSS_COMPILERS=" & EXPORT_TMP_CROSS_COMPILERS], [], 
       "../../m3bootstrap","build bootstrap failed")
   CheckExec(["mv", "boot-" & TARGET, "Makefile",path_of("../../../../..")], 
@@ -880,7 +877,7 @@ end
 %
 
 if DoStep("buildBootstraps")
-  CheckExec([BIN_USE & SL & "m3build",
+  CheckExec([BIN_USE & SL & "m3build","-T","../../../../../m3config/src",
       "-DCACHE_CROSS_COMPILERS=" & EXPORT_TMP_CROSS_COMPILERS],
       ["", EXPORT_TMP_TMP & "/" & versionName & "/" & "boot.stdout",
       EXPORT_TMP_TMP & "/" & versionName & "/" & "boot.stderr"],

@@ -486,6 +486,10 @@ PROCEDURE FirstDown (v: T; READONLY cd: VBT.MouseRec) =
           END;
           AutoRepeat.Start(v.repeater);
 
+      | VBT.Modifier.Mouse0..VBT.Modifier.Mouse4 =>
+          (* The wheels on scroller mice generate these events.  We
+             ignore them for now. *)
+
       ELSE <* ASSERT FALSE *>
       END;
       VBT.SetCursor(v, Cursors[v.state, v.axis]);

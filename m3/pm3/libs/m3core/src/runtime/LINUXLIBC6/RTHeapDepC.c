@@ -866,7 +866,7 @@ int msgrcv(int msqid, void *msgp, size_t msgsz, long int msgtyp, int msgflg)
   return result;
 }
 
-int msgsnd(int msqid, void *msgp, size_t msgsz, int msgflg)
+int msgsnd(int msqid, const void *msgp, size_t msgsz, int msgflg)
 { int result;
 
   ENTER_CRITICAL;

@@ -10,7 +10,8 @@ import("tcp")
 readonly _JVPieces = {
   "ALPHA_OSF"  : "osf1",
   "DS3100"     : "ultrix",
-  "DS3100_OSF" : "osf1"
+  "DS3100_OSF" : "osf1",
+  "Tru64v5"    : "osf1"
 }
 
 if not defined ("JV_TARGET")  JV_TARGET = TARGET  end

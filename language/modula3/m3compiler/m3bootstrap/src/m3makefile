@@ -204,7 +204,7 @@ readonly proc BootstrapTarget(target) is
     else 
       write("option(\"optimization\",\"T\")",CR)
     end
-    if equal(target,"ALPHA_OSF")
+    if equal(target,"ALPHA_OSF") or equal(target, "Tru64v5")
       % m3cgc1 generates bad code when -g flag is not used
       write("option(\"debuginfo\",\"T\")",CR)
     else	
@@ -289,6 +289,12 @@ readonly proc BootstrapTarget(target) is
     header = header & "CFLAGS=-ieee_with_no_inexact -g3" & CR
     header = header & "LDFLAGS=-ieee_with_no_inexact" & CR
     header = header & "ASFLAGS=-g3" & CR
+  end     
+    
+  if equal(target,"Tru64v5")
+    header = header & "CFLAGS=-ieee_with_no_inexact -g" & CR
+    header = header & "LDFLAGS=-ieee_with_no_inexact" & CR
+    header = header & "ASFLAGS=-g" & CR
   end     
 
   if equal(target,"FreeBSD2")

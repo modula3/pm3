@@ -1,0 +1,263 @@
+
+<TITLE>Why so many problems installing on Solaris?</TITLE>
+<H1>Why so many problems installing on Solaris?</H1>
+
+<P>
+These notes were contributed by (simon.hood@umist.ac.uk) while installing
+PM3-1.1.14 on a Sun Ultra 5 running Solaris 2.8. They describe various
+problems and their solution or workaround.
+
+<P>
+The installation of PM3 on Solaris systems is particularly prone to 
+problems as these systems tend to be an unpredictable (from the point
+of view of the PM3 people) mixture of Sun and Gnu software --- Sun
+do <I>not</I> bundle a C compiler with the operating system.
+</P>
+
+<P>
+My machine has gcc version 2.95.2 installed;  it has Sun's versions
+of <B>make</B>, <B>ld</B>, <B>as</B> and <B>ar</B> installed 
+within <TT>/usr/ccs/bin</TT>;  Gnu's version of these tools are not 
+installed.
+</P>
+<P>
+My installation was successful, after a bit of fiddling around with the
+configuration/template files and environment variables.  Some of the fixes
+are trivial (if you know what you are doing), while others --- for me at
+least --- were not --- I am a Modula 3 novice and far from experienced 
+with Solaris.
+</P>
+<P>
+The issues that arose are:
+<UL>
+<LI>Paths needed to be set to find tools such as <B>make</B>.
+
+<LI>LD_LIBRARY_PATH needed to be set to ensure 
+    libstdc++.a.2.10.0 and/or libstdc++.so.2.10.0 were found.  
+
+<LI>A link needed to be set so that <B>byacc</B> points to <B>yacc</B>.
+
+<LI>The configuration for linking needed to be changed since only the Sun
+    version of <B>ld</B> was installed, not Gnu's.  
+
+<LI>The build of <B>m3gdb</B> failed to build.
+
+<LI>The <B>gnuemacs</B> package failed to build.  
+</UL>
+</P>
+
+<H2>Initial Problems</H2>
+<P>
+<DL>
+<DT>Paths</DT>
+<DD>
+  <B>gcc</B> is usually installed in <TT>/usr/local/bin</TT>;  
+  on a Solaris machine, <B>ar</B>, <B>as</B>, <B>make</B> and <B>ld</B>
+  are all in <TT>/usr/ccs/bin</TT>, by default.  Hence these must both
+  be on <B>root's</B> path (assuming you are installing as <B>root</B>).  
+  Neither were;  I have not changed any paths since installation of
+  Solaris 2.8 on a new machine a few days ago.
+  <BR><BR>
+  This is in addition to <TT>/usr/local/pm3/bin</TT>, as mentioned by 
+  the PM3 installation instructions.
+</DD>
+<BR><BR>
+<DT><TT>byacc/yacc</TT></DT>
+<DD>
+  The build required <B>byacc</B>.  <B>yacc</B> is installed in 
+  <TT>/usr/ccs/bin</TT>;  a soft link:
+  <PRE>
+     lrwxrwxrwx   1 root     other          4 Aug 11 15:45 byacc -> yacc
+  </PRE>
+  solved this problem.  
+</DD>
+<BR><BR>
+<DT>Library Paths</DT>
+<DD>
+  In addition to <TT>/usr/local/pm3/lib/m3</TT> as mentioned by the
+  PM3 installation instructions <B>LD_LIBRARY_PATH</B> must include
+  <TT>/usr/local/lib</TT> so that <B>libstdc++</B> (part of the <B>gcc</B> 
+  distribution) can be found.  
+</DD>
+<BR><BR>
+<DT>CC</DT>
+<DD>
+  In addition I found that the environment variable CC needed to be
+  set to <TT>/usr/local/bin/gcc</TT>.  This is of course mentioned in
+  the PM3 installation instructions.  
+</DD>
+</DL>
+</P>
+
+
+<!---------------------------------------------------------------------------->
+
+
+<H2>Linking Problems</H2>
+<P>
+The two controlling configuration files for the SOLgnu distribution are
+With the configuration files <TT>pm3-1.1.14/m3config/src/COMMON</TT> and
+<TT>pm3-1.1.14/m3config/src/SOLgnu</TT>.  These appear to be set with
+options appropriate to Gnu's <B>ld</B>.  Sun's <B>ld</B> does not understand
+the option <TT>-soname &LT;thing&gt;</TT> and this leads to problems.  
+</P>
+<P>
+Whilst compiling m3core (to obtain libm3core.a and libm3core.so) 
+<PRE>
+   ---------- building m3core in libs ----------
+</PRE>
+the following error message scrolled past (and did not cause the build to 
+stop):
+<PRE>
+     -> archiving libm3core.a
+   /usr/ccs/bin/ld: illegal option -- X
+   /usr/ccs/bin/ld: illegal option -- X
+   ld: fatal: file libm3core.so.1: open failed: No such file or directory
+</PRE>
+As a result the shared object (libm3core.so) is not built which leads to
+<PRE>
+  /usr/local/pm3/lib/m3/pkg/m3core/SOLgnu
+    libm3core.so
+ 
+   m3ship: quake error: quake error: runtime error: install failed with \
+       error code: 1
+ 
+   --procedure--  -line-  -file---
+   error              --  <builtin>
+   install_file       51  /export/home/simonh/__download/_m3/pm3-1.1.14/src/ \
+       ../m3config/src/SOLgnu
+   224 /export/home/simonh/__download/_m3/pm3-1.1.14/libs/m3core/SOLgnu/.M3SHIP
+</PRE>
+I made the following changes.  To <TT>pm3-1.1.14/m3config/COMMON</TT>,
+within the procedure <TT>m3_make_shared_lib</TT>:
+<PRE>
+    %local cmd = [MAKESHLIB_CMD, "-o", lib_so, SONAME_OPTION, lib_sox, objects]
+    local cmd = [MAKESHLIB_CMD, "-o", lib_so, objects]
+</PRE>
+(This stops the <TT>-soname &LT;thing&GT;</TT> option being sent to the linker.)
+
+And to <TT>pm3-1.1.14/m3config/SOLgnu</TT>:
+<PRE>
+    %VERBOSE = ""
+    VERBOSE = "T"
+</PRE>
+(to try to force the build to tell us more of what its actually doing --- the
+commands it issues)
+and
+<PRE>
+    %MAKESHLIB = [ "/usr/ccs/bin/ld", "-dy", "-G", "-z", "text" ]
+    MAKESHLIB = ["gcc","-shared"]  % Shared library builder
+</PRE>
+which means that <B>gcc</B> is called to do the linking (it in turn calls
+<TT>/usr/ccs/bin/ld</TT>).  
+</P>
+
+<P>
+The above changes cured the problems I encountered with the build of the 
+Modula 3 system itself.  In addition two packages --- <B>gnuemacs</B> 
+and <B>m3gdb</B> --- failed to build.  I have not yet forced them to 
+build successfully.  Details below.
+</P>
+
+<H2>The gnuemacs package</H2>
+
+<P>
+This package would not build.
+The error message is given below.  The package requires that Gnu Emacs is
+installed on the system.  Since it is not installed on all systems a flag
+is available within <TT>pm3-1.1.14/src/m3makefile</TT><TT>...</TT>simply define it (to
+anything):
+<PRE>
+      SKIP_GNUEMACS="T"
+</PRE>
+and this package will be skipped.  (Gnu Emacs *is* on my system, installed
+under <TT>/usr/local</TT>;  I have not yet been able to build this package.)
+</P>
+
+
+<P>
+<PRE>
+---------- building gnuemacs in language/modula3/m3tools ----------
+
+/export/home/simonh/__download/_m3/pm3-1.1.14/src/../boot-SOLgnu/m3build/SOLgnu/m3build -T /export/home/simonh/__download/_m3/pm3-1.1.14/src/../m3config/src -F /export/home/simonh/__download/_m3/pm3-1.1.14/src/../SOLgnu/config.tmpl
+--- building in SOLgnu ---
+emacs -batch -f batch-byte-compile m3tags.el
+
+m3build: quake error: quake error: runtime error: exec failed: errno=22 *** emacs
+
+--procedure--  -line-  -file---
+exec               --  <builtin>
+emacs_compile     357  /export/home/simonh/__download/_m3/pm3-1.1.14/m3config/src/COMMON
+CompiledGnuemacs      --  <builtin>
+                   26  /export/home/simonh/__download/_m3/pm3-1.1.14/language/modula3/m3tools/gnuemacs/src/m3makefile
+
+
+m3build: quake error: quake error: runtime error: m3build failed with error code: 1
+
+--procedure--  -line-  -file---
+error              --  <builtin>
+BuildChunk        169  /export/home/simonh/__download/_m3/pm3-1.1.14/src/m3makefile
+PkgInfo           248  /export/home/simonh/__download/_m3/pm3-1.1.14/src/m3makefile
+                  455  /export/home/simonh/__download/_m3/pm3-1.1.14/src/PACKAGES
+
+*** Error code 1
+make: Fatal error: Command failed for target `packages'
+</PRE>
+</P>
+
+<H2>The m3gdb package</H2>
+
+<P>
+This package would not build.  The error message is given below.  
+A comment in <TT>pm3-1.1.14/src/m3makefile</TT> indicates that there have been
+problems building this package on other platforms;  a flag is available within
+this makefile<TT>...</TT>simply define it (to anything): 
+<PRE>
+      SKIP_M3GDB="T"
+</PRE>
+and this package will be skipped.
+</P>
+
+<P>
+<PRE>
+
+In file included from /usr/include/sys/old_procfs.h:32,
+                 from /usr/include/sys/procfs.h:29,
+                 from ../../gdb/gdb/sparc-tdep.c:33:
+/usr/include/sys/procfs_isa.h:57: conflicting types for `prgregset_t'
+/usr/include/sys/regset.h:107: previous declaration of `prgregset_t'
+/usr/include/sys/procfs_isa.h:165: conflicting types for `prfpregset_t'
+/usr/include/sys/regset.h:277: previous declaration of `prfpregset_t'
+*** Error code 1
+make: Fatal error: Command failed for target `sparc-tdep.o'
+Current working directory /export/home/simonh/__download/_m3/pm3-1.1.14/language/modula3/m3tools/m3gdb/SOLgnu/gdb
+*** Error code 1
+make: Fatal error: Command failed for target `all-gdb'
+Current working directory /export/home/simonh/__download/_m3/pm3-1.1.14/language/modula3/m3tools/m3gdb/SOLgnu
+--- building in SOLgnu ---
+
+m3build: quake error: quake error: runtime error: Failed to build m3gdb
+
+--procedure--  -line-  -file---
+error              --  <builtin>
+                   60  /export/home/simonh/__download/_m3/pm3-1.1.14/language/modula3/m3tools/m3gdb/src/m3makefile
+
+
+m3build: quake error: quake error: runtime error: m3build failed with error code: 1
+
+--procedure--  -line-  -file---
+error              --  <builtin>
+BuildChunk        169  /export/home/simonh/__download/_m3/pm3-1.1.14/src/m3makefile
+PkgInfo           248  /export/home/simonh/__download/_m3/pm3-1.1.14/src/m3makefile
+                  150  /export/home/simonh/__download/_m3/pm3-1.1.14/src/PACKAGES
+
+*** Error code 1
+make: Fatal error: Command failed for target `packages'
+
+
+</PRE>
+</P>
+
+
+Hope this helps!  2000 August 16, ISD, UMIST, England.
+
