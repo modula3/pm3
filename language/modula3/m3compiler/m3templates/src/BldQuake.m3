@@ -1353,7 +1353,7 @@ PROCEDURE GenM3Exports(t: T; x: TEXT; type: GenType) RAISES {Error}=
           EVAL t.other_libs.get(M3ID.Add(l), u);
           IF u.local THEN
             Wr.PutText(wr, "_import_otherlib(\"" & Escape(l) & "\", \"" & 
-              Escape(u.loc) & "\", IMPORTED)" & t.CR);
+              Escape(u.loc) & "\", \"IMPORTED\")" & t.CR);
           END;
         END;
       END;
