@@ -8,7 +8,6 @@ TYPE
   DelFileProc = PROCEDURE (t: BldQuake.T; x: TEXT);
   LinkFileProc = PROCEDURE (t: BldQuake.T; from, to: TEXT);
   MakeExecProc = PROCEDURE (t: BldQuake.T; script: TEXT);
-  MakeDirProc = PROCEDURE (t: BldQuake.T; dir: TEXT) RAISES {Quake.Error};
 
 REVEAL
   BldQuake.T <: Private;
@@ -79,7 +78,6 @@ TYPE
     delete_file     :  DelFileProc;
     link_file       :  LinkFileProc;
     make_executable :  MakeExecProc;
-    make_dir        :  MakeDirProc;
     path_of_path    := "";
     path_of_base    := "";
     pkg_subdir_path := "";

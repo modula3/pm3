@@ -29,15 +29,6 @@ PROCEDURE MakeExec(<* UNUSED *> t: BldQuake.T; script: TEXT)=
     EVAL Utils.Execute("chmod", args, NIL, TRUE); <* NOWARN *>
   END MakeExec;
 
-PROCEDURE MakeDir(t: BldQuake.T; dir: TEXT) RAISES {Quake.Error} =
-  VAR args := Arg.NewList(); val: QValue.T;
-  BEGIN
-    IF t.get(M3ID.Add("_quiet"), val) THEN
-      Wr.PutText(t.cur_wr(), "m3mkdir" & dir & t.CR) END; <* NOWARN *>
-    Arg.Append(args, dir);
-    EVAL Utils.Execute(t.LIB_USE & "/m3mkdir", args, NIL, TRUE); <* NOWARN *>
-  END MakeDir;
-
 BEGIN
 
 END BldPosix.

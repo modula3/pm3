@@ -2866,9 +2866,29 @@ PROCEDURE DoMakeDir(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
     <* ASSERT n_args = 1 *>
     t.pop(arg);
     WITH t = NARROW(t, T) DO
-      t.make_dir(t, QVal.ToText(t, arg));
+      MakeDir(t, QVal.ToText(t, arg));
     END;
   END DoMakeDir;
+
+PROCEDURE MakeDir(t: BldQuake.T; dir: TEXT) RAISES {Quake.Error} =
+  VAR
+    val: QValue.T;
+    dirs := NEW(TextSeq.T).init();
+  BEGIN
+    IF t.get(M3ID.Add("_quiet"), val) THEN
+      Wr.PutText(t.cur_wr(), "m3mkdir" & dir & t.CR) END; <* NOWARN *>
+    LOOP
+      TRY
+        EVAL FS.Status(dir);
+        EXIT;
+      EXCEPT
+      | OSError.E =>
+        dirs.addlo(dir);
+        dir := Pathname.Prefix(dir);
+      END;
+    END;
+    FOR i := 0 TO dirs.size() - 1 DO FS.CreateDirectory(dirs.get(i)); END;
+  END MakeDir;
 
 PROCEDURE CopyIfNew (<* UNUSED *> t: T; src, dest: TEXT) RAISES {Error} =
   VAR equal:= FALSE;
@@ -3210,7 +3230,6 @@ PROCEDURE Setup(t: T) RAISES {Error}=
       t.delete_file := BldPosix.DelFile;
       t.link_file := BldPosix.LinkFile;
       t.make_executable := BldPosix.MakeExec;
-      t.make_dir := BldPosix.MakeDir;
       t.CR := BldPosix.CR;
       t.SL := BldPosix.SL;
       t.CRship := BldPosix.CRship;
@@ -3220,7 +3239,6 @@ PROCEDURE Setup(t: T) RAISES {Error}=
       t.delete_file := BldWin32.DelFile;
       t.link_file   := BldWin32.LinkFile;
       t.make_executable := BldWin32.MakeExec;
-      t.make_dir    := BldWin32.MakeDir;
       t.CR          := BldWin32.CR;
       t.SL          := BldWin32.SL;
       t.CRship      := BldWin32.CRship;

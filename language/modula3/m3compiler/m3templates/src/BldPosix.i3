@@ -12,6 +12,5 @@ CONST
 PROCEDURE DelFile(t: BldQuake.T; x: TEXT);
 PROCEDURE LinkFile(t: BldQuake.T; from, to: TEXT);
 PROCEDURE MakeExec(t: BldQuake.T; script: TEXT);
-PROCEDURE MakeDir(t: BldQuake.T; dir: TEXT) RAISES {Quake.Error};
 
 END BldPosix.
