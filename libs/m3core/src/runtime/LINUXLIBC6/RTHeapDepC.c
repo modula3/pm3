@@ -1377,7 +1377,7 @@ int sigaction(int signum, const struct sigaction *act,
   ENTER_CRITICAL;
   if(oldact != NULL) MAKE_WRITABLE(oldact);
   MAKE_READABLE(act);
-  result = syscall(SYS_sigaction, signum, act, oldact);
+  result = __sigaction(signum, act, oldact);
   EXIT_CRITICAL;
   return result;
 }

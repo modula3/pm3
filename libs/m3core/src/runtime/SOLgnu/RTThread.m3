@@ -79,7 +79,7 @@ PROCEDURE UpdateFrameForNewSP (a: ADDRESS; <*UNUSED*> offset: INTEGER) =
 (*------------------------------------ manipulating the SIGVTALRM handler ---*)
 
 VAR
-  ThreadSwitchSignal: Uucontext.sigset_t;
+  ThreadSwitchSignal: Usignal.sigset_t;
 
 PROCEDURE setup_sigvtalrm (handler: Usignal.SignalHandler) =
   VAR sv, osv: Usignal.struct_sigaction;  i: INTEGER;
