@@ -74,6 +74,7 @@ PROCEDURE Init (t: T; wr: Wr.T; package: TEXT; package_dir: Pathname.T;
     t.pkg_dirs := NEW(IntMapTbl.Default).init(10);
     t.compile_objects := NEW(QVSeq.T).init();
     t.m3libs := NEW(IntM3LibsTbl.Default).init();
+    t.m3libs_x := NEW(TextSeq.T).init();
     t.other_libs := NEW(IntM3LibsTbl.Default).init();
     t.other_libs_x := NEW(TextSeq.T).init();
     t.interface_sources := NEW(IntM3LibsTbl.Default).init();
@@ -343,16 +344,12 @@ PROCEDURE Do_ImportM3Lib(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
   END Do_ImportM3Lib;
 
 PROCEDURE U_ImportM3Lib(t: T; x, pkg, subdir: TEXT) =
-  VAR name: M3Path.T; id := M3ID.Add(x);
+  VAR id := M3ID.Add(x);
   BEGIN
-    M3Driver.PushPath(Pkg(t, pkg) & t.SL & subdir);
-    name.dir  := NIL;
-    name.base := x;
-    name.kind := NK.A;
-    M3Driver.AddLibrary (NIL, name);
     EVAL t.m3libs.put(id, NEW(M3Libs.T, loc := Location(t, pkg, subdir), 
                               hidden := HIDDEN, 
                               local := IMPORTED));
+    t.m3libs_x.addlo(x);
   END U_ImportM3Lib;
 
 PROCEDURE Do_ImportOtherLib(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
@@ -368,14 +365,9 @@ PROCEDURE Do_ImportOtherLib(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
 
 
 PROCEDURE U_ImportOtherLib(t: T; x: TEXT; pn: TEXT; l: BOOLEAN)=
-  VAR id := M3ID.Add(x); lib: M3Libs.T; name: M3Path.T;
+  VAR id := M3ID.Add(x); lib: M3Libs.T;
   BEGIN
     IF NOT t.other_libs.get(id, lib) THEN
-      M3Driver.PushPath(pn);
-      name.dir := NIL;
-      name.base := x;
-      name.kind := NK.A;
-      M3Driver.AddLibrary (NIL, name);
       EVAL t.other_libs.put(id, NEW(M3Libs.T, 
                                     loc := Location(t, NOT_A_PACKAGE_TEXT, 
                                                     pn), 
@@ -1831,6 +1823,8 @@ PROCEDURE M3 (t: T;  opt: TEXT) RAISES {Error} =
     ov           : TEXT;
     iterator     : IntTextTbl.Iterator;
     interface    : BldFace.T;
+    name         : M3Path.T;
+    lib          : M3Libs.T;
   BEGIN
     BldHooks.BeforeDoM3Hooks(t);
     GenerateTFile(t);
@@ -1839,6 +1833,27 @@ PROCEDURE M3 (t: T;  opt: TEXT) RAISES {Error} =
       M3Driver.ResetASTCache();
     END;
 
+    (* join the m3 libraries and the other libraries *)
+    name.dir := NIL;
+    name.kind := NK.A;
+    FOR i := 0 TO t.m3libs_x.size() - 1 DO
+      name.base := t.m3libs_x.get(i);
+      IF t.m3libs.get(M3ID.Add(name.base), lib) THEN
+        M3Driver.PushPath(lib.loc);
+        M3Driver.AddLibrary(NIL, name);
+      ELSE
+        RAISE Error("m3libs_x and m3libs are incoherent!");
+      END;
+    END;
+    FOR i := 0 TO t.other_libs_x.size() - 1 DO
+      name.base := t.other_libs_x.get(i);
+      IF t.other_libs.get(M3ID.Add(name.base), lib) THEN
+        M3Driver.PushPath(lib.loc);
+        M3Driver.AddLibrary(NIL, name);
+      ELSE
+        RAISE Error("other_libs_x and other_libs are incoherent!");
+      END;
+    END;
     (* pack the arguments into a single string *)
     buf   := M3Buf.New ();
     IF t.get(M3ID.Add("KEEP_CACHE"), arg) THEN
