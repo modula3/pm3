@@ -868,7 +868,7 @@ PROCEDURE PopInclude (t: T) =
 
 VAR (*READONLY*)
   init_done := FALSE;
-  Builtins  : ARRAY [0..16] OF QValue.Binding;
+  Builtins  : ARRAY [0..17] OF QValue.Binding;
 
 PROCEDURE InitBuiltins () =
   BEGIN
@@ -892,6 +892,7 @@ PROCEDURE InitBuiltins () =
     Builtins [14] := NewBuiltin ("unlink_file", DoUnlink,    1, TRUE);
     Builtins [15] := NewBuiltin ("write",       DoWrite,    -1, FALSE);
     Builtins [16] := NewBuiltin ("TRACE_INSTR", DoTrace,     0, FALSE);
+    Builtins [17] := NewBuiltin ("lookup",      DoLookUp,    2, TRUE);
 
   END InitBuiltins;
 
@@ -1410,6 +1411,20 @@ PROCEDURE DoTrace (t: T;  n_args: INTEGER) =
     <*ASSERT n_args = 0*>
     t.tracing := NOT t.tracing;
   END DoTrace;
+
+PROCEDURE DoLookUp (t: T; n_args: INTEGER) RAISES {Error} = 
+  VAR name, default: QValue.T; binding: QValue.Binding;
+  BEGIN
+    <* ASSERT n_args = 2 *>
+    t.pop(default);
+    t.pop(name);
+    binding := t.lookup(name.int);
+    IF binding = NIL THEN
+      t.push(default);
+    ELSE
+      t.push(binding.value);
+    END;
+  END DoLookUp;
 
 (*-------------------------------------------------------- memory buffers ---*)
 (* We don't use TRY/FINALLY or worry about buffers that aren't freed.
