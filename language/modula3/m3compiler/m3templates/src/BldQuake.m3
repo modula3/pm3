@@ -1565,7 +1565,7 @@ PROCEDURE Library(t: T; x: TEXT) RAISES {Error}=
       InstallSources(t);
     END;
     Deriveds(t, "", Exts{lib, libmx, M3WEB, M3TFILE});
-    EVAL BldHooks.NoteShlib(t, lib);
+    EVAL BldHooks.NoteShlib(t, x);
   END Library;
 
 PROCEDURE DoLibrary(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
