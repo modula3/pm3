@@ -2,11 +2,12 @@
 /* All rights reserved. */
 /* See the file COPYRIGHT for a full description. */
 
-/* Last modified on Fri Jun 21 12:45:49 PDT 1996 by heydon */
+/* Last modified on Wed Jun 11 12:45:49 EST 1997 by dagenais */
+/*      modified on Fri Jun 21 12:45:49 PDT 1996 by heydon */
 /*      modified on Thu Jun 29 09:42:09 PDT 1995 by kalsow */
 /*      modified on Tue Feb  2 11:15:57 PST 1993 by jdd */
 
-/* This is RTHeapDepC.c for Linux. */
+/* This is RTHeapDepC.c for Linux. (dagenais@vlsi.polymtl.ca) */
 
 /* This file implements wrappers for almost all Linux system calls
    that take pointers as arguments.  These wrappers allow the system

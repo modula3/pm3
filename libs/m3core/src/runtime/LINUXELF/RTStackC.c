@@ -2,6 +2,8 @@
 #include <signal.h>
 #include <setjmp.h>
 
+/* This is a partial stack walker for LINUXELF (dagenais@vlsi.polymtl.ca) */
+
 /* TYPE Frame = RECORD pc, sp, fp: ADDRESS END; */
 
 /* Local variables are referred to as an offset from the FP.
