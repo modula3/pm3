@@ -4,6 +4,6 @@
 
 /* Last modified on Wed May  5 20:55:11 PDT 1993 by mjordan                  */
 
-Module(M3PathTool)
-Module(M3ToolFrame)
+Module("M3PathTool")
+Module("M3ToolFrame")
 

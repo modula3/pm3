@@ -34,7 +34,7 @@ readonly EXCEPTION_IMPL = {
   "VAX"        : "ex_frame"
 }
 
-include_dir(common)
+include_dir("common")
 include_dir(OS_TYPE)
 include_dir(TARGET)
 include_dir(EXCEPTION_IMPL{TARGET})

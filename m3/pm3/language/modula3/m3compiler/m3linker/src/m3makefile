@@ -6,22 +6,22 @@
 % Last modified on Wed Aug  3 13:58:41 PDT 1994 by kalsow
 %      modified on Wed May 26 11:51:10 PDT 1993 by muller
 
-import (libm3)
-import (m3middle)
+import ("libm3")
+import ("m3middle")
 
-Module (Mx)
-Module (MxIn)
-Module (MxOut)
-Module (MxMerge)
-Module (MxCheck)
-Module (MxGen)
-Module (MxVS)
+Module ("Mx")
+Module ("MxIn")
+Module ("MxOut")
+Module ("MxMerge")
+Module ("MxCheck")
+Module ("MxGen")
+Module ("MxVS")
 
-module (MxRep)
-module (MxMap)
-module (MxSet)
-module (MxVSSet)
-module (MxIO)
+module ("MxRep")
+module ("MxMap")
+module ("MxSet")
+module ("MxVSSet")
+module ("MxIO")
 
-Library (m3link)
+Library ("m3link")
 

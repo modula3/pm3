@@ -9,15 +9,15 @@ if AT_SRC m3_option("-O") end
 remove_m3_option("-w1")
 m3_option("-w2")
 
-import(mgkit)
-import(synloc)
-import(obliqrt)
-import(obliqlibui)
+import("mgkit")
+import("synloc")
+import("obliqrt")
+import("obliqlibui")
 
-Module (ObLibAnim)
+Module ("ObLibAnim")
 
-Library(obliqlibanim)
+Library("obliqlibanim")
 
-/* ManPage(obliqlibm3,?) */
+/* ManPage("obliqlibm3", ?) */
 
 

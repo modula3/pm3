@@ -4,14 +4,14 @@
 %
 % Last modified on Sun Sep 24 12:52:20 PDT 1995 by mhb      
 
-resource 	(emptyimage.pbm)
-resource 	(errorimage.pbm)
-resource 	(filledbullet.pbm)
-resource 	(hollowbullet.pbm)
+resource 	("emptyimage.pbm")
+resource 	("errorimage.pbm")
+resource 	("filledbullet.pbm")
+resource 	("hollowbullet.pbm")
 
-resource 	(expandArrow.pbm)
-resource 	(expandOnArrow.pbm)
-resource 	(contractArrow.pbm)
-resource 	(contractOnArrow.pbm)
+resource 	("expandArrow.pbm")
+resource 	("expandOnArrow.pbm")
+resource 	("contractArrow.pbm")
+resource 	("contractOnArrow.pbm")
 
-bundle		(ResourceBundle)
+bundle		("ResourceBundle")

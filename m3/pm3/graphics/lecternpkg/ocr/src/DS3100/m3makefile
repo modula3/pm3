@@ -22,4 +22,4 @@ import_lib("lmf", "/usr/lib")
 import_lib("i",   "/usr/lib")
 import_lib("chf", "/usr/lib")
 
-Library(ocr)
+Library("ocr")

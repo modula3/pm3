@@ -4,17 +4,17 @@
 
 /* Last modified on Wed May  5 20:53:46 PDT 1993 by mjordan                  */
 
-Interface(M3Error)
-Interface(M3Context)
-Interface(M3CUnit)
-Interface(M3CUnitRep)
-Interface(M3ErrorStream)
-Interface(M3ContextRemove)
-Interface(M3Conventions)
+Interface("M3Error")
+Interface("M3Context")
+Interface("M3CUnit")
+Interface("M3CUnitRep")
+Interface("M3ErrorStream")
+Interface("M3ContextRemove")
+Interface("M3Conventions")
 
-implementation(M3Error)
-implementation(M3Context)
-implementation(M3CUnit)
-implementation(M3ContextRemove)
-implementation(M3Conventions)
+implementation("M3Error")
+implementation("M3Context")
+implementation("M3CUnit")
+implementation("M3ContextRemove")
+implementation("M3Conventions")
 

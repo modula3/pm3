@@ -9,14 +9,14 @@ if AT_SRC m3_option("-O") end
 remove_m3_option("-w1")
 m3_option("-w2")
 
-import(synloc)
-import(obliqrt)
+import("synloc")
+import("obliqrt")
 
-Module (ObPrintTree)
-Module (ObPrintValue)
-Module (ObliqPrinter)
+Module ("ObPrintTree")
+Module ("ObPrintValue")
+Module ("ObliqPrinter")
 
-Library(obliqprint)
+Library("obliqprint")
 
-/* ManPage(obliqprint,?) */
+/* ManPage("obliqprint", ?) */
 

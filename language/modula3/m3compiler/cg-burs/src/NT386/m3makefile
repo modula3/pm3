@@ -46,6 +46,6 @@ foreach i in [".md", "md", "md.brg", "reduce1", "reduce2", "reduce3",
   deriveds(i, [""])
 end
 
-noweb_interface (MD,"interface",MD)
-derived_implementation(MD)
-derived_c(burm)
+noweb_interface ("MD", "interface", "MD")
+derived_implementation("MD")
+derived_c("burm")

@@ -10,14 +10,14 @@ m3_option ("-times")
 % m3_option ("-X0@-times@")
 % m3_option ("-X0@-NoChecks@")
 
-import (libm3)
+import ("libm3")
 
-Module (M3Token)
-Module (M3Scanner)
-Module (M3ID)
+Module ("M3Token")
+Module ("M3Scanner")
+Module ("M3ID")
 
-Library (m3tools)
-% implementation (Main)
-% program (scan)
+Library ("m3tools")
+% implementation ("Main")
+% program ("scan")
 
 

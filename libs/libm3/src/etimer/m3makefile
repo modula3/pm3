@@ -5,4 +5,4 @@
 % Last modified on Sun Jun 20 21:10:24 PDT 1993 by harrison
 %      modified on Mon Jun 22 18:22:35 PDT 1992 by muller
 
-Module (ETimer)
+Module ("ETimer")

@@ -4,15 +4,15 @@
 %
 % Last modified on Thu Aug 22 09:50:58 PDT 1996 by mhb      
 
-import		(formsvbt)
-import		(webvbt)
+import		("formsvbt")
+import		("webvbt")
 
-resource	(ui.fv)
-bundle		(UIBundle)
-implementation	(Main)
+resource	("ui.fv")
+bundle		("UIBundle")
+implementation	("Main")
 
-ManPage		(WebScape,1)
-Program		(WebScape)
+ManPage		("WebScape", 1)
+Program		("WebScape")
 
 
 

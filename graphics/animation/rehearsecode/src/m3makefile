@@ -4,10 +4,10 @@
 /*                                                                           */
 /* Last modified on Wed Dec 22 14:48:47 PST 1993 by mhb                      */
 
-import         (codeview)
+import         ("codeview")
 
-resource       (RehearseCode.fv)
-implementation (RehearseCode)
-bundle         (RehearseCodeBundle)
-ManPage        (RehearseCode,1)
-Program        (RehearseCode)
+resource       ("RehearseCode.fv")
+implementation ("RehearseCode")
+bundle         ("RehearseCodeBundle")
+ManPage        ("RehearseCode", 1)
+Program        ("RehearseCode")

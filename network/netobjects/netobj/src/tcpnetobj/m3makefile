@@ -6,7 +6,7 @@
 % Last modified on Mon Dec 20 14:12:17 PST 1993 by kalsow
 %      modified on Thu May  6 15:26:34 PDT 1993 by wobber
 
-Module(TCPNetObj)
-module(HeaderOps)
-interface(TCPTransport)
+Module("TCPNetObj")
+module("HeaderOps")
+interface("TCPTransport")
 

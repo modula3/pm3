@@ -28,11 +28,11 @@ proc make_script (x) is
   return object_file
 end
 
-BindExport (make_script (m3build))
-BindExport (make_script (m3ship))
-BindExport (make_script (m3where))
-LibdExport (make_script (m3mkdir))
+BindExport (make_script ("m3build"))
+BindExport (make_script ("m3ship"))
+BindExport (make_script ("m3where"))
+LibdExport (make_script ("m3mkdir"))
 
-ManPage (m3build,1)
-ManPage (m3ship,1)
-ManPage (m3where,1)
+ManPage ("m3build", 1)
+ManPage ("m3ship", 1)
+ManPage ("m3where", 1)

@@ -5,12 +5,12 @@
 % Last modified on Tue Nov  1 09:48:34 PST 1994 by kalsow 
 %      modified on Fri Oct 14 16:45:14 PDT 1994 by detlefs
 
-interface(M3QualNames)
-interface(M3GTool)
-interface(M3CImportASTrans)
-interface(M3ExpandCalls)
+interface("M3QualNames")
+interface("M3GTool")
+interface("M3CImportASTrans")
+interface("M3ExpandCalls")
 
-implementation(M3QualNames)
-implementation(M3GTool)
-implementation(M3CImportASTrans)
-implementation(M3ExpandCalls)
+implementation("M3QualNames")
+implementation("M3GTool")
+implementation("M3CImportASTrans")
+implementation("M3ExpandCalls")

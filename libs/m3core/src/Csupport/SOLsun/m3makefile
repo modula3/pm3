@@ -4,6 +4,6 @@
 
 % Last modified on Mon Feb 10 16:54:48 PST 1992 by muller
 
-c_source (dtoa)
-h_source (float)
+c_source ("dtoa")
+h_source ("float")
 

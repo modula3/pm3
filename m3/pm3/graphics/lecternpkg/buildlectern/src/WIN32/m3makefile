@@ -4,5 +4,5 @@
 %
 % Last modified on Thu May 16 16:27:02 PDT 1996 by mcjones
 
-implementation(OSUtilsWin32)
+implementation("OSUtilsWin32")
 

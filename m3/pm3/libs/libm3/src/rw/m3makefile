@@ -5,5 +5,5 @@
 % Last modified on Tue Nov  1 09:07:25 PST 1994 by kalsow 
 %      modified on Tue May  4 10:25:02 PDT 1993 by mjordan
 
-include_dir(Common)
+include_dir("Common")
 include_dir(OS_TYPE)

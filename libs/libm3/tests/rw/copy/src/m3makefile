@@ -4,6 +4,6 @@
 %
 % Last modified on Tue Nov  1 09:04:13 PST 1994 by kalsow 
 
-import(libm3)
-implementation(Pump)
-program(Pump)
+import("libm3")
+implementation("Pump")
+program("Pump")

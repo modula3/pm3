@@ -9,9 +9,9 @@
 % are implemented on the OKI
 % signal.o is taken from /usr/ucblib/libucb.a
 
-pgm_source (signal.o)
+pgm_source ("signal.o")
 
-Interface (Csetjmp)
-Interface (Cstdio)
-Interface (Cstring)
+Interface ("Csetjmp")
+Interface ("Cstdio")
+Interface ("Cstring")
 

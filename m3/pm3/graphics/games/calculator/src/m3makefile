@@ -5,10 +5,10 @@
 /* Last modified on Wed Dec 22 15:50:13 PST 1993 by mhb     */
 /*      modified on Tue Jun 16 18:26:52 PDT 1992 by muller  */
 
-import         (formsvbt)
+import         ("formsvbt")
 
-ManPage        (Calculator,1)
-resource       (Calculator.fv)
-bundle         (CalculatorBundle)
-implementation (Calculator)
-Program        (Calculator)
+ManPage        ("Calculator",1)
+resource       ("Calculator.fv")
+bundle         ("CalculatorBundle")
+implementation ("Calculator")
+Program        ("Calculator")

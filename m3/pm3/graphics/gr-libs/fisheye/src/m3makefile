@@ -4,27 +4,27 @@
 /* Last modified on Tue May 17 21:13:51 PDT 1994 by mhb                      */
 /*      modified on Tue Jun 16 18:28:35 PDT 1992 by muller                   */
 
-import (formsvbt)
+import ("formsvbt")
 
-ManPage (fisheye,1)
+ManPage ("fisheye", 1)
 
 include_dir ("../src/fisheye.resources")
 include_dir ("../src/fisheye.datafiles")
 
-bundle (FisheyeBundle)
+bundle ("FisheyeBundle")
 
-module (CreatePixmap)
-module (GraphData)
-module (GraphVBT)
-module (ColorTools)
-module (RealInterval)
-module (RealPoint)
-module (RealRect)
-module (UnFmt)
-module (PrintUtil)
-module (SortedHashTable)
-module (SortedIndexTable)
-implementation (Fisheye)
+module ("CreatePixmap")
+module ("GraphData")
+module ("GraphVBT")
+module ("ColorTools")
+module ("RealInterval")
+module ("RealPoint")
+module ("RealRect")
+module ("UnFmt")
+module ("PrintUtil")
+module ("SortedHashTable")
+module ("SortedIndexTable")
+implementation ("Fisheye")
 
-Program (fisheye)
+Program ("fisheye")
 

@@ -5,8 +5,8 @@
 % Last modified on Tue Mar 22 13:58:09 PST 1994 by kalsow
 
 if defined ("M3CG_HOST") and defined ("M3CG_TARGET")
-  import_version (libm3, M3CG_HOST)
-  import_version (m3cg, M3CG_HOST)
+  import_version ("libm3", M3CG_HOST)
+  import_version ("m3cg", M3CG_HOST)
 
   %----------------------------------------------- machine independent code ---
   if defined("_all") and stale("pp", path_of("pp.icn"))
@@ -14,35 +14,35 @@ if defined ("M3CG_HOST") and defined ("M3CG_TARGET")
   end
   deriveds("pp", no_extension)
 
-  noweb_interface (TreeIR,"interface",TreeIR)
-  noweb_implementation (TreeIR,"implementation",TreeIR)
+  noweb_interface ("TreeIR", "interface", "TreeIR")
+  noweb_implementation ("TreeIR", "implementation", "TreeIR")
 
-  noweb_interface (MI,"interface",MI)
-  noweb_implementation (MI,"implementation",MI)
+  noweb_interface ("MI", "interface", "MI")
+  noweb_implementation ("MI", "implementation", "MI")
 
-  noweb_interface (Burm,"interface",Burm)
-  noweb_implementation (Burm,"implementation",Burm)
+  noweb_interface ("Burm", "interface", "Burm")
+  noweb_implementation ("Burm", "implementation", "Burm")
 
-  noweb_interface (Register,"interface",Register)
-  noweb_implementation (Register,"implementation",Register)
+  noweb_interface ("Register", "interface", "Register")
+  noweb_implementation ("Register", "implementation", "Register")
 
-  interface (M3CG_Burs)
-  export_interface (M3CG_Burs)
-  module (Fmt2)
+  interface ("M3CG_Burs")
+  export_interface ("M3CG_Burs")
+  module ("Fmt2")
 
   %------------------------------------------------- machine dependent code ---
   include_dir (M3CG_TARGET)
 
   %---------------------------------------------------- library vs. program ---
   if defined ("ANT")
-    % module (RTObject)
-    implementation (Main)
-    program (cg)
+    % module ("RTObject")
+    implementation ("Main")
+    program ("cg")
   else
-    % source (RTObject.i3)
-    % source (RTObject.m3)
-    source (Main.m3)
-    library (cg)
+    % source ("RTObject.i3")
+    % source ("RTObject.m3")
+    source ("Main.m3")
+    library ("cg")
   end
 
 else

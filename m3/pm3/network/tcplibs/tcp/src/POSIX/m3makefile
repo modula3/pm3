@@ -3,16 +3,16 @@
 /* Distributed only by permission. */
 /* Last modified on Thu Feb  9 15:55:57 PST 1995 by wobber     */
 
-Interface(TCPPosix)
-interface(Herrno)
-implementation(IP)
-implementation(TCP)
-interface(TCPHack)
+Interface("TCPPosix")
+interface("Herrno")
+implementation("IP")
+implementation("TCP")
+interface("TCPHack")
 
 if equal (TARGET, "ALPHA_OSF") or equal(TARGET, "DS3100")
-   implementation(TCPHack)
+   implementation("TCPHack")
 else
-   implementation(TCPHackNull)
+   implementation("TCPHackNull")
 end
 
 

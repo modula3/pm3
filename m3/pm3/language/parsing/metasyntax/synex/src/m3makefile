@@ -9,10 +9,10 @@ if AT_SRC m3_option("-O") end
 remove_m3_option("-w1")
 m3_option("-w2")
 
-import(libm3)
-import(synloc)
+import("libm3")
+import("synloc")
 
-Module(SynScan)
-Module(SynParse)
+Module("SynScan")
+Module("SynParse")
 
-Library(synex)
+Library("synex")

@@ -25,6 +25,6 @@ if defined ("_all")
   BindExport (prog)
 end
 
-ManPage (llscan,1)
+ManPage ("llscan", 1)
 LibExport ("scan.llscan")
 

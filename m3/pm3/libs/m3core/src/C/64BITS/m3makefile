@@ -5,4 +5,4 @@
 % Last modified on Wed Jun  9 17:24:36 PDT 1993 by harrison
 %      modified on Thu May  6 12:08:55 PDT 1993 by muller
 
-Interface (BasicCtypes)
+Interface ("BasicCtypes")

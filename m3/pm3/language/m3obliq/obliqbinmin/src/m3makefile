@@ -5,8 +5,8 @@
 % Last modified on Wed Mar 23 14:09:46 1994 by luca      
 %      modified on Wed Dec 22 15:19:46 PST 1993 by kalsow
 
-import(obliq)
-implementation(Main)
+import("obliq")
+implementation("Main")
 
-Program(obliq-min)
-ManPage(obliq-min,1)
+Program("obliq-min")
+ManPage("obliq-min", 1)

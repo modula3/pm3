@@ -6,4 +6,4 @@
 /*      modified on Thu Jan 21 17:04:32 1993 by birrell                      */
 /*      modified on Fri Sep 11 16:11:59 PDT 1992 by evers                    */
 
-Module(Pickle)
+Module("Pickle")

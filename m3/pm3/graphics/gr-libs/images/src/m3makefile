@@ -5,14 +5,14 @@
 /* Makefile for "Images" library                               */
 
 
-import         (ui)
+import         ("ui")
 
-resource       (sendImage.ps)
-bundle         (ImagesBundle)
+resource       ("sendImage.ps")
+bundle         ("ImagesBundle")
 
 if AT_SRC m3_option("-O") end
-Module         (Images)
-Module         (ImageVBT)
-Module         (ImageRd)
+Module         ("Images")
+Module         ("ImageVBT")
+Module         ("ImageRd")
 
-Library        (Images)
+Library        ("Images")

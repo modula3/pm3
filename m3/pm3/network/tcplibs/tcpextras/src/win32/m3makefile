@@ -4,5 +4,5 @@
 %
 % Last modified on Mon Aug 19 15:07:29 PDT 1996 by steveg
 
-implementation(TCPExtras)
-implementation(TCPPeer)
+implementation("TCPExtras")
+implementation("TCPPeer")

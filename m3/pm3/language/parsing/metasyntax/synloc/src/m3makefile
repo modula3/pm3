@@ -9,9 +9,9 @@ if AT_SRC m3_option("-O") end
 remove_m3_option("-w1")
 m3_option("-w2")
 
-import(libm3)
+import("libm3")
 
-Module(SynWr)
-Module(SynLocation)
+Module("SynWr")
+Module("SynLocation")
 
-Library(synwr)
+Library("synwr")

@@ -9,21 +9,21 @@
 /*      modified on Tue Jun 16 22:04:27 PDT 1992 by muller                   */
 
 
-import (web)
-import (ui)
-import (videovbt)
-import (vbtkit)
-import (formsvbtpixmaps)
+import ("web")
+import ("ui")
+import ("videovbt")
+import ("vbtkit")
+import ("formsvbtpixmaps")
 
-Interface (StubImages)
-Module    (StubImageRd)
-Module    (StubImageVBT)
+Interface ("StubImages")
+Module    ("StubImageRd")
+Module    ("StubImageVBT")
 
-Interface (FVTypes)
-Module    (FormsVBT)
-Module    (FVRuntime)
-Module    (Manpage)
-module    (Macro)
-Module    (RefListUtils)
+Interface ("FVTypes")
+Module    ("FormsVBT")
+Module    ("FVRuntime")
+Module    ("Manpage")
+module    ("Macro")
+Module    ("RefListUtils")
 
-Library   (m3formsvbt)
+Library   ("m3formsvbt")

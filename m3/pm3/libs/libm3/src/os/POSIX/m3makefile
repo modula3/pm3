@@ -7,11 +7,11 @@
 %      modified on Thu Jun 17 19:14:47 PDT 1993 by harrison
 %      modified on Thu May  6 21:38:22 PDT 1993 by mjordan
 
-Module(OSErrorPosix)
-Module(FilePosix)
+Module("OSErrorPosix")
+Module("FilePosix")
 
-implementation(FSPosix)
-implementation(PipePosix)
-implementation(PathnamePosix)
-implementation(ProcessPosix)
+implementation("FSPosix")
+implementation("PipePosix")
+implementation("PathnamePosix")
+implementation("ProcessPosix")
  

@@ -3,6 +3,6 @@
 /* See the file COPYRIGHT for a full description.                            */
 /* Last modified on Thu Jan 14 08:56:57 PST 1993 by mhb                      */
 
-resource (panel.fv)
-resource (digital.pbm)
+resource ("panel.fv")
+resource ("digital.pbm")
 

@@ -7,14 +7,14 @@
 
 m3_option       ("-times")
 
-import          (formsvbt)
+import          ("formsvbt")
 
 include_dir     ("../src/resources")
 
-Module          (FormsEditVBT)
-implementation  (FormsEdit)
+Module          ("FormsEditVBT")
+implementation  ("FormsEdit")
 
-bundle          (formseditBundle)
-ManPage         (formsedit,1)
-Program         (formsedit)
+bundle          ("formseditBundle")
+ManPage         ("formsedit", 1)
+Program         ("formsedit")
 

@@ -9,13 +9,13 @@ if AT_SRC m3_option("-O") end
 remove_m3_option("-w1")
 m3_option("-w2")
 
-import(synloc)
-import(obliqrt)
+import("synloc")
+import("obliqrt")
 
-Module (ObLibM3)
+Module ("ObLibM3")
 
-Library(obliqlibm3)
+Library("obliqlibm3")
 
-/* ManPage(obliqlibm3,?) */
+/* ManPage("obliqlibm3", ?) */
 
 

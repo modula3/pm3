@@ -6,6 +6,6 @@
 %      modified on Tue Feb 11 16:32:02 PST 1992 by muller
 %
 
-Module(Fingerprint)
-Module(Poly)
-module(PolyBasis)
+Module("Fingerprint")
+Module("Poly")
+module("PolyBasis")

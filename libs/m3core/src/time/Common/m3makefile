@@ -6,7 +6,7 @@
 %      modified on Thu Jan 28 09:37:34 PST 1993 by mjordan
 %      modified on Mon Jan 11 10:07:43 PST 1993 by mcjones
 
-Interface (Time)
-Interface (Tick)
-Interface (Date)
-Module (FmtTime)
+Interface ("Time")
+Interface ("Tick")
+Interface ("Date")
+Module ("FmtTime")

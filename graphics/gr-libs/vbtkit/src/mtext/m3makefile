@@ -6,9 +6,9 @@
 %      modified on Fri May 14 00:02:02 PDT 1993 by meehan
 %      modified on Tue Jun 16 19:33:13 PDT 1992 by muller
 
-Module (MText)
-Module (MTextRd)
+Module ("MText")
+Module ("MTextRd")
 
-Interface (MTextPrivate)
-module (MTextDs)
-Module (MTextDebug)
+Interface ("MTextPrivate")
+module ("MTextDs")
+Module ("MTextDebug")

@@ -5,15 +5,15 @@
 % Last modified on Tue Dec 21 14:41:55 PST 1993 by kalsow
 %
 
-import (bicycle)
+import ("bicycle")
 
-module (Solve)
-module (Solve2)
-module (Tree)
-sequence (Tree, Tree)
-implementation (Solitaire)
+module ("Solve")
+module ("Solve2")
+module ("Tree")
+sequence ("Tree", "Tree")
+implementation ("Solitaire")
 
 % build_standalone()
-Program (solitaire)
-ManPage (solitaire,6)
+Program ("solitaire")
+ManPage ("solitaire", 6)
 

@@ -4,15 +4,15 @@
 
 /* Last modified on Wed May  5 20:57:48 PDT 1993 by mjordan                  */
 
-Interface(M3CFETool)
-Interface(M3CGo)
-Interface(M3CGoList)
-Interface(WiredStandard)
-Interface(StandardAsText)
+Interface("M3CFETool")
+Interface("M3CGo")
+Interface("M3CGoList")
+Interface("WiredStandard")
+Interface("StandardAsText")
 
-implementation(M3CFETool)
-implementation(M3CGo)
-implementation(M3CGoList)
-implementation(WiredStandard)
-implementation(StandardAsText)
+implementation("M3CFETool")
+implementation("M3CGo")
+implementation("M3CGoList")
+implementation("WiredStandard")
+implementation("StandardAsText")
 

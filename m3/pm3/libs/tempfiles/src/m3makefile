@@ -7,8 +7,8 @@
 % Makefile for "TempFiles" library
 
 
-import         (libm3)
+import         ("libm3")
 
-Module         (TempFiles)
+Module         ("TempFiles")
 
-Library        (TempFiles)
+Library        ("TempFiles")

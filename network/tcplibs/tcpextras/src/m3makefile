@@ -7,12 +7,12 @@
 
 % m3_option ("-verbose")
 
-import (libm3)
-import (tcp)
+import ("libm3")
+import ("tcp")
 
-Interface (TCPExtras)
-Interface (TCPPeer)
+Interface ("TCPExtras")
+Interface ("TCPPeer")
 
 include_dir(OS_TYPE)
 
-library(tcpextras)
+library("tcpextras")

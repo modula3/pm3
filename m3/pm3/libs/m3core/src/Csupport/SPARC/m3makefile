@@ -5,7 +5,7 @@
 %      modified on Wed Mar  4 19:13:02 PST 1992 by muller
 
 
-c_source (dtoa)
-h_source (float)
-c_source (memmove)
+c_source ("dtoa")
+h_source ("float")
+c_source ("memmove")
 

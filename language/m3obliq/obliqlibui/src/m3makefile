@@ -9,14 +9,14 @@ if AT_SRC m3_option("-O") end
 remove_m3_option("-w1")
 m3_option("-w2")
 
-import(formsvbt)
-import(synloc)
-import(obliqrt)
+import("formsvbt")
+import("synloc")
+import("obliqrt")
 
-Module (ObLibUI)
+Module ("ObLibUI")
 
-Library(obliqlibui)
+Library("obliqlibui")
 
-/* ManPage(obliqlibui,?) */
+/* ManPage("obliqlibui", ?) */
 
 

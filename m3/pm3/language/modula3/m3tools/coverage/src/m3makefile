@@ -11,7 +11,7 @@ if defined ("_all")
     exec (CC, "-c -g", src)
   end
 end
-LibdExport (report_coverage.o)
+LibdExport ("report_coverage.o")
 
 if defined ("_all")
   local src = path_of ("analyze_coverage.c")
@@ -20,6 +20,6 @@ if defined ("_all")
     exec (CC, "-I../src -g -o", pgm, src)
   end
 end
-BindExport (analyze_coverage)
+BindExport ("analyze_coverage")
 
-ManPage (analyze_coverage,1)
+ManPage ("analyze_coverage", 1)

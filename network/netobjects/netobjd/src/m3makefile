@@ -5,20 +5,20 @@
 /*      modified on Mon Sep 14 11:35:01 PDT 1992 by evers      */
 
 
-import(netobj)
-import(tcp)
+import("netobj")
+import("tcp")
 
-export_interface(NetObjMon)
-export_interface(NGCMonitor)
-export_interface(WireRep)
-export_interface(Transport)
-export_interface(DirtyElem)
-export_interface(SpaceID)
+export_interface("NetObjMon")
+export_interface("NGCMonitor")
+export_interface("WireRep")
+export_interface("Transport")
+export_interface("DirtyElem")
+export_interface("SpaceID")
 
 build_standalone()
-module (NMonRegistrySvr)
-implementation (NetObjDaemon)
+module ("NMonRegistrySvr")
+implementation ("NetObjDaemon")
 
-ManPage(netobjd,1)
+ManPage("netobjd", 1)
 
-Program(netobjd)
+Program("netobjd")

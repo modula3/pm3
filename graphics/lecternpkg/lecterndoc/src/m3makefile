@@ -5,8 +5,8 @@
 /* Makefile for "LecternDoc" library                           */
 
 
-import         (libm3)
+import         ("libm3")
 
-Module         (LecternDoc)
+Module         ("LecternDoc")
 
-Library        (LecternDoc)
+Library        ("LecternDoc")

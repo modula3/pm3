@@ -6,9 +6,11 @@
 %      modified on Wed Mar 23 14:10:13 1994 by luca      
 %      modified on Wed Dec 22 15:33:15 PST 1993 by kalsow
 
-import(obliq)
-import(obliqlibm3)
-implementation(Main)
+import("obliq")
+import("obliqlibm3")
+implementation("Main")
 
-Program(obliq-std)
-ManPage(obliq-std,1)
+Program("obliq-std")
+ManPage("obliq-std", 1)
+
+

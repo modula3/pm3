@@ -6,19 +6,19 @@
 %      modified on Thu Sep  2 15:08:45 PDT 1993 by mcjones
 %      modified on Fri May  7 14:59:36 PDT 1993 by muller
 
-Generic_interface (Float)
+Generic_interface ("Float")
 
-Interface (RealFloat)
-Interface (LongFloat)
-Interface (ExtendedFloat)
-Module (IEEESpecial)
+Interface ("RealFloat")
+Interface ("LongFloat")
+Interface ("ExtendedFloat")
+Module ("IEEESpecial")
 
-implementation (Real)
-implementation (LongReal)
-implementation (Extended)
+implementation ("Real")
+implementation ("LongReal")
+implementation ("Extended")
 
-module (DragonInt)
-module (DragonT)
+module ("DragonInt")
+module ("DragonT")
 
 % FloatMode.i3.template is not compilable.  Its purpose is to appear
 % in the "Some Useful Modula-3 Interfaces" manual.  It should be

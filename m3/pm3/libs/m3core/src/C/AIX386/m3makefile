@@ -5,7 +5,7 @@
 % Last modified on Wed Jun  9 17:24:46 PDT 1993 by harrison
 %      modified on Thu May  6 12:10:51 PDT 1993 by muller
 
-Interface (Csetjmp)
-Interface (Cstdio)
+Interface ("Csetjmp")
+Interface ("Cstdio")
 
-Interface (Cstring)
+Interface ("Cstring")

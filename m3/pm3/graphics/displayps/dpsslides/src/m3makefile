@@ -16,8 +16,8 @@ import_lib("Xext", "/usr/lib")
 import_lib("Xt", "/usr/lib")
 import_lib("X11", "/usr/lib")
 
-import (dps)
+import ("dps")
 
-implementation (DPSSlides)
-Program (dpsslides)
-ManPage (dpsslides,1)
+implementation ("DPSSlides")
+Program ("dpsslides")
+ManPage ("dpsslides", 1)

@@ -7,23 +7,22 @@
 %      modified on Wed Aug 24 22:09:20 PDT 1994 by shillner 
 
 
-import		(parseparams)
-import		(formsvbt)
-import 		(web)
-import 		(webvbt)
+import		("parseparams")
+import		("formsvbt")
+import 		("web")
+import 		("webvbt")
 
-include_dir	(resources)
-bundle		(MyBundle)
+include_dir	("resources")
+bundle		("MyBundle")
 
-module		(WSObjectVBT)
-module		(DocVBT)
-module		(FreeDocVBT)
-module		(DeckVBT)
-module		(WorkspaceVBT)
-module		(Storage)
-interface	(Options)
-implementation	(Main)
+module		("WSObjectVBT")
+module		("DocVBT")
+module		("FreeDocVBT")
+module		("DeckVBT")
+module		("WorkspaceVBT")
+module		("Storage")
+interface	("Options")
+implementation	("Main")
 
-ManPage		(DeckScape,1)
-Program		(DeckScape)
-
+ManPage		("DeckScape", 1)
+Program		("DeckScape")

@@ -5,7 +5,7 @@
 % Last modified on Thu Jun 10 16:45:52 PDT 1993 by kalsow
 %      modified on Tue Feb 11 15:18:40 PST 1992 by muller
 
-c_source (dtoa)
-h_source (float)
+c_source ("dtoa")
+h_source ("float")
 
 

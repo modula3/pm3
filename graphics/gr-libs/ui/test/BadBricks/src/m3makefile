@@ -5,13 +5,13 @@
 /* Last modified on Wed May 19 16:33:44 PDT 1993 by msm                      */
 /*      modified on Fri Apr 30-ip4:31:43 PDT 1993 by mjordan                  */
 
-override (ui, "../../../..")
-import(ui)
+override ("ui", "../../../..")
+import("ui")
 
-implementation(BadBricks)
+implementation("BadBricks")
 
-program(BadBricks)
+program("BadBricks")
 
-/* ManPage(BadBricks) */
+/* ManPage("BadBricks") */
 
 

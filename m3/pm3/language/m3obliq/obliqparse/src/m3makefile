@@ -10,14 +10,14 @@ if AT_SRC m3_option("-O") end
 remove_m3_option("-w1")
 m3_option("-w2")
 
-import(synex)
-import(metasyn)
-import(obliqrt)
+import("synex")
+import("metasyn")
+import("obliqrt")
 
-Module (ObFrame)
-Module (ObParseFrame)
-Module (ObParseTree)
-Module (ObliqParser)
+Module ("ObFrame")
+Module ("ObParseFrame")
+Module ("ObParseTree")
+Module ("ObliqParser")
 
 if equal (OS_TYPE, "WIN32")
   implementation("ObPathSepWin32")
@@ -27,11 +27,11 @@ else
   error ("obliqparse: unrecognized OS: " & OS_TYPE & CR)
 end end
 
-resource_named(ObliqGram,obliq.gr)
-bundle(ObliqBdl)
+resource_named("ObliqGram", "obliq.gr")
+bundle("ObliqBdl")
 
-Library(obliqparse)
+Library("obliqparse")
 
-/* ManPage(obliqparse,?) */
+/* ManPage("obliqparse" ,?) */
 
 

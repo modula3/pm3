@@ -4,10 +4,10 @@
 %
 % Last modified on Wed Mar  2 08:30:57 PST 1994 by kalsow
 
-override (sqrt, "../../..")
-import (sqrt)
+override ("sqrt", "../../..")
+import ("sqrt")
 
 build_standalone ()
-implementation (SqrtTst)
-program (SqrtTst)
+implementation ("SqrtTst")
+program ("SqrtTst")
 

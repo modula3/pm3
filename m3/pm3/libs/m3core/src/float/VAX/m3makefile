@@ -5,17 +5,17 @@
 % Last modified on Wed Jul 27 07:40:52 PDT 1994 by kalsow
 %      modified on Thu Apr 29 15:44:23 PDT 1993 by muller
 
-Module (FloatMode)
-Module (FPU)
+Module ("FloatMode")
+Module ("FPU")
 
-Interface (Real)
-Interface (LongReal)
-Interface (Extended)
+Interface ("Real")
+Interface ("LongReal")
+Interface ("Extended")
 
-implementation (RealFloat)
-implementation (LongFloat)
-implementation (ExtendedFloat)
+implementation ("RealFloat")
+implementation ("LongFloat")
+implementation ("ExtendedFloat")
 
-interface (RealRep)
-interface (LongRealRep)
+interface ("RealRep")
+interface ("LongRealRep")
 

@@ -4,4 +4,4 @@
 
 /* Last modified on Wed May  5 21:02:37 PDT 1993 by mjordan                  */
 
-Interface(M3AST_all)
+Interface("M3AST_all")

@@ -7,10 +7,10 @@
 %      modified on Mon Apr 26 13:38:54 PDT 1993 by mcjones
 
 
-Generic_module (ArraySort)
+Generic_module ("ArraySort")
 
-template (arraysort)
+template ("arraysort")
 
-Array_sort (Int,  Integer)
-Array_sort (Text, Text)
+Array_sort ("Int",  "Integer")
+Array_sort ("Text", "Text")
 

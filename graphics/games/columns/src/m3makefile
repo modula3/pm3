@@ -7,16 +7,16 @@
 %      modified on Mon May 04 15:16:48 PDT 1992 by muller
 
 if PLATFORM_SUPPORTS_X
-  import (X11R4)
+  import ("X11R4")
 
-  module (Bars)
-  module (Columns)
-  module (Config)
-  module (Rows)
-  module (Squares)
-  module (Threes)
-  implementation (Main)
+  module ("Bars")
+  module ("Columns")
+  module ("Config")
+  module ("Rows")
+  module ("Squares")
+  module ("Threes")
+  implementation ("Main")
 
-  Program (columns)
-  ManPage (columns,6)
+  Program ("columns")
+  ManPage ("columns", "6")
 end

@@ -10,31 +10,31 @@ if AT_SRC m3_option("-O") end
 remove_m3_option("-w1")
 m3_option("-w2")
 
-import(netobj)
-import(synloc)
+import("netobj")
+import("synloc")
 
-interface (OpSys)
+interface ("OpSys")
 include_dir (OS_TYPE)
 
-Module (ObErr)
-Module (ObCommand)
-Module (ObLib)
-Module (ObTree)
-Module (ObScope)
-Module (ObCheck)
-Module (ObValue)
-Module (ObEval)
-Module (ObBuiltIn)
-Module (Obliq)
+Module ("ObErr")
+Module ("ObCommand")
+Module ("ObLib")
+Module ("ObTree")
+Module ("ObScope")
+Module ("ObCheck")
+Module ("ObValue")
+Module ("ObEval")
+Module ("ObBuiltIn")
+Module ("Obliq")
 
-netobj(ObValue,RemVar)
-netobj(ObValue,RemArray)
-netobj(ObValue,RemObj)
-netobj(ObValue,RemEngine)
-netobj(ObValue,RemFileSystem)
+netobj("ObValue", "RemVar")
+netobj("ObValue", "RemArray")
+netobj("ObValue", "RemObj")
+netobj("ObValue", "RemEngine")
+netobj("ObValue", "RemFileSystem")
 
-Library(obliqrt)
+Library("obliqrt")
 
-/* ManPage(obliqrt,?) */
+/* ManPage("obliqrt", ?) */
 
 

@@ -6,5 +6,5 @@
 
 include_dir("../decunix")
 
-implementation (JVBuffer)
+implementation ("JVBuffer")
 

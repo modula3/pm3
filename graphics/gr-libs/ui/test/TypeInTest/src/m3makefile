@@ -5,11 +5,11 @@
 /* Last modified on Thu May 20 12:13:08 PDT 1993 by msm                      */
 /*      modified on Fri Apr 30-ip5:22:18 PDT 1993 by mjordan                  */
 
-override(ui, "../../../..")
-import(ui)
+override("ui", "../../../..")
+import("ui")
 
-implementation(TypeInTest)
+implementation("TypeInTest")
 
-program(TypeInTest)
+program("TypeInTest")
 
 

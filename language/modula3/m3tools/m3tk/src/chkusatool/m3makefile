@@ -3,4 +3,4 @@
 /* See the file COPYRIGHT for a full description.             */
 /* Last modified on Fri Jan 28 11:01:03 PST 1994 by detlefs   */
 
-Module(M3UnsetAttTool)
+Module("M3UnsetAttTool")

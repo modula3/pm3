@@ -10,45 +10,45 @@
 %
 % Makefile for Modula-3 Postcard
 
-import (formsvbt)
-import (web)
-import (webvbt)
+import ("formsvbt")
+import ("web")
+import ("webvbt")
 
 include_dir     ("resources")
 
 /* 
-ManExport       (Postcard,1)
+ManExport       ("Postcard", 1)
 */
 
 /* General-purpose modules */
-interface      (UtimeExtra)
-interface      (OSUtils)
-interface      (MailUtilities)
-interface      (MiscUtils)
-interface      (FastMenu)
-interface      (Rescreen)
-implementation (OSUtils)
-implementation (MailUtilities)
-implementation (MiscUtils)
-implementation (FastMenu)
-implementation (Rescreen)
+interface      ("UtimeExtra")
+interface      ("OSUtils")
+interface      ("MailUtilities")
+interface      ("MiscUtils")
+interface      ("FastMenu")
+interface      ("Rescreen")
+implementation ("OSUtils")
+implementation ("MailUtilities")
+implementation ("MiscUtils")
+implementation ("FastMenu")
+implementation ("Rescreen")
 
 /* Postcard itself */
-interface      (Config)
-interface      (Closure)
-interface      (UnixMail)
-interface      (BuiltInDisplay)
-interface      (BuiltInCompose)
-interface      (NI)
-implementation (Config)
-implementation (UnixMail)
-implementation (BuiltInDisplay)
-implementation (BuiltInCompose)
-implementation (NI)
-implementation (PostcardMain)
+interface      ("Config")
+interface      ("Closure")
+interface      ("UnixMail")
+interface      ("BuiltInDisplay")
+interface      ("BuiltInCompose")
+interface      ("NI")
+implementation ("Config")
+implementation ("UnixMail")
+implementation ("BuiltInDisplay")
+implementation ("BuiltInCompose")
+implementation ("NI")
+implementation ("PostcardMain")
 
-module         (WebBrowserVBT)
-Program        (WebCard)
+module         ("WebBrowserVBT")
+Program        ("WebCard")
 /* update the Version CONST in PostcardMain.m3 */
 
 

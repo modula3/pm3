@@ -6,5 +6,5 @@
 %      modified on Mon Mar 14 10:39:00 PST 1994 by heydon
 %      modified on Tue Feb 11 16:35:42 PST 1992 by muller
 
-Module (CConvert)
-Module (Convert)
+Module ("CConvert")
+Module ("Convert")

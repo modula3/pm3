@@ -5,15 +5,15 @@
 /* Last modified on Mon Apr  4 10:54:04 PDT 1994 by wobber     */
 /*      modified on Fri Feb 12 02:54:17 PST 1993 by prusker    */
 
-import(libm3)
-import(netobj)
-import(tcp)
-import(pkgobj)
+import("libm3")
+import("netobj")
+import("tcp")
+import("pkgobj")
 
-module(Export)
-module(ExportSort)
-implementation(PkgFP)
+module("Export")
+module("ExportSort")
+implementation("PkgFP")
 
 build_standalone()
 
-program(pkgfp)
+program("pkgfp")

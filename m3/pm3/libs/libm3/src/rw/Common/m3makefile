@@ -9,41 +9,41 @@
 %      modified on Fri Feb  5 12:15:19 PST 1993 by mcjones
 %      modified on Tue Jun 16 19:31:47 PDT 1992 by muller
 
-Interface(Rd)
-Interface(RdClass)
-Interface(UnsafeRd)
+Interface("Rd")
+Interface("RdClass")
+Interface("UnsafeRd")
 
-implementation(RdMove)
-implementation(RdImpl)
-/* source(RdRep.m3.book) */
+implementation("RdMove")
+implementation("RdImpl")
+/* source("RdRep.m3.book") */
 
-Interface(UnsafeWr)
-Interface(Wr)
-Interface(WrClass)
-implementation(WrMove)
-/* source(WrMove.m3.old) */
-/* source(WrRep.m3.book) */
+Interface("UnsafeWr")
+Interface("Wr")
+Interface("WrClass")
+implementation("WrMove")
+/* source("WrMove.m3.old") */
+/* source("WrRep.m3.book") */
 
-Module(NullRd)
-Module(NullWr)
+Module("NullRd")
+Module("NullWr")
 
-Module(RdCopy)
+Module("RdCopy")
 
-Module(TextRd)
-Module(TextWr)
+Module("TextRd")
+Module("TextWr")
 
-Module(FileRd)
-Module(FileWr)
-Module(IO)
+Module("FileRd")
+Module("FileWr")
+Module("IO")
 
-Module(AutoFlushWr)
-Module(Stdio)
-Module (RdUtils)
+Module("AutoFlushWr")
+Module("Stdio")
+Module ("RdUtils")
 
-Interface(MsgRd)
-Interface(MsgWr)
+Interface("MsgRd")
+Interface("MsgWr")
 
-/* Module (FilterRd) */
-/* Module (SeekableRd) */
+/* Module ("FilterRd") */
+/* Module ("SeekableRd") */
 
 

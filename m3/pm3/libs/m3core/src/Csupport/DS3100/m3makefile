@@ -5,5 +5,5 @@
 % Last modified on Thu Jun 10 16:42:07 PDT 1993 by kalsow
 %      modified on Thu Feb 13 22:57:03 PST 1992 by muller
 
-c_source (dtoa)
+c_source ("dtoa")
 

@@ -4,7 +4,7 @@
 %
 % Last modified on Fri Mar  4 13:11:42 PST 1994 by kalsow
 
-Generic_module (FloatExtras)
+Generic_module ("FloatExtras")
 build_generic_intf("RealFloatExtras", "FloatExtras", ["Real"], VISIBLE)
 build_generic_impl("RealFloatExtras", "FloatExtras", ["Real", "RealFloat"])
 build_generic_intf("LongFloatExtras", "FloatExtras", ["LongReal"], VISIBLE)

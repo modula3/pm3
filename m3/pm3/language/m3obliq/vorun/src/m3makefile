@@ -6,20 +6,20 @@
 %      modified on Fri Sep 16 13:44:30 PDT 1994 by bharat
 %      modified on Wed Mar 23 14:11:53 1994 by luca
 
-resource (volib.obl)
-resource(vorestrict.obl)
-resource (templates.obl)
-resource (vowidgets.obl)
-resource (vocheckpt.obl)
+resource ("volib.obl")
+resource("vorestrict.obl")
+resource ("templates.obl")
+resource ("vowidgets.obl")
+resource ("vocheckpt.obl")
 
-bundle (VORunBundle)
+bundle ("VORunBundle")
 
-import(obliqlibm3)
-import(obliqlibui)
-import(obliq)
-implementation(Main)
+import("obliqlibm3")
+import("obliqlibui")
+import("obliq")
+implementation("Main")
 
-program(vorun)
+program("vorun")
 
 % create vostart
 

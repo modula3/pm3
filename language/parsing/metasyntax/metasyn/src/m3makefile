@@ -9,21 +9,21 @@ if AT_SRC m3_option("-O") end
 remove_m3_option("-w1")
 m3_option("-w2")
 
-import(synloc)
-import(synex)
+import("synloc")
+import("synex")
 
-module(Builder)
-module(Constructor)
-Module(MetaParser)
+module("Builder")
+module("Constructor")
+Module("MetaParser")
 
-resource_named(MetaGram,metagrammar.gr)
-resource_named(ExtendGram,extend.gr)
-bundle(MetaSynBdl)
+resource_named("MetaGram", "metagrammar.gr")
+resource_named("ExtendGram", "extend.gr")
+bundle("MetaSynBdl")
 
 
-Library(metasyn)
+Library("metasyn")
 
-/* manPage(grammarfile,5) */
-/* manPage(metaparser,3) */
-/* manPage(extensibleGrammar,3) */
+/* manPage("grammarfile", 5) */
+/* manPage("metaparser", 3) */
+/* manPage("extensibleGrammar", 3) */
 

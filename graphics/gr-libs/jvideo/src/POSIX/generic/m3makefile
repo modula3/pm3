@@ -4,8 +4,8 @@
 %
 % Last modified on Tue Feb  7 11:21:05 PST 1995 by kalsow
 
-implementation (JVBuffer)
-implementation (Jv)
-implementation (JvsBuffer)
-implementation (JVSink)
+implementation ("JVBuffer")
+implementation ("Jv")
+implementation ("JvsBuffer")
+implementation ("JVSink")
 

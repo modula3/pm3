@@ -8,4 +8,4 @@ import("libm3")
 
 implementation("OCR_Stub")
 
-Library(ocr)
+Library("ocr")

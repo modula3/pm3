@@ -3,7 +3,7 @@
 /*                                                                           */
 /* Last modified on Thu Sep  8 23:39:46 PDT 1994 by heydon                   */
 
-import (libm3)
-implementation (FromTTY)
+import ("libm3")
+implementation ("FromTTY")
 
-program(FromTTY)
+program("FromTTY")

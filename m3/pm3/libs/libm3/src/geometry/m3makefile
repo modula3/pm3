@@ -7,15 +7,15 @@
 %      modified on Sat Apr  4 01:49:53 1992 by steveg
 %      modified on Tue Feb 11 16:25:22 PST 1992 by muller
 
-Module (Axis)
-Module (Interval)
-Module (Point)
-Module (Rect)
-Module (Transform)
-Module (Path)
-Module (Region)
-Module (PolyRegion)
-Module (Trapezoid)
+Module ("Axis")
+Module ("Interval")
+Module ("Point")
+Module ("Rect")
+Module ("Transform")
+Module ("Path")
+Module ("Region")
+Module ("PolyRegion")
+Module ("Trapezoid")
 
-Interface (RegionRep)
-Interface (PathPrivate)
+Interface ("RegionRep")
+Interface ("PathPrivate")

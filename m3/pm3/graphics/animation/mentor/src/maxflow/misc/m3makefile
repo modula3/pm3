@@ -5,8 +5,8 @@
 /* Last modified on Thu Jan 19 17:08:38 PST 1995 by mhb      */
 
 
-resource (data.backedge)
-resource (data.big)
-resource (data.big2)
-resource (data.fin)
-resource (data.simple)
+resource ("data.backedge")
+resource ("data.big")
+resource ("data.big2")
+resource ("data.fin")
+resource ("data.simple")

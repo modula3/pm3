@@ -8,17 +8,17 @@
 %      modified on Fri Apr 16 18:04:35 PDT 1993 by meehan
 %      modified on Thu Feb 18 08:55:48 PST 1993 by mjordan
 
-Generic_module(List)
-Generic_module(ListSort)
+Generic_module("List")
+Generic_module("ListSort")
 
-template (list)
+template ("list")
 
-List (Atom, Atom)
-List (Int,  Integer)
-List (Ref,  Refany)
-List (Text, Text)
+List ("Atom", "Atom")
+List ("Int",  "Integer")
+List ("Ref",  "Refany")
+List ("Text", "Text")
 
-List_sort (Atom, Atom)
-List_sort (Int,  Integer)
-List_sort (Ref,  Refany)
-List_sort (Text, Text)
+List_sort ("Atom", "Atom")
+List_sort ("Int",  "Integer")
+List_sort ("Ref",  "Refany")
+List_sort ("Text", "Text")

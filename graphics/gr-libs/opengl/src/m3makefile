@@ -8,5 +8,5 @@
 if PLATFORM_SUPPORTS_OPENGL
   import_OpenGL()
   include_dir (OS_TYPE)
-  Library (opengl)
+  Library ("opengl")
 end
