@@ -1,0 +1,79 @@
+<TITLE>M3IDE a simple environment for M3 development</TITLE>
+<BODY>
+<H1>M3IDE a simple environment for M3 development</H1>
+<P>
+M3ide runs under xemacs or emacs and may be used to perform all the
+commonly needed operations for developing Modula-3 programs.
+<P>
+It can be used to call m3build, m3ship, m3pp, m3gdb, m3browser,
+see documentation files, analyze_coverage and gprof. M3build is
+called on the right package based on the currently edited file
+and uses the right options if coverage or profiling is requested.
+When the program is run, an emacs shell window is opened and the
+correct executable is called, if coverage/profiling is required,
+and may be specified to run with shownew, showheap and showthreads.
+FormsVBT forms may be shown, somewhat like in formsedit.
+<P>
+The first step is set your emacs path to include
+/usr/local/pm3-1.1/lib/elisp and
+to load m3setup.el from your .emacs file.
+<TT><PRE>
+(setq load-path (append (list "/usr/local/pm3-1.1/lib/elisp") load-path))
+(load-library "m3setup.el")
+</PRE></TT>
+<P>
+This will setup the automatic loading of the m3ide (within the modula3)
+mode when a file ending in .i3, .m3, .ig, .mg, .fv is loaded. Then,
+upon need, the m3ide and the m3browser executables will be
+started as child processes of xemacs and communicate through
+pipe (m3ide) and sockets (m3browser). By default, m3browser will
+not accept requests from other hosts but will accept requests from
+other users on the same host, thus making your source code, along
+the paths listed in the emacs variable m3-source-roots, available
+to anyone with access to your host.
+<P>
+Starting the m3ide takes some time. Starting m3browser, depending
+on the packages scanned, may take a relatively long time. Dont
+be surprised by the delays encountered when they are started,
+the first time a command using them is used. When you add or remove
+profiling and coverage options, the current object files should be
+removed to force recompilation.
+<P>
+If you do not have w3.el, you can simply remove the corresponding
+load-library call.
+<P>
+I am quite happy with the functionality available with this simple
+environment. However, i am not happy with the speed of xemacs and
+the W3 mode in particular. Furthermore, emacs lisp is not
+multi-threaded which makes asynchronous communication with child
+processes difficult and at times unreliable, at least for a relatively 
+neophyte lisp programmer like myself.
+<P>
+I already implemented in a separate Modula-3 executable (m3ide)
+a number of things which could have been done in emacs lisp.
+Other things like showing a FormsVBT form needed a separate
+executable anyway. In the longer term, it could be interesting to
+move even more functionality into Modula-3 code. Here is a whish
+list. I will not have time in the foreseeable future to do
+any of it. Volunteers are more than welcome. Thanks to
+Lennart Staflin <lenst@lysator.liu.se> for converting the xemacs menus
+to emacs and miscellaneous elisp code improvements.
+
+<UL>
+<LI> Replace the W3 mode by WebScape (modula-3 Web client).
+<LI> Change the communication between the Web client and m3browser
+     to use a pipe or to send a long identification string in order
+     to prevent other users on the same host to access your source
+     code (useful for class assignments on shared lab hosts...).
+<LI> Make m3browser a library component and integrate in a single
+     process m3ide, WebScape and m3browser. Add functionality to
+     m3browser to serve other files and run cgi scripts (full text
+     search on the M3 documentation).
+<LI> Implement emacs-like buffers in Modula-3 and replace emacs with a 
+     Trestle/FormsVBT editor customizable with Obliq or an 
+     interpreted/dynamically-loaded Modula-3 subset.
+</UL>
+
+
+</BODY>
+
