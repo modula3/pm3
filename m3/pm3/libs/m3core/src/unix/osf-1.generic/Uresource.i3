@@ -50,12 +50,15 @@ TYPE
 (* Resource limits *)
 
 CONST
-  RLIMIT_CPU   = 0;		(* cpu time in milliseconds *)
-  RLIMIT_FSIZE = 1;		(* maximum file size *)
-  RLIMIT_DATA  = 2;		(* data size *)
-  RLIMIT_STACK = 3;		(* stack size *)
-  RLIMIT_CORE  = 4;		(* core file size *)
-  RLIMIT_RSS   = 5;		(* resident set size *)
+  RLIMIT_CPU    = 0;		(* cpu time in milliseconds *)
+  RLIMIT_FSIZE  = 1;		(* maximum file size *)
+  RLIMIT_DATA   = 2;		(* data size *)
+  RLIMIT_STACK  = 3;		(* stack size *)
+  RLIMIT_CORE   = 4;		(* core file size *)
+  RLIMIT_RSS    = 5;		(* resident set size *)
+  RLIMIT_NOFILE = 6;		(* open files *)
+  RLIMIT_AS     = 7;		(* address space *)
+  RLIMIT_VMEM   = RLIMIT_AS	(* V.4 alias for AS *)
 
   RLIM_NLIMITS = 6;		(* number of resource limits *)
 
