@@ -6,4 +6,4 @@ coco_c("FortranPrototype")
 module("Parameter")
 table("Param", "Text","Parameter")
 
-program("f2i3")
+Program("f2i3")
