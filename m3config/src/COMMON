@@ -506,7 +506,7 @@ readonly Platforms = {
   "IRIX5"     : [ "POSIX", "32BITS", "mips-sgi-irix5", "T"    ],
   "LINUX"     : [ "POSIX", "32BITS", "i486--linux", ""        ],
   "LINUXELF"  : [ "POSIX", "32BITS", "i486--linuxelf", "T"    ],
-  "NEXT"      : [ "POSIX", "32BITS", "next-bsd", "T"          ],
+  "NEXT"      : [ "POSIX", "32BITS", "next-bsd", ""           ],
   "NT386"     : [ "WIN32", "32BITS", "i486--nt", ""           ],
   "NT386GNU"  : [ "WIN32", "32BITS", "i486--cygwin32", "T"    ],
   "OKI"       : [ "POSIX", "32BITS", "i860--sysv4.0", ""      ],

@@ -1,0 +1,341 @@
+%
+% Some utility procedures
+%
+
+NOEXEC = lookup("NOEXEC","")
+
+readonly proc CheckErrors(file) is
+  %Exec(["grep","[Ee][Rr][Rr][Oo][Rr]:"
+  write("Unimplemented check errors for ", file, CR)
+end
+
+readonly proc Exec(command,io,wd) is
+
+  if VERBOSE 
+    write("command: ", command, CR, "io: ", io, CR, "wd: ",wd, CR, CR)
+  end
+
+  if NOEXEC 
+    return 0
+  else
+    return exec(command,io,wd)
+  end
+end
+  
+readonly proc CheckExec(command,io,wd,msg) is
+  if VERBOSE
+    write("command: ", command, CR, "io: ", io, CR, "wd: ", wd, CR,
+        "msg: ", msg, CR, CR)
+  end
+  if not(NOEXEC)
+    local ret = exec(command,io,wd)
+    if not equal(ret,0) error(msg,CR) end
+  end
+end
+
+readonly proc Version(timestamp,major,mid,minor,keep) is
+  VERSION = [timestamp, major, mid, minor, keep]
+end
+
+readonly proc VersionNumber(v) is
+  return v[1] & "." & v[2] & "." & v[3]
+end
+
+readonly proc VersionName(v) is
+  return "pm3-" & VersionNumber(v)
+end
+
+readonly proc DiffName(v1,v2) is
+  return "pm3-diffs-" & VersionNumber(v1) & "-" & VersionNumber(v2)
+end
+
+%
+% Remove all temporary directories associated with a version
+%
+
+readonly proc CleanTmpDirs(v1Exists,v1,v2Exists,v2) is
+  if v2Exists
+    if v1Exists
+      ret = Exec(["rm", EXPORT_TMP_SRC & "/" & DiffName(v1,v2)],[],"")
+    end
+
+    ret = Exec(["rm", "-r", EXPORT_TMP_TMP & "/" & VersionName(v2),
+        EXPORT_TMP_SRC & "/" & VersionName(v2)],[],"")
+
+    foreach platform in Platforms
+      if Platforms{platform}[3] 
+        ret = Exec(["rm", "-r", 
+            EXPORT_TMP_BOOTSTRAP & "/" & platform & "/" & VersionName(v2),
+            EXPORT_TMP_BINARIES & "/" & platform & "/" & VersionName(v2)],[],"")
+      end
+    end
+  end
+end
+
+readonly proc BuildDirectories() is
+  ret = Exec(["mkdir","-p",EXPORT_TMP_TMP],[],"")
+  ret = Exec(["mkdir","-p",EXPORT_TMP_SRC],[],"")
+  ret = Exec(["mkdir","-p",EXPORT_TMP_BOOTSTRAP],[],"")
+  ret = Exec(["mkdir","-p",EXPORT_TMP_BINARIES],[],"")
+  ret = Exec(["mkdir","-p",EXPORT_SRC],[],"")
+  ret = Exec(["mkdir","-p",EXPORT_BOOTSTRAP],[],"")
+  ret = Exec(["mkdir","-p",EXPORT_BINARIES],[],"")
+
+  foreach platform in Platforms
+    if Platforms{platform}[3] 
+      ret = Exec(["mkdir",EXPORT_TMP_BOOTSTRAP & "/" & platform],[],"")
+      ret = Exec(["mkdir",EXPORT_TMP_BINARIES & "/" & platform],[],"")
+      ret = Exec(["mkdir",EXPORT_BOOTSTRAP & "/" & platform],[],"")
+      ret = Exec(["mkdir",EXPORT_BINARIES & "/" & platform],[],"")
+    end
+  end
+end
+
+%
+% Check if a previous, current and next version were defined.
+%
+
+readonly proc ReadVersionInfo() is
+  if not stale("../src/PREVIOUSVERSION","../src/PREVIOUSVERSION")
+    previousVersionExists = "T"
+    include("../src/PREVIOUSVERSION")
+    previousVersion = VERSION
+  end
+
+  if not stale("../src/CURRENTVERSION","../src/CURRENTVERSION")
+    currentVersionExists = "T"
+    include("../src/CURRENTVERSION")
+    currentVersion = VERSION
+  end
+
+  if not stale("../src/NEXTVERSION","../src/NEXTVERSION")
+    nextVersionExists = "T"
+    include("../src/NEXTVERSION")
+    version = VERSION
+    versionName = VersionName(version)
+  end
+end
+
+%
+% Compute the diffs from the current version. No diffs, no new version
+% required.
+%
+
+readonly proc BuildDiff() is
+  if currentVersionExists
+    CheckExec(["cvs","rdiff","-D",currentVersion[0],"-D",NOW,"m3/pm3"],
+        ["", EXPORT_TMP_SRC & "/" & DiffName(currentVersion,version), ""],
+        EXPORT_TMP_SRC, "cvs diff failed")
+    CheckExec(["grep","-q","[^ ]", EXPORT_TMP_SRC & "/" & 
+        DiffName(currentVersion,version)], [], 
+        EXPORT_TMP_SRC, "no new version required")
+  end
+end
+
+%
+% Move the bootstraps where they may be used to build binaries
+%
+
+readonly proc MoveBootstraps() is
+  foreach platform in Platforms
+    if Platforms{platform}[3] 
+      CheckExec(["mv", EXPORT_TMP_TMP & "/" & versionName &
+          "/language/modula3/m3compiler/m3bootstrap" & "/" & TARGET &
+          "/pm3-" & platform,
+          EXPORT_TMP_BOOTSTRAP & "/" & platform & "/" & versionName],
+          [], "", "moving the bootstraps failed")
+      if not(NOEXEC)
+        > EXPORT_TMP_BOOTSTRAP & "/" & platform & "/" & "TODO" in
+          write(versionName,CR)
+        end
+      end
+    end
+  end
+end
+
+%
+% Everything went well up to here. We have a new release. 
+% Remove the previous version, keep the current version, and
+% export the new version.
+%
+
+readonly proc RemovePreviousVersion() is
+  if previousVersionExists
+    if not previousVersion[4]
+      ret = Exec(["rm", "-r", EXPORT_SRC & "/" & VersionName(previousVersion)],[],"")
+    end
+
+    foreach platform in Platforms
+      if Platforms{platform}[3] 
+        ret = Exec(["rm", "-r", 
+            EXPORT_BOOTSTRAP & "/" & platform & "/" & 
+            VersionName(previousVersion),
+            EXPORT_BINARIES & "/" & platform & "/" & 
+            VersionName(previousVersion)],[],"")
+      end
+    end
+  end
+end
+
+%
+% The version built gets installed (exported)
+%
+
+readonly proc InstallNextVersion() is
+  CheckExec(["mv", EXPORT_TMP_SRC & "/" & versionName,
+      EXPORT_SRC],[],"","export source failed")
+
+  if currentVersionExists
+    CheckExec(["mv", EXPORT_TMP_SRC & "/" & DiffName(currentVersion,version), 
+        EXPORT_SRC],[],"","export diff failed")
+  end
+
+  foreach platform in Platforms
+    if Platforms{platform}[3] 
+      CheckExec(["mv", 
+          EXPORT_TMP_BOOTSTRAP & "/" & platform & "/" & versionName,
+          EXPORT_BOOTSTRAP & "/" & platform],[],"","export bootstrap failed")
+    end
+  end
+
+  CheckExec(["mv", 
+      EXPORT_TMP_BINARIES & "/" & TARGET & "/" & versionName,
+      EXPORT_BINARIES & "/" & TARGET],[],"","export binaries failed")
+end
+
+%
+% Write the information for the next versions
+%
+
+readonly proc UpdateVersionNumbers() is
+  if previousVersionExists
+    >> "../src/OLDVERSIONS" in
+      write("Version(\"",previousVersion[0],"\",\"",previousVersion[1],"\",\"",
+          previousVersion[2],"\",\"",previousVersion[3],"\",\"",
+          previousVersion[4],"\")",CR)
+    end
+  end
+
+  if currentVersionExists
+    > "../src/PREVIOUSVERSION" in
+      write("Version(\"",currentVersion[0],"\",\"",currentVersion[1],"\",\"",
+          currentVersion[2],"\",\"",currentVersion[3],"\",\"",
+          currentVersion[4],"\")",CR)
+    end
+  end
+
+  > "../src/CURRENTVERSION" in
+    write("Version(\"",NOW,"\",\"",version[1],"\",\"",
+        version[2],"\",\"",version[3],"\",\"",version[4],"\")",CR)
+  end
+
+  > "../src/NEXTVERSION" in
+    write("Version(\"","0","\",\"",version[1],"\",\"",
+        version[2],"\",\"",inc(version[3],1),"\",\"\")",CR)
+  end
+end
+
+%
+% The processing begins here.
+%
+
+local ret = 0
+
+local currentVersionExists = ""
+local currentVersion = ""
+
+local previousVersionExists = ""
+local previousVersion = ""
+
+local nextVersionExists = ""
+local version = ""
+
+include("../src/CONFIG")
+
+ReadVersionInfo()
+
+if not nextVersionExists
+  error("Next version not defined", CR)
+end
+
+%
+% Insure that the needed directories exist
+%
+
+BuildDirectories()
+
+%
+% Attempt to clean the current version from the temporary build directory
+% before building the next version
+%
+
+CleanTmpDirs("","",previousVersionExists,previousVersion)
+CleanTmpDirs(previousVersionExists,previousVersion,
+    currentVersionExists,currentVersion)
+CleanTmpDirs(currentVersionExists,currentVersion,nextVersionExists,version)
+
+BuildDiff()
+
+%
+% Export the new version
+%
+
+CheckExec(["cvs","export","-D",NOW,"-d",versionName,"m3/pm3"],[],
+    EXPORT_TMP_SRC,"cvs export failed")
+
+%
+% Leave the original copy untouched. Take a copy to build the bootstraps
+% and binaries.
+%
+
+CheckExec(["cp","-a",EXPORT_TMP_SRC & "/" & versionName,EXPORT_TMP_TMP],
+    [], EXPORT_TMP_TMP,"copy source failed")
+
+%
+% Build the bootstraps
+%
+
+CheckExec(["m3build"],["",
+    EXPORT_TMP_TMP & "/" & versionName & "/" & "boot.stdout",
+    EXPORT_TMP_TMP & "/" & versionName & "/" & "boot.stderr"],
+    EXPORT_TMP_TMP & "/" & versionName & 
+    "/language/modula3/m3compiler/m3bootstrap","bootstrap build failed")
+
+MoveBootstraps()
+
+%
+% Take a copy of the bootstrap for the current platform and build binaries
+%
+
+CheckExec(["cp", "-a", "boot-" & TARGET, "Makefile", 
+    EXPORT_TMP_TMP & "/" & versionName], [], 
+    EXPORT_TMP_BOOTSTRAP & "/" & TARGET & "/" & versionName, 
+    "copy bootstrap to build binaries failed")
+
+CheckExec(["make","exportall"], ["", 
+    EXPORT_TMP_TMP & "/" & versionName & "/" & "make.stdout", 
+    EXPORT_TMP_TMP & "/" & versionName & "/" & "make.stderr"],
+    EXPORT_TMP_TMP & "/" & versionName,"building bootstrap failed")
+
+%
+% Move the binaries to their correct location
+%
+
+CheckExec(["mv", EXPORT_TMP_TMP & "/" & versionName & "/" & "binaries" & "/" &
+    TARGET, EXPORT_TMP_BINARIES & "/" & TARGET & "/" & versionName],[],"",
+    "move binaries failed")
+
+if not(NOEXEC)
+  > EXPORT_TMP_BINARIES & "/" & TARGET & "/" & "DONE" in
+    write(versionName,CR)
+  end
+end
+
+CheckExec(["rm", EXPORT_TMP_BOOTSTRAP & "/" & TARGET & "/" & "TODO"],[],"",
+    "remove TODO failed")
+
+RemovePreviousVersion()
+
+InstallNextVersion()
+
+UpdateVersionNumbers()
