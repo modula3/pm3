@@ -21,7 +21,7 @@
 
 COMPILER FortranPrototype
 
-IMPORT IO, ParamTbl, TextList;
+IMPORT IO, Parameter, ParamTbl, TextList;
 
 CHARACTERS
   letter  = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -64,15 +64,18 @@ Procedure
 .)
    = (SubroutineHead<name> | FunctionHead<name,rettype>)
      Signature<params> newline
-     Declarations
+     Declarations<paramInfo>
      TypeComments
      (.
        IO.Put("PROCEDURE "&name&" (");
        params := TextList.ReverseD(params);
-       VAR p:=params;
+       VAR
+         p:=params;
+         pi:Parameter.T;
        BEGIN
          WHILE p#NIL DO
-           IO.Put(p.head&": "&"; ");
+           <*ASSERT paramInfo.get(p.head,pi)*>
+           IO.Put(p.head&": "&pi.type&"; ");
            p:=p.tail;
          END;
        END;
@@ -93,7 +96,7 @@ Signature<VAR params : TextList.T>   (. VAR formal:TEXT; .)
        }]
      ")" .
 
-Declarations                   (. VAR type,var : TEXT; .)
+Declarations<paramInfo:ParamTbl.T>   (. VAR type,var : TEXT; .)
    = { (
          "EXTERNAL"
          Ident<var>            (. IO.Put("(* Procedure "&var&" *)\n") .)
@@ -101,19 +104,22 @@ Declarations                   (. VAR type,var : TEXT; .)
          }
        |
          Type<type>
-         VarDecl<var>          (. IO.Put(var&type&";\n") .)
-         {"," VarDecl<var>     (. IO.Put(var&type&";\n") .)
+         VarDecl<paramInfo,type>
+         {"," VarDecl<paramInfo,type>
          }
        )
        newline
      } .
 
-VarDecl<VAR var:TEXT>          (. VAR name, dim : TEXT; typecons:=""; .)
+VarDecl<paramInfo:ParamTbl.T; type:TEXT>          (. VAR name, dim : TEXT; typecons:=""; .)
    = Ident<name>
      ["(" ArrDim<dim>          (. typecons := "ARRAY "&dim&"OF " .)
       {"," ArrDim<dim>         (. typecons := "ARRAY "&dim&"OF "&typecons .)
       }                        (. typecons := "(* "&typecons&"*) " .)
-      ")"]                     (. var := name&": "&typecons .)
+      ")"]                     (. <*ASSERT NOT paramInfo.put(name,Parameter.T
+                                        {type:=typecons&type,
+                                         writeable:=FALSE,
+                                         function:=FALSE}) *> EVAL FALSE .)
      .
 
 ArrDim<VAR dim:TEXT>           (. VAR id : TEXT; .)
