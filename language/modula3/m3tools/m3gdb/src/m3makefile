@@ -41,12 +41,12 @@ local ret = 0
 
 if defined ("quick")
   % don't bother reconfiguring, just build gdb
-  ret = exec ([M3GDB_MAKE, ARG0, ARG1],[],"../gdb")
+  ret = exec ([M3GDB_MAKE, ARG0, ARG1],[],"../gdb-old")
   if not equal(ret,0) error("Failed to build m3gdb") end
 else
   % configure the sources & compile
-  local cmd = [".." & "/" & "gdb" & "/" & "configure", % M3GDB_CONFIG,
-      "--srcdir=../gdb", "--disable-gdbtk", gnu_platform (M3GDB_HOST)]
+  local cmd = [".." & "/" & "gdb-old" & "/" & "configure", % M3GDB_CONFIG,
+      "--srcdir=../gdb-old", "--disable-gdbtk", gnu_platform (M3GDB_HOST)]
   if equal(OS_TYPE,"WIN32")
     > "tmpsh" in
       write("#! /bin/sh",CR)
