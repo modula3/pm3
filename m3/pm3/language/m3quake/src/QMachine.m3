@@ -563,7 +563,7 @@ PROCEDURE PushScope (t: T): QValue.Scope =
   BEGIN
     IF (t.reg.xp >= NUMBER (t.scopes^)) THEN ExpandScopes (t); END;
     WITH s = t.scopes [t.reg.xp] DO
-      IF (s = NIL) THEN s := NEW (QValue.Scope); END;
+      s := NEW (QValue.Scope);
       IF (t.reg.xp > 0)
         THEN s.parent := t.scopes[t.reg.xp-1];
         ELSE s.parent := NIL;
