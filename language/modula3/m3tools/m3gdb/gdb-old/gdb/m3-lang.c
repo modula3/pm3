@@ -532,6 +532,11 @@ static int regno_to_jmpbuf [] = {
 
 #if defined(linux) && defined(i386)
 
+/* This tells where each register in array REGISTER_NAMES in 
+   config/i386/tm-i386.h is found in a jump_buf <jmp_buf.h>.
+   Registers which dont appear are set to 0? The fourth register
+   below is ebx and happens to be the first entry (0) in jmp_buf. */
+
 #define HAVE_REGISTER_MAP
 static int regno_to_jmpbuf [] = {
    0,0,0,0,4,3,1,2,5,0,0,0,0,0,0,0
