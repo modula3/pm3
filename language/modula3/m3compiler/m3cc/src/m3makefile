@@ -85,6 +85,18 @@ if equal (M3CC_HOST, M3CC_TARGET)
     pgms = ["m3cgc1", "mips-tfile"]
     LibdExport ("mips-tfile")
   end
+  if equal (M3CC_HOST, "ALPHA_OSF")
+    > "as" in
+      write("#!/bin/sh",CR)
+      write("/bin/as $*",CR)
+    end
+    > "fixobj" in
+      write("#!/bin/sh",CR)
+      write(LIB_USE & "/mips-tfile $*",CR)
+    end
+    LibdExport ("as")
+    LibdExport ("fixobj")
+  end
 end
 
 % check for non-default flags
