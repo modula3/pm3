@@ -3149,7 +3149,7 @@ PROCEDURE AllocUntraced (size: INTEGER): ADDRESS =
 PROCEDURE AllocTraced (dataSize, dataAlignment: CARDINAL;
                        VAR pool: AllocPool): RefReferent =
   (* Allocates space from "pool" in the traced heap. *)
-  (* LL >= RTOS.LockHeap *)
+  (* LL >= RTOS.HeapLock *)
   VAR
     res       : ADDRESS := pool.next + ADRSIZE(Header);
     cur_align : INTEGER := Word.And(LOOPHOLE(res, INTEGER), MaxAlignMask);

@@ -22,10 +22,46 @@ PROCEDURE GetMemory (size: INTEGER): ADDRESS;
 
 PROCEDURE LockHeap ();
 (* Enters an allocator/collector critical section; the same thread may
-   enter the critical section multiple times.  *)
+   enter the critical section multiple times.
+
+   It could be written at user level as:
+
+| VAR
+|   mutex    : MUTEX            := NEW(MUTEX);
+|   condition: Thread.Condition := NEW(Thread.Condition);
+|   thread   : Thread.T         := NIL;
+|   count    : CARDINAL         := 0;
+
+| PROCEDURE LockHeap () =
+|   BEGIN
+|     LOCK mutex DO
+|       IF count = 0 THEN
+|         thread := Thread.Self();
+|         INC(count);
+|       ELSIF thread = Thread.Self() THEN
+|         INC(count);
+|       ELSE
+|         Thread.Wait(mutex, condition);
+|       END;
+|     END;
+|   END LockHeap;
+
+   However, it must be possible to call it from anywhere in the
+   collector. *)
 
 PROCEDURE UnlockHeap ();
-(* Leaves the critical section.  *)
+(* Leaves the critical section.
+
+   It could be written at user level as:
+
+| PROCEDURE UnlockHeap () =
+|   BEGIN
+|     LOCK mutex DO DEC(count); END;
+|     IF count = 0 THEN Thread.Signal(condition); END;
+|   END UnlockHeap;
+
+   However, it must be possible to call it from anywhere inside the
+   collector. *)
 
 PROCEDURE BroadcastHeap ();
 (* Restarts all threads that called "WaitHeap" sometime after the

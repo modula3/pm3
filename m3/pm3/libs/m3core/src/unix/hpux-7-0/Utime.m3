@@ -3,7 +3,7 @@
 
 UNSAFE MODULE Utime;
 
-IMPORT Cstring, RT0u;
+IMPORT Cstring, ThreadF;
 FROM Ctypes IMPORT char_star, int, long_star;
 
 PROCEDURE ctime_r (clock: long_star; buf: char_star; buflen: int): char_star =

@@ -6,7 +6,7 @@
 
 UNSAFE MODULE RTHeapDep;
 
-IMPORT RT0u, RTHeapRep, RTCollectorSRC, RTMachine;
+IMPORT ThreadF, RTHeapRep, RTCollectorSRC, RTMachine;
 IMPORT Cstdlib, Ctypes, Umman, Unix, Uresource, Usignal, Utime, Utypes, Word;
 
 VAR
@@ -53,7 +53,7 @@ PROCEDURE Core (sig: Ctypes.int; <*UNUSED*> code: Ctypes.int;
       sv_handler := Usignal.SIG_DFL, sv_mask := 0, sv_flags := 0};
     dummy_vec: Usignal.struct_sigvec;
   BEGIN
-    INC(RT0u.inCritical);
+    ThreadF.SuspendOthers();
     IF NOT dumped_core THEN
       (* indicate that this thread will dump core *)
       dumped_core := TRUE;
@@ -67,7 +67,7 @@ PROCEDURE Core (sig: Ctypes.int; <*UNUSED*> code: Ctypes.int;
       Cstdlib.abort ();
       <* ASSERT FALSE *>
     END;
-    DEC(RT0u.inCritical);
+    ThreadF.ResumeOthers();
   END Core;
 
 PROCEDURE Init () =
