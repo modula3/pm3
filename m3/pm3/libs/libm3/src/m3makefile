@@ -20,7 +20,6 @@ include_dir ("uid")
 
 %--------------------------------------------- machine independent packages ---
 
-include_dir ("pickle")
 include_dir ("rw")
 include_dir ("fmtlex")
 include_dir ("list")
@@ -42,6 +41,7 @@ include_dir ("bundleintf")
 include_dir ("perftool")
 include_dir ("pqueue")
 include_dir ("sqrt")
+include_dir ("pickle")
 
 import("m3doc")
 HtmlFile("index")

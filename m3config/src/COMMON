@@ -144,8 +144,8 @@ proc setOSConventions (opt,val) is
     NAMING_CONVENTIONS = GNU_WIN32_CONVENTIONS
   end
 
-  SL = NAMING_CONVENTIONS[23]
-  CR = NAMING_CONVENTIONS[24]
+  SL = NAMING_CONVENTIONS[24]
+  CR = NAMING_CONVENTIONS[25]
   CRship = "\n"
   SLship = "/"
 end
