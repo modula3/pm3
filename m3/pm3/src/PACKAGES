@@ -240,6 +240,9 @@ PkgInfo("sharedobjgen","network/sharedobjects","","sharedobjgen",tProg,"",3,[],
     ["ALL"],[],"Shared objects stub generator, needed to compile programs "
     & "using shared objects")
 
+PkgInfo("BerkeleyDB","database","","pm3",tLib,"T",3,[],["ALL"],[],
+    "Berkeley DB")
+
 PkgInfo("daemon","database/GRAS3/Tools","","pm3",tLib,"T",3,[],["ALL"],[],
     "Basic procedure to fork daemon processes")
 
