@@ -17,15 +17,17 @@ import ("libm3")
 
 if SYSTEM_LIBS contains "LEX-YACC"
   if equal (TARGET, "HPPA")
-    include_dir ("lex-yacc-HPPA")
+    parserdir = "lex-yacc-HPPA"
   else
-    include_dir ("lex-yacc")
+    parserdir = "lex-yacc"
   end
 else if SYSTEM_LIBS contains "FLEX-BISON"
-  include_dir ("flex-bison")
+  parserdir = "flex-bison"
 else
   error ("Unable to build the pretty printer without Lex&Yacc or Flex&Bison libraries.")
 end end
+
+include_dir (parserdir)
 
 % source   ("Parse.lex")
 % source   ("Parse.yacc")

@@ -1188,12 +1188,16 @@ With:          WITH { PK ("WITH");} NPS ;
 /*--------------------- comments ------------------------*/
 
 InitialNPS:
-      WHITESPACE { blanklinep = 0; PrintNPS(1); }
+      WHITESPACE NPSPure { blanklinep = 0; PrintNPS(1); }
     ;
 
 NPS:
-      /* empty */ { blanklinep = 0; }
-    | WHITESPACE { blanklinep = 0; PrintNPS(0); } NPS
+      NPSPure { blanklinep = 0; PrintNPS(0); }
+    ;
+
+NPSPure:
+      /* empty */
+    | WHITESPACE NPSPure
     ;
 
 /*----------------- formatting semantic routines -----------------------*/

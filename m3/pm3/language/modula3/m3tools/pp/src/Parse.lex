@@ -7,6 +7,18 @@
 /*      modified on Thu Apr 23 18:08:06 PDT 1992 by muller         */
 /*      modified on Mon Apr 20 15:59:06 1992 by nichols@xerox.com  */
 /*      modified on Mon Nov 25 17:41:09 PST 1991 by meehan         */
+
+/*
+  We distinguish between known and unknown pragmas.
+  Known pragmas can appear at special positions only
+  and must fulfill a certain syntax.
+  They are part of the grammar and are processed in Parse.yacc.
+  Unknown pragmas can appear anywhere and are treated like comments.
+  They are processed by the lexer and are identified as WHITESPACE
+  for the grammar.
+  Some pragmas like NOWARN are known but are handled like unknown
+  since they can appear anywhere.
+*/
 %}
 
 %Start Prog Com Prag
@@ -35,11 +47,8 @@
 "*>"		{BufferLexeme(1); return(RPRAGMA);}
 
 [ \t\f\n\r]	{ return (HandleSpaces()); }
-"<"/"*"		{ return (HandleNPS()); }
-"("/"*"		{ return (HandleNPS()); }
-%{
-/*"<*"[ \t\f\n\r]*"NOWARN"        {BufferLexeme(1); return (HandleNPS()); }*/
-%}
+"<"/"*"		{ return (HandleCommentPragma()); }
+"("/"*"		{ return (HandleCommentPragma()); }
 
 
 "+"		{BufferLexeme(1); return(PLUS);}
