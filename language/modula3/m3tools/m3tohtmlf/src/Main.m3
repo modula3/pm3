@@ -3,7 +3,8 @@ MODULE Main;
 
 (* The m3tohtmlf program receives a Modula-3 file name as command line
    argument and formats the named file in HTML to stdout, according to
-   the typesetting rules below.
+   the typesetting rules below. If no argument is provided, the standard
+   input is used.
 
    All lines up to and including the first blank line
    are skipped.  (This makes it easy to omit the copyright notice
@@ -64,47 +65,121 @@ MODULE Main;
 
 IMPORT Wx, Buf, MarkUp;
 
-IMPORT Stdio, Rd, Wr, Params, Text, Thread, Pathname;
+IMPORT Stdio, Rd, Wr, Params, Text, Thread, ASCII;
 
-EXCEPTION
-  UsageError;
+TYPE
+  FileType = {Interface, GenericInterface, Module, GenericModule, Unknown};
 
 <*FATAL Thread.Alerted*>
 <*FATAL Wr.Failure*>
 
+PROCEDURE FindNameAndType(b: Buf.T; VAR name: TEXT; VAR type: FileType) =
+  VAR
+    position: CARDINAL := 0;
+    length: CARDINAL := NUMBER(b^);
+    t: TEXT;
+    generic: BOOLEAN := FALSE;
+  BEGIN
+    t := GetName(b,position,length);
+    IF Text.Equal(t,"GENERIC") THEN
+      t := GetName(b,position,length);
+      generic := TRUE;
+    END;
+    IF Text.Equal(t,"MODULE") THEN 
+      IF generic THEN type := FileType.GenericModule; 
+      ELSE type := FileType.Module;
+      END;
+    ELSIF Text.Equal(t,"INTERFACE") THEN
+      IF generic THEN type := FileType.GenericInterface; 
+      ELSE type := FileType.Interface;
+      END;
+    ELSE
+      type := FileType.Unknown;
+      RETURN;
+    END;
+    name := GetName(b,position,length);
+  END FindNameAndType;
+
+PROCEDURE GetName(b: Buf.T; VAR position: CARDINAL; length: CARDINAL): TEXT =
+  VAR
+    pos: CARDINAL;
+  BEGIN
+    SkipComments(b,position,length);
+    pos := position;
+    WHILE position < length AND b[position] IN ASCII.AlphaNumerics DO 
+      INC(position);
+    END;
+    RETURN Text.FromChars(SUBARRAY(b^,pos,position - pos));
+  END GetName;
+
+PROCEDURE SkipComments(b: Buf.T; VAR position: CARDINAL; length: CARDINAL) =
+  VAR
+    inComment := FALSE;
+  BEGIN
+    WHILE position < (length - 1) DO
+      IF inComment THEN
+        IF b[position] = '*' AND b[position + 1] = ')' THEN
+          INC(position);
+          inComment := FALSE;
+        END;
+      ELSE
+        IF b[position] = '(' AND b[position + 1] = '*' THEN
+          INC(position);
+          inComment := TRUE;
+        ELSIF NOT b[position] IN ASCII.Spaces THEN RETURN;
+        END;
+      END;
+      INC(position);
+    END;
+  END SkipComments;
+
+CONST
+  BufSize = 8000;
+
 VAR
   buf: Buf.T;
-  file, basename, extension: TEXT;
+  file, unitName: TEXT;
   wx := Wx.New();
   wr := Stdio.stdout;
+  fileType: FileType;
+  readBuffer: ARRAY [0..BufSize - 1] OF CHAR;
+  nb: CARDINAL;
 
 BEGIN
   TRY
-    IF Params.Count < 2 THEN RAISE UsageError; END;
-    file := Params.Get(1);
-    basename := Pathname.LastBase(file);
-    extension := Pathname.LastExt(file);
+    IF Params.Count < 2 THEN 
+      LOOP
+        nb := Rd.GetSub(Stdio.stdin, readBuffer);
+        IF nb = 0 THEN EXIT; END;
+        IF nb = BufSize THEN Wx.PutStr(wx,readBuffer); 
+        ELSE Wx.PutStr(wx,SUBARRAY(readBuffer,0,nb));
+        END;
+      END;
+      buf := Buf.FromText(Wx.ToText(wx));
+    ELSE
+      file := Params.Get(1);
+      buf := Buf.FromFile (file);
+      IF buf = NIL THEN RAISE Rd.Failure(NIL); END;
+    END;
 
-    buf := Buf.FromFile (file);
-    IF buf = NIL THEN RAISE Rd.Failure(NIL); END;
+    FindNameAndType(buf, unitName, fileType);
 
     MarkUp.Annotate(buf,wx,FALSE);
 
-    IF Text.Equal(extension,".i3") OR Text.Equal(extension,".ig") THEN
-      Wr.PutText(wr,"<TITLE> The " & basename & " interface </TITLE>\n");
-      Wr.PutText(wr,"<H1> The " & basename & " interface </H1>\n");
-    ELSIF Text.Equal(extension,".m3") OR Text.Equal(extension,".mg") THEN
-      Wr.PutText(wr,"<TITLE> The " & basename & " module </TITLE>\n");
-      Wr.PutText(wr,"<H1> The " & basename & " module </H1>\n");
+    IF fileType = FileType.Interface OR 
+        fileType = FileType.GenericInterface THEN
+      Wr.PutText(wr,"<TITLE> The " & unitName & " interface </TITLE>\n");
+      Wr.PutText(wr,"<H1> The " & unitName & " interface </H1>\n");
+    ELSIF fileType = FileType.Module OR fileType = FileType.GenericModule THEN
+      Wr.PutText(wr,"<TITLE> The " & unitName & " module </TITLE>\n");
+      Wr.PutText(wr,"<H1> The " & unitName & " module </H1>\n");
     END;
 
     Wr.PutText(wr,Wx.ToText(wx));
   EXCEPT
-    Rd.Failure => 
-      Wr.PutText(Stdio.stderr, "? can't read file " & file & " \n")
-  | UsageError =>
-      Wr.PutText(Stdio.stderr,"? usage: m3tohtmlf name.extension\n")
+  | Rd.Failure => 
+      Wr.PutText(Stdio.stderr, "? can't read file " & file & " \n");
   | Wr.Failure =>
-      Wr.PutText(Stdio.stderr, "? can't write file\n")
+      Wr.PutText(Stdio.stderr, "? can't write file\n");
   END
 END Main.
