@@ -1402,7 +1402,11 @@ PROCEDURE U_Program(t: T; x: TEXT) RAISES {Error}=
   BEGIN
     GenM3Exports(t, x, GenType.Pgm);
     IF t.all THEN
-      M3(t, "-o " & x);
+      IF NOT Text.Equal(x, "") THEN
+        M3(t, "-o " & x);
+      ELSE
+        M3(t, "");
+      END;
       InstallSources(t);
     END;
     Deriveds(t, x, Exts2{ t.PGM_ext, ".m3x" });
@@ -2743,6 +2747,37 @@ PROCEDURE DoTryExec (t: QMachine.T;  n_args: INTEGER) RAISES {Error} =
     t.push(arg);
   END DoTryExec;
 
+PROCEDURE DoReplaceChar (t: QMachine.T;  n_args: INTEGER) RAISES {Error} =
+  VAR
+    string, old, new: QValue.T;
+    oldtext, newtext, ret: TEXT;
+  BEGIN
+    <* ASSERT n_args = 3 *>
+    t.pop(new);
+    t.pop(old);
+    t.pop(string);
+    oldtext := QVal.ToText(t, old);
+    newtext := QVal.ToText(t, new);
+    IF (Text.Length(oldtext) # 1) OR (Text.Length(newtext) # 1) THEN
+      RAISE Error ("replacechar: 'old' and 'new' must be a single character each");
+    END;
+    ret := ReplaceChar(QVal.ToText(t, string), Text.GetChar(oldtext, 0), 
+                Text.GetChar(newtext, 0));
+    string.int := M3ID.Add(ret);
+    t.push(string);
+  END DoReplaceChar;
+
+PROCEDURE ReplaceChar(string: TEXT; old: CHAR; new: CHAR): TEXT=
+  VAR chars: REF ARRAY OF CHAR;
+  BEGIN
+    chars := NEW(REF ARRAY OF CHAR, Text.Length(string));
+    Text.SetChars(chars^, string);
+    FOR I := FIRST(chars^) TO LAST(chars^) DO
+      IF chars[I] = old THEN chars[I] := new; END;
+    END;
+    RETURN Text.FromChars(chars^);
+  END ReplaceChar;
+
 (*-------------------------------------------------------------- dummy ------*)
 
 PROCEDURE DoDummy(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
@@ -2902,12 +2937,10 @@ PROCEDURE NewProc (nm      : TEXT;
 
 PROCEDURE InitProcs(): REF ARRAY OF ProcRec =
   VAR
-    Procs := NEW(REF ARRAY OF ProcRec, 107);
+    Procs := NEW(REF ARRAY OF ProcRec, 108);
   BEGIN
     Procs[0].proc := NewProc ("reset_cache", DoResetCache, 0, FALSE);
-    Procs[0].readonly := TRUE;
     Procs[1].proc := NewProc ("m3", DoM3, -1, FALSE);
-    Procs[1].readonly := TRUE;
     Procs[2].proc := NewProc("override", DoOverride, 2, FALSE);
     Procs[3].proc := NewProc("Pkg", DoPkg, 1, TRUE);
     Procs[4].proc := NewProc("M3include", DoM3include, 4, FALSE);
@@ -3030,6 +3063,7 @@ PROCEDURE InitProcs(): REF ARRAY OF ProcRec =
     Procs[104].proc := NewProc("_define_pgm", DoDummy, 1, FALSE);
     Procs[105].proc := NewProc("_define_lib", DoDummy, 1, FALSE);
     Procs[106].proc := NewProc("m3front_option", DoM3FrontOption, 1, FALSE);
+    Procs[107].proc := NewProc("replacechar", DoReplaceChar, 3, TRUE);
     RETURN Procs;
   END InitProcs;
 
