@@ -24,10 +24,6 @@ Module         ("ViewAreaVBT")
 Module         ("LecternOCR")
 Module         ("Links")
 Module         ("Find")
-/* Work around poor emulation of writev kernel call in Linux */
-if equal(TARGET, "LINUX") or equal(TARGET, "LINUXELF")
-  c_source       ("writev")
-end
 implementation ("Lectern")
 /* **** the BuildLectern(1) man page is in the cra/virtualpaper package */
 
