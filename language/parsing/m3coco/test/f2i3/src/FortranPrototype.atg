@@ -75,6 +75,9 @@ Procedure
        BEGIN
          WHILE p#NIL DO
            <*ASSERT paramInfo.get(p.head,pi)*>
+           IF pi.function THEN
+             pi.type := "PROCEDURE (): "&pi.type;  (* the signature of this function is unknown *)
+           END;
            IO.Put(ARRAY BOOLEAN OF TEXT{"READONLY","VAR"}[pi.writeable] &
                   " " & p.head&": "&pi.type&"; ");
            p:=p.tail;
@@ -97,11 +100,11 @@ Signature<VAR params : TextList.T>   (. VAR formal:TEXT; .)
        }]
      ")" .
 
-Declarations<paramInfo:ParamTbl.T>   (. VAR type,var : TEXT; .)
+Declarations<paramInfo:ParamTbl.T>   (. VAR type : TEXT; .)
    = { (
          "EXTERNAL"
-         Ident<var>            (. IO.Put("(* Procedure "&var&" *)\n") .)
-         {"," Ident<var>       (. IO.Put("(* Procedure "&var&" *)\n") .)
+         External<paramInfo>
+         {"," External<paramInfo>
          }
        |
          Type<type>
@@ -112,7 +115,13 @@ Declarations<paramInfo:ParamTbl.T>   (. VAR type,var : TEXT; .)
        newline
      } .
 
-VarDecl<paramInfo:ParamTbl.T; type:TEXT>          (. VAR name, dim : TEXT; typecons:=""; .)
+External<paramInfo:ParamTbl.T>    (. VAR name : TEXT; pi:Parameter.T; .)
+   = Ident<name>               (. <*ASSERT paramInfo.get(name,pi) *>
+                                  pi.function := TRUE;
+                                  <*ASSERT paramInfo.put(name,pi) *> EVAL FALSE .)
+   .
+
+VarDecl<paramInfo:ParamTbl.T; type:TEXT>    (. VAR name, dim : TEXT; typecons:=""; .)
    = Ident<name>
      ["(" ArrDim<dim>          (. typecons := "ARRAY "&dim&"OF " .)
       {"," ArrDim<dim>         (. typecons := "ARRAY "&dim&"OF "&typecons .)
