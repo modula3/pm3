@@ -12,7 +12,7 @@
 template ("mtex")
 
 % the mtex man pages
-if AT_SRC and equal (OS_TYPE, "POSIX")
+if defined("AT_SRC") and equal (OS_TYPE, "POSIX")
   Mtex ("mtex", "7")
   Mtex ("mtex2html", "1")
   Mtex ("mtex2man", "1")

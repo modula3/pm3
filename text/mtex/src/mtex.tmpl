@@ -55,7 +55,7 @@ end
 
 proc Mtex (file, section) is
   if equal (OS_TYPE, "POSIX")
-    if AT_SRC
+    if defined("AT_SRC")
       MtexAtSRC(file, section)
     else
       MtexOutsideSRC(file, section)
