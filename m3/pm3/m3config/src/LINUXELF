@@ -251,19 +251,27 @@ proc m3_make_lib (lib, objects, imported_libs, static, shared) is
       if not equal(ret, 0) return ret end
       %exec ("gcc -shared -Wl,-soname", "-Wl," & lib_so,
       %        "-o", lib_soxx, objects)
-      link_file(lib_soxx, lib_sox)
-      link_file(lib_soxx, lib_so)
-      install_derived (lib_soxx)
-      install_derived (lib_sox)
-      install_derived (lib_so)
-      install_link_to_derived (lib_sox, LIB_INSTALL)
-      install_link_to_derived (lib_so, LIB_INSTALL)
     end
-    deriveds (lib_soxx, [""])
-    deriveds (lib_sox, [""])
-    deriveds (lib_so, [""])
   end
   return ret
+end
+
+proc m3_note_shlib(lib) is
+  if defined ("_all")
+    local lib_so   = format ("lib%s.so", lib)
+    local lib_sox  = format ("lib%s.so.3", lib)
+    local lib_soxx = format ("lib%s.so.3.5", lib)
+    link_file(lib_soxx, lib_sox)
+    link_file(lib_soxx, lib_so)
+    install_derived (lib_soxx)
+    install_derived (lib_sox)
+    install_derived (lib_so)
+    install_link_to_derived (lib_sox, LIB_INSTALL)
+    install_link_to_derived (lib_so, LIB_INSTALL)
+  end
+  deriveds (lib_soxx, [""])
+  deriveds (lib_sox, [""])
+  deriveds (lib_so, [""])
 end
 
 %---------------------------------------------------------------- assembler ---
