@@ -33,8 +33,11 @@ readonly proc _v_netobjv1(intf, type, v, useintf) is
 
   if stale(base_name & ".i3", intf_pn)
     generate_tfile()
-    exec(_NETOBJ_STUBGEN, "-sno", intf & "." & type, netobjuse, useintf,
-          M3SEARCH_TABLES)
+    local cmd = [ _NETOBJ_STUBGEN, "-sno", intf & "." & type, netobjuse, 
+                  useintf, M3SEARCH_TABLES ]
+    write(cmd)
+    local ret = exec(cmd)
+    if not equal(ret, 0) error("command failed with error code: ", ret) end
   end
     
 end
