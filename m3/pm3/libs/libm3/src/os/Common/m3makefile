@@ -9,16 +9,17 @@
 %      modified on Tue Feb  2 20:40:02 PST 1993 by mjordan
 
 
-Interface(OSError)
-Interface(File)
-Interface(RegularFile)
-Interface(Pipe)
-Interface(Pathname)
-Interface(FS)
-Interface(Process)
-Interface(Terminal)
+Interface("OSError")
+Interface("File")
+Interface("RegularFile")
+Interface("Pipe")
+Interface("Pathname")
+Interface("FS")
+Interface("Process")
+Interface("Terminal")
 
 /* The following only initialize the File.Type variables: */
-implementation(Terminal)
-implementation(RegularFile)
-implementation(Pipe)
+implementation("Terminal")
+implementation("RegularFile")
+implementation("Pipe")
+implementation("FS")
