@@ -1,0 +1,58 @@
+<HTML><HEAD>
+<TITLE>How to call C procedures from a Modula-3 program?</TITLE>
+</HEAD><BODY>
+<H1>How to call C procedures from a Modula-3 program?</H1>
+<P>
+  Calling C from Modula-3 is usually straight forward. You must declare
+  the procedures as EXTERNAL in an interface. You must take care to ensure
+  that the parameter types, especially their sizes, in the Modula-3 declaration
+  and the C implementation of the procedure match exactly; otherwise your
+  program will most likely crash or behave in other unwanted ways. It is also
+  important to note that objects in the heap may move so that object 
+  references -- including text -- are no real good choice to pass.
+  It is usually best to declare a local variable of known size and storage
+  location and use this. Have a look at the M3toC module to see how to
+  convert TEXTs to C strings etc.
+</P>
+<P>
+  Here's an example:
+</P>
+<PRE><TT>
+/* Ccode.c */
+
+#include <stdio.h>
+
+void age (int a) {
+  printf ("%d\n", a);
+};
+
+(* Ccode.i3*)
+INTERFACE Ccode;
+
+IMPORT Ctypes;
+
+<*EXTERNAL*> PROCEDURE age (a: Ctypes.int);
+
+END Ccode.
+
+(* Main.m3 *)
+UNSAFE MODULE Main;
+IMPORT Ccode;
+
+BEGIN
+  Ccode.age(19);
+END Main.
+
+(* m3makefile * )
+
+import("libm3")
+
+interface ("Ccode")
+c_source ("Ccode")
+implementation("Main")
+program("mixed")
+
+</TT></PRE>
+</BODY></HTML>
+
+
