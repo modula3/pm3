@@ -10,7 +10,7 @@
    is one predefined "Font.T", which yields the built-in font of the
    screentype.  
 
-   The locking level is "LL.sup <= VBT.mu" for all of the procedures
+   The locking level is "LL.sup &lt;= VBT.mu" for all of the procedures
    in this interface. *)
 
 INTERFACE Font;

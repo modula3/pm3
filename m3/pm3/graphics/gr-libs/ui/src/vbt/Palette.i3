@@ -20,7 +20,7 @@ IMPORT VBT, PaintOp, Cursor, Pixmap, Font,
   ScrnPaintOp, ScrnCursor, ScrnPixmap, ScrnFont;
 
 (* Translating a screen-independent resource into its screen-dependent
-   form is called {\it resolving} the resource.  Here are the closure 
+   form is called <I>resolving</I> the resource.  Here are the closure 
    types for resolving resources: *)
 
 TYPE 
@@ -93,12 +93,15 @@ PROCEDURE ResolveFont(st: VBT.ScreenType; font: Font.T)
    will deadlock. 
 
    To implement screen-independent resources, every screentype includes
-   a {\it palette}, which is a table of screen-dependent resources
+   a <I>palette</I>, which is a table of screen-dependent resources
    appropriate for that screentype.  Most clients don't need to worry
    about the palette, but if you are implementing a "VBT" class that
    translates to some other window system---like X or Microsoft
    Windows---here is the procedure for building the palette in the
-   screentype for a top-level window: \index{palette}*)
+   screentype for a top-level window: <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>palette</SPAN>
+</SPAN>
+*)
 
 PROCEDURE Init(st: VBT.ScreenType);
 <* LL.sup = VBT.mu.v *>

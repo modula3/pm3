@@ -11,7 +11,7 @@
 <*PRAGMA LL*>
 
 (* A "ScrnCursor.T" is a handle on a cursor shape that is valid for some
-   particular screentype, called the {\it owner} of the handle.  Some
+   particular screentype, called the <I>owner</I> of the handle.  Some
    handles have names; others are anonymous.  A named handle is valid
    forever.  The cursor referenced by an anonymous handle will be
    garbage-collected when all handles to it have been dropped.  *)
@@ -29,7 +29,7 @@ TYPE Raw = Cursor.Raw;
 (* See the "Cursor" interface for the raw representation of a cursor 
    shape as a pair of bitmaps, color information, and hotspot offset.
 
-\subsubsection{Obtaining handles from the oracle} *)
+<H3> Obtaining handles from the oracle </H3> *)
 
 TYPE
   Oracle = Private OBJECT (*CONST*)
@@ -85,9 +85,9 @@ TYPE
    returns the screen-dependent cursor valid for "st" that corresponds
    to the predefined screen-independent cursor "Cursor.T{cs}" .
    
-   The locking level for all methods is "LL.sup <= VBT.mu". *)
+   The locking level for all methods is "LL.sup &lt;= VBT.mu". *)
 
-(* \subsubsection{The handle object} *)
+(* <H3> The handle object </H3> *)
 
 TYPE
   T <: Public; 

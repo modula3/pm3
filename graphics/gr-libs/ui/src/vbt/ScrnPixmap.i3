@@ -10,7 +10,7 @@
 <*PRAGMA LL*>
 
 (* A "ScrnPixmap.T" is a handle on a rectangular array of pixels that
-   is valid for use on a particular screentype, called the {\it owner}
+   is valid for use on a particular screentype, called the <I>owner</I>
    of the handle.  Some handles have names; others are anonymous.  A
    named handle is valid forever; the pixmap referenced by an anonymous
    handle will be garbage-collected when all handles to it have been
@@ -27,7 +27,7 @@ TYPE Raw = Pixmap.Raw;
 (* The raw representation of a pixmap is revealed at the end of this 
    interface. 
 
-\subsubsection{Obtaining handles from the oracle} *)
+<H3> Obtaining handles from the oracle </H3> *)
 
 TYPE
   Oracle = Private OBJECT
@@ -64,9 +64,9 @@ TYPE
    pixmap valid for "st" that corresponds to the predefined
    screen-independent "Pixmap.T{pm}".
    
-   The locking level for all methods is "LL.sup <= VBT.mu". *)
+   The locking level for all methods is "LL.sup &lt;= VBT.mu". *)
 
-(* \subsubsection{The handle object} *)
+(* <H3> The handle object </H3> *)
 
 TYPE
   T <: Public; 
@@ -100,7 +100,7 @@ TYPE
    free it. After a call to "free", the pixmap bounds and contents
    are arbitrary. *)
 
-(* \subsubsection{The raw representation}
+(* <H3> The raw representation </H3>
 
    A raw pixmap allows the client to directly locate and modify the
    bits of the pixmap.  The following procedure produces a new raw
@@ -166,7 +166,7 @@ TYPE
    for the internal layout of pixels in a raw pixmap:
    
    A value "pm" of type "Pixmap.Raw" is a rectangular subregion of a
-   larger rectangular pixmap, which we shall call the {\it surround}.
+   larger rectangular pixmap, which we shall call the <I>surround</I>.
    The surround is a word-aligned pixmap, stored in raster-scan order
    by rows.  Pixels do not cross word boundaries.  More precisely, the
    westmost pixel in each row of the surround is always a pixel whose

@@ -11,7 +11,7 @@
 <*PRAGMA LL*>
 
 (* A "ScrnFont.T" is a handle on a typeface that is valid for some
-   particular screentype, called the {\it owner} of the handle.  All 
+   particular screentype, called the <I>owner</I> of the handle.  All 
    handles have names, which are highly conventionalized strings
    encoding the size, style, and other properties of the typeface. *)
    
@@ -21,7 +21,7 @@ IMPORT ScrnPixmap, Rect, TrestleComm, Font, Fingerprint;
 
 EXCEPTION Failure;
 
-(* \subsubsection{Obtaining handles from the oracle} *)
+(* <H3> Obtaining handles from the oracle </H3> *)
 
 TYPE
   Oracle = Private OBJECT
@@ -92,15 +92,15 @@ TYPE
    returns the screen-dependent font valid for "st" that corresponds
    to the predefined screen-independent font "Font.T{f}".
    
-   The locking level for all methods is "LL.sup <= VBT.mu". *)
+   The locking level for all methods is "LL.sup &lt;= VBT.mu". *)
 
-(* \subsubsection{Font attributes} *)
+(* <H3> Font attributes </H3> *)
 
 (* The arguments to a font oracle list method specify font attributes
    whose full specifications are the ``X Logical Font Description
    Conventions Version 1.3'', an MIT X Consortium Standard which can
-   be found in Part IV of {\it X Window System} by Scheifler and Gettys
-   \cite{XSpec}.  Here they are described in brief.
+   be found in Part IV of <I>X Window System</I> by Scheifler and Gettys
+   <A REL=BIB.ENTRY HREF="../html/references.html#XSpec"> [XSpec] </A>.  Here they are described in brief.
 
    The argument "family" specifies the family of the typeface.  To find
    out what fonts your X server has, run the "xlsfonts" program.  Most
@@ -119,34 +119,28 @@ TYPE
 
 (* whose elements have the following interpretations:
 
-\medskip\nobulletitem
+<UL><LI>
 "Roman": Upright letters in a roman style.
-
-\medskip\nobulletitem
+<LI>
 "Italic": Clockwise slanted letters in an italic style.
-
-\medskip\nobulletitem
+<LI>
 "Oblique": Clockwise slanted letters in a roman style.
-
-\medskip\nobulletitem
+<LI>
 "ReverseItalic":  Counter clockwise slanted letters in an italic style.
-
-\medskip\nobulletitem
+<LI>
 "ReverseOblique": Counter clockwise slanted letters in a roman style.
-
-\medskip\nobulletitem
+<LI>
 "Other": None of the above
-
-\medskip\nobulletitem
+<LI>
 "Any": Any of the above (including "Other").  
+</UL>
 
-\medskip
 
 The argument "weightName" is the foundry's name for the font's weight;
 e.g.,  "Bold", "DemiBold", or "Medium". 
        
-The argument "version" specifies the version of the {\it X Logical
-Font Description Conventions} that describes the format of a font's
+The argument "version" specifies the version of the <I>X Logical
+Font Description Conventions</I> that describes the format of a font's
 name.  If the argument is omitted, Version 1.3 is assumed.  (Version
 1.3 is the only version as these words are written.)
    
@@ -171,22 +165,19 @@ TYPE Spacing =
 
 (* whose elements have the following meaning:
 
-\medskip\nobulletitem "Proportional": Character widths vary.
-
-\medskip\nobulletitem "Monospaced": Character widths are constant.
-
-\medskip\nobulletitem "CharCell": Font is self-clearing, as defined in
+<UL><LI>"Proportional": Character widths vary.
+<LI>"Monospaced": Character widths are constant.
+<LI>"CharCell": Font is self-clearing, as defined in
 the "VBT" interface.
-
-\medskip\nobulletitem "Any": Any of the above.
-
-\medskip The argument "averageWidth" specifies the un-weighted
+<LI>"Any": Any of the above.
+</UL>
+The argument "averageWidth" specifies the un-weighted
 arithmetic mean of the widths of all glyphs in the font, measured in
 tenths of a pixel.
 
 The arguments "charsetRegistry" and "charsetEncoding" are the X names of the 
 font's character set and encoding scheme;  e.g., "ISO8859" and "1" for
-ISO Latin-1 fonts.  See Appendix G of \cite{XSpec}. *)
+ISO Latin-1 fonts.  See Appendix G of <A REL=BIB.ENTRY HREF="../html/references.html#XSpec"> [XSpec] </A>. *)
 
 CONST
   AnyMatch = "*";
@@ -199,7 +190,7 @@ CONST
    "vres" matches fonts whose horizontal and vertical resolutions agree
    with the screentype that owns the font.  *)
 
-(* \subsubsection{Registering fonts} *)
+(* <H3> Registering fonts </H3> *)
   
 (* Some screentypes allow the client to register fonts.  The client registers
    the font's strike (bits) and metrics (description) with the "StrikeOracle".
@@ -226,7 +217,7 @@ TYPE
    the remaining fields have the value "AnyValue", the "load" method
    will compute them. *)
          
-(* \subsubsection{The handle object}  *)
+(* <H3> The handle object </H3>  *)
 
 TYPE 
   T <: Public; 
@@ -281,7 +272,7 @@ PROCEDURE TextWidth(txt: TEXT; fnt: T): INTEGER;
 (* Return the sum of the printing widths of the characters in "txt"
    in the font "fnt". *)
 
-(* \subsubsection{The raw representation} *)
+(* <H3> The raw representation </H3> *)
 
 TYPE
   CharMetric = RECORD
@@ -370,7 +361,7 @@ TYPE
 
    The set of attributes returned by the metrics methods depend on the
    font.  Fonts that are owned by X screentypes support the attributes
-   defined in Part IV of {\it X Window System} ({\it op. cit.}); we
+   defined in Part IV of <I>X Window System</I> (<I>op. cit.</I>); we
    recommend that other fonts support them too.  (To read an X font
    attribute whose type is an X atom, use the "textProp" method, which
    returns the name of the atom.)

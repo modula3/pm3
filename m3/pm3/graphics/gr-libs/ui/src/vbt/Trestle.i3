@@ -137,7 +137,7 @@ PROCEDURE GetDecoration(v: VBT.T;
   Otherwise, return "FALSE". *)
   
  
-(* \subsection{Window placement} *)
+(* <H2> Window placement </H2> *)
 
 
 PROCEDURE Attach(v: VBT.T; trsl: T := NIL)
@@ -223,19 +223,16 @@ PROCEDURE ScreenOf(
 (* If "v" is an installed window, or a child of an installed window,
     then after "res := ScreenOf(v, p)" we have 
 
-\medskip\bulletitem "res.id" is the "ID" of the screen currently
+<UL><LI>"res.id" is the "ID" of the screen currently
 containing "v";
-   
-\medskip\bulletitem "res.q" is the point in screen coordinates that
+<LI>"res.q" is the point in screen coordinates that
  corresponds to the point "p" in window coordinates;
-
-\medskip\bulletitem "res.trsl" is the window system on which "v" is
+<LI>"res.trsl" is the window system on which "v" is
 installed; and
-   
-\medskip\bulletitem
+<LI>
 "res.dom" is the domain of the screen "res.id".  
-
-\medskip The point "p" need not be in the domain of "v".  If "v" is
+</UL>
+The point "p" need not be in the domain of "v".  If "v" is
 not installed, then "res.trsl" will be "NIL", "res.id" will be
 "NoScreen", and the other fields will be arbitrary.  If the window
 manager is moving "v" between screens when "ScreenOf" is called, then
@@ -267,7 +264,7 @@ PROCEDURE GetScreens(trsl: T := NIL): ScreenArray
    root "VBT".  "GetScreens" returns "NIL" if the window system has
    no screens.  *)
 
-(* \subsection{Reading pixels from a screen} *)
+(* <H2> Reading pixels from a screen </H2> *)
 
 
 PROCEDURE Capture(
@@ -284,7 +281,7 @@ PROCEDURE Capture(
    where "r" is the "VBT" at the root of screen "id" of the window 
    system "trsl".  *)
 
-(* \subsection{Checking on recent input activity} *)
+(* <H2> Checking on recent input activity </H2> *)
 
 
 PROCEDURE AllCeded(trsl: T := NIL): BOOLEAN 
@@ -306,7 +303,7 @@ PROCEDURE TickTime(trsl: T := NIL): INTEGER;
 (* Return the number of microseconds per "VBT.TimeStamp", in events
    reported to "VBTs" connected to the window system "trsl".  *)
 
-(* \subsection{Connecting to a window system} *)
+(* <H2> Connecting to a window system </H2> *)
 
 
 PROCEDURE Connect(inst: TEXT := NIL): T
@@ -325,11 +322,11 @@ PROCEDURE Connect(inst: TEXT := NIL): T
 
 | <machine name>(":" | "::")<number>("" | "." <number>)
 
-   where "<machine name>" is an arbitrary string of characters (possibly
-   empty) and "<number>" is a non-negative decimal integer.  It denotes
+   where "&lt;machine name>" is an arbitrary string of characters (possibly
+   empty) and "&lt;number>" is a non-negative decimal integer.  It denotes
    an X server according to the rules on page 27 of the second edition
-   of {\it X Window System}, by Scheifler et.  al., Digital Press, 1990
-   \cite{XSpec}.
+   of <I>X Window System</I>, by Scheifler et.  al., Digital Press, 1990
+   <A REL=BIB.ENTRY HREF="../html/references.html#XSpec"> [XSpec] </A>.
 
    For example, "nemesia:0" denotes the first window system on the
    machine "nemesia", and ":0" denotes the first window system on

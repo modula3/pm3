@@ -13,13 +13,13 @@
 A painting operation "op" takes a source pixel "s" and a destination
 pixel "d" and produces a new value "op(d, s)" for the destination pixel.
 
-A painting operation that ignores the source pixel is called a {\it tint}.  
+A painting operation that ignores the source pixel is called a <I>tint</I>.  
 If "op" is a tint, we just write "op(d)" instead of "op(d, s)".
 If the effect of a tint is to set the destination pixel to
 some fixed value independent of its initial value, then the 
-tint is said to be {\it opaque}. 
+tint is said to be <I>opaque</I>. 
 
-The locking level is "LL.sup <= VBT.mu" for all of the procedures
+The locking level is "LL.sup &lt;= VBT.mu" for all of the procedures
 in this interface. *)
 
 INTERFACE PaintOp;

@@ -9,7 +9,7 @@
    and pull-down menus.
 
    When the cursor rolls into a menu button, the "pre" method is called
-   and the button is {\it readied}.  If it receives a mouse transition
+   and the button is <I>readied</I>.  If it receives a mouse transition
    of type "LastUp" while it is readied, the "action" and "post" methods
    are called.  The "cancel" method is called if the cursor leaves the
    button or the user chords with the mouse while the button is readied

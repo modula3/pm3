@@ -28,12 +28,12 @@ IMPORT TrestleComm, PaintOp;
    screentype "st".  It provides methods to generate "ScreenPaintOp.T"s
    that are valid for "st". 
    
-   A {\it tint} is a paintop that is independent of "s".  If "op" is
+   A <I>tint</I> is a paintop that is independent of "s".  If "op" is
    a tint, we write "op(d)" instead of "op(d, s)".  (Even in the case
    of a tint, the type of "s" must be "st.bits"; otherwise the result
    of applying the tint is undefined.)  *)
 
-(* \subsubsection{Obtaining handles from the oracle}  *)
+(* <H3> Obtaining handles from the oracle </H3>  *)
 
 TYPE 
   Pixel = INTEGER;
@@ -90,7 +90,7 @@ EXCEPTION Failure;
    predefined screen-independent operation "PaintOp.T{op}".
 
    The exception "Failure" is raised if the screentype cannot provide the 
-   requested painting operation. For all the methods, "LL.sup <= VBT.mu". *)
+   requested painting operation. For all the methods, "LL.sup &lt;= VBT.mu". *)
       
 TYPE
   PlaneWiseOracle = Oracle OBJECT
@@ -160,7 +160,7 @@ construct and return an operation "op" such that for "s" and
 The procedure may raise "Failure" if the screentype does not support
 a particular array "bitOps". *)
 
-(* \subsubsection{The handle object} *)
+(* <H3> The handle object </H3> *)
 
 TYPE 
   T <: Public; 

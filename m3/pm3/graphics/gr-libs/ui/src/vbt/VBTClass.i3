@@ -89,7 +89,7 @@
 
    Painting on the vast majority of "VBT"s can be implemented simply by
    clipping to their domain and then relaying the painting to their parent.
-   To speed up this common case, every "VBT" has a {\it short-circuit} bit.
+   To speed up this common case, every "VBT" has a <I>short-circuit</I> bit.
    If this bit is set then Trestle doesn't call the "VBT"'s "paintbatch"
    method at all; it just clips to the "VBT"'s domain and paints on its
    parent.  Typically the only "VBT"s whose short-circuit bits are not set
@@ -170,7 +170,7 @@ TYPE
              axisOrder (): Axis.T;
            END;
 
-(* From "VBT.Prefix <: Prefix" it follows "VBT.T <: Prefix"; hence every
+(* From "VBT.Prefix &lt;: Prefix" it follows "VBT.T &lt;: Prefix"; hence every
    "VBT" is a "MUTEX" object, and has the above fields and methods.  The
    complete revelation for the type "VBT.T" is private to Trestle.
 
@@ -286,7 +286,7 @@ TYPE
    mistake---it is the responsibility of the split's implementation to
    paint on the parent as necessary to keep its screen up to date. *)
 
-(* \subsubsection{Specifications of the split methods} *)
+(* <H3> Specifications of the split methods </H3> *)
 
 (* The first group of methods implement the behavior in the "Split"
    interface:
@@ -385,7 +385,7 @@ PROCEDURE LocateChanged (v: VBT.Split);
    whenever two children overlap, the top one appears earlier in "succ"
    order. *)
 
-(* \subsubsection{Specifications of the up methods} *)
+(* <H3> Specifications of the up methods </H3> *)
 
 (* So much for the split methods; here now are the specifications of the up
    methods.  In all cases, "ch" is a child of "v".
@@ -427,7 +427,7 @@ PROCEDURE LocateChanged (v: VBT.Split);
 
    The method call "v.newShape(ch)" signals that "ch"'s size range,
    preferred size, or axis order may have changed.  The default recurses on
-   the parent.  When the method is called, "LL.sup < v AND LL >= {ch,
+   the parent.  When the method is called, "LL.sup &lt; v AND LL >= {ch,
    VBT.mu.ch}".
 
    The remaining methods implement event-time operations for a descendent
@@ -440,10 +440,10 @@ PROCEDURE LocateChanged (v: VBT.Split);
    cd.detail)".  When these methods are called, "LL.sup = ch".
 
    Similarly, the "readUp" and "writeUp" methods implement the procedures
-   "VBT.Read" and "VBT.Write".  When these methods are called, "LL.sup <=
+   "VBT.Read" and "VBT.Write".  When these methods are called, "LL.sup &lt;=
    VBT.mu". *)
 
-(* \subsubsection{Getting and setting the state of a VBT} *)
+(* <H3> Getting and setting the state of a VBT </H3> *)
 
 PROCEDURE Cage (v: VBT.T): VBT.Cage; <* LL >= {v} *>
 (* Return v's cage. *)
@@ -503,7 +503,7 @@ PROCEDURE HasNewShape (v: VBT.T): BOOLEAN;
 PROCEDURE ClearNewShape (v: VBT.T); <* LL.sup < v *>
 (* Clear "v"'s "newshape" bit. *)
 
-(* \subsubsection{Procedures for activating the down methods of a VBT} *)
+(* <H3> Procedures for activating the down methods of a VBT </H3> *)
 
 PROCEDURE Reshape (v: VBT.T; READONLY new, saved: Rect.T);
 <* LL.sup >= VBT.mu.v AND LL.sup <= VBT.mu *>
@@ -617,7 +617,7 @@ PROCEDURE Detach (v: VBT.T);     <* LL.sup = VBT.mu *>
 (* Set "v.parent" and "v.upRef" to "NIL"; set "v"'s domain to empty,
    enqueue a reshape to empty, and clear "v"'s shortcircuit bit. *)
 
-(* \subsubsection{Procedures for activating the up methods of a VBT} *)
+(* <H3> Procedures for activating the up methods of a VBT </H3> *)
 
 (* The following six procedures are like the corresponding procedures in
    the "VBT" interface, except that they have a different locking level: *)

@@ -19,7 +19,7 @@ INTERFACE VBT;
 IMPORT Word, Axis, Point, Rect, Region, Trapezoid, 
   Path, Pixmap, Cursor, Font, PaintOp, ScrnPixmap;
 
-(* \subsection{The public methods} *)
+(* <H2> The public methods </H2> *)
 
 (* A "VBT" is represented as an object with a private prefix and twelve
    public methods, which define the way the "VBT" responds to events.
@@ -61,16 +61,16 @@ TYPE
    interface provides wrapper procedures that call the methods
    indirectly.  *)
 
-(* \subsection{Screens and domains} *)
+(* <H2> Screens and domains </H2> *)
 
-(* Every "VBT" has a {\it screen} that associates a pixel value with
+(* Every "VBT" has a <I>screen</I> that associates a pixel value with
    each integer lattice point.  We write "v[p]" to denote the value
    of the pixel at point "p" of the screen of the "VBT" "v".  Changing
-   the pixel values in a "VBT"'s screen is called {\it painting}.
+   the pixel values in a "VBT"'s screen is called <I>painting</I>.
      
    The part of a "VBT"'s screen that is visible to the user---or that would
    be visible if other windows weren't in the way---is called the
-   {\it domain} of the "VBT": *)
+   <I>domain</I> of the "VBT": *)
 
 PROCEDURE Domain(v: T): Rect.T; <* LL.sup < v *>
 (*  Return the rectangular extent of the visible part of
@@ -90,11 +90,15 @@ PROCEDURE Domain(v: T): Rect.T; <* LL.sup < v *>
     
     The pragma "LL.sup < v" is explained in the next section.  *)
    
-(* \subsection{Locking level} *)
+(* <H2> Locking level </H2> *)
 
 (* The global mutex "mu" serializes operations that affect the tree
    of "VBTs":  
-   \index{LL (Locking Level)@{\protect\tt LL} (Locking Level)}*)
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>LL (Locking Level)</SPAN>
+<SPAN CLASS=INDEX.TEXT>&lt;TT&gt;LL&lt;/TT&gt; (Locking Level)</SPAN>
+</SPAN>
+*)
    
 VAR mu: MUTEX;  
 
@@ -105,11 +109,10 @@ VAR mu: MUTEX;
    The order in which a thread is allowed to acquire these locks is
    called the ``locking order''.  It is defined by these two rules: 
 
-   \medskip\bulletitem The global "mu" precedes every "VBT".
-   
-   \medskip\bulletitem Every "VBT" precedes its parent.
-       
-   \medskip\noindent The ``locking level'' of a thread, or "LL" for
+   <UL><LI>The global "mu" precedes every "VBT".
+<LI>Every "VBT" precedes its parent.
+</UL>       
+   The ``locking level'' of a thread, or "LL" for
    short, is the set of locks that the thread has acquired.  The
    expression "LL.sup" denotes the maximum of the locks in "LL".  (The
    locking order is partial, but "LL.sup" will be defined for any thread
@@ -118,7 +121,7 @@ VAR mu: MUTEX;
    
    Each procedure declaration in the Trestle system includes a pragma
    specifying the locking level at which a thread can legally call the
-   procedure.  For example, the pragma "LL.sup < v" on the "Domain"
+   procedure.  For example, the pragma "LL.sup &lt; v" on the "Domain"
    procedure allows a thread to call "Domain" with no locks, or with
    "mu" locked, or with descendants of "v" locked, but forbids calling
    it with any other "VBT"s locked. 
@@ -143,10 +146,10 @@ VAR mu: MUTEX;
    all of the locks "mu1" through "muN".  As a consequence, a thread
    can read the field if it holds any of the locks.
    
-   (In a locking level pragma, the ordering symbols ">=", "<=", "<",
+   (In a locking level pragma, the ordering symbols ">=", "&lt;=", "&lt;",
    and ">" are overloaded to denote either set containment or lock
    order, depending on context.  For example, "LL >= {mu, v}" indicates
-   that the thread has both "mu" and "v" locked, while "LL.sup <= mu"
+   that the thread has both "mu" and "v" locked, while "LL.sup &lt;= mu"
    indicates that all locks held by the thread precede "mu" in the
    locking order.)
 
@@ -164,10 +167,10 @@ VAR mu: MUTEX;
    net effect on a thread's locking level.  *)
 
 
-(* \subsection{ScreenTypes} *)
+(* <H2> ScreenTypes </H2> *)
 
 (* Pixel values are integers.   The color associated with a pixel value
-   is determined in some manner that depends on the {\it screentype}
+   is determined in some manner that depends on the <I>screentype</I>
    of the "VBT".  A value "st" of type "VBT.ScreenType" represents a
    screentype: *)
 
@@ -207,7 +210,7 @@ PROCEDURE MMToPixels(v: T; mm: REAL; ax: Axis.T)
 (* The "ScreenType" interface reveals more details, for example,
    about color maps.  *)
    
-(* \subsection{Splits and leaves} *)
+(* <H2> Splits and leaves </H2> *)
 
 (* User interfaces are usually constructed from a tree of "VBTs" whose
    root is the ``top-level window'' known to the window manager.  "VBTs"
@@ -244,7 +247,7 @@ PROCEDURE Parent(v: T): Split; <* LL.sup < v *>
    "Leaf".  *)
 
    
-(* \subsection{Timestamps, modifiers, mouse buttons, and cursor positions} *)
+(* <H2> Timestamps, modifiers, mouse buttons, and cursor positions </H2> *)
 
 (* The following types are used in several of the event methods: *)
 
@@ -275,14 +278,17 @@ CONST
 (* Trestle has an internal unsigned clock register that is incremented every
    few milliseconds.  When Trestle reports a mouse or keyboard event to a
    "VBT", it also reports the value of the clock register when the event
-   occurred, which is called the {\it timestamp} of the event.
+   occurred, which is called the <I>timestamp</I> of the event.
    Timestamps serve as unique identifiers for the associated events.
    Also, the absolute time interval between two events can be computed
    by subtracting their timestamps with "Word.Minus" and multiplying by
    "Trestle.TickTime()", which is the absolute interval between clock
-   ticks. \index{time interval between events}
+   ticks. <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>time interval between events</SPAN>
+</SPAN>
 
-   A few keys on the keyboard are defined to be {\it modifiers}, like "Shift",
+
+   A few keys on the keyboard are defined to be <I>modifiers</I>, like "Shift",
    "Control", and "Option".  When Trestle reports a mouse or keyboard event
    to a "VBT", it also reports the set of modifier keys and buttons that
    were down when the event occurred.  Thus the application can distinguish
@@ -321,7 +327,7 @@ CONST
    by at most one child of that split.  You should think of the positions
    controlled by a "VBT" as the visible positions in its domain. *)
 
-(* \subsection{The mouse method} *)
+(* <H2> The mouse method </H2> *)
 
 (* Trestle calls a "VBT"'s mouse method to report mouse clicks.  The
    method will be called with "LL.sup = mu", and takes an argument of
@@ -361,14 +367,17 @@ ClickType =
    Some Trestle implementations have auxilliary interfaces that 
    allow you to set the amount of time and mouse motion allowed. *)
 
-(* \subsection{The mouse focus rule} *)
+(* <H2> The mouse focus rule </H2> *)
 
 (* A split relays mouse clicks to whichever child of the split controls the
    pixel at the position of the click---more or less.  If this rule were
    applied blindly, a child could receive a down-click and never receive
    the corresponding up-click, which would make it impossible to program
    many user interfaces that involve dragging.  Therefore the actual rule
-   is more complicated.  \index{mouse~focus}
+   is more complicated.  <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>mouse~focus</SPAN>
+</SPAN>
+
 
    Each split "sp" contains a variable "mouseFocus(sp)", which records 
    the child of the split that has received a transition of type 
@@ -397,7 +406,7 @@ ClickType =
    The mouse focus is guaranteed to receive all button transitions until
    the last button comes up, no matter where it occurs.  *)
 
-(* \subsection{The position method} *)
+(* <H2> The position method </H2> *)
 
 (* Trestle calls a "VBT"'s position method to report cursor positions.  The
    method will be called with "LL.sup = mu", and takes an argument of
@@ -417,7 +426,7 @@ END;
    positions.  *)
 
 
-(* \subsection{Tracking the cursor by setting cages} *)
+(* <H2> Tracking the cursor by setting cages </H2> *)
 
 (* Every "VBT" "v" contains a field "cage(v)", which represents a set
    of cursor positions.  As long as the cursor's position is inside
@@ -426,8 +435,14 @@ END;
    position to "v", after first resetting "v"'s cage to contain all
    cursor positions.  Resetting the cage inhibits further reporting
    of cursor positions: to continue tracking, the position method must
-   set a new cage.  \index{cursor~tracking}
-   \index{cages~(for~cursor~tracking)} *)
+   set a new cage.  <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>cursor~tracking</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>cages~(for~cursor~tracking)</SPAN>
+</SPAN>
+ *)
 
 TYPE 
   Cage = RECORD 
@@ -442,13 +457,11 @@ CONST
   
 (* The cage "cg" contains the cursor position "cp" if
 
-\medskip\bulletitem "cp.pt" is in "cg.rect",
-   
-\medskip\bulletitem "cp.gone" is in "cg.inOut", and 
-
-\medskip\bulletitem either "cg.screen = AllScreens" or "cg.screen = cp.screen".
-
-\medskip\noindent Trestle imposes the restriction on cages that if "cg.screen
+<UL><LI>"cp.pt" is in "cg.rect",
+<LI>"cp.gone" is in "cg.inOut", and 
+<LI>either "cg.screen = AllScreens" or "cg.screen = cp.screen".
+</UL>
+Trestle imposes the restriction on cages that if "cg.screen
    = AllScreens", then "cg.rect" must be "Rect.Full" or "Rect.Empty",
    and if "cg" contains no cursor positions, then it must be equal as a
    record to "EmptyCage" (which is declared below).  For example,
@@ -565,11 +578,14 @@ where
    that it owes its children. *)
    
 
-(* \subsection{The key method} *)
+(* <H2> The key method </H2> *)
 
 (* Trestle calls a "VBT"'s "key" method to report keystrokes.  The
    method will be called with "LL.sup = mu", and takes an argument of
-   type "KeyRec".  \index{key method} *)
+   type "KeyRec".  <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>key method</SPAN>
+</SPAN>
+ *)
    
 TYPE 
   KeyRec = RECORD
@@ -597,7 +613,7 @@ CONST
    These interfaces are shipped with SRC Trestle but are not included
    in the printed version of the reference manual.  The codes are chosen
    to agree with the X Keysym codes (see X Window System, Scheifler
-   et al., \cite{XSpec} Appendix E).
+   et al., <A REL=BIB.ENTRY HREF="../html/references.html#XSpec"> [XSpec] </A> Appendix E).
      
    If the keyboard, like most keyboards, has two symbols on some of
    the keys, then the "KeySym" for the down transition and later up
@@ -621,12 +637,18 @@ CONST
    "VBT.Acquire".  *)
 
 
-(* \subsection{The redisplay method} *)
+(* <H2> The redisplay method </H2> *)
 
 (* A typical "VBT" has a ``display invariant'' that defines what its
    screen looks like as a function of its state.  When the state changes,
    the display invariant is reestablished by updating the screen.
-   \index{redisplay~method} \index{marking~for~redisplay}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>redisplay~method</SPAN>
+</SPAN>
+ <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>marking~for~redisplay</SPAN>
+</SPAN>
+
    
    When a series of changes are made, each of which invalidates the
    display invariant, it is undesirable to update the screen
@@ -663,12 +685,15 @@ PROCEDURE Unmark(v: T); <* LL.sup < v *>
    needed.  *)
     
 
-(* \subsection{The reshape method} *)
+(* <H2> The reshape method </H2> *)
 
 (* Trestle calls a "VBT"'s reshape method to report changes in its
    domain.  The method will be called with "LL.sup = mu.v" (as explained
    below), and takes an argument of type "ReshapeRec".  
-   \index{reshape method} *)
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>reshape method</SPAN>
+</SPAN>
+ *)
    
 TYPE ReshapeRec = RECORD
   new, prev, saved: Rect.T;
@@ -702,16 +727,19 @@ END;
    
    This locking level will be referred to as "v"'s share of "mu",
    and written "mu.v".  Holding "mu" is logically equivalent to holding
-   "mu.v" for every "v".  Consequently, "mu.v < mu" in the locking
+   "mu.v" for every "v".  Consequently, "mu.v &lt; mu" in the locking
    order.  Holding "mu.v" does not suffice to call a procedure that
    requires "mu" to be locked; on the other hand you cannot lock "mu"
    while holding "mu.v", since this would deadlock.  *)
 
-(* \subsection{The rescreen method} *)
+(* <H2> The rescreen method </H2> *)
 
 (* Trestle calls a "VBT"'s rescreen method to report changes to its
    screentype.  The method will be called with "LL.sup = mu.v", and
-   takes an argument of type "RescreenRec". \index{rescreen method} *)
+   takes an argument of type "RescreenRec". <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>rescreen method</SPAN>
+</SPAN>
+ *)
    
 TYPE RescreenRec = RECORD
   prev: Rect.T;
@@ -728,12 +756,15 @@ END;
    unmarked as it is rescreened.  "VBT.Leaf.rescreen" reshapes "v" to 
    empty. *) 
 
-(* \subsection{The repaint method} *)
+(* <H2> The repaint method </H2> *)
 
 (* Trestle calls a "VBT"'s repaint method to report that part of its
    screen has been exposed and must be repainted.  The method
    will be called with "LL.sup = mu.v", and takes an argument of type
-   "Region.T".  \index{repaint method}
+   "Region.T".  <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>repaint method</SPAN>
+</SPAN>
+
    
    There are some subtleties if you are scrolling (that is, copying 
    bits from one part of the screen to another) at the same time that 
@@ -744,7 +775,13 @@ END;
    that is in "Domain(v)" and not in "bad(v)", the pixel "v[p]" is
    displayed to the user; that is, if "vis[p]" denotes what is actually
    visible at pixel "p", then we have the basic invariant
-   \index{bad region} \index{exposed region}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>bad region</SPAN>
+</SPAN>
+ <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>exposed region</SPAN>
+</SPAN>
+
 
 | vis[p] = v[p] `for all` p `controlled by "v" and outside` bad(v) 
 
@@ -781,28 +818,26 @@ PROCEDURE ForceRepaint(v: T; READONLY rgn: Region.T);
    method. *)
 
 
-(* \subsection{About painting in general} *)
+(* <H2> About painting in general </H2> *)
 
 (* Trestle's painting procedures all follow the same pattern.
    The arguments to the procedure specify: 
 
-    \medskip\bulletitem a {\it destination}, which is a set of pixels
+    <UL><LI>a <I>destination</I>, which is a set of pixels
       in a "VBT"'s screen.  For example, the destination could be a
       rectangle, a trapezoid, a shape bounded by a curved path, or a
       region.
-
-    \medskip\bulletitem a {\it source}, which is conceptually an
+<LI>a <I>source</I>, which is conceptually an
       infinite array of pixels, not necessarily of the same depth as
       those on the screen.  For example, the source could be a texture,
       a text string in some font, an explicit bitmap or image, or the
       "VBT"'s screen itself.  
-
-    \medskip\bulletitem an {\it operation}, which is a function that takes
+<LI>an <I>operation</I>, which is a function that takes
       a destination pixel value and a source pixel value and produces a 
       destination pixel value.  For example, the operation could be 
       planewise "XOR". 
-
-   \medskip\noindent The effect of the painting procedure is to apply
+</UL>
+   The effect of the painting procedure is to apply
    the operation to each pixel in the destination region.  That is,
    if "v" is the "VBT", the effect of the painting procedure is to set
    "v[p] := op(v[p], s[p])" for each point "p" in the destination, where
@@ -833,7 +868,7 @@ PROCEDURE ForceRepaint(v: T; READONLY rgn: Region.T);
 
    For more painting operations, see the "PaintOp" interface. *) 
 
-(* \subsection{Scrolling (copying one part of the screen to another)} *)
+(* <H2> Scrolling (copying one part of the screen to another) </H2> *)
 
 
 PROCEDURE Scroll(
@@ -868,7 +903,13 @@ PROCEDURE Scroll(
    By ``simultaneously'' it is meant that the pairs "p", "q" are
    enumerated in an order so that no destination pixel of an early pair
    corresponds to a source pixel of any later pair.
-   \index{bad region} \index{exposed region}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>bad region</SPAN>
+</SPAN>
+ <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>exposed region</SPAN>
+</SPAN>
+
 
    Recall the bad region and exposed region "bad(v)" and "exposed(v)"
    from the description of the repaint method.  
@@ -882,20 +923,18 @@ PROCEDURE Scroll(
    to the worker thread's queue recording the painting that must be
    done.  Then you must be careful to avoid the following sequence of events:
 
-    \medskip\bulletitem The worker thread removes from its work queue
+    <UL><LI>The worker thread removes from its work queue
    an item indicating that it must repaint some region "A", and
    determines that the best way to do this is to scroll some other
    region "B".
-
-    \medskip\bulletitem The "repaint" method is activated with exposed
+<LI>The "repaint" method is activated with exposed
    region "B"; it adds "B" to the work queue and returns.  As it
    returns, the system sets the "VBT"'s bad and exposed regions to be
    empty. (See the description of the "repaint" method.)
-   
-    \medskip\bulletitem The worker thread copies the garbage from "B"
+<LI>The worker thread copies the garbage from "B"
     into "A".
-
-   \medskip Eventually the worker thread will get around to repainting
+</UL>
+   Eventually the worker thread will get around to repainting
    "B", but the damage to "A" will never be repaired.
 
    To avoid this race condition, the repaint method should convey
@@ -923,7 +962,7 @@ PROCEDURE Scroll(
    a portion of "exposed(v)" and then scroll that portion to other parts
    of "exposed(v)"---unusual, but legal. *)
 
-(* \subsection{Painting textures} *)
+(* <H2> Painting textures </H2> *)
 
 (* This section describes procedures for texturing rectangles, regions, and trapezoids. *)
 
@@ -936,7 +975,7 @@ PROCEDURE PaintTexture(
 (* Paint the rectangle "clip" with the texture "src+delta" using
    the operation "op". *)
 
-(* A {\it texture} is an infinite periodic pixmap.  A texture "txt"
+(* A <I>texture</I> is an infinite periodic pixmap.  A texture "txt"
 is represented by a pixmap "src" with a finite non-empty rectangular
 domain "Domain(src)"; the rule is that "txt" is the result of tiling
 the plane with translates of the pixmap "src".  Using the convenient
@@ -1026,10 +1065,10 @@ PROCEDURE PaintTrapezoid(
    "src+delta" using the operation "op". *)
 
 
-(* \subsection{Filling and stroking paths} *)
+(* <H2> Filling and stroking paths </H2> *)
 
 (* Trestle also supports PostScript-like graphics operations
-   \cite{PostScript}: *)
+   <A REL=BIB.ENTRY HREF="../html/references.html#PostScript"> [PostScript] </A>: *)
 
 TYPE
   WindingCondition = {Odd, NonZero};
@@ -1051,8 +1090,8 @@ PROCEDURE Fill(
 (* The point "p" is entwined by "path" if the winding number of "path"
    around "p" satisfies the winding condition "wind".  To ensure that
    the winding number is defined even for the points on the path, the
-   path is regarded as translated north by $\epsilon$ and west by
-   $\epsilon^2$, where $\epsilon$ is infinitesimal.  *)
+   path is regarded as translated north by $&epsilon;$ and west by
+   $&epsilon;^2$, where $&epsilon;$ is infinitesimal.  *)
 
 PROCEDURE Stroke(
     v: Leaf;
@@ -1096,7 +1135,7 @@ PROCEDURE Stroke(
    segments meeting at some joint is small, then the tip of the miter may
    extend quite far from the joint point. Trestle implementations are
    free to bevel those joints whose angle is smaller than some
-   implementation-dependent {\it miter limit}. The miter limit will be
+   implementation-dependent <I>miter limit</I>. The miter limit will be
    made available to clients in some to-be-determined interface.  On X,
    the miter limit is 11 degrees.
 
@@ -1116,7 +1155,7 @@ PROCEDURE Line(
 (* Like "Stroke" applied to the path containing the segment "(p,q)". *)
 
 
-(* \subsection{Painting pixmaps} *)
+(* <H2> Painting pixmaps </H2> *)
 
 (* The following procedure paints a pixmap without replicating it into an 
    infinite texture: *)
@@ -1168,7 +1207,7 @@ of a screen-independent pixmap.  *)
    returns.  If you wish to free the pixmap by calling "src.free()",
    you should first call "VBT.Sync(v)". *)
 
-(* \subsection{Painting text} *)
+(* <H2> Painting text </H2> *)
 
 (* The text painting procedures take an optional array of
 displacements, whose entries have the following type: *)
@@ -1200,51 +1239,46 @@ PROCEDURE PaintText(
 (* The arguments to "PaintText" must satisfy at least one of the
    following two conditions:
 
-   \medskip\bulletitem the background operation is transparent; that is,
+   <UL><LI>the background operation is transparent; that is,
    "op(p, 0) = p" for any pixel "p", or
-
-   \medskip\bulletitem the font is self-clearing (see below) and 
+<LI>the font is self-clearing (see below) and 
    "dl" is empty.  
-
-   \medskip\noindent If neither condition is true, the effect of "PaintText" is
+</UL>
+   If neither condition is true, the effect of "PaintText" is
    implementation-dependent, but is confined to the clipping rectangle.
    
    The "ScrnFont" interface defines the properties of fonts.
    Here we introduce names for the properties needed to
    explain "PaintText".  If "f" is a font and "ch" is a character, then 
 
-       \medskip\bulletitem  "printWidth(ch, f)" is the printing width of "ch"; 
+       <UL><LI>"printWidth(ch, f)" is the printing width of "ch"; 
        that is, the amount to increment the reference point when "ch" is 
        printed in font "f";
-
-       \medskip\bulletitem "bits(ch, f)" is the bitmap for "ch" in "f", which
+<LI>"bits(ch, f)" is the bitmap for "ch" in "f", which
         is positioned with "ch"'s reference point at the origin;
-
-       \medskip\bulletitem "height(ch, f)" is the height of "ch" above
+<LI>"height(ch, f)" is the height of "ch" above
        the baseline; that is, the number of rows of "bits(ch, f)" whose
        "v"-coordinate is at most zero; and "depth(ch, fnt)" is the
        number of rows of "bits(ch, f)" whose "v"-coordinate exceeds
        zero;
-       
-       \medskip\bulletitem "ascent(f)" and "descent(f)" are the logical extent
+<LI>"ascent(f)" and "descent(f)" are the logical extent
        of "f" above and below the baseline.  Some characters may extend
        higher or lower.
+</UL>
+A font is <I>self-clearing</I> if 
 
-\medskip\noindent A font is {\it self-clearing} if 
-
-\medskip\bulletitem
+<UL><LI>
 each character's
 height and depth equal the font's ascent and descent, and 
-
-\medskip\bulletitem
+<LI>
 each character's
 "printWidth" equals the width of its bitmap and each character's
 reference point is at the west boundary of its bitmap (or each
 character's "printWidth" equals the negative of the width of its bitmap
 and each character's reference point is at the east boundary of its
 bitmap).
-
-\medskip\noindent The call to "PaintText" is equivalent to the following loop:
+</UL>
+The call to "PaintText" is equivalent to the following loop:
 
 | rp := pt;
 | i := 0;
@@ -1305,7 +1339,7 @@ PROCEDURE PaintSub(
     <* LL.sup < v *>
 (* Like "PaintText" applied to the characters in "chars". *)
 
-(* \subsection{Synchronization of painting requests} *)
+(* <H2> Synchronization of painting requests </H2> *)
 
 (* To improve painting performance, Trestle combines painting commands
    into batches, and sends them to the server a batch at a time.  
@@ -1322,8 +1356,14 @@ PROCEDURE PaintSub(
    affects the screen and the time the following paint text command affects
    the screen, which can produce an undesirable flickering effect.  The
    chances of this happening can be greatly reduced by enclosing the 
-   two commands in a {\it group}, using the following two procedures:
-   \index{paint batch} \index{batch (of painting commands)} *)
+   two commands in a <I>group</I>, using the following two procedures:
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>paint batch</SPAN>
+</SPAN>
+ <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>batch (of painting commands)</SPAN>
+</SPAN>
+ *)
 
 
 PROCEDURE BeginGroup(v: Leaf; sizeHint: INTEGER := 0); 
@@ -1353,7 +1393,7 @@ PROCEDURE Sync(v: Leaf; wait := TRUE); <* LL.sup < v *>
    in the output queue have been completed. *)
 
 
-(* \subsection{Screen capture} *)
+(* <H2> Screen capture </H2> *)
 
 
 PROCEDURE Capture(
@@ -1370,9 +1410,12 @@ PROCEDURE Capture(
    all positions of pixels that were not copied.  Naturally, Trestle
    makes "br" as small as it can.  If none of the bits are available,
    the result may be "NIL". 
-   \index{reading the screen} *)
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>reading the screen</SPAN>
+</SPAN>
+ *)
 
-(* \subsection{Controlling the cursor shape} *)
+(* <H2> Controlling the cursor shape </H2> *)
 
 (* Every "VBT" "v" contains a field "cursor(v)", which is set with the following procedure: *)
 
@@ -1384,7 +1427,10 @@ PROCEDURE SetCursor(v: T; cs: Cursor.T);
    child if its mouse focus is "NIL".  Only if the cursor of the relevant
    child is "Cursor.DontCare" or if there is no relevant child does the
    split display its own cursor.
-   \index{cursor shape, how to change}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>cursor shape, how to change</SPAN>
+</SPAN>
+
 
    To be more precise, the shape of the cursor over the top level 
    window "v" is determined by the following recursive procedure:
@@ -1409,7 +1455,7 @@ PROCEDURE SetCursor(v: T; cs: Cursor.T);
  *)
 
 
-(* \subsection{Selections} *)
+(* <H2> Selections </H2> *)
 
 (* Trestle maintains an internal table of named selections,
    which initially contains several selections of general use, 
@@ -1437,22 +1483,33 @@ VAR (*CONST*)
 (* "NilSel" and "Forgery" are reserved for Trestle's internal use.  
    The owner of "KBFocus" (the keyboard focus) is the "VBT" that
    receives keystrokes.
-   \index{input or keyboard focus} \index{keyboard focus}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>input or keyboard focus</SPAN>
+</SPAN>
+ <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>keyboard focus</SPAN>
+</SPAN>
+
 
    We offer the following suggestions for the use of target and
    source selections:
-   \index{target selection}
-   \index{source selection}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>target selection</SPAN>
+</SPAN>
 
-    \medskip\bulletitem The target selection.  If text, this should
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>source selection</SPAN>
+</SPAN>
+
+
+    <UL><LI>The target selection.  If text, this should
       be underlined black or reverse video.  The selection gesture
       should not require modifiers like shift or control.  
-
-    \medskip\bulletitem The source selection.  If text, this should
+<LI>The source selection.  If text, this should
       be underlined gray.  The source gesture should be a modified
       version of the gesture for making the target selection.  
-   
-   \medskip An operation like ``copy'' should replace the
+</UL>   
+   An operation like ``copy'' should replace the
    target selection with the value of the source selection. *)
 
    
@@ -1467,29 +1524,24 @@ TYPE ErrorCode =
 
 (* Explanation of error codes:
 
-   \medskip\bulletitem "EventNotCurrent":  Raised by attempts to access a
+   <UL><LI>"EventNotCurrent":  Raised by attempts to access a
    selection with an event time that is not current.
-
-   \medskip\bulletitem "TimeOut":  If you attempt to read or write a selection,
+<LI>"TimeOut":  If you attempt to read or write a selection,
    and the selection owner's method does not return for an unreasonably
    long time, then Trestle stops waiting and raises this exception.
-
-   \medskip\bulletitem "Uninstalled":  Raised by event-time operations on
+<LI>"Uninstalled":  Raised by event-time operations on
    uninstalled "VBTs"; that is, on "VBTs" none of whose ancestors have
    been connected to a window system by one of the installation
    procedures in the "Trestle" interface.
-
-   \medskip\bulletitem "Unreadable", "Unwritable":  Raised by attempts to read
+<LI>"Unreadable", "Unwritable":  Raised by attempts to read
    an unreadable selection, or write an unwritable selection.
-
-   \medskip\bulletitem "UnownedSelection":  Raised by attempts to read, write,
+<LI>"UnownedSelection":  Raised by attempts to read, write,
    or deliver miscellaneous codes to the owner of an unowned selection.
-
-   \medskip\bulletitem "WrongType":  Raised by attempts to read or write a
+<LI>"WrongType":  Raised by attempts to read or write a
    selection with a type not supported by the selection owner.  *)
 
 
-(* \subsection{Acquiring and releasing selection ownership} *)
+(* <H2> Acquiring and releasing selection ownership </H2> *)
 
 PROCEDURE Acquire(
     v: T;
@@ -1515,11 +1567,14 @@ PROCEDURE Release(v: T; s: Selection);
    "Release" is a no-op if the current owner is not "v" or if "v" is
    not installed.  *)
 
-(* \subsection{The miscellaneous method} *)
+(* <H2> The miscellaneous method </H2> *)
 
 (* Trestle calls a "VBT"'s "misc" method to deliver miscellaneous
    codes.  The method will be called with "LL.sup = mu", and takes an
-   argument of type "MiscRec".  \index{misc method} 
+   argument of type "MiscRec".  <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>misc method</SPAN>
+</SPAN>
+ 
    
    Trestle maintains an internal table of named miscellaneous code
    types, which initially contains several types of general interest,
@@ -1597,7 +1652,7 @@ VAR (*CONST*)
    *)
 
 
-(* \subsection{Sending miscellaneous codes} *)
+(* <H2> Sending miscellaneous codes </H2> *)
 
 (* You can send a miscellanous code to the owner of a selection by using 
    the following procedure: *)
@@ -1618,7 +1673,7 @@ PROCEDURE Put(
    "UnownedSelection".  If the selection is unowned it is possible that 
    the "Put" will be silently ignored. *)
 
-(* \subsection{Circumventing event-time} *)
+(* <H2> Circumventing event-time </H2> *)
 
 (* The following procedure offers an escape from the event-time protocol.
    For example, a long-running thread that has no idea what the current 
@@ -1642,7 +1697,7 @@ PROCEDURE Forge(
    they are delivered to installed windows or their descendants.  The
    only possible error code is "Uninstalled".  *)
 
-(* \subsection{Communicating selection values} *)
+(* <H2> Communicating selection values </H2> *)
 
 (* When you read the value of a Trestle selection you get a result of 
    type "Value": *)
@@ -1674,7 +1729,7 @@ PROCEDURE FromRef(r: REFANY): Value;
    the "Value" to the other application, and only when that application
    calls the "toRef" method will your "toRef" method be called.
 
-   The "toRef" method in a "Value" will be called with "LL.sup <= mu".
+   The "toRef" method in a "Value" will be called with "LL.sup &lt;= mu".
    The "toRef" method can raise the error "Unreadable" if, for example,
    the address space of the selection owner has been destroyed.  It can
    also raise the error "WrongType" if the underlying "REFANY" cannot be
@@ -1727,11 +1782,14 @@ PROCEDURE Write(
    "WrongType".  *)
 
 
-(* \subsection{The read and write methods} *)
+(* <H2> The read and write methods </H2> *)
 
 (* Trestle calls a "VBT"'s read and write methods to access any
    selections that it owns.  The method will be called with "LL.sup
-   <= mu" (see below). \index{read method}
+   &lt;= mu" (see below). <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>read method</SPAN>
+</SPAN>
+
 
    The signature of the read method is
 
@@ -1742,7 +1800,7 @@ PROCEDURE Write(
    The method should return the value of the selection, or raise
    "Error(Unreadable)" if for some reason the value cannot be delivered,
    or "Error(WrongType)" if the selection cannot be converted to the
-   requested type.  The methods will be called with "LL.sup <= mu";
+   requested type.  The methods will be called with "LL.sup &lt;= mu";
    in fact, if the caller of "Read" is in the same address space, "LL"
    for the method call is the same as "LL" for the caller of "Read",
    else "LL" for the method call is "{}".
@@ -1761,8 +1819,11 @@ PROCEDURE Write(
    type.  Trestle does not enforce any consistency between "tc" and
    the typecode of the reference "val.toRef()".  For example, if
    "val.toRef()" is "NIL", the meaning could be determined by "tc".
-   The locking level is the same as for the read method.  \index{write
-   method}
+   The locking level is the same as for the read method.  <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>write
+   method</SPAN>
+</SPAN>
+
 
    While a read or write method is active in a descendant of an
    installed window, Trestle will block the delivery to that window
@@ -1771,7 +1832,7 @@ PROCEDURE Write(
    asynchronously, to avoid blocking the user.  *)
 
 
-(* \subsection{Controlling the shape of a VBT} *)
+(* <H2> Controlling the shape of a VBT </H2> *)
 
 (* The preferred shape of a "VBT" is represented by a pair of 
    records of type "SizeRange", one for each axis: *)
@@ -1786,7 +1847,7 @@ CONST DefaultShape =
    range from "sh.lo" to "sh.hi-1", and its preferred size is
    "sh.pref".  
 
-   A "SizeRange" "sh" is illegal unless "sh.lo <= sh.pref < sh.hi".
+   A "SizeRange" "sh" is illegal unless "sh.lo &lt;= sh.pref &lt; sh.hi".
    
    When a parent "VBT" divides its screen up between its children, it
    tries to satisfy its children's shape requirements, which it finds
@@ -1827,10 +1888,13 @@ PROCEDURE NewShape(v: T);
   it can also be called from a thread that has "mu" locked.  *)
 
 
-(* \subsection{Putting properties on a VBT} *)
+(* <H2> Putting properties on a VBT </H2> *)
 
 (* Associated with each window is a ``property set'', which is a set 
-   of non-nil traced references.  \index{property set, of window} *)
+   of non-nil traced references.  <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>property set, of window</SPAN>
+</SPAN>
+ *)
 
 
 PROCEDURE PutProp(v: T; ref: REFANY); <* LL.sup < v *>
@@ -1850,10 +1914,13 @@ PROCEDURE RemProp(v: T; tc: INTEGER); <* LL.sup < v *>
    exists. *)
 
 
-(* \subsection{Discarding a VBT} *)
+(* <H2> Discarding a VBT </H2> *)
 
 (* It is good form to call "VBT.Discard(v)" when "v" is about to be 
-   garbage-collected:  \index{discard method} *)
+   garbage-collected:  <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>discard method</SPAN>
+</SPAN>
+ *)
      
 PROCEDURE Discard(v: T); <* LL.sup = mu *>
 (* Prepare for and call "v.discard()".  *)

@@ -8,8 +8,8 @@ import ("formsvbt")
 
 ManPage ("fisheye", 1)
 
-include_dir ("../src/fisheye.resources")
-include_dir ("../src/fisheye.datafiles")
+include_dir ("fisheye.resources")
+include_dir ("fisheye.datafiles")
 
 bundle ("FisheyeBundle")
 

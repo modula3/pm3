@@ -12,7 +12,7 @@
 <*PRAGMA LL*>
 
 (* A "PackSplit.T" is a parent window whose children are packed into
-   multiple rows or columns, depending on the {\it axis} of the split.
+   multiple rows or columns, depending on the <I>axis</I> of the split.
 
    If the axis is horizontal, the children are packed into rows from west
    to east, moving south to a new row when the current row fills up.  This
@@ -41,8 +41,8 @@
    parent's vertical size; in this case the child will be alone in its
    column.
 
-   The {\it size} of a window is the extent of its domain in the axis of
-   the "PackSplit"; its {\it cross-size} is its extent in the other axis.
+   The <I>size</I> of a window is the extent of its domain in the axis of
+   the "PackSplit"; its <I>cross-size</I> is its extent in the other axis.
 
    The minimum desirable size for a "PackSplit" is the maximum of the prefs
    of its children; the preferred size is the current size, unless this is

@@ -8,8 +8,8 @@
 <*PRAGMA LL*>
 
 (* A "TSplit.T" is a parent window that giving its entire screen to
-   one child at a time.  The child being displayed is called the {\it
-   current child}.  The current child can be "NIL", in which case the
+   one child at a time.  The child being displayed is called the <I>
+   current child</I>.  The current child can be "NIL", in which case the
    "TSplit" ignores all events.  *)
 
 INTERFACE TSplit;

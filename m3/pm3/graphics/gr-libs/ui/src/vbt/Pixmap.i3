@@ -10,7 +10,7 @@
    plane with translated copies of the pixmap. There are three
    predefined pixmaps:
 
-   The locking level is "LL.sup <= VBT.mu" for all of the procedures
+   The locking level is "LL.sup &lt;= VBT.mu" for all of the procedures
    in this interface. *)
 
 INTERFACE Pixmap;

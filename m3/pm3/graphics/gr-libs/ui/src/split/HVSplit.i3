@@ -11,18 +11,18 @@
 <*PRAGMA LL*>
 
 (* An "HVSplit.T" is a parent window that splits its screen into a
-   row or column of child windows, depending on the {\it axis} of
+   row or column of child windows, depending on the <I>axis</I> of
    the split.
 
    If the axis is horizontal, "Split.Succ" enumerates the children 
    from west to east; if the axis is vertical, it enumerates them 
    from north to south.
 
-   An "HVSplit" can be {\it adjustable} or {\it unadjustable}, a 
+   An "HVSplit" can be <I>adjustable</I> or <I>unadjustable</I>, a 
    property that affects the way its space is divided between its children.    
 
-   The {\it size} of a child is the extent of its domain in the 
-   axis of split, the {\it cross-size} is its extent in the other axis.  
+   The <I>size</I> of a child is the extent of its domain in the 
+   axis of split, the <I>cross-size</I> is its extent in the other axis.  
    For example, for a vertical split, a child's size is its height 
    and its cross-size is its width.
 
@@ -34,7 +34,7 @@
    split can depend on its width.  At this point there are several cases.
 
    If the sum of the minimum sizes of the children is greater than the
-   size of the parent, then the split is said to be {\it overfull}.
+   size of the parent, then the split is said to be <I>overfull</I>.
    In this case the children are considered in order and given their
    minimum sizes, as long as there is room.  The first child that
    doesn't fit is given all the space that's left, and the remaining
@@ -43,8 +43,8 @@
    If the split is not overfull, then the children are stretched
    according to the TeX model of boxes and glue.  The details depend
    on whether the split is adjustable or unadjustable.  For an
-   adjustable split, each child's {\it stretchability} is its maximum
-   desirable size minus its current size, and its {\it shrinkability}
+   adjustable split, each child's <I>stretchability</I> is its maximum
+   desirable size minus its current size, and its <I>shrinkability</I>
    is its current size minus its minimum desirable size.  If the size
    of the parent is increased by some amount "X", then the sizes of
    the children are increased by amounts that total to "X" and are
@@ -72,13 +72,13 @@
    children's original shapes.
 
    If the sum of the maximum sizes of the children is less than the
-   size of the parent, the split is said to be {\it underfull}.  There
+   size of the parent, the split is said to be <I>underfull</I>.  There
    are no special rules for the underfull case: the TeX stretching
    algorithm is used without change.  This produces a state in which
    the children are stretched larger than their maximum sizes.
 
-   A split is {\it infeasible} if it is overfull or underfull, and {\it
-   feasible} otherwise.
+   A split is <I>infeasible</I> if it is overfull or underfull, and <I>
+   feasible</I> otherwise.
     
    The shape of an "HVSplit" is computed as follows: its maximum,
    minimum, and preferred sizes are obtained by adding up the
@@ -129,7 +129,7 @@ PROCEDURE AxisOf(v: T): Axis.T;
 <* LL.sup = VBT.mu *>
 (* Return the axis of "v". *)
 
-(* \subsubsection{Inserting children} *)
+(* <H3> Inserting children </H3> *)
 
 (* See the "Split" interface to insert and reorder children. *) 
 
@@ -169,9 +169,9 @@ PROCEDURE ConsArray(
 
   *)
 
-(* \subsubsection{Adjusting the division of space} *)
+(* <H3> Adjusting the division of space </H3> *)
 
-(* The {\it division point after a child} is the sum of the sizes of
+(* The <I>division point after a child</I> is the sum of the sizes of
    all children up to and including the child. *)
    
 

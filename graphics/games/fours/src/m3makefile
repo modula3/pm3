@@ -6,7 +6,6 @@
 %      modified on Wed Jun 14 11:59:54 PDT 1995 by kalsow
 
 
-m3_option ("-times")
 import ("vbtkit")
 
 

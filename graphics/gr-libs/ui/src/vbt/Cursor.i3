@@ -9,7 +9,7 @@
    The call "VBT.SetCursor(v, cs)" sets the cursor of "v" to
    be "cs". 
 
-   The locking level is "LL.sup <= VBT.mu" for all of the procedures
+   The locking level is "LL.sup &lt;= VBT.mu" for all of the procedures
    in this interface. *)
 
 INTERFACE Cursor;
@@ -88,8 +88,8 @@ PROCEDURE FromName(READONLY names: ARRAY OF TEXT): T;
    that matches anything.  If no name has any matches, it returns
    "DontCare".
 
-   Standard X screentypes support the cursors named in {\it X Window
-   System} by Scheifler et.  al. \cite{XSpec} Appendix B. Therefore, for
+   Standard X screentypes support the cursors named in <I>X Window
+   System</I> by Scheifler et.  al. <A REL=BIB.ENTRY HREF="../html/references.html#XSpec"> [XSpec] </A> Appendix B. Therefore, for
    example,
 
 | FromName(ARRAY OF TEXT{"XC_arrow"})

@@ -11,29 +11,26 @@
 
    Associated with each anchor button "b" is 
    
-   \medskip\bulletitem "b.menu", the menu to be activated, 
-   
-   \medskip\bulletitem "b.hfudge" and "b.vfudge", dimensions in millimeters
+   <UL><LI>"b.menu", the menu to be activated, 
+<LI>"b.hfudge" and "b.vfudge", dimensions in millimeters
    that control where the menu is popped up,
-   
-   \medskip\bulletitem "b.n", a count of the number of "ZSplit" ancestors
+<LI>"b.n", a count of the number of "ZSplit" ancestors
    of "b" to skip when looking for the "ZSplit" to insert the
    menu into.
-
-   \medskip\noindent A down click on an anchor button "b" {\it activates} 
+</UL>
+   A down click on an anchor button "b" <I>activates</I> 
    it by: 
    
-   \medskip\bulletitem  calling the method "b.pre()", and then   
-
-   \medskip\bulletitem inserting the window "b.menu" so that its
+   <UL><LI>calling the method "b.pre()", and then   
+<LI>inserting the window "b.menu" so that its
    northwest corner is "b.hfudge" millimeters to the right and
    "b.vfudge" millimeters below the southwest corner of "b".
    The menu will be inserted into the ("b.n")th "ZSplit" ancestor of
    "b" (counting the first "ZSplit" ancestor as zero), or as an
    undecorated top-level window if "b" has at most "b.n" "ZSplit"
    ancestors.
-
-   \medskip\noindent The anchor button will be deactivated when it gets
+</UL>
+   The anchor button will be deactivated when it gets
    another mouse transition or when the user rolls the mouse over a
    sibling anchor button, in which case the sibling will be activated.
    Two anchor buttons are siblings if they have the same ``anchor parent''.

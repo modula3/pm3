@@ -9,16 +9,16 @@
 <*PRAGMA LL*>
 
 (* A "ScrnColorMap.T" is a handle on a colormap that is valid for some
-   particular screentype, called the {\it owner} of the handle. Some
+   particular screentype, called the <I>owner</I> of the handle. Some
    handles have names; others are anonymous.  A named handle is valid
    forever.  The colormap referenced by an anonymous handle will be
    garbage-collected when all handles to it have been dropped. 
 
-   Every colormap has a {\it depth}; the pixel values defined by the
+   Every colormap has a <I>depth</I>; the pixel values defined by the
    color map are in the range "[0..(2^depth)-1]".  Every color-mapped
-   screentype defines a set of {\it preferred} colors that cover the
+   screentype defines a set of <I>preferred</I> colors that cover the
    spectrum reasonably densely.  Some preferred colors are designated
-   as {\it stable}.
+   as <I>stable</I>.
    
    Clients can allocate pixels out of a color map as read-only shared
    entries or as writable exclusive entries.  The implementation
@@ -29,7 +29,7 @@ INTERFACE ScrnColorMap;
 
 IMPORT TrestleComm;
 
-(* \subsubsection{Obtaining handles from the oracle} *)
+(* <H3> Obtaining handles from the oracle </H3> *)
 
 TYPE
   Oracle = Private OBJECT
@@ -83,7 +83,7 @@ EXCEPTION Failure;
    A "*" matches any number of characters and a "?" matches any single
    character. *)
    
-(* \subsubsection{The handle object} *)
+(* <H3> The handle object </H3> *)
    
 TYPE
   T <: Public; 
@@ -130,7 +130,7 @@ TYPE
    in the range "[0..last[Red]]", "g" in the range "[0..last[Green]]", and
    "b" in the range "[0..last[Blue]]".  
     
-   \medskip An "RGB" represents the color with the given blend of red,
+   An "RGB" represents the color with the given blend of red,
    green, and blue.  Each of the numbers is in the range "[0.0..1.0]";
    thus the triple "(0.0, 0.0, 0.0)" specifies black.  In case of a gray scale
    display, only the "r" component is relevant.
@@ -169,7 +169,7 @@ TYPE
    
 | cm.new(dim)
 
-   extends the writable portion of "cm" with a set of $2^{"dim"}$ new
+   extends the writable portion of "cm" with a set of $2^"dim"$ new
    entries whose pixels form a cube, and returns the cube.  The method
    raises "Failure" if the free entries of the colormap do not contain
    a cube of the given dimension.

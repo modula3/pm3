@@ -19,7 +19,7 @@
    
    "Split.Succ" enumerates the children from top to bottom.
 
-   The bottom child is called the {\it background}.  An initial
+   The bottom child is called the <I>background</I>.  An initial
    background can be specified when the "ZSplit" is created; usually
    it remains the background throughout the life of the "ZSplit".
    Usually the background has the same domain as the parent, and
@@ -33,7 +33,7 @@
    it has no children its shape is the default shape for a "VBT").  When
    the preferred shape of a non-background child changes, the "ZSplit"
    reshapes the child to its new preferred shape, preserving its 
-   {\it offset}, which is the vector between the northwest corners 
+   <I>offset</I>, which is the vector between the northwest corners 
    of the parent and child.  *)
    
 INTERFACE ZSplit;
@@ -56,7 +56,10 @@ TYPE
    "ZSplit" (as in the definition of the procedure "New" below) or from
    the "init" method of a subclass.  This restriction applies to all
    the "init" methods in Trestle, although it will not be repeated for
-   each one. \index{init method, rules for calling}
+   each one. <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>init method, rules for calling</SPAN>
+</SPAN>
+
 
   The "ZSplit" will be given the initial background child "bg" if
    "bg#NIL"; it will be given no children if "bg=NIL".  If "bg" is
@@ -76,7 +79,7 @@ PROCEDURE New(
     : T; <* LL <= VBT.mu *>
 (* "New(...)" is equivalent to "NEW(T).init(...)". *)
 
-(* \subsubsection{Inserting children} *)
+(* <H3> Inserting children </H3> *)
 
 (* The default "Split.Insert" call is rarely useful for a "ZSplit": it
    inserts the new child at the parent's northwest corner, unmapped.
@@ -143,7 +146,7 @@ PROCEDURE InsertAt(
     in "Insert". *)
 
 
-(* \subsubsection{Moving, lifting, and lowering children} *)
+(* <H3> Moving, lifting, and lowering children </H3> *)
 
 PROCEDURE Move(ch: VBT.T; READONLY dom: Rect.T);
 <* LL.sup = VBT.mu *>
@@ -173,11 +176,11 @@ PROCEDURE Lift(ch: VBT.T; alt := Altitude.Top);
 
 *)
 
-(* \subsubsection{Mapping and unmapping children} *)
+(* <H3> Mapping and unmapping children </H3> *)
 
-(* You can {\it unmap} a child of a "ZSplit", which reshapes the child
+(* You can <I>unmap</I> a child of a "ZSplit", which reshapes the child
    to be empty after recording the child's shape and offset.  When you
-   later {\it map} the child, the recorded shape and offset are
+   later <I>map</I> the child, the recorded shape and offset are
    restored.  An unmapped child is rescreened when the parent is
    rescreened, and its recorded shape and offset are updated when the
    parent is reshaped, just like the domains of the mapped children.
@@ -197,7 +200,7 @@ PROCEDURE IsMapped(ch: VBT.T): BOOLEAN;
    parent is not a "ZSplit".  *)
 
 
-(* \subsubsection{Getting domains} *)
+(* <H3> Getting domains </H3> *)
 
 
 PROCEDURE GetDomain(ch: VBT.T): Rect.T;
@@ -221,7 +224,7 @@ PROCEDURE GetParentDomain(v: T): Rect.T;
 (* Return the last non-empty value of "v.domain", or "Rect.Empty" if
    "v.domain" has always been empty.  *)
 
-(* \subsubsection{Moving children when the parent is reshaped} *)
+(* <H3> Moving children when the parent is reshaped </H3> *)
 
 (* You can supply procedures to control what happens to the children
    when a "ZSplit" is reshaped.  If you don't supply a procedure, the

@@ -14,7 +14,7 @@
    
    When the screentype of a "VBT" changes, any screen-dependent
    resources for the old screentype become useless.  The application
-   must use the new screentype's {\it oracles} to look up resources
+   must use the new screentype's <I>oracles</I> to look up resources
    that are valid for the new screentype.  This is all handled
    automatically if you use screen-independent resources that are
    predefined or defined by somebody else.  But you will need to use
