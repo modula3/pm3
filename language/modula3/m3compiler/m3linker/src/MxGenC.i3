@@ -3,7 +3,7 @@
 (* See the file COPYRIGHT for a full description.              *)
 
 (* File: MxGenC.i3                                             *)
-(* Last Modified On Thu Jan 18 15:09:57 EST 1996 By ldd        *)
+(* Last Modified On Thu Jan 18 15:09:58 EST 1996 By ldd        *)
 
 
 INTERFACE MxGenC;

@@ -3,7 +3,7 @@
 (* See the file COPYRIGHT for a full description.              *)
 (*                                                             *)
 (* File: MxGenCG.m3                                            *)
-(* Last Modified On Thu Jan 18 15:09:57 EST 1996 By ldd        *)
+(* Last Modified On Thu Jan 18 15:09:58 EST 1996 By ldd        *)
 (*                                                             *)
 (* From File: MxGen.m3                                         *)
 (* Last Modified On Thu Feb 23 08:53:23 PST 1995 By kalsow     *)

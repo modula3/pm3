@@ -2,6 +2,7 @@ INTERFACE QMachRep;
 
 IMPORT QMachine, QCode, QValue, QVTbl, QVSeq, M3Buf, IntRefTbl, TextSeq;
 IMPORT Pathname, Wr;
+
 FROM Quake IMPORT Error;
 
 REVEAL
