@@ -2,7 +2,8 @@
 (* All rights reserved.                                     *)
 (* See the file COPYRIGHT for a full description.           *)
 (*                                                          *)
-(* Last modified on Tue May  2 11:40:32 PDT 1995 by kalsow  *)
+(* Last modified on Sat Nov  9 19:20:08 PST 1996 by heydon  *)
+(*      modified on Tue May  2 11:40:32 PDT 1995 by kalsow  *)
 
 (* This interface defines platform (machine + OS) dependent
    types and constants. *)
@@ -48,7 +49,12 @@ CONST
    whose implementation you might use as a reference. *)
 
 CONST
-  VMHeap = FALSE;
+  VMHeap = TRUE;
+
+(*** hooks for the C wrapper functions ***)
+
+<*EXTERNAL*> VAR RTHeapRep_Fault: ADDRESS;  (* => RTHeapRep.Fault *)
+<*EXTERNAL*> VAR RTCSRC_FinishVM: ADDRESS;  (* => RTCollectorSRC.FinishVM *)
 
 (*--------------------------------------------------------- thread stacks ---*)
 
@@ -84,5 +90,3 @@ TYPE
   END;
 
 END RTMachine.
-
-

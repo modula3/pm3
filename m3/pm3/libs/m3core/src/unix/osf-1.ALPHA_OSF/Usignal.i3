@@ -2,7 +2,8 @@
 (* All rights reserved.                                       *)
 (* See the file COPYRIGHT for a full description.             *)
 
-(* Last modified on Thu Nov 11 15:53:59 PST 1993 by kalsow        *)
+(* Last modified on Tue Nov  5 13:33:05 PST 1996 by heydon        *)
+(*      modified on Thu Nov 11 15:53:59 PST 1993 by kalsow        *)
 (*      modified on Mon Jun 29 18:20:32 PDT 1992 by muller        *)
 
 
@@ -67,8 +68,8 @@ CONST
 
 (* Signal vector "template" used in sigvec call. *)
 TYPE
-  SignalHandler = PROCEDURE (sig, code: int;
-                             scp: UNTRACED REF struct_sigcontext);
+  SignalHandler =
+    PROCEDURE (sig, code: int; scp: UNTRACED REF struct_sigcontext);
 
   sigset_t = int;
 
@@ -135,10 +136,12 @@ TYPE
     (* END OF REGION THAT MUST AGREE WITH jmp_buf REGION IN setjmp.h
      -----------------------------------------------------------------------*)
 
-    sc_reserved1 : long;     (* reserved for user *)
-    sc_reserved2 : long;     (* reserved for user *)
-    sc_reserved3 : long;     (* reserved for user *)
-    sc_reserved4 : long;     (* reserved for user *)
+    sc_reserved1  : long;    (* reserved for kernel *)
+    sc_kreserved1 : int;     (* reserved for kernel *)
+    sc_kreserved2 : int;     (* reserved for kernel *)
+
+    sc_ssize      : Utypes.size_t;  (* stack size *)
+    sc_sbase      : Utypes.caddr_t; (* stack start *)
 
     sc_traparg_a0 : unsigned_long; (* a0 argument to trap on exception *)
     sc_traparg_a1 : unsigned_long; (* a1 argument to trap on exception *)
@@ -147,20 +150,10 @@ TYPE
     sc_fp_trap_pc      : unsigned_long; (* imprecise pc *)
     sc_fp_trigger_sum  : unsigned_long; (* exception summary at trigger pc *)
     sc_fp_trigger_inst : unsigned_long; (* instruction at trigger pc *)
-
-    (*-----------------------------------------------------------------------
-     * START OF 2nd REGION THAT MUST AGREE WITH jmp_buf REGION IN setjmp.h *)
-
-    sc_ssize : Utypes.size_t;  (* stack size *)
-    sc_sbase : Utypes.caddr_t; (* stack start *)
-
-    (* END OF 2nd REGION THAT MUST AGREE WITH jmp_buf REGION IN setjmp.h
-     --------------------------------------------------------------------*)
   END;
 
 CONST
   R_SP = 30; (* index of stack pointer in sc_regs above *)
-
 
 (* Do not modifiy these variables *)
 
