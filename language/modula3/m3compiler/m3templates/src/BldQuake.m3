@@ -908,7 +908,7 @@ PROCEDURE DoCSource(t: QMachine.T; n_args: INTEGER) RAISES {Error} =
 PROCEDURE SSource(t: T; x: TEXT) RAISES {Error}=
   VAR fn := x & ".s";
   BEGIN
-    EVAL t.s_sources.put(M3ID.Add(x), NEW(M3Libs.T, 
+    EVAL t.s_sources.put(M3ID.Add(fn), NEW(M3Libs.T, 
                                           loc := Location(t, t.package, 
                                                           PkgSubdir(t)),
                                           hidden := HIDDEN,
