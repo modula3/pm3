@@ -335,9 +335,10 @@ PROCEDURE FindTemplateDir()=
     m3_template := Env.Get("M3_TEMPLATE_DIR");
     path        : TEXT;
     subpath     : TEXT;
-    nextsep     : INTEGER := 0;
-    prevsep     : INTEGER := 0;
+    nextsep     : INTEGER;
+    prevsep     : INTEGER := -1;
     sep         : CHAR;
+    filename    : TEXT;
   BEGIN
     IF m3_template # NIL THEN
       template_dir := m3_template;
@@ -354,13 +355,17 @@ PROCEDURE FindTemplateDir()=
       REPEAT
         nextsep := Text.FindChar(path, sep, prevsep + 1);
         IF nextsep # -1 THEN
-          subpath := Text.Sub(path, prevsep, nextsep - prevsep - 1);
+          subpath := Text.Sub(path, prevsep + 1, nextsep - prevsep - 1);
         ELSE
-          subpath := Text.Sub(path, prevsep);
+          subpath := Text.Sub(path, prevsep + 1);
         END;
-        IF M3File.IsReadable(subpath & template) THEN
-          template_dir := subpath;
-          RETURN;
+        IF Text.Length(subpath) > 0 THEN
+          filename := subpath & SL & template;
+          IF M3File.IsReadable(filename) AND
+            NOT M3File.IsDirectory(filename) THEN
+            template_dir := subpath;
+            RETURN;
+          END;
         END;
         prevsep := nextsep;
       UNTIL prevsep = -1;
