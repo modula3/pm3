@@ -33,8 +33,8 @@ m3linker	m3/pm3/language/modula3/m3compiler/m3linker
 m3middle	m3/pm3/language/modula3/m3compiler/m3middle
 m3templates	m3/pm3/language/modula3/m3compiler/m3templates
 m3build		m3/pm3/language/modula3/m3compiler/m3build
-m3ship		m3/pm3/language/modula3/m3compiler/m3ship2
-m3where		m3/pm3/language/modula3/m3compiler/m3where2
+m3ship		m3/pm3/language/modula3/m3compiler/m3ship
+m3where		m3/pm3/language/modula3/m3compiler/m3where
 m3gdb		m3/pm3/language/modula3/m3tools/m3gdb
 libm3		m3/pm3/libs/libm3
 m3core		m3/pm3/libs/m3core
