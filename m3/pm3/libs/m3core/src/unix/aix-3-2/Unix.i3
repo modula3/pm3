@@ -14,7 +14,7 @@ IMPORT Word;
 FROM Word IMPORT Or, And, Shift;
 
 FROM Ctypes IMPORT short, int, long, char_star, char_star_star, int_star;
-FROM Utypes IMPORT u_short, u_long, dev_t, off_t;
+FROM Utypes IMPORT u_short, u_long, dev_t, off_t, size_t;
 FROM Utime IMPORT struct_timeval;
 
 
@@ -188,6 +188,7 @@ CONST
 
 (*** getwd - get current working directory pathname ***)
 <*EXTERNAL*> PROCEDURE getwd (pathname: char_star): char_star;
+<*EXTERNAL*> PROCEDURE getcwd (pathname: char_star; size: size_t): char_star;
 
 (*** ioctl - control device ***)
 

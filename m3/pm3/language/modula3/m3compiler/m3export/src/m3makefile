@@ -545,9 +545,7 @@ readonly proc BuildSpec() is
   local spec = EXPORT_TMP_ROOT & "/" & "rpm" & "/" & "SPECS" & "/" & 
       versionName & ".spec"
 
-  local ret = Exec(["rm","-r","files"],[],".")
-  CheckExec(["mkdir","files"],[],".","Creating files lists directory")
-  ret = Exec(["rm","-r","rpm"],[],EXPORT_TMP_ROOT)
+  local ret = Exec(["rm","-r","rpm"],[],EXPORT_TMP_ROOT)
   CheckExec(["mkdir","rpm"],[],EXPORT_TMP_ROOT,"Creating rpm directory")
   CheckExec(["mkdir","BUILD","RPMS","RPMS/i386","SOURCES","SPECS","SRPMS",
       "tmp"],[],EXPORT_TMP_ROOT & "/" & "rpm","Creating rpm subdirectories")
@@ -598,13 +596,6 @@ CR,
   proc PkgInfo(name,subdirectory,subtree,bundle,type,bundleHead,buildPhase,
       dependency,buildPlatforms,buildReq,description) is
 
-    local m3shipFile = EXPORT_TMP_TMP & "/" & versionName & 
-        "/" & subdirectory & "/" & name & "/" & TARGET & "/.M3SHIP"
-
-    % There is no m3ship file, this package was not built
-
-    if stale(m3shipFile,m3shipFile) return end
-
     % for each bundle (subpackage), write a section in the spec file
 
     if bundleHead
@@ -618,15 +609,6 @@ CR,
     % accumulate a list of bundles
 
     if not bundles contains bundle bundles{bundle} = "" end
-
-    % add the files in this M3 packake to the list of files in the current
-    % bundle.
-
-    CheckExec(["../src/listfiles.sh", m3shipFile,
-        EXPORT_TMP_TMP & "/" & versionName & 
-        "/src/../binaries/" & TARGET &
-        "/" & "usr/local/pm3","%attr(-,root,root) /usr"], 
-        ["",">>files/"& bundle,""],".", "failed to list files")
   end
 
   include("../../../../../src/PACKAGES")
@@ -636,19 +618,22 @@ CR,
 "%prep",CR,
 "%setup",CR,
 "%build",CR,
-"make M3OPTIONS=\"-DSETROOT=/usr -DEXPORTPATH=${RPM_BUILD_ROOT}\"",CR,
+"if test ${RPM_ARCH} = i386 -a ${RPM_OS} = Linux",CR,
+"  then if test -f /lib/libc.so.6",CR
+"    then make -f Makefile.LINUXLIBC6 M3OPTIONS=\"-DLIST_FILES -DSETROOT=/usr -DEXPORTPATH=${RPM_BUILD_ROOT}\"",CR,
+"  else make -f Makefile.LINUXELF M3OPTIONS=\"-DLIST_FILES -DSETROOT=/usr -DEXPORTPATH=${RPM_BUILD_ROOT}\"",CR,
+"  fi",CR,
+"else make M3OPTIONS=\"-DLIST_FILES -DSETROOT=/usr -DEXPORTPATH=${RPM_BUILD_ROOT}\"",CR,
+"fi",CR,
 "%install",CR,
 "make nothing",CR)
   end
 
-  foreach i in bundles
-    >> spec in
-      write("%files ",i,CR)
+  >> spec in
+    foreach i in bundles
+      write("%files ",i," -f files/",i,CR)
       write("%docdir /usr/lib/m3/www",CR)
     end
-
-    CheckExec(["cat","files/" & i],["",">>" & spec,""],".",
-        "failed to cat list")
   end
 end
 
@@ -676,10 +661,18 @@ proc BuildRPM() is
       "INSTALL_ROOT = \"/usr\"",CR)
   end
 
-  CheckExec(["tar","zcf",dir & "/" & "SOURCES" & "/" & versionName & ".tgz",
-      "--directory",EXPORT_TMP_SRC,versionName,
-      "--directory",EXPORT_TMP_BOOTSTRAP & "/" & TARGET,versionName],[],".",
-      "Preparing source tar file for rpm")
+  if equal(TARGET,"LINUXELF")
+    CheckExec(["tar","zcf",dir & "/" & "SOURCES" & "/" & versionName & ".tgz",
+        "--directory",EXPORT_TMP_SRC,versionName,
+        "--directory",EXPORT_TMP_BOOTSTRAP & "/LINUXLIBC6",versionName,
+        "--directory",EXPORT_TMP_BOOTSTRAP & "/LINUXELF",versionName],[],".",
+        "Preparing source tar file for rpm")
+  else
+    CheckExec(["tar","zcf",dir & "/" & "SOURCES" & "/" & versionName & ".tgz",
+        "--directory",EXPORT_TMP_SRC,versionName,
+        "--directory",EXPORT_TMP_BOOTSTRAP & "/" & TARGET,versionName],[],".",
+        "Preparing source tar file for rpm")
+  end
 
   % Restore the previous default install root
 
@@ -820,7 +813,7 @@ if DoStep("cpBootTarget")
 end
 
 if DoStep("makeExportall")
-  CheckExec(["make","exportall","M3OPTIONS=-DBUILD_ALL -DSHIP_ALL"], ["", 
+  CheckExec(["make","exportall"], ["", 
       EXPORT_TMP_TMP & "/" & versionName & "/" & "make.stdout", 
       EXPORT_TMP_TMP & "/" & versionName & "/" & "make.stderr"],
       EXPORT_TMP_TMP & "/" & versionName,"building bootstrap failed")
@@ -831,7 +824,7 @@ if DoStep("BuildSpec")
 end
 
 if DoStep("makeClean")
-  CheckExec(["make","clean"], [], EXPORT_TMP_TMP & "/" & versionName,
+  CheckExec(["make","boot-clean"], [], EXPORT_TMP_TMP & "/" & versionName,
       "cleaning bootstrap failed")
 end
 

@@ -67,7 +67,7 @@ CONST
   RLIMIT_MEMLOCK = 8;           (* Max locked-in-memory address space *)
   RLIMIT_AS = 9;                (* Address space limit *)
 
-  RLIM_NLIMITS = 10;		(* number of resource limits *
+  RLIM_NLIMITS = 10;		(* number of resource limits *)
 
   RLIM_INFINITY	= 16_7fffffff;
 

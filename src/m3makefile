@@ -24,6 +24,8 @@
 %
 % If CLEAN_ALL is set, the derived files are removed.
 %
+% If LIST_FILES is set, RPM file lists are created.
+%
 % By default, each package is built, shipped and cleaned before passing to
 % the next. Doing all the build, then all the ship, then all the clean
 % requires all the derived files to be kept in the intermediate steps
@@ -35,8 +37,8 @@ local firstPhase = ""
 local ret = 0
 
 > "config.tmpl" in
-  if equal(target,"HPPA") or equal(target,"DS3100") or equal(target,"IRIX5")
-      or equal(target,"NT386GNU")
+  if equal(TARGET,"HPPA") or equal(TARGET,"DS3100") or equal(TARGET,"IRIX5")
+      or equal(TARGET,"NT386GNU")
     write("option(\"optimization\",\"\")",CR)
   else 
     write("option(\"optimization\",\"T\")",CR)
@@ -97,6 +99,15 @@ if EXPORTPATH
   end
 end
 
+if defined("LIST_FILES")
+  doListFiles = "T"
+  ret = exec(["rm","-r","../files"],[],".")
+  ret = exec(["mkdir","../files"],[],".")
+  if not equal(ret, 0) error ("creating list directory failed: ", ret) end
+else
+  doListFiles = ""
+end
+
 if defined("BUILD_ALL") or defined("SHIP_ALL") or defined("CLEAN_ALL")
   doBuild = ""
   doShip = ""
@@ -119,7 +130,7 @@ if defined("CLEAN_ALL")
   doClean = "T"
 end
 
-readonly proc BuildChunk (dir,pkg) is
+readonly proc BuildChunk (dir,pkg,bundle) is
   local ret = 0
   local cmd = [m3build]
 
@@ -161,11 +172,26 @@ readonly proc BuildChunk (dir,pkg) is
   end
 
   if not firstPhase
+    % We are done, list the files if required.
+
+    if doListFiles
+      ret = exec(["../src/listfiles.sh", 
+        wd & "/" & BUILD_DIR & "/" & ".M3SHIP", 
+        EXPORTPATH & SETROOT,
+        "%attr(-,root,root) " & SETROOT], 
+        ["",">>../files/"& bundle,""],".")
+
+      if not equal(ret, 0) error ("list failed with error code: ", ret) end
+    end
+
+    % Remove the object files
+
     if  doClean
       ret = exec ([ "rm", "-rf", BUILD_DIR] , [], wd)
     end
 
-    % remember that we've built this chunk
+    % Remember that we've built this chunk
+
     ret = exec (["touch", pkg])
     if not equal(ret, 0) error ("touch failed with error code: ", ret) end
   end
@@ -192,8 +218,12 @@ proc PkgInfo(name,subdirectory,subtree,bundle,type,bundleHead,buildPhase,
     if not capabilities contains r ok = "" end
   end
 
+  if doListFiles
+    local ret = exec(["touch","../files/" & bundle],[],".")
+  end
+
   if ok and equal(buildPhase,currentPhase)
-    BuildChunk(subdirectory,name)
+    BuildChunk(subdirectory,name,bundle)
   end
 end
 
