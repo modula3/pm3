@@ -563,7 +563,7 @@ readonly proc BuildCvsup() is
 
   ret = Exec(["rm","-r","/etc/cvsup/sup.old"],[],".")
   ret = Exec(["mv","/etc/cvsup/sup","/etc/cvsup/sup.old"],[],".")
-  CheckExec(["mv","sup","/etc/cvsup/sup"],[],".","Moving sup")
+  CheckExec(["cp","-a","sup","/etc/cvsup/sup"],[],".","Copying sup")
 end
 
 %

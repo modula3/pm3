@@ -148,7 +148,7 @@ PkgInfo("coverage","language/modula3/m3tools","","coverage",tProg,"T",3,[],
     ["ALL"],["POSIX"],"A line-based coverage analyzer/profiler")
 
 PkgInfo("m3gdb","language/modula3/m3tools","","m3gdb",tProg,"T",3,[],["ALL"],
-    [],"Modula-3 aware debugger based on gdb")
+    ["M3GDB"],"Modula-3 aware debugger based on gdb")
 
 PkgInfo("pp","language/modula3/m3tools","","pp",tProg,"T",3,[],["ALL"],
     ["POSIX"],"Modula-3 pretty-printer")

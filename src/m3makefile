@@ -201,6 +201,7 @@ local capabilities = {}
 
 capabilities{OS_TYPE} = ""
 if not defined("SKIP_LLSCAN") capabilities{"LLSCAN"} = "" end
+if not equal(TARGET,"LINUXLIBC6") capabilities{"M3GDB"} = "" end
 if PLATFORM_SUPPORTS_MOTIF capabilities{"MOTIF"} = "" end
 if PLATFORM_SUPPORTS_DECPEX capabilities{"DECPEX"} = "" end
 if PLATFORM_SUPPORTS_OPENGL capabilities{"OPENGL"} = "" end

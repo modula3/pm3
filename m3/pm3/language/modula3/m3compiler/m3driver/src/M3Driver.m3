@@ -2293,7 +2293,7 @@ PROCEDURE BuildBootProgram ()
 
       Wr.PutText (wr, "OBJS=");
       WHILE objs # NIL DO
-        Wr.PutText(wr, objs.t & " ");
+        IF objs.t # NIL THEN Wr.PutText(wr, objs.t & " "); END;
         objs := objs.next;
       END;
       Wr.PutText (wr, "_m3main.o");
