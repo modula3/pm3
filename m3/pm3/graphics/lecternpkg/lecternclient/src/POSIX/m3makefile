@@ -10,9 +10,13 @@ implementation("LecternServerPosix")
 readonly proc simple_c_program(nm) is
   local SRCFILE = path_of(nm & ".c")
   local EXEFILE = nm
+  local ret = 0
+  local cmd = [ CC, "-o", EXEFILE, SRCFILE ]
 
   if stale(EXEFILE, SRCFILE)
-    exec (CC, "-o " & EXEFILE, SRCFILE)
+    write(cmd, "\n")
+    ret = exec (cmd)
+    if not equal(ret, 0) error("command failed with error code: ", ret) end
   end
 
   deriveds(EXEFILE, no_extension)

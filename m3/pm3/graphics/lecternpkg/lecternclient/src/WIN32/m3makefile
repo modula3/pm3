@@ -11,9 +11,13 @@ implementation("LecternServerWin32")
 readonly proc simple_c_program(nm) is
   local SRCFILE = path_of(nm & ".c")
   local EXEFILE = nm & ".EXE"
+  local ret = 0
+  local cmd = [ DEV_BIN & "cl", "/Fe" & EXEFILE, SRCFILE ]
 
   if stale(EXEFILE, SRCFILE)
-    exec (DEV_BIN & "cl /Fe" & EXEFILE, SRCFILE)
+    write (cmd, "\n")
+    ret = exec (cmd)
+    if not equal(ret, 0) error("command failed with error code: ", ret) end
   end
 
   deriveds(EXEFILE, [nm & ".OBJ"])

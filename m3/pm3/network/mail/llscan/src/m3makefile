@@ -19,8 +19,12 @@ c_source ("llscan")
 if defined ("_all")
   local prog = "llscan"
   local form = format ("-DDEFAULT_FORM=\\\"%s%sscan.llscan\\\"", LIB_USE, SL)
+  local ret = 0
+  local cmd = [ CC, "-I../src", "-D_BSD", form, "-o", prog, COMPILE_SOURCES ]
   if stale (prog, COMPILE_SOURCES)
-    exec (CC, "-I../src -D_BSD", form, "-o", prog, COMPILE_SOURCES)
+    write(cmd, "\n")
+    ret = exec (cmd)
+    if not equal(ret, 0) error("command failed with error code: ", ret) end
   end
   BindExport (prog)
 end
