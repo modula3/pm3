@@ -11,7 +11,7 @@ readonly proc coco(atg) is
   derived_implementation(parse)
 
   if defined("_all")
-    if stale(scan & ".i3", inf)
+    if stale(atg & ".i3", path_of(inf))
       checkExec([BIN_USE & SL & "m3coco", path_of(inf)],[],".")
     end
   end
@@ -29,7 +29,7 @@ readonly proc coco_c(atg) is
   derived_implementation(atg)
 
   if defined("_all")
-    if stale(scan & ".i3", inf)
+    if stale(atg & ".i3", path_of(inf))
       checkExec([BIN_USE & SL & "m3coco", "-c", path_of(inf)],[],".")
     end
   end
