@@ -9,7 +9,7 @@ interface ("RTExRep")
 
 % LINUXELF implements RTStackC even though it uses frame based exceptions.
 
-if not equal (TARGET, "LINUXELF")
+if not (equal(TARGET, "LINUXELF") or equal(TARGET,"LINUXLIBC6"))
   c_source ("RTStackC")
 end
 

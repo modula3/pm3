@@ -7,7 +7,7 @@
 /*      modified on Thu Jun 29 09:42:09 PDT 1995 by kalsow */
 /*      modified on Tue Feb  2 11:15:57 PST 1993 by jdd */
 
-/* This is RTHeapDepC.c for Linux. (dagenais@vlsi.polymtl.ca) */
+/* This is RTHeapDepC.c for Linux. (michel.dagenais@polymtl.ca) */
 
 /* This file implements wrappers for almost all Linux system calls
    that take pointers as arguments.  These wrappers allow the system
@@ -706,7 +706,7 @@ int dev;
 
   ENTER_CRITICAL;
   MAKE_READABLE(path);
-  result = _xmknod(1, path, mode, dev);
+  result = _xmknod(1, path, mode, &dev);
   EXIT_CRITICAL;
   return result;
 }

@@ -62,7 +62,12 @@ CONST
   RLIMIT_CORE  = 4;		(* core file size *)
   RLIMIT_RSS   = 5;		(* resident set size *)
 
-  RLIM_NLIMITS = 6;		(* number of resource limits *)
+  RLIMIT_NPROC = 6;             (* Max number of processes *)
+  RLIMIT_NOFILE = 7;            (* Max number of open files *)
+  RLIMIT_MEMLOCK = 8;           (* Max locked-in-memory address space *)
+  RLIMIT_AS = 9;                (* Address space limit *)
+
+  RLIM_NLIMITS = 10;		(* number of resource limits *
 
   RLIM_INFINITY	= 16_7fffffff;
 

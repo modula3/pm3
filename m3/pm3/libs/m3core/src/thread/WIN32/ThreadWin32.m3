@@ -130,6 +130,7 @@ PROCEDURE FreeCSect(r: REFANY (*Mutex*) ) =
         cSectCache[cSectCacheContents] := m.cs;
         INC(cSectCacheContents);
       ELSE
+        WinBase.DeleteCriticalSection(m.cs);
         DISPOSE(m.cs);
       END;
       m.cs := NIL;

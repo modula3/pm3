@@ -31,6 +31,12 @@ PROCEDURE execvp(
     : Ctypes.int
     RAISES {};
     
+<*EXTERNAL*>
+PROCEDURE execve(
+    name : Ctypes.char_star;
+    arg : Ctypes.char_star_star;
+    envp : Ctypes.char_star_star) : Ctypes.int;
+
 <*EXTERNAL*> 
 PROCEDURE exect(
     name: Ctypes.char_star;
