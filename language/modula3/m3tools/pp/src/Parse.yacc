@@ -174,7 +174,7 @@ typedef enum {NonOptimal, OptimalBreak, OptimalNoBreak} Formatter_BreakType;
 
 /* symbols */
 %token AMPERSAND ASSIGN ASTERISK BAR COLON COMMA DOT DOTDOT
-%token EQUAL GREATER GREQUAL LESS LSEQUAL MINUS SHARP PERIOD PLUS
+%token EQUAL GREATER GREQUAL LESS LSEQUAL MINUS SHARP PLUS
 %token RARROW RPRAGMA RBRACE RBRACKET RPAREN SEMICOLON SLASH
 %token SUBTYPE UPARROW 
 %token LPAREN LBRACKET LBRACE /*LPRAGMA*/
@@ -188,11 +188,15 @@ typedef enum {NonOptimal, OptimalBreak, OptimalNoBreak} Formatter_BreakType;
 %token PR_LL PR_LLsup PR_EXPORTED PR_SPEC
 
 /* reserved words for ESC specifications in SPEC pragmas */
-%token ALL AXIOM CONCAT DELETE DEPENDS
-%token ENSURES EXISTS FUNC IFF IMPLIES INSERT INV IS
-%token LET MAP MEMBER MODIFIES MUT_GE MUT_GT
-%token MUT_LE MUT_LT ON PRED PROTECT
-%token REP REQUIRES SHARED SUBSET
+%token ALL AXIOM DEPENDS
+%token ENSURES EXISTS FUNC IFF IMPLIES INV IS
+%token LET MAP MODIFIES ON PRED PROTECT
+%token REP REQUIRES
+/*
+%token CONCAT DELETE INSERT MEMBER SHARED SUBSET
+%token MUT_GE MUT_GT MUT_LE MUT_LT
+*/
+
 
 /* reserved words */ 
 %token AND ANY ARRAY AS BGN BITS BRANDED BY CASE CONST 
@@ -997,17 +1001,39 @@ spec_inv: Inv spec_pred ;
 spec_let: Let Ident Assign spec_term ;
 
 
-spec_term:
-      spec_prim_term
-    | spec_term spec_bin_op spec_term
-    | Lparen spec_term Rparen
-    | qqid Lparen Rparen
-    | qqid Lparen spec_term_list Rparen
-    | spec_term Lbracket spec_term_list Rbracket
-    | spec_term Uparrow
+spec_term: spec_term_sum ;
+
+spec_term_sum:
+      spec_term_prod
+    | spec_term_sum Plus spec_term_prod
+    | spec_term_sum Minus spec_term_prod
     ;
 
-spec_bin_op: Plus | Minus | Asterisk | Div | Mod ;
+spec_term_prod:
+      spec_term_selector
+    | spec_term_prod Asterisk spec_term_selector
+    | spec_term_prod Div spec_term_selector
+    | spec_term_prod Mod spec_term_selector
+    ;
+
+spec_term_selector:
+      spec_term_paren
+/*
+    | qqid Lparen Rparen
+    | qqid Lparen spec_term_list Rparen
+*/
+/*
+    | spec_term_selector Lparen Rparen
+    | spec_term_selector Lparen spec_term_list Rparen
+*/
+    | spec_term_selector Lbracket spec_term_list Rbracket
+    | spec_term_selector Uparrow
+    ;
+
+spec_term_paren:
+      spec_prim_term
+    | Lparen spec_term Rparen
+    ;
 
 spec_term_list:
       spec_term
@@ -1044,7 +1070,7 @@ spec_literal:  /* was { NOT } Atm -- a bug? */
 
 spec_atom:
       Lparen spec_pred Rparen
-    | Lparen All Lbracket spec_typed_id_list Rbracket spec_pred Rparen
+    | Lparen All    Lbracket spec_typed_id_list Rbracket spec_pred Rparen
     | Lparen Exists Lbracket spec_typed_id_list Rbracket spec_pred Rparen
     | spec_term spec_bin_rel spec_term
     | spec_term
@@ -1069,11 +1095,6 @@ spec_sub_id_list:
     ;
 
 spec_sub_id: qqid spec_term_list ;
-
-spec_term_list:
-      /* empty */
-    | spec_term_list Lbracket spec_term Rbracket
-    ;
 
 spec_proc_requires: Requires spec_pred ;
 
