@@ -1446,34 +1446,31 @@ With:          WITH { PK ("WITH");} NPS ;
 Abstract:      ABSTRACT { PK ("ABSTRACT");} NPS ;
 All:           ALL { PK ("ALL");} NPS ;
 Axiom:         AXIOM { PK ("AXIOM");} NPS ;
-/*Concat:        CONCAT { PK ("CONCAT");} NPS ;*/
-/*Delete:        DELETE { PK ("DELETE");} NPS ;*/
 Depend:        DEPEND { PK ("DEPEND");} NPS ;
 Ensures:       ENSURES { PK ("ENSURES");} NPS ;
 Exists:        EXISTS { PK ("EXISTS");} NPS ;
 Func:          FUNC { PK ("FUNC");} NPS ;
 Iff:           IFF { PK ("IFF");} NPS ;
 Implies:       IMPLIES { PK ("IMPLIES");} NPS ;
-/*Insert:        INSERT { PK ("INSERT");} NPS ;*/
 Invariant:     INVARIANT { PK ("INVARIANT");} NPS ;
 Is:            IS { PK ("IS");} NPS ;
 Let:           LET { PK ("LET");} NPS ;
 Map:           MAP { PK ("MAP");} NPS ;
-/*Member:        MEMBER { PK ("MEMBER");} NPS ;*/
 Modifies:      MODIFIES { PK ("MODIFIES");} NPS ;
-/*
+Pred:          PRED { PK ("PRED");} NPS ;
+Protect:       PROTECT { PK ("PROTECT");} NPS ;
+Requires:      REQUIRES { PK ("REQUIRES");} NPS ;
+/* special ESC functions -- they not no special treatment
+Concat:        CONCAT { PK ("CONCAT");} NPS ;
+Delete:        DELETE { PK ("DELETE");} NPS ;
+Insert:        INSERT { PK ("INSERT");} NPS ;
+Member:        MEMBER { PK ("MEMBER");} NPS ;
+Shared:        SHARED { PK ("SHARED");} NPS ;
+Subset:        SUBSET { PK ("SUBSET");} NPS ;
 Mut_ge:        MUT_GE { PK ("MUT_GE");} NPS ;
 Mut_gt:        MUT_GT { PK ("MUT_GT");} NPS ;
 Mut_le:        MUT_LE { PK ("MUT_LE");} NPS ;
 Mut_lt:        MUT_LT { PK ("MUT_LT");} NPS ;
-On:            ON { PK ("ON");} NPS ;
-*/
-Pred:          PRED { PK ("PRED");} NPS ;
-Protect:       PROTECT { PK ("PROTECT");} NPS ;
-Requires:      REQUIRES { PK ("REQUIRES");} NPS ;
-/*
-Shared:        SHARED { PK ("SHARED");} NPS ;
-Subset:        SUBSET { PK ("SUBSET");} NPS ;
 */
 
 
@@ -1504,8 +1501,8 @@ anypragma_space_list:
     ;
 
 anypragma_list:
-      SP anypragma
-    | anypragma_list SP anypragma
+      A anypragma
+    | anypragma_list A anypragma
     ;
 
 space_list_emit:
