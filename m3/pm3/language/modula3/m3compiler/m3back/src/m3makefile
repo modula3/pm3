@@ -5,8 +5,17 @@
 % Last modified on Wed Dec 14 14:42:15 PST 1994 by kalsow 
 %      modified on Mon Sep 26 14:44:07 PDT 1994 by isard 
 
-Module    ("M3x86")
-interface ("M3x86Rep")
-module    ("Stackx86")
-module    ("Codex86")
+import ("libm3")
+import ("m3middle")
+import ("m3objfile")
+
+if equal(TARGET,"LINUXELF")
+  include_dir("linux")
+elsif equal(TARGET,"NT386")
+  include_dir("nt")
+end
+
+module    ("Wrx86")
+
+Library ("m3back")
 
