@@ -339,9 +339,12 @@ BuildChunk ("m3tools")
 % requires: libm3, m3tools
 BuildChunk ("m3tohtml")
 
+%--- m3markup --- library --------------------------------------------------
+BuildChunk ("m3markup")
+
 %--- m3browser --- utility -------------------------------------------------
 % an HTTP server that provides WWW browsing of the installed Modula-3 system
-% requires: libm3, m3tools
+% requires: libm3, m3tools, m3markup
 if equal (OS_TYPE, "POSIX")
   BuildChunk ("m3browser")
 end
