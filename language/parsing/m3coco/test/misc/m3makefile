@@ -1,0 +1,30 @@
+
+import("libm3")
+import("m3coco")
+
+coco_c("HTML")
+coco_c("calc")
+coco_c("cdecl")
+coco_c("mod2")
+coco_c("umbriel2")
+
+% they contain errors but I keep them
+% to check the behaviour of m3coco
+coco_c("Mod3")
+coco_c("adacs")
+coco_c("c")
+coco_c("clang1")
+coco_c("clang2")
+coco_c("cminus")
+coco_c("cminus1")
+coco_c("microada")
+coco_c("oberon")
+coco_c("pascal")
+coco_c("pimmod2")
+coco_c("umbriel1")
+
+% clang1 produced less output in clang1.lst
+% umbriel1 produced more output in umbriel1.lst
+% umbriel2 produced 2 character sets less than before (8->6) umbriel2.lst
+%   which can be also seen in umbriel2S.m3
+% mod2 producted 5 charecter sets less than before (14->9) mod2.lst
