@@ -173,24 +173,61 @@ PROCEDURE MkDir (dir: TEXT) =
   END MkDir;
 
 PROCEDURE CheckTemplateDir() =
+  VAR
+    path, trial1, trial2: TEXT;
+    trials: TextSeq.T;
+    pos: INTEGER;
   BEGIN
+    IF template_dir = NIL AND M3File.IsDirectory(default_template_dir) THEN
+      template_dir := default_template_dir;
+    END;
+
     IF template_dir = NIL THEN
-      WITH trial1 = default_template_dir,
-           trial2 = Pathname.Join(Pathname.Prefix(Params.Get(0)),
-               other_template_dir_1);
-           trial3 = Pathname.Join(Pathname.Prefix(Params.Get(0)),
-               other_template_dir_2) DO
-        IF M3File.IsDirectory(trial1) THEN
-          template_dir := trial1;
-        ELSIF M3File.IsDirectory(trial2) THEN
-          template_dir := trial2;
-        ELSIF M3File.IsDirectory(trial3) THEN
-          template_dir := trial3;
+      WITH m3buildPaths = NEW(TextSeq.T).init(),
+           programDir = Pathname.Prefix(Params.Get(0)) DO
+        trials := NEW(TextSeq.T).init();
+        trials.addhi(default_template_dir);
+
+        IF Pathname.Absolute(programDir) THEN
+          m3buildPaths.addhi(programDir);
         ELSE
-          Err ("unable to find template directory in " & trial1 & " or " &
-              trial2 & " or " & trial3);
+          m3buildPaths.addhi(Pathname.Join(Process.GetWorkingDirectory(),
+              programDir));
+          path := Env.Get("PATH");
+          WHILE path # NIL DO
+            IF Text.Length(path) = 0 THEN path := NIL;
+            ELSE
+              pos := Text.FindChar(path,':');
+              IF pos < 0 THEN
+                m3buildPaths.addhi(path);
+                path := NIL;
+              ELSIF pos = 0 THEN path := Text.Sub(path,1);
+              ELSE
+                m3buildPaths.addhi(Text.Sub(path,0,pos));
+                path := Text.Sub(path,pos + 1);
+              END;
+           END;
+         END;
+
+         FOR i := 0 TO m3buildPaths.size() - 1 DO
+           trial1 := Pathname.Join(m3buildPaths.get(i),other_template_dir_1);
+           trial2 := Pathname.Join(m3buildPaths.get(i),other_template_dir_2);
+           trials.addhi(trial1); trials.addhi(trial2);
+           IF M3File.IsDirectory(trial1) THEN
+             template_dir := trial1; RETURN;
+           ELSIF M3File.IsDirectory(trial2) THEN
+             template_dir := trial2; RETURN;
+           END;
         END;
       END;
+    END;
+
+    IF template_dir = NIL THEN
+      path := "";
+      FOR i := TO trials.size() - 1 DO
+        path := path & "\n" & trials.get(i);
+      END;
+      Err ("unable to find template directory", path);
     END;
   END CheckTemplateDir;
 

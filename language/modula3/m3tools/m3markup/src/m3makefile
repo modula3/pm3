@@ -1,0 +1,21 @@
+% Copyright (C) 1994, Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+%
+% Last modified on Mon May 22 15:46:25 PDT 1995 by kalsow
+
+import ("libm3")
+import ("m3tools")
+
+module ("Buf")
+module ("Wx")
+module ("CharMap")
+module ("ID")
+module ("XFormat")
+module ("MarkUp")
+module ("M3MarkUp")
+module ("CMarkUp")
+module ("ErrLog")
+
+Library ("m3markup")
+
