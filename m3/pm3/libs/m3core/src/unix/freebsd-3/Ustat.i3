@@ -9,8 +9,9 @@
 INTERFACE Ustat;
 
 FROM Ctypes IMPORT int, char_star, long;
-FROM Utypes IMPORT u_short, u_long, dev_t, ino_t, off_t;
-FROM Utypes IMPORT mode_t, nlink_t, uid_t, gid_t, time_t, quad_t;
+FROM Utypes IMPORT u_short, u_long, dev_t, ino_t, off_t, off_pad_t;
+FROM Utypes IMPORT mode_t, nlink_t, uid_t, gid_t, time_t, int32_t,
+  u_int32_t, int64_t;
 
 CONST
   S_IFMT  : u_short = 8_0170000;
@@ -38,28 +39,28 @@ CONST
 
 TYPE
   struct_stat = RECORD
-    st_dev    : dev_t;
-    st_ino    : ino_t;
-    st_mode   : mode_t;
-    st_nlink  : nlink_t;
-    st_uid    : uid_t;
-    st_gid    : gid_t;
-    st_rdev   : dev_t;
-    st_atime  : time_t;
-    st_spare1 : u_long;
-    st_mtime  : time_t;
-    st_spare2 : u_long;
-    st_ctime  : time_t;
-    st_spare3 : u_long;
-    st_size   : off_t;
-    st_pad1   : long;
-    st_blocks : quad_t;
-    st_blksize: u_long;
-    st_flags  : u_long;
-    st_gen    : u_long;
-    st_lspare : long;
-    st_qspare1: quad_t;
-    st_qspare2: quad_t;
+    st_dev       : dev_t;
+    st_ino       : ino_t;
+    st_mode      : mode_t;
+    st_nlink     : nlink_t;
+    st_uid       : uid_t;
+    st_gid       : gid_t;
+    st_rdev      : dev_t;
+    st_atime     : time_t;
+    st_atimensec : long;
+    st_mtime     : time_t;
+    st_mtimensec : long;
+    st_ctime     : time_t;
+    st_ctimensec : long;
+    st_size      : off_t;
+    st_pad1      : off_pad_t;
+    st_blocks    : int64_t;
+    st_blksize   : u_int32_t;
+    st_flags     : u_int32_t;
+    st_gen       : u_int32_t;
+    st_lspare    : int32_t;
+    st_qspare1   : int64_t;
+    st_qspare2   : int64_t;
   END;
 
   struct_stat_star = UNTRACED REF struct_stat;

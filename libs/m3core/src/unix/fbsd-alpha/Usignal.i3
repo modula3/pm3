@@ -65,18 +65,19 @@ TYPE
   SignalHandler = PROCEDURE (sig, code: int;
                              scp: UNTRACED REF struct_sigcontext);
 
-  sigset_t = int;
+  sigset_t = ARRAY [0..3] OF unsigned_int;
+  sigset_t_star = UNTRACED REF sigset_t;
 
   struct_sigvec  = RECORD
     sv_handler: SignalHandler;     (* signal handler *)
-    sv_mask:    sigset_t;          (* signal mask to apply *)
+    sv_mask:    int;               (* signal mask to apply *)
     sv_flags:   int;               (* see signal options below *)
   END;
     
 
 CONST
-  empty_sigset_t : sigset_t = 0;
-  empty_sv_mask  : sigset_t = 0;
+  empty_sigset_t = sigset_t{ 0, .. };
+  empty_sv_mask  : int = 0;
 
 CONST
  (* Valid flags defined for sv_flags field of sigvec structure. *)
@@ -94,8 +95,8 @@ CONST
 TYPE
   struct_sigaction = RECORD
     sa_handler  : SignalHandler;        (* signal handler *)
-    sa_mask     : sigset_t;             (* signals to block while in handler *)
     sa_flags    : int;                  (* signal action flags *)
+    sa_mask     : sigset_t;             (* signals to block while in handler *)
   END;
 
   struct_sigaction_star = UNTRACED REF struct_sigaction;
@@ -124,21 +125,21 @@ TYPE
 
 TYPE
   struct_sigcontext = RECORD
+    sc_mask:       sigset_t;  (* signal mask to restore *)
     sc_onstack:    long;      (* sigstack state to restore *)
-    sc_mask:       long;      (* signal mask to restore *)
-    sc_pc:         long;      (* program counter to restore *)
-    sc_ps:         long;
     sc_regs:       ARRAY [0..31] OF unsigned_long;  (* struct reg *)
-    sc_ownedfp:    long;
-    sc_fpregs:     ARRAY [0..31] OF unsigned_long;  (* struct fpreg *)
-    sc_fpcr:       unsigned_long;
-    sc_fp_control: unsigned_long;
-    sc_reserved:   ARRAY [0..1] OF long;
-    sc_xxx1:       ARRAY [0..1] OF long;  (* sc_ssize, sc_sbase on DUX *)
+    sc_ps:         long;
+    sc_pc:         long;      (* program counter to restore *)
     sc_traparg_a0: unsigned_long;
     sc_traparg_a1: unsigned_long;
     sc_traparg_a2: unsigned_long;
+    sc_fpregs:     ARRAY [0..31] OF unsigned_long;  (* struct fpreg *)
+    sc_fpcr:       unsigned_long;
+    sc_fp_control: unsigned_long;
+    sc_ownedfp:    long;
+    sc_xxx1:       ARRAY [0..1] OF long;  (* sc_ssize, sc_sbase on DUX *)
     sc_xxx2:       ARRAY [0..2] OF long;
+    sc_reserved:   ARRAY [0..1] OF long;
   END;
 
 CONST R_SP = 30;  (* Index of stack pointer in sc_regs. *)
@@ -185,6 +186,7 @@ VAR (*CONST*)
 
 (*** sigstack(2) - set and/or get signal stack context ***)
 
+(* FIXME - It is OK for ss and/or oss to be NIL, so we shouldn't use VAR *)
 <*EXTERNAL*> PROCEDURE sigstack (VAR ss, oss: struct_sigstack): int;
 
 (*** sigsuspend(2) - release blocked signals and wait for interrupt ***)
@@ -194,17 +196,32 @@ PROCEDURE sigsuspend (VAR sigmask: sigset_t): int;
 
 (*** sigaction(2) - software signal facilities ***)
 
-(* FIXME - This should probably use the VAR construct like the other
-   platforms use. *)
 <*EXTERNAL*>
 PROCEDURE sigaction (sig: int;  act, oact: struct_sigaction_star): int;
 
 (*** sigvec(2) - software signal facilities ***)
 
+(* FIXME - It is OK for vec and/or ovec to be NIL, so we shouldn't use VAR *)
 <*EXTERNAL*>
 PROCEDURE sigvec (sig: int; VAR vec, ovec: struct_sigvec): int;
 
+(* FIXME - It is OK for vec and/or ovec to be NIL, so we shouldn't use VAR *)
 <*EXTERNAL*>
 PROCEDURE sigprocmask (how: int; VAR set, oldset: sigset_t) : int;
+
+<*EXTERNAL*>
+PROCEDURE sigemptyset (VAR set: sigset_t) : int;
+
+<*EXTERNAL*>
+PROCEDURE sigfillset (VAR set: sigset_t) : int;
+
+<*EXTERNAL*>
+PROCEDURE sigaddset (VAR set: sigset_t; signo: int) : int;
+
+<*EXTERNAL*>
+PROCEDURE sigdelset (VAR set: sigset_t; signo: int) : int;
+
+<*EXTERNAL*>
+PROCEDURE sigismember(VAR set: sigset_t; signo: int) : int;
 
 END Usignal.

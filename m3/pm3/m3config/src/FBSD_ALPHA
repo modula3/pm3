@@ -1,5 +1,5 @@
 %
-% FreeBSD/Alpha 3.x configuration.
+% FreeBSD/Alpha 4.x configuration.
 %
 
 readonly TARGET = "FBSD_ALPHA"
@@ -13,6 +13,8 @@ PLATFORM_SUPPORTS_MOTIF  = ""
 PLATFORM_SUPPORTS_SHARED_LIB = "T"
 INSTALL_IMPLS = ""
 SKIP_M3GDB = "T"
+SKIP_GNUEMACS = "T"
+NO_ST_SPARE = "T"
 
 ASM = ["as", "-o"]
 BOPT_FLAG = []

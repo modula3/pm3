@@ -15,9 +15,9 @@ PLATFORM_SUPPORTS_LATEX = ""
 %BPIC_FLAG = ""
 %option("static_lib","")
 
-CYGNUS_LIB_DIR = "/usr/local/lib/i386-cygwin32"
+CYGNUS_LIB_DIR = "/cygnus/cygwin-b20/H-i586-cygwin32/i586-cygwin32/lib"
 
-INSTALL_ROOT = "\\usr\\pm3"
+INSTALL_ROOT = "c:\\usr\\pm3"
 
 LINK_suffix = [ "-luser32", "-lgdi32", "-ladvapi32", "-lnetapi32", "-lm" ]
 

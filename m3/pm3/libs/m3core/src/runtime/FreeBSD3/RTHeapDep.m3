@@ -101,25 +101,11 @@ PROCEDURE Init () =
 PROCEDURE Fault (sig : Ctypes.int;
                  code: Ctypes.int;
                  scp : UNTRACED REF Usignal.struct_sigcontext) =
-  VAR sf_addr_addr: UNTRACED REF ARRAY[0..1] OF ADDRESS;
-      sf_addr     : ADDRESS;
-  (*
-   * Signal frame of FreeBSD 1.1.5
-   *
-   *  struct sigframe {
-   *    int     sf_signum;
-   *    int     sf_code;
-   *    struct  sigcontext *sf_scp;
-   *    char    *sf_addr;            <-- this is the faulting address
-   *    sig_t   sf_handler;
-   *    struct  sigcontext sf_sc;    <-- this address is passed in scp
-   *   };
-   *)
-                                                    
+  VAR
+    sf_addr := LOOPHOLE(scp.sc_err, ADDRESS);
+
   BEGIN
-    sf_addr_addr := scp - ( 2 * BYTESIZE(ADDRESS));
-    sf_addr      := sf_addr_addr[0];
-    IF scp # NIL AND RTHeapRep.Fault(sf_addr) THEN
+    IF RTHeapRep.Fault(sf_addr) THEN
       RETURN;
     END;
     IF defaultSIGSEGV = Usignal.SIG_IGN THEN RETURN; END;

@@ -24,8 +24,8 @@ PLATFORM_SUPPORTS_SHARED_LIB = ""
 PLATFORM_SUPPORTS_LATEX = ""
 BOOTSTRAP_TO_IL = ""      % Use intermediate language for bootstrapping
 X11_WITH_SHARED_MEM = "TRUE" % X11 server with shared memory extension
-INSTALL_IMPLS = "TRUE"       % install .m3 source files to ease browsing/debug
-% MAN_SECTION = "l"          % install man pages in section "l", not in 1..8
+INSTALL_IMPLS = "TRUE"    % install .m3 source files to ease browsing/debug
+% MAN_SECTION = "l"       % install man pages in section "l", not in 1..8
 
 X11ROOT = "/usr/lib"
 OPENGLROOT = "/usr/lib"
@@ -38,6 +38,9 @@ MAKELIB = ["ar","crus"]   % Library archiver
 MAKESHLIB = ["gcc","-shared"]  % Shared library builder
 RANLIB = ["touch"]        % Library index creator
 ASM = ["as","-o"]         % Assembler
+
+SHLIB_VERSION = "1"       % some require a shared library version number
+SONAME_OPTION = ["-Xlinker","-soname","-Xlinker"]
 
 OPT_FLAG = "-O2"          % optimisation
 BOPT_FLAG = "-O2"	  % optimisation for m3cgc1
@@ -80,7 +83,7 @@ WIN32_CONVENTIONS = [".i3", ".ic", ".is", ".io", ".m3", ".mc", ".ms",
 
 GNU_WIN32_CONVENTIONS = [".i3", ".ic", ".is", ".io", ".m3", ".mc", ".ms", 
     ".mo",".ig", ".mg", ".c", ".h", ".s", ".o", ".a", ".m3x", ".m3x", "",
-    ".ix", ".mx", ".exe", ".dll", "NONAME.EXE","lib","\\","\r\n",":",":","","T"]
+    ".ix", ".mx", ".exe", ".dll", "NONAME.EXE","lib","\\","\r\n",";",":","","T"]
 
 %
 % In case you need to differentiate based on M3 versions you can check
@@ -430,8 +433,9 @@ proc m3_make_static_lib (lib, objects, imported_libs) is
 end
 
 proc m3_make_shared_lib (lib, objects, imported_libs) is
-  local lib_so   = format ("lib%s.so", lib)
-  local cmd = [MAKESHLIB_CMD, "-o", lib_so, objects]
+  local lib_so = format ("lib%s.so", lib)
+  local lib_sox = format ("%s.%s", lib_so, SHLIB_VERSION)
+  local cmd = [MAKESHLIB_CMD, "-o", lib_so, SONAME_OPTION, lib_sox, objects]
 
   if VERBOSE write(cmd, CR) end
   return exec(cmd)
@@ -444,10 +448,14 @@ end
 proc m3_note_shlib(lib) is
   if Options{"shared_lib"}[0] and PLATFORM_SUPPORTS_SHARED_LIB
     local lib_so   = format ("lib%s.so", lib)
+    local lib_sox = format ("%s.%s", lib_so, SHLIB_VERSION)
+
     if defined ("_all")
       install_derived (lib_so)
-      install_link(lib_so, LIB_TO_PKG_USE & SL & PACKAGE & SL & BUILD_DIR,
-          LIB_INSTALL)
+      install_alias_link(lib_so, ".", lib_sox, 
+        PKG_INSTALL & SL & PACKAGE & SL & BUILD_DIR)
+      install_alias_link(lib_so,
+        LIB_TO_PKG_USE & SL & PACKAGE & SL & BUILD_DIR, lib_sox, LIB_INSTALL)
     end
     deriveds (lib_so, [""])
   end
@@ -577,6 +585,7 @@ readonly Platforms = {
   "FreeBSD"   : [ "POSIX", "32BITS", "i486-unknown-bsd", ""   ],
   "FreeBSD2"  : [ "POSIX", "32BITS", "i486-unknown-freebsd", "T" ],
   "FreeBSD3"  : [ "POSIX", "32BITS", "i486-unknown-freebsdelf", "T" ],
+  "FreeBSD4"  : [ "POSIX", "32BITS", "i486-unknown-freebsdelf", "T" ],
   "HP300"     : [ "POSIX", "32BITS", "m68k-hp-hpux", ""       ],
   "HPPA"      : [ "POSIX", "32BITS", "hppa1.1-hp-hpux", "T"   ],
   "IBMR2"     : [ "POSIX", "32BITS", "rs6000-ibm-aix3.2", "" ],

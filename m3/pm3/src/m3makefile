@@ -143,6 +143,10 @@ readonly proc BuildChunk (dir,pkg,bundle) is
     write ("-- ", pkg, " done --", CR)
     if doClean
       ret = exec ([ "rm", "-rf", BUILD_DIR] , [], wd)
+
+      if not doBuild
+        ret = exec ([ "rm", pkg])
+      end
     end
     return
   end
@@ -192,8 +196,10 @@ readonly proc BuildChunk (dir,pkg,bundle) is
 
     % Remember that we've built this chunk
 
-    ret = exec (["touch", pkg])
-    if not equal(ret, 0) error ("touch failed with error code: ", ret) end
+    if doBuild or doShip
+      ret = exec (["touch", pkg])
+      if not equal(ret, 0) error ("touch failed with error code: ", ret) end
+    end
   end
 end
 
@@ -204,6 +210,15 @@ if not defined("SKIP_LLSCAN") capabilities{"LLSCAN"} = "" end
 
 % m3gdb is sensitive. On some versions of NT it did not work
 if not defined("SKIP_M3GDB") capabilities{"M3GDB"} = "" end
+
+% The "gnuemacs" package requires emacs to build.  But not all systems
+% have emacs installed.
+if not defined("SKIP_GNUEMACS") capabilities{"GNUEMACS"} = "" end
+
+% Both postcard and webcard try to use the non-portable "st_spare2" field
+% to get the nanoseconds portion of file modification times.  Some
+% platforms don't have this field.
+if not defined("NO_ST_SPARE") capabilities{"ST_SPARE"} = "" end
 
 if PLATFORM_SUPPORTS_MOTIF capabilities{"MOTIF"} = "" end
 if PLATFORM_SUPPORTS_DECPEX capabilities{"DECPEX"} = "" end

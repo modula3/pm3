@@ -11,7 +11,11 @@ X11ROOT = "/usr/X11R6/lib"
 OPENGLROOT = "/usr/lib"
 LINK_suffix += GCWRAPFLAGS
 MAKESHLIB += GCWRAPFLAGS
-%INSTALL_ROOT = "/usr/local"
+% Debian settings
+%INSTALL_ROOT="/usr"
+%INSTALL_IMPLS = ""
+%EXPORTRPATH="EXPORTS"
+%RPATH_FLAG=""
 
 setDefault("","")
 

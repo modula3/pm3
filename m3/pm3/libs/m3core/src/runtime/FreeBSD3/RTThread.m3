@@ -93,19 +93,21 @@ PROCEDURE setup_sigvtalrm (handler: Usignal.SignalHandler) =
   END setup_sigvtalrm;
 
 PROCEDURE allow_sigvtalrm () =
-  VAR svt : Usignal.sigset_t := Usignal.sigmask(Usignal.SIGVTALRM);
-      old : Usignal.sigset_t;
-      i   : INTEGER;
+  VAR svt, old : Usignal.sigset_t;
+      i        : INTEGER;
   BEGIN
+    EVAL Usignal.sigemptyset(svt);
+    EVAL Usignal.sigaddset(svt, Usignal.SIGVTALRM);
     i := Usignal.sigprocmask(Usignal.SIG_UNBLOCK, svt, old);
     <*ASSERT i = 0 *>
   END allow_sigvtalrm;
 
 PROCEDURE disallow_sigvtalrm () =
-  VAR svt : Usignal.sigset_t := Usignal.sigmask(Usignal.SIGVTALRM);
-      old : Usignal.sigset_t;
-      i   : INTEGER;
+  VAR svt, old : Usignal.sigset_t;
+      i        : INTEGER;
   BEGIN
+    EVAL Usignal.sigemptyset(svt);
+    EVAL Usignal.sigaddset(svt, Usignal.SIGVTALRM);
     i := Usignal.sigprocmask(Usignal.SIG_BLOCK, svt, old);
     <*ASSERT i = 0 *>
   END disallow_sigvtalrm;

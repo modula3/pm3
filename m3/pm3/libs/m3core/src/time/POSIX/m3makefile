@@ -18,6 +18,7 @@ readonly _DateImpls = {
   "FreeBSD"    : "DateBsd",
   "FreeBSD2"   : "DateBsd",
   "FreeBSD3"   : "DateBsd",
+  "FreeBSD4"   : "DateBsd",
   "HP300"      : "DateBsd",
   "HPPA"       : "DateBsd",
   "IBMR2"      : "DateBsd",

@@ -15,7 +15,7 @@ export_interface("Transport")
 export_interface("DirtyElem")
 export_interface("SpaceID")
 
-option("standalone","T")
+%option("standalone","T")
 
 module ("NMonRegistrySvr")
 implementation ("NetObjDaemon")

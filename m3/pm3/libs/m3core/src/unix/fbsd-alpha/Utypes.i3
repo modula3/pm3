@@ -63,13 +63,13 @@ TYPE
   time_t       = int32_t;
   dev_t        = u_int32_t;
   off_t        = int64_t;
-  key_t        = long;                (* sys V compatibility *)
-  clock_t      = int;                 (* POSIX compliance    *)
-  mode_t       = u_int16_t;             (* POSIX compliance    *)
-  nlink_t      = u_int16_t;             (* POSIX compliance    *)
-  uid_t        = u_int32_t;             (* POSIX compliance    *)
-  pid_t        = int;                 (* POSIX compliance    *)
-  gid_t        = u_int32_t;             (* POSIX compliance    *)
+  key_t        = long;
+  clock_t      = int;
+  mode_t       = u_int16_t;
+  nlink_t      = u_int16_t;
+  uid_t        = u_int32_t;
+  pid_t        = int;
+  gid_t        = u_int32_t;
 
   tcflag_t     = u_long;
   cc_t         = u_char;

@@ -22,6 +22,7 @@ readonly _UnixPieces = {
   "FreeBSD"    : [ "freebsd-1" ],
   "FreeBSD2"   : [ "freebsd-2" ],
   "FreeBSD3"   : [ "freebsd-3" ],
+  "FreeBSD4"   : [ "freebsd-4" ],
   "HP300"      : [ "hpux-7-0" ],
   "HPPA"       : [ "hpux-7-0" ],
   "IBMR2"      : [ "aix-3-2" ],

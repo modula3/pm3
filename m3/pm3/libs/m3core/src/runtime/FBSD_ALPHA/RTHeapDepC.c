@@ -105,6 +105,12 @@
 #include <string.h>
 #include <unistd.h>
 
+#if __FreeBSD_version >= 400013 
+#define SOCKLEN_T       socklen_t
+#else 
+#define SOCKLEN_T       int 
+#endif
+
 #ifdef   NULL
 #undef   NULL
 #endif
@@ -539,7 +545,7 @@ struct rusage *rusage;
 int getsockopt(s, level, optname, optval, optlen)   /* ok */
 int s, level, optname;
 void *optval;
-int *optlen;
+SOCKLEN_T *optlen;
 { int result;
 
   ENTER_CRITICAL;
@@ -1115,7 +1121,7 @@ struct rlimit *rlp;
 int setsockopt(s, level, optname, optval, optlen)   /* ok */
 int s, level, optname;
 const void *optval;
-int optlen;
+SOCKLEN_T optlen;
 { int result;
 
   ENTER_CRITICAL;

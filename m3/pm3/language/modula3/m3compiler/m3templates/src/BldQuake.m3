@@ -2253,8 +2253,8 @@ PROCEDURE Noweb(t: T; src_file, root, dest_file: TEXT) RAISES {Error}=
     IF t.all THEN
       IF Stale(tmp_dest, src_file) THEN
         args := Arg.NewList();
-        Arg.Append(args, "-L'<*LINE %L \"%F\" *>%N'");
-        Arg.Append(args, "-R'" & root & "'");
+        Arg.Append(args, "-L<*LINE %L \"%F\" *>%N");
+        Arg.Append(args, "-R" & root);
         Arg.Append(args, src_file);
         TRY
           EVAL Utils.Execute("notangle", args, tmp_dest, TRUE);

@@ -11,7 +11,7 @@ INTERFACE Utypes;
 
 FROM Ctypes IMPORT 
 	long, unsigned_long, int, unsigned_int, short, unsigned_short,
-        unsigned_char;
+        char, unsigned_char;
 
 (*** <sys/types.h> ***)
 
@@ -36,6 +36,15 @@ TYPE
   u_long  = unsigned_long;
   ushort  = unsigned_short;             (* sys III compat *)
 
+  int8_t    = char;
+  u_int8_t  = u_char;
+  int16_t   = short;
+  u_int16_t = u_short;
+  int32_t   = int;
+  u_int32_t = u_int;
+  int64_t   = RECORD val: ARRAY [0..1] OF int32_t; END;
+  u_int64_t = int64_t;
+
 (* #ifdef vax *)
   struct__physadr = RECORD r: ARRAY [0..0] OF int; END;
   physadr         = UNTRACED REF struct__physadr;
@@ -44,27 +53,24 @@ TYPE
   label_t        = struct_label_t;
 (*#endif*)
 
-  struct__quad = RECORD val: ARRAY [0..1] OF long; END;
-  quad         = struct__quad;
-  quad_t       = struct__quad;
-  daddr_t      = long; 
+  quad         = int64_t;
+  quad_t       = int64_t;
+  daddr_t      = int32_t; 
   caddr_t      = ADDRESS;
-  ino_t        = u_long;
-  gno_t        = u_long;
-  cnt_t        = short;     (*?*)          (* sys V compatibility *)
-  swblk_t      = long;
-  size_t       = u_int;
+  ino_t        = u_int32_t;
+  swblk_t      = int32_t;
+  size_t       = unsigned_int;
   time_t       = long;
-  dev_t        = u_long;
-  off_t        = long;           (*!!! SHOULD BE quad_t !!!*)
-  paddr_t      = long;                (* sys V compatibility *)
-  key_t        = long;                (* sys V compatibility *)
-  clock_t      = u_long;                 (* POSIX compliance    *)
-  mode_t       = u_short;             (* POSIX compliance    *)
-  nlink_t      = u_short;             (* POSIX compliance    *)
-  uid_t        = u_long;             (* POSIX compliance    *)
-  pid_t        = long;                 (* POSIX compliance    *)
-  gid_t        = u_long;             (* POSIX compliance    *)
+  dev_t        = u_int32_t;
+  off_t        = int32_t;       (* Really int64_t, but we wrap all uses *)
+  off_pad_t    = int32_t;       (* Padding to fill out off_t to 64 bits *)
+  key_t        = long;
+  clock_t      = u_long;
+  mode_t       = u_int16_t;
+  nlink_t      = u_int16_t;
+  uid_t        = u_int32_t;
+  pid_t        = int;
+  gid_t        = u_int32_t;
 
   tcflag_t     = u_long;
   cc_t         = u_char;

@@ -450,10 +450,11 @@ PkgInfo("llscan","network/mail","","llscan",tProg,"T",3,[],["ALL"],
     "A little mh program used by Postcard")
 
 PkgInfo("postcard","network/mail","","postcard",tProg,"T",3,[],["ALL"],
-    ["POSIX"],"An integrated mail/news reader")
+    ["POSIX","ST_SPARE"],"An integrated mail/news reader")
 
 PkgInfo("gnuemacs","language/modula3/m3tools","","gnuemacs",tProg,"T",3,[],
-    ["ALL"],["POSIX"],"A library of useful E-lisp code for Modual-3-mode in " &
+    ["ALL"],["POSIX","GNUEMACS"],
+    "A library of useful E-lisp code for Modual-3-mode in " &
     "gnuemacs, also a program to build Modula-3 tags")
 
 PkgInfo("webvbt","network/www","","webvbt",tLib,"T",3,[],["ALL"],[],
@@ -466,7 +467,7 @@ PkgInfo("deckscape","network/www","","deckscape",tProg,"T",3,[],["ALL"],[],
     "A web browser that uses a new metaphor: decks of web pages")
 
 PkgInfo("webcard","network/www","","webcard",tProg,"T",3,[],["ALL"],
-    ["POSIX"],"An integrated mail/news/web client")
+    ["POSIX","ST_SPARE"],"An integrated mail/news/web client")
 
 PkgInfo("ocr","graphics/lecternpkg","","ocr",tLib,"T",3,[],["ALL"],[],
     "Interface to optical character recognition library (DECstation only)")
