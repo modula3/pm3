@@ -932,80 +932,82 @@ esc_spec:
     | Protect
     ;
 
- Term ::= PrimTerm |
+SpecProc: 
+      Signature [Modifies] [Requires] [Ensures]
+
+Signature: QualId [ Lparen IdList Rparen ] [ Colon Type ]
+
+SpecVar: VAR TypedIdList
+
+Depend: DEPENDS QualId [ Lbracket TypedId Rbracket ] On TermList
+
+Abstract: REP QualId [ Lbracket TypedId Rbracket ] IFF Pred
+               | SPEC REP QualId [ Lbracket TypedId Rbracket ] = Expr
+
+PredDef: PRED Id Lparen TypedIdList Rparen IS Pred
+
+FuncDef: FUNC Id [ Lparen TypedIdlist Rparen ] Colon Type
+
+Axiom: AXIOM Pred
+
+Protect: PROTECT QualIdList BY TermList
+
+
+Term: PrimTerm |
              Term BinOp Term | 
-             "(" Term ")" | 
-             QualId "(" [TermList] ")" |
-             Term "[" TermList "]" |
-             Term "^"
+             Lparen Term Rparen | 
+             QualId Lparen [TermList] Rparen |
+             Term Lbracket TermList Rbracket |
+             Term Uparrow
 
-    BinOp ::= "+" | "-" | "*" | DIV | MOD
+BinOp: Plus | Minus | Asterisk | DIV | MOD
 
-    TermList ::= Term { "," Term }
+TermList: Term { Comma Term }
 
-    PrimTerm ::= Number | QualId [ "'" ]
+PrimTerm: Number | QualId [ "'" ]
 
-    QualId ::= Id | QualId "." Id
+QualId: Id | QualId Dot Id
 
-    Pred ::= Disj { WeakPredOp Disj }
+Pred: Disj { WeakPredOp Disj }
 
-    WeakPredOp ::= IMPLIES | IFF
+WeakPredOp: IMPLIES | IFF
 
-    Disj ::= Conj { OR Conj }
+Disj: Conj { OR Conj }
 
-    Conj ::= Literal { AND Literal }
+Conj: Literal { AND Literal }
 
-    Literal ::= { NOT } Atm
+Literal: { NOT } Atm
 
-    Atm ::= "(" Pred ")" |
-            "(" ALL "[" TypedIdList "]" Pred ")" |
-            "(" EXISTS "[" TypedIdList "]" Pred ")" |
+Atm: Lparen Pred Rparen |
+            Lparen ALL Lbracket TypedIdList Rbracket Pred Rparen |
+            Lparen EXISTS Lbracket TypedIdList Rbracket Pred Rparen |
             Term BinRel Term |
             Term
 
-    TypedIdList ::= TypedId { "," TypedId }
+TypedIdList: TypedId { Comma TypedId }
 
-    TypedId ::= Id ":" Type
+TypedId: Id Colon Type
 
-    Type ::= QualId | MAP Type TO Type
+Type: QualId | MAP Type TO Type
 
-    BinRel ::= "<" | ">" | "<=" | ">=" | "=" | "#"
+BinRel: Less | Greater | Lsequal | Grequal | Equal | Notequal
 
-    SpecProc ::= 
-      Signature [Modifies] [Requires] [Ensures]
+Modifies: MODIFIES SubIdList
 
-    Signature ::= QualId [ "(" IdList ")" ] [ ":" Type ]
+SubIdList: SubId { Comma SubId }
 
-    Modifies ::= MODIFIES SubIdList
+SubId: QualId { Lbracket Term Rbracket }
 
-    SubIdList ::= SubId { "," SubId }
+Requires: REQUIRES Pred
 
-    SubId ::= QualId { "[" Term "]" }
+Ensures: ENSURES Pred [ EXCEPT ExceptSpecList ]
 
-    Requires ::= REQUIRES Pred
+ExceptSpecList: ExceptSpec { Bar ExceptSpec }
 
-    Ensures ::= ENSURES Pred [ EXCEPT ExceptSpecList ]
+ExceptSpec: QualId [ Lparen Id Rparen ] Rarrow Pred 
 
-    ExceptSpecList ::= ExceptSpec { "|" ExceptSpec }
 
-    ExceptSpec ::= QualId [ "(" Id ")" ] "=>" Pred 
-
-    SpecVar ::= SPEC VAR TypedIdList
-
-    Depend ::= SPEC DEPENDS QualId [ "[" TypedId "]" ] "ON" TermList
-
-    Abstract ::= SPEC REP QualId [ "[" TypedId "]" ] IFF Pred
-               | SPEC REP QualId [ "[" TypedId "]" ] = Expr
-
-    PredDef ::= SPEC PRED Id "(" TypedIdList ")" IS Pred
-
-    FuncDef ::= SPEC FUNC Id [ "(" TypedIdlist ")" ] ":" Type
-
-    Axiom ::= SPEC AXIOM Pred
-
-    Protect ::= SPEC PROTECT QualIdList BY TermList
-
-    QualIdList ::= QualId { "," QualId }
+QualIdList: QualId { Comma QualId }
 
 
 
