@@ -396,7 +396,7 @@ PROCEDURE Acquire (<*UNUSED*> self: T;
         <* ASSERT status # False *>
 
         handle := WinUser.SetClipboardData (WinUser.CF_TEXT, NIL);
-        (* ASSERT handle # NIL *> *)
+        (* ASSERT handle # NIL *)
 
       FINALLY
         status := WinUser.CloseClipboard ();
