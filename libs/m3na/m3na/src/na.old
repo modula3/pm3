@@ -1,0 +1,746 @@
+INTERFACE na;
+(*Copyright (c) 1995,1996 m3na project
+
+Abstract:  This is a Modula-3 rendition of a collection
+           of numerical .         
+
+12/13/95   Harry George      Initial version
+1/22/96    Harry George      Change to m3na project
+*)
+IMPORT Fmt;
+
+(*========================*)
+(* Error handling         *)
+(*========================*)
+
+EXCEPTION Error(Err);
+
+TYPE Err= {bad_size       (*e.g., vector sizes mismatched*)
+          ,b1_too_small    (*in tridiagonal, rewrite for n-1 eqns*)
+          ,divide_by_zero  (*x/0 condition detected*)
+          ,need_more_data  (*e.g., more data points in statistics*)
+          ,not_bracketed   (*give x1,x2 do not bracket root*)
+          ,not_converging  (*e.g., eps or maxiter too small*)
+          ,not_implemented (*it's just a stub*)
+          ,out_of_range    (*parm is out of range*)
+         };
+
+(*=========================*)
+(* Ch 00: Utilities        *)
+(*=========================*)              
+PROCEDURE sgn(a:REAL32):REAL32;
+(*IF a >=0.0 THEN RETURN 1.0 ELSE RETURN -1.0; END:*)
+
+(*=========================*)
+(* Ch 00: Bits and Integers*)
+(*=========================*)              
+
+(*========================*)
+(* ch 00: Real Numbers    *)
+(*========================*)
+TYPE
+  REAL32 = REAL;      (*IEEE 32-bit real*)
+  REAL64 = LONGREAL;  (*IEEE 64-bit real*)
+  Ftn32  = PROCEDURE(x:REAL32):REAL32;
+  Ftn64  = PROCEDURE(x:REAL64):REAL64;
+
+CONST
+  TINY32 = 1.0e-30;  (*nearly 0.0*)
+  BIG32  = 1.0e+30;  (*nearly infinite*)
+  EPS32  = 1.0e-7;   (*approx machine precision, per ieee, real.i3*)
+  
+(*---- Begin Math.i3 interface ----*)
+(*---- Exponential and Logarithm functions ----*)
+PROCEDURE exp (x: REAL32): REAL32;
+(*returns e^x*)
+
+PROCEDURE expm1 (x: REAL32): REAL32;
+(*returns e^(x-1) *)
+
+PROCEDURE log (x: REAL32): REAL32;
+(*returns ln(x) *)
+
+PROCEDURE log10 (x: REAL32): REAL32;
+(*returns log10(x) *)
+
+PROCEDURE log1p (x: REAL32): REAL32;
+(*returns ln(1+x) *)
+
+PROCEDURE pow (x, y: REAL32): REAL32;
+(*returns x^y *)
+
+PROCEDURE sqrt (x: REAL32): REAL32;
+(*returns square root of x*)
+
+(*---- Trigonometric functions ----*)
+PROCEDURE cos (x: REAL32): REAL32;
+(*returns the cosine of x radians. *)
+
+PROCEDURE sin (x: REAL32): REAL32;
+(*returns the sine of x radians. *)
+
+PROCEDURE tan (x: REAL32): REAL32;
+(*returns the tangent of x radians. *)
+
+PROCEDURE acos (x: REAL32): REAL32;
+(*returns the arc cosine of x in radians. *)
+
+PROCEDURE asin (x: REAL32): REAL32;
+(*returns the arc sine of x in radians. *)
+
+PROCEDURE atan (x: REAL32): REAL32;
+(*returns the arc tangent of x in radians. *)
+
+PROCEDURE atan2 (y, x: REAL32): REAL32;
+(*returns the arc tangent of y/x in radians. *)
+
+
+(*---- Hyperbolic trigonometric functions ----*)
+
+PROCEDURE cosh (x: REAL32): REAL32;
+(*returns the hyperbolic cosine of x. *)
+
+PROCEDURE sinh (x: REAL32): REAL32;
+(*returns the hyperbolic sine of x. *)
+
+PROCEDURE tanh (x: REAL32): REAL32;
+(*returns the hyperbolic tangent of x. *)
+
+(*????????????????????
+PROCEDURE acosh (x: REAL32): REAL32;
+(*returns the inverse hyperbolic cosine of x *)
+
+PROCEDURE asinh (x: REAL32): REAL32;
+(*returns the inverse hyperbolic sine of x *)
+
+PROCEDURE atanh (x: REAL32): REAL32;
+(*returns the inverse hyperbolic tangent of x *)
+?????????*)
+(*---- End Math.i3 interface ----*)
+
+
+(*===========================*)
+(* Ch 00: Complex Numbers    *)
+(*===========================*)
+TYPE
+  CMPLX32= RECORD re,im:REAL32; END;
+  CMPLX64= RECORD re,im:REAL64; END;
+  CPOLAR = RECORD
+             radius:REAL32;
+             angle:REAL32; (*in radians*)
+           END;
+  
+PROCEDURE Cmk(r:REAL32):CMPLX32;
+(*make a complex number from a real, using im:=0.0*)
+ 
+PROCEDURE Cadd(a,b:CMPLX32):CMPLX32;
+
+PROCEDURE Csub(a,b:CMPLX32):CMPLX32;
+
+PROCEDURE Cmul(a,b:CMPLX32):CMPLX32;
+
+PROCEDURE Complex(re,im:REAL32):CMPLX32;
+
+PROCEDURE Conjg(z:CMPLX32):CMPLX32;
+
+PROCEDURE Cdiv(a,b:CMPLX32):CMPLX32;
+
+PROCEDURE Cabs(z:CMPLX32):REAL32;
+
+PROCEDURE Csqrt(z:CMPLX32):CMPLX32;
+
+PROCEDURE RCmul(x:REAL32; a:CMPLX32):CMPLX32;
+
+PROCEDURE Ctext(a:CMPLX32;
+                style:Fmt.Style:=Fmt.Style.Fix;
+                prec:CARDINAL:=1
+                ):TEXT;
+(*generate in format "CMPLX32{1.0,2.0}"
+Uses simple Fmt.Real if a.im=0.0.
+Style and precision can be overridden*)
+
+(*---polar format---*)
+PROCEDURE CtoPolar(c:CMPLX32):CPOLAR;
+
+PROCEDURE CfromPolar(p:CPOLAR):CMPLX32;
+
+PROCEDURE CPtext(p:CPOLAR;
+                style:Fmt.Style:=Fmt.Style.Fix;
+                prec:CARDINAL:=1
+                ):TEXT;
+
+
+(*=========================*)
+(* Ch 01: Polynomials      *)
+(*=========================*)              
+
+(*=========================*)
+(* Ch 02: Vectors          *)
+(*=========================*)              
+TYPE
+  Vector =REF ARRAY OF REAL32;
+  dVector=REF ARRAY OF REAL64;
+  cVector=REF ARRAY OF CMPLX32;
+  iVector=REF ARRAY OF INTEGER;
+  Index  =iVector; 
+
+(*-----------------*)
+PROCEDURE Vtext(V:Vector; 
+            style:=Fmt.Style.Fix;
+             prec:=2):TEXT;
+(*Write vector V to a text object*)
+(*-----------------*)
+PROCEDURE Itext(I:Index):TEXT; 
+(*Write integer vector I to a text object*)
+
+(*=========================*)
+(* Ch 03: Matrices         *)
+(*=========================*)              
+TYPE
+  Matrix =REF ARRAY OF ARRAY OF REAL32;
+  dMatrix=REF ARRAY OF ARRAY OF REAL64;
+  iMATRIX=REF ARRAY OF ARRAY OF INTEGER;
+
+
+(*---Matrices-------*)
+PROCEDURE Mtext(A:Matrix;
+            style:=Fmt.Style.Fix;
+             prec:=2):TEXT; 
+(*Write matrix A to a text object*)
+(*-----------------*)
+PROCEDURE Mzero(A:Matrix) RAISES ANY;
+(* set all zeros*)
+(*-----------------*)
+PROCEDURE Midentity(A:Matrix) RAISES ANY;
+(*set all zeros except diagonal to 1's*)
+
+(*-----------------*)
+PROCEDURE Madd(A,B:Matrix):Matrix RAISES ANY;
+(*A+B=C*)
+(*each is mxn*)
+(*-----------------*)
+PROCEDURE Msub(A,B:Matrix):Matrix RAISES ANY;
+(*A-B=C*)
+(*each is m*n*)
+(*-----------------*)
+PROCEDURE Mmul(A,B:Matrix):Matrix;
+(*A x B=C*)
+(*A is mxn, B is nxp, C is mxp*)
+(*-----------------*)
+PROCEDURE MmulV(A:Matrix; b:Vector):Vector;
+(*A x b=C*)
+(*A is mxn, b is nx1, C is mx1*)
+(*-----------------*)
+PROCEDURE Mtranspose(A:Matrix):Matrix RAISES ANY;
+(*A[i,j] becomes B[j,i], returns B*)
+
+(*=========================*)
+(* Ch 00: Tensors          *)
+(*=========================*)              
+TYPE
+  Tensor3=REF ARRAY OF ARRAY OF ARRAY OF REAL32;
+
+(*======================================*)
+(* Ch 2: Simultaneous Linear Equations  *)
+(*======================================*)
+(*-----------------*)
+PROCEDURE LUdecomp(A      :Matrix;
+                   indx   :Index;
+               VAR d      :INTEGER) RAISES ANY;
+(*Decompose A into Lower/Upper portions 
+Destroys A's values. 
+A is real nxn
+B is real nx1
+indx is integer nx1
+return value "d" is used for backsub and det
+*)
+(*-----------------*)
+PROCEDURE LUbacksub(A     :Matrix;
+	            B     :Vector;
+                    indx  :Index) RAISES ANY;
+(*After LUdecomp on A, solves A dot X = B.  
+X is returned in B.  B's values are destroyed
+A is real nxn
+B is real nx1
+indx is integer nx1
+*)
+(*-----------------*)
+PROCEDURE Minverse(A,B :Matrix;
+                  indx:Index) RAISES ANY;
+(*
+Inverse of A goes to B
+Must have done LUdecomp on A first
+Destroys A's values. 
+A is real nxn 
+B is real nxn
+indx is integer nx1
+*)
+(*-----------------*)
+PROCEDURE Mdet(A:Matrix;
+              d:INTEGER):REAL32 RAISES ANY;
+(*after LUdecomp on A and no backsubs,
+returns determinant
+"d" is the parity marker from LUdecomp
+*)
+
+PROCEDURE tridag(a,b,c,r:Vector; VAR u:Vector) RAISES {Error};
+(*Given tridiagonal matrix A, with diagonals a,b,c:
+|  b1 c1  0    ...
+|  a2 b2 c2    ...
+|   0 a3 b3 c3 ...
+|              ...
+|                 aN-1 bN-1 cN-1
+|                      aN   bN
+|  Solve for u in A*u=r
+*)
+(*=====================================*)
+(* Ch 3: Interpolation & Extrapolation *)
+(*=====================================*)
+PROCEDURE polint(xa,ya:Vector;         (*interp table*)
+                 x:REAL32;             (*the input*)
+                 VAR y,dy:REAL32;      (*the output*)
+                 start,len:CARDINAL:=0 (*for partial access*)
+                 ) RAISES {Error};
+(*Given an interpolation table with xa input and ya output,
+do polynomial interpolattion for x giving y.
+Partial access: Give the starting index and the length to be used.
+*)
+
+PROCEDURE ratint(xa,ya:Vector;         (*interp table*)
+                 x:REAL32;             (*the input*)
+                 VAR y,dy:REAL32;      (*the output*)
+                 start,len:CARDINAL:=0 (*for partial access*)
+                 ) RAISES {Error};
+(*Given an interpolation table with xa input and ya output,
+do rational interpolattion for x giving y.
+Partial access: Give the starting index and the length to be used.
+*)
+
+(*===============================*)
+(* Ch 4: Integration of Functions*)
+(*===============================*)
+
+PROCEDURE trapzd(func:Ftn;      (*function to be integrated*)
+                 a,b:REAL32;    (*end points, a<b*)
+                 n:[1..32];     (*do 2^n points*)
+                 VAR y:REAL32   (*previous answer at n-1*)
+                 ):REAL32;
+(*Do trapeziod integration of func over a..b, using 
+2^n points.  Thus n=1 gives just the average.
+The caller must call trapzd with n=1 first, then 2,3,..16 as
+needed.  The caller must insert the previous return value
+in the new call's y parm, e.g.:
+| FOR i:=1 TO n DO
+|   y:=nr.trapzd(myfun,a,b,n,y);
+|   IF ABS(y-yold)<small THEN EXIT;END;
+|   yold:=y;
+| END;    
+*)
+
+PROCEDURE qtrap(func:Ftn;          (*function to be integrated*)
+                 a,b:REAL32;        (*end points, a<b*)
+                 maxn:[1..32]:=8;   (*max n for 2^n divisions*)
+                 eps:REAL32:=5.0e-6 (*allowed error*)
+                 ):REAL32 RAISES {Error};
+(*Integrate func over a..b using trapzd and averaging.
+Allow up to maxn, and quit when the error drops below eps.
+Raise error if can't meet the maxn & eps conditions.
+*)
+
+PROCEDURE qsimp(func:Ftn;          (*function to be integrated*)
+                 a,b:REAL32;        (*end points, a<b*)
+                 maxn:[1..32]:=8;   (*max n for 2^n divisions*)
+                 eps:REAL32:=5.0e-6 (*allowed error*)
+                 ):REAL32 RAISES {Error};
+(*Integrate func over a..b using trapzd and Simpson's rule.
+Allow up to maxn, and quit when the error drops below eps.
+Raise error if can't meet the conditions.
+*)
+
+PROCEDURE qromb(func:Ftn;           (*function to be integrated*)
+                 a,b:REAL32;        (*end points, a<b*)
+                 maxn:[1..32]:=8;   (*max n for 2^n divisions*)
+                 eps:REAL32:=5.0e-6;(*allowed error*)
+                 k:[1..32]:=5       (*use k-point extrapolation*)
+                 ):REAL32 RAISES {Error};
+(*Integrate func over a..b using trapzd and Romberg method.
+Allow up to 2^maxn segments, get out when error < eps, and
+use k-point extrapolation to adjust y for error*)
+
+(*===============================*)
+(* Ch 5: Evaluation of Functions *)
+(*===============================*)
+PROCEDURE eulsum(VAR sum:REAL32;    (*partial sum to date*)
+                    term:REAL32;    (*jth value*)
+                   jterm:CARDINAL;  (*which j*)
+                    wksp:Vector;    (*workspace for calcs*)
+               VAR nterm:CARDINAL   (*how high is n so far*)
+                        ) RAISES {Error};
+(*Used to evaluate summation series.  The caller has to provide
+vars for wksp and nterm, but never touch them directly.
+Start with jterm:=1 and term:=<first value>.  Then for
+each call thereafter do the next jterm and term, in order.
+Sum remains up to date, so you can quit whenever your exit criteria
+are met.
+*)
+
+PROCEDURE ratval(x:REAL64;         (*evaluate at x*)
+                 num,den:dVector   (*coeffs*)
+                 ):REAL64;
+(*Given x and the coeffs for the numerator and denominator in a
+rational function, determine R(x):
+  R(x)= P(x)/Q(x)=num/den=(p0+p1*x+p2*x^2...)/(q0+q1*x+q2*x^2...)
+This routine does _not_ assume q0=1.
+*)
+
+PROCEDURE quadreal(a,b,c:REAL32;      (*coefs*)
+                   VAR x1,x2:CMPLX32); (*results*)  
+(*Given a*x^2+b*x+c=0, solve for x.*)
+
+PROCEDURE quadcmpx(a,b,c:CMPLX32;      (*coefs*)
+                   VAR x1,x2:CMPLX32); (*results*)  
+(*Given a*x^2+b*x+c=0, solve for x.*)
+
+
+(*---Polynomials---*)
+PROCEDURE Padd(u,v:Vector):Vector;
+(*return u+v, where both are polynomials of form
+|  p=a0+a1*x^1+a2*x^2...
+and the coefs a[i] are in the vector p[i].
+*)
+
+PROCEDURE Psub(u,v:Vector):Vector;
+(*return u-v, where both are polynomials of form
+|  p=a0+a1*x^1+a2*x^2...
+and the coefs a[i] are in the vector p[i].
+*)
+
+PROCEDURE Pmul(u,v:Vector):Vector;
+(*return u*v, where both are polynomials of form
+|  p=a0+a1*x^1+a2*x^2...
+and the coefs a[i] are in the vector p[i].
+*)
+
+PROCEDURE Pdiv(u,v:Vector;
+           VAR q,r:Vector);
+(*return u,v as quotient q and remainder r,
+where u,v,q,r are polynomials of form
+|  p=a0+a1*x^1+a2*x^2...
+and the coefs a[i] are in the vector p[i].
+*)
+
+PROCEDURE ddpoly(c:Vector;    (*evaluate the poly with these coefs*)
+                 x:REAL32;    (*at this point*)
+                 pd:Vector;   (*returning p(x), p'(x)...*)
+                 nd:CARDINAL  (*and up to nd derivatives*)
+                 ) RAISES {Error};
+(*Given a poly with coefs c, find the value at x as pd[0],
+and nd more derivatives as pd[1]..pd[nd].
+
+raises:
+   Err.bad_size if nd>NUMBER(pd)+1 
+*)
+
+PROCEDURE Ptext(poly:Vector;
+                x:TEXT:="x";       
+                style:Fmt.Style:=Fmt.Style.Fix;
+                prec:CARDINAL:=1
+                ):TEXT;
+(*Generate a text object for the polynomial poly, in form:
+| p0+p1*x+p3*x^2...
+|where p0,p1,... are poly[0],poly[1],...
+*)
+
+PROCEDURE dPtext(poly:dVector;
+                x:TEXT:="x";       
+                style:Fmt.Style:=Fmt.Style.Fix;
+                prec:CARDINAL:=1
+                ):TEXT;
+(*Same a Ptext, but for dVectors*)
+
+(*---chebyshev approximations---*)
+TYPE
+  ChebyApprox<: PublicCheby;
+  PublicCheby = OBJECT
+  METHODS
+    init(func:Ftn;                         (*ftn to be approximated*)
+         maxn:CARDINAL:=30                 (*number of coeffs to find*)
+         ):ChebyApprox;
+    findm(prec:REAL32:=0.0001):CARDINAL RAISES {Error};
+                                           (*use m coeffs for precision*)
+    derivative(m:CARDINAL):ChebyApprox;    (*return derivative*)
+    integral(m:CARDINAL):ChebyApprox;      (*return integral*)
+    eval(x:REAL32;                         (*-1<x<+1*)
+         m:CARDINAL                        (*m:=use() is a good idea*)
+        ):REAL32 RAISES {Error};           (*returned value*)
+  END;
+(*=========================*)
+(* Ch 6: Special Functions *)
+(*=========================*)
+PROCEDURE gammln(z:REAL32):REAL32;
+(*returns ln(gamma(z))*)
+
+PROCEDURE factrl(n:CARDINAL):REAL32;
+(*returns n! as a real*)
+
+PROCEDURE factln(n:CARDINAL):REAL32;
+(*returns ln(n!) as a real*)
+
+PROCEDURE bico(n,k:CARDINAL):REAL32 RAISES {Error};
+(*returns binomial coefficient for "n over k"*)
+
+PROCEDURE gammp(a,x:REAL32):REAL32 RAISES {Error};
+(*returns incomplete gamma P(a,x)=gamma(a,x)/Gamma(a)*)
+
+PROCEDURE gammq(a,x:REAL32):REAL32 RAISES {Error};
+(*returns incomplete gamma Q(a,x)=Gamma(a,x)/Gamma(a)*)
+(*also, Q(a,x)=1-P(a,x) *)
+
+(*Notes for in-lines:
+|1. Cumulative Poisson Probability:
+|   Px(<k)=probability that the number of events will be
+|   between 0 and k-1 inclusive, given mean=x.
+|     Px(<k)=gammq(k,x)
+|2. Chi-Square Probability:
+|   P(X2|df)=probability that observed chi-square should be
+|   less than X2, given df degrees of freedom. 
+|     P(X2|df)=gammp(df/2.0,X2/2.0); P(0|df)=0, P(inf|df)=1
+|   Complementary form:
+|     Q(X2|df)=gammq(df/2.0,X2/2.0); Q(0|df)=1, Q(inf|df)=0
+*)
+
+PROCEDURE erff(x:REAL32):REAL32 RAISES {Error};
+(*returns error function of x*)
+
+PROCEDURE erffc(x:REAL32):REAL32 RAISES {Error};
+(*returns 1-erf(x) *)
+
+PROCEDURE erfcc(x:REAL32):REAL32;
+(*returns 1-erf(x), using fancy CHebyshev approximation*)
+
+PROCEDURE beta(z,w:REAL32):REAL32;
+(*returns gamma(z)*gamma(w)/gamma(z+w)*)
+
+PROCEDURE betai(a,b,x:REAL32):REAL32 RAISES {Error};
+(*returns incomplete beta Ix(a,b) *)
+(*Notes for in-lines:
+|1. Student's t-test distribution for df degrees of freedom is
+|     A(t|df) = 1.0-betai(df/2,1/2,df/(df+t^2))
+|   In other words, big A means t should probably be smaller
+|2. F-test distribution for df1 and df2 degrees of freedom is
+|     A(F|df1,df2) = betai(df1/2,df2/2,df2/(df2+df1*F))
+|    
+|3. Cumulative binomial probability for event which has
+|   probability p of occurring in each trial,
+|   having the event occur k or moe times in n trials is
+|     P(= betai(k,n-k+1,p)
+*)
+
+  
+(*==================*)
+(* Ch 7: Randoms    *)
+(*==================*)
+TYPE
+  RandomEngine = {ran0,ran1,ran2,ran3,ran4};
+
+  RandomGen <: PublicRandomGen;
+  PublicRandomGen = OBJECT
+  METHODS
+    init(engine:RandomEngine:=RandomEngine.ran2;
+         seed  :[FIRST(INTEGER)..-1]:=-1
+              ):RandomGen RAISES {Error};
+    unidev():REAL32;       (*uniform 0.0->1.0 *)
+    expdev():REAL32;       (*exponential, mean=1 *)
+    gasdev():REAL32;       (*gaussian, mean=0, var=1 *)
+    gamdev(event:[1..LAST(INTEGER)]):REAL32;
+         (*gamma, waiting time for event in Poisson process, mean=1*)
+    poidev(m:REAL32    (*mean*)
+           ):REAL32;   (*Poisson, integer returned as real*)
+    bnldev(pp:REAL32;  (*probability*)
+           n :INTEGER  (*trials*)
+            ):REAL32;  (*Binomial, returned as real*)
+  END;
+
+(*NOtes for in-lines:
+|1. To get a normal distribution with mean=m and stddeviation=s:
+|   value:=m + s*rand.gasdev();
+*)
+
+(*==================*)
+(* Ch 9: Roots      *)
+(*==================*)
+
+PROCEDURE zbrac(func:Ftn;            (*find brackets for this function*)
+                VAR x1,x2:REAL32;    (*starting with these points*)
+                maxiter:CARDINAL:=55 (*growing maxiter times*)
+                ):BOOLEAN RAISES {Error}; (*true if successful*)
+(*Given x1,x2, search for points (returned in x1, x2) for which
+func(x1) is opposite sign from func(x2).  Grow outward from
+the original x1,x2 by golden ratio, for geometric growth.
+Return true if a good x1,x2 can be found before getting to
+maxiter, else return false. 
+
+requires: x1<x2.
+*)
+
+PROCEDURE zbrak(func:Ftn;            (*find brackets for this function*)
+                VAR x1,x2:REAL32;    (*starting with these points*)
+                n:CARDINAL;          (*using n segments*)
+                xb1,xb2:Vector;      (*returning pairs here*)
+                VAR nb:CARDINAL      (*with this count of valid pairs*)
+                ):BOOLEAN RAISES {Error}; (*true if successful*)
+(*Break up the x1..x2 range into n segments.  Search for pairs which
+allow bracketing.  Save up to nb of these pairs.
+
+requires: x1<x2,  nb<n.
+*)
+
+PROCEDURE rtbis (func:Ftn;           (*find root of this function*)
+                 x1,x2:REAL32;       (*between these brackets*)
+                 xacc:REAL32;        (*to within +/- tolerance*)
+                 maxiter:=45         (*but no more than maxiter cuts*)
+                 ):REAL32 RAISES {Error}; (*returning the root*)
+(*Given brackets x1,x2, find a root via bisection, and refine it
+to within +/- xacc tolerance.
+
+requires: x1<x2;
+*)
+
+PROCEDURE zbrent(func:Ftn;           (*find a root of this function*)
+                 x1,x2:REAL32;       (*between these bracket points*)
+                 tol:=0.001;         (*to this tolerance*)
+                 maxiter:=100        (*with <= maxiter iterations*)
+                 ):REAL32 RAISES {Error};
+(*Use Brent's algorithm to find the real root between the
+bracket points.  x1 and x2 must be of opposite signs.
+*)
+
+PROCEDURE rtnewt(func:PROCEDURE(x:REAL32; VAR f,df:REAL32); (*this ftn*)
+                 x1,x2:REAL32;    (*bracketed by these points*)
+                 xacc:REAL32;     (*find root to this precision*)
+                 maxiter:=25      (*with no more than maxiter loops*)
+                 ):REAL32 RAISES {Error};  (*returning root*)
+(*Given a function which returns both f(x) and df(x),
+and brackets x1 and x2, find the root to xacc precision.
+
+raises: out_of_range if it jumps out of the brackets
+        divide_by_zero if dx = 0
+*)
+
+PROCEDURE rtsafe(func:PROCEDURE(x:REAL32; VAR f,df:REAL32); (*this ftn*)
+                 x1,x2:REAL32;    (*bracketed by these points*)
+                 xacc:REAL32;     (*find root to this precision*)
+                 maxiter:=25      (*with no more than maxiter loops*)
+                 ):REAL32 RAISES {Error};  (*returning root*)
+(*Given a function which returns both f(x) and df(x),
+and brackets x1 and x2, find the root to xacc precision.
+Works via newton-raphson and bisection.
+*)
+
+PROCEDURE laguer(p:cVector;   (*given this complex polynomial*)
+                 m:CARDINAL;  (*use coefs p0..pm*)
+             VAR x:CMPLX32    (*find the root x*)
+                ) RAISES {Error};
+(*Use Laguerre's method to find a root for a polynomial
+with complex coefs.
+*)
+
+PROCEDURE zroots(p:cVector;     (*given this complex polynomial*)
+             VAR roots:cVector; (*find the complex roots*)
+                 polish:BOOLEAN (*and maybe polish them*)
+                 ) RAISES {Error};
+(*Uses laguer to find and optionally polish roots*)
+
+(*==================*)
+(* Ch 12: FFT       *)
+(*==================*)
+PROCEDURE bitrev(i,nexp:CARDINAL):CARDINAL;
+(*for i in range 0..2^nexp, return the
+bitreversed value of i.
+
+WARNING:  No checking is done for out of range
+*)
+
+PROCEDURE four1(data:cVector;    (*given this complex vector*)
+                nexp:CARDINAL;   (*with 2^nexp entries*)
+                isign:[-1..1]    (*with isign =-1 or 1*)
+                ) RAISES {Error};
+(*Replaces data with fft of data.  isign controls the direction:
+    1  -> forward xform
+    0  -> raise Err.out_of_range
+   -1  -> inverse xform
+
+raises:
+    isign=0 => Err.out_of_range
+    NUMBER(data^) < 2^nexp => Err.out_of_range
+*)    
+(*==================*)
+(* Ch 14: Statistics*)
+(*==================*)
+PROCEDURE moment(data:Vector;
+                 VAR ave,  (*average*)
+                     adev, (*average deviation*)
+                     sdev, (*standard deviation*)
+                     var,  (*variance*)
+                     skew, (*skew*)
+                     kurt  (*kurtosis*)
+                     :REAL32);
+(*Note: IF var < TINY, then skew and kurt are false*)
+                     
+PROCEDURE ttest(data1,data2:Vector;
+                VAR t,    (*Student's t-test*)
+                    prob  (*probability of insignificance*)
+                    :REAL32) RAISES {Error};
+(*Do Student's t test.
+Find t, which shows how close the means are, and
+find prob, which is small if this similarity is unlikely to
+be due to chance.  Note that their variances need to be
+similar.*)
+
+PROCEDURE ftest(data1,data2:Vector;
+            VAR f,    (*F value*)
+                prob  (*probability of significance*)
+                :REAL32) RAISES {Error};
+(*do F-test, returning F and the probability that
+a difference between vars is due to chance*)
+
+PROCEDURE chsone(bins:Vector;     (*actual bin counts*)
+                ebins:Vector;     (*expected bin counts*)
+                constraints:CARDINAL:=1;
+                VAR df:REAL32;    (*degrees of freedom*)
+                VAR chsq:REAL32;  (*chi squared*)
+                VAR prob:REAL32   (*probability of significance*)
+                ) RAISES {Error};
+(*bins has an integer number of events in each bin, ebins
+has the expected number in each bin (possibly non integer),
+contraints gives the constraint count which reduces the
+df from the number of bins.  chsq then is a measure of the
+difference in the bin-by-bin numbers, while prob gives the
+significance of that measure.  Big chsq means big difference,
+big prob means big chance this large chsq came from pure random
+events.
+
+requires: count in each bin >=5
+*)
+
+PROCEDURE chstwo(bins1:Vector;    (*actual bin1 counts*)
+                bins2:Vector;     (*actual bin2 counts*)
+                constraints:CARDINAL:=1;
+                VAR df:REAL32;    (*degrees of freedom*)
+                VAR chsq:REAL32;  (*chi squared*)
+                VAR prob:REAL32   (*probability of significance*)
+                ) RAISES {Error};
+(*bins1 and bins2 have an integer number of events in each bin, 
+contraints gives the constraint count which reduces the
+df from the number of bins.  chsq then is a measure of the
+difference in the bin-by-bin numbers, while prob gives the
+significance of that measure.  Big chsq means big difference,
+big prob means big chance this large chsq came from pure random
+events.
+
+requires: count in each bin >=5
+*)
+                          
+(*========================*)
+END nr.
+        

@@ -1,0 +1,1711 @@
+ Test
+
+ Timestamp is 318424d7 (Sun Apr 28 19:09:27 1996)
+
+ Preferred load address is 00400000
+
+ Start         Length     Name                   Class
+ 0001:00000000 000473f0H .text                   CODE
+ 0002:00000000 000080b8H .bss                    DATA
+ 0003:00000000 000000dcH .rdata                  DATA
+ 0004:00000000 0002310cH .data                   DATA
+ 0004:0002310c 00000004H .CRT$XCA                DATA
+ 0004:00023110 00000004H .CRT$XCZ                DATA
+ 0004:00023114 00000004H .CRT$XIA                DATA
+ 0004:00023118 00000004H .CRT$XIZ                DATA
+ 0005:00000000 00000050H .idata$2                DATA
+ 0005:00000050 00000014H .idata$3                DATA
+ 0005:00000064 00000194H .idata$4                DATA
+ 0005:000001f8 00000194H .idata$5                DATA
+ 0005:0000038c 0000060cH .idata$6                DATA
+ 0007:00000000 00000000H .debug$C                DATA
+ 0007:00000000 00000110H .debug$E                DATA
+ 0007:00000110 00000050H .debug$F                DATA
+ 0007:00000160 00000000H .debug$G                DATA
+ 0007:00000160 00000008H .debug$H                DATA
+ 0007:00000168 00000000H .debug$P                DATA
+ 0007:00000168 00000000H .debug$S                DATA
+ 0007:00000168 00000000H .debug$T                DATA
+
+  Address         Publics by Value              Rva+Base   Lib:Object
+
+ 0001:00000000       _main                      00401000 f _m3main.obj
+ 0001:00000060       _tWordEx__test_ABC         00401060 f tWordEx.mo
+ 0001:00000096       _tWordEx__test_wordex      00401096 f tWordEx.mo
+ 0001:000000e2       _test__test_WordEx         004010e2 f tWordEx.mo
+ 0001:00000110       _tBits__test_ABC           00401110 f tBits.mo
+ 0001:00000146       _tBits__test_whichend      00401146 f tBits.mo
+ 0001:000001f5       _tBits__test_fmt           004011f5 f tBits.mo
+ 0001:0000035f       _tBits__test_reverse       0040135f f tBits.mo
+ 0001:00000420       _tBits__test_hash_pjw      00401420 f tBits.mo
+ 0001:000004ff       _tBits__test_hash_elf      004014ff f tBits.mo
+ 0001:000005de       _test__test_Bits           004015de f tBits.mo
+ 0001:00000660       _tInteger__test_ABC        00401660 f tInteger.mo
+ 0001:00000696       _tInteger__test_sqrt       00401696 f tInteger.mo
+ 0001:000008e0       _tInteger__test_gcd        004018e0 f tInteger.mo
+ 0001:00000a16       _tInteger__test_isprime    00401a16 f tInteger.mo
+ 0001:00000ac1       _tInteger__test_factor     00401ac1 f tInteger.mo
+ 0001:00000c65       _tInteger__test_cordic     00401c65 f tInteger.mo
+ 0001:00000ee0       _test__test_Integer        00401ee0 f tInteger.mo
+ 0001:00000f40       _MM_tInteger_CRASH         00401f40 f tInteger.mo
+ 0001:00000f60       _tReal64__test_ln_gamma    00401f60 f tReal64.mo
+ 0001:00001107       _tReal64__test_betai       00402107 f tReal64.mo
+ 0001:000012e2       _tReal64__test_gamma_p     004022e2 f tReal64.mo
+ 0001:000014f3       _tReal64__test_gamma_q     004024f3 f tReal64.mo
+ 0001:0000170a       _test__test_Real64         0040270a f tReal64.mo
+ 0001:00001760       _test__test_Cmplx          00402760 f tCmplx.mo
+ 0001:000026f0       _tVect__test_ABC           004036f0 f tVect.mo
+ 0001:00002726       _tVect__test_vectors       00403726 f tVect.mo
+ 0001:00002c39       _test__test_Vect           00403c39 f tVect.mo
+ 0001:00002c61       _MM_tVect_CRASH            00403c61 f tVect.mo
+ 0001:00002c80       _tMat__test_ABC            00403c80 f tMat.mo
+ 0001:00002cb6       _tMat__test_matrix         00403cb6 f tMat.mo
+ 0001:000031f5       _test__test_Mat            004041f5 f tMat.mo
+ 0001:0000321d       _MM_tMat_CRASH             0040421d f tMat.mo
+ 0001:00003230       _tRoot__test_ABC           00404230 f tRoot.mo
+ 0001:00003266       _tRoot__myfun              00404266 f tRoot.mo
+ 0001:000032b7       _tRoot__myfun2             004042b7 f tRoot.mo
+ 0001:00003354       _tRoot__test_quadreal      00404354 f tRoot.mo
+ 0001:00003658       _tRoot__test_quadcmplx     00404658 f tRoot.mo
+ 0001:000039d1       _tRoot__test_bracket_out   004049d1 f tRoot.mo
+ 0001:00003d5a       _tRoot__test_bracket_in    00404d5a f tRoot.mo
+ 0001:00004249       _tRoot__test_bisect        00405249 f tRoot.mo
+ 0001:00004519       _tRoot__test_brent         00405519 f tRoot.mo
+ 0001:00004861       _tRoot__test_newtraph      00405861 f tRoot.mo
+ 0001:00004c95       _test__test_Root           00405c95 f tRoot.mo
+ 0001:00004ccb       _MM_tRoot_CRASH            00405ccb f tRoot.mo
+ 0001:00004ce0       _tInterp__test_linear      00405ce0 f tInterp.mo
+ 0001:00005180       _tInterp__test_newt        00406180 f tInterp.mo
+ 0001:000058a9       _test__test_Interp         004068a9 f tInterp.mo
+ 0001:000058df       _MM_tInterp_CRASH          004068df f tInterp.mo
+ 0001:000058f0       _tPoly__test_ABC           004068f0 f tPoly.mo
+ 0001:00005926       _tPoly__test_add           00406926 f tPoly.mo
+ 0001:00005bd3       _tPoly__test_sub           00406bd3 f tPoly.mo
+ 0001:00005e80       _tPoly__test_mul           00406e80 f tPoly.mo
+ 0001:0000612d       _tPoly__test_div           0040712d f tPoly.mo
+ 0001:0000646e       _tPoly__test_deriv         0040746e f tPoly.mo
+ 0001:0000672b       _test__test_Poly           0040772b f tPoly.mo
+ 0001:0000678b       _MM_tPoly_CRASH            0040778b f tPoly.mo
+ 0001:000067a0       _tSLE__build_AX            004077a0 f tSLE.mo
+ 0001:00006a56       _tSLE__build_B             00407a56 f tSLE.mo
+ 0001:00006aa7       _tSLE__build_data          00407aa7 f tSLE.mo
+ 0001:00006ad0       _tSLE__test_backsub        00407ad0 f tSLE.mo
+ 0001:00006d22       _tSLE__test_householder    00407d22 f tSLE.mo
+ 0001:00006deb       _tSLE__test_tridiag        00407deb f tSLE.mo
+ 0001:000072ef       _tSLE__test_LU             004082ef f tSLE.mo
+ 0001:00007785       _test__test_SLE            00408785 f tSLE.mo
+ 0001:000077d3       __INITM_tSLE               004087d3 f tSLE.mo
+ 0001:0000782d       _MM_tSLE_CRASH             0040882d f tSLE.mo
+ 0001:00007840       _tRand__test_ABC           00408840 f tRand.mo
+ 0001:00007876       _tRand__printstats         00408876 f tRand.mo
+ 0001:00007af5       _tRand__test_engines       00408af5 f tRand.mo
+ 0001:00007d18       _tRand__test_engines__do_engine 00408d18 f tRand.mo
+ 0001:00007db3       _tRand__test_Uniform       00408db3 f tRand.mo
+ 0001:00008020       _tRand__test_Exponential   00409020 f tRand.mo
+ 0001:0000813d       _tRand__test_Normal        0040913d f tRand.mo
+ 0001:0000825a       _tRand__test_Gamma         0040925a f tRand.mo
+ 0001:000084a0       _tRand__test_Dirichlet     004094a0 f tRand.mo
+ 0001:000085c8       _test__test_Rand           004095c8 f tRand.mo
+ 0001:00008636       _MM_tRand_CRASH            00409636 f tRand.mo
+ 0001:00008650       _tFFT__test_ABC            00409650 f tFFT.mo
+ 0001:00008686       _tFFT__test_basic_FFT      00409686 f tFFT.mo
+ 0001:000086d2       _test__test_FFT            004096d2 f tFFT.mo
+ 0001:00008700       _test__msg                 00409700 f test.mo
+ 0001:00008756       _test__debug               00409756 f test.mo
+ 0001:000087e6       _test__verify              004097e6 f test.mo
+ 0001:000088cf       _test__newline             004098cf f test.mo
+ 0001:000088ef       __INITM_test               004098ef f test.mo
+ 0001:00008910       _xBits__whichend           00409910 f m3na:xBits.mo
+ 0001:000089a2       _xBits__fmt                004099a2 f m3na:xBits.mo
+ 0001:00008a30       _xBits__reverse            00409a30 f m3na:xBits.mo
+ 0001:00008ac3       _xBits__hash_pjw           00409ac3 f m3na:xBits.mo
+ 0001:00008b83       _xBits__hash_elf           00409b83 f m3na:xBits.mo
+ 0001:00008c28       _MM_xBits_CRASH            00409c28 f m3na:xBits.mo
+ 0001:00008c40       _xFFT__PreComputeTrigTables 00409c40 f m3na:xFFT.mo
+ 0001:00008d41       _xFFT__ReOrder             00409d41 f m3na:xFFT.mo
+ 0001:00008f15       _xFFT__ReOrder__Swap       00409f15 f m3na:xFFT.mo
+ 0001:00009017       _xFFT__FFTwithWrongOrderedInput 0040a017 f m3na:xFFT.mo
+ 0001:00009407       _xFFT__SlowFT              0040a407 f m3na:xFFT.mo
+ 0001:0000961e       _xFFT__Test                0040a61e f m3na:xFFT.mo
+ 0001:00009bf8       __INITM_xFFT               0040abf8 f m3na:xFFT.mo
+ 0001:00009c0e       _MM_xFFT_CRASH             0040ac0e f m3na:xFFT.mo
+ 0001:00009c20       _xInterp__linear           0040ac20 f m3na:xInterp.mo
+ 0001:00009f74       _xInterp__newt             0040af74 f m3na:xInterp.mo
+ 0001:0000a5ba       _MM_xInterp_CRASH          0040b5ba f m3na:xInterp.mo
+ 0001:0000a5d0       _xPoly__new                0040b5d0 f m3na:xPoly.mo
+ 0001:0000a60e       _xPoly__copy               0040b60e f m3na:xPoly.mo
+ 0001:0000a6a0       _xPoly__lex                0040b6a0 f m3na:xPoly.mo
+ 0001:0000a6d5       _xPoly__fmt                0040b6d5 f m3na:xPoly.mo
+ 0001:0000a859       _xPoly__Zero               0040b859 f m3na:xPoly.mo
+ 0001:0000a8d0       _xPoly__One                0040b8d0 f m3na:xPoly.mo
+ 0001:0000a96e       _xPoly__eval               0040b96e f m3na:xPoly.mo
+ 0001:0000aa52       _xPoly__add                0040ba52 f m3na:xPoly.mo
+ 0001:0000ad0e       _xPoly__sub                0040bd0e f m3na:xPoly.mo
+ 0001:0000afca       _xPoly__mul                0040bfca f m3na:xPoly.mo
+ 0001:0000b19e       _xPoly__div                0040c19e f m3na:xPoly.mo
+ 0001:0000b50b       _xPoly__deflate            0040c50b f m3na:xPoly.mo
+ 0001:0000b68a       _xPoly__deriv              0040c68a f m3na:xPoly.mo
+ 0001:0000b971       _MM_xPoly_CRASH            0040c971 f m3na:xPoly.mo
+ 0001:0000b990       _xStat__describe           0040c990 f m3na:xStat.mo
+ 0001:0000bcc2       _xStat__avevar             0040ccc2 f m3na:xStat.mo
+ 0001:0000be1e       _xStat__ttest              0040ce1e f m3na:xStat.mo
+ 0001:0000bf92       _xStat__ftest              0040cf92 f m3na:xStat.mo
+ 0001:0000c12d       _xStat__chi_sqr1           0040d12d f m3na:xStat.mo
+ 0001:0000c32b       _xStat__chi_sqr2           0040d32b f m3na:xStat.mo
+ 0001:0000c550       _MM_xStat_CRASH            0040d550 f m3na:xStat.mo
+ 0001:0000c570       _xRNG02__slow_init         0040d570 f m3na:xRNG02.mo
+ 0001:0000c603       _xRNG02__slow_engine       0040d603 f m3na:xRNG02.mo
+ 0001:0000c61f       _xRNG02__fast_init         0040d61f f m3na:xRNG02.mo
+ 0001:0000c6b2       _xRNG02__fast_engine       0040d6b2 f m3na:xRNG02.mo
+ 0001:0000c6ce       _xRNG02__SubtractiveFibo1  0040d6ce f m3na:xRNG02.mo
+ 0001:0000c7ee       _xRNG02__SubtractiveFibo2  0040d7ee f m3na:xRNG02.mo
+ 0001:0000c8e0       _xRNG02__MultiplicativeFibo1 0040d8e0 f m3na:xRNG02.mo
+ 0001:0000c9e4       _xRNG02__QuaternaryFibo    0040d9e4 f m3na:xRNG02.mo
+ 0001:0000cb6b       _xRNG02__WolframCA         0040db6b f m3na:xRNG02.mo
+ 0001:0000cc91       _xRNG02__ImprovedMcGill    0040dc91 f m3na:xRNG02.mo
+ 0001:0000cd90       _xRNG02__BaysDurhamShuffler 0040dd90 f m3na:xRNG02.mo
+ 0001:0000ce5e       _xRNG02__RandWord          0040de5e f m3na:xRNG02.mo
+ 0001:0000cea7       _xRNG02__Uni01             0040dea7 f m3na:xRNG02.mo
+ 0001:0000cfe8       _xRNG02__FasterRandWord    0040dfe8 f m3na:xRNG02.mo
+ 0001:0000d00c       _xRNG02__FasterUni01       0040e00c f m3na:xRNG02.mo
+ 0001:0000d14d       _xRNG02__IteratedSquaring  0040e14d f m3na:xRNG02.mo
+ 0001:0000d2a5       _xRNG02__initlongreal      0040e2a5 f m3na:xRNG02.mo
+ 0001:0000d348       _xRNG02__initword          0040e348 f m3na:xRNG02.mo
+ 0001:0000d38c       _xRNG02__Init              0040e38c f m3na:xRNG02.mo
+ 0001:0000d642       _xRNG02__Test              0040e642 f m3na:xRNG02.mo
+ 0001:0000d653       _M_xRNG02_t8555c3cf_LINK   0040e653 f m3na:xRNG02.mo
+ 0001:0000d682       _M_xRNG02_td6e40d70_LINK   0040e682 f m3na:xRNG02.mo
+ 0001:0000d6b1       _MM_xRNG02_CRASH           0040e6b1 f m3na:xRNG02.mo
+ 0001:0000d6d0       _xRoot__quadreal           0040e6d0 f m3na:xRoot.mo
+ 0001:0000d8d1       _xRoot__quadcmpx           0040e8d1 f m3na:xRoot.mo
+ 0001:0000dcbd       _xRoot__bracket_out        0040ecbd f m3na:xRoot.mo
+ 0001:0000df23       _xRoot__bracket_in         0040ef23 f m3na:xRoot.mo
+ 0001:0000e195       _xRoot__bisect             0040f195 f m3na:xRoot.mo
+ 0001:0000e427       _xRoot__brent              0040f427 f m3na:xRoot.mo
+ 0001:0000e8bb       _xRoot__newtraph           0040f8bb f m3na:xRoot.mo
+ 0001:0000ec23       _MM_xRoot_CRASH            0040fc23 f m3na:xRoot.mo
+ 0001:0000ec40       _xComplex__lex             0040fc40 f m3na:xComplex.mo
+ 0001:0000ec61       _xComplex__fmt             0040fc61 f m3na:xComplex.mo
+ 0001:0000ed66       _xComplex__arg             0040fd66 f m3na:xComplex.mo
+ 0001:0000ed9a       _xComplex__conj            0040fd9a f m3na:xComplex.mo
+ 0001:0000edfb       _xComplex__add             0040fdfb f m3na:xComplex.mo
+ 0001:0000ee60       _xComplex__sub             0040fe60 f m3na:xComplex.mo
+ 0001:0000eec5       _xComplex__mul             0040fec5 f m3na:xComplex.mo
+ 0001:0000ef3a       _xComplex__hgg_div         0040ff3a f m3na:xComplex.mo
+ 0001:0000f01b       _xComplex__scale           0041001b f m3na:xComplex.mo
+ 0001:0000f080       _xComplex__powN            00410080 f m3na:xComplex.mo
+ 0001:0000f15e       _xComplex__powXY           0041015e f m3na:xComplex.mo
+ 0001:0000f259       _xComplex__exp             00410259 f m3na:xComplex.mo
+ 0001:0000f306       _xComplex__ln              00410306 f m3na:xComplex.mo
+ 0001:0000f396       _xComplex__cos             00410396 f m3na:xComplex.mo
+ 0001:0000f49b       _xComplex__sin             0041049b f m3na:xComplex.mo
+ 0001:0000f59e       _xComplex__tan             0041059e f m3na:xComplex.mo
+ 0001:0000f65e       _xComplex__cosh            0041065e f m3na:xComplex.mo
+ 0001:0000f705       _xComplex__sinh            00410705 f m3na:xComplex.mo
+ 0001:0000f7c0       _xComplex__tanh            004107c0 f m3na:xComplex.mo
+ 0001:0000f862       _xComplex__toPolar         00410862 f m3na:xComplex.mo
+ 0001:0000f8de       _xComplex__fromPolar       004108de f m3na:xComplex.mo
+ 0001:0000f96f       _xComplex__fmtPolar        0041096f f m3na:xComplex.mo
+ 0001:0000fa35       _xComplex__pmul            00410a35 f m3na:xComplex.mo
+ 0001:0000fad8       _xComplex__pdiv            00410ad8 f m3na:xComplex.mo
+ 0001:0000fb7b       _xComplex__Magnitude       00410b7b f m3na:xComplex.mo
+ 0001:0000fc94       _xComplex__FromRadiusAndTheta 00410c94 f m3na:xComplex.mo
+ 0001:0000fd25       _xComplex__L1Norm          00410d25 f m3na:xComplex.mo
+ 0001:0000fd63       _xComplex__LinfinityNorm   00410d63 f m3na:xComplex.mo
+ 0001:0000fdae       _xComplex__Negative        00410dae f m3na:xComplex.mo
+ 0001:0000fe11       _xComplex__Square          00410e11 f m3na:xComplex.mo
+ 0001:0000fe84       _xComplex__Divide          00410e84 f m3na:xComplex.mo
+ 0001:0000ffb9       _xComplex__Sqrt            00410fb9 f m3na:xComplex.mo
+ 0001:000101ef       _MM_xComplex_CRASH         004111ef f m3na:xComplex.mo
+ 0001:00010200       _xSLE__backsub             00411200 f m3na:xSLE.mo
+ 0001:000104de       _xSLE__householder         004114de f m3na:xSLE.mo
+ 0001:00011188       _xSLE__matrix_to_arrays    00412188 f m3na:xSLE.mo
+ 0001:000116ee       _xSLE__tridiag             004126ee f m3na:xSLE.mo
+ 0001:00011c6d       _xSLE__GaussElim           00412c6d f m3na:xSLE.mo
+ 0001:00011d17       _xSLE__LUfactor            00412d17 f m3na:xSLE.mo
+ 0001:00012809       _xSLE__LUbacksub           00413809 f m3na:xSLE.mo
+ 0001:00012c0c       _xSLE__LUinverse           00413c0c f m3na:xSLE.mo
+ 0001:00012ea1       _xSLE__LUdet               00413ea1 f m3na:xSLE.mo
+ 0001:00012f76       _xSLE__svd_golub           00413f76 f m3na:xSLE.mo
+ 0001:00012f87       _xSLE__svd_chan            00413f87 f m3na:xSLE.mo
+ 0001:00012f98       _xSLE__svd_solve           00413f98 f m3na:xSLE.mo
+ 0001:00012fa9       _MM_xSLE_CRASH             00413fa9 f m3na:xSLE.mo
+ 0001:00012fc0       _xRNG01__DECSRC_init       00413fc0 f m3na:xRNG01.mo
+ 0001:00013057       _xRNG01__DECSRC_engine     00414057 f m3na:xRNG01.mo
+ 0001:0001312b       _xRNG01__ran0_init         0041412b f m3na:xRNG01.mo
+ 0001:000131a7       _xRNG01__ran0_engine       004141a7 f m3na:xRNG01.mo
+ 0001:00013281       _xRNG01__ran1_init         00414281 f m3na:xRNG01.mo
+ 0001:000132fd       _xRNG01__ran1_engine       004142fd f m3na:xRNG01.mo
+ 0001:000134fd       _M_xRNG01_tc45ae2e5_LINK   004144fd f m3na:xRNG01.mo
+ 0001:0001352c       _M_xRNG01_t772a9f56_LINK   0041452c f m3na:xRNG01.mo
+ 0001:0001355b       _M_xRNG01_t84a717f0_LINK   0041455b f m3na:xRNG01.mo
+ 0001:0001358a       _MM_xRNG01_CRASH           0041458a f m3na:xRNG01.mo
+ 0001:000135a0       _xRandP__Uniform           004145a0 f m3na:xRand.mo
+ 0001:00013657       _xRandP__Exponential       00414657 f m3na:xRand.mo
+ 0001:000136ba       _xRandP__NormalDev         004146ba f m3na:xRand.mo
+ 0001:00013a95       _xRandP__GammaDev          00414a95 f m3na:xRand.mo
+ 0001:00013f0a       _xRandP__Dirichlet         00414f0a f m3na:xRand.mo
+ 0001:00014074       _xRandP__Poisson           00415074 f m3na:xRand.mo
+ 0001:000140a9       _xRandP__Binomial          004150a9 f m3na:xRand.mo
+ 0001:000140de       _M_xRand_tc62aca3b_LINK    004150de f m3na:xRand.mo
+ 0001:00014159       _MM_xRand_CRASH            00415159 f m3na:xRand.mo
+ 0001:00014170       _xMat__new                 00415170 f m3na:xMat.mo
+ 0001:000141b1       _xMat__copy                004151b1 f m3na:xMat.mo
+ 0001:0001428a       _xMat__lex                 0041528a f m3na:xMat.mo
+ 0001:000142ab       _xMat__fmt                 004152ab f m3na:xMat.mo
+ 0001:000145a0       _xMat__Zero                004155a0 f m3na:xMat.mo
+ 0001:000146ae       _xMat__One                 004156ae f m3na:xMat.mo
+ 0001:0001487a       _xMat__add                 0041587a f m3na:xMat.mo
+ 0001:00014af7       _xMat__sub                 00415af7 f m3na:xMat.mo
+ 0001:00014d74       _xMat__mul                 00415d74 f m3na:xMat.mo
+ 0001:000150f1       _xMat__mulV                004160f1 f m3na:xMat.mo
+ 0001:00015320       _xMat__transpose           00416320 f m3na:xMat.mo
+ 0001:000154b5       _MM_xMat_CRASH             004164b5 f m3na:xMat.mo
+ 0001:000154d0       _xInteger__isprime         004164d0 f m3na:xPrime.mo
+ 0001:00015628       _MM_xPrime_CRASH           00416628 f m3na:xPrime.mo
+ 0001:00015640       _xInteger__fmtArray        00416640 f m3na:xInteger.mo
+ 0001:00015802       _xInteger__factor          00416802 f m3na:xInteger.mo
+ 0001:000159be       _xInteger__gcd             004169be f m3na:xInteger.mo
+ 0001:00015a5c       _xInteger__sqrt            00416a5c f m3na:xInteger.mo
+ 0001:00015b56       _xInteger__sin_cos         00416b56 f m3na:xInteger.mo
+ 0001:00015d2e       _MM_xInteger_CRASH         00416d2e f m3na:xInteger.mo
+ 0001:00015d40       _xVect__new                00416d40 f m3na:xVect.mo
+ 0001:00015d7b       _xVect__copy               00416d7b f m3na:xVect.mo
+ 0001:00015dfd       _xVect__lex                00416dfd f m3na:xVect.mo
+ 0001:00015e1e       _xVect__fmt                00416e1e f m3na:xVect.mo
+ 0001:00015fb0       _xVect__Zero               00416fb0 f m3na:xVect.mo
+ 0001:00016027       _xVect__abs                00417027 f m3na:xVect.mo
+ 0001:00016108       _xVect__add                00417108 f m3na:xVect.mo
+ 0001:0001624a       _xVect__sub                0041724a f m3na:xVect.mo
+ 0001:0001638c       _xVect__scale              0041738c f m3na:xVect.mo
+ 0001:00016446       _xVect__dot                00417446 f m3na:xVect.mo
+ 0001:0001653e       _xVect__cross              0041753e f m3na:xVect.mo
+ 0001:000165a2       _MM_xVect_CRASH            004175a2 f m3na:xVect.mo
+ 0001:000165c0       _xWordEx__PlusWithCarry    004175c0 f m3na:xWordEx.mo
+ 0001:00016655       _xWordEx__MinusWithBorrow  00417655 f m3na:xWordEx.mo
+ 0001:000166cc       _xWordEx__LeftShiftWithProbscosis 004176cc f m3na:xWordEx.mo
+ 0001:0001673f       _xWordEx__RightShiftWithProbscosis 0041773f f m3na:xWordEx.mo
+ 0001:000167b2       _xWordEx__DoubleLengthMultiply 004177b2 f m3na:xWordEx.mo
+ 0001:000167e8       _xWordEx__HighTimes        004177e8 f m3na:xWordEx.mo
+ 0001:0001684c       _xWordEx__PopCount         0041784c f m3na:xWordEx.mo
+ 0001:00016928       _xWordEx__FindLeastSignifBit 00417928 f m3na:xWordEx.mo
+ 0001:000169e9       _xWordEx__FindMostSignifBit 004179e9 f m3na:xWordEx.mo
+ 0001:00016aeb       _xWordEx__Test             00417aeb f m3na:xWordEx.mo
+ 0001:00016f33       _MM_xWordEx_CRASH          00417f33 f m3na:xWordEx.mo
+ 0001:00016f50       _xReal64__factorial        00417f50 f m3na:xSpecFtn.mo
+ 0001:00016ff2       _xReal64__ln_factorial     00417ff2 f m3na:xSpecFtn.mo
+ 0001:0001710c       _xReal64__gamma            0041810c f m3na:xSpecFtn.mo
+ 0001:0001714b       _xReal64__ln_gamma         0041814b f m3na:xSpecFtn.mo
+ 0001:000172aa       _xReal64__binomial         004182aa f m3na:xSpecFtn.mo
+ 0001:0001736a       _xReal64__gamma_p          0041836a f m3na:xSpecFtn.mo
+ 0001:000174b7       _xReal64__gamma_q          004184b7 f m3na:xSpecFtn.mo
+ 0001:00017604       _xSpecFtn__gamser          00418604 f m3na:xSpecFtn.mo
+ 0001:000176bf       _xSpecFtn__gamcf           004186bf f m3na:xSpecFtn.mo
+ 0001:0001788a       _xReal64__erf              0041888a f m3na:xSpecFtn.mo
+ 0001:0001793b       _xReal64__erfc             0041893b f m3na:xSpecFtn.mo
+ 0001:000179f0       _xReal64__beta             004189f0 f m3na:xSpecFtn.mo
+ 0001:00017a83       _xSpecFtn__betacf          00418a83 f m3na:xSpecFtn.mo
+ 0001:00017cec       _xReal64__betai            00418cec f m3na:xSpecFtn.mo
+ 0001:00017f24       __INITM_xSpecFtn           00418f24 f m3na:xSpecFtn.mo
+ 0001:00017f65       _MM_xSpecFtn_CRASH         00418f65 f m3na:xSpecFtn.mo
+ 0001:00017f80       _xReal64__sgn              00418f80 f m3na:xReal64.mo
+ 0001:00017ff0       _xUtils__debug             00418ff0 f m3na:xUtils.mo
+ 0001:000180a8       _xUtils__err               004190a8 f m3na:xUtils.mo
+ 0001:00018129       __INITM_xUtils             00419129 f m3na:xUtils.mo
+ 0001:00018150       _Random__Init              00419150 f m3:Random.mo
+ 0001:000181b0       _Random__Start             004191b0 f m3:Random.mo
+ 0001:000182a5       _Random__RandomSeed        004192a5 f m3:Random.mo
+ 0001:00018406       _Random__Next55            00419406 f m3:Random.mo
+ 0001:000184cc       _Random__Integer           004194cc f m3:Random.mo
+ 0001:00018683       _Random__Boolean           00419683 f m3:Random.mo
+ 0001:0001871e       _Random__Real              0041971e f m3:Random.mo
+ 0001:00018785       _Random__Longreal          00419785 f m3:Random.mo
+ 0001:000187ec       _Random__Extended          004197ec f m3:Random.mo
+ 0001:00018853       __INITM_Random             00419853 f m3:Random.mo
+ 0001:00018864       _M_Random_t3ca8457d_LINK   00419864 f m3:Random.mo
+ 0001:000188b6       _MM_Random_CRASH           004198b6 f m3:Random.mo
+ 0001:000188d0       _RandomReal__Real          004198d0 f m3:RandomReal.mo
+ 0001:000189ef       _RandomReal__Longreal      004199ef f m3:RandomReal.mo
+ 0001:00018b31       _RandomReal__Extended      00419b31 f m3:RandomReal.mo
+ 0001:00018b60       _TimeStamp__Init           00419b60 f m3:TimeStamp.mo
+ 0001:00018c25       _TimeStamp__New            00419c25 f m3:TimeStamp.mo
+ 0001:00018f45       _M_TimeStamp_LINE_81       00419f45 f m3:TimeStamp.mo
+ 0001:00018f69       _TimeStamp__Compare        00419f69 f m3:TimeStamp.mo
+ 0001:00018fbf       _TimeStamp__Equal          00419fbf f m3:TimeStamp.mo
+ 0001:00019022       _TimeStamp__Max            0041a022 f m3:TimeStamp.mo
+ 0001:00019094       _TimeStamp__Min            0041a094 f m3:TimeStamp.mo
+ 0001:00019106       _TimeStamp__Hash           0041a106 f m3:TimeStamp.mo
+ 0001:00019156       _TimeStamp__ToTime         0041a156 f m3:TimeStamp.mo
+ 0001:000191e7       __INITM_TimeStamp          0041a1e7 f m3:TimeStamp.mo
+ 0001:0001921a       _MM_TimeStamp_CRASH        0041a21a f m3:TimeStamp.mo
+ 0001:00019230       _MachineID__Get            0041a230 f m3:MachineIDWin32.mo
+ 0001:000192b5       _MachineID__CanGet         0041a2b5 f m3:MachineIDWin32.mo
+ 0001:00019400       _Swap__Swap4               0041a400 f m3:Swap.mo
+ 0001:0001951a       _Swap__Swap2               0041a51a f m3:Swap.mo
+ 0001:00019594       _Swap__Swap2U              0041a594 f m3:Swap.mo
+ 0001:000195de       _Swap__Swap8               0041a5de f m3:Swap.mo
+ 0001:000196c8       _Swap__SwapInt             0041a6c8 f m3:Swap.mo
+ 0001:00019806       _Swap__FindByteOrder       0041a806 f m3:Swap.mo
+ 0001:00019919       __INITM_Swap               0041a919 f m3:Swap.mo
+ 0001:0001992f       _MM_Swap_CRASH             0041a92f f m3:Swap.mo
+ 0001:00019940       _TextWr__Init              0041a940 f m3:TextWr.mo
+ 0001:00019af7       _M_TextWr_LINE_54          0041aaf7 f m3:TextWr.mo
+ 0001:00019b1b       _TextWr__New               0041ab1b f m3:TextWr.mo
+ 0001:00019b5d       _TextWr__Length            0041ab5d f m3:TextWr.mo
+ 0001:00019bfd       _TextWr__Seek              0041abfd f m3:TextWr.mo
+ 0001:00019d20       _TextWr__GotoBuffer        0041ad20 f m3:TextWr.mo
+ 0001:00019f71       _TextWr__ExpandBufferPool  0041af71 f m3:TextWr.mo
+ 0001:0001a09d       _TextWr__Close             0041b09d f m3:TextWr.mo
+ 0001:0001a13f       _TextWr__ToText            0041b13f f m3:TextWr.mo
+ 0001:0001a48c       _M_TextWr_LINE_139         0041b48c f m3:TextWr.mo
+ 0001:0001a4b0       _M_TextWr_t67b3b288_LINK   0041b4b0 f m3:TextWr.mo
+ 0001:0001a51f       _MM_TextWr_CRASH           0041b51f f m3:TextWr.mo
+ 0001:0001a530       _IO__Put                   0041b530 f m3:IO.mo
+ 0001:0001a593       _IO__PutInt                0041b593 f m3:IO.mo
+ 0001:0001a608       _IO__PutReal               0041b608 f m3:IO.mo
+ 0001:0001a68d       _IO__EOF                   0041b68d f m3:IO.mo
+ 0001:0001a6e5       _IO__GetLine               0041b6e5 f m3:IO.mo
+ 0001:0001a7a0       _IO__GetChar               0041b7a0 f m3:IO.mo
+ 0001:0001a85b       _IO__GetInt                0041b85b f m3:IO.mo
+ 0001:0001a91b       _IO__GetReal               0041b91b f m3:IO.mo
+ 0001:0001a9d6       _IO__OpenRead              0041b9d6 f m3:IO.mo
+ 0001:0001aa41       _IO__OpenWrite             0041ba41 f m3:IO.mo
+ 0001:0001aab0       _Lex__Scan                 0041bab0 f m3:Lex.mo
+ 0001:0001ac55       _Lex__Skip                 0041bc55 f m3:Lex.mo
+ 0001:0001ace6       _Lex__Match                0041bce6 f m3:Lex.mo
+ 0001:0001add6       _Lex__Bool                 0041bdd6 f m3:Lex.mo
+ 0001:0001afe3       _Lex__Bool__M              0041bfe3 f m3:Lex.mo
+ 0001:0001b061       _Lex__ReadSign             0041c061 f m3:Lex.mo
+ 0001:0001b0e5       _Lex__ReadUnsigned         0041c0e5 f m3:Lex.mo
+ 0001:0001b526       _Lex__ReadNumber           0041c526 f m3:Lex.mo
+ 0001:0001b673       _Lex__Int                  0041c673 f m3:Lex.mo
+ 0001:0001b69e       _Lex__Unsigned             0041c69e f m3:Lex.mo
+ 0001:0001b6c9       _Lex__ReadFloVal           0041c6c9 f m3:Lex.mo
+ 0001:0001b7d0       _Lex__ReadFloVal__SkipZeros 0041c7d0 f m3:Lex.mo
+ 0001:0001b895       _Lex__ReadFloVal__AppendToPrefix 0041c895 f m3:Lex.mo
+ 0001:0001ba48       _Lex__ReadFloVal__ReadDigits 0041ca48 f m3:Lex.mo
+ 0001:0001bba5       _Lex__ReadExponent         0041cba5 f m3:Lex.mo
+ 0001:0001be3c       _Lex__ReadReal             0041ce3c f m3:Lex.mo
+ 0001:0001c280       _Lex__ReadReal__M          0041d280 f m3:Lex.mo
+ 0001:0001c35d       _Lex__ReadReal__Inf        0041d35d f m3:Lex.mo
+ 0001:0001c397       _Lex__ConcatDigits         0041d397 f m3:Lex.mo
+ 0001:0001c491       _Lex__Real                 0041d491 f m3:Lex.mo
+ 0001:0001c618       _Lex__LongReal             0041d618 f m3:Lex.mo
+ 0001:0001c7ab       _Lex__Extended             0041d7ab f m3:Lex.mo
+ 0001:0001c93e       _MM_Lex_CRASH              0041d93e f m3:Lex.mo
+ 0001:0001c950       _Stdio__ShutDown           0041d950 f m3:Stdio.mo
+ 0001:0001ca5f       __INITM_Stdio              0041da5f f m3:Stdio.mo
+ 0001:0001cbe7       _MM_Stdio_CRASH            0041dbe7 f m3:Stdio.mo
+ 0001:0001cc00       _FileWr__Open              0041dc00 f m3:FileWr.mo
+ 0001:0001cc6f       _FileWr__OpenAppend        0041dc6f f m3:FileWr.mo
+ 0001:0001cd40       _FileWr__Init              0041dd40 f m3:FileWr.mo
+ 0001:0001cff7       _FileWr__Seek              0041dff7 f m3:FileWr.mo
+ 0001:0001d29e       _FileWr__Length            0041e29e f m3:FileWr.mo
+ 0001:0001d3a7       _FileWr__Flush             0041e3a7 f m3:FileWr.mo
+ 0001:0001d464       _FileWr__EmptyBuffer       0041e464 f m3:FileWr.mo
+ 0001:0001d624       _FileWr__PutString         0041e624 f m3:FileWr.mo
+ 0001:0001da34       _FileWr__Close             0041ea34 f m3:FileWr.mo
+ 0001:0001dad5       _M_FileWr_t89d06d8c_LINK   0041ead5 f m3:FileWr.mo
+ 0001:0001db6c       _MM_FileWr_CRASH           0041eb6c f m3:FileWr.mo
+ 0001:0001db80       _FileRd__Open              0041eb80 f m3:FileRd.mo
+ 0001:0001dbd6       _FileRd__Init              0041ebd6 f m3:FileRd.mo
+ 0001:0001de6f       _FileRd__Seek              0041ee6f f m3:FileRd.mo
+ 0001:0001e260       _FileRd__GetSub            0041f260 f m3:FileRd.mo
+ 0001:0001e7e7       _FileRd__Length            0041f7e7 f m3:FileRd.mo
+ 0001:0001e8d2       _FileRd__Close             0041f8d2 f m3:FileRd.mo
+ 0001:0001e973       _M_FileRd_t5cdcb95f_LINK   0041f973 f m3:FileRd.mo
+ 0001:0001e9f6       _MM_FileRd_CRASH           0041f9f6 f m3:FileRd.mo
+ 0001:0001ea10       _FS__GetAbsolutePathname   0041fa10 f m3:FSWin32.mo
+ 0001:0001eb8a       _FSWin32__GetAbsolutePathname__DoIt 0041fb8a f m3:FSWin32.mo
+ 0001:0001ebee       _FS__OpenFile              0041fbee f m3:FSWin32.mo
+ 0001:0001ef07       _FSWin32__GetFileAttributes 0041ff07 f m3:FSWin32.mo
+ 0001:0001ef3b       _FSWin32__GetFileSecurityDescriptor 0041ff3b f m3:FSWin32.mo
+ 0001:0001eff9       _FS__OpenFileReadonly      0041fff9 f m3:FSWin32.mo
+ 0001:0001f070       _FS__CreateDirectory       00420070 f m3:FSWin32.mo
+ 0001:0001f0c9       _FS__DeleteDirectory       004200c9 f m3:FSWin32.mo
+ 0001:0001f103       _FS__DeleteFile            00420103 f m3:FSWin32.mo
+ 0001:0001f13d       _FS__Rename                0042013d f m3:FSWin32.mo
+ 0001:0001f190       _FS__Iterate               00420190 f m3:FSWin32.mo
+ 0001:0001f213       _FSWin32__IterNext         00420213 f m3:FSWin32.mo
+ 0001:0001f269       _FSWin32__IterNextWithStatus 00420269 f m3:FSWin32.mo
+ 0001:0001f2d2       _FSWin32__IterRaw          004202d2 f m3:FSWin32.mo
+ 0001:0001f40c       _FSWin32__IterClose        0042040c f m3:FSWin32.mo
+ 0001:0001f450       _FSWin32__DotOrDotDot      00420450 f m3:FSWin32.mo
+ 0001:0001f4cc       _FS__Status                004204cc f m3:FSWin32.mo
+ 0001:0001f57a       _FSWin32__BuildStatus      0042057a f m3:FSWin32.mo
+ 0001:0001f5f8       _FS__SetModificationTime   004205f8 f m3:FSWin32.mo
+ 0001:0001f6b0       _M_FSWin32_LINE_373        004206b0 f m3:FSWin32.mo
+ 0001:0001f6e0       _M_FSWin32_t629ed469_INIT  004206e0 f m3:FSWin32.mo
+ 0001:0001f6fe       _M_FSWin32_t629ed469_LINK  004206fe f m3:FSWin32.mo
+ 0001:0001f736       _MM_FSWin32_CRASH          00420736 f m3:FSWin32.mo
+ 0001:0001f750       __INITM_WrWin32            00420750 f m3:WrWin32.mo
+ 0001:0001f770       _WrClass__Lock             00420770 f m3:WrMove.mo
+ 0001:0001f78e       _WrClass__Unlock           0042078e f m3:WrMove.mo
+ 0001:0001f7ac       _Wr__PutChar               004207ac f m3:WrMove.mo
+ 0001:0001f937       _UnsafeWr__FastPutChar     00420937 f m3:WrMove.mo
+ 0001:0001fa84       _WrMove__DoSeek            00420a84 f m3:WrMove.mo
+ 0001:0001faff       _Wr__PutText               00420aff f m3:WrMove.mo
+ 0001:0001fb56       _UnsafeWr__FastPutText     00420b56 f m3:WrMove.mo
+ 0001:0001fbad       _Wr__PutString             00420bad f m3:WrMove.mo
+ 0001:0001fc93       _UnsafeWr__FastPutString   00420c93 f m3:WrMove.mo
+ 0001:0001fd3b       _WrClass__PutStringDefault 00420d3b f m3:WrMove.mo
+ 0001:0001ff71       _UnsafeWr__FastPutInt      00420f71 f m3:WrMove.mo
+ 0001:00020012       _UnsafeWr__FastPutReal     00421012 f m3:WrMove.mo
+ 0001:000200bb       _UnsafeWr__FastPutLongReal 004210bb f m3:WrMove.mo
+ 0001:00020164       _Wr__Seek                  00421164 f m3:WrMove.mo
+ 0001:0002022c       _Wr__Flush                 0042122c f m3:WrMove.mo
+ 0001:000202ca       _Wr__Index                 004212ca f m3:WrMove.mo
+ 0001:00020371       _Wr__Length                00421371 f m3:WrMove.mo
+ 0001:00020418       _Wr__Close                 00421418 f m3:WrMove.mo
+ 0001:00020473       _UnsafeWr__FastClose       00421473 f m3:WrMove.mo
+ 0001:00020521       _M_WrMove_LINE_196         00421521 f m3:WrMove.mo
+ 0001:000205f1       _Wr__Seekable              004215f1 f m3:WrMove.mo
+ 0001:0002066b       _Wr__Closed                0042166b f m3:WrMove.mo
+ 0001:000206e5       _Wr__Buffered              004216e5 f m3:WrMove.mo
+ 0001:0002075f       _WrClass__CloseDefault     0042175f f m3:WrMove.mo
+ 0001:00020770       _WrClass__FlushDefault     00421770 f m3:WrMove.mo
+ 0001:00020781       _WrClass__LengthDefault    00421781 f m3:WrMove.mo
+ 0001:000207b5       _WrMove__Die               004217b5 f m3:WrMove.mo
+ 0001:000207ea       _MM_WrMove_CRASH           004217ea f m3:WrMove.mo
+ 0001:00020800       _I_WrClass_t910916d5_INIT  00421800 f m3:WrClass.io
+ 0001:00020826       _I_WrClass_t910916d5_LINK  00421826 f m3:WrClass.io
+ 0001:00020890       _Rd__GetChar               00421890 f m3:RdMove.mo
+ 0001:000209fb       _UnsafeRd__FastGetChar     004219fb f m3:RdMove.mo
+ 0001:00020b22       _RdMove__DoSeek            00421b22 f m3:RdMove.mo
+ 0001:00020bc3       _Rd__GetSub                00421bc3 f m3:RdMove.mo
+ 0001:00020c6e       _UnsafeRd__FastGetSub      00421c6e f m3:RdMove.mo
+ 0001:00020cd5       _RdClass__GetSubDefault    00421cd5 f m3:RdMove.mo
+ 0001:00020f65       _Rd__EOF                   00421f65 f m3:RdMove.mo
+ 0001:000210a6       _UnsafeRd__FastEOF         004220a6 f m3:RdMove.mo
+ 0001:00021180       _Rd__UnGetChar             00422180 f m3:RdMove.mo
+ 0001:000211db       _UnsafeRd__FastUnGetChar   004221db f m3:RdMove.mo
+ 0001:00021297       _Rd__CharsReady            00422297 f m3:RdMove.mo
+ 0001:00021442       _Rd__Index                 00422442 f m3:RdMove.mo
+ 0001:000214e9       _Rd__Length                004224e9 f m3:RdMove.mo
+ 0001:00021590       _Rd__Seek                  00422590 f m3:RdMove.mo
+ 0001:000216d7       _Rd__Close                 004226d7 f m3:RdMove.mo
+ 0001:00021732       _UnsafeRd__FastClose       00422732 f m3:RdMove.mo
+ 0001:000217c2       _M_RdMove_LINE_188         004227c2 f m3:RdMove.mo
+ 0001:00021892       _RdClass__Lock             00422892 f m3:RdMove.mo
+ 0001:000218b0       _RdClass__Unlock           004228b0 f m3:RdMove.mo
+ 0001:000218ce       _RdClass__LengthDefault    004228ce f m3:RdMove.mo
+ 0001:000218e9       _RdClass__CloseDefault     004228e9 f m3:RdMove.mo
+ 0001:000218fa       _RdMove__Die               004228fa f m3:RdMove.mo
+ 0001:0002192f       _MM_RdMove_CRASH           0042292f f m3:RdMove.mo
+ 0001:00021940       _Rd__GetSubLine            00422940 f m3:RdImpl.mo
+ 0001:00021da6       _M_RdImpl_LINE_56          00422da6 f m3:RdImpl.mo
+ 0001:00021dca       _Rd__GetText               00422dca f m3:RdImpl.mo
+ 0001:000220b3       _M_RdImpl_LINE_85          004230b3 f m3:RdImpl.mo
+ 0001:000220d7       _RdImpl__SlowGetText       004230d7 f m3:RdImpl.mo
+ 0001:000222b4       _Rd__GetLine               004232b4 f m3:RdImpl.mo
+ 0001:00022910       _M_RdImpl_LINE_177         00423910 f m3:RdImpl.mo
+ 0001:00022934       _Rd__Intermittent          00423934 f m3:RdImpl.mo
+ 0001:0002296a       _Rd__Seekable              0042396a f m3:RdImpl.mo
+ 0001:000229a0       _Rd__Closed                004239a0 f m3:RdImpl.mo
+ 0001:000229d6       _RdImpl__Error             004239d6 f m3:RdImpl.mo
+ 0001:00022a0b       _MM_RdImpl_CRASH           00423a0b f m3:RdImpl.mo
+ 0001:00022a20       _I_RdClass_t9e5b64fb_INIT  00423a20 f m3:RdClass.io
+ 0001:00022a46       _I_RdClass_t9e5b64fb_LINK  00423a46 f m3:RdClass.io
+ 0001:00022aa0       _Fmt__Bool                 00423aa0 f m3:Fmt.mo
+ 0001:00022ac6       _Fmt__Char                 00423ac6 f m3:Fmt.mo
+ 0001:00022ae9       _Fmt__Int                  00423ae9 f m3:Fmt.mo
+ 0001:00022b63       _Fmt__AnyInt               00423b63 f m3:Fmt.mo
+ 0001:00022bfe       _Fmt__Unsigned             00423bfe f m3:Fmt.mo
+ 0001:00022c78       _Fmt__AnyUnsigned          00423c78 f m3:Fmt.mo
+ 0001:00022d13       _Fmt__Real                 00423d13 f m3:Fmt.mo
+ 0001:00022e31       _Fmt__LongReal             00423e31 f m3:Fmt.mo
+ 0001:00022f5b       _Fmt__Extended             00423f5b f m3:Fmt.mo
+ 0001:00023085       _Fmt__Float                00424085 f m3:Fmt.mo
+ 0001:000231aa       _Fmt__Pad                  004241aa f m3:Fmt.mo
+ 0001:0002337e       _Fmt__F                    0042437e f m3:Fmt.mo
+ 0001:0002347b       _Fmt__ReadSpec             0042447b f m3:Fmt.mo
+ 0001:000235f3       _Fmt__PutSpec              004245f3 f m3:Fmt.mo
+ 0001:000236ae       _Fmt__GetSpec              004246ae f m3:Fmt.mo
+ 0001:00023777       _Fmt__FN                   00424777 f m3:Fmt.mo
+ 0001:00023881       _Fmt__FN__ReadSpecs        00424881 f m3:Fmt.mo
+ 0001:00023a89       _Fmt__FN__ConstructResult  00424a89 f m3:Fmt.mo
+ 0001:00023f09       _MM_Fmt_CRASH              00424f09 f m3:Fmt.mo
+ 0001:00023f20       _FmtBuf__Int               00424f20 f m3:FmtBuf.mo
+ 0001:00023f85       _FmtBuf__Unsigned          00424f85 f m3:FmtBuf.mo
+ 0001:00023fea       _FmtBuf__Real              00424fea f m3:FmtBuf.mo
+ 0001:000240dd       _FmtBuf__LongReal          004250dd f m3:FmtBuf.mo
+ 0001:000241dc       _FmtBuf__Extended          004251dc f m3:FmtBuf.mo
+ 0001:000242db       _FmtBufF__Float            004252db f m3:FmtBuf.mo
+ 0001:0002438a       _FmtBuf__SciWidth          0042538a f m3:FmtBuf.mo
+ 0001:000243ea       _FmtBuf__NaN               004253ea f m3:FmtBuf.mo
+ 0001:0002445a       _FmtBuf__Inf               0042545a f m3:FmtBuf.mo
+ 0001:000244d7       _FmtBuf__Special           004254d7 f m3:FmtBuf.mo
+ 0001:00024766       _FmtBuf__Special__AppendBlanks 00425766 f m3:FmtBuf.mo
+ 0001:00024852       _FmtBuf__AppendZeros       00425852 f m3:FmtBuf.mo
+ 0001:0002493b       _FmtBuf__Zero              0042593b f m3:FmtBuf.mo
+ 0001:00024d88       _FmtBuf__Number            00425d88 f m3:FmtBuf.mo
+ 0001:00025175       _FmtBuf__Number__FmtNum    00426175 f m3:FmtBuf.mo
+ 0001:00025520       _FmtBuf__Number__DelTrailingZeros 00426520 f m3:FmtBuf.mo
+ 0001:0002563b       _FmtBuf__Number__FmtExp    0042663b f m3:FmtBuf.mo
+ 0001:00025922       _FmtBuf__Round             00426922 f m3:FmtBuf.mo
+ 0001:00025b48       _FmtBuf__Round__NearestInc 00426b48 f m3:FmtBuf.mo
+ 0001:00025cf8       _FmtBuf__Round__Increment  00426cf8 f m3:FmtBuf.mo
+ 0001:00025eba       _MM_FmtBuf_CRASH           00426eba f m3:FmtBuf.mo
+ 0001:00025ed0       _OSErrorWin32__NewAtom     00426ed0 f m3:OSErrorWin32.mo
+ 0001:00025f17       _OSErrorWin32__ErrnoAtom   00426f17 f m3:OSErrorWin32.mo
+ 0001:00025fcf       _OSErrorWin32__Raise0      00426fcf f m3:OSErrorWin32.mo
+ 0001:0002603c       _OSErrorWin32__Raise       0042703c f m3:OSErrorWin32.mo
+ 0001:0002605f       _MM_OSErrorWin32_CRASH     0042705f f m3:OSErrorWin32.mo
+ 0001:00026070       _Process__Create           00427070 f m3:ProcessWin32.mo
+ 0001:00026234       _ProcessWin32__PrepHandle  00427234 f m3:ProcessWin32.mo
+ 0001:000262ab       _ProcessWin32__ConvertArgs 004272ab f m3:ProcessWin32.mo
+ 0001:0002651a       _ProcessWin32__ConvertEnv  0042751a f m3:ProcessWin32.mo
+ 0001:000266fc       _Process__Wait             004276fc f m3:ProcessWin32.mo
+ 0001:000267e3       _Process__Exit             004277e3 f m3:ProcessWin32.mo
+ 0001:00026801       _Process__Crash            00427801 f m3:ProcessWin32.mo
+ 0001:0002681f       _Process__RegisterExitor   0042781f f m3:ProcessWin32.mo
+ 0001:0002683d       _Process__GetID            0042783d f m3:ProcessWin32.mo
+ 0001:00026856       _Process__GetMyID          00427856 f m3:ProcessWin32.mo
+ 0001:00026870       _ProcessWin32__GetFileHandle 00427870 f m3:ProcessWin32.mo
+ 0001:0002690d       _Process__GetStandardFileHandles 0042790d f m3:ProcessWin32.mo
+ 0001:00026942       _Process__GetWorkingDirectory 00427942 f m3:ProcessWin32.mo
+ 0001:00026aa2       _ProcessWin32__GetWorkingDirectory__DoIt 00427aa2 f m3:ProcessWin32.mo
+ 0001:00026af4       _Process__SetWorkingDirectory 00427af4 f m3:ProcessWin32.mo
+ 0001:00026b2e       __INITM_ProcessWin32       00427b2e f m3:ProcessWin32.mo
+ 0001:00026bab       _M_ProcessWin32_tde094143_INIT 00427bab f m3:ProcessWin32.mo
+ 0001:00026bc9       _MM_ProcessWin32_CRASH     00427bc9 f m3:ProcessWin32.mo
+ 0001:00026be0       _Pipe__Open                00427be0 f m3:PipeWin32.mo
+ 0001:00026ce3       _MM_PipeWin32_CRASH        00427ce3 f m3:PipeWin32.mo
+ 0001:00026d00       __INITM_Pipe               00427d00 f m3:Pipe.mo
+ 0001:00026d30       _FileWin32__New            00427d30 f m3:FileWin32.mo
+ 0001:00026e08       _FileWin32__NewPipe        00427e08 f m3:FileWin32.mo
+ 0001:00026e43       _FileWin32__FileWrite      00427e43 f m3:FileWin32.mo
+ 0001:00026ed4       _FileWin32__FileClose      00427ed4 f m3:FileWin32.mo
+ 0001:00026f04       _FileWin32__FileStatus     00427f04 f m3:FileWin32.mo
+ 0001:00027016       _FileWin32__PipeRead       00428016 f m3:FileWin32.mo
+ 0001:00027116       _FileWin32__RegularFileRead 00428116 f m3:FileWin32.mo
+ 0001:00027191       _FileWin32__RegularFileSeek 00428191 f m3:FileWin32.mo
+ 0001:000271d6       _FileWin32__RegularFileFlush 004281d6 f m3:FileWin32.mo
+ 0001:00027206       _FileWin32__RegularFileLock 00428206 f m3:FileWin32.mo
+ 0001:00027268       _FileWin32__RegularFileUnlock 00428268 f m3:FileWin32.mo
+ 0001:000272ac       _FileWin32__BadDirection   004282ac f m3:FileWin32.mo
+ 0001:000272e1       _M_FileWin32_t6d674742_LINK 004282e1 f m3:FileWin32.mo
+ 0001:0002732a       _M_FileWin32_td0559d06_LINK 0042832a f m3:FileWin32.mo
+ 0001:00027350       _M_FileWin32_td4061462_LINK 00428350 f m3:FileWin32.mo
+ 0001:00027376       _M_FileWin32_td3c12642_LINK 00428376 f m3:FileWin32.mo
+ 0001:000273ae       _MM_FileWin32_CRASH        004283ae f m3:FileWin32.mo
+ 0001:000273c0       __INITM_RegularFile        004283c0 f m3:RegularFile.mo
+ 0001:000273f0       __INITM_Terminal           004283f0 f m3:Terminal.mo
+ 0001:00027420       _Pathname__Valid           00428420 f m3:PathnameWin32.mo
+ 0001:000274a6       _PathnameWin32__Valid__Ignore 004284a6 f m3:PathnameWin32.mo
+ 0001:000274ba       _Pathname__Decompose       004284ba f m3:PathnameWin32.mo
+ 0001:00027527       _PathnameWin32__Decompose__Add 00428527 f m3:PathnameWin32.mo
+ 0001:000275cd       _Pathname__Compose         004285cd f m3:PathnameWin32.mo
+ 0001:00027811       _Pathname__Absolute        00428811 f m3:PathnameWin32.mo
+ 0001:00027888       _Pathname__Prefix          00428888 f m3:PathnameWin32.mo
+ 0001:00027976       _Pathname__Last            00428976 f m3:PathnameWin32.mo
+ 0001:00027a4e       _Pathname__Base            00428a4e f m3:PathnameWin32.mo
+ 0001:00027aa5       _Pathname__Join            00428aa5 f m3:PathnameWin32.mo
+ 0001:00027bd1       _Pathname__LastBase        00428bd1 f m3:PathnameWin32.mo
+ 0001:00027c39       _Pathname__LastExt         00428c39 f m3:PathnameWin32.mo
+ 0001:00027cc2       _Pathname__ReplaceExt      00428cc2 f m3:PathnameWin32.mo
+ 0001:00027d52       _PathnameWin32__ParseRoot  00428d52 f m3:PathnameWin32.mo
+ 0001:00027f6e       _PathnameWin32__ParsePN    00428f6e f m3:PathnameWin32.mo
+ 0001:00028159       _PathnameWin32__NameSections 00429159 f m3:PathnameWin32.mo
+ 0001:0002821f       __INITM_PathnameWin32      0042921f f m3:PathnameWin32.mo
+ 0001:00028248       _MM_PathnameWin32_CRASH    00429248 f m3:PathnameWin32.mo
+ 0001:00028260       _TextSeq__Init             00429260 f m3:TextSeq.mo
+ 0001:000282e2       _TextSeq__FromArray        004292e2 f m3:TextSeq.mo
+ 0001:000283c2       _TextSeq__Addhi            004293c2 f m3:TextSeq.mo
+ 0001:00028457       _TextSeq__Addlo            00429457 f m3:TextSeq.mo
+ 0001:00028515       _TextSeq__Expand           00429515 f m3:TextSeq.mo
+ 0001:000286b1       _TextSeq__Remhi            004296b1 f m3:TextSeq.mo
+ 0001:00028750       _TextSeq__Remlo            00429750 f m3:TextSeq.mo
+ 0001:000287f0       _TextSeq__Put              004297f0 f m3:TextSeq.mo
+ 0001:00028874       _TextSeq__Get              00429874 f m3:TextSeq.mo
+ 0001:000288f1       _TextSeq__Size             004298f1 f m3:TextSeq.mo
+ 0001:0002890a       _TextSeq__Gethi            0042990a f m3:TextSeq.mo
+ 0001:0002898c       _TextSeq__Getlo            0042998c f m3:TextSeq.mo
+ 0001:000289e0       _TextSeq__Cat              004299e0 f m3:TextSeq.mo
+ 0001:00028b43       _TextSeq__Sub              00429b43 f m3:TextSeq.mo
+ 0001:00028c72       _M_TextSeq_t124b74b9_LINK  00429c72 f m3:TextSeq.mo
+ 0001:00028cf1       _MM_TextSeq_CRASH          00429cf1 f m3:TextSeq.mo
+ 0001:00028d10       _AtomList__Cons            00429d10 f m3:AtomList.mo
+ 0001:00028d55       _AtomList__List1           00429d55 f m3:AtomList.mo
+ 0001:00028d9b       _AtomList__List2           00429d9b f m3:AtomList.mo
+ 0001:00028e12       _AtomList__List3           00429e12 f m3:AtomList.mo
+ 0001:00028eba       _AtomList__FromArray       00429eba f m3:AtomList.mo
+ 0001:00028f4b       _AtomList__Length          00429f4b f m3:AtomList.mo
+ 0001:00028f83       _AtomList__Nth             00429f83 f m3:AtomList.mo
+ 0001:00028fc8       _AtomList__Member          00429fc8 f m3:AtomList.mo
+ 0001:0002901c       _AtomList__Append          0042a01c f m3:AtomList.mo
+ 0001:000290f4       _AtomList__AppendD         0042a0f4 f m3:AtomList.mo
+ 0001:00029161       _AtomList__Reverse         0042a161 f m3:AtomList.mo
+ 0001:000291c4       _AtomList__ReverseD        0042a1c4 f m3:AtomList.mo
+ 0001:00029236       _MM_AtomList_CRASH         0042a236 f m3:AtomList.mo
+ 0001:00029250       _Atom__FromText            0042a250 f m3:Atom.mo
+ 0001:00029357       _Atom__ToText              0042a357 f m3:Atom.mo
+ 0001:00029370       _Atom__Hash                0042a370 f m3:Atom.mo
+ 0001:00029389       _Atom__TblEqual            0042a389 f m3:Atom.mo
+ 0001:000293f6       _Atom__Equal               0042a3f6 f m3:Atom.mo
+ 0001:00029416       _Atom__Compare             0042a416 f m3:Atom.mo
+ 0001:0002944b       __INITM_Atom               0042a44b f m3:Atom.mo
+ 0001:000294b8       _M_Atom_t10bd4f82_LINK     0042a4b8 f m3:Atom.mo
+ 0001:000294e0       _AtomAtomTbl__Init         0042a4e0 f m3:AtomAtomTbl.mo
+ 0001:000295ac       _AtomAtomTbl__Get          0042a5ac f m3:AtomAtomTbl.mo
+ 0001:0002968b       _AtomAtomTbl__Put          0042a68b f m3:AtomAtomTbl.mo
+ 0001:000297fe       _AtomAtomTbl__Delete       0042a7fe f m3:AtomAtomTbl.mo
+ 0001:00029980       _AtomAtomTbl__Size         0042a980 f m3:AtomAtomTbl.mo
+ 0001:00029999       _AtomAtomTbl__Iterate      0042a999 f m3:AtomAtomTbl.mo
+ 0001:000299e9       _AtomAtomTbl__KeyHash      0042a9e9 f m3:AtomAtomTbl.mo
+ 0001:00029a0d       _AtomAtomTbl__KeyEqual     0042aa0d f m3:AtomAtomTbl.mo
+ 0001:00029a38       _AtomAtomTbl__Log_2        0042aa38 f m3:AtomAtomTbl.mo
+ 0001:00029a97       _AtomAtomTbl__NewBuckets   0042aa97 f m3:AtomAtomTbl.mo
+ 0001:00029c05       _AtomAtomTbl__Rehash       0042ac05 f m3:AtomAtomTbl.mo
+ 0001:00029d6f       _AtomAtomTbl__Next         0042ad6f f m3:AtomAtomTbl.mo
+ 0001:00029e51       __INITM_AtomAtomTbl        0042ae51 f m3:AtomAtomTbl.mo
+ 0001:00029ea6       _M_AtomAtomTbl_td8e8937a_LINK 0042aea6 f m3:AtomAtomTbl.mo
+ 0001:00029ecc       _M_AtomAtomTbl_t4bab35de_LINK 0042aecc f m3:AtomAtomTbl.mo
+ 0001:00029f30       _MM_AtomAtomTbl_CRASH      0042af30 f m3:AtomAtomTbl.mo
+ 0001:00029f50       __INITM_NB30               0042af50 f m3core:NB30.mo
+ 0001:00029fa0       _DateWin32__FromTimeLocal  0042afa0 f m3core:DateWin32.mo
+ 0001:0002a221       _DateWin32__CopyTimeZoneName 0042b221 f m3core:DateWin32.mo
+ 0001:0002a2ea       _DateWin32__FromTimeUTC    0042b2ea f m3core:DateWin32.mo
+ 0001:0002a3fe       _DateWin32__FromSystemTime 0042b3fe f m3core:DateWin32.mo
+ 0001:0002a513       _Date__FromTime            0042b513 f m3core:DateWin32.mo
+ 0001:0002a584       _Date__ToTime              0042b584 f m3core:DateWin32.mo
+ 0001:0002a672       __INITM_DateWin32          0042b672 f m3core:DateWin32.mo
+ 0001:0002a6b3       _M_DateWin32_t3c30f5b6_LINK 0042b6b3 f m3core:DateWin32.mo
+ 0001:0002a6d9       _M_DateWin32_t4ffe7c9f_LINK 0042b6d9 f m3core:DateWin32.mo
+ 0001:0002a6ff       _MM_DateWin32_CRASH        0042b6ff f m3core:DateWin32.mo
+ 0001:0002a710       _Tick__Now                 0042b710 f m3core:TickPortable.mo
+ 0001:0002a829       _Tick__ToSeconds           0042b829 f m3core:TickPortable.mo
+ 0001:0002a89e       _Tick__FromSeconds         0042b89e f m3core:TickPortable.mo
+ 0001:0002a99c       __INITM_TickPortable       0042b99c f m3core:TickPortable.mo
+ 0001:0002a9c0       __INITM_IEEESpecial        0042b9c0 f m3core:IEEESpecial.mo
+ 0001:0002aaa0       _TimeWin32__ToFileTime     0042baa0 f m3core:TimeWin32.mo
+ 0001:0002abb5       _TimeWin32__FromFileTime   0042bbb5 f m3core:TimeWin32.mo
+ 0001:0002ac2c       _Time__Now                 0042bc2c f m3core:TimeWin32.mo
+ 0001:0002ac87       __INITM_TimeWin32          0042bc87 f m3core:TimeWin32.mo
+ 0001:0002acdd       _MM_TimeWin32_CRASH        0042bcdd f m3core:TimeWin32.mo
+ 0001:0002acf0       _ExtendedFloat__Scalb      0042bcf0 f m3core:ExtendedFloat.mo
+ 0001:0002ad48       _ExtendedFloat__Logb       0042bd48 f m3core:ExtendedFloat.mo
+ 0001:0002ad9c       _ExtendedFloat__ILogb      0042bd9c f m3core:ExtendedFloat.mo
+ 0001:0002ade7       _ExtendedFloat__NextAfter  0042bde7 f m3core:ExtendedFloat.mo
+ 0001:0002ae45       _ExtendedFloat__CopySign   0042be45 f m3core:ExtendedFloat.mo
+ 0001:0002ae9a       _ExtendedFloat__Finite     0042be9a f m3core:ExtendedFloat.mo
+ 0001:0002aee5       _ExtendedFloat__IsNaN      0042bee5 f m3core:ExtendedFloat.mo
+ 0001:0002af30       _ExtendedFloat__Sign       0042bf30 f m3core:ExtendedFloat.mo
+ 0001:0002af7b       _ExtendedFloat__Differs    0042bf7b f m3core:ExtendedFloat.mo
+ 0001:0002afd0       _ExtendedFloat__Unordered  0042bfd0 f m3core:ExtendedFloat.mo
+ 0001:0002b025       _ExtendedFloat__Sqrt       0042c025 f m3core:ExtendedFloat.mo
+ 0001:0002b079       _ExtendedFloat__Class      0042c079 f m3core:ExtendedFloat.mo
+ 0001:0002b0c4       _ExtendedFloat__FromDecimal 0042c0c4 f m3core:ExtendedFloat.mo
+ 0001:0002b11c       _ExtendedFloat__ToDecimal  0042c11c f m3core:ExtendedFloat.mo
+ 0001:0002b1a0       _LongFloat__Scalb          0042c1a0 f m3core:LongFloat.mo
+ 0001:0002b1ef       _LongFloat__Logb           0042c1ef f m3core:LongFloat.mo
+ 0001:0002b2ec       _LongFloat__ILogb          0042c2ec f m3core:LongFloat.mo
+ 0001:0002b3f5       _LongFloat__NextAfter      0042c3f5 f m3core:LongFloat.mo
+ 0001:0002b7a8       _LongFloat__CopySign       0042c7a8 f m3core:LongFloat.mo
+ 0001:0002b7e6       _LongFloat__Finite         0042c7e6 f m3core:LongFloat.mo
+ 0001:0002b827       _LongFloat__IsNaN          0042c827 f m3core:LongFloat.mo
+ 0001:0002b892       _LongFloat__Sign           0042c892 f m3core:LongFloat.mo
+ 0001:0002b8c5       _LongFloat__Differs        0042c8c5 f m3core:LongFloat.mo
+ 0001:0002b905       _LongFloat__Unordered      0042c905 f m3core:LongFloat.mo
+ 0001:0002b94f       _LongFloat__Class          0042c94f f m3core:LongFloat.mo
+ 0001:0002ba29       _LongFloat__Sqrt           0042ca29 f m3core:LongFloat.mo
+ 0001:0002ba74       _LongFloat__FromDecimal    0042ca74 f m3core:LongFloat.mo
+ 0001:0002bd93       _LongFloat__ToDecimal      0042cd93 f m3core:LongFloat.mo
+ 0001:0002bf60       _MM_LongFloat_CRASH        0042cf60 f m3core:LongFloat.mo
+ 0001:0002bf80       _RealFloat__Scalb          0042cf80 f m3core:RealFloat.mo
+ 0001:0002bfcf       _RealFloat__Logb           0042cfcf f m3core:RealFloat.mo
+ 0001:0002c0b7       _RealFloat__ILogb          0042d0b7 f m3core:RealFloat.mo
+ 0001:0002c18c       _RealFloat__NextAfter      0042d18c f m3core:RealFloat.mo
+ 0001:0002c4bc       _RealFloat__CopySign       0042d4bc f m3core:RealFloat.mo
+ 0001:0002c4fa       _RealFloat__Finite         0042d4fa f m3core:RealFloat.mo
+ 0001:0002c535       _RealFloat__IsNaN          0042d535 f m3core:RealFloat.mo
+ 0001:0002c590       _RealFloat__Sign           0042d590 f m3core:RealFloat.mo
+ 0001:0002c5bd       _RealFloat__Differs        0042d5bd f m3core:RealFloat.mo
+ 0001:0002c5fd       _RealFloat__Unordered      0042d5fd f m3core:RealFloat.mo
+ 0001:0002c647       _RealFloat__Sqrt           0042d647 f m3core:RealFloat.mo
+ 0001:0002c692       _RealFloat__Class          0042d692 f m3core:RealFloat.mo
+ 0001:0002c752       _RealFloat__FromDecimal    0042d752 f m3core:RealFloat.mo
+ 0001:0002ca71       _RealFloat__ToDecimal      0042da71 f m3core:RealFloat.mo
+ 0001:0002cc01       _MM_RealFloat_CRASH        0042dc01 f m3core:RealFloat.mo
+ 0001:0002cc20       _DragonT__F                0042dc20 f m3core:DragonT.mo
+ 0001:0002d1d1       _DragonT__F__cutoffAdjust  0042e1d1 f m3core:DragonT.mo
+ 0001:0002d353       _DragonT__F__fixup         0042e353 f m3core:DragonT.mo
+ 0001:0002d6db       _MM_DragonT_CRASH          0042e6db f m3core:DragonT.mo
+ 0001:0002d6f0       _DragonInt__NewSession     0042e6f0 f m3core:DragonInt.mo
+ 0001:0002d7a4       _DragonInt__EndSession     0042e7a4 f m3core:DragonInt.mo
+ 0001:0002d7b5       _DragonInt__New            0042e7b5 f m3core:DragonInt.mo
+ 0001:0002d8fb       _DragonInt__copy           0042e8fb f m3core:DragonInt.mo
+ 0001:0002da05       _DragonInt__add            0042ea05 f m3core:DragonInt.mo
+ 0001:0002dbca       _DragonInt__diff           0042ebca f m3core:DragonInt.mo
+ 0001:0002dd78       _DragonInt__compare        0042ed78 f m3core:DragonInt.mo
+ 0001:0002de98       _DragonInt__max            0042ee98 f m3core:DragonInt.mo
+ 0001:0002df1e       _DragonInt__shift          0042ef1e f m3core:DragonInt.mo
+ 0001:0002e25e       _DragonInt__times2         0042f25e f m3core:DragonInt.mo
+ 0001:0002e3ce       _DragonInt__timesTenInPlace 0042f3ce f m3core:DragonInt.mo
+ 0001:0002e5c2       _DragonInt__divideTen      0042f5c2 f m3core:DragonInt.mo
+ 0001:0002e71d       _DragonInt__divmod         0042f71d f m3core:DragonInt.mo
+ 0001:0002e7f3       _DragonInt__InitValue      0042f7f3 f m3core:DragonInt.mo
+ 0001:0002e868       _DragonInt__Expand         0042f868 f m3core:DragonInt.mo
+ 0001:0002e91d       _DragonInt__FixSize        0042f91d f m3core:DragonInt.mo
+ 0001:0002e998       _MM_DragonInt_CRASH        0042f998 f m3core:DragonInt.mo
+ 0001:0002e9b0       _FloatMode__SetRounding    0042f9b0 f m3core:FloatMode.mo
+ 0001:0002e9d0       _FloatMode__GetRounding    0042f9d0 f m3core:FloatMode.mo
+ 0001:0002e9e3       _FloatMode__GetFlags       0042f9e3 f m3core:FloatMode.mo
+ 0001:0002ea08       _FloatMode__SetFlags       0042fa08 f m3core:FloatMode.mo
+ 0001:0002ea2d       _FloatMode__ClearFlag      0042fa2d f m3core:FloatMode.mo
+ 0001:0002ea4d       _FloatMode__SetBehavior    0042fa4d f m3core:FloatMode.mo
+ 0001:0002ea6d       _FloatMode__GetBehavior    0042fa6d f m3core:FloatMode.mo
+ 0001:0002ea92       _FloatMode__InitThread     0042fa92 f m3core:FloatMode.mo
+ 0001:0002eaa3       _FloatMode__Die            0042faa3 f m3core:FloatMode.mo
+ 0001:0002eada       _MM_FloatMode_CRASH        0042fada f m3core:FloatMode.mo
+ 0001:0002eaf0       _Convert__FromInt          0042faf0 f m3core:Convert.mo
+ 0001:0002eee4       _Convert__FromUnsigned     0042fee4 f m3core:Convert.mo
+ 0001:0002f117       _Convert__FromFloat        00430117 f m3core:Convert.mo
+ 0001:0002f17d       _Convert__FromLongFloat    0043017d f m3core:Convert.mo
+ 0001:0002f1b6       _Convert__FromExtended     004301b6 f m3core:Convert.mo
+ 0001:0002f21c       _Convert__InternalFromLongFloat 0043021c f m3core:Convert.mo
+ 0001:0002fdb6       _Convert__ToInt            00430db6 f m3core:Convert.mo
+ 0001:0002ff3e       _Convert__ToUnsigned       00430f3e f m3core:Convert.mo
+ 0001:00030030       _Convert__InternalToInt    00431030 f m3core:Convert.mo
+ 0001:00030411       _Convert__ToFloat          00431411 f m3core:Convert.mo
+ 0001:00030529       _Convert__ToLongFloat      00431529 f m3core:Convert.mo
+ 0001:00030617       _Convert__ToExtended       00431617 f m3core:Convert.mo
+ 0001:0003072f       _Convert__ToBinary         0043172f f m3core:Convert.mo
+ 0001:00030867       _MM_Convert_CRASH          00431867 f m3core:Convert.mo
+ 0001:00030880       _ThreadWin32__AllocCSect   00431880 f m3core:ThreadWin32.mo
+ 0001:00030996       _ThreadWin32__FreeCSect    00431996 f m3core:ThreadWin32.mo
+ 0001:00030a88       _Thread__Acquire           00431a88 f m3core:ThreadWin32.mo
+ 0001:00030aa5       _Thread__Release           00431aa5 f m3core:ThreadWin32.mo
+ 0001:00030ac2       _RTHooks__LockMutex        00431ac2 f m3core:ThreadWin32.mo
+ 0001:00030b1f       _RTHooks__UnlockMutex      00431b1f f m3core:ThreadWin32.mo
+ 0001:00030b61       _ThreadWin32__InnerWait    00431b61 f m3core:ThreadWin32.mo
+ 0001:00030c09       _ThreadWin32__InnerTestAlert 00431c09 f m3core:ThreadWin32.mo
+ 0001:00030c51       _Thread__AlertWait         00431c51 f m3core:ThreadWin32.mo
+ 0001:00030cdc       _Thread__Wait              00431cdc f m3core:ThreadWin32.mo
+ 0001:00030d31       _ThreadWin32__DequeueHead  00431d31 f m3core:ThreadWin32.mo
+ 0001:00030da6       _Thread__Signal            00431da6 f m3core:ThreadWin32.mo
+ 0001:00030de9       _Thread__Broadcast         00431de9 f m3core:ThreadWin32.mo
+ 0001:00030e30       _Thread__Alert             00431e30 f m3core:ThreadWin32.mo
+ 0001:00030f61       _Thread__TestAlert         00431f61 f m3core:ThreadWin32.mo
+ 0001:00030fc8       _Thread__Self              00431fc8 f m3core:ThreadWin32.mo
+ 0001:00030fe9       _ThreadWin32__SetSelf      00431fe9 f m3core:ThreadWin32.mo
+ 0001:0003101c       _ThreadWin32__CreateT      0043201c f m3core:ThreadWin32.mo
+ 0001:0003108b       _ThreadWin32__ThreadBase   0043208b f m3core:ThreadWin32.mo
+ 0001:000310bc       _ThreadWin32__ThreadMain   004320bc f m3core:ThreadWin32.mo
+ 0001:000313d3       _Thread__Fork              004323d3 f m3core:ThreadWin32.mo
+ 0001:000315e6       _Thread__Join              004325e6 f m3core:ThreadWin32.mo
+ 0001:00031684       _Thread__AlertJoin         00432684 f m3core:ThreadWin32.mo
+ 0001:00031748       _M_ThreadWin32_LINE_492    00432748 f m3core:ThreadWin32.mo
+ 0001:0003176b       _ThreadF__SetSwitchingInterval 0043276b f m3core:ThreadWin32.mo
+ 0001:0003177c       _Thread__Pause             0043277c f m3core:ThreadWin32.mo
+ 0001:0003181c       _Thread__AlertPause        0043281c f m3core:ThreadWin32.mo
+ 0001:00031975       _Scheduler__Yield          00432975 f m3core:ThreadWin32.mo
+ 0001:00031991       _Thread__GetDefaultStackSize 00432991 f m3core:ThreadWin32.mo
+ 0001:000319dd       _Thread__MinDefaultStackSize 004329dd f m3core:ThreadWin32.mo
+ 0001:00031a0b       _Thread__IncDefaultStackSize 00432a0b f m3core:ThreadWin32.mo
+ 0001:00031a31       _ThreadF__GetCurrentHandlers 00432a31 f m3core:ThreadWin32.mo
+ 0001:00031a52       _ThreadF__SetCurrentHandlers 00432a52 f m3core:ThreadWin32.mo
+ 0001:00031a77       _RTHooks__PushEFrame       00432a77 f m3core:ThreadWin32.mo
+ 0001:00031abb       _RTHooks__PopEFrame        00432abb f m3core:ThreadWin32.mo
+ 0001:00031ae0       _ThreadF__SuspendOthers    00432ae0 f m3core:ThreadWin32.mo
+ 0001:00031b69       _ThreadF__ResumeOthers     00432b69 f m3core:ThreadWin32.mo
+ 0001:00031bd5       _ThreadF__ProcessStacks    00432bd5 f m3core:ThreadWin32.mo
+ 0001:00031cdf       _ThreadF__MyId             00432cdf f m3core:ThreadWin32.mo
+ 0001:00031d00       _ThreadWin32__Die          00432d00 f m3core:ThreadWin32.mo
+ 0001:00031d36       _ThreadWin32__Choke        00432d36 f m3core:ThreadWin32.mo
+ 0001:00031d70       _RTThreadInit__Init        00432d70 f m3core:ThreadWin32.mo
+ 0001:00031ee1       _MM_ThreadWin32_CRASH      00432ee1 f m3core:ThreadWin32.mo
+ 0001:00031f00       _Word__Plus                00432f00 f m3core:Word.mo
+ 0001:00031f19       _Word__Times               00432f19 f m3core:Word.mo
+ 0001:00031f30       _Word__Minus               00432f30 f m3core:Word.mo
+ 0001:00031f49       _Word__Divide              00432f49 f m3core:Word.mo
+ 0001:00031f62       _Word__Mod                 00432f62 f m3core:Word.mo
+ 0001:00031f7d       _Word__LT                  00432f7d f m3core:Word.mo
+ 0001:00031f9d       _Word__LE                  00432f9d f m3core:Word.mo
+ 0001:00031fbd       _Word__GT                  00432fbd f m3core:Word.mo
+ 0001:00031fdd       _Word__GE                  00432fdd f m3core:Word.mo
+ 0001:00031ffd       _Word__And                 00432ffd f m3core:Word.mo
+ 0001:00032016       _Word__Or                  00433016 f m3core:Word.mo
+ 0001:0003202f       _Word__Xor                 0043302f f m3core:Word.mo
+ 0001:00032048       _Word__Not                 00433048 f m3core:Word.mo
+ 0001:00032060       _Word__Shift               00433060 f m3core:Word.mo
+ 0001:00032094       _Word__LeftShift           00433094 f m3core:Word.mo
+ 0001:000320b1       _Word__RightShift          004330b1 f m3core:Word.mo
+ 0001:000320ce       _Word__Rotate              004330ce f m3core:Word.mo
+ 0001:000320f4       _Word__LeftRotate          004330f4 f m3core:Word.mo
+ 0001:00032111       _Word__RightRotate         00433111 f m3core:Word.mo
+ 0001:0003212e       _Word__Extract             0043312e f m3core:Word.mo
+ 0001:00032168       _Word__Insert              00433168 f m3core:Word.mo
+ 0001:000321bb       _MM_Word_CRASH             004331bb f m3core:Word.mo
+ 0001:000321d0       _RTHeapDep__Protect        004331d0 f m3core:RTHeapDep.mo
+ 0001:000321e6       _RTHeapDep__TimeUsed       004331e6 f m3core:RTHeapDep.mo
+ 0001:000321fc       _RTHeapDep__VMFaultTime    004331fc f m3core:RTHeapDep.mo
+ 0001:00032212       _MM_RTHeapDep_CRASH        00433212 f m3core:RTHeapDep.mo
+ 0001:00032230       _RTHeapRep__UnsafeGetShape 00433230 f m3core:RTHeapRep.mo
+ 0001:000322a5       _RTHeapRep__InvokeMonitors 004332a5 f m3core:RTHeapRep.mo
+ 0001:0003232c       _RTHeapRep__RegisterMonitor 0043332c f m3core:RTHeapRep.mo
+ 0001:00032381       _RTHeapRep__UnregisterMonitor 00433381 f m3core:RTHeapRep.mo
+ 0001:00032438       _RTHeapRep__Noop           00433438 f m3core:RTHeapRep.mo
+ 0001:00032449       _RTHeapRep__CheckTypes     00433449 f m3core:RTHeapRep.mo
+ 0001:000325c3       _M_RTHeapRep_tc3630505_LINK 004335c3 f m3core:RTHeapRep.mo
+ 0001:000325ec       _MM_RTHeapRep_CRASH        004335ec f m3core:RTHeapRep.mo
+ 0001:00032600       _RTType__MaxTypecode       00433600 f m3core:RTType.mo
+ 0001:00032633       _RTType__IsSubtype         00433633 f m3core:RTType.mo
+ 0001:000326ae       _RTType__Supertype         004336ae f m3core:RTType.mo
+ 0001:00032709       _RTType__IsTraced          00433709 f m3core:RTType.mo
+ 0001:0003273b       _RTType__Get               0043373b f m3core:RTType.mo
+ 0001:00032780       _RTType__GetNDimensions    00433780 f m3core:RTType.mo
+ 0001:000327b7       _RTTypeSRC__TypeName       004337b7 f m3core:RTType.mo
+ 0001:00032816       _RTTypeSRC__TypecodeName   00433816 f m3core:RTType.mo
+ 0001:00032845       _RTType__TypeDefnToName    00433845 f m3core:RTType.mo
+ 0001:00032885       _RTTypeSRC__FindType       00433885 f m3core:RTType.mo
+ 0001:0003299e       _RTTypeSRC__Init           0043399e f m3core:RTType.mo
+ 0001:00032a05       _RTType__RegisterTypes     00433a05 f m3core:RTType.mo
+ 0001:00032d25       _RTType__CheckOpaques      00433d25 f m3core:RTType.mo
+ 0001:00032fb7       _RTType__CheckBrands       00433fb7 f m3core:RTType.mo
+ 0001:00033287       _RTType__HashString        00434287 f m3core:RTType.mo
+ 0001:000332cd       _RTType__FindChildren      004342cd f m3core:RTType.mo
+ 0001:00033397       _RTType__CheckParents      00434397 f m3core:RTType.mo
+ 0001:00033466       _RTType__AssignTypecodes   00434466 f m3core:RTType.mo
+ 0001:0003368b       _RTType__AssignObjectTypecode 0043468b f m3core:RTType.mo
+ 0001:0003370d       _RTType__FixLinks          0043470d f m3core:RTType.mo
+ 0001:000337e0       _RTType__FixSizes          004347e0 f m3core:RTType.mo
+ 0001:000338a3       _RTType__FixObjectSizes    004348a3 f m3core:RTType.mo
+ 0001:000339d3       _RTType__CallSetupProcs    004349d3 f m3core:RTType.mo
+ 0001:00033a88       _RTType__SetupObject       00434a88 f m3core:RTType.mo
+ 0001:00033b99       _RTType__CheckRevelations  00434b99 f m3core:RTType.mo
+ 0001:00033ca9       _RTType__UndefinedMethod   00434ca9 f m3core:RTType.mo
+ 0001:00033cde       _RTType__BadType           00434cde f m3core:RTType.mo
+ 0001:00033d03       _RTType__StartError        00434d03 f m3core:RTType.mo
+ 0001:00033d24       _RTType__EndError          00434d24 f m3core:RTType.mo
+ 0001:00033d6f       _RTType__BadTypeId         00434d6f f m3core:RTType.mo
+ 0001:00033dc8       _RTType__DuplicateLHS      00434dc8 f m3core:RTType.mo
+ 0001:00033e75       _RTType__UndefinedRHS      00434e75 f m3core:RTType.mo
+ 0001:00033f06       _RTType__BadParent         00434f06 f m3core:RTType.mo
+ 0001:00033f62       _RTType__ParentCycle       00434f62 f m3core:RTType.mo
+ 0001:00033fea       _RTType__BadRevelation     00434fea f m3core:RTType.mo
+ 0001:000340b3       _RTType__PutType           004350b3 f m3core:RTType.mo
+ 0001:000341ad       _RTType__PutModule         004351ad f m3core:RTType.mo
+ 0001:000341f2       _MM_RTType_CRASH           004351f2 f m3core:RTType.mo
+ 0001:00034210       _RTMisc__Copy              00435210 f m3core:RTMisc.mo
+ 0001:00034239       _RTMisc__Zero              00435239 f m3core:RTMisc.mo
+ 0001:00034263       _RTMisc__Align             00435263 f m3core:RTMisc.mo
+ 0001:00034287       _RTMisc__Upper             00435287 f m3core:RTMisc.mo
+ 0001:000342de       _RTMisc__FatalError        004352de f m3core:RTMisc.mo
+ 0001:00034351       _RTMisc__FatalErrorS       00435351 f m3core:RTMisc.mo
+ 0001:000343c4       _RTMisc__FatalErrorI       004353c4 f m3core:RTMisc.mo
+ 0001:00034402       _RTMisc__FatalErrorPC      00435402 f m3core:RTMisc.mo
+ 0001:00034530       _RTMisc__StartError        00435530 f m3core:RTMisc.mo
+ 0001:00034596       _RTMisc__EndError          00435596 f m3core:RTMisc.mo
+ 0001:000345d0       _Fingerprint__FromText     004355d0 f m3core:Fingerprint.mo
+ 0001:0003466e       _Fingerprint__FromChars    0043566e f m3core:Fingerprint.mo
+ 0001:00034735       _Fingerprint__Combine      00435735 f m3core:Fingerprint.mo
+ 0001:00034855       _Fingerprint__Fix32        00435855 f m3core:Fingerprint.mo
+ 0001:00034893       _Fingerprint__Equal        00435893 f m3core:Fingerprint.mo
+ 0001:000348d0       _Fingerprint__Hash         004358d0 f m3core:Fingerprint.mo
+ 0001:000348fa       __INITM_Fingerprint        004358fa f m3core:Fingerprint.mo
+ 0001:00034922       _MM_Fingerprint_CRASH      00435922 f m3core:Fingerprint.mo
+ 0001:00034940       _Text__Hash                00435940 f m3core:UnsafeHash.mo
+ 0001:00034c03       __INITM_UnsafeHash         00435c03 f m3core:UnsafeHash.mo
+ 0001:00034cab       _MM_UnsafeHash_CRASH       00435cab f m3core:UnsafeHash.mo
+ 0001:00034cc0       _TextF__New                00435cc0 f m3core:Text.mo
+ 0001:00034d24       _Text__Cat                 00435d24 f m3core:Text.mo
+ 0001:00034e65       _Text__Equal               00435e65 f m3core:Text.mo
+ 0001:00034f27       _Text__GetChar             00435f27 f m3core:Text.mo
+ 0001:00034f79       _Text__Length              00435f79 f m3core:Text.mo
+ 0001:00034fab       _Text__Empty               00435fab f m3core:Text.mo
+ 0001:00034fce       _Text__Sub                 00435fce f m3core:Text.mo
+ 0001:00035153       _Text__SetChars            00436153 f m3core:Text.mo
+ 0001:00035203       _Text__FromChar            00436203 f m3core:Text.mo
+ 0001:000352d3       _Text__FromChars           004362d3 f m3core:Text.mo
+ 0001:00035403       _Text__FindChar            00436403 f m3core:Text.mo
+ 0001:00035490       _Text__FindCharR           00436490 f m3core:Text.mo
+ 0001:0003550f       _Text__Compare             0043650f f m3core:Text.mo
+ 0001:000356ae       _MM_Text_CRASH             004366ae f m3core:Text.mo
+ 0001:000356c0       _Poly__Sum                 004366c0 f m3core:Poly.mo
+ 0001:00035711       _Poly__Product             00436711 f m3core:Poly.mo
+ 0001:0003583a       _Poly__ComputeMod          0043683a f m3core:Poly.mo
+ 0001:00035a5c       _Poly__Fix32               00436a5c f m3core:Poly.mo
+ 0001:00035a9a       _Poly__ExtendBytes         00436a9a f m3core:Poly.mo
+ 0001:00035d13       _Poly__ExtendWords_LE      00436d13 f m3core:Poly.mo
+ 0001:00035e44       _Poly__ExtendWords_BE      00436e44 f m3core:Poly.mo
+ 0001:00035f9c       _Poly__Power               00436f9c f m3core:Poly.mo
+ 0001:00036691       _Poly__TimesX              00437691 f m3core:Poly.mo
+ 0001:000366f8       _Poly__DoubleINC           004376f8 f m3core:Poly.mo
+ 0001:0003673b       _Poly__DoubleTimesX        0043773b f m3core:Poly.mo
+ 0001:000367cd       _Poly__FindByteOrder       004377cd f m3core:Poly.mo
+ 0001:000368c1       _Poly__ToBytes             004378c1 f m3core:Poly.mo
+ 0001:000369f6       _Poly__FromBytes           004379f6 f m3core:Poly.mo
+ 0001:00036a77       __INITM_Poly               00437a77 f m3core:Poly.mo
+ 0001:00036a88       _MM_Poly_CRASH             00437a88 f m3core:Poly.mo
+ 0001:00036aa0       _RTProcedure__ToFingerprint 00437aa0 f m3core:RTProcedure.mo
+ 0001:00036aec       _RTProcedure__FromFingerprint 00437aec f m3core:RTProcedure.mo
+ 0001:00036b23       _RTProcedureSRC__NumProcedures 00437b23 f m3core:RTProcedure.mo
+ 0001:00036b5d       _RTProcedureSRC__FromPC    00437b5d f m3core:RTProcedure.mo
+ 0001:00036ce5       _RTProcedure__CountProcs   00437ce5 f m3core:RTProcedure.mo
+ 0001:00036d8d       _RTProcedure__Init         00437d8d f m3core:RTProcedure.mo
+ 0001:00036f39       _RTProcedure__Insert       00437f39 f m3core:RTProcedure.mo
+ 0001:00037021       _RTProcedure__Locate       00438021 f m3core:RTProcedure.mo
+ 0001:000370b0       _MM_RTProcedure_CRASH      004380b0 f m3core:RTProcedure.mo
+ 0001:000370d0       _RTModule__Count           004380d0 f m3core:RTModule.mo
+ 0001:000370e6       _RTModule__Get             004380e6 f m3core:RTModule.mo
+ 0001:00037140       _RTProcess__RegisterExitor 00438140 f m3core:RTProcess.mo
+ 0001:000371ae       _RTProcess__InvokeExitors  004381ae f m3core:RTProcess.mo
+ 0001:000371f5       _RTProcess__Exit           004381f5 f m3core:RTProcess.mo
+ 0001:00037218       _RTProcess__Crash          00438218 f m3core:RTProcess.mo
+ 0001:00037280       _RTProcess__OnInterrupt    00438280 f m3core:RTProcess.mo
+ 0001:000372c9       _MM_RTProcess_CRASH        004382c9 f m3core:RTProcess.mo
+ 0001:000372e0       _RTException__Raise        004382e0 f m3core:RTException.mo
+ 0001:000374de       _RTException__ResumeRaise  004384de f m3core:RTException.mo
+ 0001:00037695       _RTException__InvokeHandler 00438695 f m3core:RTException.mo
+ 0001:000377dd       _RTException__InvokeFinallyHandler 004387dd f m3core:RTException.mo
+ 0001:00037919       _RTException__CallProc     00438919 f m3core:RTException.mo
+ 0001:0003795a       _RTException__ReleaseLock  0043895a f m3core:RTException.mo
+ 0001:00037a0b       _RTException__NoHandler    00438a0b f m3core:RTException.mo
+ 0001:00037a84       _RTException__BadStack     00438a84 f m3core:RTException.mo
+ 0001:00037ab9       _RTException__SanityCheck  00438ab9 f m3core:RTException.mo
+ 0001:00037b0a       _RTException__DumpStack    00438b0a f m3core:RTException.mo
+ 0001:00037d36       _RTException__DumpHandles  00438d36 f m3core:RTException.mo
+ 0001:00037dc9       _RTException__EName        00438dc9 f m3core:RTException.mo
+ 0001:00037ded       __INITM_RTException        00438ded f m3core:RTException.mo
+ 0001:00037e20       _RTIO__PutChar             00438e20 f m3core:RTIO.mo
+ 0001:00037e7c       _RTIO__PutChars            00438e7c f m3core:RTIO.mo
+ 0001:00037ec1       _RTIO__PutString           00438ec1 f m3core:RTIO.mo
+ 0001:00037f12       _RTIO__PutInt              00438f12 f m3core:RTIO.mo
+ 0001:00037f83       _RTIO__PutHex              00438f83 f m3core:RTIO.mo
+ 0001:00037fff       _RTIO__PutAddr             00438fff f m3core:RTIO.mo
+ 0001:00038020       _RTIO__PutText             00439020 f m3core:RTIO.mo
+ 0001:0003805f       _RTIO__Flush               0043905f f m3core:RTIO.mo
+ 0001:0003809e       _RTIO__FromInt             0043909e f m3core:RTIO.mo
+ 0001:0003834c       _RTIO__FromUnsigned        0043934c f m3core:RTIO.mo
+ 0001:0003843d       _MM_RTIO_CRASH             0043943d f m3core:RTIO.mo
+ 0001:00038450       _RTOS__Exit                00439450 f m3core:RTOS.mo
+ 0001:0003846b       _RTOS__Crash               0043946b f m3core:RTOS.mo
+ 0001:00038498       _RTOS__GetMemory           00439498 f m3core:RTOS.mo
+ 0001:000384bb       _RTOS__LockHeap            004394bb f m3core:RTOS.mo
+ 0001:000384f9       _RTOS__UnlockHeap          004394f9 f m3core:RTOS.mo
+ 0001:00038517       _RTOS__Write               00439517 f m3core:RTOS.mo
+ 0001:00038580       _WinDef__MAKEWORD          00439580 f m3core:WinDef.mo
+ 0001:000385b9       _WinDef__MAKELONG          004395b9 f m3core:WinDef.mo
+ 0001:000385dd       _WinDef__LOWORD            004395dd f m3core:WinDef.mo
+ 0001:00038610       _WinDef__HIWORD            00439610 f m3core:WinDef.mo
+ 0001:00038646       _WinDef__LOBYTE            00439646 f m3core:WinDef.mo
+ 0001:0003867c       _WinDef__HIBYTE            0043967c f m3core:WinDef.mo
+ 0001:000386b5       _MM_WinDef_CRASH           004396b5 f m3core:WinDef.mo
+ 0001:000386d0       _WinNT__BTYPE              004396d0 f m3core:WinNT.mo
+ 0001:00038703       _WinNT__ISPTR              00439703 f m3core:WinNT.mo
+ 0001:00038729       _WinNT__ISFCN              00439729 f m3core:WinNT.mo
+ 0001:0003874f       _WinNT__ISARY              0043974f f m3core:WinNT.mo
+ 0001:00038775       _WinNT__ISTAG              00439775 f m3core:WinNT.mo
+ 0001:000387b8       _WinNT__INCREF             004397b8 f m3core:WinNT.mo
+ 0001:000387fc       _WinNT__DECREF             004397fc f m3core:WinNT.mo
+ 0001:0003883d       _WinNT__IMAGE_SNAP_BY_ORDINAL 0043983d f m3core:WinNT.mo
+ 0001:00038866       _WinNT__IMAGE_ORDINAL      00439866 f m3core:WinNT.mo
+ 0001:0003889c       __INITM_WinNT              0043989c f m3core:WinNT.mo
+ 0001:00038925       _MM_WinNT_CRASH            00439925 f m3core:WinNT.mo
+ 0001:00038940       _M3toC__TtoS               00439940 f m3core:M3toC.mo
+ 0001:0003897c       _M3toC__CopyTtoS           0043997c f m3core:M3toC.mo
+ 0001:000389fd       _M3toC__FreeCopiedS        004399fd f m3core:M3toC.mo
+ 0001:00038a27       _M3toC__StoT               00439a27 f m3core:M3toC.mo
+ 0001:00038a8a       _M3toC__CopyStoT           00439a8a f m3core:M3toC.mo
+ 0001:00038b0e       __INITM_M3toC              00439b0e f m3core:M3toC.mo
+ 0001:00038b35       _MM_M3toC_CRASH            00439b35 f m3core:M3toC.mo
+ 0001:00038b50       _RTParams__Nth             00439b50 f m3core:RTParams.mo
+ 0001:00038bac       _RTParams__IsPresent       00439bac f m3core:RTParams.mo
+ 0001:00038c26       _RTParams__Value           00439c26 f m3core:RTParams.mo
+ 0001:00038c85       _RTParams__RawValue        00439c85 f m3core:RTParams.mo
+ 0001:00038d42       _RTParams__Match           00439d42 f m3core:RTParams.mo
+ 0001:00038e0e       _RTParams__Init            00439e0e f m3core:RTParams.mo
+ 0001:0003901e       _MM_RTParams_CRASH         0043a01e f m3core:RTParams.mo
+ 0001:00039030       _RTArgs__ArgC              0043a030 f m3core:RTArgs.mo
+ 0001:00039072       _RTArgs__ParseArgs         0043a072 f m3core:RTArgs.mo
+ 0001:000393f4       _RTArgs__GetArg            0043a3f4 f m3core:RTArgs.mo
+ 0001:00039471       _RTArgs__EnvC              0043a471 f m3core:RTArgs.mo
+ 0001:000394f6       _RTArgs__GetEnv            0043a4f6 f m3core:RTArgs.mo
+ 0001:000395b6       _MM_RTArgs_CRASH           0043a5b6 f m3core:RTArgs.mo
+ 0001:000395d0       _RTCollector__Disable      0043a5d0 f m3core:RTCollector.mo
+ 0001:00039622       _RTCollector__Enable       0043a622 f m3core:RTCollector.mo
+ 0001:0003967c       _RTCollector__DisableMotion 0043a67c f m3core:RTCollector.mo
+ 0001:000396c2       _RTCollector__EnableMotion 0043a6c2 f m3core:RTCollector.mo
+ 0001:0003971c       _RTCollector__Collect      0043a71c f m3core:RTCollector.mo
+ 0001:00039748       _RTCollectorSRC__StartCollection 0043a748 f m3core:RTCollector.mo
+ 0001:000397e5       _RTCollectorSRC__FinishCollection 0043a7e5 f m3core:RTCollector.mo
+ 0001:00039823       _RTCollectorSRC__DisableVM 0043a823 f m3core:RTCollector.mo
+ 0001:00039854       _RTCollectorSRC__EnableVM  0043a854 f m3core:RTCollector.mo
+ 0001:00039894       _RTCollectorSRC__FinishVM  0043a894 f m3core:RTCollector.mo
+ 0001:00039939       _RTCollectorSRC__StartBackgroundCollection 0043a939 f m3core:RTCollector.mo
+ 0001:0003999c       _RTCollector__HeaderOf     0043a99c f m3core:RTCollector.mo
+ 0001:000399b5       _RTCollector__ReferentSize 0043a9b5 f m3core:RTCollector.mo
+ 0001:00039ae4       _RTCollector__ReferentToPage 0043aae4 f m3core:RTCollector.mo
+ 0001:00039b72       _RTCollector__HeaderToPage 0043ab72 f m3core:RTCollector.mo
+ 0001:00039c00       _RTCollector__PageToHeader 0043ac00 f m3core:RTCollector.mo
+ 0001:00039c1c       _RTCollector__PageToAddress 0043ac1c f m3core:RTCollector.mo
+ 0001:00039c38       _RTCollector__Move         0043ac38 f m3core:RTCollector.mo
+ 0001:00039fd4       _RTCollector__Moved        0043afd4 f m3core:RTCollector.mo
+ 0001:0003a083       _RTCollector__NoteStackLocations 0043b083 f m3core:RTCollector.mo
+ 0001:0003a346       _RTCollector__PromotePage  0043b346 f m3core:RTCollector.mo
+ 0001:0003a50c       _RTCollector__InsertFiller 0043b50c f m3core:RTCollector.mo
+ 0001:0003a582       _RTCollector__CollectEnough 0043b582 f m3core:RTCollector.mo
+ 0001:0003a625       _RTCollector__Behind       0043b625 f m3core:RTCollector.mo
+ 0001:0003a72e       _RTCollector__CollectorOn  0043b72e f m3core:RTCollector.mo
+ 0001:0003a82e       _RTCollector__CollectorOff 0043b82e f m3core:RTCollector.mo
+ 0001:0003aa78       _RTCollector__CollectSome  0043ba78 f m3core:RTCollector.mo
+ 0001:0003ab1a       _RTCollector__CollectSomeInStateZero 0043bb1a f m3core:RTCollector.mo
+ 0001:0003b2fd       _RTCollector__CollectSomeInStateOne 0043c2fd f m3core:RTCollector.mo
+ 0001:0003b33a       _RTCollector__CollectSomeInStateTwo 0043c33a f m3core:RTCollector.mo
+ 0001:0003b36b       _RTCollector__CollectSomeInStateThree 0043c36b f m3core:RTCollector.mo
+ 0001:0003b3b4       _RTCollector__CollectSomeInStateFour 0043c3b4 f m3core:RTCollector.mo
+ 0001:0003b3f1       _RTCollector__CollectSomeInStateFive 0043c3f1 f m3core:RTCollector.mo
+ 0001:0003b7dd       _RTCollector__CopySome     0043c7dd f m3core:RTCollector.mo
+ 0001:0003bc11       _RTCollector__CleanBetween 0043cc11 f m3core:RTCollector.mo
+ 0001:0003bcbd       _RTCollector__PreHandleWeakRefs 0043ccbd f m3core:RTCollector.mo
+ 0001:0003be82       _RTCollector__WeakWalk1    0043ce82 f m3core:RTCollector.mo
+ 0001:0003bff4       _RTCollector__WeakWalk2    0043cff4 f m3core:RTCollector.mo
+ 0001:0003c0e7       _RTCollector__PostHandleWeakRefs 0043d0e7 f m3core:RTCollector.mo
+ 0001:0003c3e1       _RTCollector__InitStack    0043d3e1 f m3core:RTCollector.mo
+ 0001:0003c4be       _RTCollector__PushStack    0043d4be f m3core:RTCollector.mo
+ 0001:0003c528       _RTCollector__ExpandStack  0043d528 f m3core:RTCollector.mo
+ 0001:0003c693       _RTCollector__PopStack     0043d693 f m3core:RTCollector.mo
+ 0001:0003c6ca       _RTCollector__StackEmpty   0043d6ca f m3core:RTCollector.mo
+ 0001:0003c6f5       _RTHeapRep__Malloc         0043d6f5 f m3core:RTCollector.mo
+ 0001:0003c76d       _RTHeapRep__AllocForNew    0043d76d f m3core:RTCollector.mo
+ 0001:0003c892       _RTCollector__AllocForPureCopy 0043d892 f m3core:RTCollector.mo
+ 0001:0003c9d8       _RTCollector__AllocForImpureCopy 0043d9d8 f m3core:RTCollector.mo
+ 0001:0003cb1e       _RTCollector__LongAlloc    0043db1e f m3core:RTCollector.mo
+ 0001:0003d16d       _RTCollector__BackgroundThread 0043e16d f m3core:RTCollector.mo
+ 0001:0003d1f4       _RTCollector__StartGC      0043e1f4 f m3core:RTCollector.mo
+ 0001:0003d20a       _RTCollector__FinishGC     0043e20a f m3core:RTCollector.mo
+ 0001:0003d220       _RTHeapRep__Crash          0043e220 f m3core:RTCollector.mo
+ 0001:0003d317       _RTCollector__InstallSanityCheck 0043e317 f m3core:RTCollector.mo
+ 0001:0003d382       _RTCollector__SanityCheck  0043e382 f m3core:RTCollector.mo
+ 0001:0003d902       _RTCollector__RefSanityCheck 0043e902 f m3core:RTCollector.mo
+ 0001:0003da88       _RTCollector__ProtectedOlderRefSanityCheck 0043ea88 f m3core:RTCollector.mo
+ 0001:0003dc57       _RTHeapRep__VisitAllRefs   0043ec57 f m3core:RTCollector.mo
+ 0001:0003de43       _M_RTCollector_LINE_1769   0043ee43 f m3core:RTCollector.mo
+ 0001:0003de5c       _RTCollector__One          0043ee5c f m3core:RTCollector.mo
+ 0001:0003df13       _RTCollector__All          0043ef13 f m3core:RTCollector.mo
+ 0001:0003df5d       _RTCollector__CountRefsForTypecodes 0043ef5d f m3core:RTCollector.mo
+ 0001:0003e0ce       _RTCollector__CountRefsForAllTypecodes 0043f0ce f m3core:RTCollector.mo
+ 0001:0003e23b       _RTCollector__PerfStart    0043f23b f m3core:RTCollector.mo
+ 0001:0003e3cc       _RTCollector__PerfFlip     0043f3cc f m3core:RTCollector.mo
+ 0001:0003e41f       _RTCollector__PerfPromotedRoots 0043f41f f m3core:RTCollector.mo
+ 0001:0003e472       _RTCollector__PerfStop     0043f472 f m3core:RTCollector.mo
+ 0001:0003e4d0       _RTCollector__PerfAllow    0043f4d0 f m3core:RTCollector.mo
+ 0001:0003e549       _RTCollector__PerfBegin    0043f549 f m3core:RTCollector.mo
+ 0001:0003e59c       _RTCollector__PerfEnd      0043f59c f m3core:RTCollector.mo
+ 0001:0003e5ef       _RTCollector__PerfChange   0043f5ef f m3core:RTCollector.mo
+ 0001:0003e683       _RTCollector__PerfGrow     0043f683 f m3core:RTCollector.mo
+ 0001:0003e6f2       _RTWeakRef__WeakRefFromRef 0043f6f2 f m3core:RTCollector.mo
+ 0001:0003e92f       _RTCollector__ExpandWeakTable 0043f92f f m3core:RTCollector.mo
+ 0001:0003ea58       _RTWeakRef__WeakRefToRef   0043fa58 f m3core:RTCollector.mo
+ 0001:0003eb8c       _RTHeapRep__RegisterFinalCleanup 0043fb8c f m3core:RTCollector.mo
+ 0001:0003ecc9       _RTCollector__WeakCleaner  0043fcc9 f m3core:RTCollector.mo
+ 0001:0003ee03       _RTCollector__FirstPage    0043fe03 f m3core:RTCollector.mo
+ 0001:0003ee6f       _RTCollector__PageCount    0043fe6f f m3core:RTCollector.mo
+ 0001:0003ef4c       _RTCollector__Protect      0043ff4c f m3core:RTCollector.mo
+ 0001:0003ef9f       _RTCollector__Unprotect    0043ff9f f m3core:RTCollector.mo
+ 0001:0003efc6       _RTHeapRep__Fault          0043ffc6 f m3core:RTCollector.mo
+ 0001:0003efff       _RTCollector__FindFreePages 0043ffff f m3core:RTCollector.mo
+ 0001:0003f0e8       _RTCollector__AllocateFreePagesFromBlock 004400e8 f m3core:RTCollector.mo
+ 0001:0003f68a       _RTCollector__RebuildFreelist 0044068a f m3core:RTCollector.mo
+ 0001:0003fb00       _RTCollector__FreeLength   00440b00 f m3core:RTCollector.mo
+ 0001:0003fbd7       _RTCollector__GrowHeap     00440bd7 f m3core:RTCollector.mo
+ 0001:000400be       _RTCollector__Wait         004410be f m3core:RTCollector.mo
+ 0001:00040127       _RTCollector__Broadcast    00441127 f m3core:RTCollector.mo
+ 0001:00040148       _RTHeapRep__Init           00441148 f m3core:RTCollector.mo
+ 0001:000401f7       __INITM_RTCollector        004411f7 f m3core:RTCollector.mo
+ 0001:00040304       _M_RTCollector_tea427828_LINK 00441304 f m3core:RTCollector.mo
+ 0001:0004032a       _M_RTCollector_te0af9685_LINK 0044132a f m3core:RTCollector.mo
+ 0001:00040350       _M_RTCollector_t70f71c7e_LINK 00441350 f m3core:RTCollector.mo
+ 0001:00040376       _M_RTCollector_tbc072de1_LINK 00441376 f m3core:RTCollector.mo
+ 0001:0004039f       _M_RTCollector_t75afb1a3_LINK 0044139f f m3core:RTCollector.mo
+ 0001:000403c5       _M_RTCollector_tb50268ff_LINK 004413c5 f m3core:RTCollector.mo
+ 0001:000403eb       _M_RTCollector_t9401f469_LINK 004413eb f m3core:RTCollector.mo
+ 0001:00040411       _M_RTCollector_t9bbfcf2c_LINK 00441411 f m3core:RTCollector.mo
+ 0001:00040437       _M_RTCollector_t0f0696fb_LINK 00441437 f m3core:RTCollector.mo
+ 0001:0004045d       _M_RTCollector_tff56e508_LINK 0044145d f m3core:RTCollector.mo
+ 0001:00040495       _M_RTCollector_t49c2f36d_LINK 00441495 f m3core:RTCollector.mo
+ 0001:000404bb       _MM_RTCollector_CRASH      004414bb f m3core:RTCollector.mo
+ 0001:000404d0       _RTHeapMap__WalkRef        004414d0 f m3core:RTHeapMap.mo
+ 0001:000405db       _RTHeapMap__DoWalkRef      004415db f m3core:RTHeapMap.mo
+ 0001:00040634       _RTHeapMap__WalkGlobals    00441634 f m3core:RTHeapMap.mo
+ 0001:00040737       _RTHeapMap__BuildGlobalMap 00441737 f m3core:RTHeapMap.mo
+ 0001:00040871       _RTHeapMap__WalkModuleGlobals 00441871 f m3core:RTHeapMap.mo
+ 0001:000408bb       _RTHeapMap__Walk           004418bb f m3core:RTHeapMap.mo
+ 0001:00040e8a       _MM_RTHeapMap_CRASH        00441e8a f m3core:RTHeapMap.mo
+ 0001:00040ea0       _RTTypeMap__WalkRef        00441ea0 f m3core:RTTypeMap.mo
+ 0001:00040f29       _RTTypeMap__DoWalkRef      00441f29 f m3core:RTTypeMap.mo
+ 0001:00040f8a       _RTTypeMap__Walk           00441f8a f m3core:RTTypeMap.mo
+ 0001:00041585       _MM_RTTypeMap_CRASH        00442585 f m3core:RTTypeMap.mo
+ 0001:000415a0       _RTMapOp__GetInt           004425a0 f m3core:RTMapOp.mo
+ 0001:00041639       _RTMapOp__Push             00442639 f m3core:RTMapOp.mo
+ 0001:00041693       _MM_RTMapOp_CRASH          00442693 f m3core:RTMapOp.mo
+ 0001:000416b0       _RTPerfTool__Start         004426b0 f m3core:RTPerfTool.mo
+ 0001:00041742       _RTPerfTool__Close         00442742 f m3core:RTPerfTool.mo
+ 0001:00041758       _RTPerfTool__Send          00442758 f m3core:RTPerfTool.mo
+ 0001:0004176e       _RTPerfTool__StartTool     0044276e f m3core:RTPerfTool.mo
+ 0001:0004178d       _MM_RTPerfTool_CRASH       0044278d f m3core:RTPerfTool.mo
+ 0001:000417a0       _RTHooks__Raise            004427a0 f m3core:RTHooks.mo
+ 0001:000417c2       _RTHooks__ResumeRaise      004427c2 f m3core:RTHooks.mo
+ 0001:000417ea       _RTHooks__Concat           004427ea f m3core:RTHooks.mo
+ 0001:0004180f       _RTHooks__ReportFault      0044280f f m3core:RTHooks.mo
+ 0001:000418b1       _MM_RTHooks_CRASH          004428b1 f m3core:RTHooks.mo
+ 0001:000418d0       _RTAllocator__NewTraced    004428d0 f m3core:RTAllocator.mo
+ 0001:00041939       _RTAllocator__NewUntraced  00442939 f m3core:RTAllocator.mo
+ 0001:000419ae       _RTAllocator__NewUntracedObject 004429ae f m3core:RTAllocator.mo
+ 0001:00041a17       _RTAllocator__NewTracedArray 00442a17 f m3core:RTAllocator.mo
+ 0001:00041aac       _RTAllocator__NewUntracedArray 00442aac f m3core:RTAllocator.mo
+ 0001:00041b41       _RTHooks__Allocate         00442b41 f m3core:RTAllocator.mo
+ 0001:00041dd3       _RTHooks__AllocateUntracedRef 00442dd3 f m3core:RTAllocator.mo
+ 0001:00041e66       _RTHooks__AllocateUntracedObj 00442e66 f m3core:RTAllocator.mo
+ 0001:00041fd7       _RTHooks__AllocateOpenArray 00442fd7 f m3core:RTAllocator.mo
+ 0001:0004221d       _RTHooks__AllocateUntracedOpenArray 0044321d f m3core:RTAllocator.mo
+ 0001:0004238a       _RTHooks__DisposeUntracedRef 0044338a f m3core:RTAllocator.mo
+ 0001:000423c1       _RTHooks__DisposeUntracedObj 004433c1 f m3core:RTAllocator.mo
+ 0001:00042454       _RTAllocator__OpenArrayCount 00443454 f m3core:RTAllocator.mo
+ 0001:000424fe       _MM_RTAllocator_CRASH      004434fe f m3core:RTAllocator.mo
+ 0001:00042510       _RTLinker__ExportProcs     00443510 f m3core:RTLinker.mo
+ 0001:00042648       _RTLinker__RunMainBodies   00443648 f m3core:RTLinker.mo
+ 0001:000426c5       __INITM_RTLinker           004436c5 f m3core:RTLinker.mo
+ 0001:0004275f       _MM_RTLinker_CRASH         0044375f f m3core:RTLinker.mo
+ 0001:00042770       _RTSignal__InstallHandlers 00443770 f m3core:RTSignal.mo
+ 0001:00042781       _RTSignal__RestoreHandlers 00443781 f m3core:RTSignal.mo
+ 0001:000427a0       _RTHeapInfo__Producer      004437a0 f m3core:RTHeapInfo.mo
+ 0001:000429a2       _RTHeapInfo__SendTypes     004439a2 f m3core:RTHeapInfo.mo
+ 0001:00042ae9       _RTHeapInfo__BuildTypeName 00443ae9 f m3core:RTHeapInfo.mo
+ 0001:00042d7f       _RTHeapInfo__Send          00443d7f f m3core:RTHeapInfo.mo
+ 0001:00042de2       _RTHeapInfo__Flush         00443de2 f m3core:RTHeapInfo.mo
+ 0001:00042e40       _RTHeapInfo__SetUpdate     00443e40 f m3core:RTHeapInfo.mo
+ 0001:00042f4f       _RTHeapInfo__Init          00443f4f f m3core:RTHeapInfo.mo
+ 0001:00042fc9       _M_RTHeapInfo_t6c810e28_LINK 00443fc9 f m3core:RTHeapInfo.mo
+ 0001:00042fef       _MM_RTHeapInfo_CRASH       00443fef f m3core:RTHeapInfo.mo
+ 0001:00043000       _RTHeap__GetDataAdr        00444000 f m3core:RTHeap.mo
+ 0001:000430a8       _RTHeap__GetDataSize       004440a8 f m3core:RTHeap.mo
+ 0001:000431d9       _RTHeap__GetArrayShape     004441d9 f m3core:RTHeap.mo
+ 0001:00043299       _RTHeap__Die               00444299 f m3core:RTHeap.mo
+ 0001:000432ce       _MM_RTHeap_CRASH           004442ce f m3core:RTHeap.mo
+ 0001:000432e0       _I_WinNT_t0bba4711_INIT    004442e0 f m3core:WinNT.io
+ 0001:000432f8       _I_WinNT_t9a779304_INIT    004442f8 f m3core:WinNT.io
+ 0001:00043310       _I_WinNT_td7258597_INIT    00444310 f m3core:WinNT.io
+ 0001:00043328       _I_WinNT_t72d63e56_INIT    00444328 f m3core:WinNT.io
+ 0001:00043340       _m3_div                    00444340 f m3core:hand.obj
+ 0001:000433dd       _m3_mod                    004443dd f m3core:hand.obj
+ 0001:00043476       _set_member                00444476 f m3core:hand.obj
+ 0001:000434c0       _set_union                 004444c0 f m3core:hand.obj
+ 0001:00043512       _set_intersection          00444512 f m3core:hand.obj
+ 0001:00043564       _set_difference            00444564 f m3core:hand.obj
+ 0001:000435b8       _set_sym_difference        004445b8 f m3core:hand.obj
+ 0001:0004360a       _set_eq                    0044460a f m3core:hand.obj
+ 0001:0004366a       _set_ne                    0044466a f m3core:hand.obj
+ 0001:000436ca       _set_ge                    004446ca f m3core:hand.obj
+ 0001:0004372c       _set_gt                    0044472c f m3core:hand.obj
+ 0001:000437bb       _set_le                    004447bb f m3core:hand.obj
+ 0001:0004381d       _set_lt                    0044481d f m3core:hand.obj
+ 0001:000438ac       _BuildTables               004448ac f m3core:hand.obj
+ 0001:00043935       _set_range                 00444935 f m3core:hand.obj
+ 0001:00043a27       _set_singleton             00444a27 f m3core:hand.obj
+ 0001:00044a8c       _strtod                    00445a8c f m3core:dtoa.obj
+ 0001:00045df6       _dtoa                      00446df6 f m3core:dtoa.obj
+ 0001:00046fe1       _mainCRTStartup            00447fe1 f msvcrt:crtexe.obj
+ 0001:000470f0       _sin                       004480f0   msvcrt:MSVCRT20.dll
+ 0001:000470f6       _cos                       004480f6   msvcrt:MSVCRT20.dll
+ 0001:000470fc       __setjmp                   004480fc   msvcrt:MSVCRT20.dll
+ 0001:00047102       _memmove                   00448102   msvcrt:MSVCRT20.dll
+ 0001:00047108       _sqrt                      00448108   msvcrt:MSVCRT20.dll
+ 0001:0004710e       _ldexp                     0044810e   msvcrt:MSVCRT20.dll
+ 0001:00047114       _atan2                     00448114   msvcrt:MSVCRT20.dll
+ 0001:0004711a       _pow                       0044811a   msvcrt:MSVCRT20.dll
+ 0001:00047120       _exp                       00448120   msvcrt:MSVCRT20.dll
+ 0001:00047126       _log                       00448126   msvcrt:MSVCRT20.dll
+ 0001:0004712c       _cosh                      0044812c   msvcrt:MSVCRT20.dll
+ 0001:00047132       _sinh                      00448132   msvcrt:MSVCRT20.dll
+ 0001:00047138       _memcmp                    00448138   msvcrt:MSVCRT20.dll
+ 0001:0004713e       _malloc                    0044813e   msvcrt:MSVCRT20.dll
+ 0001:00047144       _strcmp                    00448144   msvcrt:MSVCRT20.dll
+ 0001:0004714a       _memcpy                    0044814a   msvcrt:MSVCRT20.dll
+ 0001:00047150       _memset                    00448150   msvcrt:MSVCRT20.dll
+ 0001:00047156       _longjmp                   00448156   msvcrt:MSVCRT20.dll
+ 0001:0004715c       _free                      0044815c   msvcrt:MSVCRT20.dll
+ 0001:00047162       _strlen                    00448162   msvcrt:MSVCRT20.dll
+ 0001:00047168       __ftol                     00448168   msvcrt:MSVCRT20.dll
+ 0001:0004716e       __errno                    0044816e   msvcrt:MSVCRT20.dll
+ 0001:00047174       __exit                     00448174   msvcrt:MSVCRT20.dll
+ 0001:0004717a       __XcptFilter               0044817a   msvcrt:MSVCRT20.dll
+ 0001:00047180       _exit                      00448180   msvcrt:MSVCRT20.dll
+ 0001:00047186       ___p___initenv             00448186   msvcrt:MSVCRT20.dll
+ 0001:0004718c       __initterm                 0044818c   msvcrt:MSVCRT20.dll
+ 0001:00047192       ___getmainargs             00448192   msvcrt:MSVCRT20.dll
+ 0001:00047198       __setdefaultprecision      00448198 f msvcrt:fp8.obj
+ 0001:000471ab       __setargv                  004481ab f msvcrt:dllargv.obj
+ 0001:000471ac       ___p__commode              004481ac   msvcrt:MSVCRT20.dll
+ 0001:000471b2       ___p__fmode                004481b2   msvcrt:MSVCRT20.dll
+ 0001:000471b8       __onexit                   004481b8 f msvcrt:atonexit.obj
+ 0001:00047252       _atexit                    00448252 f msvcrt:atonexit.obj
+ 0001:00047264       __except_handler3          00448264   msvcrt:MSVCRT20.dll
+ 0001:0004726a       __controlfp                0044826a   msvcrt:MSVCRT20.dll
+ 0001:00047270       ___dllonexit               00448270   msvcrt:MSVCRT20.dll
+ 0001:00047276       _GetFullPathNameA@16       00448276   kernel32:KERNEL32.dll
+ 0001:0004727c       _CreateFileA@28            0044827c   kernel32:KERNEL32.dll
+ 0001:00047282       _GetFileInformationByHandle@8 00448282   kernel32:KERNEL32.dll
+ 0001:00047288       _CreateDirectoryA@8        00448288   kernel32:KERNEL32.dll
+ 0001:0004728e       _RemoveDirectoryA@4        0044828e   kernel32:KERNEL32.dll
+ 0001:00047294       _DeleteFileA@4             00448294   kernel32:KERNEL32.dll
+ 0001:0004729a       _MoveFileExA@12            0044829a   kernel32:KERNEL32.dll
+ 0001:000472a0       _FindFirstFileA@8          004482a0   kernel32:KERNEL32.dll
+ 0001:000472a6       _FindNextFileA@8           004482a6   kernel32:KERNEL32.dll
+ 0001:000472ac       _GetLastError@0            004482ac   kernel32:KERNEL32.dll
+ 0001:000472b2       _FindClose@4               004482b2   kernel32:KERNEL32.dll
+ 0001:000472b8       _SetFileTime@16            004482b8   kernel32:KERNEL32.dll
+ 0001:000472be       _CreateProcessA@40         004482be   kernel32:KERNEL32.dll
+ 0001:000472c4       _GetCurrentProcess@0       004482c4   kernel32:KERNEL32.dll
+ 0001:000472ca       _DuplicateHandle@28        004482ca   kernel32:KERNEL32.dll
+ 0001:000472d0       _WaitForSingleObject@8     004482d0   kernel32:KERNEL32.dll
+ 0001:000472d6       _GetExitCodeProcess@8      004482d6   kernel32:KERNEL32.dll
+ 0001:000472dc       _GetStdHandle@4            004482dc   kernel32:KERNEL32.dll
+ 0001:000472e2       _GetCurrentDirectoryA@8    004482e2   kernel32:KERNEL32.dll
+ 0001:000472e8       _SetCurrentDirectoryA@4    004482e8   kernel32:KERNEL32.dll
+ 0001:000472ee       _CreatePipe@16             004482ee   kernel32:KERNEL32.dll
+ 0001:000472f4       _GetFileType@4             004482f4   kernel32:KERNEL32.dll
+ 0001:000472fa       _WriteFile@20              004482fa   kernel32:KERNEL32.dll
+ 0001:00047300       _CloseHandle@4             00448300   kernel32:KERNEL32.dll
+ 0001:00047306       _PeekNamedPipe@24          00448306   kernel32:KERNEL32.dll
+ 0001:0004730c       _ReadFile@20               0044830c   kernel32:KERNEL32.dll
+ 0001:00047312       _SetFilePointer@16         00448312   kernel32:KERNEL32.dll
+ 0001:00047318       _FlushFileBuffers@4        00448318   kernel32:KERNEL32.dll
+ 0001:0004731e       _LockFile@20               0044831e   kernel32:KERNEL32.dll
+ 0001:00047324       _UnlockFile@20             00448324   kernel32:KERNEL32.dll
+ 0001:0004732a       _FileTimeToLocalFileTime@8 0044832a   kernel32:KERNEL32.dll
+ 0001:00047330       _FileTimeToSystemTime@8    00448330   kernel32:KERNEL32.dll
+ 0001:00047336       _GetTimeZoneInformation@4  00448336   kernel32:KERNEL32.dll
+ 0001:0004733c       _SystemTimeToFileTime@8    0044833c   kernel32:KERNEL32.dll
+ 0001:00047342       _GetSystemTime@4           00448342   kernel32:KERNEL32.dll
+ 0001:00047348       _EnterCriticalSection@4    00448348   kernel32:KERNEL32.dll
+ 0001:0004734e       _LeaveCriticalSection@4    0044834e   kernel32:KERNEL32.dll
+ 0001:00047354       _InitializeCriticalSection@4 00448354   kernel32:KERNEL32.dll
+ 0001:0004735a       _ReleaseSemaphore@12       0044835a   kernel32:KERNEL32.dll
+ 0001:00047360       _TlsGetValue@4             00448360   kernel32:KERNEL32.dll
+ 0001:00047366       _TlsSetValue@8             00448366   kernel32:KERNEL32.dll
+ 0001:0004736c       _CreateSemaphoreA@16       0044836c   kernel32:KERNEL32.dll
+ 0001:00047372       _CreateThread@24           00448372   kernel32:KERNEL32.dll
+ 0001:00047378       _ResumeThread@4            00448378   kernel32:KERNEL32.dll
+ 0001:0004737e       _Sleep@4                   0044837e   kernel32:KERNEL32.dll
+ 0001:00047384       _SuspendThread@4           00448384   kernel32:KERNEL32.dll
+ 0001:0004738a       _GetThreadContext@8        0044838a   kernel32:KERNEL32.dll
+ 0001:00047390       _TlsAlloc@0                00448390   kernel32:KERNEL32.dll
+ 0001:00047396       _GetCurrentThread@0        00448396   kernel32:KERNEL32.dll
+ 0001:0004739c       _ExitProcess@4             0044839c   kernel32:KERNEL32.dll
+ 0001:000473a2       _FatalExit@4               004483a2   kernel32:KERNEL32.dll
+ 0001:000473a8       _LocalAlloc@8              004483a8   kernel32:KERNEL32.dll
+ 0001:000473ae       _AllocConsole@0            004483ae   kernel32:KERNEL32.dll
+ 0001:000473b4       _GetModuleFileNameA@12     004483b4   kernel32:KERNEL32.dll
+ 0001:000473ba       _GetVersion@0              004483ba   kernel32:KERNEL32.dll
+ 0001:000473c0       _InitializeSecurityDescriptor@8 004483c0   advapi32:ADVAPI32.dll
+ 0001:000473c6       _InitializeAcl@12          004483c6   advapi32:ADVAPI32.dll
+ 0001:000473cc       _GetUserNameA@8            004483cc   advapi32:ADVAPI32.dll
+ 0001:000473d2       _LookupAccountNameA@28     004483d2   advapi32:ADVAPI32.dll
+ 0001:000473d8       _AddAccessAllowedAce@16    004483d8   advapi32:ADVAPI32.dll
+ 0001:000473de       _SetSecurityDescriptorDacl@16 004483de   advapi32:ADVAPI32.dll
+ 0001:000473e4       _GetFileSecurityA@20       004483e4   advapi32:ADVAPI32.dll
+ 0001:000473ea       _Netbios@4                 004483ea   netapi32:NETAPI32.dll
+ 0002:00007fa0       __m3_exporters             00450fa0   <common>
+ 0002:00007fb0       _HiBits                    00450fb0   <common>
+ 0002:00008030       _LoBits                    00451030   <common>
+ 0002:000080b0       ___onexitend               004510b0   <common>
+ 0002:000080b4       ___onexitbegin             004510b4   <common>
+ 0004:00000410       _MM_tWordEx                00453410   tWordEx.mo
+ 0004:00000510       _MM_tBits                  00453510   tBits.mo
+ 0004:00000848       _MM_tInteger               00453848   tInteger.mo
+ 0004:00000b60       _MM_tReal64                00453b60   tReal64.mo
+ 0004:00000e28       _MM_tCmplx                 00453e28   tCmplx.mo
+ 0004:00001168       _MM_tVect                  00454168   tVect.mo
+ 0004:00001398       _MM_tMat                   00454398   tMat.mo
+ 0004:00001538       _MM_tRoot                  00454538   tRoot.mo
+ 0004:00001ac8       _MM_tInterp                00454ac8   tInterp.mo
+ 0004:00001c88       _MM_tPoly                  00454c88   tPoly.mo
+ 0004:000020c0       _MM_tSLE                   004550c0   tSLE.mo
+ 0004:00002488       _MM_tRand                  00455488   tRand.mo
+ 0004:00002938       _MM_tFFT                   00455938   tFFT.mo
+ 0004:00002a48       _MI_test                   00455a48   test.io
+ 0004:00002ad0       _MM_test                   00455ad0   test.mo
+ 0004:00002bd8       _MM_xBits                  00455bd8   m3na:xBits.mo
+ 0004:00002cd8       _MI_xBits                  00455cd8   m3na:xBits.io
+ 0004:00002db0       _MM_xFFT                   00455db0   m3na:xFFT.mo
+ 0004:00002f18       _MI_xFFT                   00455f18   m3na:xFFT.io
+ 0004:00002f60       _MM_xInterp                00455f60   m3na:xInterp.mo
+ 0004:00002ff8       _MI_xInterp                00455ff8   m3na:xInterp.io
+ 0004:00003040       _MM_xPoly                  00456040   m3na:xPoly.mo
+ 0004:00003200       _MI_xPoly                  00456200   m3na:xPoly.io
+ 0004:00003378       _MM_xStat                  00456378   m3na:xStat.mo
+ 0004:000034a0       _MI_xStat                  004564a0   m3na:xStat.io
+ 0004:000034f0       _MM_xRNG02                 004564f0   m3na:xRNG02.mo
+ 0004:00003978       _MI_xRNG02                 00456978   m3na:xRNG02.io
+ 0004:000039d0       _MM_xRoot                  004569d0   m3na:xRoot.mo
+ 0004:00003b40       _MI_xRoot                  00456b40   m3na:xRoot.io
+ 0004:00003b98       _MM_xComplex               00456b98   m3na:xComplex.mo
+ 0004:00003fa0       _MI_xComplex               00456fa0   m3na:xComplex.io
+ 0004:00004120       _MM_xSLE                   00457120   m3na:xSLE.mo
+ 0004:000042e0       _MI_xSLE                   004572e0   m3na:xSLE.io
+ 0004:00004350       _MM_xRNG01                 00457350   m3na:xRNG01.mo
+ 0004:00004660       _MI_xRNG01                 00457660   m3na:xRNG01.io
+ 0004:000046a0       _MM_xRand                  004576a0   m3na:xRand.mo
+ 0004:00004908       _MI_xRand                  00457908   m3na:xRand.io
+ 0004:000049c8       _MI_xRandP                 004579c8   m3na:xRandP.io
+ 0004:00004ad8       _MM_xMat                   00457ad8   m3na:xMat.mo
+ 0004:00004cd0       _MI_xMat                   00457cd0   m3na:xMat.io
+ 0004:00004db8       _MM_xPrime                 00457db8   m3na:xPrime.mo
+ 0004:00006500       _MM_xInteger               00459500   m3na:xInteger.mo
+ 0004:00006658       _MI_xInteger               00459658   m3na:xInteger.io
+ 0004:000066b0       _MM_xVect                  004596b0   m3na:xVect.mo
+ 0004:00006838       _MI_xVect                  00459838   m3na:xVect.io
+ 0004:000068a0       _MM_xWordEx                004598a0   m3na:xWordEx.mo
+ 0004:00006d28       _MI_xWordEx                00459d28   m3na:xWordEx.io
+ 0004:00006d90       _MM_xSpecFtn               00459d90   m3na:xSpecFtn.mo
+ 0004:000070f8       _MM_xReal64                0045a0f8   m3na:xReal64.mo
+ 0004:00007168       _MI_xReal64                0045a168   m3na:xReal64.io
+ 0004:00007258       _MM_xUtils                 0045a258   m3na:xUtils.mo
+ 0004:00007330       _MI_xUtils                 0045a330   m3na:xUtils.io
+ 0004:00007390       _MM_Random                 0045a390   m3:Random.mo
+ 0004:00007588       _MM_RandomReal             0045a588   m3:RandomReal.mo
+ 0004:00007628       _MI_Random                 0045a628   m3:Random.io
+ 0004:00007758       _MI_RandomReal             0045a758   m3:RandomReal.io
+ 0004:000077b8       _MM_TimeStamp              0045a7b8   m3:TimeStamp.mo
+ 0004:000079e0       _MI_TimeStamp              0045a9e0   m3:TimeStamp.io
+ 0004:00007a68       _MM_MachineIDWin32         0045aa68   m3:MachineIDWin32.mo
+ 0004:00007b08       _MI_MachineID              0045ab08   m3:MachineID.io
+ 0004:00007b60       _MI_TimeStampRep           0045ab60   m3:TimeStampRep.io
+ 0004:00007bb0       _MM_Swap                   0045abb0   m3:Swap.mo
+ 0004:00007cc8       _MI_Swap                   0045acc8   m3:Swap.io
+ 0004:00007d28       _MM_TextWr                 0045ad28   m3:TextWr.mo
+ 0004:00007fd8       _MI_TextWr                 0045afd8   m3:TextWr.io
+ 0004:000080a0       _MM_IO                     0045b0a0   m3:IO.mo
+ 0004:00008200       _MI_IO                     0045b200   m3:IO.io
+ 0004:00008280       _MM_Lex                    0045b280   m3:Lex.mo
+ 0004:000085d8       _MI_Lex                    0045b5d8   m3:Lex.io
+ 0004:00008690       _MM_Stdio                  0045b690   m3:Stdio.mo
+ 0004:00008748       _MI_Stdio                  0045b748   m3:Stdio.io
+ 0004:000087a8       _MM_FileWr                 0045b7a8   m3:FileWr.mo
+ 0004:00008a40       _MI_FileWr                 0045ba40   m3:FileWr.io
+ 0004:00008b08       _MM_FileRd                 0045bb08   m3:FileRd.mo
+ 0004:00008d50       _MI_FileRd                 0045bd50   m3:FileRd.io
+ 0004:00008e18       _MM_FSWin32                0045be18   m3:FSWin32.mo
+ 0004:000092e0       _MI_FS                     0045c2e0   m3:FS.io
+ 0004:000093d0       _MM_WrWin32                0045c3d0   m3:WrWin32.mo
+ 0004:00009448       _MM_WrMove                 0045c448   m3:WrMove.mo
+ 0004:00009818       _MI_Wr                     0045c818   m3:Wr.io
+ 0004:000098a0       _MI_WrClass                0045c8a0   m3:WrClass.io
+ 0004:000099b8       _MI_UnsafeWr               0045c9b8   m3:UnsafeWr.io
+ 0004:00009a30       _MM_RdMove                 0045ca30   m3:RdMove.mo
+ 0004:00009d70       _MM_RdImpl                 0045cd70   m3:RdImpl.mo
+ 0004:00009fa8       _MI_Rd                     0045cfa8   m3:Rd.io
+ 0004:0000a050       _MI_RdClass                0045d050   m3:RdClass.io
+ 0004:0000a160       _MI_UnsafeRd               0045d160   m3:UnsafeRd.io
+ 0004:0000a1d0       _MM_Fmt                    0045d1d0   m3:Fmt.mo
+ 0004:0000b0e8       _MM_FmtBuf                 0045e0e8   m3:FmtBuf.mo
+ 0004:0000b600       _MM_OSErrorWin32           0045e600   m3:OSErrorWin32.mo
+ 0004:0000b6e8       _MM_ProcessWin32           0045e6e8   m3:ProcessWin32.mo
+ 0004:0000ba40       _MM_PipeWin32              0045ea40   m3:PipeWin32.mo
+ 0004:0000bab8       _MM_Pipe                   0045eab8   m3:Pipe.mo
+ 0004:0000bb30       _MM_FileWin32              0045eb30   m3:FileWin32.mo
+ 0004:0000bfb8       _MM_RegularFile            0045efb8   m3:RegularFile.mo
+ 0004:0000c040       _MM_Terminal               0045f040   m3:Terminal.mo
+ 0004:0000c0c8       _MI_Fmt                    0045f0c8   m3:Fmt.io
+ 0004:0000c138       _MI_FmtBuf                 0045f138   m3:FmtBuf.io
+ 0004:0000c190       _MI_FmtBufF                0045f190   m3:FmtBufF.io
+ 0004:0000c1f0       _MI_FmtBufTest             0045f1f0   m3:FmtBufTest.io
+ 0004:0000c240       _MI_Process                0045f240   m3:Process.io
+ 0004:0000c330       _MI_File                   0045f330   m3:File.io
+ 0004:0000c3f0       _MI_OSError                0045f3f0   m3:OSError.io
+ 0004:0000c448       _MI_OSErrorWin32           0045f448   m3:OSErrorWin32.io
+ 0004:0000c4a0       _MI_FileWin32              0045f4a0   m3:FileWin32.io
+ 0004:0000c578       _MI_Pipe                   0045f578   m3:Pipe.io
+ 0004:0000c5d0       _MI_RegularFile            0045f5d0   m3:RegularFile.io
+ 0004:0000c6a8       _MI_Terminal               0045f6a8   m3:Terminal.io
+ 0004:0000c700       _MM_PathnameWin32          0045f700   m3:PathnameWin32.mo
+ 0004:0000c9a0       _MI_Pathname               0045f9a0   m3:Pathname.io
+ 0004:0000ca40       _MM_TextSeq                0045fa40   m3:TextSeq.mo
+ 0004:0000cc88       _MI_TextSeq                0045fc88   m3:TextSeq.io
+ 0004:0000cd60       _MI_TextSeqRep             0045fd60   m3:TextSeqRep.io
+ 0004:0000cee0       _MM_AtomList               0045fee0   m3:AtomList.mo
+ 0004:0000d050       _MI_AtomList               00460050   m3:AtomList.io
+ 0004:0000d158       _MM_Atom                   00460158   m3:Atom.mo
+ 0004:0000d388       _MM_AtomAtomTbl            00460388   m3:AtomAtomTbl.mo
+ 0004:0000d7c8       _MI_Atom                   004607c8   m3:Atom.io
+ 0004:0000d820       _MI_AtomAtomTbl            00460820   m3:AtomAtomTbl.io
+ 0004:0000d9d8       _MM_Math                   004609d8   m3:Math.mo
+ 0004:0000da20       _MI_Math                   00460a20   m3:Math.io
+ 0004:0000da68       _MI_Main                   00460a68   m3core:Main.io
+ 0004:0000daa8       _MM_NB30                   00460aa8   m3core:NB30.mo
+ 0004:0000db30       _MI_NB30                   00460b30   m3core:NB30.io
+ 0004:0000e040       _MM_DateWin32              00461040   m3core:DateWin32.mo
+ 0004:0000e318       _MI_Date                   00461318   m3core:Date.io
+ 0004:0000e388       _MM_TickPortable           00461388   m3core:TickPortable.mo
+ 0004:0000e470       _MI_Tick                   00461470   m3core:Tick.io
+ 0004:0000e4d8       _MM_IEEESpecial            004614d8   m3core:IEEESpecial.mo
+ 0004:0000e550       _MI_IEEESpecial            00461550   m3core:IEEESpecial.io
+ 0004:0000e5e0       _MI_WinError               004615e0   m3core:WinError.io
+ 0004:0000e628       _MM_TimeWin32              00461628   m3core:TimeWin32.mo
+ 0004:0000e718       _MI_Time                   00461718   m3core:Time.io
+ 0004:0000e770       _MI_TimeWin32              00461770   m3core:TimeWin32.io
+ 0004:0000e7c8       _MM_ExtendedFloat          004617c8   m3core:ExtendedFloat.mo
+ 0004:0000e970       _MI_ExtendedFloat          00461970   m3core:ExtendedFloat.io
+ 0004:0000ea20       _MM_LongFloat              00461a20   m3core:LongFloat.mo
+ 0004:0000ec80       _MI_LongFloat              00461c80   m3core:LongFloat.io
+ 0004:0000ed28       _MI_LongRealRep            00461d28   m3core:LongRealRep.io
+ 0004:0000ed90       _MM_RealFloat              00461d90   m3core:RealFloat.mo
+ 0004:0000efe0       _MI_RealFloat              00461fe0   m3core:RealFloat.io
+ 0004:0000f088       _MM_FPU                    00462088   m3core:FPU.mo
+ 0004:0000f0d8       _MI_FPU                    004620d8   m3core:FPU.io
+ 0004:0000f128       _MM_DragonT                00462128   m3core:DragonT.mo
+ 0004:0000f1c0       _MI_DragonT                004621c0   m3core:DragonT.io
+ 0004:0000f210       _MM_DragonInt              00462210   m3core:DragonInt.mo
+ 0004:0000f508       _MI_DragonInt              00462508   m3core:DragonInt.io
+ 0004:0000f5b0       _MI_RealRep                004625b0   m3core:RealRep.io
+ 0004:0000f608       _MM_FloatMode              00462608   m3core:FloatMode.mo
+ 0004:0000f878       _MI_FloatMode              00462878   m3core:FloatMode.io
+ 0004:0000f918       _MM_Convert                00462918   m3core:Convert.mo
+ 0004:0000fb80       _MI_Convert                00462b80   m3core:Convert.io
+ 0004:0000fc08       _MM_CConvert               00462c08   m3core:CConvert.mo
+ 0004:0000fc50       _MI_CConvert               00462c50   m3core:CConvert.io
+ 0004:0000fc98       _MM_Extended               00462c98   m3core:Extended.mo
+ 0004:0000fce8       _MI_Extended               00462ce8   m3core:Extended.io
+ 0004:0000fd38       _MM_LongReal               00462d38   m3core:LongReal.mo
+ 0004:0000fd88       _MI_LongReal               00462d88   m3core:LongReal.io
+ 0004:0000fdd8       _MM_Real                   00462dd8   m3core:Real.mo
+ 0004:0000fe20       _MI_Real                   00462e20   m3core:Real.io
+ 0004:0000fe68       _MM_ThreadWin32            00462e68   m3core:ThreadWin32.mo
+ 0004:00010888       _MM_RT0                    00463888   m3core:RT0.mo
+ 0004:000108d8       _MM_Word                   004638d8   m3core:Word.mo
+ 0004:00010bf8       _MM_RTHeapDep              00463bf8   m3core:RTHeapDep.mo
+ 0004:00010ca0       _MM_RTHeapRep              00463ca0   m3core:RTHeapRep.mo
+ 0004:00010e70       _MM_RT0u                   00463e70   m3core:RT0u.mo
+ 0004:00010ec0       _MM_RTType                 00463ec0   m3core:RTType.mo
+ 0004:00011878       _MM_RTMisc                 00464878   m3core:RTMisc.mo
+ 0004:00011a98       _MM_Fingerprint            00464a98   m3core:Fingerprint.mo
+ 0004:00011c98       _MM_UnsafeHash             00464c98   m3core:UnsafeHash.mo
+ 0004:00011d98       _MM_Text                   00464d98   m3core:Text.mo
+ 0004:00011f38       _MM_Poly                   00464f38   m3core:Poly.mo
+ 0004:000121f0       _MM_PolyBasis              004651f0   m3core:PolyBasis.mo
+ 0004:00012240       _MM_RTProcedure            00465240   m3core:RTProcedure.mo
+ 0004:00012508       _MM_RTModule               00465508   m3core:RTModule.mo
+ 0004:000125b0       _MM_RTProcess              004655b0   m3core:RTProcess.mo
+ 0004:00012748       _MM_RTException            00465748   m3core:RTException.mo
+ 0004:00012ce8       _MM_RTIO                   00465ce8   m3core:RTIO.mo
+ 0004:00012e48       _MM_RTOS                   00465e48   m3core:RTOS.mo
+ 0004:00012f70       _MM_WinDef                 00465f70   m3core:WinDef.mo
+ 0004:00013bd8       _MM_WinNT                  00466bd8   m3core:WinNT.mo
+ 0004:00013d98       _MM_M3toC                  00466d98   m3core:M3toC.mo
+ 0004:00013fb0       _MM_RTParams               00466fb0   m3core:RTParams.mo
+ 0004:000141e8       _MM_RTArgs                 004671e8   m3core:RTArgs.mo
+ 0004:000142b8       _MM_RTCollector            004672b8   m3core:RTCollector.mo
+ 0004:00015990       _MM_RTHeapMap              00468990   m3core:RTHeapMap.mo
+ 0004:00015ca8       _MM_RTTypeMap              00468ca8   m3core:RTTypeMap.mo
+ 0004:00015df0       _MM_RTMapOp                00468df0   m3core:RTMapOp.mo
+ 0004:00015e70       _MM_RTPerfTool             00468e70   m3core:RTPerfTool.mo
+ 0004:00015f20       _MM_RTHooks                00468f20   m3core:RTHooks.mo
+ 0004:00016ba8       _MM_RTAllocator            00469ba8   m3core:RTAllocator.mo
+ 0004:00017000       _MM_RTLinker               0046a000   m3core:RTLinker.mo
+ 0004:00017140       _MM_RTSignal               0046a140   m3core:RTSignal.mo
+ 0004:000171d8       _MM_RTHeapInfo             0046a1d8   m3core:RTHeapInfo.mo
+ 0004:000173c0       _MM_RTHeap                 0046a3c0   m3core:RTHeap.mo
+ 0004:00017558       _MI_M3_BUILTIN             0046a558   m3core:RTBuiltin.obj
+ 0004:00017790       _MI_RTLinker               0046a790   m3core:RTLinker.io
+ 0004:00017868       _MI_RTHooks                0046a868   m3core:RTHooks.io
+ 0004:00017bf0       _MI_Scheduler              0046abf0   m3core:Scheduler.io
+ 0004:00017c48       _MI_Thread                 0046ac48   m3core:Thread.io
+ 0004:00017de8       _MI_ThreadF                0046ade8   m3core:ThreadF.io
+ 0004:00017e50       _MI_RTThreadInit           0046ae50   m3core:RTThreadInit.io
+ 0004:00017ea8       _MI_RTHeapRep              0046aea8   m3core:RTHeapRep.io
+ 0004:000181f0       _MI_RT0                    0046b1f0   m3core:RT0.io
+ 0004:000184b8       _MI_RTHeapDep              0046b4b8   m3core:RTHeapDep.io
+ 0004:00018518       _MI_Word                   0046b518   m3core:Word.io
+ 0004:000185b0       _MI_RTMachine              0046b5b0   m3core:RTMachine.io
+ 0004:00018600       _MI_Csetjmp                0046b600   m3core:Csetjmp.io
+ 0004:00018648       _MI_Ctypes                 0046b648   m3core:Ctypes.io
+ 0004:00018d18       _MI_BasicCtypes            0046bd18   m3core:BasicCtypes.io
+ 0004:00018d68       _MI_RT0u                   0046bd68   m3core:RT0u.io
+ 0004:00018f10       _MI_RTType                 0046bf10   m3core:RTType.io
+ 0004:00018f78       _MI_RTTypeSRC              0046bf78   m3core:RTTypeSRC.io
+ 0004:00018fd8       _MI_RTMisc                 0046bfd8   m3core:RTMisc.io
+ 0004:00019048       _MI_Cstring                0046c048   m3core:Cstring.io
+ 0004:00019090       _MI_RTProcedure            0046c090   m3core:RTProcedure.io
+ 0004:00019170       _MI_Fingerprint            0046c170   m3core:Fingerprint.io
+ 0004:000191e8       _MI_Text                   0046c1e8   m3core:Text.io
+ 0004:00019260       _MI_TextF                  0046c260   m3core:TextF.io
+ 0004:00019340       _MI_Poly                   0046c340   m3core:Poly.io
+ 0004:000193c0       _MI_PolyBasis              0046c3c0   m3core:PolyBasis.io
+ 0004:0001d418       _MI_RTProcedureSRC         00470418   m3core:RTProcedureSRC.io
+ 0004:0001d478       _MI_RTModule               00470478   m3core:RTModule.io
+ 0004:0001d4d0       _MI_RTProcess              004704d0   m3core:RTProcess.io
+ 0004:0001d538       _MI_RTException            00470538   m3core:RTException.io
+ 0004:0001d728       _MI_RTExRep                00470728   m3core:RTExRep.io
+ 0004:0001d9e0       _MI_RTIO                   004709e0   m3core:RTIO.io
+ 0004:0001da50       _MI_RTOS                   00470a50   m3core:RTOS.io
+ 0004:0001dab8       _MI_WinBase                00470ab8   m3core:WinBase.io
+ 0004:0001f318       _MI_WinNT                  00472318   m3core:WinNT.io
+ 0004:00021ad0       _MI_WinBaseTypes           00474ad0   m3core:WinBaseTypes.io
+ 0004:00021b98       _MI_WinDef                 00474b98   m3core:WinDef.io
+ 0004:00021dd8       _MI_M3toC                  00474dd8   m3core:M3toC.io
+ 0004:00021e38       _MI_Cstdlib                00474e38   m3core:Cstdlib.io
+ 0004:00021e80       _MI_Cstddef                00474e80   m3core:Cstddef.io
+ 0004:00021ec8       _MI_WinCon                 00474ec8   m3core:WinCon.io
+ 0004:000224d0       _MI_RTParams               004754d0   m3core:RTParams.io
+ 0004:00022538       _MI_RTArgs                 00475538   m3core:RTArgs.io
+ 0004:00022598       _MI_RTCollector            00475598   m3core:RTCollector.io
+ 0004:00022600       _MI_RTCollectorSRC         00475600   m3core:RTCollectorSRC.io
+ 0004:00022678       _MI_RTWeakRef              00475678   m3core:RTWeakRef.io
+ 0004:000226d0       _MI_RTHeapEvent            004756d0   m3core:RTHeapEvent.io
+ 0004:00022728       _MI_RTHeapMap              00475728   m3core:RTHeapMap.io
+ 0004:00022890       _MI_RTMapOp                00475890   m3core:RTMapOp.io
+ 0004:00022ba0       _MI_RTTypeMap              00475ba0   m3core:RTTypeMap.io
+ 0004:00022c70       _MI_RTPerfTool             00475c70   m3core:RTPerfTool.io
+ 0004:00022d50       _MI_ThreadContext          00475d50   m3core:ThreadContext.io
+ 0004:00022e48       _MI_RTAllocator            00475e48   m3core:RTAllocator.io
+ 0004:00022eb8       _MI_RTSignal               00475eb8   m3core:RTSignal.io
+ 0004:00022f10       _MI_RTHeapInfo             00475f10   m3core:RTHeapInfo.io
+ 0004:00022f68       _MI_RTHeap                 00475f68   m3core:RTHeap.io
+ 0004:00022fc0       _tables_built              00475fc0   m3core:hand.obj
+ 0004:000230f4       __dowildcard               004760f4   msvcrt:wildcard.obj
+ 0004:000230f8       __newmode                  004760f8   msvcrt:_newmode.obj
+ 0004:000230fc       __commode                  004760fc   msvcrt:ncommode.obj
+ 0004:00023100       __fmode                    00476100   msvcrt:txtmode.obj
+ 0004:00023104       ___win32sflag              00476104   msvcrt:atonexit.obj
+ 0004:0002310c       ___xc_a                    0047610c   msvcrt:cinitexe.obj
+ 0004:00023110       ___xc_z                    00476110   msvcrt:cinitexe.obj
+ 0004:00023114       ___xi_a                    00476114   msvcrt:cinitexe.obj
+ 0004:00023118       ___xi_z                    00476118   msvcrt:cinitexe.obj
+ 0005:00000000       MSVCRT20_IMPORT_DESCRIPTOR 00477000   msvcrt:MSVCRT20.dll
+ 0005:00000014       KERNEL32_IMPORT_DESCRIPTOR 00477014   kernel32:KERNEL32.dll
+ 0005:00000028       ADVAPI32_IMPORT_DESCRIPTOR 00477028   advapi32:ADVAPI32.dll
+ 0005:0000003c       NETAPI32_IMPORT_DESCRIPTOR 0047703c   netapi32:NETAPI32.dll
+ 0005:00000050       NULL_IMPORT_DESCRIPTOR     00477050   msvcrt:MSVCRT20.dll
+ 0005:000001f8       __imp__GetFileSecurityA@20 004771f8   advapi32:ADVAPI32.dll
+ 0005:000001fc       __imp__SetSecurityDescriptorDacl@16 004771fc   advapi32:ADVAPI32.dll
+ 0005:00000200       __imp__AddAccessAllowedAce@16 00477200   advapi32:ADVAPI32.dll
+ 0005:00000204       __imp__LookupAccountNameA@28 00477204   advapi32:ADVAPI32.dll
+ 0005:00000208       __imp__GetUserNameA@8      00477208   advapi32:ADVAPI32.dll
+ 0005:0000020c       __imp__InitializeAcl@12    0047720c   advapi32:ADVAPI32.dll
+ 0005:00000210       __imp__InitializeSecurityDescriptor@8 00477210   advapi32:ADVAPI32.dll
+ 0005:00000214       \177ADVAPI32_NULL_THUNK_DATA 00477214   advapi32:ADVAPI32.dll
+ 0005:00000218       __imp__WaitForSingleObject@8 00477218   kernel32:KERNEL32.dll
+ 0005:0000021c       __imp__CreatePipe@16       0047721c   kernel32:KERNEL32.dll
+ 0005:00000220       __imp__DuplicateHandle@28  00477220   kernel32:KERNEL32.dll
+ 0005:00000224       __imp__GetVersion@0        00477224   kernel32:KERNEL32.dll
+ 0005:00000228       __imp__GetModuleFileNameA@12 00477228   kernel32:KERNEL32.dll
+ 0005:0000022c       __imp__AllocConsole@0      0047722c   kernel32:KERNEL32.dll
+ 0005:00000230       __imp__LocalAlloc@8        00477230   kernel32:KERNEL32.dll
+ 0005:00000234       __imp__FatalExit@4         00477234   kernel32:KERNEL32.dll
+ 0005:00000238       __imp__ExitProcess@4       00477238   kernel32:KERNEL32.dll
+ 0005:0000023c       __imp__GetCurrentThread@0  0047723c   kernel32:KERNEL32.dll
+ 0005:00000240       __imp__TlsAlloc@0          00477240   kernel32:KERNEL32.dll
+ 0005:00000244       __imp__GetThreadContext@8  00477244   kernel32:KERNEL32.dll
+ 0005:00000248       __imp__SuspendThread@4     00477248   kernel32:KERNEL32.dll
+ 0005:0000024c       __imp__Sleep@4             0047724c   kernel32:KERNEL32.dll
+ 0005:00000250       __imp__ResumeThread@4      00477250   kernel32:KERNEL32.dll
+ 0005:00000254       __imp__CreateThread@24     00477254   kernel32:KERNEL32.dll
+ 0005:00000258       __imp__CreateSemaphoreA@16 00477258   kernel32:KERNEL32.dll
+ 0005:0000025c       __imp__TlsSetValue@8       0047725c   kernel32:KERNEL32.dll
+ 0005:00000260       __imp__TlsGetValue@4       00477260   kernel32:KERNEL32.dll
+ 0005:00000264       __imp__ReleaseSemaphore@12 00477264   kernel32:KERNEL32.dll
+ 0005:00000268       __imp__InitializeCriticalSection@4 00477268   kernel32:KERNEL32.dll
+ 0005:0000026c       __imp__LeaveCriticalSection@4 0047726c   kernel32:KERNEL32.dll
+ 0005:00000270       __imp__EnterCriticalSection@4 00477270   kernel32:KERNEL32.dll
+ 0005:00000274       __imp__GetSystemTime@4     00477274   kernel32:KERNEL32.dll
+ 0005:00000278       __imp__SystemTimeToFileTime@8 00477278   kernel32:KERNEL32.dll
+ 0005:0000027c       __imp__GetTimeZoneInformation@4 0047727c   kernel32:KERNEL32.dll
+ 0005:00000280       __imp__GetFullPathNameA@16 00477280   kernel32:KERNEL32.dll
+ 0005:00000284       __imp__CreateFileA@28      00477284   kernel32:KERNEL32.dll
+ 0005:00000288       __imp__GetFileInformationByHandle@8 00477288   kernel32:KERNEL32.dll
+ 0005:0000028c       __imp__CreateDirectoryA@8  0047728c   kernel32:KERNEL32.dll
+ 0005:00000290       __imp__RemoveDirectoryA@4  00477290   kernel32:KERNEL32.dll
+ 0005:00000294       __imp__DeleteFileA@4       00477294   kernel32:KERNEL32.dll
+ 0005:00000298       __imp__MoveFileExA@12      00477298   kernel32:KERNEL32.dll
+ 0005:0000029c       __imp__FindFirstFileA@8    0047729c   kernel32:KERNEL32.dll
+ 0005:000002a0       __imp__FindNextFileA@8     004772a0   kernel32:KERNEL32.dll
+ 0005:000002a4       __imp__GetLastError@0      004772a4   kernel32:KERNEL32.dll
+ 0005:000002a8       __imp__FindClose@4         004772a8   kernel32:KERNEL32.dll
+ 0005:000002ac       __imp__SetFileTime@16      004772ac   kernel32:KERNEL32.dll
+ 0005:000002b0       __imp__CreateProcessA@40   004772b0   kernel32:KERNEL32.dll
+ 0005:000002b4       __imp__GetCurrentProcess@0 004772b4   kernel32:KERNEL32.dll
+ 0005:000002b8       __imp__FileTimeToLocalFileTime@8 004772b8   kernel32:KERNEL32.dll
+ 0005:000002bc       __imp__FileTimeToSystemTime@8 004772bc   kernel32:KERNEL32.dll
+ 0005:000002c0       __imp__GetExitCodeProcess@8 004772c0   kernel32:KERNEL32.dll
+ 0005:000002c4       __imp__GetStdHandle@4      004772c4   kernel32:KERNEL32.dll
+ 0005:000002c8       __imp__GetCurrentDirectoryA@8 004772c8   kernel32:KERNEL32.dll
+ 0005:000002cc       __imp__SetCurrentDirectoryA@4 004772cc   kernel32:KERNEL32.dll
+ 0005:000002d0       __imp__ReadFile@20         004772d0   kernel32:KERNEL32.dll
+ 0005:000002d4       __imp__GetFileType@4       004772d4   kernel32:KERNEL32.dll
+ 0005:000002d8       __imp__WriteFile@20        004772d8   kernel32:KERNEL32.dll
+ 0005:000002dc       __imp__CloseHandle@4       004772dc   kernel32:KERNEL32.dll
+ 0005:000002e0       __imp__PeekNamedPipe@24    004772e0   kernel32:KERNEL32.dll
+ 0005:000002e4       __imp__SetFilePointer@16   004772e4   kernel32:KERNEL32.dll
+ 0005:000002e8       __imp__FlushFileBuffers@4  004772e8   kernel32:KERNEL32.dll
+ 0005:000002ec       __imp__LockFile@20         004772ec   kernel32:KERNEL32.dll
+ 0005:000002f0       __imp__UnlockFile@20       004772f0   kernel32:KERNEL32.dll
+ 0005:000002f4       \177KERNEL32_NULL_THUNK_DATA 004772f4   kernel32:KERNEL32.dll
+ 0005:000002f8       __imp__cosh                004772f8   msvcrt:MSVCRT20.dll
+ 0005:000002fc       __imp___onexit             004772fc   msvcrt:MSVCRT20.dll
+ 0005:00000300       __imp____dllonexit         00477300   msvcrt:MSVCRT20.dll
+ 0005:00000304       __imp___controlfp          00477304   msvcrt:MSVCRT20.dll
+ 0005:00000308       __imp___except_handler3    00477308   msvcrt:MSVCRT20.dll
+ 0005:0000030c       __imp____p__fmode          0047730c   msvcrt:MSVCRT20.dll
+ 0005:00000310       __imp____p__commode        00477310   msvcrt:MSVCRT20.dll
+ 0005:00000314       __imp____getmainargs       00477314   msvcrt:MSVCRT20.dll
+ 0005:00000318       __imp___initterm           00477318   msvcrt:MSVCRT20.dll
+ 0005:0000031c       __imp____p___initenv       0047731c   msvcrt:MSVCRT20.dll
+ 0005:00000320       __imp__exit                00477320   msvcrt:MSVCRT20.dll
+ 0005:00000324       __imp___XcptFilter         00477324   msvcrt:MSVCRT20.dll
+ 0005:00000328       __imp___exit               00477328   msvcrt:MSVCRT20.dll
+ 0005:0000032c       __imp___errno              0047732c   msvcrt:MSVCRT20.dll
+ 0005:00000330       __imp___ftol               00477330   msvcrt:MSVCRT20.dll
+ 0005:00000334       __imp__strlen              00477334   msvcrt:MSVCRT20.dll
+ 0005:00000338       __imp__free                00477338   msvcrt:MSVCRT20.dll
+ 0005:0000033c       __imp__longjmp             0047733c   msvcrt:MSVCRT20.dll
+ 0005:00000340       __imp__memset              00477340   msvcrt:MSVCRT20.dll
+ 0005:00000344       __imp__memcpy              00477344   msvcrt:MSVCRT20.dll
+ 0005:00000348       __imp__strcmp              00477348   msvcrt:MSVCRT20.dll
+ 0005:0000034c       __imp__malloc              0047734c   msvcrt:MSVCRT20.dll
+ 0005:00000350       __imp__memcmp              00477350   msvcrt:MSVCRT20.dll
+ 0005:00000354       __imp__sinh                00477354   msvcrt:MSVCRT20.dll
+ 0005:00000358       __imp__sin                 00477358   msvcrt:MSVCRT20.dll
+ 0005:0000035c       __imp__log                 0047735c   msvcrt:MSVCRT20.dll
+ 0005:00000360       __imp__exp                 00477360   msvcrt:MSVCRT20.dll
+ 0005:00000364       __imp__pow                 00477364   msvcrt:MSVCRT20.dll
+ 0005:00000368       __imp__atan2               00477368   msvcrt:MSVCRT20.dll
+ 0005:0000036c       __imp__ldexp               0047736c   msvcrt:MSVCRT20.dll
+ 0005:00000370       __imp__sqrt                00477370   msvcrt:MSVCRT20.dll
+ 0005:00000374       __imp__memmove             00477374   msvcrt:MSVCRT20.dll
+ 0005:00000378       __imp___setjmp             00477378   msvcrt:MSVCRT20.dll
+ 0005:0000037c       __imp__cos                 0047737c   msvcrt:MSVCRT20.dll
+ 0005:00000380       \177MSVCRT20_NULL_THUNK_DATA 00477380   msvcrt:MSVCRT20.dll
+ 0005:00000384       __imp__Netbios@4           00477384   netapi32:NETAPI32.dll
+ 0005:00000388       \177NETAPI32_NULL_THUNK_DATA 00477388   netapi32:NETAPI32.dll
+
+ entry point at        0001:00046fe1
+
+ Static symbols
+
+ 0001:00043a60       _Balloc                    00444a60 f m3core:dtoa.obj
+ 0001:00043af0       _Bfree                     00444af0 f m3core:dtoa.obj
+ 0001:00043b27       _multadd                   00444b27 f m3core:dtoa.obj
+ 0001:00043c31       _s2b                       00444c31 f m3core:dtoa.obj
+ 0001:00043d36       _hi0bits                   00444d36 f m3core:dtoa.obj
+ 0001:00043dc2       _lo0bits                   00444dc2 f m3core:dtoa.obj
+ 0001:00043eb7       _i2b                       00444eb7 f m3core:dtoa.obj
+ 0001:00043eed       _mult                      00444eed f m3core:dtoa.obj
+ 0001:00044190       _pow5mult                  00445190 f m3core:dtoa.obj
+ 0001:000442a5       _lshift                    004452a5 f m3core:dtoa.obj
+ 0001:000443fc       _cmp                       004453fc f m3core:dtoa.obj
+ 0001:000444b7       _diff                      004454b7 f m3core:dtoa.obj
+ 0001:00044698       _ulp                       00445698 f m3core:dtoa.obj
+ 0001:0004473b       _b2d                       0044573b f m3core:dtoa.obj
+ 0001:00044899       _d2b                       00445899 f m3core:dtoa.obj
+ 0001:00044a0c       _ratio                     00445a0c f m3core:dtoa.obj
+ 0001:00045b5d       _quorem                    00446b5d f m3core:dtoa.obj
+
+FIXUPS: 47e80 38 16 13 87 2c c c ffffc9c4 38ca 1d ffffff4c fffffe9c 5 f
+FIXUPS: 48086 1c 1f fffff61d 1aa 82 13 f 2c 1b d 1d 72 a3 23 1d 1b 1d 3a
+FIXUPS: 47b77 4d 22 26 e 22 19 13 2c f 8f 13 bf 1f 1e 13 ffffe6de 26 1d
+FIXUPS: 46592 1d 13 29 4a 13 f8 27 37 16d a6 37 3a 96 c c c 11 c c c c
+FIXUPS: 46ccc 16e 10e 103 242 24c c1 ffffd632 26 c 7d 4c 53 1a9 92 269
+FIXUPS: 451f6 30 f 3b 88 f0 e1 17 5d 230 138 54 80 78 2d 13 94e 12 26 21
+FIXUPS: 463e5 12b 13

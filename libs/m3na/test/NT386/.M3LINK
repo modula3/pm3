@@ -1,0 +1,29 @@
+-out:Test.exe
+-subsystem:console
+netapi32.lib 0
+comdlg32.lib 0
+winspool.lib 0
+advapi32.lib 0
+gdi32.lib 0
+user32.lib 0
+kernel32.lib 0
+msvcrt.lib 0
+c:\m3\pkg\m3core\NT386\m3core.lib 46810990
+c:\m3\pkg\libm3\NT386\m3.lib 46811346
+c:\m3tmp\m3na\m3na\NT386\m3na.lib 73361168
+test.mo 70345226
+test.io 70249966
+tFFT.mo 70249972
+tRand.mo 70236792
+tSLE.mo 73361304
+tPoly.mo 70236790
+tInterp.mo 70236788
+tRoot.mo 73361359
+tMat.mo 70236784
+tVect.mo 70236784
+tCmplx.mo 73361300
+tReal64.mo 70236782
+tInteger.mo 70236780
+tBits.mo 70236780
+tWordEx.mo 70237144
+_m3main.obj 73361362
