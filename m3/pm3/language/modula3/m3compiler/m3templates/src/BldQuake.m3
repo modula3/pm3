@@ -2102,6 +2102,8 @@ PROCEDURE Template(t: T; x: TEXT) RAISES {Error}=
     full_fn := Pathname.Prefix(M3ID.ToText(t.includes[t.reg.ip-1].file.source_file)) & t.SL & fn;
   BEGIN
     EVAL t.templates.put(M3ID.Add(fn), NEW(M3Libs.T, hidden := VISIBLE,
+                                           loc := Location(t, t.package, 
+                                                           PkgSubdir(t)),
                                            local := TRUE));
 
     M3Buf.PutText(t.tfile_args, "_import_template(\"" & fn & "\", \"" & 
