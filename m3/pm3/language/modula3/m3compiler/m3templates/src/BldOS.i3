@@ -1,0 +1,5 @@
+INTERFACE BldOS;
+
+EXCEPTION Error;
+
+END BldOS.

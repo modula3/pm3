@@ -1,0 +1,21 @@
+import("libm3")
+import("m3quake")
+import("m3middle")
+import("m3driver")
+
+interface("Location")
+table("TextLoc", "Text", "Location")
+
+interface("M3Libs")
+table("IntM3Libs", "Integer", "M3Libs")
+
+table("IntMap", "Integer", "TextTextTbl")
+
+interface("BldQRep")
+Module("BldQuake")
+module("BldFace")
+module("BldHooks")
+module("BldPosix")
+module("BldWin32")
+
+library("m3templates")
