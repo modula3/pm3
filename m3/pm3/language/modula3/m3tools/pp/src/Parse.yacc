@@ -923,7 +923,7 @@ line_pragma:
     | Pr_Line     SP Card_const SP Str_const SP Rpragma1
     ;
 
-spec_pragma:       Pr_Spec       SP esc_spec       SP Rpragma1 ;
+spec_pragma:       Pr_Spec SP B esc_spec E SP Rpragma1 NL ;
 
 
 /*------ specifications for ESC (extended static checker) ------*/
@@ -942,7 +942,7 @@ esc_spec:
     ;
 
 spec_proc:
-      spec_proc_signature
+        spec_proc_signature NL
         spec_proc_opt_modifies
         spec_proc_opt_requires
         spec_proc_opt_ensures
@@ -950,17 +950,17 @@ spec_proc:
 
 spec_proc_opt_modifies:
       /* empty */
-    | spec_proc_modifies
+    | spec_proc_modifies NL
     ;
 
 spec_proc_opt_requires:
       /* empty */
-    | spec_proc_requires
+    | spec_proc_requires NL
     ;
 
 spec_proc_opt_ensures:
       /* empty */
-    | spec_proc_ensures
+    | spec_proc_ensures NL
     ;
 
 spec_proc_signature:
@@ -970,14 +970,14 @@ spec_proc_signature:
     | qqid Lparen id_list Rparen Colon spec_type
     ;
 
-spec_var: Var spec_typed_id_list ;
+spec_var: Var SP B spec_typed_id_list E ;
 
 spec_depend:
-      Depends qqid spec_opt_typed_id Colon spec_term_list ;
+      Depends SP qqid spec_opt_typed_id Colon A B spec_term_list E ;
 
 spec_abstract:
-      Rep qqid spec_opt_typed_id Colon qqid Lbracket qqid Rbracket Iff   spec_pred
-    | Rep qqid spec_opt_typed_id Colon qqid Lbracket qqid Rbracket Equal expr
+      Rep SP qqid spec_opt_typed_id Colon A qqid Lbracket qqid Rbracket A Iff   SP spec_pred
+    | Rep SP qqid spec_opt_typed_id Colon A qqid Lbracket qqid Rbracket A Equal SP expr
     ;
 
 spec_opt_typed_id:
@@ -985,56 +985,97 @@ spec_opt_typed_id:
     | Lbracket spec_typed_id Rbracket
     ;
 
-spec_pred_def: Pred Ident Lparen spec_typed_id_list Rparen Is spec_pred ;
+spec_pred_def: Pred SP Ident Lparen spec_typed_id_list Rparen A Is SP spec_pred ;
 
 spec_func_def:  /* was TypedIdlist instead of TypedIdList */
-      Func Ident                                  Colon spec_type
-    | Func Ident Lparen spec_typed_id_list Rparen Colon spec_type
+      Func SP Ident                                  Z Colon A spec_type
+    | Func SP Ident Lparen spec_typed_id_list Rparen Z Colon A spec_type
     ;
 
-spec_axiom: Axiom spec_pred ;
+spec_axiom: Axiom SP spec_pred ;
 
-spec_protect: Protect qqid_list By spec_term_list ;
+spec_protect: Protect SP qqid_list A By SP spec_term_list ;
 
-spec_inv: Inv spec_pred ;
+spec_inv: Inv SP spec_pred ;
 
-spec_let: Let Ident Assign spec_term ;
+spec_let: Let SP Ident A Assign SP spec_term ;
 
 
 /*spec_term: spec_term_sum ;*/
 
 spec_term: spec_pred ;
 
-spec_term_sum:
-      spec_term_prod
-    | spec_term_sum Plus spec_term_prod
-    | spec_term_sum Minus spec_term_prod
+spec_pred: spec_quant ;
+
+spec_quant: B spec_zquant E ;
+spec_zquant:
+      spec_concl
+    | All    SP Lbracket spec_typed_id_list Rbracket A spec_concl
+    | Exists SP Lbracket spec_typed_id_list Rbracket A spec_concl
     ;
 
-spec_term_prod:
-      spec_term_selector
-    | spec_term_prod Asterisk spec_term_selector
-    | spec_term_prod Div spec_term_selector
-    | spec_term_prod Mod spec_term_selector
+spec_concl: B spec_zconcl E ;
+spec_zconcl:
+      spec_disj
+    | spec_disj A spec_weak_pred_op SP spec_concl /* these operations are right-associative */
     ;
+
+spec_weak_pred_op: Implies | Iff ;
+
+spec_disj: B spec_zdisj E ;
+spec_zdisj:
+      spec_conj
+    | spec_zdisj A Or SP spec_conj
+    ;
+
+spec_conj: B spec_zconj E ;
+spec_zconj:
+      spec_literal
+    | spec_zconj A And SP spec_literal
+    ;
+
+spec_literal: B spec_zliteral E ;
+spec_zliteral:
+      spec_atom
+    | Not SP spec_zliteral
+    ;
+
+spec_atom:
+      B spec_term_sum A spec_bin_rel SP spec_term_sum E
+    | B spec_term_sum E
+    ;
+
+spec_term_sum: B spec_zterm_sum E ;
+spec_zterm_sum:
+      spec_term_prod
+    | spec_zterm_sum A spec_addop SP spec_term_prod
+    ;
+spec_addop: Plus | Minus ;
+
+spec_term_prod: B spec_zterm_prod E ;
+spec_zterm_prod:
+      spec_term_selector
+    | spec_zterm_prod A spec_mulop SP spec_term_selector
+    ;
+spec_mulop: Asterisk | Div | Mod ;
 
 spec_term_selector:
       spec_term_paren
-    | qqid Lparen Rparen
-    | qqid Lparen spec_term_list Rparen
-    | spec_term_selector Lbracket spec_term_list Rbracket
-    | spec_term_selector Uparrow
-    | spec_term_selector UparrowPrime
+    | qqid Z Lparen Rparen
+    | qqid Z Lparen spec_term_list Rparen
+    | spec_term_selector Z Lbracket spec_term_list Rbracket
+    | spec_term_selector Z Uparrow
+    | spec_term_selector Z UparrowPrime
     ;
 
 spec_term_paren:
       spec_prim_term
-    | Lparen spec_term Rparen
+    | Lparen spec_term Z Rparen
     ;
 
 spec_term_list:
-      spec_term
-    | spec_term_list Comma spec_term
+      Z spec_term
+    | spec_term_list Z Comma A spec_term
     ;
 
 spec_prim_term:
@@ -1043,61 +1084,26 @@ spec_prim_term:
     | qqidp
     ;
 
-spec_pred: spec_quant ;
-
-spec_quant:
-      spec_concl
-    | All    Lbracket spec_typed_id_list Rbracket spec_concl
-    | Exists Lbracket spec_typed_id_list Rbracket spec_concl
-    ;
-
-spec_concl:
-      spec_disj
-    | spec_disj spec_weak_pred_op spec_concl /* these operations are right-associative */
-    ;
-
-spec_weak_pred_op: Implies | Iff ;
-
-spec_disj:
-      spec_conj
-    | spec_disj Or spec_conj
-    ;
-
-spec_conj:
-      spec_literal
-    | spec_conj And spec_literal
-    ;
-
-spec_literal:
-      spec_atom
-    | Not spec_literal
-    ;
-
-spec_atom:
-      spec_term_sum spec_bin_rel spec_term_sum
-    | spec_term_sum
-    ;
-
 spec_typed_id_list:
-      spec_typed_id
-    | spec_typed_id_list Comma spec_typed_id
+      Z spec_typed_id
+    | spec_typed_id_list Z Comma A spec_typed_id
     ;
 
-spec_typed_id: Ident Colon spec_type ;
+spec_typed_id: Ident Colon SP spec_type ;
 
 spec_type:
       qqid
     | qqid Lbracket spec_type Rbracket
-    | Map spec_type To spec_type
+    | Map SP spec_type SP To SP spec_type
     ;
 
 spec_bin_rel: Less | Greater | Lsequal | Grequal | Equal | Notequal ;
 
-spec_proc_modifies: Modifies spec_sub_id_list ;
+spec_proc_modifies: Modifies SP spec_sub_id_list ;
 
 spec_sub_id_list:
-      spec_sub_id
-    | spec_sub_id_list Comma spec_sub_id
+      Z spec_sub_id
+    | spec_sub_id_list Z Comma A spec_sub_id
     ;
 
 spec_sub_id: qqid spec_term_bracket_list ;
@@ -1106,21 +1112,21 @@ spec_term_bracket_list:
       /* empty */
     | spec_term_bracket_list Lbracket spec_term Rbracket;
 
-spec_proc_requires: Requires spec_pred ;
+spec_proc_requires: Requires SP spec_pred ;
 
 spec_proc_ensures:
-      Ensures spec_pred
-    | Ensures spec_pred Except spec_except_spec_list
+      Ensures SP B spec_pred E
+    | Ensures SP B spec_pred SP Except SP spec_except_spec_list E
     ;
 
 spec_except_spec:
-      qqid                     Rarrow spec_pred
-    | qqid Lparen Ident Rparen Rarrow spec_pred
+      qqid                     SP Rarrow SP spec_pred
+    | qqid Lparen Ident Rparen SP Rarrow SP spec_pred
     ;
 
 spec_except_spec_list:
       spec_except_spec
-    | spec_except_spec_list Bar spec_except_spec
+    | spec_except_spec_list SP Bar SP spec_except_spec
     ;
 
 qqid:
@@ -1129,8 +1135,8 @@ qqid:
     ;
 
 qqid_list:
-      qqid
-    | qqid_list Comma qqid
+      Z qqid
+    | qqid_list Z Comma A qqid
     ;
 
 qqidp:
