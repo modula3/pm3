@@ -705,7 +705,7 @@ int dev;
 
   ENTER_CRITICAL;
   MAKE_READABLE(path);
-  result = _xmknod(path, mode, dev);
+  result = _xmknod(1, path, mode, dev);
   EXIT_CRITICAL;
   return result;
 }
