@@ -31,7 +31,7 @@ PRODUCTIONS
 
 (* 2.1 High level syntax *)
 
-     High level syntax[1]==
+(*     High level syntax[1]== *)
 
           (* R201 *)
           xExecutableProgram:
@@ -203,11 +203,11 @@ PRODUCTIONS
             xArithmeticIfStmt /
             xComputedGotoStmt .
 
-     This macro is invoked in definition 28.
+(*     This macro is invoked in definition 28. *)
 
-2.2 Source form
+(* 2.2 Source form *)
 
-     Source form[2]==
+(*     Source form[2]== *)
 
           (* R301-R303 are components of symbols recognized by the lexical analyzer *)
 
@@ -283,11 +283,11 @@ PRODUCTIONS
           (* R313 recognized by the lexical analyzer as xIcon *)
           xLabel: xIcon .
 
-     This macro is invoked in definition 28.
+(*     This macro is invoked in definition 28. *)
 
-2.3 Intrinsic and derived data types
+(* 2.3 Intrinsic and derived data types *)
 
-     Intrinsic and derived data types[3]==
+(*     Intrinsic and derived data types[3]== *)
 
           (* R401 recognized by the lexical analyzer in the context of R413 *)
 
@@ -421,11 +421,11 @@ PRODUCTIONS
 
           (* R436 chain rule deleted *)
 
-     This macro is invoked in definition 28.
+(*     This macro is invoked in definition 28. *)
 
-2.4 Data object declarations and definitions
+(* 2.4 Data object declarations and definitions *)
 
-     Data object declarations and definitions[4]==
+(*     Data object declarations and definitions[4]== *)
 
           (* R501 *)
           xTypeDeclarationStmt:
@@ -706,11 +706,11 @@ PRODUCTIONS
           (* R550 *)
           xCommonBlockObject: xVariableName / xArrayDeclarator .
 
-     This macro is invoked in definition 28.
+(*     This macro is invoked in definition 28. *)
 
-2.5 Data object use
+(* 2.5 Data object use *)
 
-     Data object use[5]==
+(*     Data object use[5]== *)
 
           (* R601 The various forms of variables have to be recognized semantically. *)
           xVariable:
@@ -828,11 +828,11 @@ PRODUCTIONS
           *  are complete
           *)
 
-     This macro is invoked in definition 28.
+(*     This macro is invoked in definition 28. *)
 
-2.6 Expressions
+(* 2.6 Expressions *)
 
-     Expressions[6]==
+(*     Expressions[6]== *)
 
           (* R701 *)
           xPrimary:
@@ -1050,11 +1050,11 @@ PRODUCTIONS
             xLblDef 'forall' xForallHeader xAssignmentStmt xEOS /
             xLblDef 'forall' xForallHeader xPointerAssignmentStmt xEOS .
 
-     This macro is invoked in definition 28.
+(*     This macro is invoked in definition 28. *)
 
-2.7 Execution control
+(* 2.7 Execution control *)
 
-     Execution control[7]==
+(*     Execution control[7]== *)
 
           (* R801 see the note on R818 *)
 
@@ -1237,11 +1237,11 @@ PRODUCTIONS
 
           (* R841 chain rule deleted *)
 
-     This macro is invoked in definition 28.
+(*     This macro is invoked in definition 28. *)
 
-2.8 I/O statements
+(* 2.8 I/O statements *)
 
-     I/O statements[8]==
+(*     I/O statements[8]== *)
 
           (* R901 *)
           xUnitIdentifier: xUFExpr / '*' .
@@ -1431,11 +1431,11 @@ PRODUCTIONS
             'delim=' xScalarVariable /
             'pad=' xScalarVariable .
 
-     This macro is invoked in definition 28.
+(*     This macro is invoked in definition 28. *)
 
-2.9 I/O editing
+(* 2.9 I/O editing *)
 
-     I/O editing[9]==
+(*     I/O editing[9]== *)
 
           (* I have trouble verifying this section because of its reliance on
           *  lexical analysis *)
@@ -1466,11 +1466,11 @@ PRODUCTIONS
           (* R1010 *)
           xFormatsep: '/' / ':' .
 
-     This macro is invoked in definition 28.
+(*     This macro is invoked in definition 28. *)
 
-2.10 Program units
+(* 2.10 Program units *)
 
-     Program units[10]==
+(*     Program units[10]== *)
 
           (* R1101 see high level syntax *)
 
@@ -1529,11 +1529,11 @@ PRODUCTIONS
             xLblDef 'endblock' 'data' [ xEndName ] xEOS /
             xLblDef 'end' 'block' 'data' [ xEndName ] xEOS .
 
-     This macro is invoked in definition 28.
+(*     This macro is invoked in definition 28. *)
 
-2.11 Procedures
+(* 2.11 Procedures *)
 
-     Procedures[11]==
+(*     Procedures[11]== *)
 
           (* R1201 *)
           xInterfaceBlock:
@@ -1699,11 +1699,11 @@ PRODUCTIONS
           xSFDummyArgNameList:
             xSFDummyArgName / xSFDummyArgNameList ',' xSFDummyArgName .
 
-     This macro is invoked in definition 28.
+(*     This macro is invoked in definition 28. *)
 
-2.12 Additional Nonterminals
+(* 2.12 Additional Nonterminals *)
 
-     Additional Nonterminals[12]==
+(*     Additional Nonterminals[12]== *)
 
           (* Nonterminal symbols that are not defined in the standard
            *)
@@ -1732,11 +1732,11 @@ PRODUCTIONS
 
           xLblDef: / xLabel .
 
-     This macro is invoked in definition 28.
+(*     This macro is invoked in definition 28. *)
 
-2.13 Deleted Features
+(* 2.13 Deleted Features *)
 
-     Deleted Features[13]==
+(*     Deleted Features[13]== *)
 
           (* Real and double precision do variables *)
 
@@ -1793,86 +1793,86 @@ PRODUCTIONS
             xHcon /
             xName '=' xHcon .
 
-     This macro is invoked in definition 28.
+(*     This macro is invoked in definition 28. *)
 
-3 Changes Due to LALR(1) Conflicts
+(* 3 Changes Due to LALR(1) Conflicts *)
 
-3.1 Entry Statement
+(* 3.1 Entry Statement *)
 
-     Entry Statement[14]==
+(*     Entry Statement[14]== *)
 
           xEntryStmt:
             xLblDef 'entry' xEntryName [ '(' xSubroutinePars ')' ] xEOS .
 
-     This macro is invoked in definition 11.
+(*     This macro is invoked in definition 11. *)
 
-3.2 Specification Expression
+(* 3.2 Specification Expression *)
 
-     Specification Expression[15]==
+(*     Specification Expression[15]== *)
 
           xExpr
 
-     This macro is invoked in definition 4.
+(*     This macro is invoked in definition 4. *)
 
-3.3 Equivalence Entity
+(* 3.3 Equivalence Entity *)
 
-     Equivalence Entity[16]==
+(*     Equivalence Entity[16]== *)
 
           xVariable
 
-     This macro is invoked in definition 4.
+(*     This macro is invoked in definition 4. *)
 
-3.4 Letter Specifications
+(* 3.4 Letter Specifications *)
 
-     Letter Specifications[17]==
+(*     Letter Specifications[17]== *)
 
           xImpl
 
-     This macro is invoked in definition 4.
+(*     This macro is invoked in definition 4. *)
 
-3.5 Scalar Integer Literal Constant
+(* 3.5 Scalar Integer Literal Constant *)
 
-     Scalar Integer Literal Constant[18]==
+(*     Scalar Integer Literal Constant[18]== *)
 
           xIcon
 
-     This macro is invoked in definition 4.
+(*     This macro is invoked in definition 4. *)
 
-3.6 Constant Expression
+(* 3.6 Constant Expression *)
 
-     Constant Expression[19]==
-
-          xExpr
-
-     This macro is invoked in definition 4.
-
-3.7 Integer Expression
-
-     Integer Expression[20]==
+(*     Constant Expression[19]== *)
 
           xExpr
 
-     This macro is invoked in definition 7.
+(*     This macro is invoked in definition 4. *)
 
-3.8 Int-Real-Dp Expression
+(* 3.7 Integer Expression *)
 
-     Int-Real-Dp Expression[21]==
-
-          xExpr
-
-     This macro is invoked in definition 7.
-
-3.9 Scalar Logical Expression
-
-     Scalar Logical Expression[22]==
+(*     Integer Expression[20]== *)
 
           xExpr
 
-     This macro is invoked in definition 7.
+(*     This macro is invoked in definition 7. *)
 
-3.10 Assignment Statement
+(* 3.8 Int-Real-Dp Expression *)
 
-     Assignment Statement[23]==
+(*     Int-Real-Dp Expression[21]== *)
+
+          xExpr
+
+(*     This macro is invoked in definition 7. *)
+
+(* 3.9 Scalar Logical Expression *)
+
+(*     Scalar Logical Expression[22]== *)
+
+          xExpr
+
+(*     This macro is invoked in definition 7. *)
+
+(* 3.10 Assignment Statement *)
+
+(*     Assignment Statement[23]== *)
 
           xAssignmentStmt:
             xLblDef xName '=' xExpr xEOS /
@@ -1903,19 +1903,21 @@ PRODUCTIONS
             xFunctionReference /
             '(' xExpr ')' .
 
-     This macro is invoked in definition 6.
+(*     This macro is invoked in definition 6. *)
 
-4 Semantically-Equivalent Grammar Symbols
+(* 4 Semantically-Equivalent Grammar Symbols *)
 
+(*
 Many of the symbols used in the context-free grammar represent
 semantically-equivalent phrases. Some are used to make the prose of the
 standard clearer, others avoid ambiguities. There is no reason to
 distinguish them once the abstract syntax tree is built, and so we replace
 all of the symbols in an equivalence class by a single member of that class.
+*)
 
-4.1 Fortran 95 Equivalence Classes
+(* 4.1 Fortran 95 Equivalence Classes *)
 
-     Fortran 95 Equivalence Classes[24]==
+(*     Fortran 95 Equivalence Classes[24]== *)
 
           xProgramUnit ::=
                  xMainProgram xSubroutineSubprogram xFunctionSubprogram
@@ -1979,15 +1981,17 @@ all of the symbols in an equivalence class by a single member of that class.
           xExprList ::=
                  xSFExprList .
 
-     This macro is defined in definitions 24 and 25.
-     This macro is invoked in definition 30.
+(*     This macro is defined in definitions 24 and 25. *)
+(*     This macro is invoked in definition 30. *)
 
+(*
 xStmt is the minimal set of statements necessary to ensure that a program's
 constructs satisfy the ordering requirements of Table 2.1 of the Fortran
 standard. xDTBodyStmt is the minimal set of statements necessary to ensure
 that a the derived type body constructs satisfy their ordering requirement.
+*)
 
-     Fortran 95 Equivalence Classes[25]==
+(*     Fortran 95 Equivalence Classes[25]== *)
 
           xStmt ::=
                  xSpecificationStmt xActionStmt
@@ -2060,11 +2064,12 @@ that a the derived type body constructs satisfy their ordering requirement.
           xAcValueList ::=
                  xAcValueList1.
 
-     This macro is defined in definitions 24 and 25.
-     This macro is invoked in definition 30.
+(*     This macro is defined in definitions 24 and 25. *)
+(*     This macro is invoked in definition 30. *)
 
-5 Literal Terminals Recognized by special means
+(* 5 Literal Terminals Recognized by special means *)
 
+(*
 Under normal circumstances, Eli uses a finite-state machine to recognize all
 of the literal terminal symbols of a context-free grammar. Fortran keywords
 and operators like .EQ., however, are recognized specially by the scanner.
@@ -2092,5 +2097,6 @@ specification set, but information is derived from it:
           grammar.gla :kwd
 
      This macro is invoked in definition 31.
+*)
 
 END Fortran95.
