@@ -426,7 +426,7 @@ exception_decl:
     ;
 
 procedure_head:
-      Procedure SP IdentP SP signature
+      Procedure SP IdentP A signature
     ;
 
 signature:
