@@ -114,13 +114,11 @@ PROCEDURE Fault (sig : Ctypes.int;
                  scp : Usignal.struct_sigcontext;
                  code: Ctypes.int) =
   VAR
-    mode: RTHeapRep.Mode;
+    mode := RTHeapRep.Mode.ReadOnly;
     error := LOOPHOLE(scp.err, PageFaultError);
   BEGIN
     IF error.write THEN
       mode := RTHeapRep.Mode.ReadWrite;
-    ELSE
-      mode := RTHeapRep.Mode.ReadOnly;
     END;
     IF RTHeapRep.Fault(LOOPHOLE(scp.cr2, ADDRESS), mode) THEN
       RETURN;

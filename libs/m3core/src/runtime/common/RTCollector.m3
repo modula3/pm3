@@ -1019,6 +1019,55 @@ PROCEDURE Stabilize (bootstrapDB: RTDB.T) =
     ThreadF.ProcessStacks(NoteStackLocations);
     (* Now, nothing in previous space is referenced by a thread. *)
 
+    VAR p, link: Page;
+    BEGIN
+      p := pureTransient.stack;
+      pureTransient.stack := Nil;
+      WHILE p # Nil DO
+        WITH pd = desc[p - p0], pm = map[p - p0] DO
+          link := pd.link;
+          <*ASSERT pd.pure*>
+          <*ASSERT NOT pd.gray*>
+          IF pm # NIL THEN
+            pd.gray := TRUE;
+            IF pd.resident AND pm.writer = ThreadF.myTxn THEN
+              pd.link := pureStabilize.stack;
+              pureStabilize.stack := p;
+            ELSE
+              pd.link := pureCopy.stack;
+              pureCopy.stack := p;
+            END
+          ELSE
+            pd.link := pureTransient.stack;
+            pureTransient.stack := p;
+          END
+        END;
+        p := link;
+      END;
+      p := impureTransient.stack;
+      impureTransient.stack := Nil;
+      WHILE p # Nil DO
+        WITH pd = desc[p - p0], pm = map[p - p0] DO
+          link := pd.link;
+          <*ASSERT NOT pd.pure*>
+          <*ASSERT pd.gray*>
+          IF pm # NIL THEN
+            IF pd.resident AND pm.writer = ThreadF.myTxn THEN
+              pd.link := impureStabilize.stack;
+              impureStabilize.stack := p;
+            ELSE
+              pd.link := pureCopy.stack;
+              pureCopy.stack := p;
+            END
+          ELSE
+            pd.link := impureTransient.stack;
+            impureTransient.stack := p;
+          END
+        END;
+        p := link;
+      END;
+    END;
+
     FOR p := p0 TO p1 - 1 DO
       VAR d := desc[p - p0];
       BEGIN
@@ -1057,16 +1106,6 @@ PROCEDURE Stabilize (bootstrapDB: RTDB.T) =
     mover := NEW (Mover);
     tmover := NEW (TMover);
     pmover := NEW (PMover);
-
-    (* On some systems (ie Win32) the system call wrappers are not atomic
-       with respect to the collector, so it's possible that this collection
-       started after a thread had validated its system call parameters but
-       before the system call completed.  On those systems, we must ensure
-       that the heap pages referenced by threads remain unprotected after
-       the collection begins. *)
-    IF RTHeapDep.VM AND NOT RTHeapDep.AtomicWrappers THEN
-      FinishThreadPages ();
-    END;
 
     (* mark from roots *)
     <* ASSERT impureCopy.stack = Nil *>
@@ -1199,6 +1238,16 @@ PROCEDURE Stabilize (bootstrapDB: RTDB.T) =
     WHILE CleanSome(impureTransient) DO END;
     FillPool(impureTransient);
     ClosePool(impureTransient);
+
+    (* On some systems (ie Win32) the system call wrappers are not atomic
+       with respect to the collector, so it's possible that this collection
+       started after a thread had validated its system call parameters but
+       before the system call completed.  On those systems, we must ensure
+       that the heap pages referenced by threads remain unprotected after
+       the collection begins. *)
+    IF RTHeapDep.VM AND NOT RTHeapDep.AtomicWrappers THEN
+      FinishThreadPages ();
+    END;
 
     (* Scan the global variables for possible pointers *)
     RTHeapMap.WalkGlobals (mover);
@@ -1499,12 +1548,8 @@ PROCEDURE PromotePage (p: Page;  r: PromoteReason;  VAR pool: AllocPool) =
       d.resident := pd.resident;
 
       pd := d;
-
-      IF pd.gray THEN
-        <* ASSERT pd.gray *>
-        pd.link := pool.stack;
-        pool.stack := p;
-      END;
+      pd.link := pool.stack;
+      pool.stack := p;
     END;
 
     IF n_pages > 1 THEN
@@ -1901,16 +1946,6 @@ PROCEDURE CollectSomeInStateZero () =
     mover := NEW (Mover);
     tmover := NEW(TMover);
 
-    (* On some systems (ie Win32) the system call wrappers are not atomic
-       with respect to the collector, so it's possible that this collection
-       started after a thread had validated its system call parameters but
-       before the system call completed.  On those systems, we must ensure
-       that the heap pages referenced by threads remain unprotected after
-       the collection begins. *)
-    IF RTHeapDep.VM AND NOT RTHeapDep.AtomicWrappers THEN
-      FinishThreadPages ();
-    END;
-
     (* Copy closure from user-level page handles,
        since we need page information during GC, but drop roots *)
     FOR p := p0 TO p1 - 1 DO
@@ -1925,6 +1960,16 @@ PROCEDURE CollectSomeInStateZero () =
       END
     END;
     WHILE CopySome() DO END;
+
+    (* On some systems (ie Win32) the system call wrappers are not atomic
+       with respect to the collector, so it's possible that this collection
+       started after a thread had validated its system call parameters but
+       before the system call completed.  On those systems, we must ensure
+       that the heap pages referenced by threads remain unprotected after
+       the collection begins. *)
+    IF RTHeapDep.VM AND NOT RTHeapDep.AtomicWrappers THEN
+      FinishThreadPages ();
+    END;
 
     (* Scan the global variables for possible pointers *)
     RTHeapMap.WalkGlobals (mover);
@@ -1945,7 +1990,7 @@ PROCEDURE FinishThreadPages () =
       WITH pd = desc[p - p0] DO
         next_p := pd.link;
         IF pd.gray AND pd.note = Note.AmbiguousRoot THEN
-          CleanPage(p, thread_page := TRUE);
+          CleanPage(p, dirty := TRUE);
         END;
       END;
       p := next_p;
@@ -1956,7 +2001,7 @@ PROCEDURE FinishThreadPages () =
       WITH pd = desc[p - p0] DO
         next_p := pd.link;
         IF pd.gray AND pd.note = Note.AmbiguousRoot THEN
-          CleanPage(p, thread_page := TRUE);
+          CleanPage(p, dirty := TRUE);
         END;
       END;
       p := next_p;
@@ -2224,7 +2269,7 @@ PROCEDURE CleanSome (VAR pool: AllocPool; cleaner := CleanBetween;
   END CleanSome;
 
 PROCEDURE CleanPage (p: Page;  cleaner := CleanBetween;
-                     pure := FALSE; gray := FALSE; thread_page := FALSE) =
+                     pure := FALSE; gray := FALSE; dirty := FALSE) =
   VAR hdr := PageToHeader(p);
   BEGIN
     WITH pd = desc[p - p0] DO
@@ -2236,10 +2281,10 @@ PROCEDURE CleanPage (p: Page;  cleaner := CleanBetween;
     FOR i := 0 TO PageCount(p) - 1 DO
       WITH pd = desc[p + i - p0] DO
         pd.gray := gray;
-        pd.dirty := FALSE;
+        pd.dirty := dirty;
       END
     END;
-    IF NOT thread_page AND NOT gray THEN ProtectClean(p) END;
+    IF NOT gray AND NOT dirty THEN ProtectClean(p) END;
     IF perfOn THEN PerfChange(p, PageCount(p)) END;
   END CleanPage;
 
