@@ -808,6 +808,14 @@ fill_fpregset (fpregsetp, regno)
     }
 }
 
+#else
+
+void
+supply_gregset (gregsetp)
+     char *gregsetp;
+{
+}
+
 #endif	/* defined (FP0_REGNUM) && defined (HAVE_FPREGSET_T) */
 
 static void
