@@ -73,7 +73,6 @@ PROCEDURE GetInfo(path: TEXT; VAR (*OUT*) mtime: Time.T): FileType
     p := M3toC.SharedTtoS(path);
     statBuf: Ustat.struct_stat;
     status: int;
-    micro: INTEGER;
   BEGIN
     status := Ustat.stat(ConvertPath(p), ADR(statBuf));
     M3toC.FreeSharedS(path, p);
@@ -86,9 +85,7 @@ PROCEDURE GetInfo(path: TEXT; VAR (*OUT*) mtime: Time.T): FileType
         END
       END
     END;
-    micro := statBuf.st_spare2;
-    IF micro > 999999 THEN micro := micro MOD 1000000 END;
-    mtime := FLOAT(statBuf.st_mtime, LONGREAL) + FLOAT(micro, LONGREAL) / 1.0d6;
+    mtime := FLOAT(statBuf.st_mtime, LONGREAL);
     CASE Word.And(statBuf.st_mode, Ustat.S_IFMT) OF
       | Ustat.S_IFDIR => RETURN FileType.Dir;
       | Ustat.S_IFREG => RETURN FileType.Normal;

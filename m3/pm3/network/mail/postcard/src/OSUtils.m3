@@ -1,8 +1,7 @@
 (* Copyright 1989 Digital Equipment Corporation.               *)
 (* Distributed only by permission.                             *)
 (* OSUtils.mod                                                 *)
-(* Last modified on Thu Oct 26 09:47:13 PDT 1995 by heydon     *)
-(*      modified on Wed Apr 27 14:58:54 PDT 1994 by birrell    *)
+(* Last modified on Wed Apr 27 14:58:54 PDT 1994 by birrell    *)
 (*      modified on Thu Mar  3 10:19:10 PST 1994 by mcjones    *)
 (*      modified on Thu Jun 11 12:05:19 PDT 1992 by meehan     *)
 
@@ -12,7 +11,7 @@ UNSAFE MODULE OSUtils EXPORTS OSUtils, UtimeExtra;
 
 IMPORT Atom, FileRd, FileWr, Fmt, OSError, OSErrorPosix, Pipe, Process, Rd,
        TextList, Text, Thread, Time, Word, Wr;
-IMPORT Cerrno, M3toC, Uerror, Unix, Ustat, Utime;
+IMPORT Cerrno, Cstring, M3toC, Uerror, Unix, Ustat, Utime;
 
 FROM Ctypes IMPORT char_star, int, long;
 
@@ -74,20 +73,19 @@ PROCEDURE GetInfo(path: TEXT; VAR (*OUT*) mtime: Time.T): FileType
     p := M3toC.SharedTtoS(path);
     statBuf: Ustat.struct_stat;
     status: int;
-    micro: INTEGER;
   BEGIN
     status := Ustat.stat(ConvertPath(p), ADR(statBuf));
     M3toC.FreeSharedS(path, p);
     IF status = -1 THEN
-      IF ClassifyError(Cerrno.GetErrno()) = ErrorClass.LookupError THEN
-        RAISE FileNotFound
-      ELSE
-        RAISE FileError(ErrorMessage(Cerrno.GetErrno()));
+      WITH errno = Cerrno.GetErrno() DO
+        IF ClassifyError(errno) = ErrorClass.LookupError THEN
+          RAISE FileNotFound
+        ELSE
+          RAISE FileError(ErrorMessage(errno));
+        END
       END
     END;
-    micro := statBuf.st_spare2;
-    IF micro > 999999 THEN micro := micro MOD 1000000 END;
-    mtime := FLOAT(statBuf.st_mtime, LONGREAL) + FLOAT(micro, LONGREAL) / 1.0d6;
+    mtime := FLOAT(statBuf.st_mtime, LONGREAL);
     CASE Word.And(statBuf.st_mode, Ustat.S_IFMT) OF
       | Ustat.S_IFDIR => RETURN FileType.Dir;
       | Ustat.S_IFREG => RETURN FileType.Normal;
