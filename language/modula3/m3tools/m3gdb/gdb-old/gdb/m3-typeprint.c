@@ -305,12 +305,12 @@ m3_type_print_base (type, stream, show, level)
       if (en) {
 	fputs_filtered (TYPE_M3_ENUM_VALNAME (target, lower), stream); }
       else {
-	fprintf_filtered (stream, "%ld", lower); }
+	print_longest (stream, 'd', 1, lower); }
       fprintf_filtered (stream, " .. ");
       if (en) {
 	fputs_filtered (TYPE_M3_ENUM_VALNAME (target, upper), stream); }
       else {
-	fprintf_filtered (stream, "%ld", upper); }
+	print_longest (stream, 'd', 1, upper); }
       fprintf_filtered (stream, "]");
       break; }
 

@@ -694,7 +694,9 @@ threads_command (args, from_tty)
 
   fprintf_filtered (stdout, "-id-   -Thread.T-  -state-\n");
   while (cur.bits) {
-    fprintf_filtered (stdout, "%4d  16_%lx  ", cur.id, cur.ref);
+    fprintf_filtered (stdout, "%4d  ", cur.id);
+    print_longest (stdout, 'x', 1, cur.ref);
+    fprintf_filtered (stdout, "  ");
 
     state = m3_unpack_ord (cur.bits, thread__t__state_offset,
 			   thread__t__state_size, 0);

@@ -17,42 +17,32 @@ LONGEST
 m3_unpack_ord (char* valaddr, int bitpos, int bitsize, int sign_extend)
 
 {
-  LONGEST res, mask; 
+  ULONGEST val;
+  ULONGEST valmask;
+  int lsbcount;
 
-  if (bitpos % 8 + bitsize <= 8) {		/* char access */
-    valaddr += bitpos / 8;
-    bitpos = bitpos % 8;
-    res = *((char *)valaddr); }
-  else if (bitpos % 16 + bitsize <= 16) {	/* short access */
-    short *v = (short *)valaddr;
-    v += bitpos / 16;
-    bitpos = bitpos % 16;
-    res = *v; }
-  else if (bitpos % 32 + bitsize <= 32) {	/* int access */
-    int *v = (int *)valaddr;
-    v += bitpos / 32;
-    bitpos = bitpos % 32;
-    res = *v; }
-  else if (bitpos % 64 + bitsize <= TARGET_LONG_BIT) {	/* long access */
-    long *v = (long *)valaddr;
-    v += bitpos / 64;
-    bitpos = bitpos % 64;
-    res = *v; }
-  else {
-    error ("wrong bitsize in m3_unpack_ord: %d", bitsize); }
+  val = extract_unsigned_integer (valaddr + bitpos / 8, sizeof (val));
+  if (BITS_BIG_ENDIAN)
+    lsbcount = (sizeof val * 8 - bitpos % 8 - bitsize);
+  else
+    lsbcount = (bitpos % 8);
+  val >>= lsbcount;
 
-  mask = ((unsigned long)(~0L)) >> (sizeof (res) * HOST_CHAR_BIT - bitsize);
-  res  = res >> bitpos;
-  res  = res & mask;
-
-  if ((sign_extend)
-     && (bitsize > 0)
-     && (bitsize < sizeof(res) * HOST_CHAR_BIT)
-     && (res & (1L << (bitsize-1)))) {
-    res = res | ((~0L) << bitsize);
-  }
-
-  return res;
+  /* If the field does not entirely fill a LONGEST, then zero the sign bits.
+     If the field is signed, and is negative, then sign extend. */
+  if ((bitsize > 0) && (bitsize < 8 * (int) sizeof (val)))
+    {
+      valmask = (((ULONGEST) 1) << bitsize) - 1;
+      val &= valmask;
+      if (sign_extend)
+	{
+	  if (val & (valmask ^ (valmask >> 1)))
+	    {
+	      val |= ~valmask;
+	    }
+	}
+    }
+  return val;
 }
 
 LONGEST
@@ -117,10 +107,10 @@ m3_print_scalar (
       if (v == 0)
 	fputs_filtered ("NIL", stream);
       else
-	fprintf_filtered (stream, "16_%lx", v); break;
-    case 'o': fprintf_filtered (stream, "8_%lo", v);  break;
+	print_longest(stream, 'x', 1, v); break;
+    case 'o': print_longest(stream, 'o', 1, v);  break;
     case 'd':
-    default:  fprintf_filtered (stream, "%ld", v);    break; }
+    default:  print_longest (stream, 'd', 1, v);    break; }
 }
 
 static 
@@ -418,8 +408,13 @@ m3_val_print2 (
       if ((lower <= val) && (val <= upper)) {
         fputs_filtered (TYPE_M3_ENUM_VALNAME (type, val), stream);
       } else {
-	fprintf_filtered (stream, "<enum value %ld out of range [%ld..%ld]>",
-			  val, lower, upper);
+	fprintf_filtered (stream, "<enum value ");
+	print_longest (stream, 'd', 1, val);
+	fprintf_filtered (stream, " out of range [");
+	print_longest (stream, 'd', 1, lower);
+	fprintf_filtered (stream, "..");
+	print_longest (stream, 'd', 1, upper);
+	fprintf_filtered (stream, "]>");
       };
       break; }
       
@@ -481,11 +476,11 @@ m3_val_print2 (
 	    if (en) {
 	      fputs_filtered (TYPE_FIELD_NAME (target, ord), stream); }
 	    else if (ch) {
-	      fprintf_filtered (stream, "'%c'", ord); }
+	      fprintf_filtered (stream, "'%c'", (char)ord); }
 	    else if (chs) {
-	      fprintf_filtered (stream, "'%c'", ord); }
+	      fprintf_filtered (stream, "'%c'", (char)ord); }
 	    else {
-	      fprintf_filtered (stream, "%ld", ord); }
+	      print_longest (stream, 'd', 1, ord); }
 	    n++; }}
 	valaddr += sizeof (long); }
       
@@ -499,8 +494,13 @@ m3_val_print2 (
       m3_ordinal_bounds (type, &lower, &upper);
       val = m3_unpack_ord (valaddr, bitpos, bitsize, (lower < 0));
       if ((val < lower) || (upper < val)) {
-        fprintf_filtered(stream,"<subrange value %ld out of range [%ld..%ld]>",
-			 val, lower, upper);
+        fprintf_filtered(stream, "<subrange value ");
+	print_longest (stream, 'd', 1, val);
+        fprintf_filtered(stream, " out of range [");
+	print_longest (stream, 'd', 1, lower);
+        fprintf_filtered(stream, "..");
+	print_longest (stream, 'd', 1, upper);
+        fprintf_filtered(stream, "]>");
       } else if (TYPE_CODE (target) == TYPE_CODE_M3_ENUM) {
         fputs_filtered (TYPE_M3_ENUM_VALNAME (target, val), stream);
       } else {
