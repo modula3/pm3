@@ -4,11 +4,11 @@ INTERFACE  CRT;
 IMPORT Rd, Wr ;
 
 CONST
-  maxSymbols   =  500; (* max number of symbols
+  maxSymbols   = 1000; (* max number of symbols
                           (terminals+nonterminals+pragmas) *)
   maxTerminals =  400; (* max number of terminals *)
   maxNt        =  128; (* max number of nonterminals *)
-  maxNodes     = 1500; (* max number of top-down graph nodes *)
+  maxNodes     = 5000; (* max number of top-down graph nodes *)
   maxClasses   =  250; (* max. number of character classes *)
   normTrans    =    0; (* DFA transition during normal scanning *)
   contextTrans =    1; (* DFA transition during scanning of right context *)
