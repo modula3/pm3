@@ -58,9 +58,9 @@ CONST
   RLIMIT_RSS    = 5;		(* resident set size *)
   RLIMIT_NOFILE = 6;		(* open files *)
   RLIMIT_AS     = 7;		(* address space *)
-  RLIMIT_VMEM   = RLIMIT_AS	(* V.4 alias for AS *)
+  RLIMIT_VMEM   = RLIMIT_AS;	(* V.4 alias for AS *)
 
-  RLIM_NLIMITS = 6;		(* number of resource limits *)
+  RLIM_NLIMITS  = 8;		(* number of resource limits *)
 
   RLIM_INFINITY	= 16_7fffffff;
 
