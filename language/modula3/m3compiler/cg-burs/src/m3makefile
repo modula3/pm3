@@ -4,13 +4,19 @@
 %
 % Last modified on Tue Mar 22 13:58:09 PST 1994 by kalsow
 
+ret = 0
+cmd = []
+
 if defined ("M3CG_HOST") and defined ("M3CG_TARGET")
   import_version ("libm3", M3CG_HOST)
   import_version ("m3cg", M3CG_HOST)
 
   %----------------------------------------------- machine independent code ---
   if defined("_all") and stale("pp", path_of("pp.icn"))
-    exec("icont", "-o", "pp", path_of("pp.icn"))
+    cmd = [ "icont", "-o", "pp", path_of("pp.icn")]
+    write (cmd, "\n")
+    ret = exec(cmd)
+    if not equal(ret, 0) error(cmd, "returned error code: ", err) end
   end
   deriveds("pp", no_extension)
 
@@ -49,7 +55,8 @@ else
   %-- we need to run the "build" script
   local ant = ""
   if defined ("ANT")  ant = "-DANT"  end
-  % exec ("cd .. ; src/build", DEFAULT_BUILD_DIR, TARGET, ant, "-O")
-  exec ("cd .. ; src/build", "DS", TARGET, ant, "-O")
-
+  write("executing build\n")
+  % ret = exec ([ src/build", DEFAULT_BUILD_DIR, TARGET, ant, "-O"], [], "..")
+  ret = exec ([ "src/build", "DS", TARGET, ant, "-O" ], [], "..")
+  if not equal(ret, 0) error ("build returned error code", ret) end
 end
