@@ -34,3 +34,4 @@ m3where2	m3/pkg/SRC-m3/m3where2
 m3core		m3/pkg/SRC-m3/m3core
 m3gdb		m3/pkg/gnu/m3gdb
 ui		m3/pkg/SRC-m3/ui
+libm3		m3/pkg/SRC-m3/libm3
