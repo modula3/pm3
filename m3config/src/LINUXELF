@@ -164,7 +164,7 @@ end
 
 % C compiler with flags for linking
 % You can override this definition in your m3makefile by defining LINK there.
-LINK = lookup ("LINK", "ld")
+LINK = lookup ("LINK", "gcc")
 
 % "m3_link" is called to produce a final executable.
 %   prog: the name of the executable.
@@ -177,18 +177,12 @@ LINK = lookup ("LINK", "ld")
 proc m3_link (prog, objects, imported_libs, debug, shared) is
   local cmd = [ LINK ]
   if not shared cmd += [ "-static" ] end
-  cmd += [ "-dynamic-linker", "/lib/ld-linux.so.1", 
-    "/usr/lib/crt1.o",  "/usr/lib/crti.o", "/usr/lib/crtbegin.o"]
   cmd += [ "-o", prog, objects ]
   foreach i in imported_libs
     if not empty(i[0]) cmd += "-L" & i[0] end
     cmd += "-l" & i[1]
   end
   cmd += "-lm"
-  cmd += [ "-L/usr/lib/gcc-lib/i486-linux/2.7.2.1",
-                      "-L/usr/i486-linux/lib",
-                      "-lgcc", "-lc", "-lgcc", "/usr/lib/crtend.o", 
-                      "/usr/lib/crtn.o" ]
 
   if debug cmd += "-g" end
 
@@ -251,6 +245,8 @@ proc m3_make_lib (lib, objects, imported_libs, static, shared) is
       if not equal(ret, 0) return ret end
       %exec ("gcc -shared -Wl,-soname", "-Wl," & lib_so,
       %        "-o", lib_soxx, objects)
+      link_file(lib_soxx, lib_sox)
+      link_file(lib_soxx, lib_so)
     end
   end
   return ret
@@ -261,8 +257,6 @@ proc m3_note_shlib(lib) is
   local lib_sox  = format ("lib%s.so.3", lib)
   local lib_soxx = format ("lib%s.so.3.5", lib)
   if defined ("_all")
-    link_file(lib_soxx, lib_sox)
-    link_file(lib_soxx, lib_so)
     install_derived (lib_soxx)
     install_derived (lib_sox)
     install_derived (lib_so)
