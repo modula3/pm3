@@ -2019,8 +2019,8 @@ PROCEDURE Bundle(t: T; m: TEXT) RAISES {Error}=
 
     TRY
       intf_status := FS.Status(intf);
-    EXCEPT
-      OSError.E => FErr(intf);
+    EXCEPT OSError.E =>
+      anystale := TRUE;
     END;
 
     IF t.all THEN
