@@ -6,7 +6,7 @@
 
 MODULE RealRect;
 
-IMPORT Word, RealPoint, Axis, RealInterval;
+IMPORT Word, RealPoint, Axis, RealInterval, Real;
 
 TYPE
   RefT = REF T;
@@ -48,7 +48,7 @@ PROCEDURE FromAbsEdges (w, e, n, s: REAL): T RAISES {} =
 
 PROCEDURE FromPoint (READONLY p: RealPoint.T): T RAISES {} =
   BEGIN
-    RETURN FromEdges (p[0], p[0] + 1.0, p[1], p[1] + 1.0);
+    RETURN FromEdges (p[0], p[0] + Real.MinPos, p[1], p[1] + Real.MinPos);
   END FromPoint;
 
 PROCEDURE FromCorners (READONLY p, q: RealPoint.T): T RAISES {} =
