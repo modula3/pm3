@@ -7,8 +7,12 @@
 if defined ("_all")
   local src = path_of ("report_coverage.c")
   local obj = "report_coverage" & OBJ_ext
+  local cmd = [ CC, "-c", "-g", src ]
+  local ret = 0
   if stale (obj, src)
-    exec (CC, "-c -g", src)
+    write (cmd)
+    ret = exec (cmd)
+    if not equal(ret, 0) error("command failed with error code: ", ret)
   end
 end
 LibdExport ("report_coverage.o")
@@ -16,8 +20,12 @@ LibdExport ("report_coverage.o")
 if defined ("_all")
   local src = path_of ("analyze_coverage.c")
   local pgm = program_name ("analyze_coverage")
+  local cmd = [ CC, "-I../src", "-g", "-o", pgm, src ]
+  local ret = 0
   if stale (pgm, src)
-    exec (CC, "-I../src -g -o", pgm, src)
+    write (cmd)
+    ret = exec (cmd)
+    if not equal(ret, 0) error("command failed with error code: ", ret)
   end
 end
 BindExport ("analyze_coverage")
