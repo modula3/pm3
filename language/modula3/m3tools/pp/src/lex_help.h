@@ -206,18 +206,20 @@ int HandleSpaces ()
 {
     StartNPS();
     /* Now deal with the main loop. */
-    int c = yytext[0];
-    do {
-	if (!IsWhite(c)) {
-	    unput(c);
-	    return WHITESPACE;
-	}
-	if (c == '\n') {
-	    ++comments[nComments].NLs;
-	}
-	SaveChar(c);
-        c = input();
-    } while (c > 0 /* EOF */);
+    {
+	int c = yytext[0];
+	do {
+	    if (!IsWhite(c)) {
+		unput(c);
+		return WHITESPACE;
+	    }
+	    if (c == '\n') {
+		++comments[nComments].NLs;
+	    }
+	    SaveChar(c);
+            c = input();
+	} while (c > 0 /* EOF */);
+    }
     return WHITESPACE;
 }
 
