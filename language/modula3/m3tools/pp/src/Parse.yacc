@@ -424,7 +424,7 @@ return_type:
 
 raises:
       /* empty */
-    | Raises SP Lbrace B0 opt_qid_list E Rbrace nowarn
+    | Raises SP Lbrace B0 opt_qid_list E Rbrace
     | Raises SP Any
     ;
 
@@ -533,7 +533,6 @@ stmt:
 
 stmt_pragma:
       assert_pragma
-    | nowarn_pragma
     | line_pragma
     ;
 
@@ -561,8 +560,8 @@ case:
     ;
 
 labels_list:
-      nowarn labels
-    | labels_list Z Comma A nowarn labels
+      labels
+    | labels_list Z Comma A labels
     ;
 
 labels:
@@ -864,6 +863,7 @@ assert_pragma:     Pr_Assert     SP expr           SP Rpragma ;
 /*
 ll_pragma:         Pr_LL         SP expr           SP Rpragma ;
 spec_pragma:       Pr_Spec       SP expr           SP Rpragma ;
+nowarn_pragma:     Pr_Nowarn     SP Rpragma ;
 */
 fatal_pragma:      Pr_Fatal      SP fatal_exc_list SP Rpragma ;
 pragma_pragma:     Pr_Pragma     SP id_list        SP Rpragma ;
@@ -876,14 +876,8 @@ fatal_exc_list:
 inline_pragma:     Pr_Inline     SP Rpragma ;
 unused_pragma:     Pr_Unused     SP Rpragma ;
 obsolete_pragma:   Pr_Obsolete   SP Rpragma ;
-nowarn_pragma:     Pr_Nowarn     SP Rpragma ;
 callback_pragma:   Pr_Callback   SP Rpragma ;
 exported_pragma:   Pr_Exported   SP Rpragma ;
-
-nowarn:
-      /* empty */
-    | QSP nowarn_pragma QSP
-    ;
 
 /*--------------------- expressions ------------------------*/
 
@@ -1103,13 +1097,13 @@ Pr_Trace:      PR_TRACE    { PF ("<* TRACE",    fonts->fixedComment);} NPS ;
 Pr_Fatal:      PR_FATAL    { PF ("<* FATAL",    fonts->fixedComment);} NPS ;
 Pr_Unused:     PR_UNUSED   { PF ("<* UNUSED",   fonts->fixedComment);} NPS ;
 Pr_Obsolete:   PR_OBSOLETE { PF ("<* OBSOLETE", fonts->fixedComment);} NPS ;
-Pr_Nowarn:     PR_NOWARN   { PF ("<* NOWARN",   fonts->fixedComment);} NPS ;
 Pr_Line:       PR_LINE     { PF ("<* LINE",     fonts->fixedComment);} NPS ;
 Pr_Callback:   PR_CALLBACK { PF ("<* CALLBACK", fonts->fixedComment);} NPS ;
 
 Pr_Pragma:     PR_PRAGMA   { PF ("<* PRAGMA",   fonts->fixedComment);} NPS ;
 Pr_Exported:   PR_EXPORTED { PF ("<* EXPORTED", fonts->fixedComment);} NPS ;
 /*
+Pr_Nowarn:     PR_NOWARN   { PF ("<* NOWARN",   fonts->fixedComment);} NPS ;
 Pr_LL:         PR_LL       { PF ("<* LL",       fonts->fixedComment);} NPS ;
 Pr_Spec:       PR_EXPORTED { PF ("<* SPEC",     fonts->fixedComment);} NPS ;
 */
