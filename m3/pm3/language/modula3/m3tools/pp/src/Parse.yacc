@@ -303,8 +303,8 @@ import_nl:
 import_module_list:
       B Ident                E
     | B Ident SP As SP Ident E
-    | import_module_list Comma A B Ident          E
-    | import_module_list Comma A B Ident As Ident E
+    | import_module_list Comma A B Ident                E
+    | import_module_list Comma A B Ident SP As SP Ident E
     ;
 
 block:
