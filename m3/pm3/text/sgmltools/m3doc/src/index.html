@@ -1,0 +1,170 @@
+<HTML><HEAD>
+<TITLE>The M3DOC documentation system</TITLE>
+</HEAD>
+<BODY>
+<DIV CLASS=HEAD>
+<SPAN CLASS=AUTHOR>Michel Dagenais</SPAN>
+<SPAN CLASS=COPYRIGHT>Michel Dagenais, GNU General Public License, 1997</SPAN>
+<ADDRESS>
+michel.dagenais@polymtl.ca<BR>
+Ecole Polytechnique<BR>
+C.P. 6079, Succ. Centre-Ville<BR>
+Montreal, Quebec, H3C 3A7</ADDRESS>
+<SPAN CLASS=DATE>8 October 1997</SPAN>
+<SPAN CLASS=KEYWORD>HTML</SPAN>
+<SPAN CLASS=KEYWORD>SGML</SPAN>
+<SPAN CLASS=KEYWORD>documentation</SPAN>
+<SPAN CLASS=KEYWORD>literate programming</SPAN>
+<SPAN CLASS=KEYWORD>online</SPAN>
+<SPAN CLASS=KEYWORD>printed</SPAN>
+<SPAN CLASS=KEYWORD>m3tosgml</SPAN>
+<SPAN CLASS=KEYWORD>conversion</SPAN>
+<SPAN CLASS=KEYWORD>TeX</SPAN>
+<SPAN CLASS=KEYWORD>wide audience</SPAN>
+</DIV>
+<H1>The M3DOC documentation system</H1>
+
+<P CLASS=MD.SKIPALL> A printable version of this documentation is available
+<A HREF="index.doc">[m3doc]</A></P>
+
+<DIV CLASS=ABSTRACT>
+<P>This system organizes the documentation of Modula-3 packages. 
+The documentation consists in HTML hypertext files and Modula-3 interfaces
+with embedded documentation. From this, a web of HTML files and a printable
+linear document are produced and shipped to the installation directory.
+</DIV>
+
+<P>
+Document formats evolved from early inflexible systems to full programming
+languages embedded in a formatting engine (e.g. nroff, TeX). In parallel,
+less powerfull but visual incremental word processing formats appeared
+(e.g. wordstar, wordperfect, word). The benefits of separating the
+information content from the presentation parameters has been recognized
+early by several groups, notably publishers. From the same content, several
+different formats (TeX, RTF, HTML, ASCII, nroff, man) and presentations 
+(book, technical report, two column article...) may be generated automatically.
+<P>
+This led to more structure
+oriented formats like SGML/XML
+<A HREF="http://www.sil.org/sgml/sgml.html">[SGML]</A>
+<A HREF="http://www.w3.org/">[XML]</A>, 
+and to a certain extent LaTeX
+<A REL=BIB.ENTRY HREF="references.html#LaTeX"> [LaTeX] </A>. 
+These systems
+may require more discipline, and thus took time to become popular.
+Their benefits were finally recognized, as illustrated by the widespread
+use of HTML
+<A HREF="http://www.w3.org/">[HTML]</A>
+and Linuxdoc (both based on SGML), other SGML document types,
+and Thot
+<A HREF="http://opera.inrialpes.fr/thot/">[Thot]</A>.
+<P>
+Several existing SGML/XML document type definitions (DTD) target technical
+publications, including CALS, DOCBOOK, QUERTZ, LINUXDOC, and HTML. Each
+varies in terms of supported features (maths, tables, figures, index,
+bibliographic references...), supporting tools, and popularity.
+None supports all the above mentioned features; in particular, they all resort
+to foreign formats for figures. The most popular document type, HTML,
+has numerous supporting tools but lacks several features including
+maths, figures, index and bibliographic references. However, HTML is 
+progressing in several ways and drafts for Math support as well as for
+generic extensions have been introduced.
+
+<SPAN CLASS=INDEX.MARK><SPAN CLASS=INDEX.KEY>html</SPAN></SPAN>
+<SPAN CLASS=INDEX.MARK><SPAN CLASS=INDEX.KEY>sgml</SPAN></SPAN>
+<SPAN CLASS=INDEX.MARK><SPAN CLASS=INDEX.KEY>xml</SPAN></SPAN>
+
+<P>
+Because of its widespread use, HTML was selected, with a number of extensions
+to cover the missing features. These extensions may be expressed using the
+generic DIV and SPAN tags for the most part; new elements are introduced for
+figures. The resulting DTD is HTML 4.0, plus 
+MathHTML 97-07-10, minus
+the interactive features (forms, scripts, applets), plus a number of additions
+detailed in this document.
+<P>
+For writing and browsing purposes, it is useful to decompose a long
+technical reference manual into several small documents. 
+Some of these small documents may be used in several contexts (as a section in
+a reference manual, as a subsection in a textbook, as a node in an hypertext
+web...). Furthermore, some portions of a reference manual may be generated 
+automatically, for instance extracted from program interfaces. 
+While most systems like Linuxdoc and
+LaTeXtoHTML do split up a large document into small html files, it may be
+more natural to assemble a large document from several small ones.
+<P>
+In the context of documenting Modula-3 programs and libraries, HTML files
+are combined, through hypertext links, with commented interface files (.i3).
+All the needed HTML and interface files reside in the src directory.
+From these, online (web of HTML files) and printed (Postscript)
+documentation is generated. For this purpose, Modula-3 interface files
+(.i3) are converted to HTML, and hypertext links to the interfaces
+are converted appropriately. To generate the printed documentation,
+some of the hypertext links are followed in a depth first search, starting
+from a root HTML file and including the content of referenced files, 
+producing a large linearized HTML document. The linearized HTML document
+may then be converted to various formats, including LaTeX and Postscript.
+
+<H2>Declaring documentation files in the m3makefile</H2>
+<P>
+Each Modula-3 interface (or implementation)
+containing user documentation is declared using the
+<TT>HtmlInterface(x)</TT> or <TT>HtmlGenericInterface(x)</TT> functions
+(or <TT>HtmlImplementation(x)</TT> and <TT>HtmlGenericImplementation(x)</TT>). 
+File <TT>x.i3</TT>, or <TT>x.ig</TT>, is converted to HTML using
+<TT>m3tosgml -html</TT>, to be exported to the Modula-3 HTML installation
+directory. The conventions for embedding the documentation in the
+interface comments are detailed later in this document.
+<P>
+Each HTML file is declared using the <TT>HtmlFile(x)</TT> function. File 
+<TT>x.html</TT> is filtered to redirect references to <TT>.i3</TT> files to the
+corresponding <TT>.html</TT> files, and to remove any non standard 
+HTML extension used.
+<P>
+Finally, one or more printed documents may be produced by declaring their
+root node with the <TT>HtmlRoot(x)</TT> function. 
+File <TT>x.html</TT> is used as a start point
+for sgmllinear, producing a single HTML file from <TT>x.html</TT> and the files
+referenced through hypertext links. The resulting linearized HTML
+file is then converted to LaTeX, formatted with latex and converted to
+Postscript, to be exported to the Modula-3 DOC installation directory.
+
+<PRE>
+import("libm3")
+import("m3doc")
+
+Module("Schema")
+Implementation("Main")
+
+HtmlFile("index")
+HtmlFile("intro")
+HtmlFile("details")
+HtmlInterface("Schema")
+
+HtmlRoot("index")
+
+Program("prog")
+</PRE>
+
+<UL CLASS=MD.SKIP>
+<LI><A REL=INCLUDE HREF="../../sgmllinear/src/linear.html">
+Merging HTML files during the linearization</A>
+<LI><A REL=INCLUDE HREF="../../sgmlconv/src/format.html">
+The Documentation Format</A>
+<LI><A REL=INCLUDE HREF="../../m3tosgml/src/comments.html">
+Documenting Modula-3 Interfaces</A>
+</UL>
+
+<H2>Conclusion</H2>
+<P>
+This document presents a simple, structured, standard based, documentation
+format. It supports all the common constructs available in traditional
+systems such as LaTeX (math, table, bibliography, index) as well as
+figures (diagrams). This structured format insures portability,
+reusability and easy maintenance/transformation. A large part of documents
+(excluding the extensions such as index marks and figures) may be
+entered using the widely available HTML editors (emacs HTML mode,
+Amaya, Netscape, Word...).
+
+</BODY>
+</HTML>

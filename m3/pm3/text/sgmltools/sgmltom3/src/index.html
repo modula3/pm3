@@ -1,0 +1,44 @@
+<HTML><HEAD>
+<TITLE>Sgmltom3: From HTML back to Modula-3 Interfaces</TITLE>
+</HEAD>
+<BODY>
+<DIV CLASS=HEAD>
+<SPAN CLASS=AUTHOR>Michel Dagenais</SPAN>
+<SPAN CLASS=COPYRIGHT>Michel Dagenais, GNU General Public License, 1997</SPAN>
+<ADDRESS>
+michel.dagenais@polymtl.ca<BR>
+Ecole Polytechnique<BR>
+C.P. 6079, Succ. Centre-Ville<BR>
+Montreal, Quebec, H3C 3A7</ADDRESS>
+<SPAN CLASS=DATE>8 October 1997</SPAN>
+<SPAN CLASS=KEYWORD>HTML</SPAN>
+<SPAN CLASS=KEYWORD>SGML</SPAN>
+<SPAN CLASS=KEYWORD>documentation</SPAN>
+<SPAN CLASS=KEYWORD>m3tosgml</SPAN>
+<SPAN CLASS=KEYWORD>medium audience</SPAN>
+</DIV>
+<H1>Sgmltom3: From HTML back to Modula-3 Interfaces</H1>
+
+<DIV CLASS=ABSTRACT>
+<P>This program converts back to Modula-3 an HTML file produced by 
+<TT>m3tosgml</TT>. It may be used to edit the HTML documentation, embedded
+into Modula-3 comments, using an HTML editor.
+</DIV>
+<P>
+The program <TT>sgmltom3</TT> reads the HTML input file (first command line
+argument, standard input when no argument given), interprets the SGML
+tags with the attribute CLASS set to <I>m3tosgml.xxx</I> (<I>xxx</I> being
+one of the subcommands skip, comment2, skiptag, quote, bquote, startProg,
+and display), and writes the corresponding Modula-3 unit to the 
+output file (second command line argument, standard output when no 
+argument given).
+<P>
+It is useful when some processing is performed on the HTML translation of the
+Modula-3 file, and the result needs to be put back into the original
+Modula-3 file. A prime example is to use an HTML editor for the documentation
+embedded into the Modula-3 comments (convert to HTML with m3tosgml, 
+use an HTML editor, convert back with sgmltom3); this assumes that the
+special attribute values (CLASS=m3tosgml.xxx) placed by <TT>m3tosgml</TT>
+are not altered by the HTML editor.
+</BODY>
+</HTML>

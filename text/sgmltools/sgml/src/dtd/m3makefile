@@ -1,0 +1,20 @@
+
+readonly proc SourceFile (nm) is
+  local dest = PKG_INSTALL & SLship & PACKAGE & SLship & pkg_subdir()
+  local src_file = path_of(nm)
+  _install_file(nm,dest,"0644","")
+end
+
+SourceFile("catalog")
+SourceFile("HTML4.soc")
+SourceFile("HTML4.dtd")
+SourceFile("HTMLmisc.ent")
+SourceFile("HTMLsym.ent")
+SourceFile("ISOlat1.ent")
+SourceFile("Math.ent")
+SourceFile("HTML32.dcl")
+SourceFile("HTML32.dtd")
+SourceFile("HTML32.soc")
+SourceFile("linuxdoc.dtd")
+SourceFile("linuxdoc.soc")
+SourceFile("linuxdocadd.dtd")

@@ -1,0 +1,57 @@
+<HTML><HEAD>
+<TITLE>Sgmllinear: From a Web of HTML documents to a linear document</TITLE>
+</HEAD>
+<BODY>
+<DIV CLASS=HEAD>
+<SPAN CLASS=AUTHOR>Michel Dagenais</SPAN>
+<SPAN CLASS=COPYRIGHT>Michel Dagenais, GNU General Public License, 1997</SPAN>
+<ADDRESS>
+michel.dagenais@polymtl.ca<BR>
+Ecole Polytechnique<BR>
+C.P. 6079, Succ. Centre-Ville<BR>
+Montreal, Quebec, H3C 3A7</ADDRESS>
+<SPAN CLASS=DATE>8 October 1997</SPAN>
+<SPAN CLASS=KEYWORD>HTML</SPAN>
+<SPAN CLASS=KEYWORD>SGML</SPAN>
+<SPAN CLASS=KEYWORD>printed</SPAN>
+<SPAN CLASS=KEYWORD>documentation</SPAN>
+<SPAN CLASS=KEYWORD>linearization</SPAN>
+<SPAN CLASS=KEYWORD>medium audience</SPAN>
+</DIV>
+<H1>Sgmllinear: From a Web of HTML documents to a linear document</H1>
+
+<DIV CLASS=ABSTRACT>
+<P>
+This program reads an HTML document and referenced documents to produce a 
+merged linear document, suitable for printing as a reference manual.
+</DIV>
+
+<P>
+The program <TT>sgmllinear</TT> reads the HTML input file (first command line
+argument, standard input when no argument given), reads a number of
+referenced HTML files, and writes the merged output to the output file
+(second command line argument, standard output when no argument given).
+It accepts the following command line options.
+
+<DL>
+<DT>-html<DD>The SGML document type processed is HTML (default).
+<DT>-index <TT>name</TT><DD>File name to append when an hypertext reference 
+leads to a directory (e.g. an HREF of ../../sgml/src is interpreted as
+../../sgml/src/<I>name</I> if <TT>src</TT> is a directory. The default
+name is <TT>index.html</TT>.
+<DT>-prefix <I>old</I> <I>new</I><DD>When an hypertext reference starts with
+<I>old</I>, replace <I>old</I> by <I>new</I> before trying to follow the
+hypertext link.
+<DT>-f <I>extension</I> <I>filter</I><DD>Any file ending with <I>extension</I>
+is read through the program <I>filter</I>. This is typically used to process
+files ending in <TT>.i3</TT> with <TT>m3tosgml</TT>.
+<DT>-v<DD>Print information about the parsing as it proceeds.
+</DL>
+
+<UL CLASS=MD.SKIP>
+<LI><A REL=SUBDOCUMENT HREF="linear.html">
+Merging HTML files during the linearization</A>
+</UL>
+
+</BODY>
+</HTML>

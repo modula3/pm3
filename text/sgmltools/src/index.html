@@ -1,0 +1,79 @@
+<HTML><HEAD>
+<TITLE>Library and Tools for Processing SGML/HTML Documentation</TITLE>
+</HEAD>
+<BODY>
+<DIV CLASS=HEAD>
+<SPAN CLASS=AUTHOR>Michel Dagenais</SPAN>
+<SPAN CLASS=COPYRIGHT>Michel Dagenais, GNU General Public License, 1997</SPAN>
+<ADDRESS>
+michel.dagenais@polymtl.ca<BR>
+Ecole Polytechnique<BR>
+C.P. 6079, Succ. Centre-Ville<BR>
+Montreal, Quebec, H3C 3A7
+</ADDRESS>
+<SPAN CLASS=DATE>8 October 1997</SPAN>
+<SPAN CLASS=KEYWORD>SGML</SPAN>
+<SPAN CLASS=KEYWORD>HTML</SPAN>
+<SPAN CLASS=KEYWORD>documentation</SPAN>
+<SPAN CLASS=KEYWORD>program</SPAN>
+<SPAN CLASS=KEYWORD>library</SPAN>
+<SPAN CLASS=KEYWORD>wide audience</SPAN>
+<SPAN CLASS=KEYWORD>reusable</SPAN>
+</DIV>
+<H1>Library and Tools for Processing SGML/HTML Documentation</H1>
+
+<DIV CLASS=ABSTRACT>
+<P>The Standard Generalized Markup Language (SGML) is a structured format
+for encoding document content. Several SGML Document Type Definitions (DTD)
+are in common use, like HTML, CALS, and Linuxdoc. A library and several tools
+have been developped to read and transform SGML documents.
+</DIV>
+
+<P>
+The <TT>sgml</TT> library parses SGML documents according to their DTD.
+Several tools use the <TT>sgml</TT> library to check the structure of
+SGML documents (<TT>sgmlstructure</TT>), add the omitted tags
+(<TT>sgmlnormalize</TT>), convert to other formats (<TT>sgmlconv</TT>), and
+group a tree of several SGML documents into a larger linear one 
+(<TT>sgmllinear</TT>). The package <TT>sgmlobliq</TT> exports the objects
+and methods of the <TT>sgml</TT> library to the Obliq interpreter; it was
+used for a prototype of <TT>sgmlconv</TT>
+<P>
+A number of tools are more directly targeted at documenting Modula-3
+packages, based on the <TT>m3doc</TT> system. These include 
+<TT>m3tosgml</TT> and <TT>sgmltom3</TT> to transform Modula-3 interfaces
+with embedded documentation into HTML documents, <TT>sgmllinear</TT>
+to group several HTML files and documented Modula-3 interfaces into a 
+large linear HTML document, and <TT>sgmlconv</TT> to convert the
+resulting HTML file into LaTeX for typesetting and printing.
+The package <TT>m3textohtml</TT> is used to convert Modula-3 interfaces
+documented for processing with <TT>m3totex</TT> into interfaces suitable for
+<TT>m3tosgml</TT>.
+
+<H2>Installation</H2>
+<P>
+This is the first release for most of these tools and should be considered
+alpha. On POSIX systems, you may use the main m3makefile to build at once
+all the contained packages. The packages are built in two phases. In the
+first phase all the libraries and programs are constructed; the documentation
+is not processed since the tools are not built yet. In the second phase,
+everything is build, including the documentation. The HTML documentation
+may then be found in HTML_INSTALL/sgmltools/src/index.html and the
+Postscript documentation in DOC_INSTALL/m3doc/index.ps
+
+<UL CLASS=MD.SKIP>
+<LI><A REL=SUBDOCUMENT HREF="../sgml/src/index.html">The SGML Parser Library</A>
+<LI><A REL=SUBDOCUMENT HREF="../sgmlnormalize/src/index.html">Sgmlnormalize: Supplying Omitted SGML Tags</A>
+<LI><A REL=SUBDOCUMENT HREF="../sgmlstructure/src/index.html">Sgmlstructure: Print the SGML Tree Structure for a Document</A>
+<LI><A REL=SUBDOCUMENT HREF="../sgmlobliq/src/index.html">Sgmlobliq: Access to the SGML Library from the Obliq Interpreter</A>
+<LI><A REL=SUBDOCUMENT HREF="../m3doc/src/index.html">M3doc: The Modula-3 Literate Programming System Based on SGML</A>
+<LI><A REL=SUBDOCUMENT HREF="../m3tosgml/src/index.html">M3tosgml: Conversion of Documented Modula-3 Interfaces into HTML</A>
+<LI><A REL=SUBDOCUMENT HREF="../sgmllinear/src/index.html">Sgmllinear: 
+From a Web of HTML documents to a linear document</A>
+<LI><A REL=SUBDOCUMENT HREF="../sgmlconv/src/index.html">Sgmlconv: Conversion from HTML to TeX and Other Formats</A>
+<LI><A REL=SUBDOCUMENT HREF="../sgmltom3/src/index.html">Sgmltom3: Conversion 
+from HTML back to Modula-3 Interfaces</A>
+<LI><A REL=SUBDOCUMENT HREF="../m3textohtml/src/index.html">M3textohtml: Conversion from the M3totex Literate Programming System to M3doc</A>
+</UL>
+</BODY>
+</HTML>

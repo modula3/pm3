@@ -1,0 +1,533 @@
+$LSMC (*ACFGILMOSX*)
+
+(* COCO/R grammar used to generate COCO/R itself
+   Modula-3 version (0.1) *)
+
+COMPILER CR
+
+(*---------------------- semantic declarations -----------------------*)
+
+IMPORT CRT, CRA ;
+IMPORT Text, ASCII ;
+
+CONST
+  ident  = 0 ;
+  string = 1 ; (* symbol kind *)
+
+PROCEDURE FixString(p : Parser) : TEXT =
+VAR
+  double := FALSE ;
+  spaces := FALSE ;
+  name   := p.name() ;
+  len    := Text.Length(name) ;
+  c      := NEW(REF ARRAY OF CHAR, len) ;
+BEGIN
+  Text.SetChars(c^, name) ;
+  IF (CRT.ignoreCase) THEN (* force uppercase *)
+    FOR i := 1 TO len - 2 DO
+      c[i] := ASCII.Upper[c[i]]
+    END ;
+  END ;
+  FOR i := 1 TO len - 2 DO (* search for interior " or spaces *)
+    IF (c[i] = '"') THEN
+      double := TRUE
+    END ;
+    IF (c[i] = ' ') THEN
+      spaces := TRUE
+    END
+  END ;
+  IF (NOT double) THEN (* force delimiters to be " quotes *)
+    c[0] := '"' ;
+    c[len - 1] := '"'
+  END ;
+  IF (spaces) THEN
+    p.error("spaces not allowed within tokens")
+  END ;
+  RETURN Text.FromChars(c^)
+END FixString;
+
+PROCEDURE MatchLiteral(p : Parser ; sp : INTEGER) =
+(* store string either as token or as literal *)
+VAR
+  sn, sn1   :  CRT.SymbolNode ;
+  matchedSp : INTEGER ;
+BEGIN
+  CRT.GetSym(sp, sn) ;
+  CRA.MatchDFA(p, sn.name, sp, matchedSp) ;
+  IF (matchedSp # CRT.noSym) THEN
+    CRT.GetSym(matchedSp, sn1) ;
+    sn1.struct := CRT.classLitToken ;
+    CRT.PutSym(matchedSp, sn1) ;
+    sn.struct := CRT.litToken
+  ELSE
+    sn.struct := CRT.classToken ;
+  END ;
+  CRT.PutSym(sp, sn)
+END MatchLiteral ;
+  
+PROCEDURE SetCtx(gp : INTEGER) =
+(* set transition code to CRT.contextTrans *)
+VAR
+  gn : CRT.GraphNode ;
+BEGIN
+  WHILE (gp > 0) DO
+    CRT.GetNode(gp, gn) ;
+    IF ((gn.typ = CRT.char) OR (gn.typ = CRT.class)) THEN
+      gn.p2 := CRT.contextTrans ;
+      CRT.PutNode(gp, gn)
+    ELSIF ((gn.typ = CRT.opt) OR (gn.typ = CRT.iter)) THEN
+      SetCtx(gn.p1)
+    ELSIF (gn.typ = CRT.alt) THEN
+      SetCtx(gn.p1) ;
+      SetCtx(gn.p2)
+    END ;
+    gp := gn.next
+  END
+END SetCtx ;
+
+PROCEDURE SetOption (s: TEXT) =
+VAR
+  c : CHAR ;
+BEGIN
+  FOR i := 0 TO (Text.Length(s) - 1) DO
+    c := ASCII.Upper[Text.GetChar(s, i)] ;
+    IF (c IN ASCII.Uppers) THEN
+      CRT.ddt[c] := TRUE
+    END
+  END
+END SetOption ;
+
+(*--------------------------------------------------------------------*)
+
+CHARACTERS
+
+  letter   = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".
+  digit    = "0123456789".
+  ctrl     = CHR(1) .. CHR(31).
+  tab      = CHR(9).
+  eol      = CHR(13).
+  lf       = CHR(10).
+  noQuote1 = ANY - '"' - ctrl.
+  noQuote2 = ANY - "'" - ctrl.
+
+IGNORE tab + eol + lf
+
+TOKENS
+
+  ident   = letter {letter | digit}.
+  string  = '"' {noQuote1} '"' | "'" {noQuote2} "'".
+  number  = digit {digit}.
+
+PRAGMAS
+
+  Options = "$" {letter} .
+                (. SetOption(p.name()) ; .)
+
+COMMENTS FROM "(*" TO "*)" NESTED
+
+PRODUCTIONS
+
+CR                           (.VAR
+                                 ok, undef, hasAttrs: BOOLEAN;
+                                 unknownSy,
+                                 eofSy, gR:       INTEGER;
+                                 gramLine, sp:    INTEGER;
+                                 name, gramName:  TEXT;
+                                 sn:              CRT.SymbolNode;.)
+=
+"COMPILER" 
+                             (.gramLine := p.line() ;
+                               eofSy := CRT.NewSym(CRT.t, "EOF", 0) ;
+                               CRT.genScanner := TRUE ;
+                               CRT.ignoreCase := FALSE ;
+                               ok := TRUE ;
+                               CRT.ignored := CRT.Set{}.)
+Ident <gramName>             (.CRT.semDeclPos.beg := p.offset() + p.length() ;
+                               CRT.semDeclPos.col := 0.)
+{ ANY }                      (.CRT.semDeclPos.len := p.offset() + p.length() - CRT.semDeclPos.beg.)
+{ Declaration }
+SYNC
+"PRODUCTIONS"                (.IF CRT.genScanner THEN
+                                 CRA.MakeDeterministic(ok)
+                               END ;
+                               IF (NOT ok) THEN
+                                 p.error("could not make deterministic automaton")
+                               END ;
+                               CRT.nNodes := 0.)
+{ Ident <name>               (.sp := CRT.FindSym(name) ;
+                               undef := (sp = CRT.noSym) ;
+                               IF (undef) THEN
+                                 sp := CRT.NewSym(CRT.nt, name, p.line()) ;
+                                 CRT.GetSym(sp, sn)
+                               ELSE
+                                 CRT.GetSym(sp, sn) ;
+                                 IF (sn.typ = CRT.nt) THEN
+                                   IF (sn.struct > 0) THEN
+                                     p.error("'" & name & "' declared twice")
+                                   END
+                                 ELSE
+                                   p.error("this type not allowed on left side of production")
+                                 END ;
+                                 sn.line := p.line()
+                               END ;
+                               hasAttrs := (sn.attrPos.beg >= 0).)
+  ( Attribs <sn.attrPos>     (.IF ((NOT undef) AND (NOT hasAttrs)) THEN
+                                 p.error("symbol earlier referenced without attributes")
+                               END ;
+                               CRT.PutSym(sp, sn).)
+  |                          (.IF ((NOT undef) AND hasAttrs) THEN
+                                 p.error("symbol earlier referenced with attributes")
+                               END.)
+  )
+  [ SemText <sn.semPos>]
+  WEAK "="
+  Expression <sn.struct, gR> (.CRT.CompleteGraph(gR) ;
+                               CRT.PutSym(sp, sn).)
+  WEAK "."
+  }                          (.sp := CRT.FindSym(gramName) ;
+                               IF (sp = CRT.noSym) THEN
+                                 p.error("missing production for grammar name");
+                               ELSE
+                                 CRT.GetSym(sp, sn) ;
+                                 IF (sn.attrPos.beg >= 0) THEN
+                                   p.error("grammar symbol must not have attributes")
+                                 END ;
+                                 CRT.root := CRT.NewNode(CRT.nt, sp, gramLine) ;
+                               END.)
+"END" Ident <name>           (.IF (NOT Text.Equal(name, gramName)) THEN
+                                 p.error("name does not match name in heading")
+                               END.)
+"."                          (.unknownSy := CRT.NewSym(CRT.t, "*Undef*", 0).)
+
+.
+
+(*----------------------------------------------------------------------*)
+
+Declaration                  (.VAR
+                                 gL1, gR1, gL2, gR2: INTEGER;
+                                 nested:             BOOLEAN;.)
+= "CHARACTERS" { SetDecl }
+| "TOKENS"     { TokenDecl <CRT.t> }
+| "NAMES"      { NameDecl }
+| "PRAGMAS"    { TokenDecl <CRT.pr> }
+| "COMMENTS"
+  "FROM" TokenExpr <gL1, gR1>
+  "TO" TokenExpr <gL2, gR2>
+  ( "NESTED"                 (.nested := TRUE.)
+    |                        (.nested := FALSE.)
+  )
+                             (.CRA.NewComment(p, gL1, gL2, nested).)
+| "IGNORE"
+  ( "CASE"                   (.CRT.ignoreCase := TRUE.)
+  | Set <CRT.ignored>
+  )
+.
+
+
+(*----------------------------------------------------------------------*)
+
+SetDecl                      (.VAR
+                                 c:    INTEGER;
+                                 set:  CRT.Set;
+                                 name: TEXT;.)
+= Ident <name>               (.c := CRT.ClassWithName(name) ;
+                               IF (c >= 0) THEN
+                                 p.error("'" & name & "' declared twice")
+                               END.)
+  "=" Set <set>              (.c := CRT.NewClass(name, set).)
+  ".".
+
+(*----------------------------------------------------------------------*)
+
+Set <VAR set : CRT.Set>      (.VAR set2 : CRT.Set ;.)
+= SimSet <set>
+  { "+" SimSet <set2>        (.set := set + set2.)
+  | "-" SimSet <set2>        (.set := set - set2.)
+  }.
+
+(*----------------------------------------------------------------------*)
+
+SimSet <VAR set: CRT.Set>    (.VAR i, n1, n2 : CARDINAL ;
+                                   c         : INTEGER ;
+                                   name      : TEXT ;
+                                   s         : TEXT ;
+                                   ch, ch0   : CHAR ;.)
+= Ident <name>               (.c := CRT.ClassWithName(name) ;
+                               IF (c < 0) THEN
+                                 p.error("undefined name '" & name & "'") ;
+                                 set := CRT.Set{}
+                               ELSE
+                                 CRT.GetClass(c, set)
+                               END.)
+| string                     (.s   := p.name() ;
+                               set := CRT.Set{};
+                               i   := 1 ;
+                               ch0 := Text.GetChar(s, 0) ;
+                               ch  := Text.GetChar(s, i) ;
+                               WHILE (ch # ch0) DO
+                                 IF (CRT.ignoreCase) THEN
+                                   ch := ASCII.Upper[ch]
+                                 END ;
+                                 set := set + CRT.Set{ORD(ch)} ;
+                                 INC(i) ;
+                                 ch := Text.GetChar(s, i)
+                               END.)
+| SingleChar <n1>
+                             (.set := CRT.Set{n1}.)
+
+  [ ".." SingleChar <n2>     (.set := set + CRT.Set{n1 .. n2}.)
+                          ]
+| "ANY"                      (.set := CRT.Set{0 .. CRT.maxTerminals}.)
+.
+
+(*----------------------------------------------------------------------*)
+
+SingleChar <VAR n: CARDINAL> (.VAR i : CARDINAL ;
+                                   s : TEXT ;.)
+  =
+    "CHR" "(" number         (.s := p.name() ;
+                               n := 0 ;
+                               i := 0 ;
+                               WHILE (i < Text.Length(s)) DO
+                                 n := 10 * n + ORD(Text.GetChar(s, i)) - ORD('0') ;
+                                 INC(i)
+                               END ;
+                               IF (n > 255) THEN
+                                 p.error("unacceptable constant value") ;
+                                 n := n MOD 256
+                               END ;
+                               IF (CRT.ignoreCase) THEN
+                                 n := ORD(ASCII.Upper[VAL(n, CHAR)])
+                               END.)
+     ")" .
+
+(*----------------------------------------------------------------------*)
+
+TokenDecl <typ: INTEGER>     (.VAR
+                                 kind:       INTEGER;
+                                 name:       TEXT;
+                                 pos:        CRT.Position;
+                                 sp, gL, gR: INTEGER;
+                                 sn:         CRT.SymbolNode;.)
+= Symbol <name, kind>        (.IF (CRT.FindSym(name) # CRT.noSym) THEN
+                                 p.error("'" & name & "' declared twice")
+                               ELSE
+                                 sp := CRT.NewSym(typ, name, p.line()) ;
+                                 CRT.GetSym(sp, sn) ;
+                                 sn.struct := CRT.classToken ;
+                                 CRT.PutSym(sp, sn)
+                               END.)
+  SYNC
+  ( "="
+    TokenExpr <gL, gR>       (.IF (kind # ident) THEN
+                                 p.error("a literal must not be declared within a structure")
+                               END ;
+                               CRT.CompleteGraph(gR) ;
+                               CRA.ConvertToStates(p, gL, sp).)
+    "."
+  |                          (.IF (kind = ident) THEN
+                                 CRT.genScanner := FALSE
+                               ELSE
+                                 MatchLiteral(p, sp)
+                               END.)
+  )
+  [ SemText <pos>            (.IF (typ = CRT.t) THEN
+                                 p.error("semantic action not allowed here")
+                               END ;
+                               CRT.GetSym(sp, sn) ;
+                               sn.semPos := pos ;
+                               CRT.PutSym(sp, sn).)
+  ].
+
+(*----------------------------------------------------------------------*)
+
+Expression <VAR gL, gR: INTEGER>(.VAR gL2, gR2: INTEGER;
+                                      first:    BOOLEAN; .)
+= Term <gL, gR>              (.first := TRUE.)
+  { WEAK "|"
+    Term <gL2, gR2>          (.IF (first) THEN
+                                 CRT.MakeFirstAlt(gL, gR) ;
+                                 first := FALSE
+                               END ;
+                               CRT.ConcatAlt(gL, gR, gL2, gR2).)
+  }
+.
+
+(*----------------------------------------------------------------------*)
+
+Term<VAR gL, gR: INTEGER>    (.VAR gL2, gR2: INTEGER;.)
+=                            (.gL := 0 ;
+                               gR := 0.)
+( Factor <gL, gR>
+    { Factor <gL2, gR2>      (.CRT.ConcatSeq(gL, gR, gL2, gR2).)
+    }
+  |                          (.gL := CRT.NewNode(CRT.eps, 0, 0) ;
+                               gR := gL.)
+  ).
+
+(*----------------------------------------------------------------------*)
+
+Factor <VAR gL, gR: INTEGER> (.VAR
+                                 sp, kind:    INTEGER;
+                                 name:        TEXT;
+                                 gn:          CRT.GraphNode;
+                                 sn:          CRT.SymbolNode;
+                                 set:         CRT.Set;
+                                 undef, weak: BOOLEAN;
+                                 pos:         CRT.Position;.)
+=                            (.gL := 0 ;
+                               gR := 0 ;
+                               weak := FALSE.)
+( [ "WEAK"                   (.weak := TRUE.)
+  ]
+  Symbol <name, kind>        (.sp := CRT.FindSym(name) ;
+                               undef := (sp = CRT.noSym) ;
+                               IF (undef) THEN
+                                 IF (kind = ident) THEN  (*forward nt*)
+                                   sp := CRT.NewSym(CRT.nt, name, 0)
+                                 ELSE  (*undefined string in production*)
+                                   sp := CRT.NewSym(CRT.t, name, p.line()) ;
+                                   MatchLiteral(p, sp)
+                                 END
+                               END ;
+                               CRT.GetSym(sp, sn) ;
+                               IF ((sn.typ # CRT.t) AND (sn.typ # CRT.nt)) THEN
+                                 p.error("this symbol kind not allowed in production")
+                               END ;
+                               IF (weak) THEN
+                                 IF (sn.typ = CRT.t) THEN
+                                   sn.typ := CRT.wt
+                                 ELSE
+                                   p.error("only terminals may be weak")
+                                 END
+                               END ;
+                               gL := CRT.NewNode(sn.typ, sp, p.line()) ;
+                               gR := gL.)
+  ( Attribs <pos>            (.CRT.GetNode(gL, gn) ;
+                               gn.pos := pos ;
+                               CRT.PutNode(gL, gn) ;
+                               CRT.GetSym(sp, sn) ;
+                               IF (undef) THEN
+                                 sn.attrPos := pos ;
+                                 CRT.PutSym(sp, sn)
+                               ELSIF (sn.attrPos.beg < 0) THEN
+                                 p.error("symbol declared without attributes")
+                               END ;
+                               IF (kind # ident) THEN
+                                 p.error("a literal must not have attributes")
+                               END.)
+  |                          (.CRT.GetSym(sp, sn) ;
+                               IF (sn.attrPos.beg >= 0) THEN
+                                 p.error("symbol declared with attributes")
+                               END.)
+  )
+| "(" Expression <gL, gR> ")"
+| "[" Expression <gL, gR> "]" (.CRT.MakeOption(gL, gR).)
+| "{" Expression <gL, gR> "}" (.CRT.MakeIteration(gL, gR).)
+
+| SemText <pos>              (.gL := CRT.NewNode(CRT.sem, 0, 0) ;
+                               gR := gL ;
+                               CRT.GetNode(gL, gn) ;
+                               gn.pos := pos ;
+                               CRT.PutNode(gL, gn).)
+| "ANY"                      (.set := CRT.Set{0 .. CRT.maxTerminals} - CRT.Set{CRT.eofSy} ;
+                               gL := CRT.NewNode(CRT.any, CRT.NewSet(set), 0) ;
+                               gR := gL.)
+| "SYNC"                     (.gL := CRT.NewNode(CRT.sync, 0, 0) ;
+                               gR := gL.)
+).
+
+(*----------------------------------------------------------------------*)
+
+TokenExpr <VAR gL, gR: INTEGER> (.VAR
+                                    gL2, gR2: INTEGER;
+                                    first:    BOOLEAN;.)
+= TokenTerm <gL, gR>         (.first := TRUE.)
+  { WEAK "|"
+    TokenTerm <gL2, gR2>     (.IF first THEN
+                                 CRT.MakeFirstAlt(gL, gR) ;
+                                 first := FALSE
+                               END ;
+                               CRT.ConcatAlt(gL, gR, gL2, gR2).)
+  }.
+
+(*----------------------------------------------------------------------*)
+
+TokenTerm <VAR gL, gR: INTEGER> (.VAR gL2, gR2: INTEGER;.)
+= TokenFactor <gL, gR>
+  { TokenFactor <gL2, gR2>   (.CRT.ConcatSeq(gL, gR, gL2, gR2).)
+  }
+  [ "CONTEXT"
+    "(" TokenExpr <gL2, gR2> (.SetCtx(gL2) ;
+                               CRT.ConcatSeq(gL, gR, gL2, gR2).)
+    ")"
+  ].
+
+(*----------------------------------------------------------------------*)
+
+TokenFactor <VAR gL, gR: INTEGER> (.VAR
+                                      kind, c: INTEGER;
+                                      set:     CRT.Set;
+                                      name:    TEXT;.)
+=                            (.gL := 0 ;
+                               gR := 0.)
+( Symbol <name, kind>        (.IF (kind = ident) THEN
+                                 c := CRT.ClassWithName(name) ;
+                                 IF (c < 0) THEN
+                                   p.error("undefined name '" & name & "'") ;
+                                   set := CRT.Set{} ;
+                                   c := CRT.NewClass(name, set)
+                                 END ;
+                                 gL := CRT.NewNode(CRT.class, c, 0) ;
+                                 gR := gL
+                               ELSE (*string*)
+                                 CRT.StrToGraph(name, gL, gR)
+                               END.)
+| "(" TokenExpr <gL, gR> ")"
+| "[" TokenExpr <gL, gR> "]" (.CRT.MakeOption(gL, gR).)
+| "{" TokenExpr <gL, gR> "}" (.CRT.MakeIteration(gL, gR).)
+).
+
+(*----------------------------------------------------------------------*)
+
+Ident <VAR name: TEXT> =
+  ident                      (.name := p.name().).
+
+(*----------------------------------------------------------------------*)
+
+Symbol <VAR name: TEXT; VAR kind: INTEGER>
+  =
+  ( Ident <name>             (.kind := ident.)
+  | string                   (.name := FixString(p) ;
+                               kind := string.)
+  ).
+
+(*----------------------------------------------------------------------*)
+
+Attribs <VAR pos : CRT.Position> =
+  "<"                        (.pos.beg := p.offset() + 1 ;
+                               pos.col := 0.)
+  { ANY }
+  ">"                        (.pos.len := p.offset() - pos.beg .).
+
+(*----------------------------------------------------------------------*)
+
+SemText <VAR pos : CRT.Position> =
+  "(."                       (.pos.beg := p.offset() + 2 ;
+                               pos.col := p.column() + 2.)
+  { ANY }
+  ".)"                       (.pos.len := p.offset() - pos.beg .).
+
+
+(*----------------------------------------------------------------------*)
+
+NameDecl                     (.VAR name, str: TEXT; .)
+  = Ident <name> "="
+    ( ident            (.name := p.name().)
+      | string         (.str := FixString(p).)
+       )               (.CRT.NewName(name, str).)
+  ".".
+
+(*----------------------------------------------------------------------*)
+
+END CR.

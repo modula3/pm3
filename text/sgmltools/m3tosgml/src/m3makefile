@@ -1,0 +1,12 @@
+
+import ("libm3")
+
+import ("m3doc")
+
+implementation ("Main")
+
+HtmlFile("index")
+
+HtmlFile("comments")
+
+Program ("m3tosgml")

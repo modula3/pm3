@@ -1,0 +1,66 @@
+<HTML><HEAD>
+<TITLE>M3textohtml: From the M3totex Literate Programming System to M3doc</TITLE>
+</HEAD>
+<BODY>
+<DIV CLASS=HEAD>
+<SPAN CLASS=AUTHOR>Michel Dagenais</SPAN>
+<SPAN CLASS=COPYRIGHT>Michel Dagenais, GNU General Public License, 1997</SPAN>
+<ADDRESS>
+michel.dagenais@polymtl.ca<BR>
+Ecole Polytechnique<BR>
+C.P. 6079, Succ. Centre-Ville<BR>
+Montreal, Quebec, H3C 3A7</ADDRESS>
+<SPAN CLASS=DATE>8 October 1997</SPAN>
+<SPAN CLASS=KEYWORD>HTML</SPAN>
+<SPAN CLASS=KEYWORD>TeX</SPAN>
+<SPAN CLASS=KEYWORD>documentation</SPAN>
+<SPAN CLASS=KEYWORD>m3totex</SPAN>
+<SPAN CLASS=KEYWORD>narrow audience</SPAN>
+</DIV>
+<H1>M3textohtml: From the M3totex Literate Programming System to M3doc</H1>
+
+<DIV CLASS=ABSTRACT>
+<P>This program is to be used to ease the transition from M3totex to M3doc
+as a literate programming system. Once all Modula-3 interfaces containing
+TeX commands are translated, it will become useless.
+</DIV>
+
+<P>
+A number of Modula-3 interfaces, generic interfaces, and some modules, 
+contain TeX commands. This program converts most common TeX commands
+embedded in Modula-3 comments to their equivalent HTML tag. It reads
+a TeX commented Modula-3 unit from standard input, prints messages about
+unrecognized TeX commands, and output the translated unit to standard output.
+<P>
+Bibliographic references (\cite{}) are converted to hypertext links into
+a file named <TT>references.html</TT> in the package <TT>src</TT> directory.
+The actual bibliographic entries need to be entered into that file.
+<P>
+While most TeX commands are translated properly, some final manual
+adjustments may be needed. Often, TeX commands embedded into strings
+in quoted, backquoted, index or verbatim sections are not processed.
+<P>
+A shell script, <TT>tex2ht</TT>,  is provided to run <TT>m3textohtml</TT> 
+over all interface files in several Modula-3 packages. Use with caution
+and always keep a copy of these packages as the conversion is done
+<I>in place</I>.
+<P>
+The number of files within SRC Modula-3 requiring conversion has been
+estimated to 250 interfaces and 30 modules. This information was obtained
+by searching for \ in all the .i3, .ig, .m3, and .mg files. While any file
+with a \ may contain TeX commands, a smaller subset is more likely:
+those with \ followed by something else than the usual Modula-3 escape 
+sequences (\n, \r, \" ...). This information is provided below for
+modules and interfaces.
+
+<UL CLASS=MD.SKIP>
+<LI><A REL=SUBDOCUMENT HREF="tex2ht.txt">Tex2ht: a shell script to run m3textohtml over several packages</A>
+<LI><A REL=SUBDOCUMENT HREF="intBsLines.txt">A list of all lines with \ in SRC Modula-3 interfaces</A>
+<LI><A REL=SUBDOCUMENT HREF="intBsFiles.txt">A list of all files with \ in SRC Modula-3 interfaces</A>
+<LI><A REL=SUBDOCUMENT HREF="intBsFiles2.txt">A list of all interfaces with \ which are not M3 escape sequence</A>
+<LI><A REL=SUBDOCUMENT HREF="modBsLines.txt">A list of all lines with \ in SRC Modula-3 modules</A>
+<LI><A REL=SUBDOCUMENT HREF="modBsFiles.txt">A list of all files with \ in SRC Modula-3 modules</A>
+<LI><A REL=SUBDOCUMENT HREF="modBsFiles2.txt">A list of all modules with \ which are not M3 escape sequence</A>
+</UL>
+</BODY>
+</HTML>

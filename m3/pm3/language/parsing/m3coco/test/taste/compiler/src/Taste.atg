@@ -1,0 +1,206 @@
+COMPILER Taste
+
+IMPORT TasteSym, TasteCode ;
+FROM TasteCode IMPORT OpCode, Address, Number ;
+FROM TasteSym  IMPORT ObjKind, VarType ;
+
+IMPORT Scan, Text ;
+
+(*--------------------------------------------------------------------------*)
+
+CHARACTERS
+  letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".
+  digit = "0123456789".
+  cr = CHR(13).
+  lf = CHR(10).
+  tab = CHR(9).
+
+TOKENS
+  ident  = letter {letter | digit}.
+  number = digit {digit}.
+
+IGNORE cr + lf + tab
+
+COMMENTS FROM "(*" TO "*)" NESTED
+
+PRODUCTIONS
+  Taste                                  (. VAR name     : TEXT ;
+                                                progName : TEXT ;
+                                                obj      : TasteSym.Obj ; .)
+  = "PROGRAM" Ident<progName> ";"        (. TasteCode.progStart := TasteCode.pc .)
+    Body
+    Ident<name> "."                      (. IF (NOT Text.Equal(name, progName)) THEN
+                                              p.error("final name does not match initial name")
+                                            END;
+                                            TasteCode.Emit1(OpCode.Halt) .).
+
+  Body                                   (. VAR fix   : Address ;
+                                                vtype : VarType ;
+                                                name  : TEXT ;
+                                                name1 : TEXT ;
+                                                obj   : TasteSym.Obj ; .)
+  =                                      (. TasteSym.EnterScope() ;
+                                            fix := TasteCode.pc + 1; TasteCode.Emit2(OpCode.Jmp, 0) .)
+    { "VAR"
+      { Ident<name> ":"                  (. obj := TasteSym.New(name, ObjKind.Var) ;
+                                            IF (obj = TasteSym.undefObj) THEN
+                                              p.error("identifier redeclared")
+                                            END .)
+        TypeId<obj.vtype> ";"
+      }
+
+    | "PROCEDURE" Ident<name> ";"        (. obj := TasteSym.New(name, ObjKind.Proc) ;
+                                            IF (obj = TasteSym.undefObj) THEN
+                                              p.error("identifier redeclared")
+                                            END ;
+                                            obj.adr := TasteCode.pc .)
+      Body
+      Ident<name1> ";"                   (. TasteCode.Emit1(OpCode.Ret);
+                                            IF (NOT Text.Equal(name, name1)) THEN
+                                              p.error("final name does not match initial one")
+                                            END .)
+    }
+    "BEGIN"                              (. TasteCode.Fixup(fix) ;
+                                            TasteCode.Emit2(OpCode.Res, TasteSym.DataSpace()) .)
+    StatSeq
+    "END"                                (. TasteSym.LeaveScope() .).
+
+  TypeId<VAR vtype : VarType>
+  =   "INTEGER"                          (. vtype := VarType.Int .)
+    | "BOOLEAN"                          (. vtype := VarType.Bool .).
+
+  Ident<VAR name : TEXT>
+  = ident                                (. name := p.name() .).
+
+  StatSeq = Stat {";" Stat}.
+
+  Stat                                   (. VAR vtype     : VarType ;
+                                                name      : TEXT;
+                                                obj       : TasteSym.Obj ;
+                                                fix       : INTEGER ;
+                                                fix2      : INTEGER ;
+                                                loopstart : INTEGER; .)
+  = [ Ident<name>                        (. obj := TasteSym.Find(name) ;
+                                            IF (obj = TasteSym.undefObj) THEN
+                                              p.error("undeclared identifier")
+                                            END .)
+      ( ":" "="                          (. IF (obj.kind # ObjKind.Var) THEN
+                                              p.error("variable expected")
+                                            END .)
+        Expression<vtype>                (. IF (vtype # obj.vtype) THEN
+                                              p.error("mismatched types")
+                                            END ;
+                                            TasteCode.Emit3(OpCode.Sto, TasteSym.curLevel - obj.level, obj.adr) .)
+      |                                  (. IF (obj.kind # ObjKind.Proc) THEN
+                                              p.error("invalid procedure call")
+                                            END ;
+                                            TasteCode.Emit3(OpCode.Call, TasteSym.curLevel - obj.level, obj.adr) .)
+      )
+    | "IF" Expression<vtype>             (. IF (vtype # VarType.Bool) THEN
+                                              p.error("boolean type expected")
+                                            END ;
+                                            fix := TasteCode.pc + 1 ;
+                                            TasteCode.Emit2(OpCode.FJmp, 0) .)
+      "THEN" StatSeq
+      [ "ELSE"                           (. fix2 := TasteCode.pc + 1 ;
+                                            TasteCode.Emit2(OpCode.Jmp, 0) ;
+                                            TasteCode.Fixup(fix) ;
+                                            fix := fix2 .)
+        StatSeq
+      ]
+      "END"                              (. TasteCode.Fixup(fix) .)
+    | "WHILE"                            (. loopstart := TasteCode.pc .)
+      Expression<vtype>                  (. IF (vtype # VarType.Bool) THEN
+                                              p.error("boolean type expected")
+                                            END ;
+                                            fix := TasteCode.pc + 1 ;
+                                            TasteCode.Emit2(OpCode.FJmp, 0) .)
+      "DO" StatSeq                       (. TasteCode.Emit2(OpCode.Jmp, loopstart) ;
+                                            TasteCode.Fixup(fix) .)
+      "END"
+    | "READ" Ident<name>                 (. obj := TasteSym.Find(name) ;
+                                            IF (obj = TasteSym.undefObj) THEN
+                                              p.error("undeclared identifier")
+                                            ELSIF (obj.vtype # VarType.Int) THEN
+                                              p.error("invalid type")
+                                            END ;
+                                            TasteCode.Emit3(OpCode.Read, TasteSym.curLevel - obj.level, obj.adr) .)
+    | "WRITE" Expression<vtype>          (. IF (vtype # VarType.Int) THEN
+                                              p.error("invalid type")
+                                            END ;
+                                            TasteCode.Emit1(OpCode.Write) .)
+    ].
+
+  Expression<VAR vtype : VarType>        (. VAR vtype1 : VarType ;
+                                                op     : OpCode ; .)
+  = SimExpr<vtype>
+    [ RelOp<op> SimExpr<vtype1>          (. IF (vtype # vtype1) THEN
+                                              p.error("mismatched types")
+                                            END ;
+                                            TasteCode.Emit1(op) ;
+                                            vtype := VarType.Bool .)
+      ].
+
+  SimExpr<VAR vtype : VarType>           (. VAR vtype1 : VarType ;
+                                                op     : OpCode ; .)
+  = Term<vtype>
+    { AddOp<op> Term<vtype1>             (. IF ((vtype # VarType.Int) OR (vtype1 # VarType.Int)) THEN
+                                              p.error("invalid type")
+                                            END ;
+                                            TasteCode.Emit1(op) .)
+      }.
+
+  Term<VAR vtype : VarType>              (. VAR vtype1 : VarType ;
+                                                op     : OpCode ; .)
+  = Factor<vtype>
+    { MulOp<op> Factor<vtype1>           (. IF ((vtype # VarType.Int) OR (vtype1 # VarType.Int)) THEN
+                                              p.error("invalid type")
+                                            END ;
+                                            TasteCode.Emit1(op) .)
+    }.
+
+  Factor <VAR vtype : VarType>           (. VAR n    : INTEGER ;
+                                                obj  : TasteSym.Obj ;
+                                                name : TEXT ; .)
+  = ( Ident<name>                        (. obj := TasteSym.Find(name) ;
+                                            IF (obj = TasteSym.undefObj) THEN
+                                              p.error("undeclared identifier")
+                                            ELSIF (obj.kind = ObjKind.Var) THEN
+                                              TasteCode.Emit3(OpCode.Load, TasteSym.curLevel - obj.level, obj.adr)
+                                            ELSE
+                                              p.error("variable expected")
+                                            END ;
+                                            vtype := obj.vtype .)
+    | "TRUE"                             (. TasteCode.Emit2(OpCode.Lit, 1) ;
+                                            vtype := VarType.Bool .)
+    | "FALSE"                            (. TasteCode.Emit2(OpCode.Lit, 0) ;
+                                            vtype := VarType.Bool .)
+    | number                             (. TRY
+                                              n := Scan.Int(p.name()) ;
+                                              TasteCode.Emit2(OpCode.Lit, n)
+                                            EXCEPT
+                                            ELSE
+                                              p.error("illegal number")
+                                            END ;
+                                            vtype := VarType.Int .)
+    | "-" Factor<vtype>                  (. IF (vtype # VarType.Int) THEN
+                                              p.error("invalid type") ;
+                                              vtype := VarType.Int
+                                            END ;
+                                            TasteCode.Emit1(OpCode.Neg) .)
+    ).
+
+  MulOp<VAR op : OpCode>
+  =   "*"                                (. op := OpCode.Mul .)
+    | "/"                                (. op := OpCode.Div .).
+
+  AddOp<VAR op : OpCode>
+  =   "+"                                (. op := OpCode.Add .)
+    | "-"                                (. op := OpCode.Sub .).
+
+  RelOp<VAR op : OpCode>
+  =   "="                                (. op := OpCode.Equ .)
+    | "<"                                (. op := OpCode.Lss .)
+    | ">"                                (. op := OpCode.Gtr .).
+
+END Taste.

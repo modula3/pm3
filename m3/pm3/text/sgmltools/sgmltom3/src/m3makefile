@@ -1,0 +1,13 @@
+
+import("sgml")
+import("m3doc")
+
+interface("SGMLtoM3")
+
+implementation("Main")
+
+sequence("SGMLtoM3","SGMLtoM3")
+
+HtmlFile("index")
+
+Program("sgmltom3")

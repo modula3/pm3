@@ -1,0 +1,8 @@
+-- linuxdoc documents --
+SGMLDECL "HTML32.dcl"
+PUBLIC "-//W3C//DTD LINUXDOC 3.2 Final//EN" linuxdoc.dtd
+PUBLIC "-//W3C//DTD LINUXDOC 3.2 Draft//EN" linuxdoc.dtd
+PUBLIC "-//W3C//DTD LINUXDOC 3.2//EN" linuxdoc.dtd
+PUBLIC "ISO 8879-1986//ENTITIES Added Latin 1//EN//LINUXDOC" ISOlat1.ent
+-- added by jjc --
+DOCTYPE linuxdoc linuxdoc.dtd

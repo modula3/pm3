@@ -1,0 +1,23 @@
+
+import_lib("sp","/usr/local/lib")
+
+import_lib("g++","/usr/lib")
+
+import_lib("stdc++","/usr/lib")
+
+readonly proc cxx_source(x) is
+  local fn = x & ".cxx"
+  local file = x & OBJ_ext
+  exec("g++ -g -c " & path_of(fn))
+  IMPORT_LIBS = [ file, IMPORT_LIBS ]
+  if NEED_OBJECTS
+    COMPILE_OBJECTS += file
+  end
+end
+
+cxx_source("m3sgml")
+
+interface("NSGMLS")
+
+implementation("SGML")
+

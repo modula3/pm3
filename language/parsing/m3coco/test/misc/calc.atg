@@ -1,0 +1,83 @@
+COMPILER Calc
+
+  FROM CalcManager IMPORT NewVar, GetVar, SetVar, ReadVal, WriteVal;
+
+  TYPE
+    String = ARRAY [0 .. 100] OF CHAR;
+
+  PROCEDURE GetNumber (VAR Int : INTEGER);
+  (* Convert latest token to integer value Int *)
+    VAR
+      I : CARDINAL;
+      String : ARRAY [0 .. 20] OF CHAR;
+    BEGIN
+      CalcS.GetString(CalcS.pos, CalcS.len, String);
+      I := 0; Int := 0;
+      WHILE String[I] # 0C DO
+        Int := 10 * Int + VAL(INTEGER, ORD(String[I]) - ORD('0')); INC(I)
+      END;
+    END GetNumber;
+
+  PROCEDURE GetSpix (VAR spix : INTEGER);
+  (* Compute hash total for latest spelling *)
+    VAR
+      IdentName : ARRAY [0 .. 20] OF CHAR;
+    BEGIN
+      CalcS.GetName(CalcS.pos, CalcS.len, IdentName);
+      spix := 17 * ORD(IdentName[0]) + ORD(IdentName[1])
+    END GetSpix;
+
+IGNORE CASE
+
+CHARACTERS
+  letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".
+  digit  = "0123456789".
+  eol    = CHR(13) .
+
+
+COMMENTS
+  FROM '--' TO eol
+
+TOKENS
+  ident  = letter {letter | digit} .
+  number = digit {digit} .
+
+PRODUCTIONS
+  Calc =
+    [Declarations] StatSeq .
+
+  Declarations                            (. VAR spix: INTEGER; .)
+    = "VAR"
+       Ident <spix>                       (. NewVar(spix) .)
+       { ',' Ident <spix>                 (. NewVar(spix) .)
+       } ';'.
+
+  StatSeq =
+    Stat {';' Stat}.
+
+  Stat                                    (. VAR spix, val: INTEGER; .)
+    =   "READ"  Ident <spix>              (. ReadVal(spix) .)
+      | "WRITE" Expr <val>                (. WriteVal(val) .)
+      | Ident <spix> ":=" Expr <val>      (. SetVar(spix, val) .) .
+
+  Expr <VAR exprVal: INTEGER>             (. VAR termVal: INTEGER; .)
+    = Term <exprVal>
+      {  '+' Term <termVal>               (. exprVal := exprVal + termVal .)
+      |  '-' Term <termVal>               (. exprVal := exprVal - termVal .)
+      } .
+
+  Term <VAR termVal: INTEGER>             (. VAR factVal: INTEGER; .)
+    = Fact <termVal>
+      {  '*' Fact <factVal>               (. termVal := termVal * factVal .)
+      |  '/' Fact <factVal>               (. termVal := termVal DIV factVal .)
+      } .
+
+  Fact <VAR factVal: INTEGER>             (. VAR spix: INTEGER; .)
+    =    Ident <spix>                     (. factVal := GetVar(spix) .)
+      |  number                           (. GetNumber(factVal) .)
+      | '(' Expr <factVal> ')' .
+
+  Ident <VAR spix : INTEGER>
+    = ident                               (. GetSpix(spix) .) .
+
+END Calc.

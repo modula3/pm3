@@ -1,0 +1,501 @@
+<HTML><HEAD>
+<TITLE>The Documentation Format</TITLE>
+</HEAD><BODY>
+<H1>The Documentation Format</H1>
+<P>
+The document type definition (DTD) follows the HTML 4.0 draft, minus all the
+interactive features (forms, scripts, applets), plus
+MathHTML draft 97-07-10 (e.g. for browers supporting MathHTML: 
+<MATH>
+  <MROW>
+    <MROOT>
+      <MROW>
+        <MF>(</MF>
+        <MSUBSUP>
+          <MI>x</MI>
+          <MN>a</MN>
+          <MN>b</MN>
+        </MSUBSUP>
+        <MO>+</MO>
+        <MI>y</MI>
+        <MO>+</MO>
+        <MI>z</MI>
+        <MSUBSUP>
+          <MO>&prod;</MO>
+          <MN>i=1</MN>
+          <MN>n</MN>
+        </MSUBSUP>
+        <MSUB><MI>s</MI><MI>i</MI></MSUB>
+        <MF>)</MF>
+      </MROW>
+      <MN>25</MN>
+    </MROOT>
+    <MO>=</MO>
+    <MI>&alpha;</MI>
+  </MROW>
+</MATH>
+and a number of extensions. Even though these drafts
+are evolving, the processing tools are modular and can easily be adapted. 
+Moreover, with a well structured content describing format, 
+it is relatively easy to migrate documents to a different expression 
+of the structure
+(i.e. different tag names). The extensions are mostly accomodated within
+the existing tags and attributes. They are detailed in the following
+sections.
+
+<SPAN CLASS=INDEX.MARK><SPAN CLASS=INDEX.KEY>html</SPAN></SPAN>
+<SPAN CLASS=INDEX.MARK><SPAN CLASS=INDEX.KEY>math</SPAN></SPAN>
+
+<H2>Title page information</H2>
+<P>
+The following elements must be present in root HTML files used
+to generate printed documentation. They are ignored in included
+documents.
+
+<SPAN CLASS=INDEX.MARK><SPAN CLASS=INDEX.KEY>title page</SPAN></SPAN>
+<SPAN CLASS=INDEX.MARK><SPAN CLASS=INDEX.KEY>author</SPAN></SPAN>
+<SPAN CLASS=INDEX.MARK><SPAN CLASS=INDEX.KEY>date</SPAN></SPAN>
+<SPAN CLASS=INDEX.MARK><SPAN CLASS=INDEX.KEY>copyright</SPAN></SPAN>
+<SPAN CLASS=INDEX.MARK><SPAN CLASS=INDEX.KEY>keyword</SPAN></SPAN>
+<UL>
+<LI> A list of authors, with references to their affiliation.
+<LI> A list of affiliations.
+<LI> Copyright notice.
+<LI> The date of last update.
+<LI> A list of keywords. The following keywords are recommended:
+     graphics, programming, network, text, animation, 3D, database,
+     user interface, io, system, algorithm, data structure, thread,
+     runtime, parsing, tool, static analysis, dynamic analysis,
+     alpha, beta, stable, mature, wide audience, narrow audience,
+     tutorial, reusable. These keywords are used when searching
+     tools and libraries relevant for a particular task, as well as
+     when selecting automatically the packages to download/install
+     depending on the interests and space availability of the
+     prospective user.
+</UL>
+
+<PRE>
+
+&lt;DIV CLASS=HEAD>
+&lt;SPAN CLASS="AUTHOR">John Doe&lt;A HREF="#adr1" REL="AFFILIATION">&lt;/A>&lt;/SPAN>
+&lt;SPAN CLASS="AUTHOR">Mary Doe&lt;A HREF="#adr2" REL="AFFILIATION">&lt;/A>&lt;/SPAN>
+&lt;ADDRESS ID="adr1">
+Newsletter editor&lt;BR>
+8723 Buena Vista, Smallville, CT 01234&lt;BR>
+Tel: +1 (123) 456 7890&lt;BR>
+email: jd@sgml.com
+&lt;/ADDRESS>
+&lt;ADDRESS ID="adr2">
+Newsletter editor&lt;BR>
+8000 Buena Vista, Bigville, VT 01234&lt;BR>
+Tel: +1 (123) 456 7891&lt;BR>
+email: md@sgml.com
+&lt;/ADDRESS>
+&lt;SPAN CLASS="COPYRIGHT">Copyright 1997 under the General Public License,
+  see file COPYING.&lt;/SPAN>
+&lt;SPAN CLASS="DATE">23 Jan 1997 16:05:31 GMT&lt;/SPAN>
+&lt;SPAN CLASS="KEYWORD">beta&lt;/SPAN>
+&lt;SPAN CLASS="KEYWORD">text&lt;/SPAN>
+&lt;SPAN CLASS="KEYWORD">SGML&lt;/SPAN>
+&lt;/DIV>
+</PRE>
+
+<H2>Sectioning</H2>
+<P>
+The document structure is based on nested sections, each section starting
+with a title. In HTML, the nesting of sections is implicit and deduced from
+the heading level. Besides the core sections, there are the abstract
+and the appendices which need to be suitably identified. The abstract may
+be used as a summary for the document. The appendices may be grouped,
+numbered separately, and placed at the end when several HTML files are
+grouped during a linearization.
+
+<SPAN CLASS=INDEX.MARK><SPAN CLASS=INDEX.KEY>abstract</SPAN></SPAN>
+<SPAN CLASS=INDEX.MARK><SPAN CLASS=INDEX.KEY>appendix</SPAN></SPAN>
+
+<PRE>
+&lt;HEAD>&lt;TITLE>This is the title but is redundant&lt;/TITLE>
+&lt;/HEAD>&lt;BODY>
+&lt;H1>This is the title for real&lt;/H1>
+  &lt;P> First paragraph &lt;/P>
+&lt;DIV CLASS=ABSTRACT>
+    &lt;P>A real short abstract. &lt;/P>
+&lt;/DIV>
+&lt;H2>Introduction&lt;/H2>
+  &lt;P>This is all about gnus and gnats as usual. &lt;/P>
+&lt;H2>Motivation&lt;/H2>
+  &lt;H3>History&lt;/H3>
+    &lt;P> Once upon a time... &lt;/P>
+&lt;DIV CLASS=APPENDIX>
+  &lt;H2>Biological characteristics of gnus&lt;/H2>
+    ...
+  &lt;H2>Biological characteristics of gnats&lt;/H2>
+    ...
+&lt;/DIV>
+</PRE>
+
+<H2>Bibliographical references</H2>
+<P>
+In an hypertext document, references may point to an html file on the Web,
+to a bibliographic entry for the referenced document, or to both.
+The following classes are used to distinguish the three cases, and their
+treatment is described.
+
+<SPAN CLASS=INDEX.MARK><SPAN CLASS=INDEX.KEY>reference entry</SPAN></SPAN>
+<SPAN CLASS=INDEX.MARK><SPAN CLASS=INDEX.KEY>hypertext link</SPAN></SPAN>
+
+<DL>
+<DT>BIB.REF<DD> The URL is added to the text between parenthesis.
+  When no class is specified, BIB.REF is assumed.
+<DT>BIB.ENTRY<DD> The entry found at the URL is added to the table
+  of references.
+<DT>BIB.NOREF<DD> Nothing is added to the table of references, usually
+  because a BIB.ENTRY link is already present and should go in the
+  table of references.
+</DL>
+<P>
+The referenced bibliographic entries must use the following classes,
+with the specified fields, inspired from the LaTeX bibtex entries.
+
+<DL>
+<DT>BIB.ARTICLE<DD> Fields: author, title, journal, year, and optionally
+  volume, number, pages, month, url, note.
+
+<DT>BIB.BOOK<DD> Fields: author or editor, title, publisher, year, 
+  and optionally
+  volume/number, series, address, edition, month, url, note.
+
+<DT>BIB.BOOKLET<DD> Fields: title, and optionally author, howpublished, 
+  address, month, year, url, note.
+
+<DT>BIB.INBOOK<DD> Fields: author or editor, title, chapter and/or pages,
+  publisher, year, and optionally volume or number, series, type, address,
+  edition, month, url, note.
+
+<DT>BIB.INCOLLECTION<DD> Fields: author, title, booktitle, publisher, year,
+  and optionally volume or number, series, type, chapter, pages, address, 
+  edition, month, url, note.
+
+<DT>BIB.INPROCEEDINGS<DD> Fields: author, title, booktitle, year, and
+  optionally editor, volume or number, series, pages, address, month,
+  organization, publisher, url, note.
+
+<DT>BIB.MANUAL<DD> Fields: title, and optionally author, organization,
+  address, edition, month, year, url, note.
+
+<DT>BIB.MSTHESIS<DD> Fields: author, title, school, year, and optionally
+  type, address, month, url, note.
+
+<DT>BIB.PHDTHESIS<DD> Fields: author, title, school, year, and optionally
+  type, address, month, url, note.
+
+<DT>BIB.MISCENTRY<DD> Fields: optionally author, title, howpublished,
+  month, year, url, note.
+
+<DT>BIB.PROCEEDINGS<DD> Fields: title, year, and optionally editor, volume or
+  number, series, address, month, organization, publisher, url, note.
+
+<DT>BIB.TECHREPORT<DD> Fields: author, title, institution, year, and
+  optionally type, number, address, month, url, note.
+
+<DT>BIB.UNPUBLISHED<DD> Fields: author, title, note, and optionally month,
+  year, url.
+
+</DL>
+<P>
+The document then contains a number of references, some of which point to
+entries, usually in a separate bibliographic database.
+
+<PRE>
+Document.html:
+
+The entries are based on the bibtex/LaTeX
+  &lt;A REL="BIB.NOREF" HREF="http://www.latex.org/manual.html">[LaTeX]&lt;/A>
+  &lt;A REL="BIB.ENTRY" HREF="../bib/BibEntries.html#lamport1985">&lt;/A>,
+a popular typesetting system for gnus and gnats.
+
+BibEntries.html:
+
+&lt;DIV ID="Doe1997" CLASS=BIB.ARTICLE>
+&lt;SPAN CLASS=AUTHOR>John Doe&lt;/SPAN>
+&lt;SPAN CLASS=AUTHOR>Mary Doe&lt;/SPAN>
+&lt;SPAN CLASS=TITLE>Gnus and Gnats&lt;/SPAN>
+&lt;SPAN CLASS=JOURNAL>Software Review&lt;/SPAN>
+&lt;SPAN CLASS=YEAR>1997&lt;/SPAN>
+&lt;/DIV>
+&lt;DIV ID="lamport1985" CLASS=BIB.BOOK>
+&lt;SPAN CLASS=AUTHOR>Leslie Lamport&lt;/SPAN>
+&lt;SPAN CLASS=TITLE>LaTeX User's Guide and Reference Manual&lt;/SPAN>
+&lt;SPAN CLASS=PUBLISHER>Addison-Wesley&lt;/SPAN>
+&lt;SPAN CLASS=ADDRESS>Reading, Massachusetts&lt;/SPAN>
+&lt;SPAN CLASS=YEAR>1985&lt;/SPAN>
+&lt;/DIV>
+</PRE>
+
+<H2>Internal References</H2>
+<P>
+Bibliographical references are used to access material outside of the
+current document. Internal references point the reader to a section,
+table, figure... through its number (by default and when REL=REF.NUMBER),
+or page (when REL=REF.PAGE).
+<!-- footnote affiliation -->
+The corresponding target (section, table, figure...) must be named
+with the ID or NAME attribute.
+
+<SPAN CLASS=INDEX.MARK><SPAN CLASS=INDEX.KEY>references</SPAN>
+  <SPAN CLASS=INDEX.KEY>internal</SPAN></SPAN>
+
+<PRE>
+The evolution of gnu populations are shown in Table 
+  &lt;A REL=REF.NUMBER HREF="#gnutable">[gnu table]&lt;/A>,
+on page
+  &lt;A REL=REF.PAGE HREF="#gnutable">[]&lt;/A>,
+...
+&lt;TABLE ID="gnutable">
+  &lt;CAPTION> Gnu populations in North America from 1800 to 1900&lt;/CAPTION>
+  &lt;TR>...
+&lt;/TABLE>
+</PRE>
+
+<H2>Indexing</H2>
+<P>
+Index marks are used to collect for a document the list of pages where
+an important topic is discussed. In some cases, begin and end marks delineate
+a section where the topic is discussed, and the corresponding page range
+appears in the index. The term printed in the index may
+not be the correct key for sorting. Indeed, terms may start with a capital
+letter, or be emphasized to indicate the that the term is first defined
+here.
+
+<SPAN CLASS=INDEX.MARK><SPAN CLASS=INDEX.KEY>index</SPAN></SPAN>
+
+<P>
+A simple index mark is indicated by a SPAN element of CLASS INDEX.MARK.
+It contains a list of usually no more than three
+SPAN elements of class INDEX.KEY, each possibly followed by a SPAN element 
+of CLASS INDEX.TEXT
+when the text to print differs from the sorting key.
+It may end with a list of SPAN elements of CLASS INDEX.SEE to refer
+to another index item. 
+<P>
+When a text range is to be delineated for the index, two index marks
+are used, one with CLASS INDEX.MARK.BEGIN and the other with CLASS
+INDEX.MARK.END. These may not contain INDEX.SEE elements, and the
+contained INDEX.KEY and INDEX.TEXT elements must match
+those in the corresponding begin/end mark.
+<PRE>
+This section discusses the Gnu population size variations over time and
+geographical area.
+&lt;SPAN CLASS=INDEX.MARK>
+  &lt;SPAN CLASS=INDEX.KEY>gnu&lt;/SPAN>
+  &lt;SPAN CLASS=INDEX.TEXT>&lt;EM>Gnu&lt;/EM>&lt;/SPAN> 
+    &lt;!-- Gnu is emphasized because first defined here -->
+  &lt;SPAN CLASS=INDEX.KEY>population&lt;/SPAN>
+  &lt;SPAN CLASS=INDEX.TEXT>Population&lt;/SPAN>
+  &lt;SPAN CLASS=INDEX.KEY>size&lt;/SPAN>
+&lt;/SPAN>
+&lt;SPAN CLASS=INDEX.MARK>
+  &lt;SPAN CLASS=INDEX.KEY>gnu&lt;/SPAN>
+  &lt;SPAN CLASS=INDEX.TEXT>&lt;EM>Gnu&lt;/EM>&lt;/SPAN>
+  &lt;SPAN CLASS=INDEX.KEY>population&lt;/SPAN>
+  &lt;SPAN CLASS=INDEX.TEXT>Population&lt;/SPAN>
+  &lt;SPAN CLASS=INDEX.KEY>growth&lt;/SPAN>
+  &lt;SPAN CLASS=INDEX.SEE>gnu&lt;/SPAN>
+  &lt;SPAN CLASS=INDEX.SEE>population&lt;/SPAN>
+  &lt;SPAN CLASS=INDEX.SEE>size&lt;/SPAN>
+&lt;/SPAN>
+Various causes affect the Gnu population size.
+&lt;SPAN CLASS=INDEX.MARK.BEGIN>
+  &lt;SPAN CLASS=INDEX.KEY>gnat&lt;/SPAN>
+  &lt;SPAN CLASS=INDEX.TEXT>&lt;EM>Gnat&lt;/EM>&lt;/SPAN>
+&lt;/SPAN>
+Most significantly, the presence of gnat has a direct correlation with
+gnu health problems.
+&lt;SPAN CLASS=INDEX.MARK.END>
+  &lt;SPAN CLASS=INDEX.KEY>gnat&lt;/SPAN>
+&lt;/SPAN>
+</PRE>
+
+<H2>Figures</H2>
+<P>
+The current HTML practice is to use bitmaps for anything graphical;
+in some cases, a vector format like Postscript or CGM is used.
+By representing diagrams as structured elements, one allows further
+editing and reuse of the diagrams, insures that the diagrams can be
+represented at the full resolution of the output device, and allows
+spell checking and cut/paste of any text within the diagram.
+
+<SPAN CLASS=INDEX.MARK><SPAN CLASS=INDEX.KEY>figure</SPAN></SPAN>
+<SPAN CLASS=INDEX.MARK><SPAN CLASS=INDEX.KEY>drawing</SPAN></SPAN>
+<SPAN CLASS=INDEX.MARK><SPAN CLASS=INDEX.KEY>postscript</SPAN></SPAN>
+<SPAN CLASS=INDEX.MARK><SPAN CLASS=INDEX.KEY>picture</SPAN></SPAN>
+
+<P>
+The following elements are introduced for representing figures. All
+positions and sizes are floating point numbers in points.
+
+<DL>
+<DT>FIGURE<DD> This element contains all the other elements, as well as
+a CAPTION element as first child. It has the attributes WIDTH and HEIGHT.
+
+<DT>RECTANGLE<DD> This element has the attributes
+VPOS, HPOS, WIDTH, HEIGHT, PENCOLOR, FILLCOLOR,
+DEPTH, PENSTYLE, FILLSTYLE, PENWIDTH, JOIN, CORNERRADIUS.
+
+<DT>CIRCLE<DD> This element has the attributes
+VPOS, HPOS, RADIUS, PENCOLOR, FILLCOLOR,
+DEPTH, PENSTYLE, FILLSTYLE.
+
+<DT>ELLIPSE<DD>This element has the attributes
+VPOS, HPOS, WIDTH, HEIGHT, PENCOLOR, FILLCOLOR,
+DEPTH, PENSTYLE, FILLSTYLE, PENWIDTH.
+
+<DT>POLYLINE<DD>This element has the attributes
+CLOSED, PENCOLOR, FILLCOLOR,
+DEPTH, PENSTYLE, FILLSTYLE, PENWIDTH, CAP, JOIN,
+BARROWTYPE, BARROWSIZE, EARROWTYPE, EARROWSIZE, POINTS.
+
+<DT>SPLINE<DD>This element has the attributes
+CLOSED, INTERPOLATED, PENCOLOR, FILLCOLOR,
+DEPTH, PENSTYLE, FILLSTYLE, PENWIDTH, CAP,
+BARROWTYPE, BARROWSIZE, EARROWTYPE, EARROWSIZE, POINTS.
+
+<DT>PICTURE<DD>This element has the attributes
+VPOS, HPOS, WIDTH, HEIGHT, DEPTH, SRC, ALT.
+
+<DT>ARC<DD>This element has the attributes
+P1, P2, P3, PIE, PENCOLOR, FILLCOLOR,
+DEPTH, PENSTYLE, FILLSTYLE, CAP,
+BARROWTYPE, BARROWSIZE, EARROWTYPE, EARROWSIZE.
+
+<DT>GTEXT<DD>This element may contain any block level element
+(lists, paragraphs...) and has the following attributes
+VPOS, HPOS, WIDTH, HEIGHT, DEPTH.
+
+<DT>GGROUP<DD>This element may contain any element acceptable in FIGURE,
+except for CAPTION. It has the following attributes: 
+VPOS, HPOS, WIDTH,
+HEIGHT, DEPTH, TRANSFORM.
+</DL>
+<P>
+Each attribute is detailed below.
+
+<DL>
+<DT>ALT<DD> String describing the associated PICTURE, for browsers without
+graphics capabilities.
+
+<DT>BARROWSIZE<DD> Three blank separated floating point numbers representing
+the arrow thickness, width and height, for the arrow at the beginning of
+a polyline, spline, or arc.
+
+<DT>BARROWTYPE<DD> One of TRIANGLE, FTRIANGLE (filled), DIAMOND, FDIAMOND,
+  V, HOLLOW, FHOLLOW. It describes the shape of the arrow head, if any, at the
+beginning of a polyline, spline or arc.
+
+<DT>CAP<DD>One of BUTT, ROUND, or PROJECTING for the end of a polyline,
+  spline, or arc.
+
+<DT>CLOSED<DD>When set to CLOSED, it indicates that the polyline or
+  spline is a closed figure (i.e. an edge is added from the last point
+  to the first).
+
+<DT>CORNERRADIUS<DD> A floating point number indicating the radius of
+  the rounded corners for a rectangle. The default is 0, which corresponds
+  to square corners for a rectangle.
+
+<DT>DEPTH<DD> The depth is a cardinal number determining the order in which
+  objects are drawn. Objects are drawn in decreasing depth order. Thus,
+  deeper objects are hidden behind the others. The depth for a GGROUP
+  serves as offset for the whole group.
+
+<DT>EARROWSIZE<DD> Just like BARROWSIZE but for the end arrow.
+
+<DT>EARROWTYPE<DD> Just like BARROWTYPE but for the end arrow.
+
+<DT>FILLCOLOR<DD> Color used to fill the area within graphical objects.
+The color may be expressed as three floating point numbers between 0 and 1
+representing the red, green and blue intensity, or as a color name.
+
+<DT>FILLSTYLE<DD> The fill style, described by a bitmap (URL), or the name
+of a builtin style.
+
+<DT>HEIGHT<DD>Height allowed for the graphical element. It determines the
+area available for text objects, twice the vertical radius for
+ellipse, the area into which to fit a picture, and the clipping boundary
+for group objects.
+
+<DT>HPOS<DD>Horizontal position of the anchor point for the graphical object
+(center for circle and ellipse, lower left corner for rectangle, picture,
+group, and text objects).
+
+<DT>INTERPOLATED<DD>When set to interpolated, the spline passes through all
+the control points.
+
+<DT>JOIN<DD>One of MITER, ROUND, BEVEL.
+
+<DT>P1<DD>Start point (x y) for an arc.
+
+<DT>P2<DD>Point on the arc, somewhere between P1 and P3.
+
+<DT>P3<DD>End point for an arc.
+
+<DT>PENCOLOR<DD>Color for the outline of graphics shapes. It may be expressed
+as red, green, and blue intensities (in the [0,1] interval), or as a color 
+name.
+
+<DT>PENSTYLE<DD>Blank separated list of floating point numbers, the first
+  being the offset within the dash pattern, and the following numbers
+  representing the length of solid line and space, in alternation, within
+  the pattern.
+
+<DT>PENWIDTH<DD>Width of the outline for graphics shapes.
+
+<DT>PIE<DD>When set to PIE, an arc is closed in a pie shape.
+
+<DT>POINTS<DD>List of blank separated x y floating point coordinates for 
+polylines and splines.
+
+<DT>RADIUS<DD>Floating point number for the radius of circles.
+
+<DT>SRC<DD>URL for PICTURE elements.
+
+<DT>TRANSFORM<DD>Six blank separated floating point numbers representing
+  the transformation matrix to apply to graphical objects contained
+  within a group. The transformation of text objects may not be properly
+  handled on all viewing systems, especially rotations.
+
+<DT>VPOS<DD>Vertical position of the anchor point for the graphical object
+(center for circle and ellipse, upper left corner for rectangle, picture,
+group, and text objects).
+
+<DT>WIDTH<DD> Width allowed for the graphical element. It determines the
+area available for text objects, twice the horizontal radius for
+ellipse, the area into which to fit a picture, and the clipping boundary
+for group objects.
+
+</DL>
+
+<PRE>
+&lt;FIGURE WIDTH=400 HEIGHT=600>
+&lt;CAPTION>Schema of cultural exchanges between gnus and gnats
+&lt;/CAPTION>
+&lt;RECTANGLE HPOS=100 VPOS=100 WIDTH=200 HEIGHT=150 FILLCOLOR="yellow"/>
+&lt;CIRCLE HPOS=200 VPOS=200 RADIUS=100 FILLCOLOR="pink"/>
+&lt;ELLIPSE HPOS=200 VPOS=400 WIDTH=200 HEIGHT=100 FILLCOLOR="red"/>
+&lt;POLYLINE CLOSED PENCOLOR="black" DEPTH=2 PENWIDTH=2.5 
+ POINTS="100.0 100.0 300 100 300 200 100 200"/>
+&lt;SPLINE CLOSED FILLCOLOR="magenta" POINTS="10 10 20 10 20 20 10 20"/>
+&lt;PICTURE HPOS=200 VPOS=400 HEIGHT=100 WIDTH=100 SRC="gnu.ppm"
+ ALT="A gnu in sunset"/>
+&lt;ARC P1="200 200" P2="200 300" P3="300 300" CAP="BUTT"
+ BARROWTYPE=DIAMOND BARROWSIZE="0 30 60"/>
+&lt;GTEXT VPOS=300 HPOS=200 HEIGHT=300 WIDTH=200>
+  &lt;P>Gnus sometimes have difficult cultural exchanges with gnats, as
+     demonstrated by the surrounding &lt;EM>diagram.&lt;/EM>
+&lt;/GTEXT>
+&lt;GGROUP VPOS=300 HPOS=200 TRANSFORM="0 .707 .707 0 0 0">
+  &lt;ELLIPSE FILLCOLOR="black" HPOS=0 VPOS=0 WIDTH=200 HEIGHT=100/>
+&lt;/GGROUP>
+&lt;/FIGURE>
+</PRE>
+</BODY></HTML>

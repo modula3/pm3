@@ -1,0 +1,155 @@
+COMPILER Mod3
+
+CHARACTERS
+  letter  = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+          + "abcdefghijklmnopqrstuvwxyz" .
+  octal   = "01234567" .
+  digit   = "0123456789" .
+  hex     = "0123456789abcdefABCDEF" .
+  other   = " !#$%&()*+,-./:;<=>?@[]^_'{|}" + CHR(128) .. CHR(255) .
+  exp     = "EeDdXx" .
+  esc     = "ntrf\'" + '"' .
+  print   = letter + digit + other .
+
+TOKENS
+  id      = letter {letter | digit | "_"} .
+  number  = digit {digit} ["_" hex {hex} |
+                           "." digit {digit} exp ["+"|"-"] digit {digit}] .
+  charlit = "'" (print | "\" (esc | octal octal octal) | '"') "'" .
+  textlit = '"' {print | "\" (esc | octal octal octal) | "'"} '"' .
+
+COMMENTS FROM "(*" TO "*)" NESTED
+COMMENTS FROM "<*" TO "*>" NESTED
+
+PRODUCTIONS
+
+(* Compilation unit productions *)
+
+Mod3          = ["UNSAFE"] (Interface | Module) | Generic .
+
+Interface     = "INTERFACE" id (";" {Import} {Decl} "END" id "." |
+                               "=" id GenActls "END" id ".") .
+Module        = "MODULE" id ["EXPORTS" IdList] (";" {Import} Block id "." |
+                                                "=" id GenActls "END" id ".") .
+
+Generic       = "GENERIC"
+                ( "INTERFACE" id GenFmls ";" {Import} {Decl} "END" id "." |
+                  "MODULE" id GenFmls ";" {Import} Block id "." ) .
+
+Import        = AsImport | FromImport .
+AsImport      = "IMPORT" ImportItem {"," ImportItem} ";" .
+FromImport    = "FROM" id "IMPORT" IdList ";" .
+Block         = {Decl} "BEGIN" S "END" .
+Decl          = "CONST" {ConstDecl ";"}
+              | "TYPE" {TypeDecl ";"}
+              | "EXCEPTION" {ExceptionDecl ";"}
+              | "VAR" {VariableDecl ";"}
+              | ProcedureHead ["=" Block id] ";"
+              | "REVEAL" {QualId ("=" | "<:") Type ";"} .
+
+GenFmls       = "(" [IdList] ")" .
+GenActls      = "(" [IdList] ")" .
+ImportItem    = id ["AS" id] .
+ConstDecl     = id [":" Type] "=" ConstExpr .
+TypeDecl      = id ("=" | "<:") Type .
+ExceptionDecl = id ["(" Type ")"] .
+VariableDecl  = IdList [":" Type] [":=" Expr] .
+ProcedureHead = "PROCEDURE" id Signature .
+
+Signature     = "(" Formals ")" [":" Type] ["RAISES" Raises] .
+Formals       = [Formal {";" Formal} [";"]] .
+Formal        = [Mode] IdList [":" Type] [":=" ConstExpr] .
+Mode          = "VALUE" | "VAR" | "READONLY" .
+Raises        = "{" [QualId {"," QualId}] "}" | "ANY" .
+
+(* Statement productions *)
+
+S             = [Stmt {";" Stmt} [";"]] .
+Stmt          = Block
+              | Expr ( ":=" Expr | "(" [Actual {"," Actual}] ")" )
+              | "CASE" Expr "OF" [Case] {"|" Case} ["ELSE" S] "END"
+              | "EXIT"
+              | "EVAL" Expr
+              | "FOR" id ":=" Expr "TO" Expr ["BY" Expr] "DO" S "END"
+              | "IF" Expr "THEN" S ["ELSIF" Expr "THEN" S] ["ELSE" S] "END"
+              | "LOCK" Expr "DO" S "END"
+              | "LOOP" S "END"
+              | "RAISE" QualId ["(" Expr ")"]
+              | "REPEAT" S "UNTIL" Expr
+              | "RETURN" [Expr]
+              | "TYPECASE" Expr "OF" [TCase] {"|" TCase} ["ELSE" S] "END"
+              | "TRY" S "EXCEPT" [Handler] {"|" Handler} ["ELSE" S] "END"
+              | "TRY" S "FINALLY" S "END"
+              | "WHILE" Expr "DO" S "END"
+              | "WITH" Binding {"," Binding} "DO" S "END" .
+
+Case          = Labels {"," Labels} "=>" S .
+Labels        = ConstExpr [".." ConstExpr] .
+Handler       = QualId {"," QualId} ["(" id ")"] "=>" S .
+TCase         = Type {"," Type} ["(" id ")"] "=>" S .
+Binding       = id "=" Expr .
+Actual        = Type | [id ":="] Expr .
+
+(* Type productions *)
+
+Type          = TypeName
+              | "ARRAY" [Type {"," Type}] "OF" Type
+              | "BITS" ConstExpr "FOR" Type
+              | "{" [IdList] "}"
+              | [TypeName] [Brand] "OBJECT" Fields ["METHODS" Methods]
+                                                   ["OVERRIDES" Overrides] "END"
+              | "PROCEDURE" Signature
+              | "RECORD" Fields "END"
+              | ["UNTRACED"] [Brand] "REF" Type
+              | "SET" "OF" Type
+              | "[" ConstExpr ".." ConstExpr "]"
+              | "(" Type ")" .
+
+Brand         = "BRANDED" [textlit] .
+Fields        = [ Field {";" Field} [";"] ] .
+Field         = IdList [":" Type] [":=" ConstExpr] .
+Methods       = [ Method {";" Method} [";"] ] .
+Method        = id Signature [":=" ConstExpr] .
+Overrides     = [ Override {";" Override} [";"] ] .
+Override      = id ":=" ConstExpr .
+
+(* Expression productions *)
+
+ConstExpr     = Expr .
+Expr          = E1 {"OR" E1} .
+E1            = E2 {"AND" E2} .
+E2            = {"NOT"} E3 .
+E3            = E4 {RelOp E4} .
+E4            = E5 {AddOp E5} .
+E5            = E6 {MulOp E6} .
+E6            = {"+" | "-"} E7 .
+E7            = E8 {Selector} .
+E8            = id | number | charlit | textlit
+                (* | Constructor *) | "(" Expr ")" .
+
+RelOp         = "=" | "#" | "<" | "<=" | ">" | ">=" | "IN" .
+AddOp         = "+" | "-" | "&" .
+MulOp         = "*" | "/" | "DIV" | "MOD" .
+
+Selector      = "^" | "." id | "[" Expr {"," Expr} "]"
+                    | "(" [Actual {"," Actual}] ")" .
+
+(*** needs to be fixed
+
+Constructor   = Type "{" [SetCons | RecordCons | ArrayCons] "}" .
+
+SetCons       = SetElt {"," SetElt} .
+SetElt        = Expr [".." Expr] .
+RecordCons    = RecordElt {"," RecordElt} .
+RecordElt     = Expr [":=" Expr] .
+ArrayCons     = Expr {"," (Expr | "..")} .
+
+***)
+
+(* Miscellaneous productions *)
+
+IdList        = id {"," id} .
+QualId        = id ["." id] .
+TypeName      = QualId | "ROOT" | "UNTRACED" "ROOT" .
+
+END Mod3.

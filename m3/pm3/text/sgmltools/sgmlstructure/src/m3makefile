@@ -1,0 +1,12 @@
+
+import("libm3")
+import("sgml")
+import("m3doc")
+
+module("SGMLPrintStructure")
+
+implementation("Main")
+
+HtmlFile("index")
+
+Program("sgmlstructure")

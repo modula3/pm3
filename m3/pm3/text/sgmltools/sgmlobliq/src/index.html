@@ -1,0 +1,109 @@
+<HTML><HEAD>
+<TITLE>Sgmlobliq: Access to the SGML Library from the Obliq Interpreter</TITLE>
+</HEAD>
+<BODY>
+<DIV CLASS=HEAD>
+<SPAN CLASS=AUTHOR>Michel Dagenais</SPAN>
+<SPAN CLASS=COPYRIGHT>Michel Dagenais, GNU General Public License, 1997</SPAN>
+<ADDRESS>
+michel.dagenais@polymtl.ca<BR>
+Ecole Polytechnique<BR>
+C.P. 6079, Succ. Centre-Ville<BR>
+Montreal, Quebec, H3C 3A7</ADDRESS>
+<SPAN CLASS=DATE>8 October 1997</SPAN>
+<SPAN CLASS=KEYWORD>HTML</SPAN>
+<SPAN CLASS=KEYWORD>TeX</SPAN>
+<SPAN CLASS=KEYWORD>SGML</SPAN>
+<SPAN CLASS=KEYWORD>obliq</SPAN>
+<SPAN CLASS=KEYWORD>narrow audience</SPAN>
+</DIV>
+<H1>Sgmlobliq: Access to the SGML Library from the Obliq Interpreter</H1>
+
+<DIV CLASS=ABSTRACT>
+<P>This version of the Obliq interpreter has access to the Table
+and SGML libraries. It was used to prototype a converter from
+HTML to TeX, which was later recoded directly in Modula-3.
+</DIV>
+<P>
+The Obliq interpreter
+<A HREF="../../../obliq/src/index.html">[Obliq]</A>
+<TT>sgml-obliq</TT> adds two packages to the standard ones available
+in <TT>obliq-std</TT>. 
+<P>
+The <TT>tbl</TT> package adds Tbl objects
+which map keys to Obliq objects. Based on parameters passed to
+the <TT>create</TT> procedure, the keys may be integers or texts,
+and they may be accessed sorted or not. The Iter objects are used
+to iterate over all the keys and objects stored in a table. The
+underlying implementation is provided by the Table and SortedTable
+interfaces in <TT>libm3</TT>. The following information is available
+in the on-line help for <TT>tbl</TT>.
+
+<PRE>
+  tbl                (the built-in table library)
+
+  create(sorted: BOOLEAN; text: BOOLEAN): Tbl;
+  get(tbl: Tbl; key: TEXT or INTEGER): REFANY;
+  put(tbl: Tbl; key: TEXT or INTEGER; value: REFANY);
+  delete(tbl: Tbl; key: TEXT or INTEGER): REFANY;
+  size(tbl: Tbl): INTEGER;
+  iterate(tbl: Tbl; up: BOOLEAN): Iter;
+  nextitem(iter: Iter): TEXT or INTEGER;
+  nextvalue(iter: Iter): REFANY;
+  seek(iter: Iter; key: TEXT or INTEGER);\n";
+
+</PRE>
+
+<P>
+The <TT>sgml</TT> package is based on the <TT>sgml</TT> library
+<A HREF="../../sgml/src/index.html">[sgml]</A>.
+The parse procedure is called with the the options and files to parse
+as arguments. A callback object must also be supplied as argument. 
+This callback object
+must implement the prescribed methods and receives all the parsing
+information. The following information is available in the on-line
+help for <TT>sgml</TT>.
+
+<PRE>
+  sgml                (the built-in sgml parser)
+
+  parse(catalogs, parameters, searchdirs, files: [TEXT]; cl: Cl);
+    where cl is an object with the following methods being
+    called back during the parsing:
+      appInfo(string: TEXT);
+      startDtd(name: TEXT; externalId: ExternalId);
+      endDtd(name: TEXT);
+      endProlog();
+      startElement(name: TEXT; type: INTEGER; included: BOOLEAN; 
+          attributes: [Attribute]);
+      endElement(name: TEXT);
+      data(string: TEXT);
+      sdata(string, entityName: TEXT);
+      pi(string, entityName: TEXT);
+      externalDataEntityRef(entity: Entity);
+      subdocEntityRef(entity: Entity);
+      nonSgmlChar(c: CHAR);
+      commentDecl(comments, seps: ARRAY OF TEXT);
+      markedSectionStart(status: INTEGER; types: [INTEGER]; 
+          entityNames: [TEXT]);
+      markedSectionEnd(status: INTEGER);
+      ignoredChars(string: TEXT);
+      generalEntity(entity: Entity);
+      error(type, line, column, entityOffset: INTEGER; entityName, 
+          filename, message: TEXT);
+
+    Entity, ExternalId, DataChunk and Attribute are objects with 
+    the same fields as their Modula-3 counterpart in SGML.i3. 
+    Constants are defined for dataType, declType, attributeType, 
+    attributeDefaulted, contentType, errorType, sectionStatus,
+    and sectionType. They use the enumerated types as suffix
+    (e.g. dataTypeSgml, dataTypeCData... dataTypePi, 
+    declTypeGeneral...).
+
+</PRE>
+<P>
+A sample sgmlobliq application, to convert from HTML to TeX is provided
+in htmltotext.txt <A HREF="htmltotext.txt">[htmltotext]</A>.
+</BODY>
+</HTML>
+

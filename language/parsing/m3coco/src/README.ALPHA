@@ -1,0 +1,70 @@
+This is the first alpha release (0.04) of Coco/R for Modula-3 (m3coco)
+It was developed (and hence known to work) with SRC Modula-3
+version 3.6 running on Solaris 2.5
+
+Known problems with this release include:
+
+  1. documentation needs updating for Modula-3
+
+  2. tokens that use CONTEXT will generate incorrect code.  I haven't
+     yet ported the code generator for these;  I have to add some extra
+     functionality to the scanner frame before I can do so
+
+  3. exceptions are not properly passed up from the scanner through the
+     parse functions
+
+  4. it should (but doesn't yet) insert <*LINE*> pragmas in the generated
+     code so that the error message locations are more comprehensible
+
+Things I'd like to add before a real release include:
+
+  1. some mechanism for passing/returning parameters from the top-level
+     parse function
+
+  2. proper exception handling in m3coco itself (instead of <*FATAL ANY*>)
+
+To Get Going:
+
+  1. Read the language description in docs/cocol and optionally the
+     PostScript version in docs/coco.ps (although this is a little
+     out of date).  Neither of these have been updated to include
+     anything about Modula-3 yet.
+
+  2. Read the blurb at the top of src/CR.m3 which describes the
+     invocation options
+
+  3. Try the working examples in src/expr (a simple expression
+     evaluator) and src/taste (a compiler/interpreter and pretty
+     printer and cross-reference generator for a toy pascal-like
+     language).
+
+     The m3makefile's in those directories also show how to use the
+     coco template.
+
+     Also look at m3coco's grammar in src/CR.atg
+
+  4. Check out some of the misc examples in samples/misc.  Most of
+     these are either just grammars or grammars with Modula-2
+     productions.  They're stolen directly from the Modula-2
+     distribution.  In addition, there's Mod3.atg which is my
+     initial attempts at encoding the Modula-3 grammar as documented
+     in SPwM3 (it isn't complete and isn't LL(1))
+   
+  5. Read the short blurb below
+
+     In the grammar productions, the variable 'p' refers to the
+     parser object (so obviously, you should avoid using it yourself).
+     The following methods are applicable:
+
+       p.string()  - returns the current token as a TEXT
+       p.name()    - returns the current token as a TEXT, converted to
+                     upper case if you used 'IGNORE CASE' in the grammar
+       p.line()    - returns the line number of the current token
+       p.column()  - returns the column number of the current token
+       p.length()  - returns the length of the current token
+       p.offset()  - returns the stream offset of the current token
+       p.error(e)  - registers an error message with the error handler
+                     (e is a TEXT)
+
+Olly Stephens
+olly@zycad.com

@@ -1,0 +1,89 @@
+COMPILER Xref
+(* Taste cross reference generator *)
+
+FROM CrossRef IMPORT Table, Create, Add, global ;
+
+CONST
+  Applied = FALSE ;
+  Defined = TRUE ;
+
+VAR
+  name  : TEXT ;
+
+(*------------------------------------------------------------------------*)
+
+CHARACTERS
+  letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" .
+  digit  = "0123456789" .
+  cr     = CHR(13) .
+  lf     = CHR(10) .
+  tab    = CHR(9) .
+
+TOKENS
+  ident  = letter {letter | digit} .
+  number = digit {digit} .
+
+IGNORE cr + lf + tab
+
+COMMENTS FROM "(*" TO "*)" NESTED
+
+PRODUCTIONS
+
+  Xref =                          (. Create(global) .)
+   "PROGRAM" Ident                (. Add(global, name, p.line(), Defined) .)
+    ";" Body Ident                (. Add(global, name, p.line(), Applied) .)
+    "." .
+
+  Body
+  =
+    { "VAR"
+      { Ident ":"                 (. Add(global, name, p.line(), Defined) .)
+        TypeId ";" }
+
+    | "PROCEDURE" Ident           (. Add(global, name, p.line(), Defined) .)
+      ";" Body
+      Ident                       (. Add(global, name, p.line(), Applied) .)
+      ";"
+    }
+    "BEGIN" StatSeq "END" .
+
+  TypeId =  "INTEGER"             (. Add(global, "INTEGER", p.line(), Applied) .)
+           | "BOOLEAN"            (. Add(global, "BOOLEAN", p.line(), Applied) .).
+
+  Ident = ident                   (. name := p.name() .) .
+
+  StatSeq = Stat {";" Stat} .
+
+  Stat
+  = [ Ident                       (. Add(global, name, p.line(), Applied) .)
+      ( ":=" Expression | )
+    | "IF" Expression
+      "THEN" StatSeq
+      [ "ELSE" StatSeq ]
+      "END"
+    | "WHILE" Expression
+      "DO" StatSeq "END"
+    | "READ" Ident                (. Add(global, name, p.line(), Applied) .)
+    | "WRITE" Expression
+    ] .
+
+  Expression = SimExpr [ RelOp SimExpr ] .
+
+  SimExpr = Term { AddOp Term } .
+
+  Term = Factor { MulOp Factor } .
+
+  Factor
+      = ( Ident                   (. Add(global, name, p.line(), Applied) .)
+          | "TRUE"                (. Add(global, "TRUE", p.line(), Applied) .)
+          | "FALSE"               (. Add(global, "FALSE", p.line(), Applied) .)
+          | number | "-" Factor
+        ) .
+
+  MulOp = "*" | "/" .
+
+  AddOp =  "+" | "-" .
+
+  RelOp = "=" | "<" | ">"  .
+
+END Xref.

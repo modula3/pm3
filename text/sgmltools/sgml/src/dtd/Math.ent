@@ -1,0 +1,606 @@
+<!-- Content model for content and presentation tags
+     in MATH & MATHDISP elements of MathML              -->
+<!-- status = draft. date = 9.May.1997 syntax = XML     -->
+<!-- author = s.buswell sb@stilo.demon.co.uk            -->
+<!-- revised 14.May.1997 by Robert Miner                -->
+<!-- revised 29.June.1997 and 2.July.1997 by s.buswell  -->
+
+<!-- Presentation tag element set                       -->
+
+<!-- tokens -->
+
+<!ENTITY % token "mi | mn | mo | mf | mtext | ms" >
+
+<!ELEMENT mi     (#PCDATA)                        >
+<!ELEMENT mn     (#PCDATA)                        >
+<!ELEMENT mo     (#PCDATA)                        >
+<!ELEMENT mf     (#PCDATA)                        >
+<!ELEMENT mtext  (#PCDATA)                        >
+<!ELEMENT ms     (#PCDATA)                        >
+
+<!-- empty tokens -->
+
+<!ENTITY % etoken  "mspace" >
+<!ELEMENT mspace     EMPTY  >
+
+<!-- layout schema -->
+
+<!ENTITY % lschema "mstyle|merror|mphantom|mrow|mfrac|
+                    msqrt|mroot|msub|msup|msubsup|mmultiscripts|
+                    munder|mover|munderover|mtable|mtr|mtd" >
+
+<!-- empty layout schema -->
+
+<!ENTITY % eschema "mprescripts | none" >
+<!ELEMENT mprescripts    EMPTY          >
+<!ELEMENT  none  EMPTY          >
+
+<!-- action schema -->
+<!ENTITY % actions "maction" >
+
+<!-- layout schema content models are given after the content
+     definitions, since layout schema can contain content schema    -->
+
+<!-- Presentation entity for substitution into content tag constructs -->
+
+<!ENTITY % Presentation  "(%token; | %etoken; | %lschema; | %eschema; |
+%actions;)"
+>
+
+<!-- general attribute definitions for class & style & other -->
+
+<!ENTITY % att-class-style      'class CDATA #IMPLIED
+                                                                style
+CDATA #IMPLIED
+                                                                other
+CDATA #IMPLIED'                  >
+
+<!-- presentation attribute definitions -->
+
+<!ENTITY % att-fontsize        'fontsize CDATA #IMPLIED'
+>
+<!ENTITY % att-fontweight      'fontweight (plain | bold) "plain"'
+>
+<!ENTITY % att-fontslant       'fontslant (upright | italic) "upright"' >
+<!ENTITY % att-fontfamily      'fontfamily CDATA   #IMPLIED'      >
+<!ENTITY % att-fontcolor       'fontcolor CDATA   #IMPLIED'       >
+
+<!ENTITY % att-fontinfo      '%att-fontsize;
+                                                                %att-fontweight;
+                                                                %att-fontslant;
+                                                                %att-fontfamily;
+
+%att-fontcolor;'                 >
+
+<!ENTITY % att-base                     'base CDATA  "10"'
+>
+
+ <!ENTITY % att-lspace                 'lspace CDATA  ".277777"'        >
+ <!ENTITY % att-rspace                 'rspace CDATA   ".277777"'       >
+ <!ENTITY % att-stretchy               'stretchy CDATA "false"' >
+ <!ENTITY % att-symetric               'symetric CDATA "sym"'           >
+ <!ENTITY % att-maxsize                'maxsize CDATA "infinity"'       >
+ <!ENTITY % att-minsize               ' minsize CDATA "0"'
+>
+ <!ENTITY % att-form                   'form CDATA #IMPLIED'            >
+
+ <!ENTITY % att-opinfo '%att-lspace;
+                                                  %att-rspace;
+                                                  %att-stretchy;
+                                                  %att-symetric;
+                                                  %att-maxsize;
+                                                  %att-minsize;'
+>
+
+
+ <!ENTITY % att-largeop                'largeop CDATA "false"'
+>
+ <!ENTITY % att-movablelimits         ' movablelimits (movable | fixed)
+"fixed"'         >
+
+<!ENTITY % att-width               ' width CDATA "0"'   >
+<!ENTITY % att-height               ' height CDATA "0"' >
+<!ENTITY % att-depth                'depth CDATA "0"'   >
+
+ <!ENTITY % att-sizeinfo '%att-width;
+                                                  %att-height;
+                                                  %att-depth;'          >
+
+<!ENTITY % att-background           'background CDATA #IMPLIED' >
+
+ <!--                   lquote CDATA '"'                -->
+ <!--                   rquote CDATA '"'                -->
+
+<!ENTITY % att-scriptlevel          'scriptlevel CDATA #IMPLIED'
+>
+<!ENTITY % att-displaystyle         'displaystyle CDATA #IMPLIED'
+>
+<!ENTITY % att-scriptsizemultiplier 'scriptsizemultiplier CDATA "0.71"'  >
+<!ENTITY % att-scriptminsize         'scriptminsize CDATA "8"'
+>
+<!ENTITY % att-linethickness         'linethickness CDATA "1"'
+>
+<!ENTITY % att-subscriptshift      'subscriptshift CDATA #IMPLIED'
+>
+<!ENTITY % att-superscriptshift     'superscriptshift CDATA #IMPLIED'    >
+
+<!ENTITY % att-accentunder              'accentunder CDATA "false"'
+>
+<!ENTITY % att-accent                        'accent CDATA "false"'
+>
+
+<!ENTITY % att-align                            'align CDATA "axis"'
+>
+<!ENTITY % att-rowalign           'rowalign CDATA "baseline"'              >
+<!ENTITY % att-columnalign        'columnalign CDATA "center"'             >
+<!ENTITY % att-rowspacing         'rowspacing CDATA "1.0"'
+>
+<!ENTITY % att-columnspacing      'columnspacing CDATA "0.8"'              >
+<!ENTITY % att-rowlines           'rowlines CDATA ""'
+>
+<!ENTITY % att-columnlines        'columnlines CDATA ""'
+>
+<!ENTITY % att-frame              'frame (none | solid | dashed) "none"'  >
+<!ENTITY % att-framespacing        'framespacing CDATA "0.4 0.5"'
+>
+<!ENTITY % att-equalrows           'equalrows CDATA "true"'
+>
+<!ENTITY % att-equalcolumns         'equalcolumns CDATA "true"'     >
+
+<!ENTITY % att-tableinfo           '%att-align;
+                                                           %att-rowalign;
+                                                           %att-columnalign;
+                                                           %att-rowspacing;
+                                                           %att-columnspacing;
+                                                           %att-rowlines;
+                                                           %att-columnlines;
+                                                           %att-frame;
+                                                           %att-framespacing;
+                                                           %att-equalrows;
+
+%att-equalcolumns;'               >
+
+<!ENTITY % att-rowspan              'rowspan CDATA "1"'                     >
+<!ENTITY % att-columnspan           'columnspan CDATA "1"'
+>
+
+<!ENTITY % att-rowalign              'rowalign (top | bottom | center |
+baseline | axis) #IMPLIED'                          >
+<!ENTITY % att-columnalign           'columnalign CDATA  #IMPLIED'
+>
+
+<!ENTITY % att-actiontype              'actiontype CDATA #IMPLIED'
+>
+
+<!ATTLIST mi        %att-fontinfo;
+                                        %att-class-style;     >
+
+<!ATTLIST mn        %att-fontinfo;
+                                        %att-base;
+                                        %att-class-style;                     >
+
+
+<!ATTLIST mo        %att-fontinfo;
+                                                %att-opinfo;
+                                                %att-largeop;
+                                                %att-movablelimits;
+                                        %att-class-style;            >
+
+<!ATTLIST mf       %att-fontinfo;
+                                                %att-opinfo;
+                                        %att-class-style;       >
+
+<!ATTLIST mtext     %att-fontinfo;
+                                        %att-class-style;     >
+
+<!ATTLIST mspace    %att-sizeinfo;
+                    %att-background;
+                                        %att-class-style;       >
+
+<!ATTLIST ms       %att-fontinfo;
+                    lquote CDATA '"'
+                    rquote CDATA '"'
+                                        %att-class-style;          >
+
+<!ATTLIST mstyle    %att-fontinfo;
+                    %att-opinfo;
+                    largeop CDATA "false"
+                    movablelimits CDATA "false"
+                    form CDATA #IMPLIED
+                    lquote CDATA '"'
+                    rquote CDATA '"'
+                    %att-sizeinfo;
+                    background CDATA #IMPLIED
+                    linethickness CDATA "1"
+                    scriptlevel CDATA #IMPLIED
+                    displaystyle CDATA #IMPLIED
+                    subscriptshift CDATA #IMPLIED
+                    superscriptshift CDATA #IMPLIED
+                    scriptsizemultiplier CDATA "0.71"
+                    scriptminsize CDATA "8"
+                    accent CDATA "false"
+                    accentunder CDATA "false"
+                    %att-tableinfo;
+                    rowspan CDATA "1"
+                    columnspan CDATA "1"
+                                        %att-class-style;                      >
+
+<!ATTLIST           merror       %att-class-style;   >
+<!ATTLIST           mrow         %att-class-style;   >
+<!ATTLIST           msqrt        %att-class-style;   >
+<!ATTLIST           mroot        %att-class-style;   >
+
+<!ATTLIST mphantom  %att-sizeinfo;
+                                        %att-class-style;     >
+
+<!ATTLIST mfrac     %att-linethickness;
+                                        %att-class-style; >
+
+<!ATTLIST msub      %att-subscriptshift;
+                                        %att-class-style;             >
+
+<!ATTLIST msup      %att-superscriptshift;
+                                        %att-class-style;          >
+
+<!ATTLIST msubsup   %att-subscriptshift;
+                    %att-superscriptshift;
+                                        %att-class-style;     >
+
+<!ATTLIST mmultiscripts
+                    %att-subscriptshift;
+                    %att-superscriptshift;
+                                        %att-class-style;          >
+
+
+<!ATTLIST munder    %att-accentunder;
+                                        %att-class-style;            >
+
+<!ATTLIST mover     %att-accent;           >
+
+<!ATTLIST munderover             %att-accent;
+                                %att-accentunder;
+                                        %att-class-style;                >
+
+<!ATTLIST mtable  %att-tableinfo;
+                                        %att-class-style;      >
+
+<!ATTLIST mtr       %att-rowalign;
+                    %att-columnalign;
+                                        %att-class-style;
+>
+
+<!ATTLIST mtd      %att-rowalign;
+                    %att-columnalign;
+                    %att-rowspan;
+                    %att-columnspan;
+                                        %att-class-style;                 >
+
+<!ATTLIST maction   %att-actiontype;
+                                        %att-class-style;     >
+
+
+<!-- Content tag element set -->
+<!-- Define relations etc  -->
+
+<!ENTITY % Verb "EQ|NEQ|GT|LT|GEQ|LEQ|IN|NOTIN|
+                 SUBSET|NOTSUBSET|PRSUBSET|NOTPRSUBSET"    >
+
+<!ELEMENT EQ          EMPTY       >
+<!ELEMENT NEQ         EMPTY       >
+<!ELEMENT GT          EMPTY       >
+<!ELEMENT LT          EMPTY       >
+<!ELEMENT GEQ         EMPTY       >
+<!ELEMENT LEQ         EMPTY       >
+<!ELEMENT IN          EMPTY       >
+<!ELEMENT NOTIN       EMPTY       >
+<!ELEMENT SUBSET      EMPTY       >
+<!ELEMENT NOTSUBSET   EMPTY       >
+<!ELEMENT PRSUBSET    EMPTY       >
+<!ELEMENT NOTPRSUBSET EMPTY       >
+
+<!ATTLIST           EQ           %att-class-style;   >
+<!ATTLIST           NEQ          %att-class-style;   >
+<!ATTLIST           GT           %att-class-style;   >
+<!ATTLIST           LT           %att-class-style;   >
+<!ATTLIST           GEQ          %att-class-style;   >
+<!ATTLIST           LEQ          %att-class-style;   >
+<!ATTLIST           IN           %att-class-style;   >
+<!ATTLIST           NOTIN        %att-class-style;   >
+<!ATTLIST           NOTSUBSET    %att-class-style;   >
+<!ATTLIST           PRSUBSET     %att-class-style;   >
+<!ATTLIST           NOTPRSUBSET          %att-class-style;   >
+
+<!-- Define operators   -->
+
+<!ENTITY % Op "PLUS|MINUS|TIMES|OVER|EXP|POWER |UNION|
+               INTERSECT|TENDSTO| APPLY"                   >
+
+<!ELEMENT MINUS       EMPTY       >
+<!ELEMENT PLUS        EMPTY       >
+<!ELEMENT TIMES       EMPTY       >
+<!ELEMENT OVER        EMPTY       >
+<!ELEMENT EXP         EMPTY       >
+<!ELEMENT POWER       EMPTY       >
+<!ELEMENT UNION       EMPTY       >
+<!ELEMENT INTERSECT   EMPTY       >
+<!ELEMENT TENDSTO     EMPTY       >
+<!ELEMENT APPLY       EMPTY       >
+<!ELEMENT DIV         EMPTY       >
+<!ELEMENT REM         EMPTY       >
+
+<!ATTLIST           MINUS        %att-class-style;   >
+<!ATTLIST           PLUS         %att-class-style;   >
+<!ATTLIST           TIMES        %att-class-style;   >
+<!ATTLIST           OVER         %att-class-style;   >
+<!ATTLIST           EXP          %att-class-style;   >
+<!ATTLIST           POWER        %att-class-style;   >
+<!ATTLIST           UNION        %att-class-style;   >
+<!ATTLIST           INTERSECT %att-class-style;   >
+<!ATTLIST           TENDSTO  %att-class-style;   >
+<!ATTLIST           APPLY    %att-class-style;   >
+<!ATTLIST           DIV          %att-class-style;   >
+<!ATTLIST           REM          %att-class-style;   >
+
+<!-- Define generic separators   -->
+
+<!ELEMENT SEP         EMPTY       >
+<!ELEMENT ST          EMPTY       >
+
+<!ATTLIST           SEP          %att-class-style;   >
+<!ATTLIST           ST           %att-class-style;   >
+
+<!-- Define general functions   -->
+
+<!ENTITY % FnGen "INT|PARTDIFF| TOTALDIFF|DIFF|INVERSE|
+               MATRIXINVERSE |DETERMINANT|SUM|PRODUCT|LIMIT"   >
+
+<!ELEMENT INT              EMPTY                >
+<!ELEMENT PARTDIFF         EMPTY                >
+<!ELEMENT TOTALDIFF        EMPTY                >
+<!ELEMENT DIFF             EMPTY                >
+<!ELEMENT INVERSE          EMPTY                >
+<!ELEMENT MATRIXINVERSE    EMPTY                >
+<!ELEMENT DETERMINANT      EMPTY                >
+<!ELEMENT SUM              EMPTY                >
+<!ELEMENT PRODUCT          EMPTY                >
+<!ELEMENT LIMIT            EMPTY                >
+
+<!ATTLIST INT        Type        CDATA   #IMPLIED
+
+%att-class-style;   >
+
+<!ATTLIST           PARTDIFF     %att-class-style;   >
+<!ATTLIST           TOTALDIFF    %att-class-style;   >
+<!ATTLIST           DIFF                 %att-class-style;   >
+<!ATTLIST           INVERSE      %att-class-style;   >
+<!ATTLIST           MATRIXINVERSE        %att-class-style;   >
+<!ATTLIST           DETERMINANT          %att-class-style;   >
+<!ATTLIST           SUM                  %att-class-style;   >
+<!ATTLIST           PRODUCT      %att-class-style;   >
+<!ATTLIST           LIMIT                %att-class-style;   >
+
+<!-- Define trig functions                    -->
+
+<!ENTITY % FnTrig  "SIN|COS|TAN|
+                    SEC| COSEC| COT|
+                    SINH| COSH| TANH|
+                    SECH| COSECH| COTANH|
+                    ARCSIN| ARCCOS| ARCTAN"     >
+
+<!ELEMENT SIN         EMPTY       >
+<!ELEMENT COS         EMPTY       >
+<!ELEMENT TAN         EMPTY       >
+<!ELEMENT SEC         EMPTY       >
+<!ELEMENT COSEC       EMPTY       >
+<!ELEMENT COT         EMPTY       >
+<!ELEMENT SINH        EMPTY       >
+<!ELEMENT COSH        EMPTY       >
+<!ELEMENT TANH        EMPTY       >
+<!ELEMENT SECH        EMPTY       >
+<!ELEMENT COSECH      EMPTY       >
+<!ELEMENT COTANH      EMPTY       >
+<!ELEMENT ARCSIN      EMPTY       >
+<!ELEMENT ARCCOS      EMPTY       >
+<!ELEMENT ARCTAN      EMPTY       >
+
+<!ATTLIST           SIN                  %att-class-style;   >
+<!ATTLIST           COS                  %att-class-style;   >
+<!ATTLIST           TAN                  %att-class-style;   >
+<!ATTLIST           SEC                  %att-class-style;   >
+<!ATTLIST           COSEC                %att-class-style;   >
+<!ATTLIST           COT                  %att-class-style;   >
+<!ATTLIST           SINH                 %att-class-style;   >
+<!ATTLIST           COSH                 %att-class-style;   >
+<!ATTLIST           TANH                 %att-class-style;   >
+<!ATTLIST           SECH                 %att-class-style;   >
+<!ATTLIST           COSECH               %att-class-style;   >
+<!ATTLIST           COTANH               %att-class-style;   >
+<!ATTLIST           ARCSIN               %att-class-style;   >
+<!ATTLIST           ARCCOS               %att-class-style;   >
+<!ATTLIST           ARCTAN               %att-class-style;   >
+
+<!-- Define qualifier elements                        -->
+<!ENTITY % qualif "LOWLIMIT|UPLIMIT|BVAR|DEGREE"        >
+
+<!-- Define expressions with content                  -->
+<!-- content model defined below                      -->
+
+<!ENTITY % Fnc "MATRIXROW|VECTOR|INTERVAL|SET|
+                MEDIAN| MODE|MOMENT|MEAN|SDIV|VAR|
+                LOG|LN|MIN|MAX|FACTORIAL"                 >
+
+<!-- Define  Semantic Mapping Tag Set -->
+<!-- NB definition of XML-ANNOTATION needs to be #OTHER -->
+<!-- to include elements from other namespaces -->
+
+<!ELEMENT ANNOTATION  (#PCDATA)  >
+<!ELEMENT XML-ANNOTATION  (#PCDATA)  >
+
+<!ATTLIST           ANNOTATION           %att-class-style;   >
+<!ATTLIST           XML-ANNOTATION      %att-class-style;   >
+
+<!-- recursive definition for content of expressions                 -->
+<!-- include presentation tag constructs at lowest level             -->
+<!-- so presentation tokens hold PCDATA at leaf level -->
+
+<!ENTITY % MathExpression "(%Presentation; |%Op;|
+                     %FnTrig;|%qualif;|FN|EXPR|MATRIX|
+                     %FnGen;| %Fnc;|SEMANTICS)"          >
+
+<!-- elements with content                       -->
+
+<!ELEMENT MATRIX      (MATRIXROW)*          >
+<!ELEMENT MATRIXROW   (%MathExpression;|SEP)*      >
+<!ELEMENT VECTOR      (%MathExpression;|SEP)*      >
+
+<!ATTLIST           MATRIX              %att-class-style;   >
+<!ATTLIST           MATRIXROW   %att-class-style;   >
+<!ATTLIST           VECTOR              %att-class-style;   >
+
+<!ELEMENT INTERVAL    (%MathExpression;|SEP)*      >
+
+<!ATTLIST INTERVAL      Closure     CDATA   #IMPLIED
+                                        %att-class-style;   >
+
+<!ELEMENT SET       (%MathExpression;|SEP)*       >
+
+<!ATTLIST SET           %att-class-style;   >
+
+<!ELEMENT MOMENT      (%MathExpression;)*               >
+<!ELEMENT MEDIAN      (%MathExpression;)*           >
+<!ELEMENT MODE        (%MathExpression;)*           >
+<!ELEMENT MEAN        (%MathExpression;)*           >
+<!ELEMENT SDIV        (%MathExpression;)*           >
+<!ELEMENT VAR         (%MathExpression;)*           >
+
+<!ATTLIST           MOMENT      %att-class-style;   >
+<!ATTLIST           MEDIAN      %att-class-style;   >
+<!ATTLIST           MODE        %att-class-style;   >
+<!ATTLIST           MEAN        %att-class-style;   >
+<!ATTLIST           SDIV        %att-class-style;   >
+<!ATTLIST           VAR         %att-class-style;   >
+
+<!ELEMENT LOG         (%MathExpression;)*           >
+<!ELEMENT LN          (%MathExpression;)*           >
+<!ELEMENT MIN         (%MathExpression;)*           >
+<!ELEMENT MAX         (%MathExpression;)*           >
+<!ELEMENT FACTORIAL   (%MathExpression;)*           >
+
+<!ATTLIST           LOG         %att-class-style;   >
+<!ATTLIST           LN          %att-class-style;   >
+<!ATTLIST           MIN         %att-class-style;   >
+<!ATTLIST           MAX         %att-class-style;   >
+<!ATTLIST           FACTORIAL   %att-class-style;   >
+
+<!--MathContent is a piece of maths of maths notation   -->
+
+<!ENTITY % MathContent  "(%MathExpression;|E)"        >
+
+<!ELEMENT LOWLIMIT      (%MathContent;)*                   >
+<!ELEMENT UPLIMIT       (%MathContent;)*                   >
+<!ELEMENT BVAR          (%MathContent;)*                   >
+<!ELEMENT DEGREE        (%MathContent;)*                   >
+
+<!ATTLIST           LOWLIMIT    %att-class-style;   >
+<!ATTLIST           UPLIMIT     %att-class-style;   >
+<!ATTLIST           BVAR                %att-class-style;   >
+<!ATTLIST           DEGREE              %att-class-style;   >
+
+<!-- Define top level semantic container element        -->
+
+<!ELEMENT SEMANTICS   ((%MathContent;)*,ANNOTATION*, XML-ANNOTATION*) >
+<!ATTLIST SEMANTICS        SemType CDATA #IMPLIED
+                                                        %att-class-style;
+>
+
+<!--Define Equations -->
+
+<!ELEMENT E      ((%MathExpression;)*,
+                     ((%Verb;),(%MathExpression;)*)+,
+                     ( ST, (%MathContent)*)? )             >
+
+<!ATTLIST  E            %att-class-style;   >
+
+<!-- Define user-specifiable element                    -->
+
+<!ELEMENT FN        (%Presentation;)*                             >
+
+<!ATTLIST  FN           %att-class-style;   >
+
+<!-- Define  the  expression scope (bracketing) element -->
+
+<!ELEMENT EXPR         (%MathExpression;| SEP)*        >
+
+<!ATTLIST  EXPR         %att-class-style;   >
+
+<!-- layout schema contain tokens, layout and content schema  -->
+
+<!ELEMENT mstyle          (%MathContent;)*                      >
+<!ELEMENT merror          (%MathContent;)*                      >
+<!ELEMENT mphantom        (%MathContent;)*                      >
+<!ELEMENT mrow            (%MathContent;)*                      >
+<!ELEMENT mfrac           (%MathContent;)*                      >
+<!ELEMENT msqrt           (%MathContent;)*                      >
+<!ELEMENT mroot           (%MathContent;)*                      >
+<!ELEMENT msub            (%MathContent;)*                      >
+<!ELEMENT msup            (%MathContent;)*                      >
+<!ELEMENT msuper          (%MathContent;)*                      >
+<!ELEMENT msubsup         (%MathContent;)*                      >
+<!ELEMENT mmultiscripts   (%MathContent;)*                      >
+<!ELEMENT munder          (%MathContent;)*                      >
+<!ELEMENT mover           (%MathContent;)*                      >
+<!ELEMENT munderover      (%MathContent;)*                      >
+<!ELEMENT mtable          (%MathContent;)*                      >
+<!ELEMENT mtr             (%MathContent;)*                      >
+<!ELEMENT mtd             (%MathContent;)*                      >
+<!ELEMENT maction         (%MathContent;)*                      >
+
+
+<!-- browser interface definition -->
+
+<!ENTITY  %     att-type        'type CDATA #IMPLIED' >
+<!ENTITY  %     att-name        'name CDATA #IMPLIED' >
+<!ENTITY  %     att-height      'height CDATA #IMPLIED' >
+<!ENTITY  %     att-width       'width CDATA #IMPLIED' >
+<!ENTITY  %     att-baseline    'baseline CDATA #IMPLIED' >
+<!ENTITY  %     att-overflow    'overflow (pan|scroll|elide|truncate|scale)
+"pan"' >
+<!ENTITY  %     att-altimg      'altimg CDATA #IMPLIED' >
+<!ENTITY  %     att-alttext     'alttext CDATA #IMPLIED' >
+<!ENTITY  %     att-macros      'macros CDATA #IMPLIED' >
+
+<!ENTITY  %     att-browif      '%att-type;
+                                                %att-name;
+                                                %att-height;
+                                                %att-width;
+                                                %att-baseline;
+                                                %att-overflow;
+                                                %att-altimg;
+                                                %att-alttext;
+                                                %att-macros;'     >
+
+<!-- the top level MATH and MATHDISP elements      -->
+<!-- MATH and MATHDISP contain MathML encoded mathematics -->
+
+<!ELEMENT MATH       (%MathContent;)*    >
+<!ELEMENT MATHDISP   (%MathContent;)*    >
+
+<!ATTLIST  MATH         %att-browif;
+                                        %att-class-style;   >
+
+<!ATTLIST  MATHDISP     %att-browif;
+                                        %att-class-style;   >
+
+<!-- the top level F and FD elements      -->
+<!-- F and FD contain non-MathML encodings      -->
+
+<!ELEMENT F             (#PCDATA)    >
+<!ELEMENT FD            (#PCDATA)    >
+
+<!ATTLIST  F            %att-browif;
+                                        %att-class-style;   >
+
+<!ATTLIST  FD           %att-browif;
+                                        %att-class-style;   >
+
+<!-- end of DTD fragment -->

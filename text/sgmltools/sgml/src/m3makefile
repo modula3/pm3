@@ -1,0 +1,42 @@
+
+import("m3doc")
+
+import("libm3")
+
+Interface("SGMLElement")
+
+Interface("SGML")
+
+Sequence("SGMLElement","SGMLElement")
+
+Interface("SGMLPrint")
+
+implementation("SGMLPrint")
+
+% This library can use James Clark C++ NSGMLS library for a robust
+% complete and fully validating parser, or it can use a simpler
+% self contained SGML parser in Modula-3.
+
+%USE_NSGMLS = "TRUE"
+if not defined("USE_NSGMLS")
+  USE_NSGMLS = ""
+end
+
+if USE_NSGMLS
+  include_dir("nsgmls")
+else
+  include_dir("sgmlc")
+end
+
+include_dir("dtd")
+
+HtmlFile("index")
+
+HtmlInterface("SGML")
+
+HtmlInterface("SGMLPrint")
+
+HtmlRoot("index")
+
+Library("sgml")
+

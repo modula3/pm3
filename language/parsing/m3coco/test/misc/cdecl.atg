@@ -1,0 +1,63 @@
+COMPILER Decl
+(* Translate simple C declarations into English
+   Based on Kernighan and Ritchie: "C Programming language", page 122
+   See also: Parr et.al. "PCCTS reference manual", page 53 in ACM SIGPLAN
+   Notices 27(2), 88-165, 1992 *)
+
+PROCEDURE GetNumber (VAR C : CARDINAL);
+  VAR
+    I : CARDINAL;
+    String : ARRAY [0 .. 20] OF CHAR;
+  BEGIN
+    LexString(String);
+    I := 0; C := 0;
+    WHILE String[I] # 0C DO
+      C := 10 * C + ORD(String[I]) - ORD('0'); INC(I)
+    END;
+  END GetNumber;
+
+VAR
+  Name, Tipe : ARRAY [0 .. 20] OF CHAR;
+  Size : CARDINAL;
+
+CHARACTERS
+  digit =  "0123456789" .
+  letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyx_" .
+
+IGNORE CHR(1) .. CHR(31)
+
+TOKENS
+  number = digit { digit } .
+  name = letter { letter } .
+
+PRODUCTIONS
+
+  Decl = { name                          (. LexName(Tipe) .)
+           Dcl                           (. FileIO.Write(FileIO.StdOut, ' ');
+                                            FileIO.WriteString(FileIO.StdOut, Tipe);
+                                            FileIO.WriteLn(FileIO.StdOut) .)
+           ";" } .
+
+  Dcl =     "*" Dcl                      (. FileIO.WriteString(FileIO.StdOut, ' pointer to') .)
+           | DirectDcl .
+
+  DirectDcl =   name                     (. LexName(Name);
+                                            FileIO.Write(FileIO.StdOut, ' ');
+                                            FileIO.WriteString(FileIO.StdOut, Name);
+                                            FileIO.WriteString(FileIO.StdOut, ' is') .)
+                Descriptor
+              | "(" Dcl ")" Descriptor .
+
+  Descriptor = [  "["                    (. FileIO.WriteString(FileIO.StdOut, ' array ') .)
+                  ( number               (. GetNumber(Size);
+                                            FileIO.Write(FileIO.StdOut, '[');
+                                            FileIO.WriteCard(FileIO.StdOut, Size, 1);
+                                            FileIO.WriteString(FileIO.StdOut, '] ') .)
+                    | (* no dimension *)
+                  )
+                  "]"                    (. FileIO.WriteString(FileIO.StdOut, 'of') .)
+                  Descriptor
+                | "(" ")"                (. FileIO.WriteString(FileIO.StdOut, ' function returning') .)
+               ] .
+
+END Decl.

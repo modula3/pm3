@@ -1,0 +1,53 @@
+<HTML><HEAD>
+<TITLE>Sgmlstructure: Print the SGML Tree Structure for a Document</TITLE>
+</HEAD>
+<BODY>
+<DIV CLASS=HEAD>
+<SPAN CLASS=AUTHOR>Michel Dagenais</SPAN>
+<SPAN CLASS=COPYRIGHT>Michel Dagenais, GNU General Public License, 1997</SPAN>
+<ADDRESS>
+michel.dagenais@polymtl.ca<BR>
+Ecole Polytechnique<BR>
+C.P. 6079, Succ. Centre-Ville<BR>
+Montreal, Quebec, H3C 3A7</ADDRESS>
+<SPAN CLASS=DATE>8 October 1997</SPAN>
+<SPAN CLASS=KEYWORD>SGML</SPAN>
+<SPAN CLASS=KEYWORD>structure</SPAN>
+<SPAN CLASS=KEYWORD>verification</SPAN>
+<SPAN CLASS=KEYWORD>medium audience</SPAN>
+</DIV>
+<H1>Sgmlstructure: Print the SGML Tree Structure for a Document</H1>
+
+<DIV CLASS=ABSTRACT>
+<P>This program prints back an SGML file with annotations identifying all
+the SGML structure elements identified during the parsing. It may help
+verify the structure of an SGML document.
+</DIV>
+<P>
+For each file name on the command line, the corresponding file is parsed
+and its content printed back on standard output along with <I>BEGIN xxx</I>
+and <I>END xxx</I> annotations indented to reflect the nesting level.
+These annotations identify the different parsing constructs, <I>xxx</I>
+being one of 
+<!-- appInfo -->
+<I>startDtd</I> beginning of document type definition,
+<I>endDtd</I> end of document type definition,
+<I>endProlog</I> end of local markup declarations,
+<I>startElement</I> start element tag,
+<I>endElement</I> end element tag,
+<I>data</I> character data,
+<I>sdata</I> internal entity reference,
+<I>pi</I> processing instruction,
+<I>externalDataEntityRef</I> entity reference to external data,
+<I>subdocEntityRef</I> external entity reference,
+<I>nonSgmlChar</I> binary non SGML character code,
+<I>commentDecl</I> comment,
+<I>markedSectionStart</I> start of IGNORE/INCLUDE marked section,
+<I>markedSectionEnd</I> end of IGNORE/INCLUDE marked section,
+<I>ignoredChars</I> content within a IGNORE marked section,
+<I>generalEntity</I> general entity reference,
+<I>error</I> parsing error encountered,
+<I>openEntityChange</I> new entity processed.
+</BODY>
+</HTML>
+

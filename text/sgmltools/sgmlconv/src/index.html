@@ -1,0 +1,58 @@
+<HTML><HEAD>
+<TITLE>Sgmlconv: Conversion from HTML to TeX and Other Formats</TITLE>
+</HEAD>
+<BODY>
+<DIV CLASS=HEAD>
+<SPAN CLASS=AUTHOR>Michel Dagenais</SPAN>
+<SPAN CLASS=COPYRIGHT>Michel Dagenais, GNU General Public License, 1997</SPAN>
+<ADDRESS>
+michel.dagenais@polymtl.ca<BR>
+Ecole Polytechnique<BR>
+C.P. 6079, Succ. Centre-Ville<BR>
+Montreal, Quebec, H3C 3A7</ADDRESS>
+<SPAN CLASS=DATE>8 October 1997</SPAN>
+<SPAN CLASS=KEYWORD>HTML</SPAN>
+<SPAN CLASS=KEYWORD>SGML</SPAN>
+<SPAN CLASS=KEYWORD>documentation</SPAN>
+<SPAN CLASS=KEYWORD>m3tosgml</SPAN>
+<SPAN CLASS=KEYWORD>conversion</SPAN>
+<SPAN CLASS=KEYWORD>TeX</SPAN>
+<SPAN CLASS=KEYWORD>medium audience</SPAN>
+</DIV>
+<H1>Sgmlconv: Conversion from HTML to TeX and Other Formats</H1>
+
+<DIV CLASS=ABSTRACT>
+<P>This program converts an HTML document into LaTeX or other formats.
+</DIV>
+<P>
+The program <TT>sgmlconv</TT> reads the HTML input file (first command line
+argument, standard input when no argument given), converts the content to
+LaTeX or other formats, and writes it to the output file 
+(second command line argument, standard output when no argument given).
+It accepts the following command line options.
+
+<DL>
+<DT>-htmltex<DD>Convert to LaTeX. The expected input format (HTML with
+additional attribute values and tags) is described later in this text.
+<DT>-report<DD>Use the LaTeX <I>report</I> style instead of <I>article</I>.
+<DT>-htmlhtml<DD>Perform minor adjustments on the HTML input, in preparation
+for shipping into the installation directory. All hypertext
+references to files in other Modula-3 packages are adjusted to reflect
+the flattened hierarchy used in the installation directory. Moreover,
+references to files with special extensions (e.g. .i3) are replaced
+by other extensions (e.g. .html) because of conversions which take place
+between the source and the installation directory. 
+<DT>-r <I>oldext</I> <I>newext</I><DD>With <TT>-htmlhtml</TT>,
+replace the extension for hypertext references from <I>oldext</I>
+to <I>newext</I>.
+<DT>-path <I>p</I><DD>The input HTML file is located in path <I>p</I> within
+the current package. This is used to detect hypertext links between packages,
+with option <TT>-htmlhtml</TT>.
+<DT>-v<DD>Produce information about the parsing while it proceeds.
+</DL>
+
+<UL CLASS=MD.SKIP>
+<LI><A REL=SUBDOCUMENT HREF="format.html">The Documentation Format</A>
+</UL>
+</BODY>
+</HTML>

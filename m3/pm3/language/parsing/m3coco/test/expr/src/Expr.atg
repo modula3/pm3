@@ -1,0 +1,57 @@
+COMPILER Expr
+
+IMPORT Scan, Fmt, Wr, Stdio ;
+
+CHARACTERS
+  digit = "0123456789" .
+  tab   = CHR(9) .
+  eol   = CHR(10) .
+
+TOKENS
+  num = digit {digit} .
+
+IGNORE eol + tab
+
+COMMENTS FROM "#" TO eol
+
+PRODUCTIONS
+
+Expr = StatSeq .
+
+StatSeq = SYNC { Stat ";" SYNC } .
+
+Stat                         (. VAR r : INTEGER ; .)
+  = Expression <r>           (. Wr.PutText(Stdio.stdout, Fmt.Int(r) & "\n") .).
+
+Expression <VAR e : INTEGER> (. VAR t : INTEGER ; .)
+  = Term <e>
+    {  '+' Term <t>          (. e := e + t .)
+    |  '-' Term <t>          (. e := e - t .)
+    }.
+
+Term <VAR t : INTEGER>       (. VAR f : INTEGER ; .)
+  = Factor <t>
+    {  '*' Factor <f>        (. t := t * f .)
+    |  '/' Factor <f>        (. t := t DIV f .)
+    |  '%' Factor <f>        (. t := t MOD f .)
+    }.
+
+Factor <VAR f : INTEGER>     (. VAR sign := 1 ; .)
+  = [ "-"                    (. sign := -1 .)
+    ]
+    ( Number<f>
+    | "(" Expression <f> ")"
+    )                        (. f := f * sign .).
+
+Number <VAR n : INTEGER>
+  = num                      (. TRY
+                                  n := Scan.Int(p.string())
+                                EXCEPT
+                                ELSE
+                                  Wr.PutText(Stdio.stderr,
+                                             "illegal number '" &
+                                                           p.string() & "'\n") ;
+                                  n := 0
+                                END .).
+
+END Expr.

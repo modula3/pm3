@@ -1,0 +1,35 @@
+%
+% This parser is based on the M3Coco parser generator. The generated
+% parsing files are provided in case you dont have access to M3Coco.
+% If you modify the generated parsing files, these changes will probably
+% never be merged back in the main distribution.
+%
+%USE_M3COCO = ""
+if not defined("USE_M3COCO")
+  USE_M3COCO = "TRUE"
+end
+
+import("m3config")
+
+if USE_M3COCO
+  import("m3coco-0.04")
+
+  derived_interface("SGMLC", HIDDEN)
+  derived_implementation("SGMLCP")
+
+  if defined("_all")
+    if stale("SGMLC.i3", "SGMLC.atg")
+      checkExec([BIN_USE & SL & "m3coco", path_of("SGMLC.atg")],[],"")
+    end
+  end
+else
+  include_dir("coco")
+end
+
+interface("SGMLCScanner")
+interface("SGMLRep")
+implementation("SGMLCS")
+implementation("SGML")
+module("FSM")
+module("AtomPkl")
+

@@ -1,0 +1,12 @@
+
+import("sgml")
+
+import("m3doc")
+
+implementation("Main")
+
+HtmlFile("index")
+
+HtmlFile("format")
+
+Program("sgmlconv")

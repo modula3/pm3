@@ -1,0 +1,116 @@
+COMPILER CMinus
+(* Simple CMinus grammar.  P.D. Terry, Rhodes University, 1995 *)
+
+CHARACTERS
+  eol        = CHR(13) .
+  letter     = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" .
+  digit      = "0123456789" .
+  noquote1   = ANY - "'" - eol .
+  noquote2   = ANY - '"' - eol .
+
+IGNORE CHR(9) .. CHR(13)
+COMMENTS FROM "//" TO eol
+
+TOKENS
+  identifier = letter {letter | digit} .
+  number     = digit { digit} .
+  string     = '"' (noquote2 | '\"') { noquote2 | '\"' } '"' .
+  char       = "'" ["\"] noquote1 "'" | "'\''" .
+
+PRODUCTIONS
+
+(* The main program can nest procedures, but procedures cannot nest procedures
+   themselves.  This can be handled in a context free way by having a
+   MainBlock and a ProcBlock non-terminal. *)
+
+   CMinus             =  "void" identifier FormalParameters
+                          MainBlock .
+
+   MainBlock          =  "{"
+                            { ConstDeclaration
+                              | ProcDeclaration
+                              | VarDeclarations }
+                            { Statement }
+                         "}" .
+
+   ConstDeclaration   =  "const" identifier "=" number ";" .
+
+   VarDeclarations    =  "int"
+                            identifier [ UpperBound ]
+                            { "," identifier [ UpperBound ] } ";"  .
+
+   UpperBound         =  "[" ( number | identifier ) "]" .
+
+   ProcDeclaration    =  ( "function" | "void" ) identifier FormalParameters
+                           ( ProcBlock | ";" ) .
+
+   FormalParameters   =  "(" [ FormalPar { "," FormalPar } ] ")" .
+
+   FormalPar          =  identifier [ "[" "]" ] .
+
+   ProcBlock          =  "{"
+                           { ConstDeclaration | VarDeclarations }
+                           { Statement }
+                         "}" .
+
+(* The rule for semicolons is very different from Pascal/Modula, where they
+   are separators. *)
+
+   CompoundStatement  =  "{" { Statement } "}" .
+
+   Statement          =  CompoundStatement | AssignmentOrCall
+                           | IfStatement | WhileStatement | ForStatement
+                           | LoopStatement | ExitStatement | WriteStatement
+                           | ReadStatement | ReturnStatement | ";" .
+
+   AssignmentOrCall   =  Designator
+                         ( "=" Expression | ActualParameters | "++" | "--" ) ";" .
+
+   Designator         =  identifier [ "[" Expression "]" ] .
+
+   ActualParameters   =  "(" [ ActualPar { "," ActualPar } ] ")" .
+
+   ActualPar          =  Expression .
+
+   IfStatement        =  "if" "(" Expression ")" Statement
+                         [ "else" Statement ] .
+
+   WhileStatement     =  "while" "(" Expression ")" Statement .
+
+   ForStatement       =  "for" "(" [ Initial ] ";" Expression ";" [ Final ] ")"
+                         Statement .
+
+   Initial            =  Designator "=" Expression .
+
+   Final              =  Designator ( "++" | "--" ) .
+
+   LoopStatement      =  "loop" Statement .
+
+   ExitStatement      =  "exit" ";" .
+
+   WriteStatement     =  "cout" "<<" Expression { "<<" Expression } ";" .
+
+   ReadStatement      =  "cin" ">>" Designator { ">>" Designator } ";" .
+
+   ReturnStatement    =  "return" [ Expression ] ";" .
+
+   Expression         =  SimpleExpression [ RelOp SimpleExpression ] .
+
+   SimpleExpression   =  [ Sign ] Term { AddOp Term } .
+                          
+   Term               =  Factor { MulOp Factor } .
+
+   Factor             =  Designator [ ActualParameters ]
+                           | number | char | string
+                           | "(" Expression ")"
+                           | "!" Factor .
+
+   Sign               =  "+" | "-" .
+
+   AddOp              =  "+" | "-" | "||" .
+
+   MulOp              =  "*" | "/" | "%" | "&&" .
+
+   RelOp              =  "==" | "!=" | "<" | "<=" | ">" | ">=" .
+
+END CMinus.

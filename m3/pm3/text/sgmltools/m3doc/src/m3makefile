@@ -1,0 +1,11 @@
+
+template("m3doc")
+
+HtmlFile("index")
+
+HtmlFile("references")
+
+HtmlRoot("index")
+
+OtherPackage("m3doc")
+

@@ -1,0 +1,44 @@
+<HTML><HEAD>
+<TITLE>M3tosgml: Conversion of Documented Modula-3 Interfaces into HTML</TITLE>
+</HEAD>
+<BODY>
+<DIV CLASS=HEAD>
+<SPAN CLASS=AUTHOR>Michel Dagenais</SPAN>
+<SPAN CLASS=COPYRIGHT>Michel Dagenais, GNU General Public License, 1997</SPAN>
+<ADDRESS>
+michel.dagenais@polymtl.ca<BR>
+Ecole Polytechnique<BR>
+C.P. 6079, Succ. Centre-Ville<BR>
+Montreal, Quebec, H3C 3A7</ADDRESS>
+<SPAN CLASS=DATE>8 October 1997</SPAN>
+<SPAN CLASS=KEYWORD>HTML</SPAN>
+<SPAN CLASS=KEYWORD>SGML</SPAN>
+<SPAN CLASS=KEYWORD>documentation</SPAN>
+<SPAN CLASS=KEYWORD>literate programming</SPAN>
+<SPAN CLASS=KEYWORD>medium audience</SPAN>
+</DIV>
+<H1>M3tosgml: Conversion of Documented Modula-3 Interfaces into HTML</H1>
+
+<DIV CLASS=ABSTRACT>
+<P>This program converts a Modula-3 interface to HTML documentation, for
+browsing and inclusion into larger documents. A number of conventions are
+used which determine how each section of the interface is translated.
+</DIV>
+<P>
+The program <TT>m3tosgml</TT> reads the Modula-3 interface 
+input file (first command line
+argument, standard input when no argument given), and writes the 
+corresponding SGML file. The option <TT>-html</TT> is the default and
+produces an HTML SGML file at output. SGML Document types other than HTML
+may be supported in the future.
+<P>
+The translation process is guided by conventions about how the different
+pisces of information are embedded into the Modula-3 interface
+comments, as described below.
+
+<UL CLASS=MD.SKIP>
+<LI><A HREF="comments.html" REL=SUBDOCUMENT>Documenting Modula-3 interfaces</A>
+</UL>
+
+</BODY>
+</HTML>

@@ -1,0 +1,21 @@
+#! /bin/sh
+# Pick the packages to convert, list them in the quotes for PACKAGES
+# and run the script in the directory containing all the packages
+# AFTER insuring that you have a good backup, preferably online.
+# The conversion is performed "in place". Never run the conversion
+# twice as the first time TeX commands are converted to HTML and the second
+# time HTML commands are escaped since they use reserved HTML characters.
+#
+#PACKAGES="formsedit formsvbt libm3 m3core m3tk mentor mg netobj realgeometry stable stablegen tcp ui vbtkit"
+PACKAGES=""
+for i in ${PACKAGES}
+  do ( cd $i;\
+    for j in `find src -name "*.[i][3g]" -print `;\
+      do BASE=`basename $j`;\
+        echo "Processing $j";\
+        m3textohtml <$j $j >$j.tmp;\
+      mv $j.tmp $j;\
+    done )
+done
+
+

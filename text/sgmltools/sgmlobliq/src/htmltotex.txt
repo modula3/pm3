@@ -1,0 +1,143 @@
+
+var
+  beginTagText = tbl_create(false,true), 
+  endTagText = tbl_create(false,true),
+  startText = "",
+  endText = "",
+  encodeData = proc() end;
+
+let register = proc(name,st,et)
+    tbl_put(beginTagText,name,st);
+    tbl_put(endTagText,name,et);
+  end;
+
+let conv = {
+  elementStack => [],
+
+  visible => true,
+
+  out => wr_stdout,
+
+  processEntity => meth(self,entity)
+      if self.visible then
+        wr_putText(self.out,encodeData(entity.internalText));
+      end;
+    end,
+
+  appInfo => meth(self,string)
+
+    end,
+
+  startDtd => meth(self,name,externalId)
+
+    end,
+
+  endDtd => meth(self,name)
+
+    end,
+
+  endProlog => meth(self)
+
+    end,
+
+  startElement => meth(self,name,contentType,included,attributes)
+      self.elementStack := self.elementStack @ [name];
+      let t = tbl_get(beginTagText,name);
+      if (t isnot ok) and self.visible then
+        wr_putText(self.out,t);
+      end;
+    end,
+
+  endElement => meth(self,name)
+      let t = tbl_get(endTagText,name);
+      if (t isnot ok) and self.visible then
+        wr_putText(self.out,t);
+      end;
+      self.elementStack := self.elementStack[0 for #(self.elementStack) - 1];
+    end,
+
+  data => meth(self,string)
+      if self.visible then
+        wr_putText(self.out,encodeData(string));
+      end;
+    end,
+
+  sdata => meth(self,string,entityName)
+
+    end,
+
+  pi => meth(self,string,entityName)
+
+    end,
+
+  externalDataEntityRef => meth(self,entity)
+      self.processEntity(entity);
+    end,
+
+  subdocEntityRef => meth(self,entity)
+      self.processEntity(entity);
+    end,
+
+  nonSgmlChar => meth(self,c)
+      wr_putText(wr_stderr,"Error: non SGML char\n");
+    end,
+
+  commentDecl => meth(self,comments,seps)
+
+    end,
+
+  markedSectionStart => meth(self,status,types,entityNames)
+
+    end,
+
+  markedSectionEnd => meth(self,status)
+
+    end,
+
+  ignoredChars => meth(self,string)
+
+    end,
+
+  generalEntity => meth(self,entity)
+      self.processEntity(entity);
+    end,
+
+  error => meth(self,errorType,line,column,entityOffset,entityName,filename,
+                message)
+      wr_putText(wr_stderr,"Error " & message & ", " & filename & " " &
+          fmt_int(line) & " " & fmt_int(column) & "\n");
+    end
+};
+
+startText := "\n\\documentstyle{article}\n\\begin{document}\n";
+
+endText := "\n\\end{document}\n";
+
+register("P","\n","");
+register("HTML",startText,endText);
+register("TITLE","%","");
+register("TT","{\\tt","}");
+register("I","{\\it","}");
+register("B","{\\bf","}");
+register("SUB","_{","}");
+register("SUP","^{","}");
+register("BR","\\br","");
+register("UL","\n\\begin{itemize}\n","\n\\end{itemize}\n");
+register("DL","\n\\begin{itemize}\n","\n\\end{itemize}\n");
+register("OL","\n\\begin{enumerate}\n","\n\\end{enumerate}\n");
+register("LI","\n\\item ","");
+register("DD","\n\\item[","] ");
+register("DT","","");
+register("H1","\n\\section*{","}\n");
+register("H2","\n\\subsection*{","}\n");
+register("H3","\n\\subsubsection*{","}\n");
+register("PRE","\n{\\obeylines\\obeyspaces","}\n");
+
+encodeData := proc(string)
+    var t = string;
+    t := text_replaceAll("_","\\_",t);
+    t := text_replaceAll("$","\\$",t);
+    t := text_replaceAll("\r","\n",t);
+    t;
+  end;
+
