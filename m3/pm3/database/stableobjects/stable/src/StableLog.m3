@@ -4,13 +4,13 @@
 (*                                                             *)
 (* Created by Carsten Weich                                    *)
 (*                                                             *)
-(* Last modified on Thu Jan 19 13:13:18 PST 1995 by kalsow     *)
+(* Last modified on Thu Aug 28 16:50:29 PDT 1997 by heydon     *)
+(*      modified on Thu Jan 19 13:13:18 PST 1995 by kalsow     *)
 (*      modified on Tue Sep 27 19:18:12 PDT 1994 by weich      *)
 
 UNSAFE MODULE StableLog;
 
-IMPORT Rd, Wr, WrClass, RdClass, Text, TextF, 
-       Thread, Pickle, 
+IMPORT AtomList, Rd, Wr, WrClass, RdClass, Text, TextF, Thread, Pickle, 
        StableError, RdUtils, Word;
 
 REVEAL
@@ -25,6 +25,16 @@ CONST
 
   Mtext        = ORD('t');
   Mpickle      = ORD('P');
+
+PROCEDURE WrErrorHalt(err: AtomList.T) =
+  BEGIN
+    StableError.Halt("Cannot write to logfile: " & RdUtils.FailureText(err))
+  END WrErrorHalt;
+
+PROCEDURE RdErrorHalt(err: AtomList.T) =
+  BEGIN
+    StableError.Halt("Cannot read from logfile: " & RdUtils.FailureText(err))
+  END RdErrorHalt;
 
 PROCEDURE OutCall (log: Wr.T; procId: CARDINAL) =
   BEGIN
@@ -48,9 +58,7 @@ PROCEDURE InCall (log: Rd.T; max: CARDINAL): CARDINAL RAISES {Error} =
 
 PROCEDURE CheckCallEndMark (log: Rd.T): BOOLEAN =
   BEGIN
-    TRY
-      RETURN EndCallMark = InInteger(log)
-    EXCEPT
+    TRY RETURN EndCallMark = InInteger(log) EXCEPT
       Error => RETURN FALSE
     END
   END CheckCallEndMark;
@@ -64,9 +72,7 @@ PROCEDURE OutRef(log: Wr.T; r: REFANY) =
         OutInteger(log, Mpickle);
         Pickle.Write(log, r)
       EXCEPT
-        Wr.Failure (err) =>
-        StableError.Halt(
-            "Cannot write to logfile: " & RdUtils.FailureText(err))
+        Wr.Failure (err) => WrErrorHalt(err)
       | Pickle.Error (msg) =>
         StableError.Halt("Cannot write to logfile: Pickle error: " & msg)
       END
@@ -74,17 +80,11 @@ PROCEDURE OutRef(log: Wr.T; r: REFANY) =
   END OutRef;
 
 PROCEDURE InRef(log: Rd.T): REFANY RAISES {Error} =
-  VAR r: REFANY;
-      code:= InInteger(log);
-  BEGIN
+  VAR r: REFANY; code:= InInteger(log); BEGIN
     IF code = Mpickle THEN
-      TRY
-        r:= Pickle.Read(log)
-      EXCEPT
+      TRY r:= Pickle.Read(log) EXCEPT
       | Pickle.Error, Rd.EndOfFile => RAISE Error
-      | Rd.Failure (err) =>
-        StableError.Halt(
-            "Can not read log file: " & RdUtils.FailureText(err))
+      | Rd.Failure (err) => RdErrorHalt(err)
       END
     ELSIF code = Mtext THEN
       r:= InText(log)
@@ -99,39 +99,29 @@ PROCEDURE InRef(log: Rd.T): REFANY RAISES {Error} =
 
 PROCEDURE OutChar (log: Wr.T; c: CHAR) =
   BEGIN
-    TRY
-      Wr.PutChar(log, c)
-    EXCEPT
-      Wr.Failure (err) =>
-        StableError.Halt(
-          "Cannot write to logfile: " & RdUtils.FailureText(err))
+    TRY Wr.PutChar(log, c) EXCEPT
+      Wr.Failure (err) => WrErrorHalt(err)
     END
   END OutChar;
 
 PROCEDURE OutChars (log: Wr.T; READONLY chars: ARRAY OF CHAR) =
-  VAR n:= NUMBER(chars) - NUMBER(chars) MOD BYTESIZE(Word.T);
-  BEGIN
+  VAR n:= NUMBER(chars) - NUMBER(chars) MOD BYTESIZE(Word.T); BEGIN
     TRY
       Wr.PutString(log, SUBARRAY(chars, 0, n));
       FOR i:= n TO LAST(chars) DO
         Wr.PutChar(log, chars[i])
       END
     EXCEPT
-      Wr.Failure (err) =>
-        StableError.Halt(
-          "Cannot write to logfile: " & RdUtils.FailureText(err))
+      Wr.Failure (err) => WrErrorHalt(err)
     END
   END OutChars;
-
 
 PROCEDURE OutInteger (log: Wr.T; i: INTEGER) =
   BEGIN
     TRY
       Wr.PutString(log, LOOPHOLE(i, ARRAY [0..BYTESIZE(INTEGER)-1] OF CHAR));
     EXCEPT
-      Wr.Failure (err) =>
-        StableError.Halt(
-          "Cannot write to logfile: " & RdUtils.FailureText(err))
+      Wr.Failure (err) => WrErrorHalt(err)
     END
   END OutInteger;
 
@@ -145,9 +135,7 @@ PROCEDURE OutBoolean (log: Wr.T; bool: BOOLEAN) =
     TRY
       Wr.PutChar(log, VAL(ORD(bool), CHAR))
     EXCEPT
-      Wr.Failure (err) =>
-        StableError.Halt(
-          "Cannot write to logfile: " & RdUtils.FailureText(err))
+      Wr.Failure (err) => WrErrorHalt(err)
     END
   END OutBoolean;
 
@@ -156,9 +144,7 @@ PROCEDURE OutReal (log: Wr.T; r: REAL) =
     TRY
       Wr.PutString(log, LOOPHOLE(r, ARRAY [0..BYTESIZE(REAL)-1] OF CHAR));
     EXCEPT
-      Wr.Failure (err) =>
-        StableError.Halt(
-          "Cannot write to logfile: " & RdUtils.FailureText(err))
+      Wr.Failure (err) => WrErrorHalt(err)
     END
   END OutReal;
 
@@ -167,9 +153,7 @@ PROCEDURE OutLongreal (log: Wr.T; r: LONGREAL) =
     TRY
       Wr.PutString(log, LOOPHOLE(r, ARRAY [0..BYTESIZE(LONGREAL)-1] OF CHAR));
     EXCEPT
-      Wr.Failure (err) =>
-        StableError.Halt(
-          "Cannot write to logfile: " & RdUtils.FailureText(err))
+      Wr.Failure (err) => WrErrorHalt(err)
     END
   END OutLongreal;
 
@@ -178,19 +162,15 @@ PROCEDURE OutExtended (log: Wr.T; r: EXTENDED) =
     TRY
       Wr.PutString(log, LOOPHOLE(r, ARRAY [0..BYTESIZE(EXTENDED)-1] OF CHAR));
     EXCEPT
-      Wr.Failure (err) =>
-        StableError.Halt(
-          "Cannot write to logfile: " & RdUtils.FailureText(err))
+      Wr.Failure (err) => WrErrorHalt(err)
     END
   END OutExtended;
 
 PROCEDURE OutText(log: Wr.T; text: TEXT) =
-  VAR len: INTEGER;
-  BEGIN
-    IF text # NIL THEN
-      len := Text.Length(text)
-    ELSE
-      len := -1
+  VAR len: INTEGER; BEGIN
+    IF text # NIL
+      THEN len := Text.Length(text)
+      ELSE len := -1
     END;
     OutInteger(log, len);
     IF len > 0 THEN OutChars(log, SUBARRAY(text^, 0, len)) END
@@ -206,9 +186,7 @@ PROCEDURE InChar (log: Rd.T): CHAR RAISES {Error} =
       RETURN Rd.GetChar(log)
     EXCEPT
       Rd.EndOfFile => RAISE Error
-    | Rd.Failure (err) =>
-        <*NOWARN*> StableError.Halt(
-          "Can not read log file: " & RdUtils.FailureText(err))
+    | Rd.Failure (err) => RdErrorHalt(err) <*NOWARN*>
     END
   END InChar;
 
@@ -217,11 +195,8 @@ PROCEDURE InCharsLen (log: Rd.T): CARDINAL RAISES {Error} =
     RETURN InInteger(log)
   END InCharsLen;
 
-PROCEDURE InChars (    log  : Rd.T;
-                   VAR chars: ARRAY OF CHAR)
-  RAISES {Error} =
-  VAR n:= NUMBER(chars) - NUMBER(chars) MOD BYTESIZE(Word.T);
-  BEGIN
+PROCEDURE InChars (log: Rd.T; VAR chars: ARRAY OF CHAR) RAISES {Error} =
+  VAR n:= NUMBER(chars) - NUMBER(chars) MOD BYTESIZE(Word.T); BEGIN
     TRY
       IF Rd.GetSub(log, SUBARRAY(chars, 0, n)) # n THEN
         RAISE Error
@@ -231,30 +206,21 @@ PROCEDURE InChars (    log  : Rd.T;
       END
     EXCEPT
       Rd.EndOfFile => RAISE Error
-    | Rd.Failure (err) =>
-        StableError.Halt("Can not read log file: "
-                           & RdUtils.FailureText(err))
+    | Rd.Failure (err) => RdErrorHalt(err)
     END
   END InChars;
 
-PROCEDURE InInteger (log: Rd.T;
-                     min         := FIRST(INTEGER);
-                     max         := LAST(INTEGER)   ):
+PROCEDURE InInteger(log: Rd.T; min := FIRST(INTEGER); max := LAST(INTEGER)):
     INTEGER RAISES {Error} =
-  VAR 
-    i: INTEGER;
-  BEGIN
+  VAR i: INTEGER; BEGIN
     TRY
       IF Rd.GetSub(log, LOOPHOLE(i, ARRAY [0..BYTESIZE(INTEGER)-1] OF CHAR))
           # BYTESIZE(INTEGER) THEN
         RAISE Error
       END;
     EXCEPT
-    | Rd.Failure (err) =>
-        StableError.Halt("Can not read log file: "
-                           & RdUtils.FailureText(err))
+    | Rd.Failure (err) => RdErrorHalt(err)
     END;
-
     IF min <= i AND i <= max THEN
       RETURN i
     ELSE
@@ -275,68 +241,51 @@ PROCEDURE InBoolean (log: Rd.T): BOOLEAN RAISES {Error} =
       RETURN Rd.GetChar(log) = VAL(ORD(TRUE), CHAR)
     EXCEPT
       Rd.EndOfFile => RAISE Error
-    | Rd.Failure (err) =>
-        <*NOWARN*> StableError.Halt(
-          "Can not read log file: " & RdUtils.FailureText(err))
+    | Rd.Failure (err) => RdErrorHalt(err) <*NOWARN*>
     END
   END InBoolean;
 
 PROCEDURE InReal (log: Rd.T): REAL RAISES {Error} =
-  VAR 
-    r: REAL;
-  BEGIN
+  VAR r: REAL; BEGIN
     TRY
       IF Rd.GetSub(log, LOOPHOLE(r, ARRAY [0..BYTESIZE(REAL)-1] OF CHAR))
           # BYTESIZE(REAL) THEN
         RAISE Error
       END;
     EXCEPT
-    | Rd.Failure (err) =>
-        StableError.Halt("Can not read log file: "
-                           & RdUtils.FailureText(err))
+    | Rd.Failure (err) => RdErrorHalt(err)
     END;
     RETURN r;
   END InReal;
 
 PROCEDURE InLongreal (log: Rd.T): LONGREAL RAISES {Error} =
-  VAR 
-    r: LONGREAL;
-  BEGIN
+  VAR r: LONGREAL; BEGIN
     TRY
       IF Rd.GetSub(log, LOOPHOLE(r, ARRAY [0..BYTESIZE(LONGREAL)-1] OF CHAR))
           # BYTESIZE(LONGREAL) THEN
         RAISE Error
       END;
     EXCEPT
-    | Rd.Failure (err) =>
-        StableError.Halt("Can not read log file: "
-                           & RdUtils.FailureText(err))
+    | Rd.Failure (err) => RdErrorHalt(err)
     END;
     RETURN r;
   END InLongreal;
 
-PROCEDURE InExtended (log: Rd.T): EXTENDED RAISES {Error} =
-  VAR 
-    r: EXTENDED;
-  BEGIN
+PROCEDURE InExtended(log: Rd.T): EXTENDED RAISES {Error} =
+  VAR r: EXTENDED; BEGIN
     TRY
       IF Rd.GetSub(log, LOOPHOLE(r, ARRAY [0..BYTESIZE(EXTENDED)-1] OF CHAR))
           # BYTESIZE(EXTENDED) THEN
         RAISE Error
       END;
     EXCEPT
-    | Rd.Failure (err) =>
-        StableError.Halt("Can not read log file: "
-                           & RdUtils.FailureText(err))
+    | Rd.Failure (err) => RdErrorHalt(err)
     END;
     RETURN r;
   END InExtended;
 
-PROCEDURE InText(log: Rd.T) : TEXT
-   RAISES {Error} =
-  VAR len: INTEGER;
-      text: TEXT;
-  BEGIN
+PROCEDURE InText(log: Rd.T): TEXT RAISES {Error} =
+  VAR len: INTEGER; text: TEXT; BEGIN
     len := InInteger(log);
     IF len = -1 THEN
       RETURN NIL
@@ -352,3 +301,5 @@ PROCEDURE InText(log: Rd.T) : TEXT
 
 BEGIN
 END StableLog.
+
+
