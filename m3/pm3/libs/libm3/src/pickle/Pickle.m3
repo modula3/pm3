@@ -362,6 +362,9 @@ PROCEDURE WriteType(writer: Writer; tc: INTEGER)
     WITH pickleTC = writer.tcToPkl[tc] DO
       IF pickleTC = 0 THEN
         INC(writer.tcCount);
+        IF writer.tcCount >= NUMBER(writer.pklToTC^) THEN
+          ExtendWriterTypes(writer);
+        END;
         pickleTC := writer.tcCount;
         writer.pklToTC[writer.tcCount] := tc;
         fp := RTTypeFP.ToFingerprint(tc);
@@ -381,6 +384,13 @@ PROCEDURE WriteType(writer: Writer; tc: INTEGER)
       END;
     END;
   END WriteType;
+
+PROCEDURE ExtendWriterTypes(writer: Writer) =
+  (* Extend "writer.pklToTC" table. *)
+  VAR old := writer.pklToTC; BEGIN
+    writer.pklToTC := NEW(TypeTable, NUMBER(writer.pklToTC^) * 2);
+    SUBARRAY(writer.pklToTC^, 0, NUMBER(old^)) := old^;
+  END ExtendWriterTypes;
 
 PROCEDURE WriteInt(writer: Writer; i: INTEGER)
         RAISES { Wr.Failure, Thread.Alerted } =
