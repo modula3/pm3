@@ -291,7 +291,11 @@ readonly proc BootstrapTarget(target) is
     header = header & "ASFLAGS=-g3" & CR
   end     
 
-  header = header & "RANLIB=touch" & CR
+  if equal(target,"FreeBSD2")
+    header = header & "RANLIB=ranlib" & CR
+  else
+    header = header & "RANLIB=touch" & CR
+  end
 
   CreateMakefile("pm3-" & target & SL & "Makefile." & target,target,
       header, options)

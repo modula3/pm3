@@ -201,8 +201,10 @@ local capabilities = {}
 
 capabilities{OS_TYPE} = ""
 if not defined("SKIP_LLSCAN") capabilities{"LLSCAN"} = "" end
+
 % m3gdb is sensitive. On some versions of NT it did not work
-capabilities{"M3GDB"} = ""
+if not defined("SKIP_M3GDB") capabilities{"M3GDB"} = "" end
+
 if PLATFORM_SUPPORTS_MOTIF capabilities{"MOTIF"} = "" end
 if PLATFORM_SUPPORTS_DECPEX capabilities{"DECPEX"} = "" end
 if PLATFORM_SUPPORTS_OPENGL capabilities{"OPENGL"} = "" end
