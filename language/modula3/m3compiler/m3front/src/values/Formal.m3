@@ -120,6 +120,7 @@ PROCEDURE EmitDeclaration (formal: Value.T;  types_only, param: BOOLEAN) =
         size  := info.size;
         align := info.alignment;
         mtype := info.mem_type;
+        IF Type.IsStructured(type) THEN mtype := CG.Type.Struct; END;
       ELSE
         size  := Target.Address.size;
         align := Target.Address.align;
