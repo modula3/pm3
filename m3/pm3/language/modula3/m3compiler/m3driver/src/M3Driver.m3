@@ -593,7 +593,8 @@ PROCEDURE ParseOption (arg: TEXT;  arg_len: INTEGER;  rest: Arg.List)
              END;
 
     | 'Z' => IF (arg_len = 2) THEN
-               do_coverage := TRUE; ok := TRUE;
+               Arg.Append (pass_0.args, arg);  ok := TRUE;
+               do_coverage := TRUE;
              END;
 
     | 'z' => IF (arg_len > 3) THEN
@@ -1764,15 +1765,6 @@ PROCEDURE Pass0 (f: FileInfo;  object: TEXT): BOOLEAN
       ResetEnv (f.source, object);
       Pass0_Trace (f.source, options);
 
-      IF do_coverage THEN
-        VAR tmp := NEW(OptArr, NUMBER(options^) + 1);
-        BEGIN
-          SUBARRAY(tmp^, 0, NUMBER(options^)) := options^;
-          tmp[LAST(tmp^)] := "-Z";
-          options := tmp;
-        END;
-      END;
-
       TRY
         ok := M3Compiler.Compile (source, env, options^);
       EXCEPT
@@ -2809,6 +2801,7 @@ PROCEDURE BuildBootLibrary ()
     wr    : Wr.T;
     name  := M3Path.Parse (lib_name, host := TRUE);
     objs  : TextList;
+    t: TEXT;
   BEGIN
     <*ASSERT bootstrap_mode *>
 
@@ -2853,8 +2846,11 @@ PROCEDURE BuildBootLibrary ()
       f := sources;
       WHILE (f # NIL) DO
         IF (f.object # NIL) THEN 
-          objs := NEW(TextList, next := objs);
-          objs.t := GenBootLine (wr, f); 
+          t := GenBootLine (wr, f);
+          IF t # NIL THEN 
+            objs := NEW(TextList, next := objs);
+            objs.t := t;
+          END;
         END;
         f := f.next;
       END;
