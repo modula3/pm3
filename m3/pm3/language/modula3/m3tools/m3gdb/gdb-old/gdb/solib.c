@@ -67,6 +67,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #ifdef SVR4_SHARED_LIBS
 static char *solib_break_names[] = {
+  "rtld_db_dlactivity",
   "r_debug_state",
   "_r_debug_state",
   "_dl_debug_state",
