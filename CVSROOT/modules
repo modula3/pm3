@@ -39,5 +39,6 @@ m3where		m3/pm3/language/modula3/m3compiler/m3where
 m3gdb		m3/pm3/language/modula3/m3tools/m3gdb
 libm3		m3/pm3/libs/libm3
 m3core		m3/pm3/libs/m3core
+X11		m3/pm3/graphics/gr-libs/X11
 #ui		m3/pkg/SRC-m3/ui
 #set		m3/pkg/SRC-m3/set
