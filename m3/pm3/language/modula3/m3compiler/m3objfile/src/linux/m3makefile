@@ -1,0 +1,9 @@
+
+Interface ("M3ObjFile")
+
+Interface ("DebugProcTypes")
+
+Table("IntProc", "Integer", "DebugProcTypes")
+
+Module ("ELFObjFile")
+
