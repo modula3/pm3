@@ -5,7 +5,7 @@ IMPORT QMachRep, IntTextTbl, Pathname, Text, M3File;
 IMPORT TextLocTbl, IntMapTbl, TextTextTbl, Fmt, QVSeq, IntM3LibsTbl;
 IMPORT M3Path, M3Libs, TextSeq, TextRefTbl, Utils, Unit, OSError, Msg;
 IMPORT FileWr, File, FS, Arg, BldPosix, BldWin32, BldHooks, Process;
-IMPORT Pipe, Thread, TextList, BldFace, FileRd;
+IMPORT Pipe, Thread, TextList, BldFace, FileRd, Rd;
 IMPORT Location AS Loc;
 FROM Quake IMPORT Error;
 IMPORT M3DriverRep;
@@ -2741,7 +2741,7 @@ PROCEDURE DoTryExec (t: QMachine.T;  n_args: INTEGER) RAISES {Error} =
     EXCEPT 
       | OSError.E =>
         RAISE Error ("exec failed" & command);
-      | Wr.Failure, Thread.Alerted => (* ignore *)
+      | Wr.Failure, Thread.Alerted, Rd.Failure => (* ignore *)
     END;
     arg.kind := QValue.Kind.Integer;
     arg.int := n;
