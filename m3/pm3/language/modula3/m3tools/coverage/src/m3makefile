@@ -1,0 +1,25 @@
+% Copyright (C) 1993, Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+%
+% Last modified on Thu Feb 23 14:02:51 PST 1995 by kalsow
+
+if defined ("_all")
+  local src = path_of ("report_coverage.c")
+  local obj = "report_coverage" & OBJ_ext
+  if stale (obj, src)
+    exec (CC, "-c -g", src)
+  end
+end
+LibdExport (report_coverage.o)
+
+if defined ("_all")
+  local src = path_of ("analyze_coverage.c")
+  local pgm = program_name ("analyze_coverage")
+  if stale (pgm, src)
+    exec (CC, "-I../src -g -o", pgm, src)
+  end
+end
+BindExport (analyze_coverage)
+
+ManPage (analyze_coverage,1)

@@ -1,0 +1,9 @@
+#! /bin/sh
+
+cd $1_X
+make -f make.boot
+pgm > stdout 2> stderr
+diff stdout ../$1/stdout
+diff stderr ../$1/stderr
+rm -f pgm core
+

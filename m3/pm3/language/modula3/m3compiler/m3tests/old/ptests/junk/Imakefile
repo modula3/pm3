@@ -1,0 +1,113 @@
+/* Copyright (C) 1990, Digital Equipment Corporation.         */
+/* All rights reserved.                                       */
+/* See the file COPYRIGHT for a full description.             */
+
+/* Last modified on Tue Mar 12 22:05:06 1991 by muller        */
+
+
+source (Imake.ptest)
+source (.gdbinit)
+
+RMAKE = .ROOT/util/imake -I.ROOT/util -I. -e -Tm3all.tmpl PF=---$(PF)
+
+#define testdir(d,comment)                                                  @@\
+subdir (d)                                                                  @@\
+test:: FRC                                                                  @@\
+	@echo $(PF) d -- comment                                            @@\
+	@(cd d; $(RMAKE) test)                                              @@\
+output:: FRC                                                                @@\
+	@echo $(PF) d -- comment                                            @@\
+	@(cd d; $(RMAKE) output)                                            @@\
+public:: d/.gdbinit                                                         @@\
+d/.gdbinit:                                                                 @@\
+	(cd d; ln -s ../.gdbinit .)
+
+test:: FRC
+	@cat README
+
+testdir (p001, Hellow world)
+testdir (p002, Text)
+testdir (p003, Fmt)
+testdir (p004, exception mechanism)
+testdir (p005, a simple thread program)
+testdir (p006, a bit more complicated)
+testdir (p007, a whole bunch of threads - does the memory grow ?)
+testdir (p008, thread alerts)
+testdir (p009, ORD VAL NUMBER FIRST LAST)
+testdir (p010, TYPECODE NARROW)
+testdir (p011, BITSIZE BYTESIZE ADRSIZE)
+testdir (p012, readers)
+testdir (p013, readers again)
+testdir (p014, variables in nested blocks and procedures)
+testdir (p015, simple procedure with integer argument)
+testdir (p016, CASE statements)
+testdir (p017, FOR and EXIT statements)
+testdir (p018, IF statements)
+testdir (p019, REPEAT and EXIT statements)
+testdir (p020, TRY FINALLY and RETURN statements)
+testdir (p021, Imbricated TRY FINALLY statements)
+testdir (p022, TYPECASE statements)
+testdir (p023, WHILE and EXIT statements)
+testdir (p024, WITH statements)
+testdir (p025, assignment of INTEGER subranges)
+testdir (p026, user and language specified variable initialization)
+testdir (p027, RECORD types variables and assignments)
+testdir (p028, fixed ARRAY types variables assignments and subscripting)
+testdir (p029, nested procedures with up-level variable references)
+testdir (p030, non-opaque OBJECTs)
+testdir (p031, more of the Thread Interface)
+testdir (p032, more of the Thread Interface)
+testdir (p033, Readers)
+testdir (p034, equality of open arrays and records)
+testdir (p035, equality of procedures)
+testdir (p036, fibonacci)
+testdir (p037, unknown)
+testdir (p038, unknown)
+testdir (p039, unknown)
+testdir (p040, unknown)
+testdir (p041, unknown)
+testdir (p042, unknown)
+testdir (p043, unknown)
+testdir (p044, unknown)
+testdir (p045, unknown)
+testdir (p046, unknown)
+testdir (p047, Readers)
+testdir (p048, unknown)
+testdir (p049, unknown)
+testdir (p050, unknown)
+testdir (p051, unknown)
+testdir (p052, unknown)
+testdir (p053, unknown)
+testdir (p054, Richard benchmark)
+testdir (p055, unknown)
+testdir (p056, unknown)
+testdir (p057, unknown)
+testdir (p058, unknown)
+testdir (p059, unknown)
+testdir (p060, unknown)
+testdir (p061, unknown)
+testdir (p062, unknown)
+testdir (p063, unknown)
+testdir (p064, unknown)
+testdir (p065, unknown)
+testdir (p066, exception handler stack screwed up)
+testdir (p067, mixup in imported names)
+testdir (p068, PrintProc for arrays and array of chars and Text.T)
+testdir (p069, two object types that differs only by default overwriting)
+testdir (p070, procedure registration)
+testdir (p071, SUBARRAY := SUBARRAY)
+testdir (p072, CHAR literals > 127)
+testdir (p073, MOD and DIV - new fast versions)
+testdir (p074, b2tests/b004 - initialization of REF RECORD)
+testdir (p075, casting open/fixed array to/from open/fixed array)
+testdir (p076, b3tests/b005 - more array problems)
+testdir (p077, BITS 2 FOR [-1..1])
+testdir (p078, use of constant open arrays in constants)
+testdir (p079, up-level reference of a FOR variable)
+testdir (p080, order of initialization between interfaces)
+testdir (p081, open array constants)
+testdir (p082, operations constant set expressions)
+testdir (p083, mixing of exceptions in version stamps)
+
+test:: FRC
+	@echo $(PF) ptests done

@@ -1,0 +1,11 @@
+#! /bin/csh
+
+rm -f diffs
+
+foreach d (p???)
+  if ( -d ${d}_X ) then
+    echo ------------- $d ----------- >> diffs
+    diff $d/stderr ${d}_X/stderr | head -30 >>& diffs
+    diff $d/stdout ${d}_X/stdout | head -30 >>& diffs
+  endif
+end

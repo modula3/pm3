@@ -1,0 +1,285 @@
+% Copyright (C) 1990, Digital Equipment Corporation.
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+% Last modified on Mon Aug 16 10:05:07 PDT 1993 by kalsow
+%      modified on Tue Mar 12 22:05:06 1991 by muller
+
+HERE = "/udir/kalsow/pkgs/m3tests2/ptests"
+
+M3 = "/udir/kalsow/pkgs/driver2-ip/DSC/m3.DS"
+%M3 = "/proj/m3/pkg/driver2-ip/DSC/m3.DS"
+
+PASS_0 = "-Y0@/udir/kalsow/pkgs/compiler2-ip/DS3100-ALPHA_OSF/m3c@"
+%PASS_0 = "-Y0@/udir/kalsow/pkgs/compiler2-ip/DSC/m3c@"
+%PASS_0 = "-Y0@/proj/m3/pkg/compiler2-ip/DSC/m3c@"
+
+PASS_6 = "-Y6@/udir/muller/m3/pkg/m3cc/src/m3cc@-t@alpha@"
+%PASS_6 = "-Y6@/udir/muller/m3/pkg/m3cc/src/m3cc@"
+%PASS_6 = "-Y6@/proj/m3/pkg/m3cc/src/m3cc@"
+
+LIBM3 = "/udir/kalsow/pkgs/libm3-ip"
+%LIBM3 = "/udir/muller/m3/pkg/libm32-ip"
+%LIBM3 = "/proj/m3/pkg/libm32-ip"
+
+M3OPT = { PASS_0, PASS_6, "-g", "-w1", "-D../..", "-keep", "-boot" }
+%M3OPT = { PASS_0, PASS_6, "-g", "-w1", "-D../..", "-keep" }
+
+M3LIBS = { "-T" & HERE & "/.M3IMPTAB",
+           "-T" & LIBM3 & "/tALPHA_OSF/.M3IMPTAB",
+           LIBM3 & "/tALPHA_OSF/libm3.a" }
+%M3LIBS = { "-T" & LIBM3 & "/DS/.M3IMPTAB", LIBM3 & "/DS/libm3.a" }
+
+
+%------------------------------------------------------------------------
+% build the test library
+%
+if stale ("libtest.a", "m3makefile")
+  or stale ("libtest.a", "../Test.i3")
+  or stale ("libtest.a", "../Test.m3")
+  delete_file (["libtest.a", "libtest.ax", "Test.io", "Test.mo"])
+  > ".M3IMPTAB" in
+    write ("@", HERE, "/..", CR)
+    write ("Test.i3",CR)
+  end
+  exec ([M3, M3OPT, "-make", "-why", "-a", "libtest.a",
+         "../Test.i3", "../Test.m3", M3LIBS])
+end
+
+%------------------------------------------------------------------------
+% build a shell script to run a test
+%
+if stale ("DO_TEST", "m3makefile")
+  local m3_cmd = M3
+  foreach o in M3OPT
+    m3_cmd = m3_cmd & " " & o
+  end
+  m3_cmd = m3_cmd & " -o pgm ../$1 ../libtest.a -X0@-D../$1@"
+  foreach l in M3LIBS
+    m3_cmd = m3_cmd & " " & l
+  end
+  > "DO_TEST" in
+    write ("#! /bin/sh", CR)
+    write ("", CR)
+    write ("rm -rf $2", CR)
+    write ("mkdir $2", CR)
+    write ("cd $2", CR)
+    write ("ln -s ../$1/Main.m3", CR)
+    write (m3_cmd, CR)
+    % write (m3_cmd & " > stdout 2> stderr", CR)
+    % write ("pgm >> stdout 2>> stderr", CR)
+    % write ("diff stdout ../$1/stdout", CR)
+    % write ("diff stderr ../$1/stderr", CR)
+    % write ("rm -f pgm core", CR)
+  end
+  exec (["-chmod", "+x", "DO_TEST"])
+end
+
+%------------------------------------------------------------------------
+% run a test case
+%
+proc testdir (dir, comment) is
+  local ddir = "_" & dir
+  if defined (ddir) or defined ("_all")
+    write ("--- ", dir, " --- ", comment, CR)
+    exec (["-@DO_TEST", dir, dir & "_X"])
+  end
+end
+
+testdir ("p001", "Hello world")
+testdir ("p002", "Text")
+testdir ("p003", "Fmt")
+testdir ("p004", "exception mechanism")
+testdir ("p005", "a simple thread program")
+testdir ("p006", "a bit more complicated")
+testdir ("p007", "a whole bunch of threads - does the memory grow ?")
+testdir ("p008", "thread alerts")
+testdir ("p009", "ORD VAL NUMBER FIRST LAST")
+testdir ("p010", "TYPECODE NARROW")
+testdir ("p011", "BITSIZE BYTESIZE ADRSIZE")
+testdir ("p014", "variables in nested blocks and procedures")
+testdir ("p015", "simple procedure with integer argument")
+testdir ("p016", "CASE statements")
+testdir ("p017", "FOR and EXIT statements")
+testdir ("p018", "IF statements")
+testdir ("p019", "REPEAT and EXIT statements")
+testdir ("p020", "TRY FINALLY and RETURN statements")
+testdir ("p021", "Imbricated TRY FINALLY statements")
+testdir ("p022", "TYPECASE statements")
+testdir ("p023", "WHILE and EXIT statements")
+testdir ("p024", "WITH statements")
+testdir ("p025", "assignment of INTEGER subranges")
+testdir ("p026", "user and language specified variable initialization")
+testdir ("p027", "RECORD types variables and assignments")
+testdir ("p028", "fixed ARRAY types variables assignments and subscripting")
+testdir ("p029", "nested procedures with up-level variable references")
+testdir ("p030", "non-opaque OBJECTs")
+testdir ("p034", "equality of open arrays and records")
+testdir ("p035", "equality of procedures")
+testdir ("p036", "fibonacci")
+testdir ("p037", "tests Time.LongPause")
+testdir ("p038", "sizes of two-byte signed integer subranges")
+testdir ("p039", "VERY LONG thread test - commented out")
+testdir ("p040", "binary <-> ASCII conversion routines")
+testdir ("p041", "floating point comparison and SIGN function")
+testdir ("p042", "floating point ABS, MAX, divide")
+testdir ("p043", "List.Sort, NARROW, and NEW")
+testdir ("p044", "MIN, MAX, WITH and record constructors")
+testdir ("p045", "nested procedures")
+testdir ("p046", "Word.Insert, array of [0..255]")
+testdir ("p048", "nested procedures")
+testdir ("p049", "procedure parameters")
+testdir ("p050", "open array parameters")
+testdir ("p051", "external variables")
+testdir ("p052", "indexing of ref open array")
+testdir ("p053", "set operations")
+testdir ("p054", "Richards' simulation benchmark")
+testdir ("p055", "recursive fibonacci")
+testdir ("p056", "subarray assignment")
+testdir ("p057", "open array parameter")
+testdir ("p058", "subarray")
+testdir ("p059", "cc optimizer bug")
+testdir ("p060", "opaque types")
+testdir ("p061", "object types & NEW")
+testdir ("p062", "typecase and List")
+testdir ("p063", "structural equivalence")
+testdir ("p064", "procedure parameters")
+testdir ("p065", "typecode")
+testdir ("p066", "exception handler stack screwed up")
+testdir ("p067", "mixup in imported names")
+% testdir ("p068", "PrintProc for arrays and array of chars and Text.T")
+testdir ("p069", "two object types that differs only by default overwriting")
+testdir ("p070", "procedure registration")
+testdir ("p071", "SUBARRAY := SUBARRAY")
+testdir ("p072", "CHAR literals > 127")
+testdir ("p073", "MOD and DIV - new fast versions")
+testdir ("p074", "b2tests/b004 - initialization of REF RECORD")
+testdir ("p075", "casting open/fixed array to/from open/fixed array")
+testdir ("p076", "b3tests/b005 - more array problems")
+testdir ("p077", "BITS 2 FOR [-1..1]")
+testdir ("p078", "use of constant open arrays in constants")
+testdir ("p079", "up-level reference of a FOR variable")
+testdir ("p080", "order of initialization between interfaces")
+testdir ("p081", "open array constants")
+testdir ("p082", "operations constant set expressions")
+testdir ("p083", "mixing of exceptions in version stamps")
+testdir ("p084", "method overrides and NARROW")
+testdir ("p085", "various combinations of FATAL pragma")
+testdir ("p086", "constant folding of FIRST (open array)")
+testdir ("p087", "set constructors with variable sized ranges")
+testdir ("p088", "importing an interface under different names")
+testdir ("p089", "revelations of renamed types")
+testdir ("p090", "REAL parameter passing - MIPS cc bug")
+testdir ("p091", "NULL <: PROCEDURE in array constructor")
+testdir ("p092", "array of real parameters")
+testdir ("p093", "Rd.GetLine (long line)")
+testdir ("p094", "array constants and forward references")
+testdir ("p095", "thread.signal/wait exercise")
+testdir ("p096", "procedure/method constants")
+testdir ("p097", "NEW with method overrides")
+testdir ("p098", "procedure compatibility within an array constructor")
+testdir ("p099", "array constructors and procedure parameters")
+testdir ("p100", "unnamed types within LOOPHOLE")
+testdir ("p101", "nested procedure in a module's main body")
+testdir ("p102", "C reserved words in record constructors and NEW")
+testdir ("p103", "runtime test of TextRd")
+testdir ("p104", "obsolete pragma")
+testdir ("p105", "FROM-IMPORT vs. revelations")
+testdir ("p106", "ambiguous desugaring from manual")
+testdir ("p107", "interface versus implementation names for keyword binding")
+testdir ("p108", "array of procedure constants")
+testdir ("p109", "FIRST/LAST of enumerated types in record constants")
+testdir ("p110", "FIRST/LAST of enumerated types")
+testdir ("p111", "C reserved words in call to NEW")
+testdir ("p112", "local revelation that a type is an object")
+testdir ("p113", "FIRST/LAST of REAL")
+testdir ("p114", "array expressions")
+testdir ("p115", "reuse of open array conversion within an expression")
+testdir ("p116", "IEEE floating point tests from Xerox PARC")
+testdir ("p117", "SUBARRAY (LOOPHOLE)")
+testdir ("p118", "LAST (REAL)")
+testdir ("p119", "small exception arguments (big-endian problem)")
+testdir ("p120", "small exception arguments (big-endian problem)")
+testdir ("p121", "real parameters vs. the C compiler")
+testdir ("p122", "RETURN from within TRY-FINALLY")
+testdir ("p123", "simple arithmetic expresssions")
+testdir ("p124", "negative DIV of subrange")
+testdir ("p125", "MOD of subrange")
+testdir ("p126", "REAL arithmetic")
+testdir ("p127", "TRUNC, ROUND, FLOOR, CEILING")
+testdir ("p128", "simple FLOOR test")
+testdir ("p129", "simple DIV test")
+% testdir ("p130", "signed/unsigned conversions")
+testdir ("p131", "TRUNC, ROUND, FLOOR, CEILING again")
+testdir ("p132", "assignments of builtin types")
+testdir ("p133", "assignments of records and arrays")
+testdir ("p134", "BITS FOR tests") % -- archaic Modula-2+ bit-field packing
+testdir ("p135", "more BITS FOR tests")
+testdir ("p136", "bit operations")
+testdir ("p137", "bit insert and extract")
+testdir ("p138", "bit field assignments")
+testdir ("p139", "memory copy")
+testdir ("p140", "exceptions")
+testdir ("p141", "RTMisc.Exit")
+testdir ("p142", "procedure defaults")
+testdir ("p143", "variable initialization")
+testdir ("p144", "imported variables and order of evaluation")
+testdir ("p145", "pass-thru REF types")
+testdir ("p146", "NUMBER")
+% testdir ("p147", "Modula-2+ PRINTF tests")
+testdir ("p148", "simple procedure calls")
+testdir ("p149", "up-level addressing")
+testdir ("p150", "up-level addressing with INLINEs")
+testdir ("p151", "by-value open array parameters")
+% testdir ("p152", "simple SCANF tests")
+% testdir ("p153", "more elaborate SCANF tests")
+% testdir ("p154", "simple SCANF tests on RdV")
+testdir ("p155", "operations on small sets")
+testdir ("p156", "operations on medium-sized sets")
+testdir ("p157", "operations on big sets in the heap")
+testdir ("p158", "operations on small packed sets")
+% testdir ("p159", "operations on very big sets in the heap")
+testdir ("p160", "more operations on very big sets in the heap")
+% testdir ("p161", "more operations on very big sets in the heap")
+testdir ("p162", "more operations on very big sets in the heap")
+testdir ("p163", "simple statements")
+testdir ("p164", "simple thread tests")
+testdir ("p165", "simple TYPECODE test")
+testdir ("p166", "RTMisc.Zero test")
+testdir ("p167", "array constructors as parameters")
+testdir ("p168", "record constructor with loopholed argument")
+testdir ("p169", "runtime fingerprint")
+testdir ("p170", "simple BITS FOR test")
+testdir ("p171", "array constructor as record default")
+testdir ("p172", "REAL vs. C's float")
+testdir ("p173", "LONGREAL vs. C's double")
+testdir ("p174", "large enumeration")
+testdir ("p175", "CASE stmt with very large bounds")
+testdir ("p176", "need full assignment in NEW and constructors")
+testdir ("p177", "unaligned object field references")
+testdir ("p178", "packed fields vs. C's unsigned arithmetic")
+testdir ("p179", "alignment of ARRAY OF BITS 32 FOR INTEGER")
+testdir ("p180", "simple generic test")
+testdir ("p181", "<*NOWARN*>")
+testdir ("p182", "renamed hello world")
+testdir ("p183", "hidden object field")
+testdir ("p184", "fold constant to check type equality")
+testdir ("p185", "REAL vs. C float")
+testdir ("p186", "case statement with large labels")
+testdir ("p187", "array assignment when index type changes")
+testdir ("p188", "initialized globals")
+testdir ("p189", "module initialization order")
+testdir ("p190", "order of evaluation for messy method calls")
+testdir ("p191", "array assignment generates bad C  !!BUG!!")
+testdir ("p192", "recursive declarations")
+testdir ("p193", "implicit narrow on '&' operands")
+testdir ("p194", "open arrays in fixed array initializers !!BUG!!")
+testdir ("p195", "messy method calls")
+testdir ("p196", "procedure valued defaults")
+testdir ("p197", "appending pickles to files")
+testdir ("p198", "compiler hash function")
+testdir ("p199", "exporting an obsolete function")
+testdir ("p200", "recursive types again")
+testdir ("p201", "recursive values")
+testdir ("p202", "SUBARRAY actual parameter")
+testdir ("p203", "fingerprint of NULL")
+

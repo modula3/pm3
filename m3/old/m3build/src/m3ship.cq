@@ -1,0 +1,11 @@
+% Copyright (C) 1993, Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+%
+% Last modified on Wed May 11 16:52:54 PDT 1994 by kalsow
+
+if HAVE_PKGTOOLS
+  include("m3ship.cq0")
+else
+  include("m3ship.cq1")
+end

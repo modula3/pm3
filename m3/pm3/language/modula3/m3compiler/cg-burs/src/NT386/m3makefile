@@ -1,0 +1,51 @@
+% Copyright (C) 1993, Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+%
+% Last modified on Tue Jan 18 15:52:53 PST 1994 by kalsow
+
+if defined("_all")
+  local md_nw = path_of ("MD.nw")
+
+  % extract the machine description
+  if stale("md", md_nw)
+    exec("notangle -R'BURS specification'", md_nw,
+	 "| sed -e 's/:  */:	/g' -e 's/    */	/g'",
+         "> .md")
+  end
+  cp_if (".md", "md")
+
+  % build the input to iburg
+  if stale("md.brg", ["md", "pp"])
+    exec("pp < md > md.brg")
+  end
+
+  % build burm.c
+  if stale("burm.c", "md.brg")
+    exec("iburg -I -T < md.brg > burm.c")
+  end
+
+  % extract the reducer cases
+  foreach i in {"1", "2", "3"}
+    if stale("reduce" & i, "md")
+      exec("pp", "-" & i, "<", "md", ">", "reduce" & i)
+    end
+  end
+
+  % build MD.m3
+  if stale("MD.m3", [md_nw, "reduce1", "reduce2", "reduce3"])
+    exec("notangle -L'<*LINE %L \"%F\" *>%N' -Rimplementation",
+	  md_nw, "reduce1", "reduce2", "reduce3", "> .MD.m3")
+  end
+  cp_if (".MD.m3", "MD.m3")
+
+end % if defined ("_all")
+
+foreach i in [".md", "md", "md.brg", "reduce1", "reduce2", "reduce3",
+              ".MD.m3", "MD.m3"]
+  deriveds(i, [""])
+end
+
+noweb_interface (MD,"interface",MD)
+derived_implementation(MD)
+derived_c(burm)

@@ -1,0 +1,44 @@
+/* Copyright (C) 1990, Digital Equipment Corporation.         */
+/* All rights reserved.                                       */
+/* See the file COPYRIGHT for a full description.             */
+
+/* Last modified on Thu Nov  7 13:03:32 PST 1991 by kalsow    */
+/*      modified on Tue Mar 12 22:05:06 1991 by muller        */
+
+M3      = m3xx -Y0@/udir/kalsow/m3/m3compiler/mips/m3compiler@
+M3FLAGS = 
+COMPILE = $(M3) -g -w1 -D../.. -o a.out ../libtest.a
+
+all::       /* run all tests */
+new_base::  /* run all tests & capture their output as the new base case */
+tidy::      /* remove the trash */
+scratch::   /* remove all derived files */
+
+/* build the "standard" test library */
+libtest.a: ../Test.i3 ../Test.m3 ; $(M3) -a libtest.a ../Test.i3 ../Test.m3
+scratch:: ; rm test.a Test.io Test.mo
+
+#define testdir(d,comment)                                                  @@\
+                                                                            @@\
+all:: d##_X                                                                 @@\
+new_base:: d##_base                                                         @@\
+scratch:: ; rm -f d##_X                                                     @@\
+d:: d##_X                                                                   @@\
+d##_base:: d##_X ; mv d##_X/stdout d##_X/stderr d                           @@\
+d##_X:: libtest.a FRC ;\                                                    @@\
+-@ echo --- d --- comment  ;\                                               @@\
+   rm -fr d##_X ;\                                                          @@\
+   mkdir d##_X ;\                                                           @@\
+   (cd d##_X ;\                                                             @@\
+     $(COMPILE) ../d >stdout ;\                                             @@\
+     a.out >>stdout ) 2>d##_X/stderr ;\                                     @@\
+   diff d/stdout d##_X/stdout ;\                                            @@\
+   diff d/stderr d##_X/stderr
+
+testdir (x001, "Wr.PutChar (Rd.GetChar) loop")
+testdir (x002, "Wr.PutChar (Rd.GetChar) loop on a file")
+testdir (x003, "more Thread tests - requires input")
+testdir (x004, "Readers - requires input")
+testdir (x005, "Wr.PutChar(Rd.GetChar) loop - needs input")
+testdir (x006, "concurrent input and output")
+testdir (x007, "thread.alerted/shutdown exercise")

@@ -1,0 +1,51 @@
+.\" Copyright (C) 1992, Digital Equipment Corporation
+.\" All rights reserved.
+.\" See the file COPYRIGHT for a full description.
+.\"
+.\" Last modified on Thu Jun  2 16:50:27 PDT 1994 by kalsow 
+.\"
+.TH quake 1L \" -*- nroff -*-
+.\" Simple versions of the DEC ULTRIX .EX and .EE man macros.  These
+ \" macros are not present in Sun's man macros.
+.de EX
+.sp
+.nf
+.RS \\$1
+..
+.de EE
+.RE
+.fi
+.sp
+..
+.\"------------------------------------------------------------------------
+.SH NAME
+quake \- a language and its interpreter for compiling Modula-3
+program descriptions
+
+.\"------------------------------------------------------------------------
+.SH SYNOPSIS
+.B quake
+[-nV] [definitions | files ...]
+
+.\"------------------------------------------------------------------------
+.SH DESCRIPTION
+\fIQuake\fP
+is a simple, specialized language and its interpreter drawing on
+elements of the C language, the Bourne shell, and the C pre-processor.
+It was designed to be a component of m3build(1)\-the replacement for m3make
+(q.v.).	 Building a complete, general-purpose language was not one of the
+goals.
+.PP
+For a full description see URL:
+.IP
+.nf
+http://www.research.digital.com/SRC/modula-3/html/quake/quake.html
+.PP
+
+.\"------------------------------------------------------------------------
+.SH AUTHOR
+Stephen Harrison (harrison@src.dec.com).
+
+.\"------------------------------------------------------------------------
+.SH See Also
+m3build(1)

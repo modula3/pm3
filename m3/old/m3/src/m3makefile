@@ -1,0 +1,49 @@
+% Copyright (C) 1992, Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+%
+% File: m3makefile
+% Last modified on Tue Jan 24 13:10:54 PST 1995 by kalsow
+%      modified on Wed Jun  2 12:06:33 PDT 1993 by muller
+
+remove_m3_option ("-gui")
+m3_option ("-times")
+
+import ("libm3")
+import ("m3middle")
+import ("m3linker")
+import ("m3front")
+
+if equal (OS_TYPE, "POSIX")
+  interface ("M3Backend")
+  implementation ("M3BackPosix")
+else
+  import ("m3objfile")
+  import ("m3back")
+  interface ("M3Backend")
+  implementation ("M3BackWin32")
+end
+
+module ("Arg")
+module ("Msg")
+module ("M3Path")
+module ("Unit")
+module ("Utils")
+module ("WebFile")
+implementation ("Main")
+
+build_standalone () %-- we don't want to depend on the shared libraries...
+if AT_SRC and defined ("with_cmon")
+  import ("cmon")
+  local etp_args = "-a -i -f " & path_of ("etpprocs")
+  local cmon_mips = "-machine pebbles.pa.dec.com" & " " & etp_args
+  local cmon_alpha = "-machine spieler.pa.dec.com" & " " & etp_args
+  cmon_prog ("m3", cmon_mips, cmon_alpha)
+  LibdExport (format ("m3=%s/m3.cmon", BUILD_DIR))
+else
+  program ("m3")
+  LibdExport (program_name ("m3"))
+end
+
+% ManPage ("m3","1")
+

@@ -1,0 +1,40 @@
+/* Copyright 1992 Digital Equipment Corporation.               */
+/* Distributed only by permission.                             */
+/* See the file COPYRIGHT for a full description.              */
+/* Last modified on Wed Aug  7 09:20:35 PDT 1996 by najork     */
+/*      modified on Wed May 29 13:52:01 PDT 1996 by mcjones    */
+/*      modified on Thu Aug 31 17:09:28 PDT 1995 by perl       */
+/*      modified on Wed Apr 19 14:28:14 PDT 1995 by birrell    */
+/*                                                             */
+/* Makefile for Lectern                                        */
+
+if AT_SRC and equal (OS_TYPE, "POSIX")
+  import         ("cmon")
+end
+import         ("formsvbt")
+import         ("images")
+import         ("tempfiles")
+import         ("lecterndoc")
+import         ("lecternclient")
+import         ("mtex") /* for manpage */
+include_dir    ("resources")
+Module         ("MyFileBrowserVBT")
+Module         ("ThumbnailVBT")
+Module         ("ViewAreaVBT")
+Module         ("LecternOCR")
+Module         ("Links")
+Module         ("Find")
+/* Work around poor emulation of writev kernel call in Linux */
+if equal(TARGET, "LINUX") or equal(TARGET, "LINUXELF")
+  c_source       ("writev")
+end
+implementation ("Lectern")
+/* **** the BuildLectern(1) man page is in the cra/virtualpaper package */
+
+/* For ETP tracing, we use "Cmon_prog" instead of "Program" */
+if AT_SRC and equal (OS_TYPE, "POSIX")
+  Cmon_prog      ("Lectern", "-machine newport -a -be Lectern__PauseAndLog -F -f ../cmon/etpfilelist", "-machine src-server2 -a -be Lectern__PauseAndLog -F -f ../cmon/etpfilelist")
+else
+  Program        ("Lectern")
+end
+Mtex           ("Lectern", 1) /* manpage */

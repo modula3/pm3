@@ -1,0 +1,21 @@
+/* Copyright (C) 1993, Digital Equipment Corporation                         */
+/* All rights reserved.                                                      */
+/* See the file COPYRIGHT for a full description.                            */
+
+/* Last modified on Mon Jun  3 14:10:23 PDT 1996 by mcjones */
+
+implementation("LecternClientPosix")
+implementation("LecternServerPosix")
+
+readonly proc simple_c_program(nm) is
+  local SRCFILE = path_of(nm & ".c")
+  local EXEFILE = nm
+
+  if stale(EXEFILE, SRCFILE)
+    exec (CC, "-o " & EXEFILE, SRCFILE)
+  end
+
+  deriveds(EXEFILE, no_extension)
+end
+simple_c_program("LecternClient")
+BindExport("LecternClient")

@@ -1,0 +1,36 @@
+% Copyright (C) 1993, Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+% Last modified on Thu Aug 31 11:16:08 PDT 1995 by steveg   
+%      modified on Wed Jan 18 13:30:00 PST 1995 by kalsow   
+%      modified on Thu Sep  9 14:26:49 PDT 1993 by harrison 
+%      modified on Thu May 13 22:09:30 PDT 1993 by mjordan 
+
+%
+% Here are the OS-specific commands
+%
+% These are for Ultrix
+%
+
+readonly SL = "/"   % the path separator
+readonly SLship = "/"   % the path separator in M3SHIP file
+readonly CR = "\n"  % line break character
+readonly CRship = "\n"  % line break character in M3SHIP file
+
+readonly proc delete_file(file) is
+  local void = unlink_file(file)
+end
+
+readonly proc link_file(from, to) is
+  delete_file(to)
+  exec("-ln", "-s", from, to)
+end
+
+readonly proc make_executable(script) is
+  exec("@chmod +x", script)
+end
+
+readonly proc make_dir(dir) is
+  if not defined ("_quiet") write ("m3mkdir ", dir, CR) end
+  exec("@" & LIB_USE & "/m3mkdir", dir)
+end

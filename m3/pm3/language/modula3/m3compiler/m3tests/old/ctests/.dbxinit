@@ -1,0 +1,6 @@
+ignore 26
+set $datacache = 0
+set $casesense = 1
+set $printwide = 1
+use m3xx/src/builtinOps m3xx/src/builtinWord m3xx/src/builtinTypes m3xx/src/exprs m3xx/src/misc m3xx/src/stmts m3xx/src/types m3xx/src/values m3xx/src/zzcg /udir/kalsow/pkgs/m3cg/src/generic /udir/kalsow/pkgs/m3cg/src/DS3100
+

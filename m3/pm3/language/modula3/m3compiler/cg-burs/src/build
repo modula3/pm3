@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# build HOST TARGET
+# build HOST-TARGET
+
+# set -x
+case "$1" in
+*-*)	host=`expr $1 : '^\(.*\)-.*'`
+	target=`expr $1 : '^.*-\(.*\)'`
+	shift ;;
+*)	host=$1 target=$2; shift; shift ;;
+esac
+dir=$host-$target
+if [ ! -d $dir ]; then mkdir $dir; fi
+m3build -S -b $host -d $dir \
+	-DM3CG_HOST=$host -DM3CG_TARGET=$target -DM3CG_BUILD_DIR=$dir $*

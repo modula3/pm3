@@ -1,0 +1,49 @@
+/* Copyright (C) 1989, Digital Equipment Corporation           */
+/* All rights reserved.                                        */
+/* See the file COPYRIGHT for a full description.              */
+
+/* Last Modified On Sat Mar  9 02:14:40 1991 By muller         */
+
+#if defined (DEV_ENV)
+M3      = .ROOT/system/driver/m3.local
+#else
+M3      = $(PREFIX)/$(BINDIR)/m3
+#endif
+M3FLAGS = -g -w1 -X0/-C/ -D../.. -k
+
+TEST_OBJS = ../../Test.io ../../Test.mo 
+
+#define test_simple_module(m)                                               @@\
+test_interface (m)                                                          @@\
+test_module (m)
+
+#define test_interface(f)                                                   @@\
+test_file(f,i3,ic,is,io)
+
+#define test_module(f)                                                      @@\
+test_file(f,m3,mc,ms,mo)
+
+#define test_file(file,src,cf,sf,obj)                                       @@\
+source (file.src)                                                           @@\
+                                                                            @@\
+pgm:: file.obj                                                              @@\
+file.obj file.cf: FRC                                                       @@\
+	-$(M3) $(M3FLAGS) -c file.src 2> file.src.errs                      @@\
+	-@/bin/rm -f core
+
+#define no_input input(/dev/null)
+
+#define input(stdin)                                                        @@\
+test:: output                                                               @@\
+	-@/bin/rm -f pgm *.io *.mo                                          @@\
+output:: pgm                                                                @@\
+	-pgm $(ARGS) < stdin >> pgm.errs 2>> pgm.errs                       @@\
+	-@/bin/rm -f core                                                   @@\
+pgm:: ../../Test.io ../../Test.mo  FRC                                      @@\
+	-$(M3) $(M3FLAGS) -o pgm *.[im]o $(TEST_OBJS) $(LIBS) 2>pgm.errs    @@\
+	-@/bin/rm -f core                                                   @@\
+../../Test.io: ../../Test.i3                                                @@\
+	(cd ../..; $(M3) $(M3FLAGS) -c Test.i3)                             @@\
+../../Test.mo: ../../Test.m3                                                @@\
+	(cd ../..; $(M3) $(M3FLAGS) -c Test.m3)
+

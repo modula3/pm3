@@ -1,0 +1,18 @@
+
+% Copyright (C) 1992, Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+%
+% Last modified on Mon Oct 30 11:18:54 PST 1995 by steveg
+
+% m3_option ("-verbose")
+
+import (libm3)
+import (tcp)
+
+Interface (TCPExtras)
+Interface (TCPPeer)
+
+include_dir(OS_TYPE)
+
+library(tcpextras)

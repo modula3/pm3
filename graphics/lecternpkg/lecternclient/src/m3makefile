@@ -1,0 +1,18 @@
+/* Copyright (C) 1993, Digital Equipment Corporation                         */
+/* All rights reserved.                                                      */
+/* See the file COPYRIGHT for a full description.                            */
+
+/* Last modified on Wed May 29 13:52:36 PDT 1996 by mcjones */
+
+import("libm3")
+import("mtex")
+
+Interface("LecternClient")
+Interface("LecternServer")
+
+include_dir(OS_TYPE)
+
+Library("lecternserver")
+Mtex("LecternClient", 1) /* manpage */
+
+

@@ -1,0 +1,220 @@
+% Copyright (C) 1993, Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+%
+% Last modified on Tue Jan 18 15:53:30 PST 1994 by kalsow
+
+\section{Register Allocation}\label{sec:Register}
+
+The code generators described in this report use the simple register
+allocator exported by [[Register]]:
+
+<<interface>>=
+INTERFACE Register;
+IMPORT RefSeq, Word, MD;
+TYPE <<interface types>>
+<<interface procedures>>
+END Register.
+
+<<implementation>>=
+MODULE Register;
+IMPORT RefSeq, Word;
+
+REVEAL <<revelations>>
+<<procedures>>
+BEGIN
+END Register.
+@ Registers are represented by a subtype of [[MD.Var]]:
+
+<<interface types>>=
+T <: Public;
+Public = MD.Var OBJECT
+  count: INTEGER := 0;
+  mask : Mask    := Mask {};
+  set  : Set     := NIL
+END;
+@ Clients reveal [[Register.T]], perhaps adding some machine-specific
+details.
+
+The [[count]] field gives the number of ``busy'' references to the
+register. Non-zero [[count]]s prevent the registers from being used. Up
+to 32 registers are grouped into a register set:
+
+<<interface types>>=
+Set <: PublicSet;
+PublicSet = OBJECT
+  used: REF Mask := NIL;
+  busy: REF Mask := NIL;
+  list: RefSeq.T := NIL
+METHODS
+  free (): CARDINAL;
+  getreg (): T;
+  init (sizeHint: CARDINAL := NUMBER (Number)): Set
+END;
+
+Number = [0..31];
+
+Mask = SET OF Number;
+
+<<revelations>>=
+Set = PublicSet BRANDED OBJECT
+OVERRIDES
+  free   := free;
+  getreg := getreg;
+  init   := init
+END;
+@ A [[Register.Set]] holds a sequence of registers; those whose
+[[count]] fields are 0 may free. Each register points to its set, if it
+belongs to one.  [[used]] points to a set that identifies those
+registers that have been allocated at least once.  A register is
+identified by the value of its [[mask]] field, which is usually a set
+of one element corresponding to its (abstract) register number.
+[[busy]] points to a set that identifies those registers that are in
+use. A register is free if its [[count]] is~0 and it is not in
+[[busy]]. [[used]] and [[busy]] are pointers to sets so that several
+[[Register.Set]]s can share the same [[busy]] and [[used]] sets;
+the [[init]] method, however, initializes [[busy]] and [[used]]
+to new, empty sets:
+
+<<procedures>>=
+PROCEDURE init (set: Set; sizeHint: CARDINAL := NUMBER (Number)): Set =
+  BEGIN
+    set.used := NEW (REF Mask); set.used^ := Mask {};
+    set.busy := NEW (REF Mask); set.busy^ := Mask {};
+    set.list := NEW (RefSeq.T).init (sizeHint);
+    RETURN set
+  END init;
+@ Clients must add the appropriate [[Register.T]]s to [[list]].
+
+The [[getreg]] method allocates a free register from [[set]], sets the
+register's [[count]] field to~1, notes the allocation by adding the
+register's [[mask]] to [[set.used]] and [[set.busy]], and returns the
+register.  If [[set.list]] is empty or contains no free registers,
+[[getreg]] returns [[NIL]].  Its implementation does just these steps:
+
+<<procedures>>=
+PROCEDURE getreg (set: Set): T =
+  VAR reg: T;
+  BEGIN
+    FOR i := 0 TO set.list.size () - 1 DO
+      reg := set.list.get (i);
+      IF <<is [[reg]] free?>> THEN
+        <<allocate [[reg]] from [[set]]>>
+        RETURN reg
+      END
+    END;
+    RETURN NIL
+  END getreg;
+
+<<is [[reg]] free?>>=
+(reg.count = 0 AND reg.mask*set.busy^ = Mask{})
+
+<<allocate [[reg]] from [[set]]>>=
+reg.count := 1;
+set.used^ := set.used^ + reg.mask;
+set.busy^ := set.busy^ + reg.mask;
+@ The [[free]] method returns the number of free registers in [[set]]:
+
+<<procedures>>=
+PROCEDURE free (set: Set): CARDINAL =
+  VAR n: CARDINAL := 0; reg: T;
+  BEGIN
+    FOR i := 0 TO set.list.size () - 1 DO
+      reg := set.list.get (i);
+      IF <<is [[reg]] free?>> THEN INC (n) END
+    END;
+    RETURN n
+  END free;
+@ [[free]] must count the number of registers because a register might
+be allocated by means other than [[getreg]].
+
+Once allocated, [[Register.T]]s are managed by the procedures
+
+<<interface procedures>>=
+PROCEDURE isfree   (reg: T): BOOLEAN;
+PROCEDURE freereg  (reg: T);
+PROCEDURE getagain (reg: T): T;
+PROCEDURE givereg  (reg: T);
+@ The predicate [[isavail]] returns [[TRUE]] if its argument is
+available for allocation:
+
+<<procedures>>=
+PROCEDURE isfree (reg: T): BOOLEAN =
+  BEGIN
+    RETURN reg.count = 0 AND (reg.set = NIL OR reg.mask*reg.set.busy^ = Mask{})
+  END isfree;
+@ [[freereg]] unconditionally frees register [[reg]] by clearing its
+[[count]] and removing it from the appropriate [[busy]] set:
+
+<<procedures>>=
+PROCEDURE freereg (reg: T) =
+  BEGIN
+    reg.count := 0;
+    IF reg.set # NIL THEN
+      reg.set.busy^ := reg.set.busy^ - reg.mask
+    END
+  END freereg;
+@ [[givereg]] decrements [[reg]]'s [[count]] field, if [[reg]] is
+non-NIL and has a positive [[count]].  If the [[count]] reaches~0,
+[[givereg]] frees the register:.
+
+<<procedures>>=
+PROCEDURE givereg (reg: T) =
+  BEGIN
+    IF reg # NIL AND reg.count > 0 THEN
+      DEC (reg.count);
+      IF reg.count = 0 THEN freereg (reg) END
+    END
+  END givereg;
+@ [[getagain]] records another reference to [[reg]] by incrementing its
+[[count]]. It also handles the special case of recording the first
+reference to a register, which is equivalent to allocating it:
+
+<<procedures>>=
+PROCEDURE getagain (reg: T): T =
+  BEGIN
+    IF reg # NIL AND reg.count >= 0 THEN
+      IF reg.count > 0 THEN
+        INC (reg.count)
+      ELSIF reg.set # NIL THEN
+        WITH set = reg.set DO <<allocate [[reg]] from [[set]]>> END
+      END
+    END;
+    RETURN reg
+  END getagain;
+@ [[givereg]] and [[getagain]] have no effect if the register's
+[[count]] is less than~0. This design permits permanently allocated
+registers, such as a stack pointer, to annotate trees without special
+treatment by initializing their [[count]] fields to negative values.
+
+The procedures
+
+<<interface procedures>>=
+PROCEDURE number (s: Mask): INTEGER;
+PROCEDURE mask (s: Mask): Word.T;
+@ help manipulate the [[used]] and [[busy]] sets computed by
+[[getreg]]. [[number]] returns the number of elements in [[s]], and
+[[mask]] returns [[s]] as [[Word.T]], which is used, for example, to
+emit a register mask.
+
+<<procedures>>=
+PROCEDURE mask (s: Mask): Word.T =
+  VAR m: Word.T := 0;
+  BEGIN
+    FOR r := FIRST (Number) TO LAST (Number) DO
+      IF r IN s THEN
+        m := Word.Or (m, Word.Shift (1, r))
+      END
+    END;
+    RETURN m
+  END mask;
+
+PROCEDURE number (s: Mask): INTEGER =
+  VAR n := 0;
+  BEGIN
+    FOR r := FIRST (Number) TO LAST (Number) DO
+      IF r IN s THEN INC (n) END
+    END;
+    RETURN n
+  END number;
+@

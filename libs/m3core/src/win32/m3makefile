@@ -1,0 +1,21 @@
+% Copyright (C) 1994, Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+%
+% Last modified on Mon Aug 19 10:45:07 PDT 1996 by heydon  
+%      modified on Wed Nov  9 15:14:29 PST 1994 by kalsow  
+
+Interface  ("WinBaseTypes")
+Module     ("WinDef")
+Interface  ("WinError")
+Module     ("WinNT")
+Interface  ("WinBase")
+Interface  ("WinCon")
+Module     ("WinGDI")
+Interface  ("WinNetwk")
+Interface  ("WinReg")
+Module     ("WinUser")
+Module     ("WinVer")
+Module     ("NB30")
+Interface  ("CommDlg")
+Module     ("WinIoctl")

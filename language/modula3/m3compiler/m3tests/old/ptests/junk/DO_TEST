@@ -1,0 +1,7 @@
+#! /bin/sh
+
+rm -rf $2
+mkdir $2
+cd $2
+ln -s ../$1/Main.m3
+/udir/kalsow/pkgs/driver2-ip/DSC/m3.DS -boot -keep -g -Y6@/udir/muller/m3/pkg/m3cc/src/m3cc@-t@alpha@ -w1 -D../.. -Y0@/udir/kalsow/pkgs/compiler2-ip/DS3100-ALPHA_OSF/m3c@ -o pgm ../$1 ../libtest.a -X0@-D../$1@ /udir/kalsow/pkgs/libm3-ip/tALPHA_OSF/libm3.a -T/udir/kalsow/pkgs/m3tests2/ptests/.M3IMPTAB -T/udir/kalsow/pkgs/libm3-ip/tALPHA_OSF/.M3IMPTAB

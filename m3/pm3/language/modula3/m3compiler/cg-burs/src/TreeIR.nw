@@ -1,0 +1,688 @@
+% Copyright (C) 1993, Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+%
+% Last modified on Tue Mar 22 13:57:46 PST 1994 by kalsow
+
+\section{The Tree Intermediate Representation}\label{sec:TreeIR}
+
+The tree intermediate representation is a machine-independent
+representation of executable code. Tree nodes have an operator that
+specifies their semantics and 0--2 children, which are other trees.
+Nodes also have several attributes.
+
+Trees are written in a functional, prefix notation, e.g.,
+[[PLUS(MEM(NAME),CONST)]].  Legal trees can thus be specified by a
+language in which the sentences written in this notation.
+Fig.~\ref{fig:syntax} gives the syntax of this language.  IR trees are
+{\em not\/} parse or abstract syntax trees; The grammar given in
+Fig.~\ref{fig:syntax} leads to parse trees, but these are not the same
+as IR trees.  To minimize confusion, regard Fig.~\ref{fig:syntax} as a
+grammar for expressions written in a functional notation.
+
+The upper-case identifiers in Fig.~\ref{fig:syntax} are terminal
+symbols --- the IR operators --- and the lower-case identifiers are
+the nonterminal symbols, which serve to group the operators into
+classes.
+
+%------------------------------------------------------------------------------
+\subsection{Interface}\label{TreeIR:interface}
+
+The [[TreeIR]] interface defines a representation for trees and a
+suite of contructor functions for building them.
+
+<<interface>>=
+INTERFACE TreeIR;
+IMPORT Wr;
+TYPE  <<interface types>>
+CONST <<interface constants>>
+<<interface procedures>>
+END TreeIR.
+@
+
+There are 61~operators, which correspond to the terminals shown in
+Fig.~\ref{fig:syntax}:
+
+<<interface types>>=
+Op = {
+  oZERO,
+  oSEQ,   oLABEL,  oJUMP,   oCJUMP,
+  oMEM,   oMOVE,   oESEQ,   oNAME,   oCONST, oCONSTF,
+  oALLOC, oTEMP,
+  oCALL,  oARG,    oNOARGS,
+  oFPLUS, oFMINUS, oFMUL,   oFDIV,   oFNEG,
+  oCVTSU, oCVTSS,  oCVTSF,  oCVTUU,  oCVTUS,  oCVTFS, oCVTFF,
+  oPLUS,  oMINUS,  oMUL,    oDIV,    oMOD,    oNEG,
+  oUPLUS, oUMINUS, oUMUL,   oUDIV,   oUMOD,
+  oAND,   oOR,     oLSHIFT, oRSHIFT, oASHIFT, oXOR,   oCOMP,
+  oEQ,    oNE,     oLT,     oGE,     oGT,     oLE,
+  oULT,   oUGE,    oUGT,    oULE,
+  oFEQ,   oFNE,    oFLT,    oFLE,    oFGT,    oFGE
+};
+@ [[Op.oZERO]] appears so that the other operators have a non-zero codes.
+
+\begin{figure}
+\begin{center}\tt
+\begin{tabular}{ll}
+\it stm\rm:    & SEQ(\it stm, stm\tt) \\
+\it stm\rm:    & LABEL \\
+\it stm\rm:    & JUMP(\it exp\tt) \\
+\it stm\rm:    & CJUMP(\it test, exp\tt) \\
+\it stm\rm:    & \it exp \\[1ex]
+
+\it exp\rm:    & \it binop\/\tt(\it exp, exp\tt) \\
+\it exp\rm:    & \it unop\/\tt(\it exp\tt) \\
+\it exp\rm:    & \it cvtop\/\tt(\it exp\tt) \\
+\it exp\rm:    & MEM(\it exp\tt) \\
+\it exp\rm:    & MOVE(MEM(\it exp\tt)\it, exp\tt) \\
+\it exp\rm:    & MOVE(TEMP\it, exp\tt) \\
+\it exp\rm:    & ESEQ(\it stm, exp\tt) \\
+\it exp\rm:    & NAME \\
+\it exp\rm:    & CONST \\
+\it exp\rm:    & CONSTF \\
+\it exp\rm:    & ALLOC(TEMP\it, exp\tt) \\
+\it exp\rm:    & TEMP \\
+\it exp\rm:    & CALL(\it args, exp\tt) \\[1ex]
+
+\it test\rm:   & \it relop\/\tt(\it exp, exp\tt) \\[1ex]
+
+\it args\rm:   & ARG(\it exp, args\tt) \\
+\it args\rm:   & NOARGS \\[1ex]
+
+\it binop\rm:  & FPLUS  FMINUS  FMUL    FDIV \\
+\it binop\rm:  & PLUS   MINUS   MUL     DIV     MOD  \\
+\it binop\rm:  & UPLUS  UMINUS  UMUL    UDIV    UMOD  \\
+\it binop\rm:  & AND    OR      LSHIFT  RSHIFT  ASHIFT  XOR \\[1ex]
+
+\it relop\rm:  & EQ   NE   LT   LE   GT   GE \\
+\it relop\rm:  & ULT  ULE  UGT  UGE \\
+\it relop\rm:  & FEQ  FNE  FLT  FLE  FGT  FGE \\[1ex]
+
+\it unop\rm:   & NEG    COMP   FNEG \\
+\it cvtop\rm:  & CVTSU  CVTSS  CVTSF  CVTUU  CVTUS  CVTFS  CVTFF \\
+\end{tabular}
+\end{center}
+\caption{Syntax of IR trees\label{fig:syntax}}
+\end{figure}
+
+Trees are represented by objects, but [[TreeIR]] specifies only the
+fields and methods it needs in its [[Public]] type:
+<<interface types>>=
+T <: Public;
+Public = OBJECT
+  state : INTEGER  := 0;
+  op    : Op       := Op.oZERO;
+  left  : T        := NIL;
+  right : T        := NIL;
+  size  : CARDINAL := 0;
+  origin: INTEGER  := No_origin
+METHODS
+  print (wr: Wr.T := NIL; depth: CARDINAL := 0)
+END;
+
+<<interface constants>>=
+No_origin = 0;
+@ Clients must reveal [[TreeIR.T]] to complete the type definition.  The
+[[op]] field holds the operator, and the [[size]] field gives the size
+of the value the node computes, in bytes.  The [[left]] and [[right]]
+fields are valid only for those operators that have children. These
+fields appear in [[Public]] instead of a subtype to insure proper
+interaction with the BURS code generator, which is written in C (see
+Sec.~\ref{Burm:Output}).  Likewise, [[state]] is used only by the code
+generator.  The [[origin]] field holds the source line number that
+caused this node to be created.  The [[print]] method displays its
+node on the writer [[wr]].
+
+The following four subtypes of [[TreeIR.T]] classify trees according
+to operator and add operator-specific fields.
+
+<<interface types>>=
+Int       = T OBJECT i: INTEGER  := 0     END;
+Real      = T OBJECT r: LONGREAL := 0.0d0 END;
+Name      = T OBJECT name: TEXT  := NIL   END;
+Temporary = T OBJECT temp: Temp  := NIL   END;
+@ [[Int]]s and [[Real]]s are leaves that hold integer and real
+constants in their [[i]] and [[r]] fields, respectively, and [[Name]]s
+are leaves that reference assembly-language names given by their
+[[name]] fields.  A [[Temporary]] is a node that references a
+descriptor for a temporary location or register.  [[Temp]]s are usually
+objects, but the details are machine dependent and must be
+defined by clients:
+<<interface types>>=
+Temp <: REFANY;
+@
+
+Finally, the following subtypes identify nodes that hold unary and
+binary operators, respectively.
+<<interface types>>=
+Unary  = T BRANDED OBJECT END;
+Binary = T BRANDED OBJECT END;
+@ There are~19 constructors that build trees:
+<<interface types>>=
+Size = [1 .. LAST (INTEGER)];
+
+<<interface procedures>>=
+PROCEDURE tALLOC (temp: Temp; exp: T): T;
+PROCEDURE tARG (exp, args: T): T;
+PROCEDURE tCALL (size: CARDINAL; args, exp: T; line := No_origin): T;
+PROCEDURE tCJUMP (test, exp: T; line := No_origin): T;
+PROCEDURE tCONST (size: Size; val: INTEGER): T;
+PROCEDURE tCONSTF (size: Size; val: LONGREAL): T;
+PROCEDURE tCONVERT (size: Size; op: Op; exp: T; line := No_origin): T;
+PROCEDURE tESEQ (stm, exp: T): T;
+PROCEDURE tLABEL (label: TEXT; line := No_origin): T;
+PROCEDURE tJUMP (exp: T; line := No_origin): T;
+PROCEDURE tMEM (size: Size; exp: T; line := No_origin): T;
+PROCEDURE tMOVE (exp1, exp2: T; line := No_origin): T;
+PROCEDURE tNAME (size: Size; label: TEXT): T;
+PROCEDURE tNOARGS (): T;
+PROCEDURE tOP (size: Size; op: Op; exp1, exp2: T; line := No_origin): T;
+PROCEDURE tREL (op: Op; exp1, exp2: T; line := No_origin): T;
+PROCEDURE tSEQ (stm1, stm2: T): T;
+PROCEDURE tTEMP (size: Size; temp: Temp): T;
+PROCEDURE tUNOP (size: Size; op: Op; exp: T; line := No_origin): T;
+@ These constructors build only legal IR trees as defined in
+Fig.~\ref{fig:syntax}. Invocations that violate
+Fig.~\ref{fig:syntax}'s grammar elicit an assertion failure.  The
+details of these procedures are described below.
+
+The nodes built by the constructors above use [[line]]
+to initialize the [[origin]] field of the nodes.
+
+The constants below define sets of operators that correspond to the
+non-terminals in Fig.~\ref{fig:syntax} and are used by [[TreeIR]]
+itself to insure that it builds only legal trees.
+<<interface constants>>=
+Cvtop = SET OF Op {
+    Op.oCVTSU, Op.oCVTSS, Op.oCVTSF,
+    Op.oCVTUU, Op.oCVTUS, Op.oCVTFS, Op.oCVTFF };
+
+Unop = SET OF Op {
+    Op.oNEG, Op.oCOMP, Op.oFNEG };
+
+Relop = SET OF Op {
+    Op.oEQ,  Op.oNE,  Op.oLT,  Op.oGE,  Op.oGT,  Op.oLE,
+                      Op.oULT, Op.oUGE, Op.oUGT, Op.oULE,
+    Op.oFEQ, Op.oFNE, Op.oFLT, Op.oFLE, Op.oFGT, Op.oFGE };
+
+Binop = SET OF Op {
+    Op.oFPLUS,  Op.oFMINUS, Op.oFMUL, Op.oFDIV,
+    Op.oPLUS,   Op.oMINUS,  Op.oMUL,  Op.oDIV,  Op.oMOD,
+    Op.oUPLUS,  Op.oUMINUS, Op.oUMUL, Op.oUDIV, Op.oUMOD,
+    Op.oAND,    Op.oOR,     Op.oXOR,
+    Op.oLSHIFT, Op.oRSHIFT, Op.oASHIFT };
+
+Args = SET OF Op {
+    Op.oARG, Op.oNOARGS };
+
+Exp = Binop + Unop + Cvtop + SET OF Op {
+    Op.oMEM,   Op.oMOVE,   Op.oESEQ,  Op.oNAME,
+    Op.oCONST, Op.oCONSTF, Op.oALLOC, Op.oTEMP, Op.oCALL };
+
+Stm = Exp + SET OF Op {
+    Op.oSEQ, Op.oLABEL, Op.oJUMP, Op.oCJUMP };
+
+Test = Relop;
+@
+
+%------------------------------------------------------------------------------
+\subsection{Node Semantics}\label{TreeIR:Semantics}
+
+Each production in the grammar derives nodes with particular meanings.
+For example, the Modula-3 fragment
+\begin{quote}\small
+\begin{verbatim}
+VAR x, max: LONGREAL;
+BEGIN
+  IF x > max THEN max := x END
+END
+\end{verbatim}
+\end{quote}
+might be represented by the tree built by
+\begin{quote}\small
+\begin{verbatim}
+t := tSEQ(
+        tCJUMP(tREL(Op.oFLE, tMEM(8, tNAME(4, "x")),
+                             tMEM(8, tNAME(4, "max"))),
+               tNAME(4, "L1")), tSEQ(
+        tMOVE(tMEM(8, tNAME(4, "max")), tMEM(8, tNAME(4, "x"))),
+        tLABEL("L1") ));
+\end{verbatim}
+\end{quote}
+where [[L1]] is a generated label.
+
+The subsections below describe each constructor and display its
+implementation.
+
+%------------------------------------------------------------------------------
+\subsubsection{Statements}\label{TreeIR:Statements}
+
+[[tSEQ(stm1, stm2: T)]] constructs a sequence of statements; is
+executed followed by the the second (unless, of course, the first
+executes [[JUMP]]). If [[stm1]] (resp.\ [[stm2]]) is [[NIL]], [[tSEQ]]
+returns [[stm2]] (resp.\ [[stm1]]).  It is an error for both [[stm1]]
+and [[stm2]] to be [[NIL]].
+
+<<constructors>>=
+PROCEDURE tSEQ (stm1, stm2: T): T =
+  BEGIN
+    <* ASSERT stm1 # NIL OR stm2 # NIL *>
+    <* ASSERT stm1 = NIL OR stm1.op IN Stm *>
+    <* ASSERT stm2 = NIL OR stm2.op IN Stm *>
+    IF stm1 # NIL AND stm2 # NIL THEN
+      RETURN NEW (Binary, op := Op.oSEQ, left := stm1, right := stm2,
+                    print := printSEQ)
+    ELSIF (stm1 # NIL) THEN
+      RETURN stm1
+    ELSE
+      RETURN stm2
+    END
+  END tSEQ;
+@ The [[print]] method is
+
+<<procedures>>=
+PROCEDURE printSEQ (self: Binary; wr: Wr.T := NIL;
+                    <*UNUSED*>depth: CARDINAL := 0) =
+  BEGIN
+    self.left.print  (wr, 0);
+    self.right.print (wr, 0)
+  END printSEQ;
+@ [[SEQ]] nodes serve simply to string together other nodes, so this
+method prints nothing for the [[SEQ]] itself.
+
+[[tLABEL (label: TEXT)]] constructs a [[LABEL]], which serves as the
+target of jumps, calls, etc.
+
+<<constructors>>=
+PROCEDURE tLABEL (label: TEXT; line := No_origin): T =
+  BEGIN
+    RETURN NEW (Name, op := Op.oLABEL, name := label,
+                print := printNAME, origin := line)
+  END tLABEL;
+
+<<procedures>>=
+PROCEDURE printNAME (self: Name; wr: Wr.T := NIL; depth: CARDINAL := 0) =
+  BEGIN
+    print (self, wr, depth,
+        Fmt.F (" size=%s name=%s\n", Fmt.Int (self.size), self.name))
+  END printNAME;
+@
+
+[[print]] prints handles [[NIL]] writers, and prints the operator name
+indented by [[depth]] spaces, a suffix string, and recursively prints
+the left and right operands:
+
+<<procedures>>=
+PROCEDURE print (self: T; VAR wr: Wr.T; depth: CARDINAL;
+                 suffix: TEXT := "\n") =
+  <* FATAL Thread.Alerted, Wr.Failure *>
+  CONST opnames = <<operator names>>
+  BEGIN
+    IF wr = NIL THEN wr := Stdio.stderr END;
+    IF self # NIL THEN
+      FOR i := 1 TO depth DO Wr.PutText (wr, " ") END;
+      Wr.PutText (wr, Fmt.F ("0x%s ", Fmt2.Ref (self)));
+      IF self.op >= FIRST (opnames) AND self.op <= LAST (opnames) THEN
+        Wr.PutText (wr, opnames[self.op])
+      ELSE
+        Wr.PutText (wr, Fmt.Int (ORD (self.op)))
+      END;
+      IF suffix # NIL THEN Wr.PutText (wr, suffix) END;
+      IF self.left  # NIL THEN self.left.print  (wr, depth + 1) END;
+      IF self.right # NIL THEN self.right.print (wr, depth + 1) END
+    END
+  END print;
+@ [[opnames]] is a table of the text names for the operators:
+
+<<operator names>>=
+ARRAY Op OF TEXT {
+    "ZERO",
+    "SEQ",   "LABEL",  "JUMP",   "CJUMP",
+    "MEM",   "MOVE",   "ESEQ",   "NAME",   "CONST",  "CONSTF",
+    "ALLOC", "TEMP",
+    "CALL",  "ARG",    "NOARGS",
+    "FPLUS", "FMINUS", "FMUL",   "FDIV",   "FNEG",
+    "CVTSU", "CVTSS",  "CVTSF",  "CVTUU",  "CVTUS",  "CVTFS", "CVTFF",
+    "PLUS",  "MINUS",  "MUL",    "DIV",    "MOD",    "NEG",
+    "UPLUS", "UMINUS", "UMUL",   "UDIV",   "UMOD",
+    "AND",   "OR",     "LSHIFT", "RSHIFT", "ASHIFT", "XOR",   "COMP",
+    "EQ",    "NE",     "LT",     "GE",     "GT",     "LE",
+    "ULT",   "UGE",    "UGT",    "ULE",
+    "FEQ",   "FNE",    "FLT",    "FLE",    "FGT",    "FGE"
+};
+@
+
+[[tJUMP (exp: T)]] constructs a node that jumps to any address.  The
+address may be computed as an expression.  Jumping to a fixed label is
+written abstractly as [[JUMP(NAME)]].
+
+<<constructors>>=
+PROCEDURE tJUMP (exp: T; line := No_origin): T =
+  BEGIN
+    <* ASSERT exp.op IN Exp *>
+    RETURN NEW (Unary, op := Op.oJUMP, left := exp,
+                print := printJUMP, origin := line)
+  END tJUMP;
+
+<<procedures>>=
+PROCEDURE printJUMP (self: T;  wr: Wr.T := NIL;  depth: CARDINAL := 0) =
+  BEGIN
+    print (self, wr, depth)
+  END printJUMP;
+@
+
+[[tCJUMP (test, exp: T)]] yields a conditional jump to any address.
+If the test evaluates to ``true'' at runtime, the jump is taken.  The
+address may be computed as an expression.
+
+<<constructors>>=
+PROCEDURE tCJUMP (test, exp: T;  line := No_origin): T =
+  BEGIN
+    <* ASSERT test.op IN Test *>
+    <* ASSERT exp.op  IN Exp *>
+    RETURN NEW (Binary, op := Op.oCJUMP, left := test, right := exp,
+                print := printJUMP, origin := line)
+  END tCJUMP;
+@
+
+A statement may also be an expression. At runtime, the expression is
+evaluated (for possible side-effects), and the result is discarded.
+There is no constructor for such a statement; the expression is simply
+used as a statement.
+
+%------------------------------------------------------------------------------
+\subsubsection{Expressions}\label{TreeIR:Expressions}
+
+[[tOP (size: Size; op: Op; exp1, exp2: T)]] constructs a tree for the
+binary operator specified by [[op]].  [[size]] is the number of bytes
+in the operands and in the result.  For example, the abstract tree
+[[PLUS(PLUS,e1,e2)]] represents the sum of the two expressions [[e1]]
+and [[e2]] and is constructed by [[tOP (4,Op.oPLUS,e1,e2)]] (assuming
+the expression deals in 4-byte integers).  It is an error for [[size]]
+to differ from the [[size]] fields of [[exp1]] and [[exp2]].
+
+<<constructors>>=
+PROCEDURE tOP (size: Size; op: Op; exp1, exp2: T; line := No_origin): T =
+  BEGIN
+    <* ASSERT op IN Binop *>
+    <* ASSERT exp1.op IN Exp AND exp2.op IN Exp *>
+    <* ASSERT size = exp1.size AND size = exp2.size *>
+    RETURN NEW (Binary, op := op, size := size, left := exp1, right := exp2,
+                print := printOP, origin := line)
+  END tOP;
+
+<<procedures>>=
+PROCEDURE printOP (self: T;  wr: Wr.T := NIL;  depth: CARDINAL := 0) =
+  BEGIN
+    print (self, wr, depth, Fmt.F (" size=%s\n", Fmt.Int (self.size)));
+  END printOP;
+@ [[RSHIFT]] is right logical shift; vacated bits are filled with 0's.
+[[ASHIFT]] is right arithmetic shift; vacated bits are filled with the
+sign bit from the unshifted value.
+
+Likewise, [[tUNOP (size: Size; op: Op; exp: T)]] constructs a tree for
+the unary operator specified by [[op]].  It is an error for [[size]]
+to differ from the [[size]] field of [[exp]].
+
+<<constructors>>=
+PROCEDURE tUNOP (size: Size; op: Op; exp: T; line := No_origin): T =
+  BEGIN
+    <* ASSERT op IN Unop *>
+    <* ASSERT exp.op IN Exp *>
+    <* ASSERT size = exp.size *>
+    RETURN NEW (Unary, op := op, size := size, left := exp,
+                 print := printOP, origin := line)
+  END tUNOP;
+@
+
+[[tCONVERT (size: Size; op: Op; exp: T)]] constructs conversion nodes.
+Type-conversions serve two purposes: To convert from one machine data
+type (signed integer, unsigned integer, floating) to another, and to
+convert from one precision ([[size]]) to another.  These are unusual
+operators in that the child's [[size]] may differ from the parent's.
+The distinction between long integer, short integer, and character is
+not a difference of machine data type, but simply of size.  The same
+holds for single- and double-precision floating point.  For example,
+[[tCONVERT (4,Op.oCVTSS,x)]] converts from a short integer to a long
+integer and returns the tree [[CVTSS (x)]].
+
+<<constructors>>=
+PROCEDURE tCONVERT (size: Size; op: Op; exp: T; line := No_origin): T =
+  BEGIN
+    <* ASSERT op IN Cvtop *>
+    <* ASSERT exp.op IN Exp *>
+    RETURN NEW (Unary, op := op, size := size, left := exp,
+                print := printOP, origin := line)
+  END tCONVERT;
+@
+
+[[tMEM (size: Size; exp: T)]] constructs a node that fetches a value
+from an address in memory.  The child [[exp]] represents the address.
+The [[size]] of the [[MEM]] node indicates the amount of data to be
+fetched, starting at that address in memory.  [[size]] may be any
+number representable as an address.
+
+<<constructors>>=
+PROCEDURE tMEM (size: Size; exp: T; line := No_origin): T =
+  BEGIN
+    <* ASSERT exp.op IN Exp *>
+    RETURN NEW (Unary, op := Op.oMEM, size := size, left := exp,
+                print := printOP, origin := line)
+  END tMEM;
+@
+
+[[tMOVE (exp1, exp2: T)]] builds a tree that stores a value at an
+address in memory.  [[exp1]] is the address and, as shown in
+Fig.~\ref{fig:syntax}, must be created by [[tMEM (size, exp)]];
+[[exp2]] is the value.  The number of bytes stored is the [[size]] of
+the [[MOVE]] node and is equal to the [[size]] of [[exp1]] node, which
+must equal the [[size]] of [[exp2]].  The [[MOVE]] node is an
+expression; the value is that of [[exp2]].  [[size]] may be any number
+representable as an address.  There is, however, little that can be
+done with expressions of large size other than to fetch and store
+them.  For example,
+\begin{quote}\small
+\begin{verbatim}
+tMOVE (tMEM (1000,tNAME (4,"y")),tMEM (1000,tNAME (4,"x")))
+\end{verbatim}
+\end{quote}
+is a block move; it moves 1000 bytes from [[x]] to [[y]].
+
+[[MOVE]] can also move a value into a temporary, which is usually a
+register.  In this case, [[exp1]] is a tree returned by [[tTEMP]] (see
+below).  [[exp2]] is copied into the temporary, and the result and
+[[size]] are that of [[exp2]].  The [[size]] of [[exp2]] must equal
+that of the temporary.
+Assertions insure that the constraints on [[exp1]] are met:
+
+<<constructors>>=
+PROCEDURE tMOVE (exp1, exp2: T; line := No_origin): T =
+  BEGIN
+    <* ASSERT exp1.op IN SET OF Op { Op.oMEM, Op.oTEMP } *>
+    <* ASSERT exp2.op IN Exp *>
+    <* ASSERT exp1.size = exp2.size *>
+    RETURN NEW (Binary, op := Op.oMOVE, size := exp2.size,
+                left := exp1, right := exp2,
+                print := printOP, origin := line)
+  END tMOVE;
+@
+
+[[tESEQ (stm, exp: T)]] builds a node that is like the comma operator
+in C.  [[stm]] is evaluated, then [[exp]] is evaluated.  The result and
+[[size]] of the [[ESEQ]] node are that of [[exp]].  This operator is
+one of the few where order of evaluation of the children is
+guaranteed.
+
+<<constructors>>=
+PROCEDURE tESEQ (stm, exp: T): T =
+  BEGIN
+    <* ASSERT stm.op IN Stm *>
+    <* ASSERT exp.op IN Exp *>
+    RETURN NEW (Binary, op := Op.oESEQ, size := exp.size,
+                left := stm, right := exp, print := printOP)
+  END tESEQ;
+@
+
+[[tNAME (size: Size; label: TEXT)]] constructs a [[Name]] node that
+yields the value associated with a label.  Such a value is typically
+an address, so [[size]] is usually equal to the address size of the
+target machine.  [[label]] is a character string that labels the
+value, which becomes the value of the [[name]] field.
+
+<<constructors>>=
+PROCEDURE tNAME (size: Size;  label: TEXT): T =
+  BEGIN
+    RETURN NEW (Name, op := Op.oNAME, size := size, name := label,
+                print := printNAME)
+  END tNAME;
+@
+
+[[tCONST (size: Size; val: INTEGER)]] and [[tCONSTF (size: Size; val:
+LONGREAL)]] build [[Int]] and [[Real]] leaf nodes representing integer
+and real constants, respectively.  [[val]] is assigned to the [[i]] or
+[[r]] field, as appropriate.
+
+<<constructors>>=
+PROCEDURE tCONST (size: Size; val: INTEGER): T =
+  BEGIN
+    RETURN NEW (Int, op := Op.oCONST, size := size, i := val,
+                print := printCONST)
+  END tCONST;
+
+PROCEDURE tCONSTF (size: Size; val: LONGREAL): T =
+  BEGIN
+    RETURN NEW (Real, op := Op.oCONSTF, size := size, r := val,
+                print := printCONSTF)
+  END tCONSTF;
+
+<<procedures>>=
+PROCEDURE printCONST (self: Int; wr: Wr.T := NIL; depth: CARDINAL := 0) =
+  BEGIN
+    print (self, wr, depth, Fmt.F (" size=%s i=%s\n", Fmt.Int (self.size),
+           Fmt.Int (self.i)))
+  END printCONST;
+
+PROCEDURE printCONSTF (self: Real; wr: Wr.T := NIL; depth: CARDINAL := 0) =
+  BEGIN
+    print (self, wr, depth, Fmt.F (" size=%s r=%s\n", Fmt.Int (self.size),
+           Fmt.LongReal (self.r)))
+  END printCONSTF;
+@
+
+[[tALLOC (temp: Temp; exp: T)]] is used to allocate a temporary
+(again, usually a register) for evaluating an expression.  A temporary
+is allocated and associated with [[temp]], and [[exp]] is evaluated and
+its value is saved; the temporary is then deallocated.  The result is
+the result of [[exp]].  There should be no references to [[temp]]
+outside of [[exp]].
+
+<<constructors>>=
+PROCEDURE tALLOC (temp: Temp;  exp: T): T =
+  BEGIN
+    <* ASSERT exp.op IN Exp *>
+    RETURN NEW (Binary, op := Op.oALLOC, size := exp.size,
+                left := tTEMP (exp.size, temp), right := exp,
+                print := printOP)
+  END tALLOC;
+@ Note that [[tALLOC]] builds a [[TEMP]] node to hold [[temp]].
+
+[[tTEMP (size: Size; temp: Temp)]] references the temporary given by
+[[temp]], which holds a value of [[size]] bytes.  [[temp]] may have
+been allocated with [[tALLOC]], or may have been allocated in some
+other way.
+
+<<constructors>>=
+PROCEDURE tTEMP (size: Size;  temp: Temp): T =
+  BEGIN
+    RETURN NEW (Temporary, op := Op.oTEMP, size := size, temp := temp,
+                print := printTEMP)
+  END tTEMP;
+
+<<procedures>>=
+PROCEDURE printTEMP (self: Temporary;  wr: Wr.T := NIL;  depth: CARDINAL:= 0) =
+  <* FATAL Thread.Alerted, Wr.Failure *>
+  BEGIN
+    print (self, wr, depth, Fmt.F (" size=%s temp@0x%s", Fmt.Int (self.size),
+           Fmt2.Ref (self.temp)));
+    Wr.PutText (wr, "\n")
+  END printTEMP;
+@
+
+[[tCALL (size: CARDINAL; args, exp: T)]] constructs a node that
+represents a procedure call. The argument list [[args]] is evaluated;
+these are passed to the function, whose address is given by [[exp]].
+The function returns a result of size [[size]], and this result is the
+result of the [[CALL]] expression.  The arguments may be evaluated
+left-to-right, or right-to-left, or in some other order. All arguments
+are passed by value; other transmission mechanisms are implemented
+by synthesizing the appropriate trees.
+
+<<constructors>>=
+PROCEDURE tCALL (size: CARDINAL; args, exp: T; line := No_origin): T =
+  BEGIN
+    <* ASSERT args.op IN Args *>
+    <* ASSERT exp.op  IN Exp *>
+    RETURN NEW (Binary, op := Op.oCALL, size := size,
+                left := args, right := exp,
+                print := printOP, origin := line)
+  END tCALL;
+@
+
+%------------------------------------------------------------------------------
+\subsubsection{Arguments}\label{TreeIR:Arguments}
+
+[[tARG (exp, args: T)]] and [[tNOARGS ()]] construct nodes
+representing argument lists.  [[tNOARGS]] constructs a node for the
+empty argument list or the ``end'' of an argument list.  Its [[size]]
+is 0.  [[tARG]] constructs one element of an argument list, with two
+fields: ``this element'' ([[exp]]), and ``rest-of-list'' ([[args]]).
+A [[size]] field of an [[ARG]] node is computed as the sum of the
+[[size]]s of [[exp]] and [[args]].
+
+<<constructors>>=
+PROCEDURE tARG (exp, args: T): T =
+  BEGIN
+    <* ASSERT exp.op  IN Exp *>
+    <* ASSERT args.op IN Args *>
+    RETURN NEW (Binary, op := Op.oARG, size := exp.size + args.size,
+                left := exp, right := args, print := printOP)
+  END tARG;
+
+PROCEDURE tNOARGS (): T =
+  BEGIN
+    RETURN NEW (T, op := Op.oNOARGS, print := printOP)
+  END tNOARGS;
+@
+
+%------------------------------------------------------------------------------
+\subsubsection{Testing}\label{TreeIR:Testing}
+
+[[tREL (op: Op; exp1, exp2: T)]] constructs a node that compares two
+expressions [[exp1]] and [[exp2]] using the relational operators
+[[op]].  The [[size]]s of [[exp1]] and [[exp2]] must be equal, and the
+result node has a [[size]] of 1.
+
+<<constructors>>=
+PROCEDURE tREL (op: Op; exp1, exp2: T; line := No_origin): T =
+  BEGIN
+    <* ASSERT op IN Relop *>
+    <* ASSERT exp1.op IN Exp *>
+    <* ASSERT exp2.op IN Exp *>
+    <* ASSERT exp1.size = exp2.size *>
+    RETURN NEW (Binary, op := op, size := 1, left := exp1, right := exp2,
+                print := printOP, origin := line)
+  END tREL;
+@
+
+%------------------------------------------------------------------------------
+\subsection{Implementation}\label{TreeIR:Implementation}
+
+[[TreeIR]]'s implementation can now be completed:
+<<implementation>>=
+MODULE TreeIR;
+IMPORT Fmt, Fmt2, Stdio, Thread, Wr;
+<<constructors>>
+<<procedures>>
+BEGIN
+END TreeIR.
+@

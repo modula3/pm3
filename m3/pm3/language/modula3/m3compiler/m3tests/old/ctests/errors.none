@@ -1,0 +1,27 @@
+"../c008/Main.m3", line 12: warning: CASE statement does not handle all possible values
+"../c008/Main.m3", line 27: warning: CASE statement does not handle all possible values
+2 warnings encountered
+"../c012/Main.m3", line 35: warning: unreachable statement
+1 warning encountered
+"../c017/Main.m3", line 37: warning: TYPECASE statement may not handle all cases
+"../c017/Main.m3", line 23: warning: unreachable ELSE in TYPECASE
+2 warnings encountered
+"../c091/Main.m3", line 11: warning: <*UNUSED*> symbol used (a)
+"../c091/Main.m3", line 8: warning: not used (b)
+"../c091/Main.m3", line 29: warning: <*OBSOLETE*> symbol used (BarO)
+"../c091/Main.m3", line 30: warning: <*UNUSED*> symbol used (BarU)
+"../c091/Main.m3", line 32: warning: <*OBSOLETE*> symbol used (vO)
+"../c091/Main.m3", line 33: warning: <*UNUSED*> symbol used (vU)
+"../c091/Main.m3", line 35: warning: <*OBSOLETE*> symbol used (Foo)
+"../c091/Main.m3", line 19: warning: not used (BarM)
+"../c091/Main.m3", line 25: warning: not used (vM)
+"../c091/Main.m3", line 35: warning: <*OBSOLETE*> symbol used (Foo)
+10 warnings encountered
+"../c104/Main.m3", line 3: warning: not used (Main)
+1 warning encountered
+"../c108/Main.m3", line 1: warning: SRC Modula-3 restriction: default method is not a compile-time constant (m)
+"../c108/Main.m3", line 1: warning: SRC Modula-3 restriction: default method is not a compile-time constant (n)
+2 warnings encountered
+"../c131/Main.m3", line 35: warning: ".." ignored in open array constructor
+"../c131/Main.m3", line 35: warning: ".." ignored in open array constructor
+2 warnings encountered

@@ -1,0 +1,297 @@
+% Copyright (C) 1989, 1992 Digital Equipment Corporation 
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+% 
+% Last Modified On Thu Jun 20 12:16:57 PDT 1996 By heydon   
+%      Modified On Wed Jun 14 13:31:17 PDT 1995 By kalsow   
+% 
+% DECstation -> NT386 at SRC.
+%
+
+%-------------------------------------------------- compilation environment ---
+
+readonly TARGET = "NT386"
+readonly DEFAULT_BUILD_DIR = "NT386"
+
+include ("PLATFORMS")  % get the target-dependent mappings
+include ("POSIX")      % get the OS-dependent functions
+% include (OS_TYPE)    % get the OS-dependent functions
+
+readonly NAMING_CONVENTIONS = "0"
+%                                        object files       libraries
+%  0=Unix                          =>  .o   .io    .mo       libXX.a
+%  1=Unix with a grumpy C compiler =>  .o   _i.o   _m.o      libXX.a
+%  2=Windows/NT                    =>  .obj .io    .mo       XX.lib
+%
+
+%------------------------------------------------------------- export paths ---
+% During the installation, destination directories that do not exists 
+% will be created. You need the necessary permissions to do so; otherwise,
+% the installation will fail, but can be restarted after you have 
+% fixed the permissions.
+
+BIN_INSTALL   = "/proj/mips/bin"            % executables
+LIB_INSTALL   = "/proj/m3/lib.xNT386"       % libraries
+DOC_INSTALL   = "/proj/doc"                 % documents
+PKG_INSTALL   = "/proj/m3/pkg"              % packages
+EMACS_INSTALL = "/proj/generic/lib/elisp"   % emacs lisp code
+MAN_INSTALL   = "/proj/man/mips"            % man pages
+HTML_INSTALL  = "/proj/www/SRC"             % public hypertext
+   
+WDROOT = $HOME & "/pkg/m3"  % handy-dandy default for overrides
+
+% On some systems (e.g. AFS) you must install public files in a different
+% place from where you use them.  If that is the case for your system,
+% specify the "use" location here, otherwise leave them alone.
+BIN_USE   = BIN_INSTALL
+LIB_USE   = LIB_INSTALL
+PKG_USE   = PKG_INSTALL
+
+readonly INSTALL_IMPLS = "TRUE"
+% "TRUE"
+%    => save all source files during the install
+%    => makes debugging easier and browsing more fruitful
+% "" (i.e. FALSE)
+%    => save only the exported interfaces and templates 
+%    => makes the installed system slightly smaller.
+
+%---------------------------------------------------------------------- X11 ---
+% If you have X11R4 installed and would like the X11R4 binding interfaces
+% to be built, define the procedure "import_X11R4" to import the libraries
+% that are needed.  Otherwise, define "import_X11R4" to be an empty procedure.
+%
+% If you use the MIT server with DECnet support, you need X11 and dnet,
+% otherwise X11 should be enough.
+% 
+% Since X11R5 is an extension of X11R4, you can use the X11R5 libraries
+% instead of X11R4.  However, the Modula-3 binding interfaces have not
+% yet been upgraded to X11R5.
+%
+% "import_X11R4" is called from the X11R4 package.  "import_Motif" is
+% called from the motif package.  "import_PEX" is called from the PEX
+% package.
+
+proc import_X11R4() is
+end
+
+readonly proc import_Motif() is
+end
+
+readonly proc import_DECPEX() is
+end
+
+readonly proc import_OpenGL() is
+  %%% Note: Windows NT 3.5 supports OpenGL, Windows '95 does not (yet).
+  import_lib ("opengl32", "\\\\nuevo\\retail\\mstools\\lib")
+  import_lib ("glu32",    "\\\\nuevo\\retail\\mstools\\lib")
+end
+
+readonly proc import_TCP() is
+  import_lib("wsock32", "\\\\nuevo\\retail\\mstools\\lib")
+end
+
+readonly PLATFORM_SUPPORTS_X      = ""
+readonly PLATFORM_SUPPORTS_MOTIF  = ""
+readonly PLATFORM_SUPPORTS_DECPEX = ""
+readonly PLATFORM_SUPPORTS_OPENGL = "TRUE"
+
+% Does your X11 server have the shared memory extension?
+readonly X11_WITH_SHARED_MEM = ""
+
+%-------------------------------------------------------------------- emacs ---
+% If you have emacs and want to compile ".el" files to ".elc" files,
+% fill in the function below.  Otherwise, comment out or delete the
+% entire function.  Note, the distributed code assumes gnuemacs version 19
+% or later.
+
+readonly proc emacs_compile (el) is
+  exec ("emacs -batch -f batch-byte-compile", el)
+end
+
+%---------------------------------------------------- C compiler and linker ---
+% The following definitions are used to compile and link C modules.
+% Note that these definitions can be overridden on the m3build command
+% line with "-D".  (e.g.  m3build -DCC=gcc)
+%
+% _ifdef(a,b,c) == if defined(a) return b else return c
+%
+% The actual definitions must be kept on one line due to finicky details
+% of the bootstrap process.
+
+CC = _ifdef ("CC", CC, [ "c:\\mstools\\bin\cl", "-w", "-D_MT", "-D_DLL", "-D_X86_", "-DWIN32", "-nologo" ])
+%--- C compiler with flags for compiling a single ".c" file
+
+LINK = _ifdef ("LINK", LINK, [ "c:\\mstools\\bin\\link32", "-debug:full", "-debugtype:cv", "-subsystem:console", "-entry:mainCRTStartup" ])
+%--- C compiler with flags for linking
+
+MAKELIB = _ifdef ("MAKELIB", MAKELIB, [ "c:\\mstools\\bin\\lib32", "-debugtype:cv", "-machine:i386" ])
+%--- program to build library archives
+
+ASM = _ifdef ("ASM", ASM, [ "c:\\mstools\\bin\\masm386", "/Zi", "/Ml", "/t", "/z" ])
+%--- assembler
+
+%------------------------------------------------------------- GNU variants ---
+% The two large pieces of GNU software used by the Modula-3 system
+% gcc(=m3cc) and gdb(=m3gdb) often require slightly different C compilers
+% or flags.  They are specified here.  Note that they may be overridden
+% from the m3build command line.
+%
+% To use the GNU defaults for CC and CFLAGS, specify "*".
+%
+
+GNU_CC     = _ifdef ("GNU_CC",     GNU_CC,     CC)
+GNU_CFLAGS = _ifdef ("GNU_CFLAGS", GNU_CFLAGS, "")
+GNU_MAKE   = _ifdef ("GNU_MAKE",   GNU_MAKE,   "nmake")
+
+%-------------------------------------------------------- Modula-3 compiler ---
+% The syntax for the values passed to most of the M3_CONFIG options is
+% "@pgm@arg1@...@argn@" where "@" is an arbitrary character.  The
+% separator character must begin and end the value.
+
+% Where is the driver?
+M3 = "/udir/kalsow/pkg/m3/m3/DS/m3"
+
+% What are the standard flags?
+M3OPTIONS = [ "-w1", "-why", "-g", "-boot" ]
+
+M3_CONFIG = [
+   "-Y1" & _pack_args (CC),
+   "-Y2" & _pack_args (LINK),
+   "-Y3" & _pack_args (MAKELIB),
+   "-Y4" & _pack_args (RANLIB),
+   "-Y7" & _pack_args (ASM),
+
+   "-X0@-unfold_nested_procs@",
+   % --- the Modula-3 to IL compiler options
+
+   "-Y6@/udir/kalsow/pkg/m3/m3staloneback/DS/m3back@-NTObj@",
+   % --- the Modula-3 IL to assembly language pass
+
+   % "-z2@crtdll.lib@kernel32.lib@ntdll.lib@user32.lib@gdi32.lib"
+   %      & "@winspool.lib@comdlg32.lib@-lnetapi32.lib@",
+   % --- libraries systematically linked with all programs
+
+   "-z3" & LIB_USE & SL & "report_coverage.o",
+   % --- library linked in programs compiled with "-Z" coverage option
+
+   "-z4" & LIB_USE,
+
+   "-z5" & NAMING_CONVENTIONS,
+   % Set the host naming conventions.
+
+   "-z61",
+   % Values of "-z6":
+   %   "0" => the m3 driver will split library names and pass -L/-l
+   %          arguments to the linker
+   %   "1" => the m3 driver will pass libraries with full path names
+   %   "2" => like "0" except that for shared libraries, the driver
+   %          passes -Rdir as well as -Ldir to the linker
+
+   "-zA0",
+   % The "-zA" option specifies the maximum size (in megabytes) that Pass0
+   % is allowed to reach as a persistent server before the driver kills it.
+   % Setting it to zero disables server mode.
+   % NOTE: the current compiler is buggy, leave "-zA" alone!
+
+   "-zB@-O2@", % --- pass 1 options implied by "-O"
+   "-zC@@",    % --- pass 6 options implied by "-O"
+   "-zD@@",    % --- pass 7 options implied by "-O"
+
+   "-zE@-Od@-Zi@",  % --- pass 1 options implied by "-g"
+   "-zF@-g@",       % --- pass 6 options implied by "-g"
+   "-zG@@",         % --- pass 7 options implied by "-g"
+
+   "-zH2",
+   % --- the target's naming conventions
+
+   "-zI" & TARGET,
+   % --- the target architecture
+
+   % "-zJ10",
+   % The option "-zJx1" specifies that pass "x" is "noisy", "-zJx0"
+   % specifices that it's not.  The default is to assume that passes
+   % are not noisy.  The driver collects the standard output of noisy
+   % passes in a file and then deletes the file, unless "-keep" or
+   % "-verbose" is specified.
+
+   "-zK0",
+   % --- Set the value of "-zK" to "1" if you want the m3 driver to
+   %     supply -Bdynamic/-Bstatic options to the linker, "0" otherwise.
+
+   "-Bdynamic",
+   % --- libraries are shared by default.  If you give -zK1 you should
+   %     also provide an initial -Bdynamic or -Bstatic.
+
+   "-zL0"
+   % --- Set the value of "-zL" to "1" if you want .M3LINK files produced
+   %     for a dynamic loader
+]
+
+proc build_standalone() is
+   % --- reset the linker to avoid shared libraries.
+end
+
+proc build_shared() is
+   % --- reset the linker to use shared libraries.
+end
+
+% ------------------------------------------------------------------- hooks ---
+% These are the "last chance" hooks that are called each time a library
+% or program is built.  They might build shared libraries or strip
+% executables...
+
+proc before_library_hooks(x) is
+end
+
+proc after_library_hooks(x) is
+end
+
+proc before_program_hooks(x) is
+end
+
+proc after_program_hooks(x) is
+end
+
+%---------------------------------------------------------------- bootstrap ---
+% These functions are used during the bootstrap process
+%
+
+BOOT_OBJS = []
+BOOT_LIBS = []
+
+readonly proc boot_import (file) is
+  BOOT_LIBS += file
+end
+
+readonly proc boot_c (file) is
+  exec (CC, "-Zi", "-c", file & ".c")
+  BOOT_OBJS += file & ".obj"
+end
+
+readonly proc _boot_asm (src, obj) is
+  exec (ASM, src, ",", obj, ";")
+  BOOT_OBJS += obj
+end
+
+readonly proc boot_s  (file) is  _boot_asm (file & ".s",  file & ".o")  end
+readonly proc boot_is (file) is  _boot_asm (file & ".is", file & ".io") end
+readonly proc boot_ms (file) is  _boot_asm (file & ".ms", file & ".mo") end
+
+readonly proc boot_lib (file) is
+  local args = arglist ("@", BOOT_OBJS)
+  exec (MAKELIB, "-out:" & file & ".lib", args)
+end
+
+readonly proc boot_prog (file) is
+  local args = arglist ("@", [BOOT_OBJS, BOOT_LIBS, "crtdll.lib",
+                        "kernel32.lib", "user32.lib", "gdi32.lib",
+                        "advapi32.lib",
+                        "winspool.lib", "comdlg32.lib", "netapi32.lib" ])
+  exec (CC, "-Zi", "-o", file, args,  "/link", "/ignore:505")
+end
+
+%---------------------------------------------- the rest of the environment ---
+
+include ("COMMON")
+include ("COMMON.SRC")
+

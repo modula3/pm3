@@ -1,0 +1,9 @@
+#! /bin/csh
+
+rm -f diffs
+foreach f (c*_X/*c)
+  echo $f
+  echo --------------- $f ------------ >> diffs
+  /udir/kalsow/pkgs/m3cg/test/passthru < $f > ${f}.x
+  diff $f ${f}.x >> diffs
+end

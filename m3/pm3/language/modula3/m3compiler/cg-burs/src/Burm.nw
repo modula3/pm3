@@ -1,0 +1,379 @@
+% Copyright (C) 1993, Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+%
+% Last modified on Tue Mar 22 14:01:11 PST 1994 by kalsow
+
+\section{BURS Code Generation}\label{sec:Burm}
+
+The back end uses {\tt burg}~\cite{fraser:henry:proebsting:92},
+a code generator generator,
+for building machine-specific code generators.
+Like many code generator generators\cite{aho:ganapathi:tjiang:89,emmelmann:etal:89},
+{\tt burg} uses tree pattern matching and dynamic
+programming (DP)~\cite{aho:johnson:76,aho:sethi:ullman:86}.  It
+accepts tree patterns and associated costs and produces
+a tree matcher (written in C) that makes one or more passes over each subject tree,
+which are the IR trees described above.
+The first pass is bottom up and finds a set of patterns that cover the tree with
+minimum cost. The subsequent passes are top down and machine specific;
+these passes execute ``semantic actions'' associated with
+minimum-cost patterns at the nodes they matched.
+The semantic actions allocate registers and emit object code.
+
+There are two versions of {\tt burg};
+one~\cite{fraser:henry:proebsting:92} uses BURS (bottom-up rewrite system)
+theory~\cite{pelegri:graham:88} and performs the DP at compile-compile time.
+The other~\cite{fraser:hanson:proebsting:92a} produces a hard-coded matcher
+that does DP at compile time. Both accept
+the same specifications and both have been to produce
+robust VAX, MIPS, and SPARC code generators for {\tt lcc}, a
+retargetable compiler for ANSI~C~\cite{fraser:hanson:91b}.
+
+\subsection{Input}\label{Burm:Input}
+
+Figure~\ref{fig:grammar} shows an extended BNF grammar for {\tt burg}
+specifications. Grammar symbols are displayed in
+{\sl slanted\/} type and terminal symbols are displayed in {\tt
+typewriter} type. $\{X\}$ denotes zero or more instances of $X$, and
+$[X]$ denotes an optional $X$.
+\begin{figure}
+\begin{center}\sl
+\begin{tabular}{lll}
+grammar	& $\rightarrow$	& $\{$ dcl $\}$ {\tt \%\%} $\{$ rule $\}$\\[1ex]
+
+dcl	& $\rightarrow$	& {\tt \%start} nonterm\\
+	& $\vert$	& {\tt \%term} $\{$ identifier {\tt =} integer $\}$\\[1ex]
+
+rule	& $\rightarrow$	& nonterm {\tt :} tree {\tt =} integer $[$ cost $]$ {\tt ;}\\[1ex]
+
+cost	& $\rightarrow$	& {\tt (} integer {\tt )}\\[1ex]
+
+tree	& $\rightarrow$	& term {\tt (} tree {\tt ,} tree {\tt )}\\
+	& $\vert$	& term {\tt (} tree {\tt )}\\
+	& $\vert$	& term\\
+	& $\vert$	& nonterm\\
+\end{tabular}
+\end{center}
+\caption{EBNF Grammar for {\tt burg} Specifications.\label{fig:grammar}}
+\end{figure}
+Specifications consist of declarations, a {\tt \%\%} separator, and
+rules.  The declarations declare terminals --- the operators in subject
+trees --- and associate a unique, positive {\em external symbol
+number\/} with each one.  Non-terminals are declared by their presence
+on the left side of rules.  The {\tt \%start} declaration optionally
+declares a non-terminal as the start symbol.  In
+Figure~\ref{fig:grammar}, {\sl term\/} and {\sl nonterm\/} denote
+identifiers that are terminals and non-terminals, respectively.
+
+Rules define tree {\em patterns\/} in a fully parenthesized prefix
+form. Every non-terminal denotes a tree.  Each operator has a fixed
+arity, which is inferred from the rules in which it is used.  A {\em
+chain rule\/} is a rule whose pattern is another non-terminal.  If no
+start symbol is declared, the non-terminal defined by the first rule is
+used.
+
+Each rule has a unique, positive {\em external rule number\/}, which
+comes after the pattern and is preceded by a ``{\tt =}''.
+As described below, external rule numbers are used to report the
+matching rule to a user-supplied semantic action routine.
+Rules end with an optional non-negative, integer cost; omitted costs
+default to zero.
+
+Figure~\ref{fig-tree-grammar} shows a sample specification that implements a very
+simple instruction selector.
+\begin{figure}
+\begin{verbatim}
+%{
+#define NODEPTR_TYPE treepointer
+#define OP_LABEL(p) ((p)->op)
+#define LEFT_CHILD(p) ((p)->left)
+#define RIGHT_CHILD(p) ((p)->right)
+#define STATE_LABEL(p) ((p)->state)
+#define PANIC printf
+%}
+%start reg
+%term Assign=1 Constant=2 Fetch=3 Four=4 Mul=5 Plus=6
+%%
+con:  Constant = 1;
+con:  Four = 2;
+addr: con = 3;
+addr: Plus(con,reg) = 4;
+addr: Plus(con,Mul(Four,reg)) = 5;
+reg:  Fetch(addr) = 6 (1);
+reg:  Assign(addr,reg) = 7 (1);
+\end{verbatim}
+\caption{A Sample Tree Grammar\label{fig-tree-grammar}}
+\end{figure}
+{\tt burg} specifications are lexically similar to YACC's.
+Lines beginning with
+{\tt\#} are comments. Text between ``\verb|%{|'' and ``\verb|%}|'' is called
+the {\em configuration section}; there may be several such sections.
+All are concatenated and copied verbatim into the head of the generated
+matcher, which is called {\tt Burm}.  Text after the second ``\verb|%%|'',
+if any, is also copied verbatim into {\tt Burm}, at the end.
+
+The configuration section configures {\tt Burm} for the trees being parsed
+and the client's environment.  This section must define
+\verb|NODEPTR_TYPE| to be a visible typedef symbol for a pointer to a
+node in the subject tree.  {\tt Burm} invokes \verb|OP_LABEL(p)|,
+[[LEFT_CHILD(p)]], and [[RIGHT_CHILD(p)]] to read the operator
+and children from the node pointed to by [[p]].  It invokes
+[[PANIC]] when it detects an error.  If the configuration section
+defines these operations as macros, they are implemented in-line;
+otherwise, they must be implemented as functions.  The section on
+diagnostics elaborates on [[PANIC]].
+
+{\tt Burm} computes and stores a single integral {\em state\/} in each node
+of the subject tree.  The configuration section must define a macro
+\verb|STATE_LABEL(p)| to access the state field of the node pointed to
+by \verb|p|.  A macro is required because {\tt burg} uses it as an lvalue.
+\verb|STATE_LABEL(p)| is an integer, but it must be large enough to hold a pointer.
+
+\subsection{Output}\label{Burm:Output}
+
+{\tt burg} generates C functions and data that clients
+call to {\em label\/} subjects trees and then to {\em reduce\/} them.
+The labeller runs bottom-up and left-to-right, visiting each node
+exactly once.  Each node is labeled with a state, which
+encodes all full and partial optimal pattern matches viable at that
+node. Reduce passes traverse the subject tree
+top-down.  A reducer accepts a tree node's state label and a
+{\em goal\/} non-terminal --- initially the root's state label and the
+start symbol --- that combine to determine the rule to be applied at
+that node.  By construction, the rule has the given goal non-terminal
+as its left-hand side.  The rule's pattern identifies the subject
+subtrees and goal non-terminals for all recursive visits.  Here, a
+``subtree'' is not necessarily an immediate child of the current node.
+Patterns with interior operators cause a reducer to skip the
+corresponding subject nodes, so it may proceed directly to
+grandchildren, great-grandchildren, and so on.  On the other hand,
+chain rules cause reducers to revisit the current subject node, with
+a new goal non-terminal, so $x$ is also regarded as a subtree of $x$.
+
+As reducers visit (and possibly revisits) each node, they
+implement semantic action side effects and control the order in
+which subtrees are visited.  The labeller is self-contained, but
+reducers use code from {\tt burg}, so they do not stand alone.
+
+{\tt burg} generates a C implementation of the {\tt Burm} interface:
+<<interface>>=
+INTERFACE Burm;
+IMPORT Ctypes, TreeIR, Wr;
+TYPE T = TreeIR.T;
+<<interface variables>>
+<<interface procedures>>
+END Burm.
+@ \verb|NODEPTR_TYPE| must be defined to be equivalent to \verb|T|, and
+[[T]] must have an integer [[state]] field.
+
+{\tt burg} generates the labeller as a C function named \verb|burm_label|,
+which {\tt Burm} exports as {\tt label}:
+<<interface procedures>>=
+<* EXTERNAL burm_label *>
+PROCEDURE label(tree: T): INTEGER;
+@ It labels the entire subject tree pointed to by \verb|tree| and returns the
+root's state label.  State zero labels unmatched trees.  The trees may
+be corrupt or merely inconsistent with the grammar.
+
+The simpler \verb|state| is \verb|label| without the
+code to traverse the tree and to read and write its fields. It may be
+used to integrate labelling into client-supplied traversal code.
+<<interface procedures>>=
+<* EXTERNAL burm_state *>
+PROCEDURE state(op, left_state, right_state: INTEGER): INTEGER;
+@ It accepts an external symbol number for a node and the labels for the
+node's left and right children. It returns the state label to assign
+to that node.  For unary operators, the last argument is ignored; for
+leaves, the last two arguments are ignored.
+
+Clients must write the reducers, but {\tt burg} writes code and data that
+help.  Primary is
+<<interface procedures>>=
+<* EXTERNAL burm_rule *>
+PROCEDURE rule(state: INTEGER; goalnt: INTEGER): INTEGER;
+@ which accepts a tree's state label and a goal non-terminal and returns the
+external rule number of a rule. The rule will have matched the tree
+and have the goal non-terminal on the left-hand side; \verb|rule|
+returns zero when the tree labelled with the given state did not match
+the goal non-terminal.  For the initial, root-level call, \verb|goalnt|
+must be 1, and {\tt Burm} exports an array that identifies the values
+for nested calls:
+<<interface variables>>=
+<* EXTERNAL burm_nts *>
+VAR nts: ARRAY [0..511] OF UNTRACED REF ARRAY [0..10] OF Ctypes.unsigned_short_int;
+@ is an array indexed by external rule numbers. Each element points to a
+zero-terminated vector of short integers, which encode the goal
+non-terminals for that rule's pattern, left-to-right.  Clients need
+only these two externals to write complete reducers, but a third
+procedure simplifies some applications:
+<<interface procedures>>=
+<* EXTERNAL burm_kids *>
+PROCEDURE kids(tree: T; eruleno: INTEGER; VAR kids: ARRAY [0..9] OF T);
+@ accepts the address of a tree \verb|tree|, an external rule number, and an
+empty vector of pointers to trees.  \verb|kids| assumes that \verb|tree|
+matched the given rule, and it fills in the vector with the subtrees (in
+the sense described above) of \verb|tree| that must be reduced recursively.
+It is not [[NIL]]-terminated.
+
+[[Burm]] also exports a procedure to print a tree's cover:
+<<interface procedures>>=
+PROCEDURE printcover(tree: T; goalnt := 1; indent := 0; wr: Wr.T := NIL);
+@ [[printcover]]'s implementation is an example of a reducer
+that uses the procedures described above.
+<<procedures>>=
+PROCEDURE printcover(tree: T; goalnt := 1; indent := 0; wr: Wr.T := NIL) =
+  <* FATAL Wr.Failure, Thread.Alerted *>
+  VAR eruleno := rule(tree.state, goalnt);
+      kid: ARRAY [0..9] OF T; i: INTEGER;
+  BEGIN
+    IF wr = NIL THEN wr := Stdio.stderr END;
+    FOR i := 0 TO indent DO PutText(wr, " ") END;
+    <<print rule [[eruleno]]>>
+    PutText(wr, "\n");
+    <<reduce [[tree]]'s kids>>
+  END printcover;
+@ [[printcover]] starts by calling [[rule]] to identify the external
+rule number that matched [[tree]]. It then prints the matching rule,
+indented by the amount indicated by [[indent]], on [[wr]],
+which defaults to the standard error:
+<<print rule [[eruleno]]>>=
+WITH rule = string[eruleno] DO
+  VAR i := FIRST(rule^);
+  BEGIN
+    WHILE ORD(rule[i]) # 0 DO Wr.PutChar(wr, rule[i]); INC(i) END
+  END
+END;
+@ When {\tt burg} is run with the [[-I]] option it generates data
+that helps produce diagnostics.  The vectors
+<<interface variables>>=
+<* EXTERNAL burm_string *>
+VAR string: ARRAY [0..511] OF UNTRACED REF ARRAY [0..255] OF CHAR;
+<* EXTERNAL burm_arity *>
+VAR arity: ARRAY [0..4095] OF Ctypes.char;
+@ [[string]] is indexed by external rule number and its
+entries point to the text for each rule.
+@ [[arity]] is index by operator and gives the arity of each operator.
+
+[[printcover]] calls [[kids]] to fill its array [[kid]]
+with pointers to the appropriate subtrees, and then
+reduces them recursively:
+<<reduce [[tree]]'s kids>>=
+kids(tree, eruleno, kid);
+WITH nts = nts[eruleno] DO
+  i := FIRST(nts^);
+  WHILE nts[i] # 0 DO
+    printcover(kid[i], nts[i], indent + 1, wr);
+    INC(i)
+  END
+END
+@ As mentioned above, [[nts]] is an array of pointers to vectors
+of short integers that give the goal non-terminal numbers
+for [[eruleno]]'s subtrees. The last entry in this vector is 0,
+which terminates the loop over the subtrees.
+
+\subsection{Debugging}\label{Burm:Debugging}
+
+To help debug specifications, [[Burm]] exports
+<<interface variables>>=
+VAR Trace: INTEGER := 0;
+
+<*EXTERNAL "Burm__tracer"*>
+VAR tracer: PROCEDURE(tree: T; eruleno, cost, bestcost: INTEGER);
+@ {\tt burg}'s [[-T]] option causes the generated matcher to call
+[[trace]] whenever [[tree]] matches the pattern with external rule
+number [[eruleno]].  [[cost]] is the cost of the match and [[bestcost]]
+is the cost of the best previous match.  The implementation of
+[[trace]] uses [[Trace]] to determine whether to print every match or
+only those with [[cost]] less than [[bestcost]]:
+<<procedures>>=
+PROCEDURE trace(tree: T; eruleno, cost, bestcost: INTEGER) =
+  <* FATAL Wr.Failure, Thread.Alerted *>
+  VAR wr := Stdio.stderr;
+  BEGIN
+    IF Trace < 0 THEN
+      IF cost < 32767 THEN
+        <<print [[tree]]'s address>>
+        <<print rule [[eruleno]]>>
+      END;
+      IF    cost < bestcost AND bestcost = 32767 THEN
+        PutText (wr, Fmt.F (" matches with cost %s\n", Fmt.Int (cost)))
+      ELSIF cost < bestcost THEN
+        PutText (wr, Fmt.F (" wins with cost %s vs. %s\n",
+          Fmt.Int (cost), Fmt.Int (bestcost)))
+      ELSIF cost < 32767 THEN
+        PutText (wr, Fmt.F (" loses with cost %s vs. %s\n",
+          Fmt.Int (cost), Fmt.Int (bestcost)))
+      END
+    ELSIF Trace > 0 AND cost < bestcost THEN
+      DEC(Trace);
+      <<print [[tree]]'s address>>
+      <<print rule [[eruleno]]>>
+      IF    bestcost = 32767 THEN
+        PutText (wr, Fmt.F (" matches with cost %s\n", Fmt.Int (cost)))
+      ELSE
+        PutText (wr, Fmt.F (   " wins with cost %s\n", Fmt.Int (cost)))
+      END
+    END
+  END trace;
+
+<<print [[tree]]'s address>>=
+IF tree # NIL THEN PutText(wr, Fmt.F("0x%s ", Fmt2.Ref(tree))) END;
+@ If [[Trace]] is positive, only ``winning'' matches are printed
+and [[Trace]] is decremented for each such match.
+[[Trace]] is initialized to the value of the environment
+variable [[Trace]], if that variable is an integer:
+<<implementation>>=
+MODULE Burm;
+IMPORT Env, Fmt, Fmt2, Scan, Stdio, Thread, Wr, Lex, FloatMode;
+FROM Wr IMPORT PutText;
+
+<<procedures>>
+
+VAR res := Env.Get("Trace");
+BEGIN
+  tracer := trace;
+  IF res # NIL THEN
+    TRY
+      Trace := Scan.Int(res)
+    EXCEPT
+      Lex.Error, FloatMode.Trap =>
+    END 
+  END
+END Burm.
+@ {\tt Burm} invokes [[PANIC]] when an error prevents it from proceeding.
+[[PANIC]] has the same signature as C's [[printf]]. If [[PANIC]]
+returns, {\tt Burm} aborts.
+
+\subsection{Higher-Level Specifications}\label{Burm:HighLevel}
+
+[[burg]] specifications use external rule numbers instead
+of YACC-like embedded semantic actions, because no one
+format suits all intended applications.
+External rule numbers could be selected by hand,
+and explicit case statements
+to switch on these numbers and implement the appropraite
+semantic actions could appear in reducers.
+
+Most clients, however, consume a richer
+description and translate it into [[burg]]'s simpler input.
+The specifications below have the following tab-separated
+field format.
+\begin{quote}\small\sl
+\begin{tabular}{lllll}
+nonterm\/{\tt:} & rule & $[$ cost $]$ & reduce$_1$ & reduce$_2$\\
+\end{tabular}
+\end{quote}
+Non-terminals and rules are specified as described above.
+The brackets around [[cost]] indicate that it isoptional.
+{\sl reduce$_1$} and {\sl reduce$_2$}
+are Modula-3 statements. A simple preprocessor reads this form
+of specification, generates the external rule numbers, and emits either
+[[burg]]'s input or
+the body of a Modula-3 [[CASE]] statement in which the statements
+in {\sl reduce$_1$} or {\sl reduce$_2$} appear
+in the appropriate [[CASE]] arm. An option selects between
+the two {\sl reduce\/} alternatives.
+The notation [["]] appearing in {\sl reduce$_1$} or {\sl reduce$_2$}
+duplicates the statement in the previous line.
+Other abbreviations and conventions are described below.

@@ -1,0 +1,38 @@
+------------- p040 -----------
+967c967
+< 0.001234567890123
+---
+> 0.001234567890124
+969,978c969,978
+<   FromLongFloat [Flo]    => 0.001234567890123
+<   ToLongFloat => 0.001234567890123   / 17
+<   FromLongFloat [AltFlo] => 0.001234567890123
+<   ToLongFloat => 0.001234567890123   / 17
+<   FromLongFloat [Sci]    => 1.234567890123456D-3
+<   ToLongFloat => 0.001234567890123   / 20
+<   FromLongFloat [AltSci] => 1.234567890123456D-3
+<   ToLongFloat => 0.001234567890123   / 20
+<   FromLongFloat [Mix]    => 0.001234567890123
+<   ToLongFloat => 0.001234567890123   / 17
+---
+>   FromLongFloat [Flo]    => 0.001234567890124
+>   ToLongFloat => 0.001234567890124   / 17
+>   FromLongFloat [AltFlo] => 0.001234567890124
+>   ToLongFloat => 0.001234567890124   / 17
+>   FromLongFloat [Sci]    => 1.234567890123500D-3
+>   ToLongFloat => 0.001234567890124   / 20
+>   FromLongFloat [AltSci] => 1.2345678901235D-3
+>   ToLongFloat => 0.001234567890124   / 18
+>   FromLongFloat [Mix]    => 0.001234567890124
+>   ToLongFloat => 0.001234567890124   / 17
+987c987
+<   FromLongFloat [Sci]    => 1.234567890123456D-33
+---
+>   FromLongFloat [Sci]    => 1.234567890123500D-33
+------------- p070 -----------
+1,2c1,2
+< 654 procedures
+< Toto fingerprint = {-2009008983, 151110551}
+---
+> 653 procedures
+> Toto fingerprint = {1652510548, 1818438165}

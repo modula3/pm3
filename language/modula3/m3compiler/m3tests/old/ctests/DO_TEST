@@ -1,0 +1,8 @@
+#! /bin/sh
+
+rm -rf $2
+mkdir $2
+cd $2
+ln -s ../$2/Main.m3
+/proj/m3/pkg/driver2-ip/DSC/m3.DS -Y0@/proj/m3/pkg/compiler2-ip/DSC/m3c@ -Y6@/proj/m3/pkg/m3cc/src/m3cc@ -g -keep -w1 -c ../$1 -T/proj/m3/pkg/libm32-ip/DS/.M3IMPTAB > stdout 2> stderr
+cat stdout stderr

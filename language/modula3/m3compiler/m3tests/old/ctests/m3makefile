@@ -1,0 +1,186 @@
+% Copyright (C) 1990, Digital Equipment Corporation.
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+% Last modified on Wed Jun 16 15:10:49 PDT 1993 by kalsow
+%      modified on Tue Mar 12 22:05:06 1991 by muller
+
+M3       = "/proj/m3/pkg/driver2-ip/DSC/m3.DS"
+PASS_0   = "-Y0@/proj/m3/pkg/compiler2-ip/DSC/m3c@"
+PASS_6   = "-Y6@/proj/m3/pkg/m3cc/src/m3cc@"
+LIBM3    = "/proj/m3/pkg/libm32-ip"
+
+M3OPT    = { PASS_0, PASS_6, "-g", "-w1", "-keep" }
+M3LIBS   = { "-T" & LIBM3 & "/DS/.M3IMPTAB" }
+% M3LIBS   = { "-T" & LIBM3 & "/DS/.M3IMPTAB", LIBM3 & "/DS/libm3.a" }
+
+%------------------------------------------------------------------------
+% build a shell script to run a test
+%
+if stale ("DO_TEST", "m3makefile")
+  local m3_cmd = M3
+  foreach o in M3OPT
+    m3_cmd = m3_cmd & " " & o
+  end
+  m3_cmd = m3_cmd & " -c ../$1"
+  foreach l in M3LIBS
+    m3_cmd = m3_cmd & " " & l
+  end
+  > "DO_TEST" in
+    echo ("#! /bin/sh")
+    echo ("")
+    echo ("rm -rf $2")
+    echo ("mkdir $2")
+    echo ("cd $2")
+    echo ("ln -s ../$1/Main.m3")
+    echo (m3_cmd & " > stdout 2> stderr")
+    echo ("cat stdout stderr")
+    % echo ("rm -f pgm core")
+  end
+  exec (["-chmod", "+x", "DO_TEST"])
+end
+
+%------------------------------------------------------------------------
+% run a test case
+%
+proc testdir (dir, comment) is
+  local ddir = "_" & dir
+  if defined (@ddir) or defined (_all)
+    echo ("--- " & dir & " --- " & comment)
+    exec (["-DO_TEST", dir, dir & "_X"])
+  end
+end
+
+testdir ("c001", "empty program")
+testdir ("c002", "empty unsafe program")
+testdir ("c003", "a program with two statements")
+testdir ("c004", "declaration of REF INTEGER")
+testdir ("c005", "declaration of T subtype REFANY")
+testdir ("c006", "variables in nested blocks and procedures")
+testdir ("c007", "a procedure with an integer argument")
+testdir ("c008", "CASE statements")
+testdir ("c009", "FOR and EXIT statements")
+testdir ("c010", "IF statements")
+testdir ("c011", "address subtraction")
+testdir ("c012", "LOOP and EXIT statements")
+testdir ("c013", "REPEAT and EXIT statements")
+testdir ("c014", "TRY FINALLY and RETURN statements")
+testdir ("c015", "imbricated TRY FINALLY statements")
+testdir ("c016", "TRY EXCEPT statements")
+testdir ("c017", "TYPECASE statements")
+testdir ("c018", "WHILE and EXIT statements")
+testdir ("c019", "WITH statements")
+testdir ("c020", "assignment of INTEGER subranges")
+testdir ("c021", "procedures and variables in an Interface")
+testdir ("c022", "user and language specified variable initialization")
+testdir ("c023", "simple subrange type in an Interface")
+testdir ("c024", "importing an external subrange type")
+testdir ("c025", "RECORD types variables and assignments")
+testdir ("c026", "fixed ARRAY types variables assignments and subscripting")
+testdir ("c027", "nested procedures with up-level variable references")
+testdir ("c028", "type minimization of REF/RECORD")
+testdir ("c029", "non-opaque OBJECTs")
+testdir ("c030", "opaque OBJECTS")
+testdir ("c031", "assignment and initialization of INTEGER subranges")
+testdir ("c032", "BRANDED REF types")
+testdir ("c033", "NEW of simple REF types")
+testdir ("c034", "NEW of REF types that require initialization")
+testdir ("c035", "NEW of open arrays")
+testdir ("c036", "NEW of OBJECTs with default and non-default slots")
+testdir ("c037", "NEW of opaque OBJECTs with default and non-default slots")
+testdir ("c038", "open ARRAY indexing")
+testdir ("c039", "SUBARRAY")
+testdir ("c040", "large INTEGER constants")
+testdir ("c041", "FIRST and LAST as constants")
+testdir ("c042", "SET declarations and constants")
+testdir ("c043", "RECORD constants")
+testdir ("c044", "escape character literals")
+testdir ("c045", "Text.PutStr -  passing a fixed array to an open array formal")
+testdir ("c046", "declaring an opaque type")
+testdir ("c047", "RAISE statements")
+testdir ("c048", "NUMBER")
+testdir ("c049", "based constants and BITS FOR...")
+testdir ("c050", "opaque object types")
+testdir ("c051", "revealing objects")
+testdir ("c052", "type identification")
+testdir ("c053", "MAX")
+testdir ("c054", "coverage of builtinWord")
+testdir ("c055", "coverage of arithmetic operations and relations")
+testdir ("c056", "twisted mutually recursive types")
+testdir ("c057", "CSE on array indexing expressions")
+testdir ("c058", "open array parameters")
+testdir ("c059", "recursive types and constant expressions")
+testdir ("c060", "nested procedures and variables")
+testdir ("c061", "CASE statements")
+testdir ("c062", "RCmaps of REF types")
+testdir ("c063", "NIL is a ROOT")
+testdir ("c064", "common subexpressions are not always common")
+testdir ("c065", "ADDRESS arithmetic")
+testdir ("c066", "Constructor expressions")
+testdir ("c067", "EXTERNAL vs. non EXTERNAL")
+testdir ("c068", "does refany have a typecell ?")
+testdir ("c069", "assignment of open arrays")
+testdir ("c070", "scopes")
+testdir ("c071", "procedures that return structures in C")
+testdir ("c072", "ASSERT")
+testdir ("c073", "procedure arguments")
+testdir ("c074", "INC and DEC - range checking")
+testdir ("c075", "unknown")
+testdir ("c076", "unknown")
+testdir ("c077", "unknown")
+testdir ("c078", "unknown")
+testdir ("c079", "unknown")
+testdir ("c080", "unknown")
+testdir ("c081", "unknown")
+testdir ("c082", "unknown")
+testdir ("c083", "unknown")
+testdir ("c084", "unknown")
+testdir ("c085", "unknown")
+testdir ("c086", "unknown")
+testdir ("c087", "unknown")
+testdir ("c088", "unknown")
+testdir ("c089", "unknown")
+testdir ("c090", "unknown")
+testdir ("c091", "unknown")
+testdir ("c092", "unknown")
+testdir ("c093", "unknown")
+testdir ("c094", "unknown")
+testdir ("c095", "unknown")
+testdir ("c096", "unknown")
+testdir ("c097", "unknown")
+testdir ("c098", "unknown")
+testdir ("c099", "unknown")
+testdir ("c100", "unknown")
+testdir ("c101", "unknown")
+testdir ("c102", "unknown")
+testdir ("c103", "unknown")
+testdir ("c104", "unknown")
+testdir ("c105", "unknown")
+testdir ("c106", "unknown")
+testdir ("c107", "unknown")
+testdir ("c108", "unknown")
+testdir ("c109", "unknown")
+testdir ("c110", "ObjectType.Method does not work")
+testdir ("c111", "external variables should not be initialized")
+testdir ("c112", "assignable types")
+testdir ("c113", "size of local copies of value formal arrays")
+testdir ("c114", "initialization of UNTRACED REF variables")
+testdir ("c115", "line 15: illegal operand for MOD ?")
+testdir ("c116", "subrange of enumerated type used as array index =b1tests/b003")
+testdir ("c117", "b1tests/b001 - array constructors")
+testdir ("c118", "b1tests/b002 - BYTESIZE illegal in CASE ?")
+testdir ("c119", "b1tests/b004 - open array actual / VAR fixed array formal")
+testdir ("c120", "b2tests/b001 - empty records cause improper C type")
+testdir ("c121", "b1tests/b008 - multiple timestamps for a single type")
+testdir ("c122", "the compiler dumps core !")
+testdir ("c123", "implicit import of large constants")
+testdir ("c124", "recursion on Module names is allowed")
+testdir ("c125", "LAST of subrange assignment in record constructor")
+testdir ("c126", "assignability of recursive types")
+testdir ("c127", "nasty scoping and lazy typechecking interactions")
+testdir ("c128", "unknown")
+testdir ("c129", "unknown")
+testdir ("c130", "unknown")
+testdir ("c131", "unknown")
+testdir ("c132", "unknown")
+testdir ("c133", "unknown")
+testdir ("c134", "statically initialized fields")

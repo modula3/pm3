@@ -1,0 +1,114 @@
+# Copyright (C) 1993, Digital Equipment Corporation
+# All rights reserved.
+# See the file COPYRIGHT for a full description.
+
+# Last modified on Mon Mar 20 09:59:32 PST 1995 by kalsow   
+#      modified on Tue Jan 25 16:47:36 1994 by harrison 
+#      modified on Tue May  4 21:20:29 PDT 1993 by mjordan 
+
+TARGET = "target_unknown"
+
+PACKAGE = quake
+PROGRAM = quake.exe
+
+#
+# parser.y generates y.tab.h for lexical.c, so parser.o must come first
+#
+
+OBJECTS = \
+	parser.obj \
+	lexical.obj \
+	array.obj \
+	atom.obj \
+	hash.obj \
+	builtin.obj \
+	code.obj \
+	dict.obj \
+	execute.obj \
+	fileio.obj \
+	iostack.obj \
+	list.obj \
+	name.obj \
+	operator.obj \
+	path.obj \
+	quake.obj \
+	table.obj \
+	stack.obj \
+	strng.obj \
+	utils.obj
+
+SRC = ..\src
+LOCAL = .
+
+SOURCES = \
+	$(SRC)\parser.c \
+	$(SRC)\lexical.c \
+	$(SRC)\array.c \
+	$(SRC)\atom.c \
+	$(SRC)\hash.c \
+	$(SRC)\builtin.c \
+	$(SRC)\code.c \
+	$(SRC)\dict.c \
+	$(SRC)\execute.c \
+	$(SRC)\fileio.c \
+	$(SRC)\iostack.c \
+	$(SRC)\list.c \
+	$(SRC)\name.c \
+	$(SRC)\operator.c \
+	$(SRC)\path.c \
+	$(SRC)\quake.c \
+	$(SRC)\table.c \
+	$(SRC)\stack.c \
+	$(SRC)\strng.c \
+	$(SRC)\utils.c
+
+MAKEFILE = $(SRC)\makefile
+
+DEBUG_DEFINES = # -DDEBUG_RANGE_CHECKING -DDEBUG_MALLOC -DHASH_PROFILE -DYYDEBUG
+
+# If DEBUG_MALLOC is enabled include thes following two lines ...
+#	INCLUDES = -I. -I$(SRC) -I..\dbmalloc
+#	LIBRARIES = -L..\dbmalloc -ldbmalloc -lm
+# ... otherwise, these line
+INCLUDES = -I. -I$(SRC)
+LIBRARIES = msvcrt.lib
+
+DEFINES = -DTARGET_$(TARGET) $(DEBUG_DEFINES)
+CC = cl
+YACC = bison -y
+COPT = -D_MT -D_X86_ -D_DLL -nologo -DMSDOS
+CDEBUG =
+CFLAGS = $(COPT) $(CDEBUG) $(INCLUDES) $(DEFINES)
+YFLAGS = -d
+
+all: $(PROGRAM)
+
+$(PROGRAM): $(OBJECTS) $(MAKEFILE)
+	$(CC) $(CFLAGS) $(OBJECTS) $(LIBRARIES) -o $@
+
+clean: 
+	-rm -f $(PROGRAM) $(OBJECTS)
+
+depend: $(MAKEFILE) $(SOURCES)
+	makedepend -f$(MAKEFILE) $(INCLUDES) $(DEFINES) $(SOURCES)
+
+array.obj:    $(SRC)\array.c;    $(CC) -c $(CFLAGS) $(SRC)\array.c
+atom.obj:     $(SRC)\atom.c;     $(CC) -c $(CFLAGS) $(SRC)\atom.c
+builtin.obj:  $(SRC)\builtin.c;  $(CC) -c $(CFLAGS) $(SRC)\builtin.c
+code.obj:     $(SRC)\code.c;     $(CC) -c $(CFLAGS) $(SRC)\code.c
+dict.obj:     $(SRC)\dict.c;     $(CC) -c $(CFLAGS) $(SRC)\dict.c
+execute.obj:  $(SRC)\execute.c;  $(CC) -c $(CFLAGS) $(SRC)\execute.c
+fileio.obj:   $(SRC)\fileio.c;   $(CC) -c $(CFLAGS) $(SRC)\fileio.c
+hash.obj:     $(SRC)\hash.c;     $(CC) -c $(CFLAGS) $(SRC)\hash.c
+iostack.obj:  $(SRC)\iostack.c;  $(CC) -c $(CFLAGS) $(SRC)\iostack.c
+lexical.obj:  $(SRC)\lexical.c;  $(CC) -c $(CFLAGS) $(SRC)\lexical.c
+list.obj:     $(SRC)\list.c;     $(CC) -c $(CFLAGS) $(SRC)\list.c
+name.obj:     $(SRC)\name.c;     $(CC) -c $(CFLAGS) $(SRC)\name.c
+operator.obj: $(SRC)\operator.c; $(CC) -c $(CFLAGS) $(SRC)\operator.c
+parser.obj:   $(SRC)\parser.c;   $(CC) -c $(CFLAGS) $(SRC)\parser.c
+path.obj:     $(SRC)\path.c;     $(CC) -c $(CFLAGS) $(SRC)\path.c
+quake.obj:    $(SRC)\quake.c;    $(CC) -c $(CFLAGS) $(SRC)\quake.c
+stack.obj:    $(SRC)\stack.c;    $(CC) -c $(CFLAGS) $(SRC)\stack.c
+strng.obj:    $(SRC)\strng.c;    $(CC) -c $(CFLAGS) $(SRC)\strng.c
+table.obj:    $(SRC)\table.c;    $(CC) -c $(CFLAGS) $(SRC)\table.c
+utils.obj:    $(SRC)\utils.c;    $(CC) -c $(CFLAGS) $(SRC)\utils.c

@@ -1,0 +1,24 @@
+#! /bin/sh
+# Copyright (C) 1993, Digital Equipment Corporation
+# All rights reserved.
+# See the file COPYRIGHT for a full description.
+#
+# build TARGET
+#
+# Last modified on Mon May 16 08:32:51 PDT 1994 by kalsow 
+#
+
+TARGET=$1
+shift
+
+package_dir=`pwd`
+
+QUAKE=quake
+# QUAKE=/udir/kalsow/pkg/m3/quake/DS/quake
+
+if [ ! -d $TARGET ]; then mkdir $TARGET; fi
+cd $TARGET
+
+$QUAKE -D_bootstrap -D_all -DPACKAGE_DIR=$package_dir -DPACKAGE=m3build -DBUILD_DIR=$TARGET ../templates/$TARGET $* $package_dir/src/m3makefile
+
+

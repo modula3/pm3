@@ -1,0 +1,75 @@
+/* Copyright (C) 1990, Digital Equipment Corporation.         */
+/* All rights reserved.                                       */
+/* See the file COPYRIGHT for a full description.             */
+
+/* Last modified on Tue Nov 12 09:23:50 PST 1991 by kalsow    */
+/*      modified on Tue Mar 12 22:05:06 1991 by muller        */
+
+M3      = m3xx -Y0@/udir/kalsow/m3/m3compiler/mips/m3compiler@
+M3FLAGS = 
+COMPILE = $(M3) -g -w1 -D../.. -o a.out ../libtest.a
+
+all::       /* run all tests */
+new_base::  /* run all tests & capture their output as the new base case */
+tidy::      /* remove the trash */
+scratch::   /* remove all derived files */
+
+/* build the "standard" test library */
+libtest.a: ../Test.i3 ../Test.m3 ; $(M3) -a libtest.a ../Test.i3 ../Test.m3
+scratch:: ; -rm -f libtest.a Test.io Test.mo
+
+#define testdir(d,comment)                                                  @@\
+                                                                            @@\
+all:: d##_X                                                                 @@\
+new_base:: d##_base                                                         @@\
+scratch:: ; -rm -fr d##_X                                                   @@\
+d:: d##_X                                                                   @@\
+d##_base:: d##_X ; @mv d##_X/stdout d##_X/stderr d                          @@\
+d##_X:: libtest.a FRC ;\                                                    @@\
+-@ echo --- d --- comment  ;\                                               @@\
+   rm -fr d##_X ;\                                                          @@\
+   mkdir d##_X ;\                                                           @@\
+   (cd d##_X ;\                                                             @@\
+     $(COMPILE) ../d >stdout ) 1>2 2>d##_X/stderr ;\                        @@\
+   diff d/stdout d##_X/stdout ;\                                            @@\
+   diff d/stderr d##_X/stderr ;\                                            @@\
+   rm -f d##_X/a.out
+
+testdir (e001, "assigning non-overlapping subrange types")
+testdir (e002, "non-constant variable initialization in an interface")
+testdir (e003, "exception not at the top-level")
+testdir (e004, "Text.Cat with the wrong number of arguments")
+testdir (e005, "/ instead of DIV on CARDINAL constants")
+testdir (e006, "non-imported exceptions are visible !")
+testdir (e007, "procedure constants (no longer an error...)")
+testdir (e008, "circular imports")
+testdir (e009, "method specified in NEW incompatible with type declaration")
+testdir (e010, "verify that there are enough elements in an array constructor")
+testdir (e011, "m3compiler accepts any type for VAR ARRAY OF formal")
+testdir (e012, "NULL is not a statment")
+testdir (e013, "illegal recursive declaration")
+testdir (e014, "coverage of procedure signature in interface by module")
+testdir (e015, "illegal recursive declaration x=y/y=x")
+testdir (e016, "FROM IMPORT in an EXPORTed interface is visible in the module")
+testdir (e017, "illegal recursive declaration")
+testdir (e018, "illegal recursive declaration")
+testdir (e019, "illegal recursive declaration")
+testdir (e020, "illegal recursive declaration")
+testdir (e021, "illegal recursive declaration")
+testdir (e022, "illegal recursive declaration")
+testdir (e023, "illegal recursive declaration")
+testdir (e024, "illegal recursive declaration")
+testdir (e025, "incompatible array parameter")
+testdir (e026, "two types with the same brand")
+testdir (e027, "b1tests/b005 - ARRAY [1..0] OF x is empty")
+testdir (e028, "circular FROM imports")
+testdir (e029, "use type instead of value as an initializer")
+testdir (e030, "missing main program")
+testdir (e031, "spurious '..' in array initializer")
+testdir (e032, "FROM IMPORT in an IMPORTed interface is visible in the module")
+testdir (e033, "importing the builtin scope through an arbitrary interace")
+testdir (e034, "structural equivalence of records");
+testdir (e035, "illegal recursive declaration")
+
+test:: FRC
+	@echo $(PF) etests done

@@ -1,0 +1,22 @@
+/* Copyright (C) 1996, Digital Equipment Corporation                         */
+/* All rights reserved.                                                      */
+/* See the file COPYRIGHT for a full description.                            */
+
+/* Last modified on Fri May 24 08:43:02 PDT 1996 by mcjones */
+
+implementation("LecternClientWin32")
+implementation("LecternServerWin32")
+
+
+readonly proc simple_c_program(nm) is
+  local SRCFILE = path_of(nm & ".c")
+  local EXEFILE = nm & ".EXE"
+
+  if stale(EXEFILE, SRCFILE)
+    exec (DEV_BIN & "cl /Fe" & EXEFILE, SRCFILE)
+  end
+
+  deriveds(EXEFILE, [nm & ".OBJ"])
+end
+%simple_c_program("LecternClient")
+%BindExport("LecternClient")

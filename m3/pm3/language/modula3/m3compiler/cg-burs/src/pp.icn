@@ -1,0 +1,84 @@
+# Copyright (C) 1993, Digital Equipment Corporation
+# All rights reserved.
+# See the file COPYRIGHT for a full description.
+#
+# Last modified on Tue Jan 18 15:54:04 PST 1994 by kalsow
+#
+# nt:	rule	cost	...	...
+
+global lineno
+
+procedure main(argv)
+	local line
+	lineno := 0
+	if *argv = 0 then {
+		while write(line := getline()) do
+			if line == "%%" then break
+		process()
+		while write(getline())
+	} else if argv[1] ? (="-" & tab(any('123456789')) & pos(0)) then {
+		while line := getline() do
+			if line == "%%" then break
+		generate(-argv[1])
+		while getline()
+	} else
+		stop("unrecognized option `" || argv[1] || "'")
+	return
+end
+
+procedure getline()
+	local line
+	line := read() | fail
+	lineno +:= 1
+	while line[-1:0] == "\\" do {
+		line := line[1:-1] || reverse(trim(reverse(read()), ' \t'))
+		lineno +:= 1
+	}
+	return line
+end
+
+procedure generate(which)
+	local f, line, i, prev
+	write("<<reduce", which, ">>=")
+	while line := getline() do {
+		if line == "%%" then break
+		f := split(line, '\t')
+		if *f > 0 then {
+			i := which + 3
+			if f[i] == "\"" then
+				write("| ", lineno, " => ", prev[i])
+			else {
+				if f[i] ~== ";" then {
+					if f[i][1] == "@" then
+						f[i] := f[i][2:0]
+					else if f[i][1] == "\"" then
+						f[i] := "recurs(); " || "emit(" || f[i] || ")"					else
+						f[i] := "recurs(); " || f[i]
+					write("| ", lineno, " => ", f[i])
+				}
+				prev := f
+			}
+		}
+	}
+end
+
+procedure process()
+	local f, c, line
+	while line := getline() do {
+		if line == "%%" then break
+		f := split(line, '\t')
+		if *f > 0 then
+			write(f[1], "\t", f[2], " = ", lineno, " (", f[3], ");")
+	}
+	write(line == "%%")
+end
+
+procedure split(line, sep)
+	local fields, nsep
+	nsep := ~sep
+	fields := []
+	line ? while put(fields, tab(many(nsep))) do tab(many(sep))
+	if not integer(fields[3]) then
+		fields := [fields[1], fields[2], 0] ||| fields[3:0]
+	return fields
+end

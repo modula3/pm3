@@ -1,0 +1,8 @@
+#! /bin/sh
+
+diff $1/stderr.build ../src/$1/stderr.build
+diff $1/stdout.build ../src/$1/stdout.build
+
+diff $1/stderr.pgm ../src/$1/stderr.pgm
+diff $1/stdout.pgm ../src/$1/stdout.pgm
+

@@ -1,0 +1,12 @@
+% Copyright (C) 1994, Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+%
+% Last modified on Thu Jun 23 08:21:30 PDT 1994 by kalsow   
+
+%
+% This file is evaluated after the user's m3makefile.
+%
+
+RunCleanUps()
+

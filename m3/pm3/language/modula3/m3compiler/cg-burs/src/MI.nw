@@ -1,0 +1,3428 @@
+% Copyright (C) 1993, Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+%
+% Last modified on Fri May 13 14:46:07 PDT 1994 by kalsow
+
+\section{Target-Independent Code}\label{sec:MI}
+
+Many of the methods defined by [[M3CG_ops]] can be implemented
+independently of a specific target machine.  The module [[MI]]
+implements these methods and builds the appropriate IR trees.  In
+addition, it defines a type [[U]] that is a subtype of [[M3CG.T]] with
+additional public fields and methods. Some of these methods are
+implemented by [[MI]], but some must be implemented by target-specific
+code.
+
+[[MI]] provides target-independent implementations for many [[M3CG.T]]
+methods, but some necessarily build trees that lead to poor code on
+some targets.  For example, [[MI]]'s [[abs]] method builds the tree
+\begin{quote}\small
+\begin{verbatim}
+ALLOC(TEMP,ESEQ(
+   SEQ(
+      MOVE(TEMP,x), SEQ(
+      CJUMP(GE(TEMP,CONST(0)),NAME(1)), SEQ(
+      MOVE(TEMP,NEG(TEMP)),
+      LABEL(1)) )),
+   TEMP)
+)
+\end{verbatim}
+\end{quote}
+where [[x]] represents the argument and [[TEMP]] is the temporary that
+holds the absolute value.  Target-specific code can override [[abs]]
+if there is a better idiom, e.g., an instruction or instruction
+sequence.
+
+%------------------------------------------------------------------------------
+\subsection{Interface}\label{MI:Interface}
+
+The [[MI]] interface is
+
+<<interface>>=
+INTERFACE MI;
+
+IMPORT M3CG, RefSeq, TreeIR, Wr;
+FROM M3CG IMPORT Name, RType, Type, TypeUID;
+
+TYPE   <<interface types>>
+REVEAL <<interface revelations>>
+<<interface procedures>>
+
+END MI.
+@ Much of [[MI]] defines a subtype of [[M3CG.T]] that contains
+[[MI]]-specific fields and methods, which are detailed below along
+with their implementations:
+
+<<interface types>>=
+U <: Public;
+Public = M3CG.T OBJECT
+  <<public fields>>
+METHODS
+  <<public methods>>
+END;
+@ [[U]] is defined as a subtype of [[Public]] so that [[MI]]'s
+implementation can add additional hidden fields and methods. Typical
+machine-dependent modules add their fields by subtyping [[U]].
+
+[[MI]] extends [[M3CG]]'s [[Proc]] and [[Var]] types with additional
+fields.
+<<interface types>>=
+Var = M3CG.Var OBJECT
+  name   : Name    := NIL;
+  asmname: Name    := NIL;
+  typeid : TypeUID := 0;
+  type   : Type    := Type.Void;
+METHODS
+  print (wr: Wr.T := NIL)
+END;
+
+Proc = M3CG.Proc OBJECT
+  name   : Name     := NIL;
+  asmname: Name     := NIL;
+  type   : Type     := Type.Void;
+  code   : RefSeq.T := NIL;
+  level  : CARDINAL := 0;
+  parent : Proc     := NIL;
+  origin : INTEGER  := -1;
+  file   : TEXT     := NIL
+END;
+@ The [[name]] field gives the source-language name of a variable or
+procedure, if there is one, and [[asmname]] gives its assembly-language
+name, the form of which is machine-dependent. [[asmname]] is what
+appears in the generated code. [[type]] gives the [[M3CG]] type of the
+variable or procedure. [[code]] holds a sequence of IR trees for the
+procedure's body.
+
+[[level]] is the procedure's static nesting level, and [[parent]]
+points to the enclosing procedure. Top-level procedures are at level 0
+and have a [[NIL]] parent.  [[origin]] and [[file]] give the sources
+coordinates of the beginning of the procedure.
+
+Machine-dependent code will complete [[Var]] and
+[[Proc]] by adding machine-dependent fields.  Note that [[Var]] and
+[[Proc]] are objects with a [[print]] method as dictated by
+[[TreeIR]]'s interface (see Sec.~\ref{TreeIR:interface}).
+
+[[MI]] also constrains its [[Tree]] and [[Temp]] types, and reveals
+that [[TreeIR]]'s [[Temp]]s must be subtypes of [[MI]]'s [[Var]]s:
+
+<<interface types>>=
+Temp = TreeIR.Temp;
+Tree = TreeIR.T;
+
+<<interface revelations>>=
+TreeIR.Temp <: Var;
+
+@
+
+%------------------------------------------------------------------------------
+\subsection{Implementation}\label{MI:Implementation}
+
+[[MI]]'s implementation reveals [[MI.U]]'s private fields:
+<<implementation>>=
+MODULE MI EXPORTS MI, M3CG_Burs;
+
+IMPORT Fmt, RefSeq, Stdio, Text, Thread, TextRefTbl, Word, Wr, MD,
+       M3CG, M3CG_Ops, Target, TargetMap, TInt, TreeIR;
+
+FROM Fmt       IMPORT Int;
+FROM TargetMap IMPORT CG_Align_bytes, CG_Base, CG_Bytes, CG_Size;
+FROM TreeIR    IMPORT Op, tALLOC, tARG, tCALL, tCJUMP, tCONST, tCONSTF,
+                      tCONVERT, tESEQ, tLABEL, tJUMP, tMEM, tMOVE, tNAME,
+                      tNOARGS, tOP, tREL, tSEQ, tTEMP, tUNOP;
+FROM M3CG      IMPORT Type, Name, ByteSize, ByteOffset,
+                      Label, Frequency, Sign, Alignment,
+                      MType, RType, AType, IType, ZType,
+                      Always, Maybe;
+
+VAR  <<variables>>
+TYPE <<types>>
+
+REVEAL
+  U = Public BRANDED OBJECT
+    <<private fields>>
+  METHODS
+    <<private methods>>
+  OVERRIDES
+    <<overrides>>
+  END;
+
+<<procedures>>
+BEGIN
+END MI.
+@ [[MI]] overrides many of the methods in [[M3CG]] with its own methods,
+most of which construct IR trees.
+
+%------------------------------------------------------------------------------
+\subsection{Compilation Units}\label{MI:CompilationUnits}
+
+The front end starts compiling by calling [[M3CG_Burs.New]] to create an
+instance of [[M3CG.T]] or an appropriate subtype.  [[M3CG_Burs.New]] is
+defined here in [[MI]], but it creates an instance of [[MD.U]],
+initializes it, and calls the [[init]] method to complete any
+initialization required by [[MD]]:
+
+<<public methods>>=
+init ();
+
+<<public fields>>=
+debugging := TRUE;
+
+<<overrides>>=
+init := init;
+
+<<procedures>>=
+PROCEDURE New (output: Wr.T; debugging := TRUE): M3CG.T =
+  VAR cg := NEW (MD.U, wr := output, debugging := debugging,
+                       note_error := note_error); 
+  BEGIN
+    cg.init ();
+    RETURN cg
+  END New;
+
+PROCEDURE init (<*UNUSED*> self: U) =
+  BEGIN END init;
+@ After the front end calls [[M3CG_Burs.New]], it invokes the
+[[get_config]] method to retrieve the target's configuration and
+[[set_error_handler]] to install a procedure that is called when there
+is an unexpected code generation error.
+
+<<overrides>>=
+set_error_handler := set_error_handler;
+
+<<public fields>>=
+note_error: PROCEDURE (msg: TEXT) := NIL;
+
+<<procedures>>=
+(******
+PROCEDURE get_config (<*UNUSED*>self: U): M3CG_Ops.Configuration =
+  BEGIN
+    RETURN M3CG_Ops.Configuration {
+             args_left_to_right := TRUE,
+             nested_calls       := FALSE,
+             nested_procs_first := FALSE,
+             clean_stores       := TRUE,
+             clean_calls        := TRUE
+           }
+  END get_config;
+********)
+
+PROCEDURE set_error_handler (self: U; p: M3CG_Ops.ErrorHandler) =
+  BEGIN
+    self.note_error := p
+  END set_error_handler;
+@ [[MI]] stipulates and assumes that arguments be evaluated left to
+right, that procedures be compiled from the outermost procedure to the
+innermost one, and that calls be unnested.  Unless the front end calls
+[[set_error_handler]], any errors detected by the back end will result
+in a call to [[note_error]], which issues an error message and
+crashes (see Sec.~\ref{MI:I/O}).  [[clean_stores]] and [[clean_calls]]
+as [[TRUE]] cause the front end to insure that the code generation
+stack is empty after a store and before a call.
+
+Once an instance of [[M3CG.T]] is created, the front end invokes the
+[[begin_unit]] method to announce the beginning of a compilation unit.
+Likewise, when it's done compiling, it calls [[end_unit]] to signal the
+end of the compilation unit.  The front end also invokes
+[[import_unit]] and [[export_unit]] to announce each interface that's
+imported or exported.  [[MI]] defines vacuous implementations of these
+methods that echo their arguments as assembly language comments but
+implementations of [[MD]] may override them, if necessary.  [[trace]]
+is defined in Sec.~\ref{MI:I/O}.
+
+<<overrides>>=
+begin_unit  := begin_unit;
+end_unit    := end_unit;
+import_unit := import_unit;
+export_unit := export_unit;
+
+<<procedures>>=
+PROCEDURE begin_unit (self: U; optimize: INTEGER) =
+  BEGIN self.trace ("begin_unit", Int(optimize)) END begin_unit;
+
+PROCEDURE end_unit (self: U) =
+  BEGIN self.trace ("end_unit") END end_unit;
+
+PROCEDURE import_unit (self: U; n: Name) =
+  BEGIN self.trace ("import_unit", n) END import_unit;
+
+PROCEDURE export_unit (self: U; n: Name) =
+  BEGIN self.trace ("export_unit", n) END export_unit;
+@
+
+%------------------------------------------------------------------------------
+\subsection{Counters}\label{MI:Counters}
+
+[[M3CG]] requires each implementation to provide counters to generate
+unique labels.
+
+<<overrides>>=
+next_label := next_label;
+
+<<private fields>>=
+next_label_id: Label  := 10;
+
+<<procedures>>=
+PROCEDURE next_label (self: U; n: INTEGER := 1): Label =
+  VAR x := self.next_label_id;
+  BEGIN
+    INC (self.next_label_id, n);
+    RETURN x
+  END next_label;
+
+@ [[next_label_id]] is initialized at 10 because [[MI]] reserves the
+labels 1--9 as ``local'' labels, much like the local label facilities
+of some assemblers.  These labels are used for transfer of control in
+short code sequences, e.g., in the code for the predefined procedures
+and for internal loops. The tree for [[abs]], shown above, is an
+example.  The target of the [[CJUMP]] node is the label [[1]], which
+the [[LABEL]] node defines. When used as targets, 1--9 specify forward
+jumps and negative labels specify backwards jumps. These labels are
+never nested and are reused as necessary.
+
+%------------------------------------------------------------------------------
+\subsection{I/O}\label{MI:I/O}
+
+The back end writes its output by calling [[put]], which writes on an
+associated writer, and it calls [[trace]] to leave diagnostic droppings
+as assembly language comments, e.g., in the implementation of
+[[begin_unit]] above.  [[trace]] calls [[comment]], which
+machine-dependent code can override if the target's assembly language
+comment convention for multi-line comments differs from that used below.
+
+<<public fields>>=
+wr: Wr.T;
+prefix := " # ";
+newline:= "\n";
+
+<<public methods>>=
+put   (a, b, c, d, e, f, g, h, i, j, k, l, m: TEXT := NIL);
+trace (a, b, c, d, e, f: TEXT := NIL);
+
+<<overrides>>=
+put     := put;
+comment := comment;
+trace   := trace;
+
+<<procedures>>=
+PROCEDURE put (self: U; a, b, c, d, e, f, g, h, i, j, k, l, m: TEXT := NIL) =
+  <* FATAL Wr.Failure, Thread.Alerted *>
+  VAR wr := self.wr;
+  BEGIN
+    IF a # NIL THEN Wr.PutText (wr, a) END;
+    IF b # NIL THEN Wr.PutText (wr, b) END;
+    IF c # NIL THEN Wr.PutText (wr, c) END;
+    IF d # NIL THEN Wr.PutText (wr, d) END;
+    IF e # NIL THEN Wr.PutText (wr, e) END;
+    IF f # NIL THEN Wr.PutText (wr, f) END;
+    IF g # NIL THEN Wr.PutText (wr, g) END;
+    IF h # NIL THEN Wr.PutText (wr, h) END;
+    IF i # NIL THEN Wr.PutText (wr, i) END;
+    IF j # NIL THEN Wr.PutText (wr, j) END;
+    IF k # NIL THEN Wr.PutText (wr, k) END;
+    IF l # NIL THEN Wr.PutText (wr, l) END;
+    IF m # NIL THEN Wr.PutText (wr, m) END
+  END put;
+
+PROCEDURE comment (self: U; a, b, c, d: TEXT := NIL) =
+  <* FATAL Wr.Failure, Thread.Alerted *>
+  PROCEDURE comment (t: TEXT; VAR width: INTEGER) =
+    <* FATAL Wr.Failure, Thread.Alerted *>
+    VAR ch: CHAR;
+    BEGIN
+      IF t = NIL THEN RETURN END;
+      FOR i := 0 TO Text.Length (t) - 1 DO
+        ch := Text.GetChar (t, i);
+        IF width = -1 THEN self.put (self.prefix); width := 0 END;
+        IF ch = '\n'
+          THEN Wr.PutText (self.wr, self.newline); width := -1
+          ELSE Wr.PutChar (self.wr, ch)
+        END
+      END
+    END comment;
+  VAR width := -1;
+  BEGIN
+    comment (a, width);
+    comment (b, width);
+    comment (c, width);
+    comment (d, width);
+    Wr.PutText (self.wr, self.newline)
+  END comment;
+
+PROCEDURE trace (self: U; a, b, c, d, e, f: TEXT := NIL) =
+  VAR s: TEXT := "";
+  BEGIN
+    IF b # NIL THEN s := s & " " & b END;
+    IF c # NIL THEN s := s & " " & c END;
+    IF d # NIL THEN s := s & " " & d END;
+    IF e # NIL THEN s := s & " " & e END;
+    IF f # NIL THEN s := s & " " & f END;
+    self.comment (a, s)
+  END trace;
+
+PROCEDURE note_error (msg: TEXT) =
+  <* FATAL Wr.Failure, Thread.Alerted *>
+  BEGIN
+    Wr.PutText (Stdio.stderr, "\n*** M3CG ERROR *** ");
+    IF msg # NIL THEN Wr.PutText (Stdio.stderr, msg) END;
+    Wr.PutText (Stdio.stderr, " ***\n\n");
+    <*ASSERT FALSE*>
+  END note_error;
+@ Note that [[put]] does not emit a newline; clients must do so.
+
+%------------------------------------------------------------------------------
+\subsection{Stack Manipulation}\label{MI:Stack}
+
+As described above, [[M3CG]] defines a stack-based abstract machine,
+and the methods defined in [[M3CG.T]] manipulate an implicit stack.
+In this implementation, the stack holds IR trees:
+
+<<public fields>>=
+sp   : [0..25] := 0;
+stack: ARRAY [1..25] OF Tree;
+@ Many methods thus pop IR trees off of [[stack]] and use them to form
+new IR trees, which are pushed onto [[stack]] according to the
+semantics defined for each method.  Most stack manipulation is done
+via [[push]], [[push_temp]] and [[pop_temp]].  [[push]] pushes an IR
+tree on the stack.  [[push_temp]] pushes an IR temporary reference
+on the stack.  [[pop_temp]] pops the top tree and generates code to
+capture its value in a temporary.
+
+<<public methods>>=
+push      (tree: Tree);
+push_temp (t: Temp);
+pop_temp  (t: Temp);
+
+<<overrides>>=
+push      := push;
+push_temp := push_temp;
+pop_temp  := pop_temp;
+
+<<procedures>>=
+PROCEDURE push (self: U; tree: Tree) =
+  BEGIN
+    INC (self.sp);
+    self.stack[self.sp] := tree
+  END push;
+
+PROCEDURE push_temp (self: U; t: Temp) =
+  BEGIN
+    self.push (temp (self, t))
+  END push_temp;
+
+PROCEDURE pop_temp (self: U; t: Temp) =
+  BEGIN
+    self.append (tMOVE (tTEMP (CG_Bytes[t.type], t),
+                   self.stack[self.sp], self.line));
+    DEC (self.sp)
+  END pop_temp;
+@ [[append]] is described below.
+
+%------------------------------------------------------------------------------
+\subsection{Representing Compiled Code}\label{MI:CompiledCode}
+
+As a procedure is compiled, [[MI]] builds up a sequence of IR trees that
+represent the executable code for the procedure.  The elements of this
+sequence correspond roughly to basic blocks, although the IR trees may
+have embedded jumps. [[currentProc]] points to the current procedure
+and [[currentProc.code]] is the sequence:
+
+<<public fields>>=
+currentProc: Proc := NIL;
+
+<<private fields>>=
+current: Tree := NIL;
+@ [[current]] is the IR tree under construction. Those [[M3CG]] methods
+that construct a ``statement-level'' IR tree, e.g., assignment, append
+their resulting IR tree to [[current]] instead of pushing it onto
+[[stack]]:
+
+<<public methods>>=
+append (tree: Tree; clean := FALSE);
+
+<<overrides>>=
+append := append;
+
+<<procedures>>=
+PROCEDURE append (self: U; tree: Tree; clean := FALSE) =
+  BEGIN
+    IF clean AND self.sp > 0 THEN self.clean () END;
+    self.current := tSEQ (self.current, tree)
+  END append;
+@ [[append]] uses [[SEQ]] nodes to build what is essentially a list of
+statement-level IR trees. As such, these trees dictate execution order.
+Normally, [[append]] is called only when [[stack]] is empty or when it
+is known that the rearrangement of execution order implied by calling
+[[append]] with a non-empty stack is harmless.
+
+If [[tree]] could have a side effect that might affect the values
+computed by the trees on the stack, they {\em must\/} be evaluated
+before [[tree]] is appended. This condition is indicated by calling
+[[append]] with [[clean]] equal to [[TRUE]]. [[clean]] assigns each
+tree on the stack that has a side effect to a local variable and
+replaces it with a reference to that variable.
+
+<<private methods>>=
+clean () := clean;
+
+<<procedures>>=
+PROCEDURE clean (self: U) =
+  BEGIN
+    FOR i := 1 TO self.sp DO
+      IF sideEffect (self.stack[i]) THEN
+        VAR t  := typeOf (self.stack[i]);
+            t1 := self.declare_temp (CG_Bytes[t], CG_Align_bytes[t], t, TRUE);
+        BEGIN
+          self.push (self.stack[i]);
+          self.store (t1, 0, t);
+          self.load  (t1, 0, t);
+          self.stack[i] := self.stack[self.sp];
+          DEC (self.sp)
+        END
+      END
+    END
+  END clean;
+@ [[sideEffect]] returns [[TRUE]] only if its argument tree contains a
+call or a store to memory:
+
+<<procedures>>=
+PROCEDURE sideEffect (t: Tree): BOOLEAN =
+  BEGIN
+    IF t # NIL AND
+      (t.op = Op.oCALL OR
+       t.op = Op.oMOVE AND t.left.op = Op.oMEM OR
+       sideEffect (t.left) OR sideEffect (t.right)) THEN RETURN TRUE END;
+    RETURN FALSE
+  END sideEffect;
+@
+
+[[endOfblock]] adds the current IR tree held in [[current]] to
+[[currentProc.code]]:
+
+<<private methods>>=
+endOfblock () := endOfblock;
+
+<<procedures>>=
+PROCEDURE endOfblock (self: U) =
+  BEGIN
+    IF self.sp = 0 AND self.current # NIL THEN
+      self.currentProc.code.addhi (self.current);
+      self.current := NIL
+    END
+  END endOfblock;
+@ [[endOfblock]] adds [[current]] to [[code]] only if the stack is
+empty.  This design permits [[endOfblock]] to be called without
+checking for an empty stack.
+
+%------------------------------------------------------------------------------
+\subsection{Debugging Information}\label{MI:Debugging}
+
+[[M3CG]] defines methods for conveying symbol-table information
+to the back ends. This information is necessary to generate code that
+can be debugged with target-specific debuggers.
+
+[[set_source_file]] and [[set_source_line]] are called to announce the
+current source file name and line number, respectively, with which
+subsequent code is associated.  [[MI]]'s implementation of these
+methods simply posts the information in the instance of [[MI.U]] for
+subsequent retrieval.  If the file name or line number has changed
+since the last posting, [[endOfblock]] is called:
+
+<<public fields>>=
+line: INTEGER := 0;
+file: TEXT    := NIL;
+
+<<overrides>>=
+set_source_file := set_source_file;
+set_source_line := set_source_line;
+
+<<procedures>>=
+PROCEDURE set_source_file (self: U; file: TEXT) =
+  BEGIN
+    IF self.file # NIL AND file # NIL
+    AND NOT Text.Equal (self.file, file) THEN
+      self.file := file;
+      self.endOfblock ()
+    END;
+    self.file := file
+  END set_source_file;
+
+PROCEDURE set_source_line (self: U; line: INTEGER) =
+  BEGIN
+    IF self.line # line THEN
+      self.line := line;
+      self.endOfblock ()
+    END;
+    self.line := line
+  END set_source_line;
+@
+
+The other 21~methods transmit target-specific symbol-table information about
+types and implemented by [[MD]].
+
+%------------------------------------------------------------------------------
+\subsection{Runtime Hooks}\label{MI:RuntimeHooks}
+
+The front end defines the locations of runtime routines that it may
+call. The front end finds these routines in the [[RTHooks]] interface.
+The location of each routine is expressed as a variable and a byte
+offset. [[MI]] simply maintains a table that maps the name of each hook
+to its variable, offset pair.
+
+<<private fields>>=
+runtime: TextRefTbl.Default := NIL;
+
+<<types>>=
+RuntimeHook = REF RECORD
+  name  : Name;
+  var   : Var;
+  offset: ByteOffset
+END;
+@ The front ``declares'' a hook by calling by calling
+[[set_runtime_hook]], and later accesses the hooks by calling
+[[get_runtime_hook]].  Note that redefining a hook and asking for a
+non-existent hook are errors.
+
+<<overrides>>=
+set_runtime_hook := set_runtime_hook;
+get_runtime_hook := get_runtime_hook;
+
+<<procedures>>=
+PROCEDURE set_runtime_hook (self: U; n: Name; v: M3CG.Var; o: ByteOffset) =
+  VAR e := NEW (RuntimeHook, name := n, var := v, offset := o);
+  BEGIN
+    IF self.runtime = NIL THEN
+      self.runtime := NEW (TextRefTbl.Default).init()
+    END;
+    IF self.runtime.put (n, e) THEN
+      self.note_error ("redefined runtime hook: " & n)
+    END
+  END set_runtime_hook;
+
+PROCEDURE get_runtime_hook (self: U; n: Name; VAR v: M3CG.Var; VAR o: ByteOffset) =
+  VAR ref: REFANY; e: RuntimeHook;
+  BEGIN
+    IF self.runtime # NIL AND self.runtime.get(n, ref) THEN
+      e := ref;
+      v := e.var;
+      o := e.offset
+    ELSE
+      self.note_error ("undefined runtime hook: " & n)
+    END
+  END get_runtime_hook;
+@
+
+%------------------------------------------------------------------------------
+\subsection{Procedures}\label{MI:Procedures}
+
+The front end compiles a procedures by making the following sequence
+of method calls, where [[cg]] is the relevant instance of [[M3CG.T]].
+\begin{quote}
+  [[proc := cg.declare_procedure (...)]]\\
+  \dots declare formals\dots\\
+  \dots declare locals\dots\\
+  [[cg.begin_procedure (proc)]]\\
+  \dots generate statements of procedure\dots\\
+  [[cg.end_procedure (proc)]]\\
+  \dots generate nested procedures\dots
+\end{quote}
+[[declare_procedure]] and the methods that declare formals and locals
+are defined by [[MD]], and [[begin_procedure]] and [[end_procedure]]
+are defined by {\em both\/} [[MI]] and [[MD]]. During compilation,
+[[MD]]'s methods invoke [[MI]]'s explicitly.  [[MI]]'s
+[[begin_procedure]] initializes [[MI]]'s fields in preparation
+for code generation and its [[end_procedure]] finishes off the last
+block and saves the generated code for the procedure.
+
+<<overrides>>=
+begin_procedure := begin_procedure;
+end_procedure   := end_procedure;
+
+<<procedures>>=
+PROCEDURE begin_procedure (self: U; p: M3CG.Proc) =
+  BEGIN
+    self.currentProc := p;
+    WITH p = self.currentProc DO
+      IF p.code = NIL THEN p.code := NEW (RefSeq.T).init() END;
+      p.origin := self.line;
+      p.file   := self.file
+    END;
+    self.current := NIL;
+    self.sp := 0
+  END begin_procedure;
+
+PROCEDURE end_procedure (self: U; <*UNUSED*>p: M3CG.Proc) =
+  BEGIN
+    self.endOfblock ()
+  END end_procedure;
+@ Typical implementations of [[MD]] override [[begin_procedure]] or
+[[end_procedure]] with target-specific versions that call [[MI]]'s
+methods as necessary.
+
+If a procedure declaration is nested, the front end calls
+[[note_procedure_origin]] to announce the source coordinate of the
+nested declaration. [[MI]]'s implementation is vacuous:
+
+<<overrides>>=
+note_procedure_origin := note_procedure_origin;
+
+<<procedures>>=
+PROCEDURE note_procedure_origin (self: U; p: M3CG.Proc) =
+  BEGIN
+    self.trace (".nested", NARROW (p, Proc).name)
+  END note_procedure_origin;
+@
+
+[[M3CG.T]]'s [[begin_block]] and [[end_block]] methods are called to
+announce the beginning and end of an anonymous nested block;
+[[MI]] implements trivial versions, which [[MD]] usually overrides:
+
+<<overrides>>=
+begin_block := begin_block;
+end_block   := end_block;
+
+<<procedures>>=
+PROCEDURE begin_block (self: U) =
+  BEGIN self.trace (".begin") END begin_block;
+
+PROCEDURE end_block (self: U) =
+  BEGIN self.trace (".bend")  END end_block;
+@
+
+%------------------------------------------------------------------------------
+\subsection{Statements}\label{MI:Statements}
+
+Unconditional jumps, conditional jumps, and jumps from [[CASE]] statements
+are examples of ``statement-level'' IR trees. The [[M3CG.T]] methods are
+
+<<overrides>>=
+set_label := set_label;
+jump      := jump;
+if_true   := if_true;
+if_false  := if_false;
+case_jump := case_jump;
+@ Labels are defined by [[set_label]]:
+
+<<procedures>>=
+PROCEDURE set_label (self: U; l: Label; <*UNUSED*>nonLocal: BOOLEAN) =
+  BEGIN
+    <* ASSERT l <= 9 OR self.sp >= 0 *>
+    IF l > 9 AND self.sp > 0 THEN self.clean () END;
+    IF l > 9 THEN self.endOfblock () END;
+    self.append (tLABEL (Fmt.Int (l), self.line))
+  END set_label;
+@ [[set_label]] terminates the current block and appends a [[tLABEL]]
+tree to the current tree.  The current block is not terminated if the
+label is a temporary label; such labels are used internally by the back
+end for ``extended'' blocks, like those generated for the predefined
+procedures.
+
+If the [[nonLocal]] argument is [[TRUE]], the label bounds
+bounds an exception scope and code must not migrate past it or into it.
+[[MD]] must override [[set_label]] and call
+[[MI]]'s [[set_label]] if it implements code migration.
+
+Unconditional jumps are similar: [[jump]] appends a [[JUMP]] tree and
+may terminate the current block.
+
+<<procedures>>=
+PROCEDURE jump (self: U; l: Label) =
+  BEGIN
+    <* ASSERT l <= 9 OR self.sp = 0 *>
+    self.append (tJUMP (<<jump target [[l]]>>, self.line));
+    IF l > 9 THEN self.endOfblock () END
+  END jump;
+
+<<jump target [[l]]>>=
+tNAME (CG_Bytes[Type.Addr], Fmt.Int (l))
+@ [[endOfblock]] is not called if the jump's target is a temporary label
+because such labels must be defined within the current extended block.
+
+The conditional jump methods [[if_true]] and [[if_false]] test the
+tree on the top of the stack and pop it.  The [[Frequency]] parameter, [[f]],
+ranges between [[0]] and [[100]] and indicates that probability that
+the branch will be taken. [[if_true]] jumps on non-zero values,
+including non-zero constants:
+
+<<procedures>>=
+PROCEDURE if_true (self: U; l: Label; <*UNUSED*>f: Frequency) =
+  VAR tos := self.stack[self.sp];
+  BEGIN
+    <* ASSERT l <= 9 OR self.sp >= 1 *>
+    <<add $\ne 0$, if necessary>>
+    DEC (self.sp);
+    IF tos.op = Op.oCONST THEN
+      IF NARROW (tos, TreeIR.Int).i # 0 THEN self.jump (l) END
+    ELSE
+      self.append (tCJUMP (tos, <<jump target [[l]]>>, self.line), clean := l > 9);
+      IF l > 9 THEN self.endOfblock () END
+    END
+  END if_true;
+@ [[tCJUMP]] insists that its first argument be a test tree, i.e., a
+node with a relational operator (see Sec.~\ref{TreeIR:Statements}),
+but it is possible that the tree on the top of the stack is simply an
+integer (which represents a Boolean). If so, an explicit $\ne$
+comparison with 0 is added using other [[M3CG.T]] methods:
+
+<<add $\ne 0$, if necessary>>=
+IF NOT tos.op IN TreeIR.Relop THEN
+    self.push_integer (0);
+    self.relop(Op.oNE);
+    tos := self.stack[self.sp]
+END;
+@ [[relop]] is described in Sec.~\ref{MI:Arithmetic}. [[if_true]] also
+terminates the current block, unless the jump target is a temporary
+label or must be encapsulated within the tree on the top of the stack,
+as described below.
+
+The design of the IR is biased toward conditional jumps that branch if
+the condition is true because [[CJUMP]] is the only conditional jump
+operator.  Thus, [[if_false]] must invert the comparison operator on
+the incoming test node, after adding a comparison operator, if
+necessary.  The actual jump node is constructed by [[if_true]],
+except for constants:
+
+<<procedures>>=
+PROCEDURE if_false (self: U; l: Label; f: Frequency) =
+  CONST invert = ARRAY [Op.oEQ..Op.oFGE] OF Op {
+    Op.oNE,  Op.oEQ,  Op.oGE,  Op.oLT, Op.oLE, Op.oGT,
+    Op.oUGE, Op.oULT, Op.oULE, Op.oUGT,
+    Op.oFNE, Op.oFEQ, Op.oFGE, Op.oFGT, Op.oFLE, Op.oFLT };
+  VAR tos := self.stack[self.sp];
+  BEGIN
+    <* ASSERT l <= 9 OR self.sp >= 1 *>
+    <<add $\ne 0$, if necessary>>
+    IF tos.op = Op.oCONST THEN
+      DEC (self.sp);
+      IF NARROW (tos, TreeIR.Int).i = 0 THEN self.jump (l) END
+    ELSE
+      tos.op := invert[tos.op];
+      self.if_true (l, Always - f)
+    END
+  END if_false;
+@ The [[Always]] is exported by [[M3CG]] and is equal to a [[Frequency]]
+of 100; thus, [[Always - f]] is the probability that the false
+branch will be taken.
+
+The front end implements a [[CASE]] statement by building a branch
+table, which is indexed by the integer value on the top of the stack.
+The front end also generates code to check that the value is within
+range. Thus, [[case_jump]] needs only to emit a table of labels and
+build an tree to do an indexed, indirect jump.
+
+<<procedures>>=
+PROCEDURE case_jump (self: U; READONLY labels: ARRAY OF Label) =
+  VAR v: Var;
+  BEGIN
+    <* ASSERT self.sp = 1 *>
+    <<emit the branch table [[v]]>>
+    self.load_address (v, 0);
+    self.exch ();
+    self.index_address (CG_Bytes[Type.Addr]);
+    self.load_indirect (0, Type.Addr);
+    self.append (tJUMP (self.stack[self.sp], self.line));
+    DEC (self.sp);
+    self.endOfblock ()
+  END case_jump;
+@ The branch table is represented by [[v]], a variable. Building a tree
+to fetch the $n^{th}$ element from [[v]], where $n$ is the value of
+the tree on the top of the stack, is accomplished by calling other
+[[M3CG.T]] methods. [[load_address]] pushes the address of [[v]],
+[[exch]] exchanges the positions of this address and the integer index
+in preparation for [[index_address]], which builds a tree to compute
+the proper address in [[v]]. [[load_indirect]] builds a tree to fetch
+the address at this address, and this tree is used as the target of
+the [[JUMP]] node.
+
+Building the branch table is accomplished by using other [[M3CG.T]]
+methods (which are usually implemented by [[MD]])
+to declare a constant array of addresses and to initialize
+them to each of the labels in [[labels]].
+
+<<emit the branch table [[v]]>>=
+v := self.declare_constant (NIL, NUMBER(labels)*CG_Bytes[Type.Addr],
+        CG_Align_bytes[Type.Addr], Type.Struct, 0, FALSE, TRUE);
+self.begin_init (v);
+FOR i := FIRST (labels) TO LAST (labels) DO
+  self.init_label (i*CG_Bytes[Type.Addr], labels[i])
+END;
+self.end_init (v);
+@ [[declare_constant]] (Sec.~\ref{MIPS:Globals} contains an example)
+declares the array, and [[begin_init]] and [[end_init]] bracket the
+initialization sequence.  Each label is initialized by calling
+[[init_label]], which implementations of [[MD]] must provide.
+[[init_label]] initializes the location at the address of [[v]] plus an
+offset given by the first argument to the address of label given by the
+second argument.
+
+%------------------------------------------------------------------------------
+\subsection{Loads and Stores}\label{MI:Loads}
+
+There are 7~methods that load and store data; 6~of these admit
+machine-independent, though perhaps sub-optimal, implementations.
+
+<<overrides>>=
+load               := load;
+load_indirect      := load_indirect;
+store              := store;
+store_indirect     := store_indirect;
+store_ref          := store_ref;
+store_ref_indirect := store_ref_indirect;
+@
+
+[[load]] loads the value of a variable. For temporaries, it does so by
+calling [[push_temp]], which builds a [[TEMP]] node (possibly wrapped
+in a [[CVTFF]] node).  For all other variables, [[load]] pushes the
+variable's address and uses an indirect load to fetch its contents:
+
+<<procedures>>=
+PROCEDURE load (self: U; v: M3CG.Var; o: ByteOffset; t: MType) =
+  BEGIN
+    IF ISTYPE (v, Temp) THEN
+      <* ASSERT o = 0 *>
+      self.push (tTEMP (CG_Bytes[NARROW (v, Temp).type], v));
+      <<widen integers or wrap reals>>
+    ELSE
+      self.load_address  (v, o);
+      self.load_indirect (0, t)
+    END
+  END load;
+@ [[load_address]] is implemented by [[MD]] because it depends on
+machine-dependent addressing details.  [[load_indirect]] takes an
+address and a constant offset and uses [[add_offset]] (see
+Sec.~\ref{MI:AddressArithmetic}) to compute the relevant address:
+
+<<procedures>>=
+PROCEDURE load_indirect (self: U; o: ByteOffset; t: MType) =
+  BEGIN
+    <* ASSERT self.sp >= 1 *>
+    self.add_offset (o);
+    WITH tos = self.stack[self.sp] DO
+      tos := tMEM (CG_Bytes[t], tos, self.line)
+    END;
+    <<widen integers or wrap reals>>
+  END load_indirect;
+@ The tree that loads the actual value might be wrapped in a conversion:
+
+<<widen integers or wrap reals>>=
+WITH tos = self.stack[self.sp] DO
+  CASE t OF <*NOWARN*>
+  | Type.Addr, Type.Word, Type.Word_A..Type.Word_D =>
+      self.convert (Op.oCVTUU, CG_Bytes[CG_Base [t]])
+  | Type.Int, Type.Int_A .. Type.Int_D =>
+      self.convert (Op.oCVTSS, CG_Bytes[CG_Base [t]])
+  | Type.Reel, Type.LReel, Type.XReel =>
+      tos := tCONVERT (CG_Bytes[t], Op.oCVTFF, tos, self.line)
+  END
+END;
+@ When a less than [[INTEGER]]-sized value is loaded, it is widened by
+calling [[convert]] (see Sec.~\ref{MI:Arithmetic}).  [[convert]] sign
+extends [[Int_A]] through [[Int_D]] values and zero extends [[Word_A]]
+through [[Word_D]] values.  [[convert]] does nothing if [[nbytes]] is
+equal to [[CG_Bytes[t]]. Floating-point values are not widened, but they
+are tucked under a [[CVTFF]] node to signify that the variable
+holds a floating-point value. The [[CVTFF]] node acts as a datatype
+flag so that the code generator can load the value into the proper kind
+of register on machines with separate floating-point registers.
+
+Implementations of [[MD]] can override [[load]] to emit better code or
+to permit variables to be assigned to registers.
+
+The store methods are similar to the [[load]] methods. [[store]]
+handles [[Temp]]s by calling [[pop_temp]]; otherwise,
+it pushes the variable's address and does an indirect store:
+
+<<procedures>>=
+PROCEDURE store (self: U; v: M3CG.Var; o: ByteOffset; t: MType) =
+  BEGIN
+    <* ASSERT self.sp >= 1 *>
+    IF ISTYPE (v, Temp) THEN
+      <* ASSERT o = 0 *>
+      <<narrow integers>>
+      self.pop_temp (v)
+    ELSE
+      self.load_address (v, o);
+      self.exch ();
+      self.store_indirect (0, t)
+    END
+  END store;
+@ For [[store_indirect]], the value is on the top of the stack:
+
+<<procedures>>=
+PROCEDURE store_indirect (self: U; o: ByteOffset; t: MType) =
+  VAR value: Tree;
+  BEGIN
+    <* ASSERT self.sp >= 2 *>
+    <<narrow integers>>
+    value := self.stack[self.sp];
+    DEC (self.sp);
+    self.add_offset (o);
+    self.append (tMOVE (tMEM (CG_Bytes[t], self.stack[self.sp], self.line),
+                        value, self.line));
+    DEC (self.sp)
+  END store_indirect;
+@ Note that the address (on the top of the stack) is buried inside a
+[[MEM]] node as stipulated by the tree IR syntax (see
+Fig~\ref{fig:syntax}).
+
+An integer value must be narrowed if it is possible that it's larger
+than the size of an [[INTEGER]]:
+
+<<narrow integers>>=
+CASE t OF <*NOWARN*>
+| Type.Int, Type.Int_A .. Type.Int_D =>
+    self.convert (Op.oCVTSS, CG_Bytes[t])
+| Type.Addr, Type.Word, Type.Word_A .. Type.Word_D =>
+    self.convert (Op.oCVTUU, CG_Bytes[t])
+| Type.Reel, Type.LReel, Type.XReel =>
+    <* ASSERT self.stack[self.sp].size = CG_Bytes[t] *>
+END;
+@ Note that the address, [[addr]], is wrapped in a [[MEM]] node as
+dictated by the tree IR specification (see Fig.~\ref{fig:syntax}).
+
+The remaining store methods are used to store [[TRACED]] reference
+values. These methods are use so that implementations that use
+reference counts for storage management can increment the appropriate
+count. For implementations that rely on garbage collection, like this
+one, these methods simply invoke the methods displayed above.
+
+<<procedures>>=
+PROCEDURE store_ref (self: U; v: M3CG.Var; o: ByteOffset) =
+  BEGIN self.store (v, o, Type.Addr) END store_ref;
+
+PROCEDURE store_ref_indirect (self: U; o: ByteOffset; <*UNUSED*>var: BOOLEAN) =
+  BEGIN self.store_indirect (o, Type.Addr) END store_ref_indirect;
+@
+
+%------------------------------------------------------------------------------
+\subsection{Literals}\label{MI:Literals}
+
+All 4 of the methods that load literal values can be implemented by [[MI]].
+
+<<overrides>>=
+load_float     := load_float;
+load_integer   := load_integer;
+load_nil       := load_nil;
+load_procedure := load_procedure;
+@ Integers, floating-point values, and [[NIL]] values are loaded by
+building the appropriate [[CONST]] or [[CONSTF]] node.  Note that
+[[REAL]] values are sorted in trees as [[LONGREAL]] values.
+
+<<procedures>>=
+PROCEDURE load_nil (self: U) =
+  BEGIN
+    self.push (tCONST (CG_Bytes[Type.Addr], 0))
+  END load_nil;
+
+PROCEDURE load_integer (self: U; READONLY i: Target.Int) =
+  VAR n: INTEGER;
+  BEGIN
+    IF NOT TInt.ToInt (i, n) THEN <* ASSERT FALSE *> END;
+    self.push (tCONST (CG_Bytes[Type.Int], n))
+  END load_integer;
+
+PROCEDURE load_float (self: U; READONLY f: Target.Float) =
+  CONST type_map = ARRAY Target.Precision OF RType {
+              Type.Reel, Type.LReel, Type.XReel };
+  BEGIN
+    self.push (tCONSTF (CG_Bytes[type_map[f.pre]], FLOAT (f.fraction, LONGREAL)))
+  END load_float;
+@ [[load_procedure]] loads the address of a procedure:
+
+<<procedures>>=
+PROCEDURE load_procedure (self: U; p: M3CG.Proc) =
+  BEGIN
+    self.push (tNAME (CG_Bytes[Type.Addr], NARROW (p, Proc).asmname))
+  END load_procedure;
+@ Implementations of [[MD]] can override [[load_procedure]] if loading a
+procedure address is more elaborate.
+
+[[MI]]'s [[push_integer]] and [[push_float]] methods take literal integers and
+floating-point values instead of [[Target]] values, create [[Target]]
+values and call [[load_integer]] and [[load_float]], respectively.
+
+<<public methods>>=
+push_integer (i: INTEGER);
+push_float   (x: REAL; t: RType);
+
+<<overrides>>=
+push_integer := push_integer;
+push_float   := push_float;
+
+<<procedures>>=
+PROCEDURE push_integer (self: U;  i: INTEGER) =
+  BEGIN
+    self.push (tCONST (CG_Bytes[Type.Int], i))
+  END push_integer;
+
+PROCEDURE push_float (self: U;  x: REAL;  t: RType) =
+  CONST map = ARRAY RType OF Target.Precision { Target.Precision.Short,
+                  Target.Precision.Long, Target.Precision.Extended };
+  BEGIN
+    self.load_float (Target.Float { pre := map[t], exponent := 0,
+      fraction := FLOAT (x, EXTENDED) })
+  END push_float;
+@
+
+%------------------------------------------------------------------------------
+\subsection{Arithmetic}\label{MI:Arithmetic}
+
+The 6 arithmetic methods take operands of any of arithmetic types and
+return values of the same type.
+
+<<overrides>>=
+add       := add;
+div       := div;
+divide    := divide;
+mod       := mod;
+multiply  := multiply;
+negate    := negate;
+subtract  := subtract;
+cvt_float := cvt_float;
+@ The code for many of these methods is similar: switch on the type and
+build the appropriate tree. [[MI]] defines two private methods to
+encapsulate this code for binary and unary operators:
+
+<<private methods>>=
+binary (iop, uop, rop := Op.oZERO; t := Type.Int) := binary;
+unary  (iop, uop, rop := Op.oZERO; t := Type.Int) := unary;
+
+<<procedures>>=
+PROCEDURE binary (self: U; iop, uop, rop := Op.oZERO; t := Type.Int) =
+  VAR op: Op; n: INTEGER;
+  BEGIN
+    <* ASSERT self.sp >= 2 *>
+    <<set [[op]] to the appropriate operator>>
+    WITH left = self.stack[self.sp-1], right = self.stack[self.sp] DO
+      IF <<[[left]] is a constant>> AND <<[[right]] is a constant>> THEN
+        left := fold (self, left.size, op, left, right)
+      ELSE
+        CASE op OF 
+        <<strength reductions>>
+        ELSE
+        END;
+        left := tOP (left.size, op, left, right, self.line)
+      END
+    END;
+    DEC (self.sp)
+  END binary;
+@ [[binary]] accepts a type [[t]] and three operators, one for signed
+integer ([[iop]]), unsigned integer ([[uop]]), and floating-point
+([[rop]]) operands. It uses [[t]] to select the appropriate operator
+and calls [[tOP]] to build the tree. If the operands are constants,
+however, it calls [[fold]], described below, to perform the appropriate
+operation and return a constant. The omitted details are
+
+<<set [[op]] to the appropriate operator>>=
+CASE t OF <*NOWARN*>
+| Type.Int                          => op := iop
+| Type.Addr, Type.Word              => op := uop
+| Type.Reel, Type.LReel, Type.XReel => op := rop
+END;
+
+<<[[left]] is a constant>>=
+( left.op = Op.oCONST OR  left.op = Op.oCONSTF)
+
+<<[[right]] is a constant>>=
+(right.op = Op.oCONST OR right.op = Op.oCONSTF)
+@ Some operators can be replaced with less costly variants. For example,
+multiplication by a power of two can be implemented with a left shift:
+
+<<strength reductions>>=
+| Op.oMUL, Op.oUMUL =>
+    IF ispower2 (left, n) THEN
+      left  := right;
+      right := tCONST (CG_Bytes[t], n);
+      self.binary (Op.oLSHIFT, Op.oLSHIFT, t := t);
+      RETURN
+    END;
+    IF ispower2 (right, n) THEN
+      right := tCONST (CG_Bytes[t], n);
+      self.binary (Op.oLSHIFT, Op.oLSHIFT, t := t);
+      RETURN
+    END
+@ If [[tree]] is a constant tree for positive integer that is a power of
+two, [[ispower2 (tree, n)]] sets [[n]] to that power and returns TRUE,
+otherwise, it returns FALSE:
+
+<<procedures>>=
+PROCEDURE ispower2 (tree: Tree; VAR n: INTEGER): BOOLEAN =
+  VAR i: INTEGER;
+  BEGIN
+    IF tree.op = Op.oCONST THEN
+      i := NARROW (tree, TreeIR.Int).i;
+      IF i > 0 AND Word.And (i, i - 1) = 0 THEN
+        n := -1;
+        WHILE i # 0 DO
+          i := Word.Shift (i, -1);
+          INC (n)
+        END;
+        RETURN TRUE
+      END
+    END;
+    RETURN FALSE
+  END ispower2;
+@ Similarly, division by a power of two can be replaced with a right
+shift and modulus can be replaced with masking:
+
+<<strength reductions>>=
+| Op.oDIV, Op.oUDIV =>
+    IF ispower2 (right, n) THEN
+      right := tCONST (CG_Bytes[t], n);
+      self.binary (Op.oASHIFT, Op.oRSHIFT, t := t);
+      RETURN
+    END
+| Op.oMOD, Op.oUMOD =>
+    IF ispower2 (right, n) THEN
+      right := tCONST (CG_Bytes[t], Word.Not (Word.Shift (-1, n)));
+      self.binary (Op.oAND, Op.oAND, t := t);
+      RETURN
+    END
+@ Some logical operations are no-ops:
+
+<<strength reductions>>=
+| Op.oLSHIFT, Op.oRSHIFT, Op.oASHIFT =>
+    IF <<[[right]] is a constant>> AND NARROW (right, TreeIR.Int).i = 0 THEN
+      DEC (self.sp);
+      RETURN
+    END;
+    IF <<[[right]] is a constant>> AND NARROW (right, TreeIR.Int).i >= Target.Integer.size THEN
+      DEC (self.sp);
+      IF sideEffect (left)
+        THEN left := tESEQ (left, tCONST (CG_Bytes[Type.Int], 0))
+        ELSE left := tCONST (CG_Bytes[Type.Int], 0)
+      END;
+      RETURN
+    END
+| Op.oOR, Op.oPLUS, Op.oUPLUS =>
+    IF <<[[right]] is a constant>> AND NARROW (right, TreeIR.Int).i = 0 THEN
+      DEC (self.sp);
+      RETURN
+    END;
+    IF <<[[left]] is a constant>>  AND NARROW (left,  TreeIR.Int).i = 0 THEN
+      self.exch ();
+      DEC (self.sp);
+      RETURN
+    END
+| Op.oAND =>
+    IF <<[[right]] is a constant>> AND NARROW (right, TreeIR.Int).i = -1 THEN
+      DEC (self.sp);
+      RETURN
+    END;
+    IF <<[[left]] is a constant>>  AND NARROW (left,  TreeIR.Int).i = -1 THEN
+      self.exch ();
+      DEC (self.sp);
+      RETURN
+    END
+@ [[unary]] is similar in form to [[binary]]:
+
+<<procedures>>=
+PROCEDURE unary (self: U; iop, uop, rop := Op.oZERO; t := Type.Int) =
+  VAR op: Op;
+  BEGIN
+    <* ASSERT self.sp >= 1 *>
+    <<set [[op]] to the appropriate operator>>
+    WITH left = self.stack[self.sp] DO
+      IF <<[[left]] is a constant>>
+        THEN left := fold (self, left.size, op, left)
+        ELSE left := tUNOP (left.size, op, left, self.line)
+      END
+    END
+  END unary;
+@
+
+The code generation methods are implemented by making the appropriate
+calls on [[binary]] or [[unary]]:
+
+<<procedures>>=
+PROCEDURE add (self: U; t: AType) =
+  BEGIN self.binary (Op.oPLUS, Op.oUPLUS, Op.oFPLUS, t) END add;
+
+PROCEDURE subtract (self: U; t: AType) =
+  BEGIN self.binary (Op.oMINUS, Op.oUMINUS, Op.oFMINUS, t) END subtract;
+
+PROCEDURE multiply (self: U; t: AType) =
+  BEGIN self.binary (Op.oMUL, Op.oUMUL, Op.oFMUL, t) END multiply;
+
+PROCEDURE divide (self: U; t: RType) =
+  BEGIN self.binary (Op.oZERO, Op.oZERO, Op.oFDIV, t) END divide;
+
+PROCEDURE div (self: U; t: IType; <*UNUSED*>a, b: Sign) =
+  BEGIN self.binary (Op.oDIV, Op.oUDIV, Op.oZERO, t) END div;
+
+PROCEDURE mod (self: U; t: IType; <*UNUSED*>a, b: Sign) =
+  BEGIN self.binary (Op.oMOD, Op.oUMOD, Op.oZERO, t) END mod;
+
+PROCEDURE negate (self: U; t: AType) =
+  BEGIN self.unary (Op.oNEG, Op.oZERO, Op.oFNEG, t) END negate;
+@ [[Op.oZERO]] is passed when the corresponding formal argument does not
+apply, e.g., for integers in [[divide]].
+
+Analogous to [[binary]] and [[unary]], [[convert]] builds a conversion
+node, folding conversions, and omitting needless ones, as appropriate:
+
+<<private methods>>=
+convert (op: Op; size: CARDINAL) := convert;
+
+<<procedures>>=
+PROCEDURE convert (self: U; op: Op; size: CARDINAL) =
+  BEGIN
+    <* ASSERT self.sp >= 1 *>
+    WITH left = self.stack[self.sp] DO
+      IF <<[[left]] is a constant>> THEN
+        left := fold (self, size, op, left)
+      ELSE
+        CASE op OF <*NOWARN*>
+        | Op.oCVTSS, Op.oCVTUU, Op.oCVTFF =>
+            IF size # left.size THEN
+              left := tCONVERT (size, op, left, self.line)
+            END
+        | Op.oCVTSU, Op.oCVTSF, Op.oCVTUS, Op.oCVTFS =>
+            left := tCONVERT (size, op, left, self.line)
+        END
+      END
+    END
+  END convert;
+@ [[convert]] is used by [[cvt_float]], which the front end invokes to
+implement the conversion [[FLOAT]]. [[cvt_float]] converts a value of
+type [[t]] at the top of the stack to a value of type [[u]], which is
+a floating-point type:
+
+<<procedures>>=
+PROCEDURE cvt_float (self: U; t: AType; u: RType) =
+  CONST ops = ARRAY AType OF Op { Op.oCVTSF, Op.oCVTSF, Op.oCVTFF, .. };
+  BEGIN
+    <* ASSERT self.sp >= 1 *>
+    self.convert (ops[t], CG_Bytes[u])
+  END cvt_float;
+@
+
+Finally, [[fold]] returns the appropriate [[CONST]] or [[CONSTF]] node
+for constant operands:
+
+<<procedures>>=
+PROCEDURE fold (self: U; size: CARDINAL;
+    op: Op; l, r: Tree := NIL): Tree =
+  BEGIN
+    IF    l.op = Op.oCONST  AND r = NIL THEN
+      <<fold unary integer operators>>
+    ELSIF l.op = Op.oCONSTF AND r = NIL THEN
+      <<fold unary floating-point operators>>
+    ELSIF l.op = Op.oCONST  AND r.op = Op.oCONST  THEN
+      <<fold binary integer operators>>
+    ELSIF l.op = Op.oCONSTF AND r.op = Op.oCONSTF THEN
+      <<fold binary floating-point operators>>
+    ELSE
+      <* ASSERT FALSE *>
+    END
+  END fold;
+@ The [[IF]] sequence uses the operand type to select the appropriate
+code sequence. So, for example, [[CVTSF]] is a unary integer operator:
+
+<<fold unary integer operators>>=
+VAR i := NARROW (l, TreeIR.Int).i; result: INTEGER;
+BEGIN
+  CASE op OF <*NOWARN*>
+  | Op.oCVTSF  => RETURN tCONSTF (size, FLOAT (i, LONGREAL))
+  | Op.oCVTSU  => result := i
+  | Op.oCVTSS  => result := i
+  | Op.oCVTUU  => result := i
+  | Op.oCVTUS  => result := i
+  | Op.oNEG    => result := -i
+  | Op.oCOMP   => result := Word.Not (i)
+  END;
+  RETURN tCONST (size, result)
+END;
+@ The only use of [[CVTUU]] and [[CVTSS]] is to narrow integers to a
+smaller size, so no sign extension is needed. [[CVTFS]] is a unary
+floating-point operator:
+
+<<fold unary floating-point operators>>=
+VAR x := NARROW (l, TreeIR.Real).r; result: LONGREAL;
+BEGIN
+  CASE op OF <*NOWARN*>
+  | Op.oCVTFS  => RETURN tCONST (size, TRUNC (x))
+  | Op.oCVTFF  => result := x
+  | Op.oFNEG   => result := -x
+  END;
+  RETURN tCONSTF (size, result)
+END;
+@ [[fold]] refuses to fold expressions that would fault at compile time,
+e.g., when the second operand of division or modulus is 0:
+
+<<fold binary integer operators>>=
+VAR i := NARROW (l, TreeIR.Int).i;
+    j := NARROW (r, TreeIR.Int).i;
+    result: INTEGER;
+BEGIN
+  CASE op OF <*NOWARN*>
+  | Op.oPLUS   => result := i + j
+  | Op.oMINUS  => result := i - j
+  | Op.oMUL    => result := i * j
+  | Op.oUPLUS  => result := Word.Plus (i, j)
+  | Op.oUMINUS => result := Word.Minus (i, j)
+  | Op.oUMUL   => result := Word.Times (i, j)
+  | Op.oEQ     => result := ORD (i =  j)
+  | Op.oNE     => result := ORD (i #  j)
+  | Op.oLT     => result := ORD (i <  j)
+  | Op.oGE     => result := ORD (i >= j)
+  | Op.oGT     => result := ORD (i >  j)
+  | Op.oLE     => result := ORD (i <= j)
+  | Op.oAND    => result := Word.And (i, j)
+  | Op.oOR     => result := Word.Or (i, j)
+  | Op.oLSHIFT => result := Word.Shift (i, j)
+  | Op.oRSHIFT => result := Word.Shift (i, -j)
+  | Op.oXOR    => result := Word.Xor (i, j)
+  | Op.oULT    => result := ORD (Word.LT (i, j))
+  | Op.oUGE    => result := ORD (Word.GE (i, j))
+  | Op.oUGT    => result := ORD (Word.GT (i, j))
+  | Op.oULE    => result := ORD (Word.LE (i, j))
+  | Op.oDIV    => IF j # 0
+                    THEN result := i DIV j
+                    ELSE RETURN tOP (size, op, l, r, self.line)
+                  END
+  | Op.oMOD    => IF j # 0
+                    THEN result := i MOD j
+                    ELSE RETURN tOP (size, op, l, r, self.line)
+                  END
+  | Op.oUDIV   => IF j # 0
+                    THEN result := Word.Divide (i, j)
+                    ELSE RETURN tOP (size, op, l, r, self.line)
+                  END
+  | Op.oUMOD   => IF j # 0
+                    THEN result := Word.Mod (i, j)
+                    ELSE RETURN tOP (size, op, l, r, self.line)
+                  END
+  END;
+  RETURN tCONST (size, result)
+END;
+@ The floating-point comparisons return integers:
+
+<<fold binary floating-point operators>>=
+VAR x := NARROW (l, TreeIR.Real).r;
+    y := NARROW (r, TreeIR.Real).r;
+    result: LONGREAL;
+BEGIN
+  CASE op OF <*NOWARN*>
+  | Op.oFPLUS  => result := x + y
+  | Op.oFMINUS => result := x - y
+  | Op.oFMUL   => result := x * y
+  | Op.oFEQ    => RETURN tCONST (size, ORD (x =  y))
+  | Op.oFNE    => RETURN tCONST (size, ORD (x #  y))
+  | Op.oFLT    => RETURN tCONST (size, ORD (x <  y))
+  | Op.oFLE    => RETURN tCONST (size, ORD (x <= y))
+  | Op.oFGT    => RETURN tCONST (size, ORD (x >  y))
+  | Op.oFGE    => RETURN tCONST (size, ORD (x >= y))
+  | Op.oFDIV   => IF y # 0.0d0
+                    THEN result := x / y
+                    ELSE RETURN tOP (size, op, l, r, self.line)
+                  END
+  END;
+  RETURN tCONSTF (size, result)
+END;
+@ A more elaborate version of [[fold]] would also refuse to fold
+expressions that overflow at compile time.
+
+%------------------------------------------------------------------------------
+\subsection{Comparisons}\label{MI:Comparisons}
+
+There are methods for the usual 6 comparison operators:
+
+<<overrides>>=
+eq := eq;
+ne := ne;
+gt := gt;
+ge := ge;
+lt := lt;
+le := le;
+@ Each of these returns a Boolean result. Implementing these is similar
+to implementing the binary operators; a new method, [[relop]],
+encapsulates the code and discriminates among the possible relational
+operators based on type:
+
+<<private methods>>=
+relop (iop, uop, rop := Op.oZERO; t := Type.Int; lab := 0) := relop;
+
+<<procedures>>=
+PROCEDURE relop (self: U; iop, uop, rop := Op.oZERO; t := Type.Int; lab := 0) =
+  VAR op: Op;
+  BEGIN
+    <* ASSERT self.sp >= 2 *>
+    <<set [[op]] to the appropriate operator>>
+    WITH left = self.stack[self.sp-1], right = self.stack[self.sp] DO
+      IF <<[[left]] is a constant>> AND <<[[right]] is a constant>>
+        THEN left := fold (self, left.size, op, left, right)
+        ELSE left := tREL (op, left, right, self.line)
+      END
+    END;
+    DEC (self.sp);
+    IF lab # 0 THEN self.if_true(lab, Maybe) END
+  END relop;
+@ [[relop]] can also be passed a label: If [[lab]] is non-zero,
+[[relop]] also calls [[if_true]] to test the outcome of the
+comparison.  This feature is used by [[if_eq]], etc., described below.
+Note that [[fold]], shown above, accepts the relational operators.
+
+The comparions methods all call [[relop]] with the appropriate
+operators.
+
+<<procedures>>=
+PROCEDURE eq (self: U; t: ZType) =
+  BEGIN self.relop (Op.oEQ, Op.oEQ,  Op.oFEQ, t); self.bool () END eq;
+
+PROCEDURE ne (self: U; t: ZType) =
+  BEGIN self.relop (Op.oNE, Op.oNE,  Op.oFNE, t); self.bool () END ne;
+
+PROCEDURE gt (self: U; t: ZType) =
+  BEGIN self.relop (Op.oGT, Op.oUGT, Op.oFGT, t); self.bool () END gt;
+
+PROCEDURE ge (self: U; t: ZType) =
+  BEGIN self.relop (Op.oGE, Op.oUGE, Op.oFGE, t); self.bool () END ge;
+
+PROCEDURE lt (self: U; t: ZType) =
+  BEGIN self.relop (Op.oLT, Op.oULT, Op.oFLT, t); self.bool () END lt;
+
+PROCEDURE le (self: U; t: ZType) =
+  BEGIN self.relop (Op.oLE, Op.oULE, Op.oFLE, t); self.bool () END le;
+@ The comparison trees constructed by [[relop]] can be used only as
+operands to [[CJUMP]] nodes. The [[M3CG]] specification, however,
+dictates that these comparison methods generate code to return Boolean
+values.  [[bool]] converts a test expression into a Boolean value, if
+necessary; see Sec.~\ref{MI:Predefined}.
+
+The front end calls a different set of comparison methods when it
+generates code for a comparison in a control-flow context.
+
+<<overrides>>=
+if_eq := if_eq;
+if_ne := if_ne;
+if_gt := if_gt;
+if_ge := if_ge;
+if_lt := if_lt;
+if_le := if_le;
+@ These methods take a label argument to which control is transferred if
+the comparison is true. This label is passed to [[relop]]:
+
+<<procedures>>=
+PROCEDURE if_eq (self: U; l: Label; t: ZType; <*UNUSED*> f: Frequency) =
+  BEGIN self.relop (Op.oEQ, Op.oEQ,  Op.oFEQ, t, l) END if_eq;
+
+PROCEDURE if_ne (self: U; l: Label; t: ZType; <*UNUSED*> f: Frequency) =
+  BEGIN self.relop (Op.oNE, Op.oNE,  Op.oFNE, t, l) END if_ne;
+
+PROCEDURE if_gt (self: U; l: Label; t: ZType; <*UNUSED*> f: Frequency) =
+  BEGIN self.relop (Op.oGT, Op.oUGT, Op.oFGT, t, l) END if_gt;
+
+PROCEDURE if_ge (self: U; l: Label; t: ZType; <*UNUSED*> f: Frequency) =
+  BEGIN self.relop (Op.oGE, Op.oUGE, Op.oFGE, t, l) END if_ge;
+
+PROCEDURE if_lt (self: U; l: Label; t: ZType; <*UNUSED*> f: Frequency) =
+  BEGIN self.relop (Op.oLT, Op.oULT, Op.oFLT, t, l) END if_lt;
+
+PROCEDURE if_le (self: U; l: Label; t: ZType; <*UNUSED*> f: Frequency) =
+  BEGIN self.relop (Op.oLE, Op.oULE, Op.oFLE, t, l) END if_le;
+@
+
+%------------------------------------------------------------------------------
+\subsection{Address Arithmetic}\label{MI:AddressArithmetic}
+
+The front end calls the methods below to implement common addressing
+idioms.
+
+<<overrides>>=
+add_offset    := add_offset;
+index_address := index_address;
+@ [[add_offset]] increments an address by a constant:
+
+<<procedures>>=
+PROCEDURE add_offset (self: U; i: INTEGER) =
+  BEGIN
+    WITH tos = self.stack[self.sp] DO
+      <<check for [[UPLUS(exp,CONST)]]>>
+      tos := indexAddr (self, tos, i)
+    END
+  END add_offset;
+@ When the tree at the top of the stack is [[UPLUS(exp,CONST)]], the
+result can be simplified by adding the constant in the existing
+[[UPLUS]] tree to [[i]] and rebuilding the [[UPLUS]] tree:
+
+<<check for [[UPLUS(exp,CONST)]]>>=
+IF tos.op = Op.oUPLUS AND tos.right.op = Op.oCONST THEN
+  INC (i, NARROW (tos.right, TreeIR.Int).i);
+  tos := tos.left
+END;
+@ [[indexAddr]] builds the tree [[UPLUS(exp,CONST)]]; see
+Sec.~\ref{MI:Miscellaneous}.
+
+[[index_address]] implements array indexing when the element size ---
+the stride --- is known at compile time. It takes an address $A$ and
+an integer value $n$ from the stack and computes the address $A +
+n\times[[size]]$, where [[size]] is the array stride and is a constant.
+The integer $n$ is at the top of the stack and $A$ is under it.
+[[index_address]] is implemented by calling other methods to build the
+appropriate tree:
+
+<<procedures>>=
+PROCEDURE index_address (self: U; size: INTEGER) =
+  BEGIN
+    <* ASSERT self.sp >= 2 *>
+    IF size # 1 THEN
+        self.push_integer (size);
+        self.binary (Op.oUMUL)
+    END;
+    self.convert (Op.oCVTSU, CG_Bytes[Type.Addr]);
+    self.binary (Op.oUPLUS)
+  END index_address;
+@
+
+%------------------------------------------------------------------------------
+\subsection{Predefined Procedures}\label{MI:Predefined}
+
+The 7 predefined arithmetic operators are each implemented by a method:
+
+<<overrides>>=
+abs     := abs;
+max     := max;
+min     := min;
+round   := round;
+trunc   := trunc;
+floor   := floor;
+ceiling := ceiling;
+@ [[MI]] implements these by constructing the appropriate IR trees.
+Implementations of [[MD]] might override these methods if there is a
+superior implementation for a specific target machine, e.g., the MIPS
+has an instruction to perform [[ABS]] on floating-point values.
+
+The [[MI]] implementation of these methods differs from other
+[[M3CG.T]] methods because the trees must be expressions, but also
+include statements, such as jumps. In general, these methods return
+trees of the form [[ALLOC(TEMP,ESEQ(stm,exp))]], where the [[TEMP]]
+node points to a temporary that is assigned the desired value. The [[stm]]
+tree is a sequence of trees that compute this value and assign it to
+the temporary, and [[exp]] is the resulting value, which is often the
+temporary. [[alloc]] implements a form of this idiom that admits up
+to four temporaries:
+
+<<private methods>>=
+alloc (result: Tree; t1, t2, t3, t4: Temp := NIL; save: Tree) := alloc;
+
+<<procedures>>=
+PROCEDURE alloc (self: U; result: Tree;
+    t1, t2, t3, t4: Temp := NIL; save: Tree) =
+  VAR tree := self.current;
+  BEGIN
+    IF result = NIL
+      THEN tree := tESEQ (tree, tCONST (CG_Bytes[Type.Int], 0))
+      ELSE tree := tESEQ (tree, result)
+    END;
+    IF t4 # NIL THEN tree := tALLOC (t4, tree) END;
+    IF t3 # NIL THEN tree := tALLOC (t3, tree) END;
+    IF t2 # NIL THEN tree := tALLOC (t2, tree) END;
+    IF t1 # NIL THEN tree := tALLOC (t1, tree) END;
+    self.current := save;
+    IF result = NIL
+      THEN self.append (tree, clean := TRUE)
+      ELSE self.push (tree)
+    END
+  END alloc;
+@ [[alloc]] uses the current IR tree as the [[stm]] tree.  If
+[[result]] is [[NIL]], there is no result {\em per se}, and [[alloc]]
+must fabricate one to satisfy [[tALLOC]]'s constraints. A [[NIL]]
+[[result]] also causes the [[ALLOC]] node to be appended onto the
+just-restored current IR tree; otherwise, the [[ALLOC]] node is pushed
+onto the stack.
+
+The procedure [[temp]] wraps a temporary inside a [[TEMP]] node:
+
+<<procedures>>=
+PROCEDURE temp (self: U; t1: Temp): Tree =
+  VAR tree := tTEMP (CG_Bytes[t1.type], t1);
+  BEGIN
+    CASE t1.type OF
+    | Type.Reel, Type.LReel, Type.XReel =>
+        tree := tCONVERT (tree.size, Op.oCVTFF, tree, self.line)
+    ELSE
+    END;
+    RETURN tree
+  END temp;
+@ The [[CVTFF]] distinguishes floating-point temporaries from other
+temporaries.
+
+The temporaries that appear in [[ALLOC]] nodes are assigned
+registers during code generation. They are thus declared by separate
+method, which [[MD]] implements.
+
+<<public methods>>=
+declare_register (t: Type): Temp;
+@
+
+[[ABS (x)]] typifies the implementation of predefined procedures and
+is implemented by the equivalent of the pseudo-code
+\begin{quote}\small
+\begin{verbatim}
+   t1 := x
+   IF t1 >= 0 GOTO 1f
+   t1 := -t1
+1: RETURN t1
+\end{verbatim}
+\end{quote}
+The [[RETURN t1]] identifies the temporary that is passed as [[result]] to
+[[alloc]].  As described in Sec.~\ref{MI:Counters}, the labels 1--9 are
+used for ``local'' labels, as illustrated by this sequence.
+
+The methods for predefined procedures must construct an isolated
+statement-level IR tree, e.g., [[abs]] must construct a tree for the
+sequence above.  It does so by saving the current value of
+[[self.current]], setting [[self.current]] to [[NIL]], and passing the
+saved value to [[alloc]], which restores [[self.current]] as shown above.
+
+<<procedures>>=
+PROCEDURE abs (self: U; t: AType) =
+  VAR t1: Temp; save := self.current;
+  BEGIN
+    <* ASSERT self.sp >= 1 *>
+    IF t # Type.Word THEN
+      self.current := NIL;
+      t1 := self.declare_register (t);
+      self.pop_temp (t1); (* t1 := pop() *)
+      <<[[IF t1 >= 0 GOTO 1f]]>>
+      <<[[t1 := -t1]]>>
+      <<[[1: RETURN t1]]>>
+    END
+  END abs;
+@ Jumping to [[1f]] if [[t1]] is greater than or equal to [[0.0]] is
+synthesized by calling other methods:
+
+<<[[IF t1 >= 0 GOTO 1f]]>>=
+self.push_temp (t1);
+CASE t OF <*NOWARN*>
+| Type.Int                          => self.push_integer (0)
+| Type.Reel, Type.LReel, Type.XReel => self.push_float (0.0, t)
+END;
+self.if_ge (1, t, Maybe);
+@ Likewise, [[negate]] implements [[t1 := -t1]]:
+
+<<[[t1 := -t1]]>>=
+self.push_temp (t1);
+self.negate (t);
+self.pop_temp (t1);
+@ A label and a call to [[alloc]] complete the implementation:
+
+<<[[1: RETURN t1]]>>=
+self.set_label (1);
+self.alloc (temp (self, t1), t1, save := save);
+@
+
+[[max]] requires two temporaries:
+
+<<procedures>>=
+PROCEDURE max (self: U; t: ZType) =
+  VAR save := self.current;
+      t1 := self.declare_register (t);
+      t2 := self.declare_register (t);
+  BEGIN
+    <* ASSERT self.sp >= 2 *>
+    self.current := NIL;
+    self.pop_temp (t1);
+    self.pop_temp (t2);
+    <<[[IF t1 > t2 GOTO 2f]]>>
+    <<[[t1 := t2]]>>
+    <<[[2: RETURN t1]]>>
+  END max;
+
+<<[[IF t1 > t2 GOTO 2f]]>>=
+self.push_temp (t1);
+self.push_temp (t2);
+self.if_gt (2, t, Maybe);
+
+<<[[t1 := t2]]>>=
+self.push_temp (t2);
+self.pop_temp  (t1);
+
+<<[[2: RETURN t1]]>>=
+self.set_label (2);
+self.alloc (temp (self, t1), t1, t2, save := save);
+@ [[min]] is nearly identical and can thus use all but one of [[max]]'s
+fragments:
+
+<<procedures>>=
+PROCEDURE min (self: U; t: ZType) =
+  VAR save := self.current;
+      t1 := self.declare_register (t);
+      t2 := self.declare_register (t);
+  BEGIN
+    self.current := NIL;
+    self.pop_temp (t1);
+    self.pop_temp (t2);
+    <<[[IF t1 < t2 GOTO 2f]]>>
+    <<[[t1 := t2]]>>
+    <<[[2: RETURN t1]]>>
+  END min;
+
+<<[[IF t1 < t2 GOTO 2f]]>>=
+self.push_temp (t1);
+self.push_temp (t2);
+self.if_lt (2, t, Maybe);
+@
+
+[[round]], [[trunc]], [[floor]], and [[ceiling]] implement the
+predefined operations by the same names.  [[MI]] provides
+machine-independent, but perhaps sub-optimal implementations for each
+method.  [[trunc]] is the easiest because it is implemented by the
+[[CVTFS]] operator:
+
+<<procedures>>=
+PROCEDURE trunc (self: U; <*UNUSED*>t: RType) =
+  BEGIN
+    <* ASSERT self.sp >= 1 *>
+    self.convert (Op.oCVTFS, CG_Bytes[Type.Int])
+  END trunc;
+@
+
+[[ROUND (x)]] is equal to [[TRUNC (x+0.5)]] if [[x]] is positive and
+[[TRUNC (x-0.5)]] if [[x]] is negative. Thus, the sequence
+\begin{quote}\small
+\begin{verbatim}
+   t1 := x
+   IF t1 >= 0.0 GOTO 1f
+   t1 := t1 - 0.5
+   GOTO 2f
+1: t1 := t1 + 0.5
+2: RETURN TRUNC (t1)
+\end{verbatim}
+\end{quote}
+implements [[ROUND (x)]]. Note the use of two local labels.
+
+<<procedures>>=
+PROCEDURE round (self: U; t: RType) =
+  VAR t1 := self.declare_register (t); save := self.current;
+  BEGIN
+    <* ASSERT self.sp >= 1 *>
+    self.current := NIL;
+    self.pop_temp (t1);
+    <<[[IF t1 >= 0.0 GOTO 1f]]>>
+
+    self.push_temp (t1);        (*    t1 := t1 - 0.5 *)
+    self.push_float (0.5, t);
+    self.binary (rop := Op.oFMINUS, t := t);
+    self.pop_temp (t1);
+    self.jump (2);              (*    GOTO 2f *)
+
+    self.set_label (1);         (* 1: t1 := t1 + 0.5 *)
+    self.push_temp (t1);
+    self.push_float (0.5, t);
+    self.binary (rop := Op.oFPLUS, t := t);
+    self.pop_temp (t1);
+
+    self.set_label (2);         (* 2: RETURN TRUNC(t1) *)
+    self.alloc (temp (self, t1), t1, save := save);
+    self.trunc (t)
+  END round;
+
+<<[[IF t1 >= 0.0 GOTO 1f]]>>=
+<<push [[t1]] and [[0.0]]>>
+self.if_ge (1, t, Maybe);
+
+<<push [[t1]] and [[0.0]]>>=
+self.push_temp (t1);
+self.push_float (0.0, t1.type);
+@ Note that the [[ALLOC]] node becomes the argument to [[trunc]].
+Truncating the augmented value of [[t1]] would require another
+temporary (of type integer) to hold the result.
+
+[[FLOOR (x)]] is slightly more complicated.  If [[x]] is positive,
+[[FLOOR (x)]] is equal to [[TRUNC (x)]].  If [[x]] is negative,
+[[FLOOR (x)]] is equal to [[TRUNC (x)]] only if [[FLOAT (TRUNC (x))]] is
+equal to [[x]]; otherwise, [[FLOOR (x)]] is [[TRUNC (x)-1]]. [[floor]]
+implements this approach using [[t1]] to hold [[x]]
+and [[t2]] to hold [[TRUNC (x)]]:
+
+<<procedures>>=
+PROCEDURE floor (self: U; t: RType) =
+  VAR save := self.current;
+      t1 := self.declare_register (t);
+      t2 := self.declare_register (Type.Int);
+  BEGIN
+    <* ASSERT self.sp >= 1 *>
+    self.current := NIL;
+    self.pop_temp (t1);
+    <<[[t2 := TRUNC (t1)]]>>
+    <<[[IF t1 >= 0.0 GOTO 1f]]>>
+    <<[[IF FLOAT (t2) = t1 GOTO 1f]]>>
+
+    <<push [[t2]] and [[1]]>>    (* t2 := t2 - 1 *)
+    self.binary (Op.oMINUS);
+    self.pop_temp (t2);
+
+    <<[[1: RETURN t2]]>>
+ END floor;
+
+<<[[t2 := TRUNC (t1)]]>>=
+self.push_temp (t1);
+self.trunc (t);
+self.pop_temp (t2);
+
+<<[[IF FLOAT (t2) = t1 GOTO 1f]]>>=
+self.push_temp (t2);
+self.convert (Op.oCVTSF, CG_Bytes[t]);
+self.push_temp (t1);
+self.if_eq (1, t, Maybe);
+
+<<push [[t2]] and [[1]]>>=
+self.push_temp (t2);
+self.push_integer (1);
+
+<<[[1: RETURN t2]]>>=
+self.set_label (1);
+self.alloc (temp (self, t2), t1, t2, save := save);
+@
+
+[[CEILING (x)]] is similar to [[FLOOR (x)]] and can
+use most of its fragments.  If [[x]] is negative,
+[[CEILING (x)]] is equal to [[TRUNC (x)]].  If [[x]] is positive,
+[[CEILING (x)]] is equal to [[TRUNC (x)]] only if [[FLOAT (TRUNC (x))]] is
+equal to [[x]]; otherwise, [[CEILING (x)]] is [[TRUNC (x)+1]]:
+
+<<procedures>>=
+PROCEDURE ceiling (self: U; t: RType) =
+  VAR save := self.current;
+      t1 := self.declare_register (t);
+      t2 := self.declare_register (Type.Int);
+  BEGIN
+    <* ASSERT self.sp >= 1 *>
+    self.current := NIL;
+    self.pop_temp (t1);
+    <<[[t2 := TRUNC (t1)]]>>
+
+    <<push [[t1]] and [[0.0]]>>  (* IF t1 <= 0.0 GOTO 1f *)
+    self.if_le (1, t, Maybe);
+
+    <<[[IF FLOAT (t2) = t1 GOTO 1f]]>>
+
+    <<push [[t2]] and [[1]]>>    (* t2 := t2 + 1 *)
+    self.binary (Op.oPLUS);
+    self.pop_temp (t2);
+
+    <<[[1: RETURN t2]]>>
+  END ceiling;
+@
+
+[[MI]] defines [[bool]] to convert test expressions to bona fide
+Boolean values when necessary:
+
+<<private methods>>=
+bool () := bool;
+
+<<procedures>>=
+PROCEDURE bool (self: U) =
+  BEGIN
+    IF self.stack[self.sp].op IN TreeIR.Relop THEN
+      <<generate a Boolean value>>
+    END
+  END bool;
+@ The general form of the generated code is
+\begin{quote}\small
+\begin{verbatim}
+   t1 := 1
+   IF test GOTO 1f
+   t1 := 0
+1: RETURN t1
+\end{verbatim}
+\end{quote}
+which is implemented by
+
+<<generate a Boolean value>>=
+VAR t1 := self.declare_register (Type.Int); save := self.current;
+BEGIN
+  self.current := NIL;
+  self.push_integer (1);
+  self.pop_temp (t1);
+  self.if_true (1, Maybe);
+  self.push_integer (0);
+  self.pop_temp (t1);
+  <<[[1: RETURN t1]]>>
+END;
+@
+
+%------------------------------------------------------------------------------
+\subsection{Sets}\label{MI:Sets}
+
+A set is represented as a bit vector, i.e., by a pointer to an array
+of integers.  The sizes of sets are known at compile time, which the
+13~set methods take as an argument.
+
+<<overrides>>=
+set_union          := set_union;
+set_difference     := set_difference;
+set_intersection   := set_intersection;
+set_sym_difference := set_sym_difference;
+set_member         := set_member;
+set_eq             := set_eq;
+set_ne             := set_ne;
+set_lt             := set_lt;
+set_le             := set_le;
+set_gt             := set_gt;
+set_ge             := set_ge;
+set_range          := set_range;
+set_singleton      := set_singleton;
+@ [[set_union]], which computes [[z := x]]~$\cup$~[[y]], typifies the set methods:
+
+<<procedures>>=
+PROCEDURE set_union (self: U; s: ByteSize) =
+  PROCEDURE union () = BEGIN self.binary (Op.oOR) END union;
+  BEGIN
+    self.set_op (s, union);
+  END set_union;
+@ The code is generated by [[set_op]], which is passed a procedure to
+compute the appropriate operation for each word of the result, e.g.,
+[[union]] in the code above.  [[set_op]] generates a loop over
+the individual words of each operand; the general form of the loop is
+\begin{quote}\small
+\begin{verbatim}
+   v  := z
+   t1 := x
+   t2 := y
+   i  := s
+1: i  := i - Set_grain_bytes
+   v[i] := t1[i] op t2[i]
+   IF i > 0 GOTO 1b
+\end{verbatim}
+\end{quote}
+where
+<<variables>>=
+Set_grain_bytes := Target.Set_grain DIV Target.Byte;
+@ is the number of bytes in the set allocation unit.  For union, the
+two difference operations, and intersection, the stack holds the result
+[[z]], and the operands [[x]], and [[y]], in that order.  [[op]] in the
+schema above denotes the call to the procedure passed to [[set_op]].
+[[s]] is the size of the set in set allocation units and is a
+compile-time constant.  Note that [[i]] is initialized to index the
+last unit of [[x]], [[y]], and [[z]] and marches backwards.
+
+Like the predefined operators described above, [[set_op]] saves
+[[self.current]] so that can generate an isolated sequence of IR trees:
+
+<<private methods>>=
+set_op (s: ByteSize; op: PROCEDURE ()) := set_op;
+
+<<procedures>>=
+PROCEDURE set_op (self: U; s: ByteSize; op: PROCEDURE ()) =
+  VAR v  := self.declare_register (Type.Addr);
+      t1 := self.declare_register (Type.Addr);
+      t2 := self.declare_register (Type.Addr);
+      i  := self.declare_register (Type.Int);
+      save := self.current;
+  BEGIN
+    <* ASSERT self.sp >= 3 *>
+    self.current := NIL;
+
+    self.pop_temp (t2);
+    self.pop_temp (t1);
+    self.pop_temp (v);
+    self.push_integer (s);
+    self.pop_temp (i);
+
+    <<[[1: i := i - Set_grain_bytes]]>>
+
+    self.push_temp (v);     (* v[i] := t1[i] op t2[i] *)
+    self.push_temp (i);
+    self.index_address (1);
+    self.push_temp (t1);
+    <<fetch set element [[t[i] ]]>>
+    self.push_temp (t2);
+    <<fetch set element [[t[i] ]]>>
+    op ();
+    self.store_indirect (0, Type.Int);
+
+    <<[[IF i > 0 GOTO 1b]]>>
+
+     self.alloc (NIL, v, t1, t2, i, save := save)
+  END set_op;
+@ These set operators beahave like assignment; they do not return a value,
+so a [[NIL]] result is passed to [[alloc]], which builds 4~[[ALLOC]] nodes.
+
+<<[[IF i > 0 GOTO 1b]]>>=
+self.push_temp (i);
+self.push_integer (0);
+self.relop (Op.oGT, lab := -1);
+@ The label [[-1]] in this chunk indicates that the jump is a backwards
+jump to the local label [[1]].  Manipulating [[i]] is straightforward:
+
+<<[[1: i := i - Set_grain_bytes]]>>=
+self.set_label (1);
+self.push_temp (i);
+self.push_integer (Set_grain_bytes);
+self.binary (Op.oMINUS);
+self.pop_temp (i);
+@ Computing the address of [[v[i]]] and fetching the values of [[t1[i]]]
+and [[t1[i]]] uses indexed addressing:
+
+<<fetch set element [[t[i] ]]>>=
+self.push_temp (i);
+self.index_address (1);
+self.load_indirect (0, Type.Int);
+@ The other three infix set operators are implemented similarly.
+[[set_intersection]] is the {\sc and} of the bit vectors:
+
+<<procedures>>=
+PROCEDURE set_intersection (self: U; s: ByteSize) =
+  PROCEDURE intersection () = BEGIN self.binary (Op.oAND) END intersection;
+  BEGIN
+    self.set_op (s, intersection)
+  END set_intersection;
+@ [[set_sym_difference]] implements symmetric difference of two
+sets, which is exclusive-{\sc or} of the bit vectors:
+
+<<procedures>>=
+  PROCEDURE set_sym_difference (self: U; s: ByteSize) =
+  PROCEDURE difference () = BEGIN self.binary (Op.oXOR) END difference;
+  BEGIN
+    self.set_op (s, difference)
+  END set_sym_difference;
+@ Set difference, [[x - y]], is the {\sc and} of each word
+of [[x]] with the complement of the corresponding word in [[y]]:
+
+<<procedures>>=
+PROCEDURE set_difference (self: U; s: ByteSize) =
+  PROCEDURE difference () =
+    BEGIN self.unary (Op.oCOMP); self.binary (Op.oAND) END difference;
+  BEGIN
+    self.set_op (s, difference)
+  END set_difference;
+@
+
+[[x IN y]] causes the front end to call [[set_member]] with [[x]] on
+the top of the stack followed by [[y]].  Membership is implemented by
+shifting the appropriate word of set right so that the bit
+corresponding to [[x]] is positioned at bit 0; {\sc and}ing this bit
+with 1 yields the result.  [[x DIV Target.Set_grain]] selects the
+appropriate word and [[x MOD Target.Set_grain]] selects the appropriate
+bit within the word.  The two uses of [[x]] require that [[x]] be
+copied to a temporary, [[t1]]:
+
+<<procedures>>=
+PROCEDURE set_member (self: U; <*UNUSED*>s: ByteSize) =
+  VAR t1 := self.declare_register (Type.Word); save := self.current;
+  BEGIN
+    <* ASSERT self.sp >= 2 *>
+    self.current := NIL;
+    self.pop_temp (t1);
+    <<push the address of [[y[t1 DIV Target.Set_grain] ]]>>
+    self.load_indirect (0, Type.Word);
+    <<shift right by [[t1 MOD Target.Set_grain]]>>
+    self.push_integer (1);
+    self.binary (Op.oAND);
+    WITH t2 = NIL DO <<[[RETURN]] top of stack>> END
+  END set_member;
+
+<<shift right by [[t1 MOD Target.Set_grain]]>>=
+self.push_temp (t1);
+self.push_integer (Target.Set_grain); 
+self.binary (Op.oMOD);
+self.binary (Op.oRSHIFT);
+
+<<[[RETURN]] top of stack>>=
+VAR tos := self.stack[self.sp];
+BEGIN
+  DEC (self.sp);
+  self.alloc (tos, t1, t2, save := save)
+END;
+@ [[Target.Set_grain]] is always a power of two, which causes
+[[binary]] to convert unsigned modulus and division to logical
+operations:
+
+<<push the address of [[y[t1 DIV Target.Set_grain] ]]>>=
+self.push_temp (t1);
+self.push_integer (Target.Set_grain);
+self.binary (Op.oDIV);
+self.index_address (Set_grain_bytes);
+@
+
+The front end generates a call to [[set_singleton]] for operations that
+add one element to a set. The index of the element, [[x]], is on the
+top of the stack followed by the set, [[y]].  Adding one element
+amounts to {\sc or}ing in the appropriate bit.  The situation is
+similar to testing for membership, except that two temporaries are
+required: [[t1]] holds a 1 shifted left to the position corresponding
+to [[x]] and [[t2]] holds the address of the appropriate word in
+[[y]].
+
+<<procedures>>=
+PROCEDURE set_singleton (self: U; <*UNUSED*>s: ByteSize) =
+  VAR save := self.current;
+      t1 := self.declare_register (Type.Word);
+      t2 := self.declare_register (Type.Addr);
+  BEGIN
+    <* ASSERT self.sp >= 2 *>
+    self.current := NIL;
+    self.pop_temp (t1);
+    <<push the address of [[y[t1 DIV Target.Set_grain] ]]>>
+    self.pop_temp (t2);
+    self.push_temp (t2);
+    self.load_indirect (0, Type.Word);
+    self.push_integer (1);
+    <<shift left by [[t1 MOD Target.Set_grain]]>>
+    self.binary (Op.oOR);
+
+    self.push_temp (t2);
+    self.exch ();
+    self.store_indirect (0, Type.Int);
+    self.alloc (NIL, t1, t2, save := save)
+  END set_singleton;
+
+<<shift left by [[t1 MOD Target.Set_grain]]>>=
+self.push_temp (t1);
+self.push_integer (Target.Set_grain); 
+self.binary (Op.oMOD);
+self.binary (Op.oLSHIFT);
+@ [[MI]]'s [[exch]] is similar to [[swap]] (see
+Sec.~\ref{MI:Miscellaneous}), but [[exch]] can be called {\em only\/}
+when it is known that swapping the execution order of the trees on the
+stack is harmless:
+
+<<private methods>>=
+exch () := exch;
+
+<<procedures>>=
+PROCEDURE exch (self: U) =
+  VAR tmp: Tree;
+  BEGIN
+    <* ASSERT self.sp >= 2 *>
+    tmp := self.stack[self.sp];
+    self.stack[self.sp] := self.stack[self.sp-1];
+    self.stack[self.sp-1] := tmp
+  END exch;
+@
+
+The set comparison methods are similar to the set operators: They
+generate a loop to compare each pair of integers in the two operands.
+They initialize a Boolean outcome and reset it in the body of the
+loop. When the outcome is reset, the loop terminates prematurely. The
+general form of the generated code is
+\begin{quote}\small
+\begin{verbatim}
+   t1 := x
+   t2 := y
+   b  := init
+   i  := s
+1: i  := i - Set_grain_bytes
+   IF t1[i] op t2[i] GOTO 2f
+   b  := reset
+   GOTO 3f
+2: body
+   IF i > 0 GOTO 1b
+3: RETURN b
+\end{verbatim}
+\end{quote}
+[[x]] and [[y]] are the two operands; [[y]] is at the top of the
+stack. [[init]] is the initial value of the Boolean outcome, [[b]],
+and [[reset]] is the value [[b]] is reset too when the outcome becomes
+known. [[body]] optionally modifies [[b]] and is used only for
+[[set_lt]].  [[set_cmp]] implements this general scheme:
+
+<<private methods>>=
+set_cmp (s: ByteSize; init, reset: INTEGER; op: PROCEDURE ();
+         body: PROCEDURE (t1, t2, i, b: Temp) := NIL) := set_cmp;
+@ [[op]] implements the test inside the loop, and [[body]], if non-NIL,
+implements the modification of [[b]].  [[set_cmp]] is called by the
+set comparison methods with the appropriate arguments, e.g.,
+
+<<procedures>>=
+PROCEDURE set_eq (self: U; s: ByteSize) =
+  PROCEDURE eq () = BEGIN self.relop (Op.oEQ, lab := 2) END eq;
+  BEGIN
+    self.set_cmp (s, 1, 0, eq)
+  END set_eq;
+@ Note that [[op]] must generate a test that, if true, causes the loop
+to {\em continue\/} and must coordinate this procedure with the value
+passed as [[init]]. Thus, [[set_eq]] initializes the outcome to
+[[TRUE]] (1) and generates code to continue the loop as long as the
+elements of the sets are equal.
+
+[[set_cmp]] is as follows.
+
+<<procedures>>=
+PROCEDURE set_cmp (self: U; s: ByteSize; init, reset: INTEGER;
+            op: PROCEDURE (); body: PROCEDURE (t1, t2, i, b: Temp) := NIL) =
+  VAR t1 := self.declare_register (Type.Addr);
+      t2 := self.declare_register (Type.Addr);
+      i  := self.declare_register (Type.Int);
+      b  := self.declare_register (Type.Int);
+      save := self.current;
+  BEGIN
+    <* ASSERT self.sp >= 2 *>
+    self.current := NIL;
+    self.pop_temp (t2);
+    self.pop_temp (t1);
+    self.push_integer (init);
+    self.pop_temp (b);
+    self.push_integer (s);
+    self.pop_temp (i);
+
+    <<[[1: i := i - Set_grain_bytes]]>>
+
+    self.push_temp (t1);         (* IF t1[i] op t2[i] GOTO 2f *)
+    <<fetch set element [[t[i] ]]>>
+    self.push_temp (t2);
+    <<fetch set element [[t[i] ]]>>
+    op ();
+
+    self.push_integer (reset);   (* b := reset *)
+    self.pop_temp (b);
+    self.jump (3);               (* GOTO 3f *)
+
+    self.set_label (2);
+    IF body # NIL THEN body (t1, t2, i, b) END;
+    <<[[IF i > 0 GOTO 1b]]>>
+
+    <<[[3: RETURN b]]>>
+  END set_cmp;
+
+<<[[3: RETURN b]]>>=
+self.set_label (3);
+self.alloc (temp (self, b), t1, t2, i, b, save := save);
+@ [[set_ne]] is similar to [[set_eq]], except it initializes the outcome
+to [[FALSE]]:
+
+<<procedures>>=
+PROCEDURE set_ne (self: U; s: ByteSize) =
+  PROCEDURE eq () = BEGIN self.relop (Op.oEQ, lab := 2) END eq;
+  BEGIN
+    self.set_cmp (s, 0, 1, eq)
+  END set_ne;
+@ [[set_le]] initializes the outcome to [[TRUE]] and generates a loop
+that continues as long as [[x&~y = 0]] for each word [[x]] and [[y]]
+in the operand sets:
+
+<<procedures>>=
+PROCEDURE set_le (self: U; s: ByteSize) =
+  PROCEDURE le () =
+    BEGIN
+      self.unary (Op.oCOMP);
+      self.binary (Op.oAND);
+      self.push_integer (0);
+      self.relop (Op.oEQ, lab := 2)
+    END le;
+  BEGIN
+    self.set_cmp (s, 1, 0, le)
+  END set_le;
+@ [[set_gt]] and [[set_ge]] are implemented by exchanging the operands and
+calling [[set_lt]] and [[set_le]], respectively.
+
+<<procedures>>=
+PROCEDURE set_gt (self: U; s: ByteSize) =
+  BEGIN self.exch (); self.set_lt (s) END set_gt;
+
+PROCEDURE set_ge (self: U; s: ByteSize) =
+  BEGIN self.exch (); self.set_le (s) END set_ge;
+@
+
+[[set_lt]] tests if one set is a proper subset of another set. This
+test is accomplished by initializing the outcome to [[FALSE]],
+generating a loop like the one generated by [[set_le]], but adding
+code to modify [[b]], if appropriate.
+
+<<procedures>>=
+PROCEDURE set_lt (self: U; s: ByteSize) =
+  PROCEDURE le () =
+    BEGIN
+      self.unary (Op.oCOMP);
+      self.binary (Op.oAND);
+      self.push_integer (0);
+      self.relop (Op.oEQ, lab := 2)
+    END le;
+  PROCEDURE body (t1, t2, i, b: Temp) =
+    BEGIN <<[[b |= t1[i] != t2[i] ]]>> END body;
+  BEGIN
+    self.set_cmp (s, 0, 0, le, body)
+  END set_lt;
+@ [[body]] generates code to make [[b]] [[TRUE]] if \verb|t1[i]| is not
+equal to \verb|t2[i]|. It's already determined that \verb|t1[i] <= t2[i]|,
+so if \verb|t1[i] != t2[i]|, then \verb|t1[i] < t2[i]|.
+
+<<[[b |= t1[i] != t2[i] ]]>>=
+self.push_temp (t1);       (*    IF t1[i] = t2[i] GOTO 4f *)
+<<fetch set element [[t[i] ]]>>
+self.push_temp (t2);
+<<fetch set element [[t[i] ]]>>
+self.relop (Op.oEQ, lab := 4);
+
+self.push_temp (b);        (*    b := b | 1*)
+self.push_integer (1);
+self.binary (Op.oOR);
+self.pop_temp (b);
+
+self.set_label (4);        (* 4: *)
+@
+
+[[set_range]] takes a set address and two integers, [[m]] and [[n]], in
+that order, and sets bits [[m]] through [[n]] in the set to [[1]].
+[[m]] and [[n]] can be arbitrary indices into the set and [[m]] might
+be greater than [[n]].  The generated code has the general form shown
+below; [[*t1]] denotes indirect addressing.
+\begin{quote}\small
+\begin{verbatim}
+   t1  := x
+   t2  := m
+   t3  := n
+   IF t2 > t3 GOTO 4f
+   end := &t1[t3 DIV Target.Set_grain]
+   t1  := &t1[t2 DIV Target.Set_grain]
+   t3  := Target.Set_grain - 1 - (t3 MOD Target.Set_grain)
+   IF t1 < end GOTO 2f
+   *t1 := *t1 | (((-1@<<(t2 MOD Target.Set_grain))@<<t3)>>t3)
+   GOTO 4f
+2: *t1 := *t1 | (-1@<<(t2 MOD Target.Set_grain))
+   GOTO 3f
+1: *t1 := -1
+3: t1  := t1 + Set_grain_bytes
+   IF t1 < end GOTO 1b
+   *t1 := *t1 | (-1>>t3)
+4:
+\end{verbatim}
+\end{quote}
+
+<<procedures>>=
+PROCEDURE set_range (self: U; <*UNUSED*>s: ByteSize) =
+  VAR save := self.current;
+      t1  := self.declare_register (Type.Addr);
+      t2  := self.declare_register (Type.Int);
+      t3  := self.declare_register (Type.Int);
+      end := self.declare_register (Type.Addr);
+  BEGIN
+    <* ASSERT self.sp >= 3 *>
+    self.current := NIL;
+    self.pop_temp (t3);      (*    t3 := n *)
+    self.pop_temp (t2);      (*    t2 := m *)
+    self.pop_temp (t1);      (*    t1 := x *)
+
+    self.push_temp (t2);     (*    IF t2 > t3 GOTO 4f *)
+    self.push_temp (t3);
+    self.relop (Op.oGT, lab := 4);
+
+    WITH a = end, b = t3 DO  (*    end := &t1[t3 DIV Target.Set_grain] *)
+      <<[[a := &t1[b DIV Target.Set_grain] ]]>> END;
+    WITH a = t1, b = t2 DO   (*    t1  := &t1[t2 DIV Target.Set_grain] *)
+      <<[[a := &t1[b DIV Target.Set_grain] ]]>> END;
+
+    (* t3 := Target.Set_grain - 1 - (t3 MOD Target.Set_grain) *)
+    self.push_temp (t3);
+    self.push_integer (Target.Set_grain);
+    self.binary (Op.oMOD);
+    self.unary (Op.oNEG);
+    self.push_integer (Target.Set_grain - 1);
+    self.binary (Op.oUPLUS);
+    self.pop_temp (t3);
+
+    self.push_temp (t1);     (*    IF t1 < end GOTO 2f *)
+    self.push_temp (end);
+    self.relop (Op.oLT, lab := 2);
+
+    (* *t1 := *t1 | (((-1@<<(t2 MOD Target.Set_grain))@<<t3)>>t3) *)
+    WITH a = t2 DO <<[[-1<<(a MOD Target.Set_grain)]]>> END;
+    self.push_temp (t3);
+    self.binary (Op.oLSHIFT);
+    self.push_temp (t3);
+    self.binary (Op.oRSHIFT);
+    <<[[*t1 := *t1 | ]] top of stack>>
+
+    self.jump (4);           (*    GOTO 4f *)
+
+    self.set_label (2);    (* 2: *t1 := *t1 | (-1@<<(t2 MOD Target.Set_grain)) *)
+    WITH a = t2 DO <<[[-1<<(a MOD Target.Set_grain)]]>> END;
+    <<[[*t1 := *t1 | ]] top of stack>>
+
+    self.jump (3);           (*    GOTO 3f *)
+
+    self.set_label (1);      (* 1: *t1 := -1 *)
+    self.push_temp (t1);
+    self.push_integer (-1);
+    self.store_indirect (0, Type.Word);
+
+    self.set_label (3);      (* 3: t1 := t1 + Set_grain_bytes *)
+    self.push_temp (t1);   
+    self.push_integer (Set_grain_bytes);
+    self.binary (Op.oUPLUS);
+    self.pop_temp (t1);
+
+    self.push_temp (t1);     (* IF t1 < end GOTO 1b *)
+    self.push_temp (end);
+    self.relop (Op.oLT, lab := -1);
+
+    (* *t1 := *t1 | (-1>>t3)) *)
+    self.push_integer (-1);
+    self.push_temp (t3);
+    self.binary (Op.oRSHIFT);
+    <<[[*t1 := *t1 | ]] top of stack>>
+
+    self.set_label (4);      (* 4: *)
+
+    self.alloc (NIL, t1, t2, t3, end, save := save)
+  END set_range;
+
+<<[[a := &t1[b DIV Target.Set_grain] ]]>>=
+self.push_temp (t1);
+self.push_temp (b);
+self.push_integer (Target.Set_grain);
+self.binary (Op.oDIV);
+self.index_address (Set_grain_bytes);
+self.pop_temp (a);
+
+<<[[*t1 := *t1 | ]] top of stack>>=
+self.push_temp (t1);
+self.load_indirect (0, Type.Word);
+self.binary (Op.oOR);
+self.push_temp (t1);
+self.exch ();
+self.store_indirect (0, Type.Word);
+
+<<[[-1<<(a MOD Target.Set_grain)]]>>=
+self.push_integer (-1);
+self.push_temp (a);
+self.push_integer (Target.Set_grain);
+self.binary (Op.oMOD);
+self.binary (Op.oLSHIFT);
+@
+
+%------------------------------------------------------------------------------
+\subsection{Word Operations}\label{MI:WordOperations}
+
+The front end generates in-line code for the following operations in
+the required [[Word]] interface.
+
+<<overrides>>=
+not          := not;
+and          := and;
+or           := or;
+xor          := xor;
+shift        := shift;
+shift_left   := shift_left;
+shift_right  := shift_right;
+rotate       := rotate;
+rotate_left  := rotate_left;
+rotate_right := rotate_right;
+extract      := extract;
+extract_n    := extract_n;
+extract_mn   := extract_mn;
+insert       := insert;
+insert_n     := insert_n;
+insert_mn    := insert_mn;
+@ The simple logical operations [[and]], [[or]], [[xor]],
+[[shift_left]], [[shift_right]], and the unary [[not]] are implemented
+with the corresponding tree operators:
+
+<<procedures>>=
+PROCEDURE not (self: U) =
+  BEGIN self.unary (Op.oCOMP) END not;
+
+PROCEDURE and (self: U) =
+  BEGIN self.binary (Op.oAND) END and;
+
+PROCEDURE or (self: U) =
+  BEGIN self.binary (Op.oOR) END or;
+
+PROCEDURE xor (self: U) =
+  BEGIN self.binary (Op.oXOR) END xor;
+
+PROCEDURE shift_left (self: U) =
+  BEGIN self.binary (Op.oLSHIFT) END shift_left;
+
+PROCEDURE shift_right (self: U) =
+  BEGIN self.binary (Op.oRSHIFT) END shift_right;
+@ [[shift]] generates code that does a left shift if the shift amount
+is positive and a right shift otherwise. The generated code has the form
+\begin{quote}\small
+\begin{verbatim}
+   t1 := x
+   t2 := y
+   IF t2 < 0 GOTO 1f
+   t1 := t1@<<t2
+   GOTO 2f
+1: t1 := t1>>(-t2)
+2: RETURN t1
+\end{verbatim}
+\end{quote}
+
+<<procedures>>=
+PROCEDURE shift (self: U) =
+  VAR save := self.current;
+      t1 := self.declare_register (Type.Int);
+      t2 := self.declare_register (Type.Word);
+  BEGIN
+    <* ASSERT self.sp >= 2 *>
+    self.current := NIL;
+    self.pop_temp (t2);
+    self.pop_temp (t1);
+
+    <<[[IF t2 < 0 GOTO 1f]]>>
+                        
+    self.push_temp (t1); (*    t1 := t1<<t2 *)
+    self.push_temp (t2);
+    self.binary (Op.oLSHIFT);
+    self.pop_temp (t1);
+
+    self.jump (2);       (*    GOTO 2f *)
+
+    self.set_label (1);  (* 1: t1 := t1>>(-t2) *)
+    self.push_temp (t1);  
+    self.push_temp (t2);
+    self.unary (Op.oNEG);
+    self.binary (Op.oRSHIFT);
+    self.pop_temp (t1);
+
+    <<[[2: RETURN t1]]>>
+  END shift;
+
+<<[[IF t2 < 0 GOTO 1f]]>>=
+self.push_temp (t2);
+self.push_integer (0);
+self.relop (Op.oLT, lab := 1);
+@ Unlike [[shift_left]] and [[shift_right]], [[shift]] can be called
+with a shift amount greater than or equal to [[Target.Integer.size]].
+For machines on which such shifts yield results other than 0 (like the
+MIPS) or fault, [[MD]] must either override [[shift]] or generate an
+appropriate instruction sequence for the tree operators [[LSHIFT]] and
+[[RSHIFT]].
+
+[[rotate]] is similar to [[shift]], but there is no IR operator for
+rotate, so [[rotate]] must use shifting and {\sc or}ing to simulate
+rotation. The generated code is
+\begin{quote}\small
+\begin{verbatim}
+t1 := x
+t2 := y MOD Target.Integer.size
+RETURN (t1@<<t2)|(t1>>(Target.Integer.size-t2))
+\end{verbatim}
+\end{quote}
+and [[rotate]] is
+
+<<procedures>>=
+PROCEDURE rotate (self: U) =
+  VAR save := self.current;
+      t1 := self.declare_register (Type.Int);
+      t2 := self.declare_register (Type.Word);
+  BEGIN
+    <* ASSERT self.sp >= 2 *>
+    self.current := NIL;
+    self.push_integer (Target.Integer.size);  (* t2 := y MOD Target.Integer.size *)
+    self.binary (Op.oMOD);
+    self.pop_temp (t2);
+    self.pop_temp (t1);                       (* t1 := x *)
+
+    (* RETURN (t1@<<t2)|(t1>>(Target.Integer.size-t2)) *)
+    self.push_temp (t1); 
+    self.push_temp (t2);
+    self.binary (Op.oLSHIFT);
+    self.push_temp (t1);
+    self.push_integer (Target.Integer.size);
+    self.push_temp (t2);
+    self.binary (Op.oMINUS);
+    self.binary (Op.oRSHIFT);
+    self.binary (Op.oOR);
+
+    <<[[RETURN]] top of stack>>
+END rotate;
+@ [[rotate_left]] and [[rotate_right]] simply call [[rotate]]:
+
+<<procedures>>=
+PROCEDURE rotate_left (self: U) =
+  BEGIN self.rotate () END rotate_left;
+
+PROCEDURE rotate_right (self: U) =
+  BEGIN self.unary (Op.oNEG); self.rotate () END rotate_right;
+@
+
+[[extract]] implements [[Word.Extract (x: T; i, n: CARDINAL)]], which
+extracts [[n]] bits from [[x]] beginning at the [[i]]$^{\rm th}$ bit
+from the right (i.e., [[i]] is the least-significant bit).
+[[extract]]'s [[sign]] argument says whether or not to sign extend the
+result. The generated code shifts [[x]] left then right:
+\begin{quote}\small
+\begin{verbatim}
+t1 := n
+RETURN (x@<<(Target.Integer.size-(i+t1)))>>(Target.Integer.size-t1)
+\end{verbatim}
+\end{quote}
+where the right shift is logical if [[sign]] is [[FALSE]] and
+arithmetic otherwise. [[extract]] is called with [[x]], [[i]], and
+[[n]] on the stack in that order where [[n]] is at the top of the
+stack.
+
+<<procedures>>=
+PROCEDURE extract (self: U; sign: BOOLEAN) =
+  VAR t1 := self.declare_register (Type.Int); save := self.current;
+  BEGIN
+    <* ASSERT self.sp >= 3 *>
+    self.current := NIL;
+    self.pop_temp (t1);
+
+    self.push_temp (t1);
+    self.binary (Op.oUPLUS);  (* i + t1 *)
+    self.push_integer (Target.Integer.size);
+    self.exch ();
+    self.binary (Op.oUMINUS); (* Target.Integer.size-(i+t1) *)
+    self.binary (Op.oLSHIFT); (* x<<(Target.Integer.size-(i+t1)) *)
+
+    self.push_integer (Target.Integer.size);
+    self.push_temp (t1);
+    self.binary (Op.oMINUS);  (* Target.Integer.size-t1 *)
+    <<right shift with [[sign]]>>
+    WITH t2 = NIL DO <<[[RETURN]] top of stack>> END
+  END extract;
+
+<<right shift with [[sign]]>>=
+IF sign
+  THEN self.binary (Op.oASHIFT)
+  ELSE self.binary (Op.oRSHIFT)
+END;
+@ [[extract_n]] and [[extract_mn]] are like [[extract]] except that more
+of their parameters are constants known at compile-time.
+
+<<procedures>>=
+PROCEDURE extract_n (self: U; sign: BOOLEAN; n: INTEGER) =
+  BEGIN
+    <* ASSERT self.sp >= 2 *>
+    self.push_integer (Target.Integer.size - n);
+    self.exch ();
+    self.binary (Op.oMINUS);  (* Target.Integer.size-(i+n) *)
+    self.binary (Op.oLSHIFT); (* x<<(Target.Integer.size-(i+n)) *)
+    self.push_integer (Target.Integer.size - n);
+    <<right shift with [[sign]]>>
+  END extract_n;
+
+PROCEDURE extract_mn (self: U; sign: BOOLEAN; m, n: INTEGER) =
+  BEGIN
+    <* ASSERT self.sp >= 1 *>
+    self.push_integer (Target.Integer.size - (m + n));
+    self.binary (Op.oLSHIFT); (* x<<(Target.Integer.size-(m+n)) *)
+    self.push_integer (Target.Integer.size - n);
+    <<right shift with [[sign]]>>
+  END extract_mn;
+@
+
+[[insert]] implements [[Word.Insert (x, y: T; i, n: CARDINAL): T]],
+which returns [[x]] with the [[n]] bits beginning at bit [[i]]
+replaced with the [[n]] least significant bits of [[y]].  The
+generated code is
+\begin{quote}\small
+\begin{verbatim}
+t1 := i
+t2 := (~(-1@<<n))@<<t1
+RETURN (x&~t2)|((y@<<t1)&t2)
+\end{verbatim}
+\end{quote}
+[[t2]] is a mask of [[n]] 1's beginning at bit [[i]], and it's used to
+clear the appropriate portion of [[x]] and discard the extraneous
+portion of [[y]].  [[insert]] is called with [[x]], [[y]], [[i]], and
+[[n]] on the stack in that order where [[n]] is at the top of the
+stack.
+
+<<procedures>>=
+PROCEDURE insert (self: U) =
+  VAR save := self.current;
+      t1 := self.declare_register (Type.Int);
+      t2 := self.declare_register (Type.Int);
+  BEGIN
+    <* ASSERT self.sp >= 4 *>
+    self.current := NIL;
+    self.exch ();
+    self.pop_temp (t1);
+
+    self.push_integer (-1); (* -1@<<n *)
+    self.exch ();
+    self.binary (Op.oLSHIFT);
+    self.unary (Op.oCOMP);  (* ~(-1@<<n) *)
+    self.push_temp (t1);    (* (~(-1@<<n)<<t1) *)
+    self.binary (Op.oLSHIFT);
+    self.pop_temp (t2);
+
+    self.push_temp (t1);    (* (y@<<t1)&t2 *)
+    self.binary (Op.oLSHIFT);
+    self.push_temp (t2);
+    self.binary (Op.oAND);
+
+    self.exch ();
+    self.push_temp (t2);    (* x&~t2 *)
+    self.unary (Op.oCOMP);
+    self.binary (Op.oAND);
+
+    self.binary (Op.oOR);   (* (x&~t2)|((y@<<t1)&t2) *)    
+    VAR tos := self.stack[self.sp];
+    BEGIN
+        DEC (self.sp);
+        self.alloc (tos, t1, t2, save := save)
+    END
+  END insert;
+@ [[insert_n]] and [[insert_mn]] are like [[insert]] except that more of
+their arguments are known at compile-time.
+
+<<procedures>>=
+PROCEDURE insert_n (self: U; n: INTEGER) =
+  VAR save := self.current;
+      t1 := self.declare_register (Type.Int);
+      t2 := self.declare_register (Type.Int);
+      n_bits := Word.Not (Word.Shift (Word.Not (0), n));
+  BEGIN
+    <* ASSERT self.sp >= 3 *>
+    self.current := NIL;
+    self.pop_temp (t1);
+
+    self.push_integer (n_bits);
+    self.push_temp (t1);   (* (~(-1@<<n)<<t1) *)
+    self.binary (Op.oLSHIFT);
+    self.pop_temp (t2);
+
+    self.push_temp (t1);   (* (y@<<t1)&t2 *)
+    self.binary (Op.oLSHIFT);
+    self.push_temp (t2);
+    self.binary (Op.oAND);
+
+    self.exch ();
+    self.push_temp (t2);   (* x&~t2 *)
+    self.unary (Op.oCOMP);
+    self.binary (Op.oAND);
+
+    self.binary (Op.oOR);  (* (x&~t2)|((y@<<t1)&t2) *)    
+    VAR tos := self.stack[self.sp]; BEGIN
+        DEC (self.sp);
+        self.alloc (tos, t1, t2, save := save)
+    END
+  END insert_n;
+
+PROCEDURE insert_mn (self: U; m, n: INTEGER) =
+  VAR n_bits := Word.Not (Word.Shift (Word.Not (0), n));
+      bits_m_to_n := Word.Shift (n_bits, m);
+  BEGIN
+    <* ASSERT self.sp >= 2 *>
+    self.push_integer (m);   (* (y@<<m)&bits_m_to_n *)
+    self.binary (Op.oLSHIFT);
+    self.push_integer (bits_m_to_n);
+    self.binary (Op.oAND);
+
+    self.exch ();
+    self.push_integer (Word.Not (bits_m_to_n)); (* x&~bits_m_to_n *)
+    self.binary (Op.oAND);
+
+    self.binary (Op.oOR)     (* (x&~bits_m_to_n)|((y@<<m)&bits_m_to_n) *)
+  END insert_mn;
+@
+
+%------------------------------------------------------------------------------
+\subsection{Procedure Calls}\label{MI:Calls}
+
+The front end generates a procedure call by first announcing its
+arrival via [[start_call_direct]] or [[start_call_indirect]].  It then
+evaluates the arguments in the order dictated by the value of
+[[args_left_to_right]] and announces each argument with a call to
+[[pop_param]].  The actual call is denoted by [[call_direct]] when the
+procedure is known at compile time, or by [[call_indirect]] when the
+procedure is computed at runtime.
+
+<<overrides>>=
+start_call_direct   := start_call_direct;
+call_direct         := call_direct;
+start_call_indirect := start_call_indirect;
+call_indirect       := call_indirect;
+pop_param           := pop_param;
+pop_struct          := pop_struct;
+@ The calling conventions for most modern machines require that nested
+calls be unnested, e.g., that [[f(x,g(y))]] be evaluated by the
+equivalent of $v$[[ := g(y); f(x,]]$v$[[)]] where $v$ is a local variable.
+[[MI]] implements this kind of evaluation for nested calls; for
+[[f(x,g(y))]], [[MI]] builds the IR trees of the form
+\begin{quote}\small
+\begin{verbatim}
+MOVE(MEM(t),CALL(ARG(y,NOARGS),g)),
+CALL(ARG(MEM(t),ARG(x,NOARGS)),f)
+\end{verbatim}
+\end{quote}
+where [[t]] denotes a temporary that holds the value returned by [[g]].
+
+[[MI]] accumulates the arguments for the current call in
+[[currentArgs]] as a tree of [[ARG]] nodes. A nested call causes the
+current argument list be saved on [[pendingArgs]] so that
+[[currentArgs]] can accumulate the arguments for the nested call:
+
+<<types>>=
+DeferredArgs = REF RECORD args: Tree; prev: DeferredArgs END;
+
+<<public fields>>=
+currentArgs: Tree := NIL;
+
+<<private fields>>=
+pendingArgs: DeferredArgs := NIL;
+
+<<initialize [[currentArgs]]>>=
+<* ASSERT self.currentArgs = NIL *>
+IF self.currentArgs # NIL THEN
+  self.pendingArgs := NEW (DeferredArgs,
+    args := self.currentArgs, prev := self.pendingArgs)
+END;
+self.currentArgs := tNOARGS ();
+@ An argument list has at least a [[NOARGS]] node, so a non-[[NIL]]
+[[currentArgs]] identifies a nested call for [[start_call_direct]] and
+[[start_call_indirect]]:
+
+<<procedures>>=
+PROCEDURE start_call_direct (self: U; <*UNUSED*> p: M3CG.Proc;
+    <*UNUSED*> lev: INTEGER; <*UNUSED*> t: Type) =
+  BEGIN
+    <<initialize [[currentArgs]]>>
+  END start_call_direct;
+
+PROCEDURE start_call_indirect (self: U; <*UNUSED*> t: Type) =
+  BEGIN
+    <<initialize [[currentArgs]]>>
+  END start_call_indirect;
+@
+
+Each argument appears at the top of the stack and is announced by
+[[pop_param]], which tucks the argument inside an [[ARG]] node:
+
+<<procedures>>=
+PROCEDURE pop_param (self: U; <*UNUSED*>t: ZType) =
+  BEGIN
+    <* ASSERT self.sp >= 1 *>
+    <* ASSERT self.currentArgs # NIL *>
+    self.currentArgs := tARG (self.stack[self.sp], self.currentArgs);
+    DEC (self.sp)
+  END pop_param;
+
+PROCEDURE pop_struct (self: U; <*UNUSED*>s: ByteSize; <*UNUSED*>a: Alignment) =
+  BEGIN
+    <* ASSERT self.sp >= 1 *>
+    <* ASSERT self.currentArgs # NIL *>
+    self.currentArgs := tARG (self.stack[self.sp], self.currentArgs);
+    DEC (self.sp)
+  END pop_struct;
+@ [[args_left_to_right]] is [[TRUE]] for this back end, so the arguments
+accumulate in the reverse order, i.e., the top [[ARG]] node holds the
+rightmost argument.
+
+[[call_direct]] simply loads the address of the known procedure and
+calls [[call_indirect]]. Its argument [[t]] is the type of the return
+value.  [[MD]] must override [[start_call_direct]] or [[call_direct]]
+to generate any static link manipulations, if necessary.
+
+<<procedures>>=
+PROCEDURE call_direct (self: U; p: M3CG.Proc; t: Type) =
+  BEGIN
+    self.load_procedure (p);
+    self.call_indirect (t)
+  END call_direct;
+@ [[call_indirect]] wraps the argument list and the address of the
+procedure (which is at the top of the stack) into a [[CALL] node. The
+type of the return value, [[t]], dictates the size field of the
+[[CALL]] node:
+
+<<procedures>>=
+PROCEDURE call_indirect (self: U; t: Type) =
+  VAR tos := tCALL (CG_Bytes[t], self.currentArgs, self.stack[self.sp], self.line);
+  BEGIN
+    <* ASSERT self.sp >= 1 *>
+    <* ASSERT self.currentArgs # NIL *>
+    DEC (self.sp);
+    IF t = Type.Void THEN
+      self.append (tos)
+    ELSE
+      CASE t OF <*NOWARN*>
+      | Type.Reel, Type.LReel, Type.XReel =>
+          tos := tCONVERT (tos.size, Op.oCVTFF, tos, self.line)
+      ELSE
+      END;
+      IF self.sp > 0 OR self.pendingArgs # NIL THEN
+        <<assign call to a temporary>>
+      ELSE
+        self.push (tos)
+      END
+    END;
+    IF self.pendingArgs # NIL THEN
+      self.currentArgs := self.pendingArgs.args;
+      self.pendingArgs := self.pendingArgs.prev
+    ELSE
+      self.currentArgs := NIL
+    END
+  END call_indirect;
+@ Like floating-point loads, calls that return floating-point values
+are wrapped in [[CVTFF]] nodes to distinguish them from calls that
+return other values.
+
+Proper procedures return no value, so their calls --- nested or not ---
+are appended to the current code block. Calls to proper procedures {\em
+can\/} be nested; the front end generates such calls for their side
+effects for example.
+
+If a function call is nested or there are other values on the stack,
+the value of the call is assigned to a temporary and the assignment is
+appended to the current code block. A reference to the temporary is
+pushed onto the stack as the value of the call.
+
+<<assign call to a temporary>>=
+VAR v: Var := self.declare_temp (CG_Bytes[t], CG_Align_bytes[t], t, TRUE);
+BEGIN
+  self.push (tos);
+  self.store (v, 0, t);
+  self.load (v, 0, t)
+END;
+@ [[store]] calls [[append]] to add the assignment to the current block.
+
+%------------------------------------------------------------------------------
+\subsection{Traps and Runtime Checks}\label{MI:Traps}
+
+The front end implements runtime checks by calling the methods listed
+below.
+
+<<overrides>>=
+assert_fault   := assert_fault;
+narrow_fault   := narrow_fault;
+return_fault   := return_fault;
+case_fault     := case_fault;
+typecase_fault := typecase_fault;
+check_nil      := check_nil;
+check_lo       := check_lo;
+check_hi       := check_hi;
+check_range    := check_range;
+check_index    := check_index;
+check_eq       := check_eq;
+@ [[MI]] implements these by generating the code for the check, if
+necessary, and a branch to an integer code that identifies the fault:
+
+<<procedures>>=
+PROCEDURE fault (self: U; code: Fault): Tree =
+  BEGIN
+    RETURN tJUMP (fault_handler (self, code), self.line)
+  END fault;
+
+CONST
+  HandlerName = ARRAY Fault OF TEXT {
+    "AssertFault",   "NarrowFault",   "ReturnFault",  "CaseFault",
+    "TypecaseFault", "NilFault",      "RangeFault",   "RangeFault",
+    "RangeFault",    "SubscriptFault", "ShapeFault"
+  };
+
+PROCEDURE fault_handler (self: U;  code: Fault): Tree =
+  BEGIN
+    (* first, make sure that the runtime hook is defined *)
+    WITH h = self.fault_handler[ORD (code)] DO
+      IF (h.var = NIL) THEN
+        self.get_runtime_hook (HandlerName [code], h.var, h.offset);
+      END;
+    END;
+    (* then, return the index into the table *)
+    RETURN tCONST (CG_Bytes[Type.Int], ORD (code));
+  END fault_handler;
+@ The [[Fault]] codes are named by their fault or check name:
+
+<<interface types>>=
+Fault = {
+  assert_fault, narrow_fault, return_fault, case_fault, typecase_fault,
+  check_nil, check_lo, check_hi, check_range, check_index, check_eq
+};
+
+FaultHandler = RECORD
+  var    : M3CG.Var;
+  offset : M3CG.ByteOffset;
+END;
+
+<<public fields>>=
+fault_handler: ARRAY [0..NUMBER(Fault)-1] OF FaultHandler;
+@ Implementations of [[MD]] must recognize the [[JUMP(CONST)]] idiom and
+generate the appropriate machine code for the fault, e.g., a trap
+instruction, or override these methods.
+
+The [[fault]] methods are:
+
+<<procedures>>=
+PROCEDURE assert_fault (self: U) =
+  BEGIN
+    self.append (fault (self, Fault.assert_fault), clean := TRUE)
+  END assert_fault;
+
+PROCEDURE narrow_fault (self: U) =
+  BEGIN
+    self.append (fault (self, Fault.narrow_fault), clean := TRUE)
+  END narrow_fault;
+
+PROCEDURE return_fault (self: U) =
+  BEGIN
+    self.append (fault (self, Fault.return_fault), clean := TRUE)
+  END return_fault;
+
+PROCEDURE case_fault (self: U) =
+  BEGIN
+    self.append (fault (self, Fault.case_fault), clean := TRUE)
+  END case_fault;
+
+PROCEDURE typecase_fault (self: U) =
+  BEGIN
+    self.append (fault (self, Fault.typecase_fault), clean := TRUE)
+  END typecase_fault;
+@
+
+The [[check_nil]], [[check_lo]], and [[check_hi]] methods all generate
+code with the general form
+\begin{quote}\small
+\begin{verbatim}
+t1 := x
+IF t1 op c GOTO code
+RETURN t1
+\end{verbatim}
+\end{quote}
+where [[c]] is a constant and [[code]] is a [[Fault]].  [[check]]
+implements this general scheme, taking [[c]] from the top of the
+stack:
+
+<<private methods>>=
+check (code: Fault; op: Op; t: Type) := check;
+
+<<procedures>>=
+PROCEDURE check (self: U; code: Fault; op: Op; t: Type) =
+  VAR t1 := self.declare_register (t); save := self.current;
+  BEGIN
+    <* ASSERT self.sp >= 2 *>
+    self.current := NIL;
+    self.exch ();
+    self.pop_temp (t1);
+    <<[[IF t1 op c GOTO code]]>>
+    self.alloc (temp (self, t1), t1, save := save) (* RETURN t1 *)
+  END check;
+
+<<[[IF t1 op c GOTO code]]>>=
+self.push_temp (t1);
+self.exch ();
+self.relop (op, op, t := t1.type);
+self.append (tCJUMP (self.stack[self.sp], fault_handler (self, code), self.line));
+DEC (self.sp);
+@ Each check method pushes the appropriate constant and calls [[check]]:
+
+<<procedures>>=
+PROCEDURE check_nil (self: U) =
+  BEGIN
+    self.load_nil ();
+    self.check (Fault.check_nil, Op.oEQ, Type.Addr)
+  END check_nil;
+
+PROCEDURE check_lo (self: U; READONLY i: Target.Int) =
+  BEGIN
+    self.load_integer (i);
+    self.check (Fault.check_lo, Op.oLT, Type.Int)
+  END check_lo;
+
+PROCEDURE check_hi (self: U; READONLY i: Target.Int) =
+  BEGIN
+    self.load_integer (i);
+    self.check (Fault.check_hi, Op.oGT, Type.Int)
+  END check_hi;
+@ [[check_range]] faults if [[x]], at the top of the stack, is outside a
+constant range:
+
+<<procedures>>=
+PROCEDURE check_range (self: U; READONLY a, b: Target.Int) =
+  VAR code := Fault.check_range; save := self.current;
+      t1 := self.declare_register (Type.Int);
+  BEGIN
+    <* ASSERT self.sp >= 1 *>
+    IF <<[[a = 0 AND b > 0]]>> THEN
+      <<special case [[0 <= x <= b]]>>
+    ELSE
+      self.current := NIL;
+      self.pop_temp (t1);
+      self.load_integer (a); (* IF t1 < a GOTO code *)
+      WITH op = Op.oLT DO <<[[IF t1 op c GOTO code]]>> END;
+    
+      self.load_integer (b); (* IF t1 > b GOTO code *)
+      WITH op = Op.oGT DO <<[[IF t1 op c GOTO code]]>> END;
+
+      self.alloc (temp (self, t1), t1, save := save) (* RETURN t1 *)
+    END
+  END check_range;
+@ As shown, the general case requires two comparisons, but
+the range $0\le x\le b$ can be checked with just one
+unsigned comparison:
+
+<<[[a = 0 AND b > 0]]>>=
+TInt.EQ (a, TInt.Zero) AND TInt.LE (TInt.Zero, b)
+
+<<special case [[0 <= x <= b]]>>=
+self.load_integer (b);
+self.check (code, Op.oUGT, Type.Word);
+@
+
+[[check_index]] faults if [[x]], the second item on the stack, is
+outside the range [[0..y-1]] where [[y]] is the top item on the stack.
+[[y]] is popped:
+
+<<procedures>>=
+PROCEDURE check_index (self: U) =
+  BEGIN
+    self.check (Fault.check_index, Op.oGE, Type.Word)
+  END check_index;
+@
+
+[[check_eq]] pops and compares the top two integers on the stack and
+faults if they are not equal. Note that [[check_eq]] is not an
+expression.
+
+<<procedures>>=
+PROCEDURE check_eq (self: U) =
+  BEGIN
+    <* ASSERT self.sp = 2 *>
+    WITH code = Fault.check_eq DO
+      self.relop (Op.oNE);
+      self.append (tCJUMP (self.stack[self.sp], fault_handler (self, code), self.line));
+      DEC (self.sp)
+    END
+  END check_eq;
+@
+
+%------------------------------------------------------------------------------
+\subsection{Miscellaneous Operations}\label{MI:Miscellaneous}
+
+Finally, several miscellaneous operations:
+
+<<overrides>>=
+swap     := swap;
+pop      := pop;
+copy_n   := copy_n;
+copy     := copy;
+zero_n   := zero_n;
+zero     := zero;
+loophole := loophole;
+@ [[swap]] exchanges the top two trees on the stack, but preserves
+their execution order by calling [[clean]]:
+
+<<procedures>>=
+PROCEDURE swap (self: U; <*UNUSED*>a, b: Type) =
+  BEGIN
+    <* ASSERT self.sp >= 2 *>
+    self.clean ();
+    self.exch ()
+  END swap;
+@
+
+[[pop]] ``discards'' the top tree on the stack. It does so by
+appending it to the current block so that it is executed for its side
+effects, if any.
+
+<<procedures>>=
+PROCEDURE pop (self: U; <*UNUSED*>t: Type) =
+  BEGIN
+    <* ASSERT self.sp >= 1 *>
+    self.append (self.stack[self.sp]);
+    DEC (self.sp)
+  END pop;
+@
+
+[[copy_n]] implements ``block'' moves, e.g., array assignments, by
+generating a call to the C library function [[memcpy]] or [[memmove]].
+Implementations of [[MD]] can override these methods to implement more
+efficient moves. The number of units to copy is at the top of the stack
+followed by the source address, [[x]], and the destination address,
+[[y]]. [[t]] is the type of unit to copy.  [[overlap]] is [[TRUE]] if
+the blocks could overlap, which forces [[copy_n]] to call [[memmove]]
+instead of [[memcpy]].
+
+<<private fields>>=
+memcpy, memmove, memset: Proc := NIL;
+
+<<procedures>>=
+PROCEDURE copy_n (self: U; t: MType; overlap: BOOLEAN) =
+  VAR m: Proc; tmp: Tree;
+  BEGIN
+    <* ASSERT self.sp >= 3 *>
+    self.push_integer (CG_Bytes[t]);
+    self.multiply (Type.Int);
+    tmp := self.stack[self.sp];
+    self.stack[self.sp]   := self.stack[self.sp-2];
+    self.stack[self.sp-2] := tmp;
+    IF overlap THEN
+       IF self.memmove = NIL THEN
+         self.memmove := DeclareMemcopy (self, "memmove");
+       END;
+       m := self.memmove
+    ELSE
+       IF self.memcpy = NIL THEN
+         self.memcpy := DeclareMemcopy (self, "memcpy");
+       END;
+       m := self.memcpy
+    END;
+    self.start_call_direct (m, 0, Type.Void);
+    self.pop_param (Type.Addr);
+    self.pop_param (Type.Addr);
+    self.pop_param (Type.Int);
+    self.call_direct (m, Type.Void)
+  END copy_n;
+
+PROCEDURE DeclareMemcopy (self: U; name: TEXT): Proc =
+  VAR p: Proc;
+  BEGIN
+    p := self.import_procedure (name, 3, Type.Void, "C");
+    EVAL self.declare_param ("dest", CG_Bytes[Type.Addr],
+                             CG_Align_bytes[Type.Addr], Type.Addr, 0,
+                             FALSE, FALSE, M3CG.Never);
+    EVAL self.declare_param ("src", CG_Bytes[Type.Addr],
+                             CG_Align_bytes[Type.Addr], Type.Addr, 0,
+                             FALSE, FALSE, M3CG.Never);
+    EVAL self.declare_param ("n_bytes", CG_Bytes[Type.Int],
+                             CG_Align_bytes[Type.Int], Type.Int, 0,
+                             FALSE, FALSE, M3CG.Never);
+    RETURN p;
+  END DeclareMemcopy;
+@ [[copy]] is similar to [[copy_n]], but the number of units to copy is
+known at compile time. [[copy]] calls [[copy_n]] except for the case
+in which the copy can be done with a single load and store:
+
+<<procedures>>=
+PROCEDURE copy (self: U; n: INTEGER; t: MType; overlap: BOOLEAN) =
+  BEGIN
+    IF n = 1 THEN
+      self.load_indirect  (0, t);
+      self.store_indirect (0, t)
+    ELSE
+      self.push_integer (n);
+      self.copy_n (t, overlap)
+    END
+  END copy;
+@
+
+[[zero_n]] and [[zero]] are similar to [[copy_n]] and [[copy]], but
+they clear the destination. The number of units to clear is at the top
+of the stack followed by the destination address. [[t]] is the
+type of unit to clear.  [[zero_n]] uses the C library's [[memset]]
+function to set the destination units to 0.
+
+<<procedures>>=
+PROCEDURE zero_n (self: U; t: MType) =
+  BEGIN
+    <* ASSERT self.sp >= 2 *>
+    self.push_integer (CG_Bytes[t]);
+    self.multiply (Type.Int);
+    self.exch ();
+    IF self.memset = NIL THEN
+      self.memset := self.import_procedure ("memset", 3, Type.Void, "C");
+      EVAL self.declare_param ("dest", CG_Bytes[Type.Addr],
+                               CG_Align_bytes[Type.Addr], Type.Addr, 0,
+                               FALSE, FALSE, M3CG.Never);
+      EVAL self.declare_param ("value", CG_Bytes[Type.Int],
+                               CG_Align_bytes[Type.Int], Type.Int, 0,
+                               FALSE, FALSE, M3CG.Never);
+      EVAL self.declare_param ("n_bytes", CG_Bytes[Type.Int],
+                               CG_Align_bytes[Type.Int], Type.Int, 0,
+                               FALSE, FALSE, M3CG.Never);
+    END;
+    self.start_call_direct (self.memset, 0, Type.Void);
+    self.pop_param (Type.Addr);
+    self.push_integer (0);
+    self.pop_param (Type.Int);
+    self.pop_param (Type.Int);
+    self.call_direct (self.memset, Type.Void)
+  END zero_n;
+
+PROCEDURE zero (self: U; n: INTEGER; t: MType) =
+  BEGIN
+    IF n = 1 THEN
+      self.push_integer (0);
+      self.store_indirect (0, t)
+    ELSE
+      self.push_integer (n);
+      self.zero_n (t)
+    END;
+  END zero;
+@
+
+The front end calls [[loophole]] when it must treat a value of one
+type as a value of a different type, but there is no conversion:
+
+<<procedures>>=
+PROCEDURE loophole (<*UNUSED*>self: U; from, two: ZType) =
+  BEGIN
+    <* ASSERT CG_Size[from] = CG_Size[two] *>
+  END loophole;
+@ Implementations of [[MD]] can override [[loophole]] if, for example,
+they must use different register sets for [[from]] and [[to]].
+
+[[MI]] defines additional methods and procedures that are useful on
+most targets.
+
+<<public methods>>=
+swToSeg (seg: TEXT);
+
+<<overrides>>=
+swToSeg := swToSeg;
+
+<<interface procedures>>=
+PROCEDURE indexAddr (self: U; tree: Tree; n: INTEGER): Tree;
+PROCEDURE roundup (n, m: INTEGER): INTEGER;
+PROCEDURE typeOf (t: Tree): Type;
+@ [[swToSeg]] is used to track a current logical ``segment'' and to emit
+appropriate segment-switching directives:
+
+<<public fields>>=
+currentSeg := "";
+
+<<procedures>>=
+PROCEDURE swToSeg (self: U; seg: TEXT) =
+  BEGIN
+    IF NOT Text.Equal (self.currentSeg, seg) THEN
+      self.put (seg);
+      self.currentSeg := seg
+    END
+  END swToSeg;
+@ [[swToSeg]] is called from implementations of [[MD]] with
+machine-specific arguments, e.g., [[".data"]] and [[".text"]] on the
+MIPS.
+
+[[indexAddr]] implements the common idiom of adding a constant to a an
+address:
+
+<<procedures>>=
+PROCEDURE indexAddr (self: U; tree: Tree; n: INTEGER): Tree =
+  BEGIN
+    IF n # 0 THEN
+      tree := tOP (CG_Bytes[Type.Addr], Op.oUPLUS,
+                   tree, tCONST (CG_Bytes[Type.Addr], n), self.line)
+    END;
+    RETURN tree
+  END indexAddr;
+@ [[roundup]] rounds up an integer [[n]] to the next multiple of [[m]]:
+
+<<procedures>>=
+PROCEDURE roundup (n, m: INTEGER): INTEGER =
+  BEGIN
+    IF n MOD m # 0 THEN INC (n, m - n MOD m) END;
+    RETURN n
+  END roundup;
+@ [[typeOf (t)]] returns a [[Type]] value suitable for holding
+the value computed by the IR tree [[t]]. It's used, for example,
+to allocate temporaries.
+
+<<procedures>>=
+PROCEDURE typeOf (t: Tree): Type =
+  BEGIN
+    CASE t.op OF <*NOWARN*>
+      Op.oNAME =>               RETURN Type.Addr
+    | Op.oMOVE, Op.oARG =>      RETURN typeOf (t.left)
+    | Op.oESEQ, Op.oALLOC =>    RETURN typeOf (t.right)
+    | Op.oTEMP =>               RETURN NARROW (t, TreeIR.Temporary).temp.type;
+    | Op.oAND,    Op.oOR,  Op.oXOR, Op.oLSHIFT, Op.oRSHIFT,
+      Op.oASHIFT, Op.oCOMP =>   RETURN Type.Word
+    | Op.oEQ,  Op.oNE,  Op.oLT,  Op.oGE,   Op.oGT, Op.oLE,
+      Op.oFEQ, Op.oFNE, Op.oFLT, Op.oFLE, Op.oFGT, Op.oFGE,
+      Op.oULT, Op.oUGE, Op.oUGT, Op.oULE => RETURN Type.Int;
+    | Op.oCONSTF, Op.oCVTFF, Op.oCVTSF,
+      Op.oFPLUS, Op.oFMINUS, Op.oFMUL, Op.oFDIV, Op.oFNEG =>
+        FOR ty := FIRST (RType) TO LAST (RType) DO
+          IF t.size = CG_Bytes[ty] THEN RETURN ty END
+        END;
+        <*ASSERT FALSE*>
+    | Op.oMEM,   Op.oCALL,  Op.oCONST,
+      Op.oCVTSU, Op.oCVTSS, Op.oCVTUU, Op.oCVTUS, Op.oCVTFS,
+      Op.oPLUS,  Op.oMINUS, Op.oMUL,   Op.oDIV,   Op.oMOD,   Op.oNEG,
+      Op.oUPLUS, Op.oUMINUS,Op.oUMUL,  Op.oUDIV,  Op.oUMOD =>
+        FOR ty := FIRST (IType) TO LAST (IType) DO
+          IF t.size <= CG_Bytes[ty] THEN RETURN ty END
+        END;
+        <*ASSERT FALSE*>
+    END
+  END typeOf;

@@ -1,0 +1,35 @@
+% Copyright (C) 1993, Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+% Last modified on Thu Aug 31 11:15:31 PDT 1995 by steveg   
+%      modified on Wed Nov 23 09:43:06 PST 1994 by kalsow   
+%      modified on Thu Sep  9 15:23:16 PDT 1993 by harrison 
+%      modified on Tue Jun  1 13:29:31 PDT 1993 by mjordan 
+
+%
+% Here are the OS-specific commands
+%
+% These are for Windows NT
+%
+
+readonly SL  = "\\"    % the path separator
+readonly SLship = "/"  % the path separator for M3SHIP file
+readonly CR = "\r\n"   % line break character
+readonly CRship = "\n"   % line break character for M3SHIP
+
+readonly proc delete_file(file) is
+  local void = unlink_file(file)
+end
+
+readonly proc link_file(from, to) is
+  cp_if (from, to)
+end
+
+readonly proc make_executable(script) is
+  % nothing to do
+end
+
+readonly proc make_dir(dir) is
+  if not defined ("_quiet") write ("m3mkdir ", dir, CR) end
+  exec("@" & LIB_USE & "\\m3mkdir", dir)
+end

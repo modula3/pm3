@@ -1,0 +1,1452 @@
+% Copyright (C) 1994, Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+%
+% Last modified on Fri Feb  9 14:23:04 PST 1996 by heydon   
+%      modified on Thu Aug 31 12:51:41 PDT 1995 by steveg   
+%      modified on Wed Jun 14 14:01:51 PDT 1995 by kalsow   
+%      modified 4/94 by sam.kendall@east.sun.com
+%      modified on Thu Sep  9 14:49:57 PDT 1993 by harrison 
+%      modified on Tue Jun  1 13:40:31 PDT 1993 by mjordan 
+
+%
+% The 'm3build' shell script invokes quake with:
+%
+%     a file that contains a machine description
+%
+%     sets PACKAGE to the name of the package that we're building
+%
+%     and sets PACKAGE_DIR to the full path of the package that we're building
+%
+% The machine description sets:
+%
+%     BUILD_DIR set to the name of subdirectory within the package
+%
+%     {BIN,LIB,DOC,PKG,EMACS,MAN}_INSTALL set to directories where we
+%	should install things
+%
+%     {BIN,LIB,PKG}_USE set to directories where we should use things
+%
+%     includes the os-specific functions
+%
+%     NAMING_CONVENTIONS to indicate the local conventions
+%
+%     and includes this file.
+%
+
+%---------------------------------------------------------------- constants ---
+
+readonly M3_VERSION = "SRC Modula-3 version 3.5 (February 1, 1995)"
+
+readonly BUILD_PACKAGE = PACKAGE          % current package
+readonly BUILD_BASE = format ("%s%s%s", PACKAGE_DIR, SL, BUILD_DIR)
+
+readonly M3EXPORTS   = ".M3EXPORTS"       % file of exported quake commands
+readonly M3TFILE     = ".M3IMPTAB"        % -T file for importers
+readonly M3WEB       = ".M3WEB"           % file for WWW browser
+
+readonly LOCAL = "local"                  % defined here, i.e. local = TRUE
+readonly IMPORTED = ""                    % imported, i.e. local = FALSE
+readonly NL = ""                          % backward compatibility...
+
+readonly VISIBLE = ""                     % i.e. hidden = FALSE
+readonly HIDDEN = "hidden"                % i.e. hidden = TRUE
+
+readonly SAFE = ""                        % safe generic instantiation
+readonly UNSAFE = "UNSAFE "               % UNSAFE generic instantiation
+
+readonly QRPCR = "\")" & CR               % quote, right-paren, carriage return
+
+readonly NOT_A_PACKAGE = "-not-a-package!"
+
+if equal (NAMING_CONVENTIONS, "0")
+  readonly OBJ_ext = ".o"
+  readonly IO_ext  = ".io"
+  readonly MO_ext  = ".mo"
+  readonly LIB_pre = "lib"
+  readonly LIB_ext = ".a"
+  readonly PGM_ext = ""
+else if equal (NAMING_CONVENTIONS, "1")
+  readonly OBJ_ext = ".o"
+  readonly IO_ext  = "_i.o"
+  readonly MO_ext  = "_m.o"
+  readonly LIB_pre = "lib"
+  readonly LIB_ext = ".a"
+  readonly PGM_ext = ""
+else if equal (NAMING_CONVENTIONS, "2")
+  readonly OBJ_ext = ".obj"
+  readonly IO_ext  = ".io"
+  readonly MO_ext  = ".mo"
+  readonly LIB_pre = ""
+  readonly LIB_ext = ".lib"
+  readonly PGM_ext = ".exe"
+else
+  error (format ("unknown naming convention: \"%s\".%s",
+                 NAMING_CONVENTION, CR))
+end
+end
+end
+
+% possible derived object extensions (used for deletions)
+readonly intf_extensions = [".ix", ".ic", ".is", IO_ext ]
+readonly impl_extensions = [".mx", ".mc", ".ms", MO_ext ]
+readonly c_extensions    = [".s", OBJ_ext ]
+readonly s_extensions    = [ OBJ_ext ]
+readonly no_extension    = [""]
+readonly rsrc_extensions = [".i3", ".m3", intf_extensions, impl_extensions]
+
+%--------------------------------------------------------- global variables ---
+
+IMPORTS = {}                     % imported packages
+PKG_OVERRIDES = {}               % pkg name -> directory
+
+M3LIBS = {}                      % Modula-3 libraries
+
+IMPORT_LIBS = []                 % imported Modula-3 libraries
+
+OTHER_LIBS = {}                  % foreign libraries and objects
+OTHER_LIBS_X = []                % ordered list of names
+OTHER_LIBS_L = []                % foreign libraries (ordered argument list)
+
+COMPILE_SOURCES = []             % source files that need compilation
+COMPILE_OBJECTS = []             % object files that are produced
+
+INTERFACE_SOURCES = {}           % Modula-3 interface files (x.i3)
+GENERIC_INTERFACE_SOURCES = {}   % generic Modula-3 interface files (x.ig)
+
+MODULE_SOURCES = {}              % Modula-3 implementations (x.m3)
+GENERIC_MODULE_SOURCES = {}      % generic implementations (x.mg)
+
+C_SOURCES = {}                   % C source files (x.c)
+H_SOURCES = {}                   % C header files (x.h)
+S_SOURCES = {}                   % Assembler files (x.s)
+
+C_INPUTS  = {}                   % local C source files & their objects
+H_INPUTS  = []                   % all visible H files
+H_DIRS    = {}                   % directories containing local H files
+
+% DERIVED_SOURCES records local derived files of types that are normally
+% source files, such as .i3 files.
+DERIVED_SOURCES = {}		 % any derived source -> ""
+
+TEMPLATES = {}                   % imported template files
+
+M3SEARCH_TABLES = []             % list of -T files to use
+TFILE_ARGS = []                  % contents of the -T file
+
+RESOURCES = {}                   % list of resources to bundle
+
+LOCATIONS = {}                   % full path -> [package, subdir]
+PKG_DIRS  = {}                   % package -> (subdir -> full path)
+
+HAVE_PKGTOOLS = ""               % SRC package tools installed?
+AT_SRC        = ""               % at SRC?  TRUE => include SRC-only packages
+
+CLEANUP_PROCS = []               % procedures to run at the end of evaluation
+
+BUILD_LIB    = ""                % name of the library we're building
+BUILD_PGM    = ""                % name of the program we're building
+
+%------------------------------------- hooks to be optionally overriden -------
+
+% Do something before m3 is invoked.
+proc before_do_m3_hooks() is
+  % empty
+end
+
+% Do something while M3EXPORTS is being generated.  This procedure is
+% called with standard output redirected to M3EXPORTS.
+proc gen_map_hooks() is
+  % empty
+end
+
+% This routine is passed the boolean INSTALL_IMPLS, and returns an array
+% of unit maps, the elements of which will be installed as part of m3ship.
+proc install_units_hooks(install_impls)	is
+  return []
+end
+
+% Return an array of unit maps to walk as part of m3where.
+proc where_units_hooks() is
+  return []
+end
+
+%---------------------------------------------------------- initializations ---
+
+% write ("PACKAGE     = ", PACKAGE, CR)
+% write ("PACKAGE_DIR = ", PACKAGE_DIR, CR)
+% write ("BUILD_BASE  = ", BUILD_BASE, CR)
+% write ("BUILD_DIR   = ", BUILD_DIR, CR)
+% write ("OS_TYPE     = ", OS_TYPE, CR)
+
+% check that all the OS-dependent functions are defined
+foreach i in ["delete_file", "link_file",
+              "make_executable", "make_dir" ]
+  if not defined(i)
+    error(format ("required command \"%s\" not defined%s", i, CR))
+  end
+end
+
+% check that all the install directories are defined
+foreach i in ["BIN_INSTALL", "LIB_INSTALL", "DOC_INSTALL",
+              "PKG_INSTALL", "MAN_INSTALL", "EMACS_INSTALL"]
+  if not defined(i)
+    error(format ("installation directory \"%s\" not defined%s", i, CR))
+  end
+end
+
+%-------------------------------------------------------- package locations ---
+
+PKG_CACHE = { BUILD_PACKAGE : ".." }  % pkg name -> directory
+
+%
+% returns the path currently used to reach package 'x'
+%
+readonly proc Pkg(x) is
+  if PKG_CACHE contains x
+    return PKG_CACHE{x}
+  end
+  local dir = PKG_USE
+  if PKG_OVERRIDES contains x
+    dir = PKG_OVERRIDES{x}
+  end
+  dir = format ("%s%s%s", dir, SL, x)
+  PKG_CACHE{x} = dir
+  return dir
+end
+
+%
+% establish an override for the location of package 'p'
+%
+already_warned = ""
+readonly proc override(p, dir) is
+  if equal (p, BUILD_PACKAGE)
+    if not already_warned
+      write ("m3build: ignoring override(\"",
+               p, "\", \"", dir, "\")", CR)
+      already_warned = "TRUE"
+    end
+  else
+    PKG_OVERRIDES{p} = dir
+    PKG_CACHE{p} = format ("%s%s%s", dir, SL, p)
+  end
+end
+
+%
+% include a file from a package
+%
+readonly proc M3include (fn, fname, dir, pkg) is
+  if stale (fn, fn)
+    error (format (
+  "unable to read \"%s\"%s   from directory \"%s\" of package \"%s\" (%s)%s%s",
+     fname, CR, dir, pkg, Pkg(pkg), CR, CR))
+  else
+    include (fn)
+  end
+end
+
+%-------------------------------------------------------- general locations ---
+
+%
+% return the full path that identifies the
+% given subdirectory within the package.
+%
+readonly proc Location(pkg, subdir) is
+  if equal(pkg, NOT_A_PACKAGE)
+    LOCATIONS{subdir} = [NOT_A_PACKAGE, subdir]
+    return subdir
+  end
+
+  if not PKG_DIRS contains pkg
+    % we've never heard of this package before
+    local new_path = format ("%s%s%s", Pkg(pkg), SL, subdir)
+    local new_map = {}
+    new_map{subdir} = new_path
+    PKG_DIRS{pkg} = new_map
+    LOCATIONS{new_path} = [pkg, subdir]
+    % write("0-> [", pkg, " ", subdir, "] -> ", new_path, CR)
+    return new_path
+  end
+
+  % see if we've heard of this subdirectory
+  local dir_map = PKG_DIRS{pkg}
+  if not dir_map contains subdir
+    % nope, it's a new subdirectory
+    local new_path2 = format ("%s%s%s", Pkg(pkg), SL, subdir)
+    dir_map{subdir} = new_path2
+    LOCATIONS{new_path2} = [pkg, subdir]
+    % write("1-> [", pkg, " ", subdir, "] -> ", new_path2, CR)
+    return new_path2
+  end
+
+  return dir_map{subdir}
+end
+
+readonly proc loc_pkg(loc)    is  return LOCATIONS{loc}[0]  end
+readonly proc loc_subdir(loc) is  return LOCATIONS{loc}[1]  end
+
+%----------------------------------------------------------- relative paths ---
+
+readonly proc Normalize(a, b) is
+  local result = normalize(a, b)
+  % write ("normalize(\"", a, "\", \"", b, "\") => \"", result, "\"", CR)
+  return result
+end
+
+path_of_path = "" % records result of last path() call in path_of
+path_of_base = "" % records result of normalize in path_of
+
+%
+% returns the path needed to reach 'x' from the build directory
+%
+readonly proc path_of(x) is
+  % This initial lookup in DERIVED_SOURCES allows packages (such as
+  % netobj) that were written without derived sources in mind to work
+  % without modification.
+  if DERIVED_SOURCES contains x
+    return x
+  end
+
+  local p = path()
+  if not equal(p, path_of_path)
+    path_of_path = p
+    path_of_base = format ("%s%s%s%s", Pkg(PACKAGE), SL, pkg_subdir(), SL)
+    %%% path_of_base = Normalize (BUILD_BASE, path_of_path)
+  end
+  return format ("%s%s", path_of_base, x)
+end
+
+pkg_subdir_path = "" % records result of last path() call in pkg_subdir
+pkg_subdir_base = "" % records result of last normalize in pkg_subdir
+
+%
+% returns the path needed to reach the current directory from
+% the current package
+%
+readonly proc pkg_subdir() is
+  local p = path()
+  if not equal(p, pkg_subdir_path)
+    pkg_subdir_path = p
+    pkg_subdir_base = Normalize (PACKAGE_DIR, pkg_subdir_path)
+  end
+  return pkg_subdir_base
+end
+
+%-------------------------------------------------------------------- units ---
+% unit map format:
+% units and libraries are mapped to a triple as follows
+%   [location, visibility, locality]
+% The locality denotes whether the definition occurred in this
+% package or via an import. Non-local things are forwarded
+% by forwarding the import itself.
+
+readonly proc unit_loc(u)          is  return u[0] end
+readonly proc is_local(u)          is  return u[2] end
+readonly proc is_visible(u)        is  return not u[1] end
+readonly proc unit_visibility(u)   is  return u[1] end
+
+readonly proc set_visibility(x, fn, v) is
+  if x contains fn
+    x{fn}[1] = v
+  else
+    error (format ("set_visibility(%s) of unknown unit%s", fn, CR))
+  end
+end
+
+%-------------------------------------------------------------------- names ---
+
+readonly proc program_name(x) is
+  return x & PGM_ext
+end
+
+readonly proc library_name(x) is
+  return format ("%s%s%s", LIB_pre, x, LIB_ext)
+end
+
+%--------------------------------------------------------------- .M3EXPORTS ---
+
+readonly proc gen_m3exports(x) is
+
+  proc gen_unit_map(s, t) is
+    foreach e in s
+      local u = s{e}
+      if is_local(u)
+        local loc = unit_loc(u)
+        write ("_map_add_", t, "(\"", escape(e),
+                  "\", \"", escape(loc_pkg(loc)),
+                  "\", \"", escape(loc_subdir(loc)),
+                  "\", \"", unit_visibility(u), "\")", CR)
+      end
+    end
+  end
+
+  > M3EXPORTS in
+    write("% exports of ", BUILD_PACKAGE, CR)
+
+    if BUILD_LIB
+      write ("_define_lib(\"", BUILD_LIB, "\")", CR)
+    else if BUILD_PGM
+      write ("_define_pgm(\"", BUILD_PGM, "\")", CR)
+    end end
+
+    % output the foreign imports (in order!)
+    foreach l in OTHER_LIBS_X
+      local u = OTHER_LIBS{l}
+      if is_local(u)
+        local loc = unit_loc(u)
+        write("_import_otherlib(\"", escape(l), "\", \"", escape(loc),
+              "\", IMPORTED)", CR)
+      end
+    end
+
+    % copy forward overrides
+    foreach ov in PKG_OVERRIDES
+      write("override(\"", escape(ov), "\", \"",
+             escape(PKG_OVERRIDES{ov}), "\")", CR)
+    end
+
+    % copy forward package imports
+    foreach im in IMPORTS
+      local version = IMPORTS{im}
+      write("import_version(\"", escape(im), "\", \"",
+             escape(version), "\")", CR)
+    end
+
+    % output the library imports
+    foreach l in M3LIBS
+      local u = M3LIBS{l}
+      if is_local(u)
+        local loc = unit_loc(u)
+        write("_import_m3lib(\"", escape(l), "\", \"", escape(loc_pkg(loc)),
+                  "\", \"", escape(loc_subdir(loc)), "\")", CR)
+      end
+    end
+
+    % output the unit map
+    gen_unit_map(INTERFACE_SOURCES, "interface")
+    gen_unit_map(GENERIC_INTERFACE_SOURCES, "generic_interface")
+    gen_unit_map(GENERIC_MODULE_SOURCES, "generic_module")
+    gen_unit_map(MODULE_SOURCES, "module")
+    gen_unit_map(C_SOURCES, "c")
+    gen_unit_map(H_SOURCES, "h")
+    gen_unit_map(S_SOURCES, "s")
+
+    % dump the rest, including the _import_template() calls
+    foreach x in TFILE_ARGS
+      write(escape(x))
+    end
+
+    % dump any 'custom' calls; these must come after any _import_template()
+    % calls, which may introduce the definitions of the custom calls
+    gen_map_hooks()
+  end
+
+  if defined ("_all")  install_derived(M3EXPORTS)  end
+  deriveds(M3EXPORTS, no_extension)
+end
+
+%--------------------------------------- calls used in generated files only ---
+
+readonly proc _define_lib(nm) is
+end
+
+readonly proc _define_pgm(nm) is
+end
+
+readonly proc _import_template(x, pkg, subdir) is
+  local fn = format ("%s%s%s%s%s", Pkg(pkg), SL, subdir, SL, x)
+  % write("import template: ", fn, CR)
+  M3include(fn, x, subdir, pkg)
+end
+
+readonly proc _import_m3lib(x, pkg, subdir) is
+  %-- doesn't let the driver find the library
+  % IMPORT_LIBS += format ("%s%s%s%s%s%s%s", Pkg(pkg), SL, subdir,
+  %                          SL, LIB_pre, x, LIB_ext)
+
+  %-- leaves the bottom library first on the list
+  %  IMPORT_LIBS += format ("-L%s%s%s", Pkg(pkg), SL, subdir)
+  %  IMPORT_LIBS += format ("-l%s", x)
+
+  IMPORT_LIBS = [ format ("-L%s%s%s", Pkg(pkg), SL, subdir),
+                  format ("-l%s", x),
+                  IMPORT_LIBS ]
+  
+  M3LIBS{x} = [Location(pkg, subdir), HIDDEN, IMPORTED]
+end
+
+readonly proc _import_otherlib(x, pn, l) is
+  if not OTHER_LIBS contains x
+    % OTHER_LIBS_L += format ("%s%s%s%s%s", pn, SL, LIB_pre, x, LIB_ext)
+    OTHER_LIBS_L += format ("-L%s", pn)
+    OTHER_LIBS_L += format ("-l%s", x)
+    OTHER_LIBS{x} = [Location(NOT_A_PACKAGE, pn), HIDDEN, l]
+    OTHER_LIBS_X += x
+  end
+end
+
+readonly proc _map_add_interface(unit, pkg, subdir, visibility) is
+  INTERFACE_SOURCES{unit} = [Location(pkg, subdir), visibility, IMPORTED]
+end
+
+readonly proc _map_add_generic_interface(unit, pkg, subdir, visibility) is
+  local loc = Location(pkg, subdir)
+  local fn = format ("%s%s%s", loc, SL, unit)
+  COMPILE_SOURCES += fn %-- the driver needs to know about all generic sources
+  GENERIC_INTERFACE_SOURCES{unit} = [loc, visibility, IMPORTED]
+end
+
+readonly proc _map_add_module(unit, pkg, subdir, visibility) is
+  MODULE_SOURCES{unit} = [Location(pkg, subdir), visibility, IMPORTED]
+end
+
+readonly proc _map_add_generic_module(unit, pkg, subdir, visibility) is
+  local loc = Location(pkg, subdir)
+  local fn = format ("%s%s%s", loc, SL, unit)
+  COMPILE_SOURCES += fn %-- the driver needs to know about all generic sources
+  GENERIC_MODULE_SOURCES{unit} = [loc, visibility, IMPORTED]
+end
+
+readonly proc _map_add_c(unit, pkg, subdir, visibility) is
+  C_SOURCES{unit} = [Location(pkg, subdir), visibility, IMPORTED]
+end
+
+readonly proc _map_add_h(unit, pkg, subdir, visibility) is
+  local loc = Location(pkg, subdir)
+  H_SOURCES{unit} = [loc, visibility, IMPORTED]
+  H_INPUTS += format ("%s%s%s.h", loc, SL, unit)
+  H_DIRS{loc} = loc
+end
+
+readonly proc _map_add_s(unit, pkg, subdir, visibility) is
+  S_SOURCES{unit} = [Location(pkg, subdir), visibility, IMPORTED]
+end
+
+%----------------------------------------------------------------------- M3 ---
+
+readonly proc DO_M3(args) is
+  before_do_m3_hooks()
+  generate_tfile()
+
+  if defined ("CAPTURE_M3")
+    local all_args = arglist ("", [M3_CONFIG, "-make", M3OPTIONS, args,
+                               M3SEARCH_TABLES, COMPILE_SOURCES,
+                               IMPORT_LIBS, OTHER_LIBS_L])
+    cp_if (all_args, ".M3ARGS")
+  end
+
+  local sources = arglist("-F", [M3SEARCH_TABLES, COMPILE_SOURCES,
+                                 IMPORT_LIBS, OTHER_LIBS_L])
+  
+  if not defined ("_quiet")
+    write(["m3", M3OPTIONS, args, sources, CR])
+    % write([M3, M3_CONFIG, "-make", M3OPTIONS, args, sources, CR])
+  end
+  exec("@-" & M3, M3_CONFIG, "-make", M3OPTIONS, args, sources)
+  install_derived (M3WEB)
+
+  if not empty(PKG_OVERRIDES)
+    % there were overrides => don't create any shipping information
+    NoteOverrides()
+  end
+end
+
+readonly proc NoteOverrides() is
+  delete_file(M3SHIP_FILE)
+  > M3OVERRIDES in  write (CR) end
+end
+
+readonly proc m3_option(x) is
+  M3OPTIONS += x
+end
+
+readonly proc remove_m3_option(x) is
+  local new_options = []
+  foreach opt in M3OPTIONS
+    if not equal (x, opt)  new_options += opt  end
+  end
+  M3OPTIONS = new_options
+end
+
+%----------------------------------------------------------------- deleting ---
+% If the variable `_clean' is defined, delete all files `d.e', where e is
+% one of the extensions in `ext'.
+
+readonly proc deriveds(d, ext) is
+  if defined("_clean")
+    if defined ("_quiet")
+      foreach e in ext
+        delete_file(d & e)
+      end
+    else
+      write("delete")
+      foreach e in ext
+        local f = d & e
+        write(" ", f)
+        delete_file(f)
+      end
+      write(CR)
+    end
+  end
+end
+
+%------------------------------------------------------------------ imports ---
+
+readonly proc include_dir(p) is
+  local fn = format ("%s%s%s%s%s", path(), SL, p, SL, "m3makefile")
+  if stale (fn, fn)
+    error (format (
+      "unable to read \"%s\"%s   from directory \"%s%s%s\"%s%s",
+      "m3makefile", CR, path(), SL, p, CR, CR))
+  else
+    include (fn)
+  end
+end
+
+readonly proc include_pkg(p) is
+  local save_pkg = PACKAGE
+  local save_dir = PACKAGE_DIR
+  PACKAGE = p
+  PACKAGE_DIR = Normalize ("", Pkg(p))
+  local fn = format ("%s%s%s%s%s", PACKAGE_DIR, SL, "src", SL, "m3makefile")
+  % write("include pkg: ", fn, CR)
+  M3include (fn, "m3makefile", "src", PACKAGE)
+  PACKAGE = save_pkg
+  PACKAGE_DIR = save_dir
+end
+
+readonly proc import(p) is
+  import_version (p, BUILD_DIR)
+end
+
+readonly proc import_version (p, version) is
+  if equal (p, BUILD_PACKAGE)
+    error (format ("cannot import package into itself: \"%s\"%s%s", p, CR, CR))
+  end
+  if not IMPORTS contains p
+    IMPORTS{p} = version
+    local fn = format ("%s%s%s%s%s", Pkg(p), SL, version, SL, M3EXPORTS)
+    % write ("import: ", fn, CR)
+    M3include (fn, M3EXPORTS, version, p)
+  end
+end
+
+readonly proc import_obj(x) is
+  local file = path_of(x)
+  %% IMPORT_LIBS += file
+  IMPORT_LIBS = [ file, IMPORT_LIBS ]
+  if NEED_OBJECTS
+    COMPILE_OBJECTS += file
+  end
+end
+
+readonly proc import_lib(x, pn) is
+  _import_otherlib(x, pn, LOCAL)
+end
+
+%------------------------------------------------------------------ objects ---
+
+readonly proc pgm_object(x, ext) is
+  if NEED_OBJECTS
+    COMPILE_OBJECTS += x & ext
+  end
+end
+
+%------------------------------------------------------------------ sources ---
+
+readonly proc _new_unit(vis) is
+  return [Location(PACKAGE, pkg_subdir()), vis, LOCAL]
+end
+
+readonly proc source(x) is
+  % nothing to do
+end
+
+readonly proc pgm_source(x) is
+  COMPILE_SOURCES += path_of (x)
+  %% COMPILE_SOURCES += format("%s%s%s%s%s", Pkg(PACKAGE), SL, pkg_subdir(), SL,x)
+end
+
+readonly proc _interface(x, vis) is
+  local fn = x & ".i3"
+  INTERFACE_SOURCES{fn} = _new_unit(vis)
+  pgm_source(fn)
+  pgm_object(x, IO_ext )
+  deriveds(x, intf_extensions)
+end
+
+readonly proc interface(x) is  _interface(x, HIDDEN)  end
+readonly proc Interface(x) is  _interface(x, VISIBLE) end
+
+readonly proc implementation(x) is
+  local fn = x & ".m3"
+  MODULE_SOURCES{fn} = _new_unit(HIDDEN)
+  pgm_source(fn)
+  pgm_object(x, MO_ext)
+  deriveds(x, impl_extensions)
+end
+
+readonly proc module(x) is  interface(x)  implementation(x)  end
+readonly proc Module(x) is  Interface(x)  implementation(x)  end
+
+readonly proc h_source(x) is
+  local fn = x & ".h"
+  local here = path_of ("")
+  H_SOURCES{fn} = _new_unit(VISIBLE)
+  H_INPUTS += format ("%s%s%s", here, SL, fn)
+  H_DIRS{here} = here
+  pgm_source(fn)
+end
+
+readonly proc c_source(x) is
+  local fn = x & ".c"
+  local here = path_of("")
+  C_SOURCES{fn} = _new_unit(HIDDEN)
+  C_INPUTS {x} = [ path_of(fn), x & OBJ_ext ]
+  H_DIRS{here} = here
+  pgm_source(fn)
+  pgm_object(x, OBJ_ext)
+  deriveds(x, c_extensions)
+end
+
+readonly proc s_source(x) is
+  local fn = x & ".s"
+  S_SOURCES{fn} = _new_unit(HIDDEN)
+  pgm_source(fn)
+  pgm_object(x, OBJ_ext)
+  deriveds(x, s_extensions)
+end
+
+%-------------------------------------------------------------- generics ---
+
+readonly proc _generic_intf(x, vis) is
+  local fn = x & ".ig"
+  GENERIC_INTERFACE_SOURCES{fn} = _new_unit(vis)
+  pgm_source(fn)
+end
+
+readonly proc _generic_impl(x, vis) is
+  local fn = x & ".mg"
+  GENERIC_MODULE_SOURCES{fn} = _new_unit(vis)
+  pgm_source(fn)
+end
+
+readonly proc generic_interface(x) is  _generic_intf(x, HIDDEN)  end
+readonly proc Generic_interface(x) is  _generic_intf(x, VISIBLE) end
+
+readonly proc generic_implementation(x) is  _generic_impl(x, HIDDEN)  end
+readonly proc Generic_implementation(x) is  _generic_impl(x, VISIBLE) end
+
+readonly proc generic_module(x) is
+  generic_interface(x)
+  generic_implementation(x)
+end
+
+readonly proc Generic_module(x) is
+  Generic_interface(x)
+  Generic_implementation(x)
+end
+
+readonly proc _build_generic_intf (nm, generic, args, vis, safety) is
+  local file = nm & ".i3"
+  local tmp  = ".generic.tmp"
+  local sep  = ""
+  if defined ("_all")
+    > tmp in
+      write ("(*generated by m3build*)", CR, CR)
+      write (safety, "INTERFACE ", nm, " = ", generic, " (")
+      foreach f in args
+        write (sep, f)
+        sep = ", "
+      end
+      write (") END ", nm , ".", CR)
+    end
+    cp_if (tmp, file)
+    delete_file (tmp)
+  end
+  derived_interface (nm, vis)
+end
+
+readonly proc build_generic_intf (nm, generic, args, vis) is
+  _build_generic_intf (nm, generic, args, vis, SAFE)
+end
+
+readonly proc build_generic_unsafe_intf (nm, generic, args, vis) is
+  _build_generic_intf (nm, generic, args, vis, UNSAFE)
+end
+
+readonly proc _build_generic_impl (nm, generic, args, safety) is
+  local file = nm & ".m3"
+  local tmp  = ".generic.tmp"
+  local sep  = ""
+  if defined ("_all")
+    > tmp in
+      write ("(*generated by m3build*)", CR, CR)
+      write (safety, "MODULE ", nm, " = ", generic, " (")
+      foreach f in args
+        write (sep, f)
+        sep = ", "
+      end
+      write (") END ", nm , ".", CR)
+    end
+    cp_if (tmp, file)
+    delete_file (tmp)
+  end
+  derived_implementation (nm)
+end
+
+readonly proc build_generic_impl (nm, generic, args) is
+  _build_generic_impl (nm, generic, args, SAFE)
+end
+
+readonly proc build_generic_unsafe_impl (nm, generic, args) is
+  _build_generic_impl (nm, generic, args, UNSAFE)
+end
+
+%---------------------------------------------------------- derived sources ---
+
+readonly proc derived_interface (x, vis) is
+  local im = x & ".i3"
+  INTERFACE_SOURCES{im} = [Location(BUILD_PACKAGE, BUILD_DIR), vis, LOCAL]
+  COMPILE_SOURCES += im
+  DERIVED_SOURCES{im} = im
+  pgm_object(x, IO_ext)
+  deriveds(x, intf_extensions)
+  deriveds(im, no_extension)
+end
+
+readonly proc derived_implementation (x) is
+  local mm = x & ".m3"
+  MODULE_SOURCES{mm} = [Location(BUILD_PACKAGE, BUILD_DIR), HIDDEN, LOCAL]
+  COMPILE_SOURCES += mm
+  DERIVED_SOURCES{mm} = mm
+  pgm_object(x, MO_ext)
+  deriveds(x, impl_extensions)
+  deriveds(mm, no_extension)
+end
+
+readonly proc derived_c (x) is
+  local fn = x & ".c"
+  C_SOURCES{fn} = [Location(BUILD_PACKAGE, BUILD_DIR), HIDDEN, LOCAL]
+  C_INPUTS {x} = fn
+  H_DIRS{"."} = "."
+  COMPILE_SOURCES += fn
+  DERIVED_SOURCES{fn} = fn
+  pgm_object(x, OBJ_ext)
+  deriveds(x, c_extensions)
+  deriveds(fn, no_extension)
+end
+
+readonly proc derived_h (x) is
+  local fn = x & ".h"
+  H_SOURCES{fn} = [Location(BUILD_PACKAGE, BUILD_DIR), HIDDEN, LOCAL]
+  H_INPUTS += fn
+  H_DIRS{"."} = "."
+  COMPILE_SOURCES += fn
+  DERIVED_SOURCES{fn} = fn
+  deriveds(fn, no_extension)
+end
+
+%--------------------------------------------------------- hiding/exporting ---
+% These are forwarded in the exports file
+
+readonly proc hide_interface(x) is
+  local fn = x & ".i3"
+  set_visibility(INTERFACE_SOURCES, fn, HIDDEN)
+  TFILE_ARGS += "hide_interface(\""
+  TFILE_ARGS += x
+  TFILE_ARGS += QRPCR
+end
+
+readonly proc hide_generic_interface(x) is
+  local fn = x & ".ig"
+  set_visibility(GENERIC_INTERFACE_SOURCES, fn, HIDDEN)
+  TFILE_ARGS += "hide_generic_interface(\""
+  TFILE_ARGS += x
+  TFILE_ARGS += QRPCR
+end
+
+readonly proc hide_generic_implementation(x) is
+  local fn = x & ".mg"
+  set_visibility(GENERIC_MODULE_SOURCES, fn, HIDDEN)
+  TFILE_ARGS += "hide_generic_implementation(\""
+  TFILE_ARGS += x
+  TFILE_ARGS += QRPCR
+end
+
+readonly proc export_interface(x) is
+  local fn = x & ".i3"
+  set_visibility(INTERFACE_SOURCES, fn, VISIBLE)
+  TFILE_ARGS += "export_interface(\""
+  TFILE_ARGS += x
+  TFILE_ARGS += QRPCR
+end
+
+readonly proc export_generic_interface(x) is
+  local fn = x & ".ig"
+  set_visibility(GENERIC_INTERFACE_SOURCES, fn, VISIBLE)
+  TFILE_ARGS += "export_generic_interface(\""
+  TFILE_ARGS += x
+  TFILE_ARGS += QRPCR
+end
+
+readonly proc export_generic_implementation(x) is
+  local fn = x & ".mg"
+  set_visibility(GENERIC_MODULE_SOURCES, fn, VISIBLE)
+  TFILE_ARGS += "export_generic_implementation(\""
+  TFILE_ARGS += x
+  TFILE_ARGS += QRPCR
+end
+
+%---------------------------------------------------------------- resources ---
+
+readonly proc resource_named(rd, x) is
+  RESOURCES{rd} = path_of(x)
+end
+
+readonly proc resource(x) is
+  resource_named(x, x)
+end
+
+proc derived_resource(x) is
+  RESOURCES{x} = x
+  deriveds("", [x])
+end
+
+readonly proc bundle(m) is
+  local intf = m & ".i3"
+  local elements = []
+  local anystale = ""
+
+  % The generated sources are in the build directory
+
+  derived_interface (m, VISIBLE)
+  derived_implementation (m)
+
+  if defined("_all")
+    foreach r in RESOURCES
+      local p = RESOURCES{r}
+      elements += ["-element", r, p]
+      if not anystale
+        if stale(intf, p) anystale = "true"  end
+      end
+    end
+    if anystale
+      exec(BIN_USE & SL & "m3bundle", "-name", m, arglist("-F", elements))
+    end
+    RESOURCES = {} % so we don't keep capturing the same ones...
+  end
+
+  deriveds(m, rsrc_extensions)
+end
+
+
+%---------------------------------------------------------------- templates ---
+
+readonly proc template(x) is
+  local fn = x & ".tmpl"
+  local full_fn = format ("%s%s%s", path(), SL, fn)
+  TEMPLATES{fn} = _new_unit(VISIBLE)
+
+  TFILE_ARGS += "_import_template(\""
+  TFILE_ARGS += fn
+  TFILE_ARGS += "\", \""
+  TFILE_ARGS += PACKAGE
+  TFILE_ARGS += "\", \""
+  TFILE_ARGS += pkg_subdir()
+  TFILE_ARGS += QRPCR
+
+  % write("template: ", fn, CR)
+  M3include(full_fn, fn, pkg_subdir(), PACKAGE)
+end
+
+%--------------------------------------------------------- library building ---
+
+readonly proc library(x) is
+  M3LIBS{x} = [Location(PACKAGE, BUILD_DIR), HIDDEN, LOCAL]
+  BUILD_LIB = x
+  BUILD_PGM = ""
+  gen_m3exports(x)
+  before_library_hooks (x)
+  local lib   = format ("%s%s%s",  LIB_pre, x, LIB_ext)
+  local libmx = format ("%s%s.m3x", LIB_pre, x) %%%--- v3.4
+  if defined("_all")
+    DO_M3(["-a", lib])
+    install_derived(lib)
+    install_derived(libmx)
+    install_sources()
+  end
+  deriveds("", [lib, libmx, M3WEB, M3TFILE])
+  after_library_hooks(x)
+end
+
+% we never export libraries...  this is just for backward compatibility
+readonly proc Library(x) is library(x) end
+
+readonly proc install_derived(x) is
+  if HAVE_PKGTOOLS  return  end
+  local dest = format ("%s%s%s%s%s", PKG_INSTALL, SL, BUILD_PACKAGE,
+                                                  SL, BUILD_DIR)
+  >> M3SHIP_FILE in
+    _install_dir (dest)
+    write ("install_file(\"", escape(x), "\", \"",
+            escape(dest), "\", \"0644\")", CR)
+  end
+end
+
+readonly proc install_link_to_derived (src, dest) is
+  if HAVE_PKGTOOLS
+    _install_file (src, dest, "0755", "T")
+  else
+    local target = format ("%s%s%s%s%s%s%s", PKG_USE, SL, BUILD_PACKAGE,
+                                             SL, BUILD_DIR, SL, src)
+    local link = format ("%s%s%s", dest, SL, src)
+    >> M3SHIP_FILE in
+      _install_dir (dest)
+      write ("link_file(\"", escape(target), "\", \"", escape(link), "\")", CR)
+    end
+  end
+end
+
+%--------------------------------------------------------- program building ---
+
+readonly proc _program(x) is
+  BUILD_PGM = x
+  BUILD_LIB = ""
+  gen_m3exports(x)     % not strictly necessary, but helps find_unit
+  before_program_hooks(x)
+  if defined("_all")
+    DO_M3(["-o", x])
+    install_sources()
+  end
+  deriveds(x, [ PGM_ext, ".m3x" ])
+  deriveds("", ["_m3main.c", "_m3main.o", "_m3main.obj", M3WEB, M3TFILE ])
+  after_program_hooks(x)
+end
+
+readonly proc program(x) is
+  _program(x)
+  if defined("_all")  install_derived(program_name(x))  end
+end
+
+readonly proc Program(x) is
+  _program(x)
+  BindExport(program_name(x))
+end
+
+readonly proc c_program(x) is
+  local include_dirs = []
+  local objects = []
+  local pgm = program_name(x)
+
+  foreach dir in H_DIRS
+    include_dirs += "-I" & dir
+  end
+
+  foreach xx in C_INPUTS
+    local src = C_INPUTS{xx}[0]
+    local obj = C_INPUTS{xx}[1]
+    if defined("_all")
+      if stale(obj, src) or stale (obj, H_INPUTS)
+        exec (CC, include_dirs, "-c", src)
+      end
+    end
+    objects += obj
+  end
+
+  if defined("_all")
+    if stale(pgm, objects)
+      exec (LINK, "-o", pgm, objects, IMPORT_LIBS, OTHER_LIBS_L)
+    end
+  end
+
+  deriveds ("", objects)
+  deriveds(x, [ PGM_ext ])
+end
+
+readonly proc C_program(x) is
+  c_program(x)
+  BindExport(program_name(x))
+end
+
+%---------------------------------------------------------------- man pages ---
+
+readonly proc manPage(x, sec) is
+  local fn = format ("%s.%s", x, sec)
+  local cat_file = fn
+  local man_file = path_of(fn)
+
+  if defined("MAN_SECTION")
+    % all Modula-3 man pages go in a single section
+    cat_file = format ("%s.%s", x, MAN_SECTION)
+  end
+
+  if defined("_all")
+    if stale(cat_file, man_file)
+      cp_if(man_file, cat_file)
+    end
+  end
+
+  deriveds(cat_file, no_extension)
+end
+
+readonly proc ManPage(x, sec) is
+  manPage(x, sec)
+  MandExport(x, sec)
+end
+
+%-------------------------------------------------------------------- emacs ---
+
+readonly proc Gnuemacs(x) is
+  EmacsExport(path_of(x & ".el"))
+end
+ 
+readonly proc CompiledGnuemacs(x) is
+  local src_file = path_of(x & ".el")
+
+  if defined ("emacs_compile")
+    local el_file  = x & ".el"
+    local elc_file = x & ".elc"
+
+    if defined ("_all")
+      cp_if (src_file, el_file)
+      if stale(elc_file, el_file)
+        emacs_compile (el_file)
+      end
+    end
+
+    deriveds(el_file,  no_extensions)
+    deriveds(elc_file, no_extensions)
+    EmacsdExport(el_file)
+    EmacsdExport(elc_file)
+  else
+    EmacsExport(src_file)
+  end
+end
+
+%-------------------------------------------------------------------- noweb ---
+
+readonly proc noweb(src_file,root,dest_file) is
+  src_file = path_of(src_file & ".nw")
+  local tmp_dest = "." & dest_file
+  if defined("_all")
+    if stale(tmp_dest, src_file)
+      exec("notangle -L'<*LINE %L \"%F\" *>%N' -R'" & root & "'", src_file,
+           ">", tmp_dest)
+    end
+    cp_if (tmp_dest, dest_file)
+  end
+  deriveds(tmp_dest, no_extension)
+  deriveds(dest_file, no_extension)
+end
+
+readonly proc noweb_interface(f,r,d) is
+  noweb(f,r,d & ".i3")
+  derived_interface(d, HIDDEN)
+end
+
+readonly proc Noweb_interface(f,r,d) is
+  noweb(f,r,d & ".i3")
+  derived_interface(d, VISIBLE)
+end
+
+readonly proc noweb_implementation(f,r,d) is
+  noweb(f,r,d & ".m3")
+  derived_implementation(d)
+end
+
+%--------------------------------------------------------------------- Zume ---
+
+proc zume(x) is
+  write("zume is not implemented", CR)
+end
+
+%--------------------------------------------------------------- "-T" files ---
+% compiler -Tfile generation. 
+
+readonly proc generate_tfile() is
+  local T_DIRS   = {}
+
+  proc walk_units(s) is
+    foreach m in s
+      local u   = s{m}
+      local loc = unit_loc(u)
+      if is_visible(u) or is_local(u)  % and not equal(pkg, BUILD_PACKAGE)
+        if not T_DIRS contains loc  T_DIRS{loc} = [] end
+        T_DIRS{loc} += m
+      end
+    end
+  end
+
+  walk_units(INTERFACE_SOURCES)
+  walk_units(GENERIC_INTERFACE_SOURCES)
+  walk_units(GENERIC_MODULE_SOURCES)
+
+  > M3TFILE in
+    foreach d in T_DIRS
+      write("@", d, CR)
+      foreach unit in T_DIRS{d}  write(unit, CR)  end
+    end
+  end
+
+  if defined ("_all")  install_derived(M3TFILE)  end
+  deriveds(M3TFILE, no_extension)
+
+  M3SEARCH_TABLES = "-T" & M3TFILE
+end
+
+%------------------------------------------------------ exported interfaces ---
+% installation of exported interfaces & implementations
+
+readonly proc install_sources() is
+  if HAVE_PKGTOOLS return end
+
+  local INSTALL_DIRS   = {}
+
+  proc walk_units(s) is
+    foreach m in s
+      local u   = s{m}
+      local loc = unit_loc(u)
+      if is_local(u)
+        %% if INSTALL_IMPLS or is_visible(u)
+        if not INSTALL_DIRS contains loc  INSTALL_DIRS{loc} = [] end
+        INSTALL_DIRS{loc} += m
+        %% end
+      end
+    end
+  end
+
+  walk_units(INTERFACE_SOURCES)
+  walk_units(GENERIC_INTERFACE_SOURCES)
+  walk_units(GENERIC_MODULE_SOURCES)
+  walk_units(H_SOURCES)
+  walk_units(TEMPLATES)
+  if INSTALL_IMPLS
+    walk_units(MODULE_SOURCES)
+    walk_units(C_SOURCES)
+    walk_units(S_SOURCES)
+  end
+  foreach s in install_units_hooks(INSTALL_IMPLS)
+    walk_units(s)
+  end
+
+  >> M3SHIP_FILE in
+    foreach d in INSTALL_DIRS
+      local dest = format ("%s%s%s%s%s", PKG_INSTALL, SL, loc_pkg(d),
+                                                      SL, loc_subdir(d))
+      _install_dir (dest)
+      foreach unit in INSTALL_DIRS{d}
+        write ("install_file(\"", escape (format ("%s%s%s", d, SL, unit)),
+                             "\", \"", escape(dest), "\", \"0644\")", CR)
+      end
+    end
+  end
+end
+
+%------------------------------------------------------------------ cleanup ---
+
+proc RegisterCleanUp(p) is
+  CLEANUP_PROCS += p
+end
+
+proc RunCleanUps() is
+  foreach p in CLEANUP_PROCS
+    p()
+  end
+end
+
+%---------------------------------------------------------- m3where support ---
+
+readonly proc find_unit(unit, h) is
+
+  proc gen_unit(s) is
+    if s contains unit
+      local u = s{unit}
+      if h or is_visible(u)
+        write (unit_loc(u), SL, unit, CR)
+        return "true"
+      end
+    end
+    return ""
+  end
+
+  if gen_unit(INTERFACE_SOURCES)         return end
+  if gen_unit(GENERIC_INTERFACE_SOURCES) return end
+  if gen_unit(GENERIC_MODULE_SOURCES)    return end
+  if gen_unit(MODULE_SOURCES)            return end
+  if gen_unit(C_SOURCES)                 return end
+  if gen_unit(H_SOURCES)                 return end
+  if gen_unit(S_SOURCES)                 return end
+  foreach s in where_units_hooks()
+    if gen_unit(s)                       return end
+  end
+
+  write("\"", unit, "\" not found", CR)
+end
+
+readonly proc enum_units(h) is
+
+  proc gen_units(s) is
+    foreach m in s
+      local u = s{m}
+      if h or is_visible(u)
+        write (unit_loc(u), SL, m, CR)
+      end
+    end
+  end
+
+  gen_units(INTERFACE_SOURCES)
+  gen_units(GENERIC_INTERFACE_SOURCES)
+  gen_units(GENERIC_MODULE_SOURCES)
+  gen_units(MODULE_SOURCES)
+  gen_units(H_SOURCES)
+  gen_units(C_SOURCES)
+  gen_units(S_SOURCES)
+  foreach s in where_units_hooks()
+    gen_unit(s)
+  end
+end
+
+%------------------------------------------------ internal export utilities ---
+
+readonly M3SHIP_FILE = ".M3SHIP"       % ship commands
+readonly M3OVERRIDES = ".M3OVERRIDES"  % flag to indicate override use
+last_ship_dir  = ""                    % last "dest" dir in the M3SHIP file
+all_ship_dirs  = {}                    % all directories used so far
+
+if defined("_all")
+  delete_file(M3SHIP_FILE)
+  delete_file(M3OVERRIDES)
+  > M3SHIP_FILE in 
+     if HAVE_PKGTOOLS
+       write (CRship) 
+     else
+       write (CR) 
+     end
+  end % let m3ship know we've been here
+end
+deriveds(M3SHIP_FILE, no_extension)
+deriveds(M3OVERRIDES, no_extension)
+
+readonly proc _install_dir (dest) is
+  if HAVE_PKGTOOLS
+    if not equal (dest, last_ship_dir)
+      last_ship_dir = dest
+      write ("-l ", dest, CRship)
+    end
+  else
+    if not all_ship_dirs contains dest
+      all_ship_dirs{dest} = dest
+      write ("make_dir(\"", escape(dest), "\")", CR)
+    end
+  end
+end
+
+readonly proc _install_file(src, dest, mode, derived) is
+  if not derived
+    local new_src = path_of(src)
+    if HAVE_PKGTOOLS
+      % Since the package tools refuse to export things that are outside
+      % the current package and in general we don't know where a source
+      % file resides, we make links to any exported source files.
+      if defined("_all") and stale(src, new_src) link_file(new_src, src) end
+      deriveds(src, no_extension)
+      new_src = src
+    end
+    src = new_src
+  end
+
+  if not defined("_all") return end
+
+  if not empty(PKG_OVERRIDES)
+    % there were overrides => don't create any shipping information
+    NoteOverrides()
+    return
+  end
+
+  >> M3SHIP_FILE in
+
+    % make sure the install directory is built
+    _install_dir (dest)
+  
+    % finally, generate the code to install the file
+    if HAVE_PKGTOOLS
+      write (BUILD_DIR, SLship, src, CRship)
+    else
+      write ("install_file(\"", escape(src), "\", \"", escape(dest),
+             "\", \"", mode, "\")", CR)
+    end
+
+  end % >> M3SHIP_FILE
+end
+
+readonly proc _install_man(x, sec, derived) is
+  local src  = format("%s.%s", x, sec)
+  local dest = ""
+  if defined("MAN_SECTION")
+    dest = format("%s%sman%s", MAN_INSTALL, SL, MAN_SECTION)
+    if not derived    src = path_of(src)   end
+    local new_src = format("%s.%s", x, MAN_SECTION)
+    cp_if(src, new_src)
+    src = new_src
+    derived = "T"
+  else
+    if HAVE_PKGTOOLS
+      dest = format("%s%sman%s", MAN_INSTALL, SLship, sec)
+    else
+      dest = format("%s%sman%s", MAN_INSTALL, SL, sec)
+    end
+  end
+  _install_file (src, dest, "0644", derived)
+end
+
+readonly proc _install_src(src, dest, mode) is
+  if not defined("_all") return end
+
+  if not empty(PKG_OVERRIDES)
+    % there were overrides => don't create any shipping information
+    NoteOverrides()
+    return
+  end
+
+  >> M3SHIP_FILE in
+
+    % make sure the install directory is built
+    _install_dir (dest)
+  
+    % finally, generate the code to install the file
+    if HAVE_PKGTOOLS
+      write (src, CRship)
+    else
+      write ("install_file(\"", escape(src), "\", \"", escape(dest),
+             "\", \"", mode, "\")", CR)
+    end
+
+  end % >> M3SHIP_FILE
+end
+
+last_install_dir = ""
+readonly proc Note_install (src, dest) is
+  if not defined ("_quiet")
+    if not equal (last_install_dir, dest)
+      write (dest, CR)
+      last_install_dir = dest
+    end
+    write ("   ", src, CR)
+  end
+end
+
+%-------------------------------------------- user callable export routines ---
+
+readonly proc BindExport(x)   is _install_file(x, BIN_INSTALL,  "0755","T") end
+readonly proc BinExport(x)    is _install_file(x, BIN_INSTALL,  "0755","")  end
+readonly proc LibdExport(x)   is _install_file(x, LIB_INSTALL,  "0755","T") end
+readonly proc LibExport(x)    is _install_file(x, LIB_INSTALL,  "0755","")  end
+readonly proc EmacsdExport(x) is _install_file(x, EMACS_INSTALL,"0644","T") end
+readonly proc EmacsExport(x)  is _install_file(x, EMACS_INSTALL,"0644","")  end
+readonly proc DocdExport(x)   is _install_file(x, DOC_INSTALL,  "0644","T") end
+readonly proc DocExport(x)    is _install_file(x, DOC_INSTALL,  "0644","")  end
+readonly proc MandExport(x,s) is _install_man(x, s, "T")                    end
+readonly proc ManExport(x,s)  is _install_man(x, s, "")                     end
+readonly proc HtmlExport(x)   is _install_src(x, HTML_INSTALL, "0644")     end
+

@@ -1,0 +1,38 @@
+% Copyright (C) 1993, Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+%
+% Last modified on Wed May 11 16:19:28 PDT 1994 by kalsow 
+
+
+proc make_script (x) is
+  local EXE = ""
+  if equal (OS_TYPE, "WIN32") EXE = ".exe" end
+
+  local source_file = x & ".cq"
+  local object_file = x & EXE
+  if equal (OS_TYPE, "WIN32") object_file = x & ".exe" end
+  if stale (object_file, path_of(source_file))
+    write ("creating ", object_file, "...", CR)
+    include (source_file) % define the local script
+    > x & ".c" in
+      foreach line in script
+        write (line, CR)
+      end
+    end
+    BOOT_OBJS = []
+    BOOT_LIBS = []
+    boot_c (x)
+    boot_prog (x)
+  end
+  return object_file
+end
+
+BindExport (make_script (m3build))
+BindExport (make_script (m3ship))
+BindExport (make_script (m3where))
+LibdExport (make_script (m3mkdir))
+
+ManPage (m3build,1)
+ManPage (m3ship,1)
+ManPage (m3where,1)

@@ -1,0 +1,326 @@
+--- building in DS ---
+m3 -w1 -why -g -a libtest.a -F/usr/tmp/qkAAAa24975 
+--- p001 --- Hello world
+--- p002 --- Text
+--- p003 --- Fmt
+--- p004 --- exception mechanism
+--- p005 --- a simple thread program
+--- p006 --- a bit more complicated
+--- p007 --- a whole bunch of threads - does the memory grow ?
+--- p008 --- thread alerts
+--- p009 --- ORD VAL NUMBER FIRST LAST
+--- p010 --- TYPECODE NARROW
+--- p011 --- BITSIZE BYTESIZE ADRSIZE
+--- p014 --- variables in nested blocks and procedures
+--- p015 --- simple procedure with integer argument
+--- p016 --- CASE statements
+--- p017 --- FOR and EXIT statements
+--- p018 --- IF statements
+--- p019 --- REPEAT and EXIT statements
+--- p020 --- TRY FINALLY and RETURN statements
+--- p021 --- Imbricated TRY FINALLY statements
+--- p022 --- TYPECASE statements
+--- p023 --- WHILE and EXIT statements
+--- p024 --- WITH statements
+--- p025 --- assignment of INTEGER subranges
+--- p026 --- user and language specified variable initialization
+--- p027 --- RECORD types variables and assignments
+--- p028 --- fixed ARRAY types variables assignments and subscripting
+--- p029 --- nested procedures with up-level variable references
+--- p030 --- non-opaque OBJECTs
+--- p034 --- equality of open arrays and records
+--- p035 --- equality of procedures
+--- p036 --- fibonacci
+--- p037 --- tests Time.LongPause
+--- p038 --- sizes of two-byte signed integer subranges
+--- p039 --- VERY LONG thread test - commented out
+--- p040 --- binary <-> ASCII conversion routines
+--- p041 --- floating point comparison and SIGN function
+--- p042 --- floating point ABS, MAX, divide
+--- p043 --- List.Sort, NARROW, and NEW
+--- p044 --- MIN, MAX, WITH and record constructors
+--- p045 --- nested procedures
+--- p046 --- Word.Insert, array of [0..255]
+--- p048 --- nested procedures
+--- p049 --- procedure parameters
+--- p050 --- open array parameters
+--- p051 --- external variables
+--- p052 --- indexing of ref open array
+--- p053 --- set operations
+--- p054 --- Richards' simulation benchmark
+--- p055 --- recursive fibonacci
+--- p056 --- subarray assignment
+--- p057 --- open array parameter
+--- p058 --- subarray
+--- p059 --- cc optimizer bug
+--- p060 --- opaque types
+--- p061 --- object types & NEW
+--- p062 --- typecase and List
+--- p063 --- structural equivalence
+--- p064 --- procedure parameters
+--- p065 --- typecode
+--- p066 --- exception handler stack screwed up
+--- p067 --- mixup in imported names
+--- p069 --- two object types that differs only by default overwriting
+--- p070 --- procedure registration
+1c1
+< sh: 27798 Illegal instruction - core dumped*** error code 132 (ignored)
+---
+> sh: 2568 Illegal instruction - core dumped*** error code 132 (ignored)
+*** error code 1 (ignored)
+8c8
+< 791 procedures
+---
+> 789 procedures
+*** error code 1 (ignored)
+--- p071 --- SUBARRAY := SUBARRAY
+--- p072 --- CHAR literals > 127
+--- p073 --- MOD and DIV - new fast versions
+--- p074 --- b2tests/b004 - initialization of REF RECORD
+--- p075 --- casting open/fixed array to/from open/fixed array
+--- p076 --- b3tests/b005 - more array problems
+--- p077 --- BITS 2 FOR [-1..1]
+--- p078 --- use of constant open arrays in constants
+--- p079 --- up-level reference of a FOR variable
+--- p080 --- order of initialization between interfaces
+--- p081 --- open array constants
+--- p082 --- operations constant set expressions
+--- p083 --- mixing of exceptions in version stamps
+--- p084 --- method overrides and NARROW
+--- p085 --- various combinations of FATAL pragma
+--- p086 --- constant folding of FIRST (open array)
+--- p087 --- set constructors with variable sized ranges
+--- p088 --- importing an interface under different names
+--- p089 --- revelations of renamed types
+--- p090 --- REAL parameter passing - MIPS cc bug
+--- p091 --- NULL <: PROCEDURE in array constructor
+--- p092 --- array of real parameters
+--- p093 --- Rd.GetLine (long line)
+--- p094 --- array constants and forward references
+--- p095 --- thread.signal/wait exercise
+--- p096 --- procedure/method constants
+p0/p096/stdout.pgm is missing
+p0/p096/stderr.pgm is missing
+--- p097 --- NEW with method overrides
+--- p098 --- procedure compatibility within an array constructor
+--- p099 --- array constructors and procedure parameters
+--- p100 --- unnamed types within LOOPHOLE
+--- p101 --- nested procedure in a module's main body
+--- p102 --- C reserved words in record constructors and NEW
+--- p103 --- runtime test of TextRd
+--- p104 --- obsolete pragma
+--- p105 --- FROM-IMPORT vs. revelations
+--- p106 --- ambiguous desugaring from manual
+--- p107 --- interface versus implementation names for keyword binding
+--- p108 --- array of procedure constants
+--- p109 --- FIRST/LAST of enumerated types in record constants
+--- p110 --- FIRST/LAST of enumerated types
+--- p111 --- C reserved words in call to NEW
+--- p112 --- local revelation that a type is an object
+--- p113 --- FIRST/LAST of REAL
+--- p114 --- array expressions
+--- p115 --- reuse of open array conversion within an expression
+--- p116 --- IEEE floating point tests from Xerox PARC
+0a1
+> m3build: /proj/mips/bin/quake failed (status = 256)
+*** error code 1 (ignored)
+1c1,6
+< sh: 29953 Illegal instruction - core dumped*** error code 132 (ignored)
+---
+> sh: 27434 Illegal instruction - core dumped*** error code 132
+> "../../TESTARGS", line 1: command execute failed
+> *** call stack ***
+> "../../TESTARGS", line 1: call to built-in exec
+> "/proj/m3/pkg/m3build/templates/COMMON", line 1: call to procedure RunTest
+> "/proj/m3/pkg/m3build/templates/CLEANUP", line 11: call to procedure RunCleanUps
+*** error code 1 (ignored)
+1c1,164
+< longjmp botch
+---
+> ---------------------------- REAL ---
+>    1.0/0.0 # 1.0/(-0.0) test OK
+>    1.0/0.0 = 1.0/(- (-0.0)) test OK
+>    ILogb (MinPosNormal) test OK
+>    Ilogb (MinPosNormal / 8.0) test OK
+>    Logb  (MinPosNormal / 8.0) test OK
+>    Ilogb (Scalb (1.1, 100)) test OK
+>    Logb (Scalb (1.1, 100)) test OK
+>    NextAfter (0.0, 10.0) test OK
+>    NextAfter (-1.0, -2.0) test OK
+>    CopySign (1.0, -0.0) test OK
+>    CopySign (-1.0, 0.0) test OK
+>    Class (one/ten) test OK
+>    Class (MinPos/ten) test OK
+>    Class (MinPosNormal/ten) test OK
+>    Finite (MinPosNormal/ten) test OK
+>    Class (MaxFinite*ten) test OK
+>    Finite (MaxFinite*ten) test OK
+>    IsNaN (MaxFinite*ten) test OK
+>    Class (zero/zero) test OK
+>    Finite (zero/zero) test OK
+>    IsNaN (zero/zero) test OK
+>    Sign (zero) test OK
+>    Sign (minusZero) test OK
+> ** Unordered (zero, NaN) test not OK: FALSE should be TRUE
+>    Unordered (zero, zero) test OK
+> ** Unordered (NaN, NaN) test not OK: FALSE should be TRUE
+*** error code 141 (ignored)
+--- p117 --- SUBARRAY (LOOPHOLE)
+--- p118 --- LAST (REAL)
+--- p119 --- small exception arguments (big-endian problem)
+--- p120 --- small exception arguments (big-endian problem)
+--- p121 --- real parameters vs. the C compiler
+--- p122 --- RETURN from within TRY-FINALLY
+--- p123 --- simple arithmetic expresssions
+--- p124 --- negative DIV of subrange
+--- p125 --- MOD of subrange
+--- p126 --- REAL arithmetic
+--- p127 --- TRUNC, ROUND, FLOOR, CEILING
+--- p128 --- simple FLOOR test
+--- p129 --- simple DIV test
+--- p131 --- TRUNC, ROUND, FLOOR, CEILING again
+--- p132 --- assignments of builtin types
+--- p133 --- assignments of records and arrays
+--- p134 --- BITS FOR tests
+p1/p134/stdout.pgm is missing
+p1/p134/stderr.pgm is missing
+--- p135 --- more BITS FOR tests
+p1/p135/stdout.pgm is missing
+p1/p135/stderr.pgm is missing
+--- p136 --- bit operations
+--- p137 --- bit insert and extract
+--- p138 --- bit field assignments
+1,7d0
+< "../src/Main.m3", line 23: ** INTERNAL CG ERROR *** unable to find integer type?  type=1  s/o/a=14/376/64
+< "../src/Main.m3", line 28: ** INTERNAL CG ERROR *** unable to find integer type?  type=1  s/o/a=14/376/64
+< "../src/Main.m3", line 34: ** INTERNAL CG ERROR *** unable to find integer type?  type=1  s/o/a=14/376/64
+< "../src/Main.m3", line 39: ** INTERNAL CG ERROR *** unable to find integer type?  type=1  s/o/a=14/376/64
+< "../src/Main.m3", line 45: ** INTERNAL CG ERROR *** unable to find integer type?  type=1  s/o/a=14/376/64
+< "../src/Main.m3", line 50: ** INTERNAL CG ERROR *** unable to find integer type?  type=1  s/o/a=14/376/64
+< 6 errors encountered
+*** error code 1 (ignored)
+p1/p138/stdout.pgm is missing
+p1/p138/stderr.pgm is missing
+--- p139 --- memory copy
+--- p140 --- exceptions
+--- p141 --- RTProcess.Exit
+--- p142 --- procedure defaults
+--- p143 --- variable initialization
+--- p144 --- imported variables and order of evaluation
+--- p145 --- pass-thru REF types
+--- p146 --- NUMBER
+--- p148 --- simple procedure calls
+--- p149 --- up-level addressing
+--- p150 --- up-level addressing with INLINEs
+--- p151 --- by-value open array parameters
+--- p155 --- operations on small sets
+--- p156 --- operations on medium-sized sets
+--- p157 --- operations on big sets in the heap
+--- p158 --- operations on small packed sets
+--- p160 --- more operations on very big sets in the heap
+--- p162 --- more operations on very big sets in the heap
+--- p163 --- simple statements
+--- p164 --- simple thread tests
+--- p165 --- simple TYPECODE test
+--- p166 --- RTMisc.Zero test
+--- p167 --- array constructors as parameters
+--- p168 --- record constructor with loopholed argument
+--- p169 --- runtime fingerprint
+--- p170 --- simple BITS FOR test
+--- p171 --- array constructor as record default
+--- p172 --- REAL vs. C's float
+--- p173 --- LONGREAL vs. C's double
+--- p174 --- large enumeration
+--- p175 --- CASE stmt with very large bounds
+--- p176 --- need full assignment in NEW and constructors
+--- p177 --- unaligned object field references
+--- p178 --- packed fields vs. C's unsigned arithmetic
+--- p179 --- alignment of ARRAY OF BITS 32 FOR INTEGER
+--- p180 --- simple generic test
+--- p181 --- <*NOWARN*>
+--- p182 --- renamed hello world
+--- p183 --- hidden object field
+--- p184 --- fold constant to check type equality
+--- p185 --- REAL vs. C float
+--- p186 --- case statement with large labels
+--- p187 --- array assignment when index type changes
+--- p188 --- initialized globals
+--- p189 --- module initialization order
+--- p190 --- order of evaluation for messy method calls
+--- p191 --- array assignment generates bad C  !!BUG!!
+--- p192 --- recursive declarations
+--- p193 --- implicit narrow on '&' operands
+--- p194 --- open arrays in fixed array initializers !!BUG!!
+--- p195 --- messy method calls
+--- p196 --- procedure valued defaults
+--- p197 --- appending pickles to files
+--- p198 --- compiler hash function
+--- p199 --- exporting an obsolete function
+--- p200 --- recursive types again
+--- p201 --- recursive values
+--- p202 --- SUBARRAY actual parameter
+--- p203 --- fingerprint of NULL
+--- r001 --- unhandled exception
+1c1
+< sh: 4987 Illegal instruction - core dumped*** error code 132 (ignored)
+---
+> sh: 21831 Illegal instruction - core dumped*** error code 132 (ignored)
+*** error code 1 (ignored)
+--- r002 --- stack overflow in the main thread
+1c1
+< sh: 5030 Illegal instruction - core dumped*** error code 132 (ignored)
+---
+> sh: 21870 Illegal instruction - core dumped*** error code 132 (ignored)
+*** error code 1 (ignored)
+--- r003 --- b3tests/b002 - improper size for an open array parameter
+1c1
+< sh: 5077 Illegal instruction - core dumped*** error code 132 (ignored)
+---
+> sh: 21906 Illegal instruction - core dumped*** error code 132 (ignored)
+*** error code 1 (ignored)
+--- r004 --- negative size for an open array
+1c1
+< sh: 5128 Illegal instruction - core dumped*** error code 132 (ignored)
+---
+> sh: 21946 Illegal instruction - core dumped*** error code 132 (ignored)
+*** error code 1 (ignored)
+--- e001 --- assigning non-overlapping subrange types
+--- e002 --- non-constant variable initialization in an interface
+--- e003 --- exception not at the top-level
+--- e004 --- Text.Cat with the wrong number of arguments
+--- e005 --- / instead of DIV on CARDINAL constants
+--- e006 --- non-imported exceptions are visible !
+--- e007 --- procedure constants (no longer an error...)
+--- e008 --- circular imports
+--- e009 --- method specified in NEW incompatible with type declaration
+--- e010 --- verify that there are enough elements in an array constructor
+--- e011 --- m3compiler accepts any type for VAR ARRAY OF formal
+--- e012 --- NULL is not a statment
+--- e013 --- illegal recursive declaration
+--- e014 --- coverage of procedure signature in interface by module
+--- e015 --- illegal recursive declaration x=y/y=x
+--- e016 --- FROM IMPORT in an EXPORTed interface is visible in the module
+--- e017 --- illegal recursive declaration
+--- e018 --- illegal recursive declaration
+--- e019 --- illegal recursive declaration
+--- e020 --- illegal recursive declaration
+1c1
+< sh: 5732 Illegal instruction - core dumped*** error code 132 (ignored)
+---
+> sh: 24888 Illegal instruction - core dumped*** error code 132 (ignored)
+*** error code 1 (ignored)
+--- e021 --- illegal recursive declaration
+--- e022 --- illegal recursive declaration
+--- e023 --- illegal recursive declaration
+--- e024 --- illegal recursive declaration
+--- e025 --- incompatible array parameter
+--- e026 --- two types with the same brand
+--- e027 --- b1tests/b005 - ARRAY [1..0] OF x is empty
+--- e028 --- circular FROM imports
+--- e029 --- use type instead of value as an initializer
+--- e030 --- missing main program
+--- e031 --- spurious '..' in array initializer
+--- e032 --- FROM IMPORT in an IMPORTed interface is visible in the module
+--- e033 --- importing the builtin scope through an arbitrary interace
+--- e034 --- structural equivalence of records
+--- e035 --- illegal recursive declaration

@@ -1,0 +1,20 @@
+% Copyright (C) 1992, Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+%
+% Last modified on Tue Jun  7 09:45:58 PDT 1994 by kalsow   
+%      modified on Thu Sep  9 15:23:16 PDT 1993 by harrison 
+
+%
+% The SRC-specific template code is here.
+%
+
+%------------------------------------------------------------ SRC overrides ---
+
+HAVE_PKGTOOLS = "TRUE"
+AT_SRC        = "TRUE"
+
+readonly proc install_file(src, dest, mode) is
+  write ("install_file(", src, ", ", dest, ", ", mode, ")", CR)
+  error ("install_file: is not defined at SRC!?" & CR)
+end

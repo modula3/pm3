@@ -1,0 +1,3559 @@
+% Copyright (C) 1993, Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+%
+% Last modified on Fri May 13 15:00:38 PDT 1994 by kalsow
+
+\section{MIPS-Dependent Code}\label{sec:MIPS}
+
+[[MD]] completes the implementation of [[M3CG]] for a specific target
+machine, e.g., the MIPS. [[MD]] is target dependent and is thus not
+imported by any other module in the compiler, which makes its interface
+trivial:
+
+<<interface>>=
+INTERFACE MD;
+IMPORT MI;
+TYPE U   <: MI.U;
+     Var <: MI.Var;
+END MD.
+@
+
+[[MD]]'s implementation reveals the details of the opaque types
+[[Tree.T]], [[Tree.Temp]], [[M3CG.Var]], and [[M3CG.Proc]], implements
+the machine-dependent methods of [[M3CG.T]], and drives the code
+generator produced by [[burg]].  This implementation of [[MD]] is for
+the MIPS processor.
+
+<<implementation>>=
+MODULE MD;
+
+IMPORT Fmt, RefSeq, Stdio, Text, TextSeq, Thread, Wr, Burm, M3CG;
+IMPORT M3CG_Ops, MI, Register, Target, TargetMap, TInt, TFloat, TreeIR;
+IMPORT Word;
+
+FROM Fmt       IMPORT Int;
+FROM MI        IMPORT indexAddr, roundup;
+FROM TargetMap IMPORT CG_Align_bytes, CG_Base, CG_Bytes;
+FROM TreeIR    IMPORT Op, Temp, tCONST, tCONVERT, tESEQ, tOP, tMEM,
+                      tMOVE, tNAME, tTEMP;
+FROM Register  IMPORT getagain, givereg, mask, number;
+FROM M3CG      IMPORT BitSize, BitOffset, ByteOffset, ByteSize, Alignment,
+                      Label, Name, TypeUID, Type,
+                      Frequency, AType, RType;
+
+TYPE   <<types>>
+REVEAL <<revelations>>
+VAR    <<variables>>
+CONST  <<constants>>
+<<procedures>>
+BEGIN  <<initialization>>
+  IF NOT Target.Init ("DS3100") THEN <*ASSERT FALSE*> END;
+END MD.
+@
+
+[[MD]] reveals its [[U]] type as a subtype of [[MI.U]] and thus as a
+subtype of [[M3CG.T]]:
+
+<<revelations>>=
+U = MI.U BRANDED OBJECT
+  <<private fields>>
+METHODS
+  <<private methods>>
+OVERRIDES
+  <<overrides>>
+END;
+@
+%------------------------------------------------------------------------------
+\subsection{Global Variables}\label{MIPS:Globals}
+
+[[MD]] reveals that objects of type [[M3CG.Var]] have fields
+that give their size and alignment in bytes:
+
+<<revelations>>=
+Var = MI.Var BRANDED OBJECT
+  size : CARDINAL;
+  align: CARDINAL := 1;
+METHODS
+  address (cg: U; o: ByteOffset): TreeIR.T;
+OVERRIDES
+  print := printVar;
+END;
+@ [[printVar]] calls [[print]] to print diagnostic details common to all
+variables:
+
+<<procedures>>=
+PROCEDURE printVar (self: Var; wr: Wr.T := NIL) =
+  BEGIN
+    print (self, wr)
+  END printVar;
+
+PROCEDURE print (self: Var; wr: Wr.T; prefix := "["; suffix := "]") =
+  BEGIN
+    IF wr = NIL THEN wr := Stdio.stderr END;
+    Out (wr, prefix, self.name);
+    IF self.name # NIL AND self.asmname # NIL THEN Out (wr, ",") END;
+    Out (wr, self.asmname, ": ");
+    Out (wr, "size,align=", Int (self.size), ",", Int (self.align));
+    Out (wr, suffix)
+  END print;
+
+PROCEDURE Out (wr: Wr.T; a, b, c, d: TEXT := NIL) =
+  <* FATAL Thread.Alerted, Wr.Failure *>
+  BEGIN
+    IF a # NIL THEN Wr.PutText (wr, a) END;
+    IF b # NIL THEN Wr.PutText (wr, b) END;
+    IF c # NIL THEN Wr.PutText (wr, c) END;
+    IF d # NIL THEN Wr.PutText (wr, d) END
+  END Out;
+@
+ 
+Global variables, i.e., constants and module-level variables, are
+represented by a separate subtype of [[Var]]:
+
+<<types>>=
+Global = Var BRANDED OBJECT
+OVERRIDES
+  address := GlobalAddr;
+  print   := printGlobal
+END;
+
+<<procedures>>=
+PROCEDURE printGlobal (self: Global; wr: Wr.T := NIL) =
+  BEGIN
+    print (self, wr, "[Global ")
+  END printGlobal;
+@ The [[address]] method returns a tree that represents the address of
+the global plus a constant offset:
+
+<<procedures>>=
+PROCEDURE GlobalAddr (self: Global; cg: U; o: ByteOffset): TreeIR.T =
+  BEGIN
+    RETURN indexAddr (cg, tNAME (CG_Bytes[Type.Addr], self.asmname), o)
+  END GlobalAddr;
+@
+
+There are 5 methods that declare global variables:
+
+<<overrides>>=
+import_global    := import_global;
+declare_global   := declare_global;
+declare_constant := declare_constant;
+declare_segment  := declare_segment;
+bind_segment     := bind_segment;
+@ [[import_global]] builds a [[Global]] object for an imported name and
+emits a [[.extern]] directive for it:
+
+<<procedures>>=
+PROCEDURE import_global (<*UNUSED*>self: U; n: Name; s: ByteSize;
+    <*UNUSED*>a: Alignment;  t: Type;  m3t: TypeUID): M3CG.Var =
+  BEGIN
+    <* ASSERT n # NIL *>
+    RETURN <<allocate and initialize a [[Global]]>>
+  END import_global;
+
+<<allocate and initialize a [[Global]]>>=
+NEW (Global, name := n, asmname := n, size := s, type := t, typeid := m3t);
+@ The assembly-language name for an imported name $X$ is just $X$.  The
+[[.extern]] directive informs the assembler that the name is defined
+elsewhere.
+
+[[declare_global]] is similar, but also {\em defines\/} storage for
+the variable:
+
+<<procedures>>=
+PROCEDURE declare_global (self: U; n: Name; s: ByteSize; a: Alignment;
+    t: Type; m3t: TypeUID; exported, init: BOOLEAN): M3CG.Var =
+  VAR v := <<allocate and initialize a [[Global]]>>
+  BEGIN
+    v.asmname := generate_asmname (self, n, m3t);
+    IF exported THEN <<export [[v]]>> END;
+    <<set alignment and emit [[v]]'s definition>>
+    RETURN v
+  END declare_global;
+
+<<set alignment and emit [[v]]'s definition>>=
+v.align := a;
+IF init THEN
+  <<assign segment for [[v]]>>
+  <<emit alignment for [[v]]>>
+  self.put (v.asmname, ":\n")
+ELSE
+  <<define [[v]] as uninitialized>>
+END;
+@ [[exported]] is [[TRUE]] if this variable is exported. If it isn't,
+[[n]] may be [[NIL]] and [[declare_global]] generates a suitable
+assembly-language name:
+
+<<procedures>>=
+PROCEDURE generate_asmname (self: U;  n: Name;  id: INTEGER): TEXT =
+  BEGIN
+    id := Word.And (id, 16_ffffffff);  (* 32-bit type ids *)
+    IF n = NIL THEN
+      RETURN "L." & Int (self.next_label ())
+    ELSIF (id = 0) THEN
+      RETURN "_" & n
+    ELSIF (id = 16_ffffffff) THEN
+      RETURN "_M3__" & n
+    ELSE
+      RETURN Fmt.F ("_M3_%s_%s", Fmt.Unsigned (id), n);
+    END;
+  END generate_asmname;
+@ [[next_label]] is also used to generate labels.
+
+[[exported]] variables must be announced to the assembler via a
+[[.globl]] directive:
+
+<<export [[v]]>>=
+self.put (".globl ", v.asmname, "\n");
+@ Globals are initialized or uninitialized.  If [[init]] is [[TRUE]],
+the appropriate initialization methods described in Sec.~\ref{MIPS:Initialization}
+are called immediately following the call to [[declare_global]].
+Thus, [[declare_global]] switches to the proper segment and emits an
+alignment directive and the appropriate label in anticipation of the
+initialization calls.
+
+On the MIPS, small variables --- those occupying 8 or fewer bytes ---
+are placed in the ``short data'' segment and are addressed via a
+global pointer. Larger variables are placed in the data segment and
+address via absolute addressing.
+
+<<assign segment for [[v]]>>=
+IF v.size > 8*Target.Byte
+  THEN self.swToSeg (".data\n")
+  ELSE self.swToSeg (".sdata\n")
+END;
+@ On the MIPS, the three possible alignments are specified by the
+$\log_2$ of the alignment in bytes:
+
+<<emit alignment for [[v]]>>=
+CASE v.align OF
+| 0,1 => (* nothing needed for byte alignment *)
+| 2   => self.put (".align 1\n")
+| 4   => self.put (".align 2\n")
+| 8   => self.put (".align 3\n")
+ELSE     self.put (".align 2\n")
+END;
+@ Uninitialized variables are defined by [[.comm]] or [[.lcomm]]
+directives depending on whether they are [[exported]] or not:
+
+<<define [[v]] as uninitialized>>=
+IF exported
+  THEN self.put (".comm ")
+  ELSE self.put (".lcomm ")
+END;
+self.put (v.asmname, ",", Int (s), "\n");
+@
+
+Global constants are read-only global variables and are declared and
+defined by [[declare_constant]].  Its implementation is nearly
+identical to [[declare_global]], except that constants are placed in
+the ``read-only data'' segment:
+
+<<procedures>>=
+PROCEDURE declare_constant (self: U; n: Name; s: ByteSize; a: Alignment;
+    t: Type; m3t: TypeUID; exported, init: BOOLEAN): M3CG.Var =
+  VAR v := <<allocate and initialize a [[Global]]>>
+  BEGIN
+    v.asmname := generate_asmname (self, n, m3t);
+    IF exported THEN <<export [[v]]>> END;
+    v.align := a;
+    IF init THEN
+      self.swToSeg (".rdata\n");
+      <<emit alignment for [[v]]>>
+      self.put (v.asmname, ":\n")
+    ELSE
+      <<define [[v]] as uninitialized>>
+    END;
+    RETURN v
+  END declare_constant;
+@
+
+Finally, together [[declare_segment]] and [[bind_segment]] collaborate
+to accomplish what [[declare_global]] does, but [[declare_segment]]
+returns a handle for a variable to the front end before that variable's
+size, type or initial values are known.  Each declared segment is bound
+exactly once.
+
+<<procedures>>=
+PROCEDURE declare_segment (self: U; n: Name;  m3t: TypeUID): M3CG.Var =
+  VAR v := NEW (Global, name := n, asmname := n);
+  BEGIN
+    <*ASSERT m3t = -1 *>
+    v.asmname := generate_asmname (self, n, m3t);
+    <<export [[v]]>>  (* assume that all segments are exported *)
+    IF Text.Equal (Text.Sub (n, 0, 2), "I_")
+    OR Text.Equal (Text.Sub (n, 0, 2), "M_") THEN
+      unit_name := Text.Sub (n, 2)
+    END;
+    RETURN v
+  END declare_segment;
+
+PROCEDURE bind_segment (self: U; vv: M3CG.Var; s: ByteSize; a: Alignment;
+    t: Type;  exported, init: BOOLEAN) =
+  VAR v: Var := vv;
+  BEGIN
+    v.size   := s;
+    v.type   := t;
+    v.typeid := -1;
+    v.align  := a;
+    <<emit symbol-table data for segment [[v]]>>
+    <<set alignment and emit [[v]]'s definition>>
+  END bind_segment;
+@
+
+%------------------------------------------------------------------------------
+\subsection{Static Initialization}\label{MIPS:Initialization}
+
+Global variables are initialized by the following methods.
+
+<<overrides>>=
+begin_init  := begin_init;
+end_init    := end_init;
+init_int    := init_int;
+init_var    := init_var;
+init_offset := init_offset;
+init_proc   := init_proc;
+init_label  := init_label;
+init_chars  := init_chars;
+init_float  := init_float;
+@
+
+The front end begins an initialization sequence by calling
+[[begin_init]] and terminates the sequence with [[end_init]]. In
+between these calls, the various [[init]] methods are called as
+necessary.  All of the [[init]] methods take an offset argument that
+is the byte offset from the variable at which to lay down the
+relevant data.  This offset increases with each [[init]] call.
+[[begin_init]] initializes a field to track the offset:
+
+<<private fields>>=
+init_pc: CARDINAL;
+
+<<procedures>>=
+PROCEDURE begin_init (self: U; <*UNUSED*>v: M3CG.Var) =
+  BEGIN
+    self.init_pc := 0
+  END begin_init;
+@ The offset is strictly increasing, but not necessarily contiquously,
+i.e., the front end specifies uninitialized ``holes'' by increasing
+the offset as necessary. [[MD]]'s [[space]] method emits the assembler
+directives to implement these holes and adjust [[pc]] accordingly:
+
+<<private methods>>=
+space (o: ByteOffset) := space;
+
+<<procedures>>=
+PROCEDURE space (self: U; o: ByteOffset) =
+  VAR nbytes := o - self.init_pc;
+  BEGIN
+    <*ASSERT nbytes >= 0*>
+    IF nbytes > 0 THEN
+      self.put (".space ", Int (nbytes), " # -> ", Int(o), "\n")
+    END;
+    self.init_pc := o
+  END space;
+@ [[end_init]] calls [[space]] to finish a possibly incomplete initialization:
+
+<<procedures>>=
+PROCEDURE end_init (self: U; v: M3CG.Var) =
+  BEGIN
+    self.space (NARROW (v,Var).size)
+  END end_init;
+@ Each [[init]] method calls [[space]] to fill the hole, if necessary,
+emits its specific initialization, and sets [[pc]] to the appropriate
+value. [[init_int]] is typical:
+
+<<procedures>>=
+PROCEDURE init_int (self: U; o: ByteOffset; READONLY value: Target.Int; t: Type) =
+  CONST pseudos = ARRAY [1..4] OF TEXT { ".byte ", ".half ", NIL, ".word " };
+  VAR size := CG_Bytes[t];
+      buf: ARRAY [0..2 * BITSIZE (INTEGER)] OF CHAR;
+      len := TInt.ToChars (value, buf);
+  BEGIN
+    <* ASSERT o MOD CG_Align_bytes[t] = 0 *>
+    self.space (o);
+    self.put (pseudos[size], Text.FromChars (SUBARRAY (buf, 0, len)), "\n");
+    INC (self.init_pc, size)
+  END init_int;
+@ The front end also tracks the offset and passes the appropriate value
+of [[o]].
+
+[[init_var]] initializes a word with the address of a variable plus a
+constant:
+
+<<procedures>>=
+PROCEDURE init_var (self: U; o: ByteOffset; value: M3CG.Var; bias: ByteOffset) =
+  BEGIN
+    <* ASSERT o MOD (Target.Address.align DIV Target.Byte) = 0 *>
+    self.space (o);
+    IF value = NIL THEN
+      self.put (".word ", Int (bias))
+    ELSE
+      self.put (".word ", NARROW(value, Var).asmname);
+      <<emit signed [[bias]]>>
+    END;
+    self.put ("\n");
+    INC (self.init_pc, Target.Address.bytes)
+  END init_var;
+
+<<emit signed [[bias]]>>=
+IF    bias < 0 THEN
+  self.put (Int (bias))
+ELSIF bias > 0 THEN
+  self.put ("+", Int (bias))
+END;
+@ Note that [[value]] can be [[NIL]], in which case only [[bias]] is
+emitted. Initializing pointers to [[NIL]] is an example of the usage.
+
+[[init_offset]] initializes a word to the frame offset of a local
+variable; it's used by the front end to build exception tables. The
+frame offset is assigned by [[declare_local]] (see
+Sec.~\ref{MIPS:ProcedureFrames}).
+
+<<procedures>>=
+PROCEDURE init_offset (self: U; o: ByteOffset; var: M3CG.Var) =
+  VAR v: Local := var;
+  BEGIN
+    <* ASSERT o MOD (Target.Integer.align DIV Target.Byte) = 0 *>
+    self.space (o);
+    self.put (".word ", Int(v.offset), "+", Int (v.proc.framesize), "\n");
+    INC (self.init_pc, Target.Integer.bytes)
+  END init_offset;
+@ [[v.proc.framesize]] is the size of the stack frame for the procedure
+in which [[v]] is declared; see Sec.~\ref{MIPS:ProcedureFrames}.
+
+[[init_proc]] initializes a word with the address of a procedure;
+it's used, for example, to build method suites.
+
+<<procedures>>=
+PROCEDURE init_proc (self: U; o: ByteOffset; value: M3CG.Proc) =
+  BEGIN
+    <* ASSERT o MOD (Target.Address.align DIV Target.Byte) = 0 *>
+    self.space (o);
+    self.put (".word ", NARROW(value, Proc).asmname, "\n");
+    INC (self.init_pc, Target.Address.bytes)
+  END init_proc;
+@
+
+[[init_label]] is like [[init_var]] and [[init_proc]] except that
+the value is a label instead of a variable or a procedure:
+
+<<procedures>>=
+PROCEDURE init_label (self: U; o: ByteOffset; value: Label) =
+  BEGIN
+    <* ASSERT o MOD (Target.Address.align DIV Target.Byte) = 0 *>
+    self.space (o);
+    self.put (".word L.", Int (value), "\n");
+    INC (self.init_pc, Target.Address.bytes)
+  END init_label;
+@ [[init_label]] is called by [[MI]]'s implementation of [[case_jump]];
+see Sec.~\ref{MI:Statements}.
+
+[[TEXT]] values are initialized by [[init_chars]]:
+
+<<procedures>>=
+PROCEDURE init_chars (self: U; o: ByteOffset; value: TEXT) =
+  VAR c: CHAR; len := Text.Length (value);
+  BEGIN
+    <* ASSERT o MOD (Target.Char.align DIV Target.Byte) = 0 *>
+    self.space (o);
+    IF len > 0 THEN
+      FOR i := 0 TO len - 1 DO
+        IF i MOD 64 = 0 THEN <<start a new [[.ascii]] directive>> END;
+        c := Text.GetChar (value, i);
+        <<emit [[c]] or its escape sequence>>
+      END;
+      self.put ("\"\n");
+      INC (self.init_pc, len*Target.Char.bytes)
+    END
+  END init_chars;
+@ [[init_chars]] emits as many [[.ascii]] directives as required by
+[[value]]. To avoid long output lines, each directive specifies no
+more than 64 characters:
+
+<<start a new [[.ascii]] directive>>=
+IF i > 0 THEN self.put ("\"\n") END;
+self.put (".ascii \"");
+@ [[.ascii]] directives enclose strings in double quotes and
+[[init_chars]] must accept any characters in [[value]].  Thus, it
+emits escape sequences for [["]], [[\]], and the unprintable
+{\sc ascii} characters:
+
+<<emit [[c]] or its escape sequence>>=
+IF c = '"' OR c = '\\' THEN
+  self.put ("\\", Text.FromChar (c))
+ELSIF c < ' ' OR c >= '\177' THEN
+  self.put ("\\", Fmt.Pad (Int (ORD (c), 8), 3, '0'))
+ELSE
+  self.put (Text.FromChar (c))
+END;
+@
+
+[[init_float]] accepts a [[Target.Float]] representation for a
+floating-point constant and emits the appropriate initialization.  The
+MIPS assembler has [[.float]] and [[.double]] directives for
+initializing floating-point values from their string representation,
+but [[init_float]] cannot use them because these directives cannot
+specify the effect of some compile-time operations on floating-point
+constants.  [[init_float]] must emit bit patterns for the values it is
+passed in order to handle initializations like
+\begin{quote}\small
+\begin{verbatim}
+VAR z := FLOAT (FLOAT (0.3, REAL), LONGREAL);
+\end{verbatim}
+\end{quote}
+correctly. The correct initialization for [[z]] is
+\begin{quote}\small
+\begin{verbatim}
+.word 0x0,0x3fd33333
+\end{verbatim}
+\end{quote}
+[[.double 0.3]] would initialize [[z]] to the equivalent of
+\begin{quote}\small
+\begin{verbatim}
+.word 0x33333333,0x3fd33333
+\end{verbatim}
+\end{quote}
+which is incorrect.
+
+<<procedures>>=
+PROCEDURE init_float (self: U; o: ByteOffset; READONLY f: Target.Float) =
+  VAR words: ARRAY [0..1] OF INTEGER; n := TFloat.ToInts (f, words);
+      buf: ARRAY [0..2 * BITSIZE (EXTENDED)] OF CHAR;
+      len := TFloat.ToChars (f, buf);
+    BEGIN
+    <* ASSERT n > 0 *>
+    self.space (o);
+    self.put (".word 0x", Fmt.Unsigned (words[0]));
+    INC (self.init_pc, Target.Integer.bytes);
+    FOR i := 1 TO n - 1 DO
+      self.put (",0x", Fmt.Unsigned (words[i]));
+      INC (self.init_pc, Target.Integer.bytes)
+    END;
+    self.put (" # ", Text.FromChars (SUBARRAY (buf, 0, len)), "\n")
+  END init_float;
+@
+%------------------------------------------------------------------------------
+\subsection{Procedures, Parameters, and Locals}\label{MIPS:ProcedureFrames}
+
+Procedures are represented by [[M3CG.Proc]] objects:
+
+<<types>>=
+Proc = MI.Proc BRANDED OBJECT
+  label        : Label    := 9;
+  n_params     := 0;
+  parameters   : REF ARRAY OF Param := NIL;
+  framesize    := 0;
+  argbuildsize := 0;
+  argoffset    := 0;
+  offset       := 0;
+  last_curr    : Proc := NIL;
+END;
+@ [[label]] labels the exit point of the
+procedure, and [[parameters]] and [[locals]] are, respectively,
+a sequence of the procedure's parameters and its top-level locals.
+
+The remaining fields describe the layout of the procedure's activation
+record, or frame. Figure~\ref{fig:frame} shows the frame layout for
+MIPS procedures.  [[framesize]] is size of the stack frame, and
+[[argbuildsize]] is the size of the argument build area.  [[offset]]
+starts at 0 and is incremented as locals and temporaries are declared;
+its final value is the size of the frame region that holds locals and
+temporaries.  [[argoffset]] starts at 0 and is incremented as
+parameters are declared.
+
+\begin{figure}
+\begin{center}
+\setlength{\unitlength}{12pt}
+\begin{picture}(10,17)
+\thinlines
+\put( 6,15){\vector(0,1){2}}
+\put(15,14.5){\vector(-1,0){3}}\put(15,14.5){\makebox(0,0)[l]{~\tt \$sp}}
+\put( 0, 12){\makebox(12, 3){argument build area}}
+\put( 0, 12){\line( 1, 0){12}}
+\put( 0, 10){\makebox(12, 2){saved floating-point registers}}
+\put( 0, 10){\line( 1, 0){12}}
+\put( 0,  8){\makebox(12, 2){saved scalar registers}}
+\put( 0,  8){\line( 1, 0){12}}
+\put( 0,  4){\makebox(12, 4){locals \& temporaries}}
+\put( 0,  4){\line( 1, 0){12}}
+\put(15,3.5){\vector(-1,0){3}}\put(15,3.5){\makebox(0,0)[l]{~virtual frame pointer}}
+\put( 0,  3){\makebox(12, 1){argument 1}}
+\put( 0,  3){\line( 1, 0){12}}
+\put( 0,  1){\makebox(12, 2){$\vdots$}}
+\put( 0,  1){\line( 1, 0){12}}
+\put( 0,  0){\makebox(12, 1){argument $n$}}
+
+\put(-0.5,8.5){\line(-1,0){4}}
+\put(-2.5,6.75){\vector(0,1){1.75}}
+\put(-2.5,6.25){\makebox(0,0){\tt offset}}
+\put(-2.5,5.75){\vector(0,-1){1.75}}
+\put(-0.5, 4){\line(-1,0){4}}
+
+\put(-0.5,10.5){\line(-1,0){8}}
+\put(-6.5,7.75){\vector(0,1){2.75}}
+\put(-6.5,7.25){\makebox(0,0){\tt fpoffset}}
+\put(-6.5,6.75){\vector(0,-1){2.75}}
+\put(-4.5, 4){\line(-1,0){4}}
+
+\put(-0.5,15){\line(-1,0){12}}
+\put(-10.5,10){\vector(0,1){5}}
+\put(-10.5,9.5){\makebox(0,0){\tt framesize}}
+\put(-10.5,9.0){\vector(0,-1){5}}
+\put(-8.5, 4){\line(-1,0){4}}
+
+\thicklines
+\put( 0, 0){\line( 1, 0){12}}
+\put( 0, 0){\line( 0, 1){15}}
+\put(12,15){\line( 0,-1){15}}
+\put(12,15){\line(-1, 0){12}}
+
+\end{picture}
+\end{center}
+\caption{MIPS Frame Layout.\label{fig:frame}}
+\end{figure}
+
+Procedures are declared by
+
+<<overrides>>=
+declare_procedure := declare_procedure;
+import_procedure  := import_procedure;
+@ These methods create, initialize, and return [[Proc]] objects.
+[[import_procedure]] is called for procedures that are defined
+elsewhere:
+
+<<procedures>>=
+PROCEDURE import_procedure (self: U; n: Name; n_params: INTEGER;
+    <*UNUSED*>return: Type; <*UNUSED*>lang: TEXT): M3CG.Proc =
+  VAR v := NEW (Proc, name := n, asmname := n,  n_params := 0,
+                parameters := NEW (REF ARRAY OF Param, n_params),
+                file := self.file, origin := self.line,
+                last_curr := self.currentProc);
+  BEGIN
+    <* ASSERT n # NIL *>
+    self.currentProc := v;
+    RETURN v;
+  END import_procedure;
+@ [[declare_procedure]] is called for procedures defined in the current
+compilation unit:
+
+<<procedures>>=
+PROCEDURE declare_procedure (self: U; n: Name; n_params: INTEGER;
+    <*UNUSED*>return: Type; lev: INTEGER;
+    exported: BOOLEAN; parent: M3CG.Proc): M3CG.Proc =
+  VAR v := NEW (Proc, name := n, asmname := n, level := lev, n_params := 0,
+                parameters := NEW (REF ARRAY OF Param, n_params),
+                code := NEW (RefSeq.T).init(),
+                parent := parent, file := self.file, origin := self.line,
+                last_curr := self.currentProc);
+  BEGIN
+    IF lev > 0 THEN v.offset := Target.Address.size END;
+    v.asmname := generate_asmname (self, n, 0);
+    IF exported THEN <<export [[v]]>> END;
+    self.currentProc := v;
+    RETURN v
+  END declare_procedure;
+@ The static link for nested procedures is passed as a hidden
+undeclared parameter and stored as the first local, so [[offset]] in
+initialized accordingly for nested procedures.  As for unexported
+variables, the front end may pass [[NIL]] as the name for unexported
+procedures, which causes [[declare_procedure]] to generate a suitable
+[[asmname]].
+
+[[declare_procedure]] posts the current procedure in [[MI]]'s public field
+so that it can be accessed from the methods that declare variables.
+
+Like globals, parameters are represented by a separate subtype of [[Var]]:
+<<types>>=
+Param = Var BRANDED OBJECT
+  offset: INTEGER;
+  proc  : Proc
+OVERRIDES
+  address := ParamAddr;
+  print   := printParam
+END;
+
+<<procedures>>=
+PROCEDURE printParam (self: Param; wr: Wr.T := NIL) =
+  BEGIN
+    print (self, wr, "[Param ", Fmt.F (" offset=%s]", Int (self.offset)))
+  END printParam;
+@ Likewise, locals have a separate subtype, but their supertype is
+[[Param]] because they share many of the same properties:
+
+<<types>>=
+Local = Param BRANDED OBJECT
+OVERRIDES
+  print := printLocal
+END;
+
+<<procedures>>=
+PROCEDURE printLocal (self: Local; wr: Wr.T := NIL) =
+  BEGIN
+    print (self, wr, "[Local ", Fmt.F (" offset=%s]", Int (self.offset)))
+  END printLocal;
+@ [[level]] is the variable's static nesting level, and [[proc]] points
+to the procedure in which the variable is declared.  Both parameters
+and locals are addressed by positive offsets from the stack pointer
+[[$sp]].  But the [[framesize]] cannot be computed until the
+procedure's register needs are known, so [[offset]] records the
+variable's offset in bytes from the virtual frame pointer shown in
+Fig.~\ref{fig:frame} during code generation.  Parameters have positive
+offsets, locals have negative offsets.  The appropriate [[framesize]]
+is added to these offsets during code emission.
+
+The address of a local or a parameter in the current procedure is the
+stack pointer plus the variable's [[offset]].  For up-level addresses,
+the appropriate [[framesize]] has already been computed and must be
+added, because the adjustment during code emission is made for only
+references involving [[sp]].  If a local or parameter declared at
+level $n$ is required in a procedure at level $m > n$, $m - n$ static
+links must be followed. [[ParamAddr]] handles all of these cases:
+
+<<procedures>>=
+PROCEDURE ParamAddr (self: Param; cg: U; o: ByteOffset): TreeIR.T =
+  VAR base := access (cg, cg.currentProc.level - self.proc.level);
+  BEGIN
+    RETURN tOP (base.size, Op.oUPLUS, base, tCONST (base.size, o + self.offset))
+  END ParamAddr;
+@ [[access (k)]] builds a tree to walk down [[k]] static links and is
+described in Sec.~\ref{MIPS:Loads}. If [[self.proc]] is the current
+procedure, [[access (0)]] returns a [[TEMP]] for the stack pointer and
+the [[UPLUS(sp,CONST)]] idiom causes the appropriate frame size to be
+added during code emission (see Sec.~\ref{MIPS:LoadsandStores}).  If the
+reference is an up-level reference, [[access]] returns a tree that
+fetches the appropriate static link, which is the virtual frame pointer
+shown in Fig.~\ref{fig:frame}, and the [[UPLUS(reg,CONST)]] computes the
+correct address. Similar comments apply for [[Local]] variables.
+
+The [[M3CG]] declaration methods are
+
+<<overrides>>=
+declare_local    := declare_local;
+declare_param    := declare_param;
+declare_temp     := declare_temp;
+declare_register := declare_register;
+free_temp        := free_temp;
+@ [[declare_local]] creates, initializes, and returns [[Local]] objects:
+
+<<procedures>>=
+PROCEDURE declare_local (self: U; n: Name; s: ByteSize; a: Alignment;
+    t: Type;  m3t: TypeUID; in_memory, up_level: BOOLEAN;
+    f: Frequency): M3CG.Var =
+  VAR v: Var; p: Proc := self.currentProc;
+  BEGIN
+    IF n # NIL OR in_memory OR up_level OR t = Type.Void THEN
+      v := NEW (Local, name := n, size := s, align := a,
+                type := t, typeid := m3t, proc := p);
+      WITH v = NARROW (v, Local) DO
+        v.proc.offset := roundup (v.proc.offset + s, a);
+        v.offset := -v.proc.offset
+      END
+    ELSE
+      v := getregvar (t);
+      IF v = NIL THEN
+        RETURN self.declare_local (n, s, a, t, m3t, TRUE, FALSE, f)
+      END;
+      v.typeid := m3t;
+      v.name   := n
+    END;
+    p.code.addhi (v);
+    RETURN v
+  END declare_local;
+@ The local's [[offset]] is computed by rounding the sum of the
+procedure's [[offset]] plus the size of the local to the appropriate
+alignment boundary.  [[in_memory]] is [[TRUE]] if the back end must
+place the local in memory because, for example, its address is taken.
+[[up_level]] is [[TRUE]] if the variable is referenced from a nested
+procedure.  [[f]] is the front end's estimate of the frequency that the
+variable is referenced. If an anonymous local can be kept in a register
+and there is a suitable register available, the local is represented by
+a [[Temp]] as described below. The local is also appended to the code
+body so that the appropriate symbol table data will be produced during
+code emission.
+
+[[declare_parameter]] is similar; the parameter's [[offset]] is the
+procedure's [[argoffset]] rounded appropriately.  [[argoffset]] is then
+incremented by the size of the parameter. Note that the minimum
+alignment for parameters is~4, which is required by the calling
+conventions described in Secs.~\ref{MIPS:Procedures} and~\ref{MIPS:Calls}.
+
+<<procedures>>=
+PROCEDURE declare_param (self: U; n: Name; s: ByteSize; a: Alignment;
+    t: Type;  m3t: TypeUID; <*UNUSED*> in_memory: BOOLEAN;
+    <*UNUSED*> up_level: BOOLEAN; <*UNUSED*> f: Frequency): M3CG.Var =
+  VAR p : Proc := self.currentProc;
+  VAR v := NEW (Param, name := n, size := s, align := a,
+                type := t, typeid := m3t, proc := p);
+  BEGIN
+    v.offset := roundup (v.proc.argoffset, MAX(a, 4));
+    p.argoffset := v.offset + s;
+    p.parameters[p.n_params] := v;  INC (p.n_params);
+    IF (p.code = NIL) THEN (* this is an imported procedure *)
+      IF p.n_params = NUMBER (p.parameters^) THEN
+        self.currentProc := p.last_curr;
+      END;
+    ELSE
+      p.code.addhi (v);
+    END;
+    RETURN v
+  END declare_param;
+@ [[addhi]] appends the parameter to the current procedure's list of
+parameters, which is implemented as a sequence.  This sequence is used
+to access the procedures in the order in which they were declared.
+
+The front end calls [[declare_temp]] to allocate anonymous locals with
+possibly restricted lifetimes. Register temporaries are represented by
+a subtype of [[Var]] with a field that points to a register:
+<<revelations>>=
+Temp = Var BRANDED OBJECT
+  reg: Register.T := NIL
+OVERRIDES
+  print := printTemp
+END;
+
+<<procedures>>=
+PROCEDURE printTemp (self: Temp; wr: Wr.T := NIL) =
+  BEGIN
+    print (self, wr, "[Temporary", NIL);
+    IF self.reg # NIL THEN Out (wr, " "); self.reg.print (wr) END;
+    Out (wr, "]")
+  END printTemp;
+@ [[declare_temp]] uses [[getregvar]] to create a [[Temp]] for a
+callee-saved register, if such a register is available:
+
+<<procedures>>=
+PROCEDURE getregvar (t: Type): Temp =
+  VAR reg: Register.T;
+  BEGIN
+    CASE CG_Base[t] OF
+    | Type.Int,  Type.Word,  Type.Addr  => reg :=  vars.getreg ()
+    | Type.Reel, Type.LReel, Type.XReel => reg := fvars.getreg ()
+    ELSE RETURN NIL;
+    END;
+    IF reg = NIL THEN RETURN NIL END;
+    reg.count := -1;
+    RETURN NEW (Temp, reg := reg, type := t,
+                size := CG_Bytes[t], align := CG_Align_bytes[t])
+  END getregvar;
+@ [[vars]] and [[fvars]] are the register sets for callee-saved integer
+and floating-point registers, respectively; see Sec.~\ref{MIPS:Registers}.
+The [[count]] field is set to -1 to insure that the register isn't
+released until the explicit call to [[free_temp]].
+
+[[declare_temp]] returns a [[Temp]] if the temporary does not need to
+be in memory and there is an available register; otherwise, it returns
+a [[Local]].
+
+<<procedures>>=
+PROCEDURE declare_temp (self: U; s: ByteSize; a: Alignment;
+    t: Type; in_memory: BOOLEAN): M3CG.Var =
+  VAR v: Var;
+  BEGIN
+    IF in_memory THEN
+      v := self.declare_local (NIL, s, a, t, 0, TRUE, FALSE, 50);
+      v.type := t
+    ELSE
+      v := getregvar (t);
+      IF v = NIL THEN v := self.declare_temp (s, a, t, TRUE) END
+    END;
+    RETURN v
+  END declare_temp;
+@ The front end calls [[free_temp]] to announce that a temporary is no
+longer needed. If the temporary was assigned a register, it is released
+by calling [[givereg]].
+
+<<procedures>>=
+PROCEDURE free_temp (<*UNUSED*> self: U; v: M3CG.Var) =
+  BEGIN
+    IF ISTYPE (v, Temp) THEN
+      WITH t = NARROW (v, Temp) DO
+        t.reg.count := 1;
+        givereg (t.reg)
+      END
+    END
+  END free_temp;
+@
+
+For some [[Temp]]s, the [[reg]] field is filled in during code
+generation with a code-generation register (see Sec.~\ref{MIPS:Leaves});
+[[MI]] calls [[declare_register]] to create, initialize, and return
+such [[Temp]]s, which are used in [[ALLOC]] and [[TEMP]] nodes.
+[[declare_register]] is
+
+<<procedures>>=
+PROCEDURE declare_register (<*UNUSED*>self: U; t: Type): Temp =
+  BEGIN
+    RETURN NEW (Temp, size := CG_Bytes[t], align := CG_Align_bytes[t], type := t)
+  END declare_register;
+@
+%------------------------------------------------------------------------------
+\subsection{Debugging Information}\label{MIPS:Debugging}
+
+The [[M3CG]] methods that supply symbol-table information depend on the
+target operating system and perhaps on the target architecture and are
+thus implemented by [[MD]].  The implementations of the following~21
+methods emit symbol-table information suitable for use by [[m3gdb]], a variant
+of [[gdb]] that is specific to Modula-3.
+
+<<overrides>>=
+declare_typename   := declare_typename;
+declare_array      := declare_array;
+declare_open_array := declare_open_array;
+declare_enum       := declare_enum;
+declare_enum_elt   := declare_enum_elt;
+declare_packed     := declare_packed;
+declare_record     := declare_record;
+declare_field      := declare_field;
+declare_set        := declare_set;
+declare_subrange   := declare_subrange;
+declare_pointer    := declare_pointer;
+declare_indirect   := declare_indirect;
+declare_proctype   := declare_proctype;
+declare_formal     := declare_formal;
+declare_object     := declare_object;
+declare_method     := declare_method;
+declare_raises     := declare_raises;
+declare_exception  := declare_exception;
+declare_opaque     := declare_opaque;
+reveal_opaque      := reveal_opaque;
+@
+
+Debugging information is embedded in the generated assembly language as
+directives of the form
+\begin{quote}\small\tt
+[[#]].def {\em name\/}; .scl {\em scl\/}; .val {\em val\/}; %
+.type {\em type\/}; .tag {\em tag\/}; .size {\em size\/}; .endef
+\end{quote}
+{\em name\/} is the symbol name, and {\em scl\/} and {\em val\/} are
+its ``storage class'' and ``value,'' respectively. The storage class
+gives the semantic meaning of the symbol, e.g., the name of a
+structure, a field within a structure, a [[typedef]], a variable, etc.
+The form of the value depends on the storage class.  The {\em type\/}
+and {\em size\/} values specify the type of symbol and its size, e.g.,
+the number of bytes occupied by a variable.  If the {\em type\/}
+denotes a structure or enumeration, {\em tag\/} is the associated tag.
+All type information is given in terms of C types, and fields are
+omitted if they carry no information.
+
+These directives are emitted by [[emitdef]]:
+<<private methods>>=
+emitdef (name, tag, val: TEXT := NIL; scl, type, size: INTEGER := -2) := emitdef;
+
+<<procedures>>=
+PROCEDURE emitdef (self: U; name, tag, val: TEXT := NIL; scl, type, size: INTEGER := -2) =
+ BEGIN
+   IF self.debugging THEN
+     self.put (" #.def ", name);
+     IF scl  # -2  THEN self.put ("; .scl ",  Int (scl)) END;
+     IF val  # NIL THEN self.put ("; .val ",  val) END;
+     IF type # -2  THEN self.put ("; .type ", Int (type)) END;
+     IF tag  # NIL AND scl # C_STRTAG
+                   THEN self.put ("; .tag ",  tag) END;
+     IF size # -2  THEN self.put ("; .size ", Int (size)) END;
+     self.put ("; .endef\n")
+   END
+ END emitdef;
+@ The default values for the arguments suppress output of the corresponding field.
+Note that if [[debugging]] is [[FALSE]], no debugging information is emitted.
+
+The~21 methods listed above represent [[def]] directives as trees:
+<<types>>=
+Symbol = OBJECT
+  name, val, tag : TEXT    := NIL;
+  type, scl, size: INTEGER := -2;
+  typeid         : TypeUID := -1;
+  emitted        : BOOLEAN := FALSE
+METHODS
+  walk (cg: U) := leaf;
+END;
+
+TreeSymbol = Symbol OBJECT
+  left, right : TreeSymbol := NIL;
+METHODS
+  walk (cg: U) := preorder;
+END;
+@ [[leaf]], the default [[walk]] method, emits a single [[def]] directive:
+<<procedures>>=
+PROCEDURE leaf (self: Symbol; cg: U) =
+ BEGIN
+   IF NOT self.emitted THEN
+     self.emitted := TRUE;
+     <<emit a [[.def]] directive for [[self]]>>
+   END
+ END leaf;
+
+<<emit a [[.def]] directive for [[self]]>>=
+cg.emitdef (self.name, self.tag, self.val, self.scl, self.type, self.size);
+@ 
+
+The [[def]] directives are designed to accommodate C and C++, but
+Modula-3's type system differs significantly from C's.  Modula-3 types
+are encoded as C structures with idiosyncratic names and fields that
+are recognized by [[m3gdb]]; for the most part, the actual structures
+are unimportant.  For example, the C structure
+\begin{quote}\small
+[[struct M3d$32 { int fill; }]]
+\end{quote}
+encodes the Modula-3 type [[INTEGER]]; the~32 in the structure tag
+gives the size of [[INTEGER]]s on the MIPS.  In general, the tags have
+the form [[M3]]$x$[[$]]$s$\dots~where $x$ is a one-character code for
+the Modula-3 type and $s$ is the size of values of that type in bits.
+
+Structures like [[M3d$32]] are specified by one [[def]] directive for
+the beginning of the structure, one for each field, and one for the end
+of the structure. For example, [[M3d$32]] requires~3 [[def]]
+directives:
+\begin{quote}\small
+\begin{verbatim}
+ #.def M3d$32; .scl 10; .type 8; .size 4; .endef
+ #.def fill; .scl 8; .val 0; .type 4; .size 4; .endef
+ #.def .eos; .scl 102; .val 4; .tag M3d$32; .size 4; .endef
+\end{verbatim}
+\end{quote}
+The~10 and~8 in the first line say that the symbol [[M3d$32]] is a
+structure tag, and the size of~4 says the structure takes~4 bytes.
+The~8 in the second line identifies [[fill]] as a field with offset~0
+(the value of the [[val]] directive) and a type of integer (the type~4)
+that occupies~4 bytes (the size~4).  The last line specifies the end of
+the structure definition; it uses the tag to identify the specific
+structure, and both the [[val]] and [[size]] directives repeat the size
+of the structure.
+
+The various storage class and type codes are given are specified by
+constants in [[m3gdb]], which are replicated below.
+
+<<constants>>=
+C_AUTO   =     1;  (* automatic variable *)
+C_EXT    =     2;  (* external variable *)
+C_STAT   =     3;  (* static variable *)
+C_REG    =     4;  (* register variable *)
+C_MOS    =     8;  (* member of struct, union, or enumeration *)
+C_ARG    =     9;  (* function argument *)
+C_STRTAG =    10;  (* beginning of struct *)
+(*C_TPDEF  =    13;*)  (* typedef *)
+C_EOS    =   102;  (* end of struct, union, or enumeration *)
+
+T_INT    =     4;
+(*T_FLOAT  =     6;*)
+(*T_DOUBLE =     7;*)
+T_STRUCT =     8;
+DT_FCN   = 16_20; (* function modifier *)
+@
+
+The [[def]] directives for a stucture, like the one shown above, are
+build as a tree of [[Symbol]]s; the [[left]] and [[right]] fields point
+to subtrees. The [[def]] directives for a complete structure are
+emitted by overriding [[walk]] with a method that traverses the tree in
+preorder:
+<<procedures>>=
+PROCEDURE preorder (self: TreeSymbol; cg: U) =
+ BEGIN
+   IF NOT self.emitted THEN
+     self.emitted := TRUE;
+     <<emit a [[.def]] directive for [[self]]>>
+     IF self.left  # NIL THEN self.left.walk  (cg) END;
+     IF self.right # NIL THEN self.right.walk (cg) END
+   END
+ END preorder;
+@ These trees are built incrementally. [[beginstruct]] builds the root
+node for a new structure and sets [[current_struct]] to that node:
+
+<<variables>>=
+current_struct: TreeSymbol;
+
+<<procedures>>=
+PROCEDURE beginstruct (class: CHAR; t: TypeUID; info: TEXT := NIL) =
+  VAR len: CARDINAL;  tag: TEXT;  r: TreeSymbol;  buf: ARRAY [0..199] OF CHAR;
+  BEGIN
+    buf[0] := 'M';
+    buf[1] := '3';
+    buf[2] := class;
+    len := 3;
+    IF (t # 0) THEN
+      INC (len, ConvertTypeUID (buf, 3, t));
+    END;
+    IF (info # NIL) THEN
+      Text.SetChars (SUBARRAY (buf, len, NUMBER(buf)-len), info);
+      len := MIN (NUMBER (buf), len + Text.Length (info));
+    END;
+    tag := Text.FromChars (SUBARRAY (buf, 0, len));
+
+    r := NEW (TreeSymbol, scl := C_STRTAG, type := T_STRUCT,
+                size := 1, name := tag,  tag := tag);
+    current_struct := r;
+    r.right := r;
+  END beginstruct;
+@ [[beginstruct]] initializes the [[right]] field to point the root node;
+as the tree is constructed, the [[right]] field points to the last field
+appended to the [[left]] subtree by [[addfield]]:
+
+<<procedures>>=
+PROCEDURE addfield (t: TypeUID;  info: TEXT := NIL) =
+  VAR
+    r := current_struct;
+    f := NEW (TreeSymbol, scl := C_MOS, size := 1, val := NIL, type := T_INT);
+    buf: ARRAY [0..199] OF CHAR;
+    len: CARDINAL := 0;
+  BEGIN
+    IF (t # 0) THEN
+      len := ConvertTypeUID (buf, 0, t);
+    END;
+    IF (info # NIL) THEN
+      Text.SetChars (SUBARRAY (buf, len, NUMBER(buf)-len), info);
+      len := MIN (NUMBER (buf), len + Text.Length (info));
+    END;
+    f.name := Text.FromChars (SUBARRAY (buf, 0, len));
+    r.right.left := f;
+    r.right := f;
+  END addfield;
+@ [[t]] is the [[TypeUID]] for the type of the field except that zero
+specifies no type.  [[info]] is additional information to encode in
+the field's name.
+
+When a structure is finished, [[endstruct]] replaces the [[right]]
+field of the root with a [[Symbol]] for the end-of-structure [[def]]
+directive and emits the type if its argument is non-nil:
+<<procedures>>=
+PROCEDURE endstruct (cg: U := NIL) =
+  VAR r := current_struct;
+  BEGIN
+    r.right := NEW (TreeSymbol, name := ".eos", scl := C_EOS, tag := r.name,
+                    val := Int (r.size), size := r.size);
+    IF cg # NIL THEN r.walk (cg) END
+  END endstruct;
+@ Once finished, calling the [[walk]] method emits all of the [[def]]
+directives necessary to specify the type.
+
+[[ConvertTypeUID]] converts a 32-bit type uid to an array of hex digits
+and returns the result's length:
+<<procedures>>=
+CONST
+  HexDigits = ARRAY [0..15] OF CHAR { '0','1','2','3','4','5','6','7',
+                                      '8','9','a','b','c','d','e','f' };
+
+PROCEDURE ConvertTypeUID (VAR buf: ARRAY OF CHAR;  start: CARDINAL;  t: TypeUID): CARDINAL =
+  VAR v := t;
+  BEGIN
+    FOR i := start+7 TO start BY -1 DO
+      buf[i] := HexDigits[ Word.Mod (v, 16) ];
+      v := Word.Divide (v, 16);
+    END;
+    RETURN 8;
+  END ConvertTypeUID;
+@
+
+[[MD]]'s [[begin_unit]] initializes a few lists:
+<<overrides>>=
+begin_unit := begin_unit;
+
+<<procedures>>=
+PROCEDURE begin_unit (self: U; <*UNUSED*>optimize: INTEGER) =
+  BEGIN
+    self.exported := NEW (TextSeq.T).init();
+    self.typedefs := NEW ( RefSeq.T).init()
+  END begin_unit;
+
+<<private fields>>=
+exported: TextSeq.T := NIL;
+typedefs:  RefSeq.T := NIL;
+@
+
+The sequences [[exported]] and [[typedefs]] hold, respectively, the
+names of the exported interfaces and [[Symbol]]s for C-style type
+definitions. These are emitted at the end of the assembly-language
+output by [[MD]]'s [[end_unit]] along with any types that are not yet
+emitted.  The exported interfaces are identified by their appearance as
+the fields of a structure named [[M3e$]]{\em name\/}, where {\em
+name\/} is the the interface or implementation module name (see
+[[bind_segment]]).
+<<overrides>>=
+end_unit    := end_unit;
+export_unit := export_unit;
+
+<<variables>>=
+unit_name: TEXT := NIL;
+
+<<procedures>>=
+PROCEDURE export_unit (self: U; n: Name) =
+  BEGIN
+    self.exported.addhi (n)
+  END export_unit;
+
+PROCEDURE end_unit (self: U) =
+  BEGIN
+    beginstruct ('i', -1, unit_name);
+    FOR i := 0 TO self.exported.size () - 1 DO
+      addfield (0, self.exported.get (i))
+    END;
+    endstruct (self);
+
+    FOR i := 0 TO self.typedefs.size () - 1 DO
+      NARROW (self.typedefs.get (i), Symbol).walk (self)
+    END
+  END end_unit;
+
+<<emit [[typedef t name]]>>=
+WITH r = types[t] DO
+  self.typedefs.addhi (NEW (Symbol, name := name, scl := C_TPDEF,
+                                    type := r.type, tag := r.tag))
+END;
+@
+
+The remaining methods that emit debugging information build the
+appropriate [[Symbol]]s and emit [[def]] directives as necessary.  The
+simplest of these generate [[typedef]]s to possibly undefined types
+with [[m3gdb]]-specific names:
+<<procedures>>=
+PROCEDURE declare_typename (self: U; t: TypeUID; n: Name) =
+  VAR full_name := Fmt.F ("%s.%s", unit_name, n);
+  BEGIN
+    beginstruct ('N', t);
+    addfield (0, full_name);
+    endstruct (self);
+
+    beginstruct ('n', -1, full_name);
+    addfield (t);
+    endstruct (self);
+  END declare_typename;
+
+PROCEDURE declare_exception (self: U; n: Name; arg_type: TypeUID;
+    <*UNUSED*>raise_proc: BOOLEAN; <*UNUSED*>base: M3CG.Var;
+    <*UNUSED*>offset: INTEGER) =
+  BEGIN
+    beginstruct ('X', arg_type);
+    addfield (0, n);
+    endstruct (self);
+  END declare_exception;
+
+PROCEDURE reveal_opaque (self: U; lhs, rhs: TypeUID) =
+  BEGIN
+    beginstruct ('Q', lhs);
+    addfield (rhs);
+    endstruct (self);
+
+    beginstruct ('Q', rhs);
+    addfield (lhs);
+    endstruct (self);
+  END reveal_opaque;
+@
+
+Many of the remaining methods build [[m3gdb]]-specific C structures
+that encode all of the necessary Modula-3 type information in the
+structure names and in the names and types of the fields.  In many
+cases, the actual size of the C structure is irrelevant; [[m3gdb]]
+decodes the necessary information from the names.
+<<procedures>>=
+PROCEDURE declare_array (self: U; t, index, elt: TypeUID; s: BitSize) =
+  BEGIN
+    beginstruct ('A', t, Int (s));
+    addfield (index);
+    addfield (elt);
+    endstruct (self);
+  END declare_array;
+
+PROCEDURE declare_open_array (self: U; t, elt: TypeUID; s: BitSize) =
+  BEGIN
+    beginstruct ('B', t, Int (s));
+    addfield (elt);
+    endstruct (self);
+  END declare_open_array;
+
+PROCEDURE declare_packed (self: U; t: TypeUID; s: BitSize; base: TypeUID) =
+  BEGIN
+    beginstruct ('D', t, Int (s));
+    addfield (base);
+    endstruct (self);
+  END declare_packed;
+
+PROCEDURE declare_subrange (self: U; t, domain: TypeUID;
+    READONLY min, max: Target.Int; s: BitSize) =
+  VAR a, b: INTEGER;
+  BEGIN
+    EVAL TInt.ToInt (min, a);
+    EVAL TInt.ToInt (max, b);
+
+    beginstruct ('Z', t, Fmt.F ("%s_%s_%s", Int (s), Int (a), Int (b)));
+    addfield (domain);
+    endstruct (self)
+  END declare_subrange;
+
+CONST BoolFlag = ARRAY BOOLEAN OF TEXT { "0", "1" };
+
+PROCEDURE declare_pointer (self: U; t, target: TypeUID; brand: TEXT;
+    traced: BOOLEAN) =
+  VAR tag: TEXT;  bbrand := brand;
+  BEGIN
+    IF (brand = NIL) THEN bbrand := "" END;
+    tag := Fmt.F ("%s_%s_%s_%s", Int (Target.Address.size),
+                  BoolFlag [traced], BoolFlag [brand # NIL], bbrand);
+
+    beginstruct ('Y', t, tag);
+    addfield (target);
+    endstruct (self);
+  END declare_pointer;
+
+PROCEDURE declare_indirect (self: U; t, target: TypeUID) =
+  BEGIN
+    beginstruct ('I', t, Int (Target.Address.size));
+    addfield (target);
+    endstruct (self)
+  END declare_indirect;
+
+PROCEDURE declare_opaque (<*UNUSED*>self: U; <*UNUSED*> t, super: TypeUID) =
+  BEGIN
+    (* we don't generate any info, just the revelation is interesting *)
+  END declare_opaque;
+
+PROCEDURE declare_set (self: U; t, domain: TypeUID; s: BitSize) =
+  BEGIN
+    beginstruct ('S', t, Int (s));
+    addfield (domain);
+    endstruct (self)
+  END declare_set;
+@
+
+For records, the field names encode the offsets and sizes of the
+fields; the C structure has the form
+\begin{quote}\small
+[[struct M3R$]]$s$[[$]]$n$[[$]]$t$[[ {]]\\
+[[  ]]$t_1$ [[field$]]$o_1$[[$]]$s_1$[[$]]$f_1$[[;]]\\
+[[  ]]\dots\\
+[[  ]]$t_n$ [[field$]]$o_n$[[$]]$s_n$[[$]]$f_n$[[;]]\\
+[[};]]
+\end{quote}
+where $s$ is the size in bits, $n$ is the number of fields,
+$t$ is the [[TypeID]], and for each field $i$,
+$o_i$ is its offset in bits,
+$s_i$ is its size in bits,
+$f_i$ is its name, and
+$t_i$ is its type.
+
+The front end announces a record type by calling [[declare_record]],
+and it announces each field by calling [[declare_field]].
+[[declare_record]] starts the required C structure and sets
+[[field_count]] to the number of fields. [[declare_field]] decrements
+[[field_count]] and finishes off the structure after it adds the last
+field. [[declare_record]] emits a [[fill]] field for records with no
+fields because C's type system does not support zero-length
+structures.
+<<variables>>=
+field_count := 0;
+
+<<procedures>>=
+PROCEDURE declare_record (self: U; t: TypeUID; s: BitSize; n_fields: INTEGER) =
+  BEGIN
+    beginstruct ('R', t, Int (s));
+    field_count := n_fields;
+    IF field_count = 0 THEN <<add [[fill]] field>> END
+  END declare_record;
+
+PROCEDURE declare_field (self: U; n: Name; o: BitOffset; s: BitSize; t: TypeUID)=
+  BEGIN
+    addfield (t, Fmt.F ("%s_%s_%s", Int (o), Int (s), n));
+    <<decrement and test [[field_count]]>>
+  END declare_field;
+
+<<decrement and test [[field_count]]>>=
+DEC (field_count);
+IF field_count = 0 THEN endstruct (self) END;
+
+<<add [[fill]] field>>=
+addfield (0, "fill");
+endstruct (self);
+@
+
+Enumeration types are handled similarly: [[declare_enum]] starts the
+structure, and sets [[field_count]], and [[declare_enum_elt]] adds a
+field and finishes off the structure:
+<<procedures>>=
+PROCEDURE declare_enum (self: U; t: TypeUID; n_elts: INTEGER; s: BitSize) =
+  BEGIN
+    beginstruct ('C', t, Int (s));
+    field_count := n_elts;
+    IF field_count = 0 THEN <<add [[fill]] field>> END
+  END declare_enum;
+
+PROCEDURE declare_enum_elt (self: U; n: Name) =
+  BEGIN
+    addfield (0, n);
+    <<decrement and test [[field_count]]>>
+  END declare_enum_elt;
+@
+
+Procedure types are declared by [[declare_proctype]] followed by zero
+more calls to [[declare_formal]] and [[declare_raises]].  These latter
+two methods each decrement and test [[field_count]]:
+<<procedures>>=
+PROCEDURE declare_proctype (self: U; t: TypeUID; n_formals: INTEGER;
+    result: TypeUID; n_raises: INTEGER) =
+  VAR tag := Fmt.F ("%s_%s", Int(Target.Address.size), Int (n_raises));
+  BEGIN
+    beginstruct ('P', t, tag);
+    addfield (result);
+    field_count := n_formals + MAX(n_raises, 0);
+    IF field_count = 0 THEN endstruct (self) END
+  END declare_proctype;
+
+PROCEDURE declare_formal (self: U; n: Name; t: TypeUID) =
+  BEGIN
+    addfield (t, n);
+    <<decrement and test [[field_count]]>>
+  END declare_formal;
+
+PROCEDURE declare_raises (self: U; n: Name) =
+  BEGIN
+    addfield (0, n);
+    <<decrement and test [[field_count]]>>
+  END declare_raises;
+@
+
+Objects are more complicated: The fields form one C structure, as
+described above for records, and the methods form a second. These two
+structures comprise the fields of a third structure for the object as
+if the following C declarations were compiled. $n$ and $m$ denote the
+number of fields and methods, respectively.
+
+\begin{quote}\small\em
+[[struct M3R$]]$s$[[$]]$n$[[$b]]uid[[ {]]\\
+[[  ]]$t_1$ [[field$]]$o_1$[[$]]$s_1$[[$]]$f_1$[[;]]\\
+[[  ]]\dots\\
+[[  ]]$t_n$ [[field$]]$o_n$[[$]]$s_n$[[$]]$f_n$[[;]]\\
+[[};]]\\
+[[struct M3R$]]$s$[[$]]$n$[[$a]]uid[[ {]]\\
+[[  ]]$t_1$ [[field$]]$o_1$[[$]]$s_1$[[$]]$m_1$[[;]]\\
+[[  ]]\dots\\
+[[  ]]$t_m$ [[field$]]$o_m$[[$]]$s_m$[[$]]$m_m$[[;]]\\
+[[};]]\\
+[[struct M3O$]]$s$[[$]]traced[[$]]branded[[$]]uid[[$]]$b$[[ {]]\\
+[[  ]]supertype[[ super;]]\\
+[[  struct M3R$]]$s$[[$]]$n$[[$b]]uid[[ fields;]]\\
+[[  struct M3R$]]$s$[[$]]$n$[[$a]]uid[[ methods;]]\\
+[[};]]\\
+[[typedef struct M3O$]]$s$[[$]]traced[[$]]branded[[$]]uid[[$]]$b$[[ M3u$]]uid[[;]]
+\end{quote}
+$m_i$ are the names of the methods,
+{\em traced\/} is 1 if the object is traced and 0 otherwise,
+{\em branded\/} is 1 if the object is branded and 0 otherwise,
+$b$ is the brand, if there is one, and
+{\em supertype\/} is the objects supertype.
+
+[[declare_object]] announces the beginning of an object and gives the
+supertype and the number of fields and methods. It sets [[method_id]],
+which is the [[TypeID]] of the C structure for the methods.
+[[declare_field]] and [[declare_method]] are called for each field and
+method, respectively.  [[declare_method]] switches momentarily to the
+structure for the method, decrements a separate method counter and
+increments a method offset, and switches back to the structure for the
+fields. This approach permits the front end to announce the fields and
+methods in either order.
+
+<<variables>>=
+method_offset := 0;
+
+<<procedures>>=
+PROCEDURE declare_object (self: U; t, super: TypeUID;
+    brand: TEXT; traced: BOOLEAN; n_fields, n_methods: INTEGER;
+    <*UNUSED*> field_size: BitSize) =
+  VAR tag: TEXT;  bbrand := brand;
+  BEGIN
+    IF (brand = NIL) THEN bbrand := "" END;
+    tag := Fmt.F ("%s_%s_%s_%s_%s", Int (Target.Address.size),
+                  Int (n_fields), BoolFlag [traced],
+                  BoolFlag [brand # NIL], bbrand);
+
+    beginstruct ('O', t, tag);
+    addfield (super);
+    field_count := n_fields + n_methods;
+    IF field_count = 0 THEN endstruct (self) END
+  END declare_object;
+
+PROCEDURE declare_method (self: U; n: Name; signature: TypeUID) =
+  BEGIN
+    addfield (signature, Fmt.F ("%s_%s_%s", Int (method_offset),
+                                 Int (Target.Address.size), n));
+  
+    INC (method_offset, Target.Address.size);
+    DEC (field_count);
+    IF field_count = 0 THEN endstruct (self) END
+  END declare_method;
+@
+
+As detailed in Sec.~\ref{MIPS:Procedures}, debugging information for a
+procedure is emitted with the procedure's prolog is emitted.  Debugging
+information for variables is output when code is emitted during the
+second pass over a procedure's code.  The debugging information for a
+segment is emitted by [[bind_segment]].
+<<emit symbol-table data for procedure [[p]]>>=
+self.emitdef (name := p.name, scl := C_STAT, val := p.asmname, type := DT_FCN+T_INT);
+
+<<emit symbol-table data for parameter [[v]]>>=
+WITH scl = C_ARG,  val = Int (v.offset) DO <<emit a [[def]] directive for [[v]]>> END;
+
+<<emit symbol-table data for local [[v]]>>=
+WITH scl = C_AUTO, val = Int (v.offset) DO <<emit a [[def]] directive for [[v]]>> END;
+
+<<emit symbol-table data for temporary [[v]]>>=
+WITH scl = C_REG, val = Text.Sub (v.reg.asmname, 2) DO
+  <<emit a [[def]] directive for [[v]]>> END;
+
+<<emit symbol-table data for segment [[v]]>>=
+VAR scl: INTEGER; val := v.asmname;
+BEGIN
+  IF exported THEN scl := C_EXT ELSE scl := C_STAT END;
+  <<emit a [[def]] directive for [[v]]>>
+END;
+@ [[def]] directives for variables and procedures must appear
+{\em after\/} the [[def]] directives for their types:
+<<emit a [[def]] directive for [[v]]>>=
+EmitV (self, v, scl, val);
+
+<<procedures>>=
+PROCEDURE EmitV (self: U;  v: Var;  scl: INTEGER;  val: TEXT) =
+  BEGIN
+    IF v.name # NIL THEN
+      self.emitdef (name := FixName (v.name, v.typeid), scl := scl, val := val,
+                    size := v.size, type := 0(*v.type*), tag := NIL(*v.tag*))
+    END;
+  END EmitV;
+
+PROCEDURE FixName (nm: TEXT;  t: TypeUID): TEXT =
+  VAR len: INTEGER;  buf: ARRAY [0..199] OF CHAR;
+  BEGIN
+    IF (t = 0) THEN
+      RETURN nm;
+    ELSIF (t = -1) THEN
+      RETURN "M3__" & nm;
+    ELSE
+      buf [0] := 'M';
+      buf [1] := '3';
+      buf [2] := '_';
+      len := 3 + ConvertTypeUID (buf, 3, t);
+      buf[len] := '_';  INC(len);
+      Text.SetChars (SUBARRAY (buf, len, NUMBER(buf)-len), nm);
+      len := MIN (NUMBER (buf), len + Text.Length (nm));
+      RETURN Text.FromChars (SUBARRAY (buf, 0, len));
+    END;
+  END FixName;
+@
+
+Debugging directives also specify block boundaries, which [[m3gdb]] uses
+to determine the scopes of symbols, e.g., locals declared within a
+block. [[MD]]'s [[begin_block]] and [[end_block]] format the
+appropriate debugging directives and hang them on the evolving sequence
+of code for the procedure.  These directives are emitted when the
+procedure's code is emitted; see Sec.~\ref{MIPS:Procedures}.
+<<overrides>>=
+begin_block := begin_block;
+end_block   := end_block;
+
+<<procedures>>=
+PROCEDURE begin_block (self: U) =
+  VAR lab: TEXT;
+  BEGIN
+    IF self.debugging THEN
+      lab := Int (self.next_label ());
+      self.currentProc.code.addhi (Fmt.F ("L.%s:\n #.begin L.%s\n", lab, lab))
+    END
+  END begin_block;
+
+PROCEDURE end_block (self: U) =
+  VAR lab: TEXT;
+  BEGIN
+    IF self.debugging THEN
+      lab := Int (self.next_label ());
+      self.currentProc.code.addhi (Fmt.F ("L.%s:\n #.bend L.%s\n", lab, lab))
+    END
+  END end_block;
+@
+%------------------------------------------------------------------------------
+\subsection{Loads}\label{MIPS:Loads}
+
+The methods
+
+<<overrides>>=
+load_address     := load_address;
+load_static_link := load_static_link;
+@ load the address of a variable and a procedure's {\em static link},
+respectively.  These may require generating code to follow static links
+for~0 or more levels. The static link for a procedure is the
+procedure's virtual pointer (see Fig.~\ref{fig:frame}). It is passed as
+a hidden argument to nested procedures, which store it as their first
+local variable.  [[access]] walks down $k$ static links:
+
+<<procedures>>=
+PROCEDURE access (self: U; k: INTEGER): TreeIR.T =
+  VAR tree := tTEMP (CG_Bytes[sp.type], sp);
+  BEGIN
+    FOR i := 1 TO k DO
+      tree := tMEM (CG_Bytes[Type.Addr],
+                    indexAddr (self, tree, -Target.Address.bytes))
+    END;
+    RETURN tree
+  END access;
+@ [[sp]] is a [[Temp]] for the stack pointer:
+
+<<variables>>=
+sp: Temp;
+@ [[sp]] is initialized with the other variables that represent registers.
+
+[[load_address]] generates code that yields the address of global,
+local, or parameter, plus an offset. It calls the variable's
+[[address]] method to build the appropriate tree:
+
+<<procedures>>=
+PROCEDURE load_address (self: U; v: M3CG.Var; o: ByteOffset) =
+  BEGIN
+    <* ASSERT NOT ISTYPE (v, Temp) *>
+    self.push (NARROW (v, Var).address (self, o))
+  END load_address;
+@
+
+There are three cases to consider when a procedure $F$ declared at
+level $n$ calls a procedure $G$ declared at level $m$.  If $m=0$, the
+static link is [[NIL]].  If $m > n$, $G$ is nested within $F$, and the
+static link is $F$'s virtual frame pointer.  If $n >= m$, $F$ is nested
+within $G$ or $F$ is declared at the same level as $G$, and the static
+link is found by following $n-m+1$ static links.  [[load_static_link]]
+handles these cases, where $n = [[self.currentProc.level]]$:
+
+<<procedures>>=
+PROCEDURE load_static_link (self: U; p: M3CG.Proc) =
+  VAR m := NARROW (p, Proc).level;
+  BEGIN
+    IF m = 0 THEN
+      self.load_nil ()
+    ELSE
+      self.push (access (self, self.currentProc.level - m + 1));
+      IF m > self.currentProc.level THEN
+        WITH tos = self.stack[self.sp] DO
+          tos := tOP (tos.size, Op.oUPLUS, tos, tCONST (tos.size, 0))
+        END
+      END
+    END
+  END load_static_link;
+@ When $m > n$, [[access]] returns a [[TEMP]] node for the stack
+pointer, and the [[UPLUS(sp,CONST]] tree causes the appropriate frame
+size to be adding during code emission and thus computes the virtual
+frame pointer.
+
+[[MD]] must also arrange to pass the static link in direct calls.  This
+can be done by overriding [[MI]]'s [[call_direct]] method with code
+that arranges to load the static link into register~2, which is the
+convention on the MIPS:
+
+<<overrides>>=
+call_direct     := call_direct;
+pop_static_link := pop_static_link;
+
+<<procedures>>=
+PROCEDURE call_direct (self: U; p: M3CG.Proc; t: Type) =
+  VAR m := NARROW (p, Proc).level;
+  BEGIN
+    IF m > 0 THEN
+      self.load_static_link (p);
+      self.pop_static_link ()
+    END;
+    MI.U.call_direct (self, p, t)
+  END call_direct;
+@ [[pop_static_link]] assigns the value at the top of stack to the
+static link for the procedure that's about to be called via
+[[call_direct]] or [[call_indirect]]:
+
+<<procedures>>=
+PROCEDURE pop_static_link (self: U) =
+  BEGIN
+    <* ASSERT self.sp >= 1 *>
+    self.pop_temp (r2)
+  END pop_static_link;
+@ [[r2]] is a [[Temp]] that represents register~2 in the same way that
+[[sp]] represents the stack pointer.
+
+%------------------------------------------------------------------------------
+\subsection{Predefined Procedures}\label{MIPS:Predefined}
+
+The MIPS floating-point unit has instructions or pseudo-instructions
+for 4~of the predefined arithmetic operations:
+
+<<overrides>>=
+abs     := abs;
+round   := round;
+floor   := floor;
+ceiling := ceiling;
+@ [[MD]]'s versions of these methods build idiosyncratic trees that occur
+only for these operations and thus identify the desired instruction.
+These tree idioms have the form [[ESEQ (CONST (code),exp)]] where
+[[code]] is 0--3 and identifies the instruction and [[exp]] is the
+operand.  [[emit_predefined]] generates this idiom.  The last three
+methods wrap their result in a [[CVTFS]] node to denote that they
+return integers.
+
+<<types>>=
+Predefined = { Abs, Round, Floor, Ceiling };
+
+<<procedures>>=
+PROCEDURE emit_predefined (self: U; code: Predefined)=
+  BEGIN
+    <* ASSERT self.sp >= 1 *>
+    WITH tos = self.stack[self.sp] DO
+      tos := tESEQ (tCONST (CG_Bytes[Type.Int], ORD (code)), tos)
+    END
+  END emit_predefined;
+@
+
+[[abs]] is defined for both integer and floating-point types, but the
+[[abs.s]] and [[abs.d]] instructions apply only to the latter types,
+so [[MD]]'s implementation calls [[MI]]'s implementation for the
+integer types:
+
+<<procedures>>=
+PROCEDURE abs (self: U; t: AType) =
+  BEGIN
+    CASE t OF <*NOWARN*>
+    | Type.Reel, Type.LReel, Type.XReel =>
+        emit_predefined (self, Predefined.Abs)
+    ELSE
+        MI.U.abs (self, t)
+    END
+  END abs;
+@ The other 3~predefined procedures take only floating-point arguments
+and are thus completely implemented by the following methods.
+
+<<procedures>>=
+PROCEDURE round (self: U; <*UNUSED*>t: RType) =
+  BEGIN
+    emit_predefined (self, Predefined.Round);
+    <<add [[CVTFS]] node>>
+  END round;
+
+PROCEDURE floor (self: U; <*UNUSED*>t: RType) =
+  BEGIN
+    emit_predefined (self, Predefined.Floor);
+    <<add [[CVTFS]] node>>
+  END floor;
+
+PROCEDURE ceiling (self: U; <*UNUSED*>t: RType) =
+  BEGIN
+    emit_predefined (self, Predefined.Ceiling);
+    <<add [[CVTFS]] node>>
+  END ceiling;
+
+<<add [[CVTFS]] node>>=
+WITH tos = self.stack[self.sp] DO
+  tos := tCONVERT (CG_Bytes[Type.Int], Op.oCVTFS, tos, self.line)
+END;
+@
+%------------------------------------------------------------------------------
+\subsection{Registers}\label{MIPS:Registers}
+
+Registers are represented by instances of [[Register.T]], which are
+subtypes of [[Var]]s and can thus be printed by [[print]] (see
+Sec.~\ref{MIPS:Globals}):
+
+<<revelations>>=
+Register.T = Register.Public BRANDED OBJECT
+OVERRIDES
+  print := printRegister
+END;
+
+<<procedures>>=
+PROCEDURE printRegister (self: Register.T; wr: Wr.T := NIL) =
+  BEGIN
+    print (self, wr, "[Register ", Fmt.F (" count=%s]", Int (self.count)))
+  END printRegister;
+@ [[MD]] initializes \verb|reg[0..31]| tp represent the 32 general-purpose
+registers on the MIPS:
+
+<<variables>>=
+reg: ARRAY Register.Number OF Register.T;
+
+<<initialization>>=
+FOR r := FIRST (reg) TO LAST (reg) DO
+  reg[r] := NEW (Register.T, asmname := "$" & Int (r), type := Type.Int, size := 32,
+                 count := 1, set := regs, mask := Register.Mask{r})
+END;
+@ The [[count]] fields are initialized to~1 so that dedicated
+registers, like the argument registers, can be used in targeting; see
+Sec.\~ref{MIPS:Calls}.  The [[count]] fields of the other registers are
+reset to~0 below when they are added to a register set. Similar comments
+apply to [[set]].
+
+Register~29 is the stack pointer, register~31 holds return addresses,
+and register~0 is always~0.  As mentioned above, [[sp]] is a [[Temp]]
+whose [[reg]] field points to register~29:
+
+<<initialization>>=
+sp := NEW (Temp, type := Type.Addr, size := reg[29].size, reg := reg[29]);
+reg[29].count := -1; reg[29].asmname := "$sp";
+reg[31].count := -1;
+reg[ 0].count := -1;
+@
+
+The MIPS calling convention~\cite{kane:heinrich:92} stipulates that
+registers 8--15, 24, and 25 are available for expression evaluation
+and are not saved by procedures that use them. These registers are
+thus grouped into the [[regs]] register set:
+
+<<variables>>=
+regs := NEW (Register.Set).init ();
+
+<<initialization>>=
+WITH mask = Register.Mask{8..15,24,25}, reg = reg, set = regs DO
+  <<add registers in [[mask]] to [[set]]>>
+END;
+
+<<add registers in [[mask]] to [[set]]>>=
+FOR r := FIRST (reg) TO LAST (reg) DO
+  IF r IN mask THEN
+    reg[r].count := 0;
+    reg[r].set := set;
+    set.list.addhi (reg[r])
+  END
+END;
+@ Registers 16--23 and 30 {\em are\/} saved across procedure calls, so
+they are grouped into the [[vars]] set:
+
+<<variables>>=
+vars := NEW (Register.Set).init ();
+
+<<initialization>>=
+WITH mask = Register.Mask{16..23,30}, reg = reg, set = vars DO
+  <<add registers in [[mask]] to [[set]]>>
+END;
+@
+
+There are 32 floating-point registers, which are represented and
+classified in ways similar to the general-purpose registers:
+
+<<variables>>=
+freg: ARRAY Register.Number OF Register.T;
+
+<<initialization>>=
+FOR r := 0 TO 30 BY 2 DO
+  freg[r] := NEW (Register.T, asmname := "$f" & Int (r), type := Type.LReel, size := 64,
+                  count := 1, set := fregs, mask := Register.Mask{r, r+1})
+END;
+@ Only the even-numbered floating-point registers are referenced, hence
+only they are allocated and use a two-bit [[mask]].  Even-numbered
+registers 4--10 and 16--18 are available for expression evaluation and
+are not saved across calls:
+
+<<variables>>=
+fregs := NEW (Register.Set).init ();
+
+<<initialization>>=
+WITH mask = Register.Mask{4,6,8,10,16,18}, reg = freg, set = fregs DO
+  <<add registers in [[mask]] to [[set]]>>
+END;
+@ Likewise, even-numbered registers 20--30 are saved across calls and
+are thus suitable for assignment to variables:
+
+<<variables>>=
+fvars := NEW (Register.Set).init ();
+
+<<initialization>>=
+WITH mask = Register.Mask{20,22,24,26,28,30}, reg = freg, set = fvars DO
+  <<add registers in [[mask]] to [[set]]>>
+END;
+@
+%------------------------------------------------------------------------------
+\subsection{Procedures}\label{MIPS:Procedures}
+
+The generated code for a procedure [[P]] with at least 4 arguments and
+that uses {\em all\/} of the saved general-purpose and floating-point
+registers has the general form shown below.
+\begin{quote}\small
+\begin{verbatim}
+.text
+.align 2
+.ent P
+P:
+.frame $sp,framesize,$31
+subu $sp,framesize
+sw $4,0($sp)
+sw $5,4($sp)
+sw $6,8($sp)
+sw $7,12($sp)
+.fmask 0x7FF00000,-fpoffset
+s.d $f20,framesize-fpoffset-40($sp)
+...
+s.d $f30,framesize-fpoffset($sp)
+.mask 0xC0FF00000,-offset
+sw $16,framesize-offset-36($sp)
+...
+sw $30,framesize-offset-4($sp)
+sw $31,framesize-offset($sp)
+...
+body
+...
+9:
+l.d $f20,framesize-fpoffset-40($sp)
+...
+l.d $f30,framesize-fpoffset($sp)
+lw $16,framesize-offset-36($sp)
+...
+lw $30,framesize-offset-4($sp)
+lw $31,framesize-offset($sp)
+addu $sp,framesize
+j $31
+\end{verbatim}
+\end{quote}
+[[framesize]], [[fpoffset]], and [[offset]] refer to the quantities
+shown in Fig.~\ref{fig:frame}.  The [[.frame]], [[.fmask]], and
+[[.mask]] directives convey these quantities to the assembler and
+ultimately to the debugger.  The prologue allocates the frame by
+decrementing the stack pointer, saves the incoming parameters, which
+may be passed in registers 4--7, saves the saved floating-point
+registers, and saves the saved general-purpose registers, including
+the return address in register 31.  The epilog begins at the label
+[[9:]] and restores the saved registers and returns.  Procedures that
+return integers or pointers return them in [[$2]]; those that return
+floating-point values return them in [[$f0]].  Some of these steps are
+omitted for procedures with fewer than 4 parameters, that do not use
+all of [[$16]]--[[$30]] or [[$f20]]--[[$f30]], do not make calls, or
+do not return values.
+
+As mentioned in Sec.~\ref{MI:Procedures}, the methods
+[[begin_procedure]] and [[end_procedure]] bracket code generation for a
+procedure.  [[MD]] overrides only [[end_procedure]], which makes two
+passes over the body of the procedure.  The first pass generates code
+and the second emits code.
+
+<<overrides>>=
+begin_procedure := begin_procedure;
+end_procedure   := end_procedure;
+
+<<procedures>>=
+PROCEDURE begin_procedure (self: U; p: M3CG.Proc) =
+  BEGIN
+    MI.U.begin_procedure (self, p);
+    self.begin_block ()
+  END begin_procedure;
+
+PROCEDURE end_procedure (self: U; pp: M3CG.Proc) =
+  <*FATAL Wr.Failure, Thread.Alerted*>
+  VAR p: Proc := pp;
+      offset, fpoffset, line := self.line; file := self.file;
+  BEGIN
+    MI.U.end_procedure (self, p);
+    self.end_block ();
+    self.errorFile := p.file;
+    self.file := p.file; self.line := p.origin;
+    <<generate code for [[p]]>>
+    <<compute [[framesize]], [[offset]], and [[fpoffset]]>>
+    self.file := p.file; self.line := p.origin;
+    <<emit prologue>>
+    <<emit code for [[p]]>>
+    <<emit epilog>>
+    Wr.Flush (self.wr);
+    vars.used^  := Register.Mask {};
+    fvars.used^ := Register.Mask {};
+    p.code := NIL;
+    self.file := file; self.line := line
+  END end_procedure;
+
+<<private fields>>=
+errorFile := "";
+@ The [[used]] sets of [[vars]] and [[fvars]] are cleared in
+preparation for code generation and register allocation. As described
+in Sec.~\ref{MI:Procedures}, the code for the procedure's body is a
+sequence of IR trees.  The first pass over this sequence generates code
+and allocates registers for each tree:
+
+<<generate code for [[p]]>>=
+FOR i := 0 TO p.code.size () - 1 DO
+  TYPECASE p.code.get (i) OF
+  | TreeIR.T (tree) =>
+      IF label (self, tree)
+        THEN ralloc (self, tree, 1)
+        ELSE p.code.put (i, NIL) END
+  (**| Var (v) => types[v.typeid].walk (self)**)
+  ELSE
+  END
+END;
+@ The code sequence can include debugging information, which are described
+in Sec.~\ref{MIPS:Debugging}; these are ignored during code generation.
+For each IR tree in the sequence, [[label]] returns [[TRUE]] if it
+finds a minimum-cost covering of [[tree]]. If so, the reducer
+[[ralloc]] is called to traverse the cover and allocate registers. If
+[[label]] fails, it reports an error and returns [[FALSE]].
+The corresponding element of the code sequence is discarded.
+This pass also emits symbol-table data for the types of variables.
+
+After the first pass over the procedure's body, [[end_procedure]] has
+enough information to compute the procedure's [[framesize]], and to
+emit the prologue described above.  The second pass calls [[reduce]] to
+emit the code for the nodes in each cover and to emit symbol-table
+data:
+
+<<emit code for [[p]]>>=
+self.swToSeg (".text\n");
+FOR i := 0 TO p.code.size () - 1 DO
+  TYPECASE p.code.get (i) OF <*NOWARN*>
+  | NULL            => (* skip *)
+  | TreeIR.T (tree) => reduce (self, tree, 1)
+  | TEXT   (s)      => self.put (s)
+  | Symbol (s)      => s.walk (self)
+  | Local  (v)      => <<emit symbol-table data for local [[v]]>>
+  | Param  (v)      => <<emit symbol-table data for parameter [[v]]>>
+  | Temp   (v)      => <<emit symbol-table data for temporary [[v]]>>
+  END
+END;
+@ The remaining innards of [[end_procedure]] collaborate to build a
+frame of the form shown in Fig.~\ref{fig:frame}.
+
+[[ralloc]] has three important side effects in additional to allocating
+registers to nodes.  It computes the size of the argument build area in
+[[p.argbuildsize]], records the saved general-purpose registers used in
+[[vars.used]], and records the saved floating-point registers used in
+[[fvars.used]].  These values are used to compute the [[framesize]] and
+the offsets to saved floating-point and general-purpose registers:
+
+<<compute [[framesize]], [[offset]], and [[fpoffset]]>>=
+IF p.argbuildsize > 0 THEN
+  vars.used^ := vars.used^ + reg[31].mask
+END;
+IF p.offset > 0 THEN p.offset := roundup (p.offset, 4) END;
+p.framesize := roundup (p.offset + 4 * number (vars.used^) +
+                        8 * number (fvars.used^) + p.argbuildsize, 8);
+offset   := p.offset + 4;
+fpoffset := roundup (p.offset + 4 * number (vars.used^), 8) + 8;
+@ If [[argbuildsize]] is non-zero, the procedure makes a call, so
+register 31 must be saved along with the other registers in [[vars]].
+The size of the space for locals and temporaries is rounded up to a word
+boundary, and [[framesize]] is computed as the sum of this size plus
+the space needed for the saved registers plus the size of the argument
+build area; see Fig.~\ref{fig:frame}.  [[framesize]] is rounded up to a
+doubleword boundary because the MIPS stack pointer must be so aligned.
+
+As suggested in Fig.~\ref{fig:frame}, [[offset]] gives the location
+relative to the virtual frame pointer where the {\em last\/}
+general-purpose register is saved, and is therefore the size of the
+local area plus 4.  [[fpoffset]] is similar, but must be doubleword
+aligned.
+
+Once the [[framesize]] and the register offsets are computed, the
+prologue described above can be emitted:
+
+<<emit prologue>>=
+self.swToSeg (".text\n");
+self.put (".align 2\n");
+self.loc (p.file, p.origin);
+<<emit symbol-table data for procedure [[p]]>>
+self.put (".ent ", p.asmname, "\n");
+self.put (p.asmname, ":\n");
+self.put (".frame $sp,", Int (p.framesize), ",$31\n");
+IF p.framesize > 0 THEN
+  self.put ("subu $sp,", Int (p.framesize), "\n")
+END;
+IF p.level > 0 THEN <<store static link>> END;
+IF NUMBER (p.parameters^) > 0 THEN <<store parameters>> END;
+<<save floating-point registers>>
+<<save general-purpose registers>>
+@ The [[.fmask]] directive gives the negative of [[fpoffset]] and a mask
+in which 1~bits identify the floating-point registers saved.  The code
+for saving the registers is similar to that for restoring them:
+
+<<save floating-point registers>>=
+WITH count = number (fvars.used^) DO
+  IF count > 0 THEN
+    self.put (Fmt.F (".fmask 0x%s,%s\n",
+              Fmt.Unsigned (mask (fvars.used^)), Int (-fpoffset)));
+    save (self, "s.d %s,%s($sp)\n", freg, fvars.used^,
+          p.framesize - fpoffset - 8*count)
+  END
+END;
+
+<<restore floating-point registers>>=
+save (self, "l.d %s,%s($sp)\n", freg, fvars.used^,
+    p.framesize - fpoffset - 8*number (fvars.used^));
+@ [[save]] does double duty; it saves or restores the registers specified
+by its arguments, least-numbered register first:
+
+<<procedures>>=
+PROCEDURE save (self: U; fmt: TEXT; VAR reg: ARRAY OF Register.T;
+                         mask: Register.Mask; off: INTEGER) =
+  BEGIN
+    FOR i := FIRST (reg) TO LAST (reg) DO
+      WITH r = reg[i] DO
+        IF r # NIL AND r.mask*mask # Register.Mask{} THEN
+          INC (off, r.size DIV 8);
+          self.put (Fmt.F (fmt, r.asmname, Int (off)))
+        END
+      END
+    END;
+  END save;
+@ Note that [[offset]] is incremented {\em before\/} the load or store
+instruction is printed because [[off]] is computed from [[fpoffset]] or
+[[offset]], which point {\em at\/} the last register saved instead of
+after it.  Saving and restoring the general-purpose registers is
+similar:
+
+<<save general-purpose registers>>=
+WITH count = number (vars.used^) DO
+  IF count > 0 THEN
+    self.put (Fmt.F (".mask 0x%s,%s\n",
+              Fmt.Unsigned (mask (vars.used^)), Int (-offset)));
+    save (self, "sw %s,%s($sp)\n", reg, vars.used^,
+          p.framesize - offset - 4*count)
+  END
+END;
+
+<<restore general-purpose registers>>=
+save (self, "lw %s,%s($sp)\n", reg, vars.used^,
+       p.framesize - offset - 4*number (vars.used^));
+@
+The epilog starts with the procedure's return point label, includes the
+code to restore the saved registers, and concludes by removing the
+stack frame and returning to the caller:
+
+<<emit epilog>>=
+self.put (Int(p.label), ":\n");
+<<restore floating-point registers>>
+<<restore general-purpose registers>>
+IF p.framesize > 0 THEN
+  self.put ("addu $sp,", Int (p.framesize), "\n")
+END;
+self.put ("j $31\n", ".end ", p.asmname, "\n");
+@
+
+The MIPS calling convention stipulates that the first few arguments
+are passed in registers. Specifically, the first four words of
+arguments (including gaps to satisfy alignments) are passed in
+registers [[$4]]--[[$7]] respectively, except in the following cases.
+\begin{enumerate}
+\item
+   The first argument is passed in [[$f12]] if it is a single- or
+   double-precision floating-point value.
+\item
+   The second argument is passed in [[$f14]] if it is a single- or
+   double-precision floating-point value and the first argument is
+   passed in [[$f12]].
+\end{enumerate}
+When arguments are passed in floating-point registers, the
+corresponding integer registers are unused.  Space in the argument
+build area is allocated for all arguments, even those passed in
+registers, so the [[offset]] fields of the parameters guide the code
+that stores parameters passed in registers into their stack locations:
+
+<<store parameters>>=
+VAR first: Param := p.parameters[0];
+    v: Param; off: INTEGER;
+CONST real   = SET OF Type { Type.Reel..Type.XReel };
+      double = SET OF Type { Type.LReel, Type.XReel };
+BEGIN
+  FOR i := 0 TO LAST (p.parameters^) DO
+    v   := p.parameters[i];
+    off := v.offset;
+    IF    off > 12 THEN
+      EXIT
+    ELSIF off = 0 AND v.type IN real THEN
+      store (self, freg[12], v.type, off)
+    ELSIF off = 4 AND v.type = Type.Reel
+    AND first.type = Type.Reel THEN
+      store (self, freg[14], v.type, off)
+    ELSIF off = 8 AND v.type IN real
+    AND first.type IN double THEN
+      store (self, freg[14], v.type, off)
+    ELSIF off = 8 AND v.type IN double THEN
+      store (self, reg[6], Type.Word, off);
+      store (self, reg[7], Type.Word, off + 4)
+    ELSIF off <= 12 THEN
+      store (self, reg[(off DIV 4) + 4], Type.Word, off)
+    END
+  END
+END;
+@ Note that the floating-point argument with offset 8 is passed in
+registers 6 and 7 if the preceding arguments are not floating-point
+arguments.
+
+[[store]] builds the tree [[MOVE(MEM(UPLUS(TEMP,off)),TEMP)]], which
+stores register [[r]] into the stack at the offset [[off]]:
+
+<<procedures>>=
+PROCEDURE store (self: U; r: Register.T; t: Type; off: INTEGER) =
+  VAR reg := self.declare_register (t);
+      src := tTEMP (CG_Bytes[t], reg);
+      dst := tMEM (CG_Bytes[t],
+               indexAddr (self, tTEMP (CG_Bytes[Type.Addr], sp), off),
+               self.line);
+  BEGIN
+    reg.reg := r;
+    IF r.set = fregs THEN
+      src := tCONVERT (src.size, Op.oCVTFF, src, self.line)
+    END;
+    WITH tree = tMOVE (dst, src, self.line) DO
+      <<generate and emit code for [[tree]]>>
+    END
+  END store;
+@ [[reg]] is a [[Temp]] for register [[r]], which is tucked into a
+[[TEMP]] tree as the source of the [[MOVE]], and [[dst]] is the tree
+for the destination.  If [[r]] is a floating-point register, the
+source tree is [[CVTFF(TEMP)]].
+
+Generating for the store and emitting it is done by labelling
+[[tree]], allocating registers for it, and handing it to [[reduce]]:
+
+<<generate and emit code for [[tree]]>>=
+IF label (self, tree) THEN
+  ralloc (self, tree, 1);
+  reduce (self, tree, 1)
+END;
+@ [[ralloc]] will not actually allocate any registers because [[tree]]
+doesn't need any.
+
+Finally, nested procedures save the static link, which is passed in
+register~2, as their first local:
+
+<<store static link>>=
+store (self, reg[2], Type.Addr, -Target.Address.bytes);
+@
+
+[[exit_proc]] generates code for [[RETURN]] statements, with and without
+return values.
+
+<<overrides>>=
+exit_proc := exit_proc;
+@ For a procedure that returns a value, the generated code moves the
+value to the appropriate register before jumping to the epilog:
+
+<<procedures>>=
+PROCEDURE exit_proc (self: U; t: Type) =
+  VAR reg: Temp;
+  BEGIN
+    IF t # Type.Void THEN
+      <* ASSERT self.sp = 1 *>
+      CASE CG_Base[t] OF <*NOWARN*>
+      | Type.Addr, Type.Word, Type.Int => reg := r2
+      | Type.Reel                      => reg := f0
+      | Type.LReel, Type.XReel         => reg := d0
+      END;
+      self.append(tMOVE(tTEMP(CG_Bytes[t], reg), self.stack[self.sp], self.line));
+      DEC(self.sp)
+    END;
+    <* ASSERT self.sp = 0 *>
+    self.jump (NARROW (self.currentProc, Proc).label)
+  END exit_proc;
+@ As shown, integers and addresses are returned in [[$2]] and
+floating-point values are returned in [[$f0]]. [[r2]], [[f0]], and
+[[d0]] are [[Temp]]s for these registers:
+
+<<variables>>=
+r2, f0, d0: Temp;
+
+<<initialization>>=
+r2 := NEW (Temp, type := Type.Int,   size := 4, reg :=  reg[2]);
+f0 := NEW (Temp, type := Type.Reel,  size := 4, reg := freg[0]);
+d0 := NEW (Temp, type := Type.LReel, size := 8, reg := freg[0]);
+@
+%------------------------------------------------------------------------------
+\subsection{Source locations}\label{MIPS:Source locations}
+
+[[loc]] emits the [[MIPS]] ``[[.loc]]'' directives that provide debuggers
+with the current file name and line number.  [[loc]] records each
+location so it can avoid extraneous [[.loc]] directives:
+
+<<private fields>>=
+currentFile := "";
+currentLine := 0;
+@
+<<private methods>>=
+loc (file: TEXT; line: INTEGER) := loc;
+
+<<procedures>>=
+PROCEDURE loc (self: U; file: TEXT; line: INTEGER) =
+  BEGIN
+    IF file # NIL AND NOT Text.Equal (file, self.currentFile) THEN
+      self.put (".file 2,\"", file, "\"\n");
+      self.currentFile := file;
+      self.currentLine := 0
+    END;
+    IF line # self.currentLine AND line # TreeIR.No_origin THEN
+      self.put (".loc 2,", Int (line), "\n");
+      self.currentLine := line
+    END
+  END loc;
+@
+%------------------------------------------------------------------------------
+\subsection{Labeling}\label{MIPS:Labeling}
+
+The labeler, [[label]], labels an IR tree as described in
+Sec.~\ref{Burm:Output} and returns [[TRUE]] if a cover is found and
+returns [[FALSE]] otherwise:
+
+<<procedures>>=
+PROCEDURE label (self: U; tree: TreeIR.T): BOOLEAN =
+  <<[[label1]]>>
+  BEGIN
+    IF Burm.rule (label1 (tree), 1) > 0 THEN
+      IF Burm.Trace # 0 THEN
+        self.put ("/*\n");
+        tree.print (self.wr);
+        Burm.printcover (tree, wr := self.wr);
+        self.put ("*/\n")
+      END;
+      RETURN TRUE
+    ELSE
+      self.put ("/* No cover for\n");
+      tree.print (self.wr);
+      self.put ("*/\n");
+      (* self.note_error ("Internal code generation error " &
+                        <<source coordinate>>); *)
+      RETURN FALSE
+    END
+  END label;
+@
+
+The success of a match is determined by finding the external rule
+number for the rule that matched [[tree]], which is always positive.
+[[label1]] returns the state number of [[tree]], and [[Burm.rule]]
+returns the external rule number as described in
+Sec.~\ref{Burm:Output}.  [[label1]] does a postorder traversal of
+[[tree]] calling [[Burm.state]] to compute each node's state numbers:
+
+<<[[label1]]>>=
+PROCEDURE label1 (tree: TreeIR.T): INTEGER =
+  VAR op: INTEGER;
+  BEGIN
+    IF tree = NIL THEN RETURN 0 END;
+    op := ORD (tree.op);
+    CASE tree.op OF
+    <<operator translations>>
+    ELSE
+    END;
+    tree.state := Burm.state (op, label1 (tree.left), label1 (tree.right));
+    RETURN tree.state
+  END label1;
+@ [[label1]] translates a few operators to extended operators that are
+specific to the BURS specification for the MIPS as described below.
+For example, [[CONST]] nodes for the constant 0 and 5-bit positive
+constants are identified by separate operators:
+
+<<operators>>=
+%term I0=70 I5=71
+
+<<operator translations>>=
+| Op.oCONST =>
+    VAR n := NARROW (tree, TreeIR.Int).i;
+    BEGIN
+      IF    n = 0            THEN op := 70
+      ELSIF n > 0 AND n < 32 THEN op := 71 END
+    END
+@
+%------------------------------------------------------------------------------
+\subsection{Generating and Emitting Code}\label{MIPS:Generating}
+
+Once labeled, trees are reduced twice as described above.  The first
+reducer, [[ralloc]], assigns registers. The second, [[reduce]],
+emits code.
+
+[[ralloc]] uses [[getreg]] to assign a register to each node's
+[[reg]] field, as described in Sec.~\ref{sec:Register}. Both reducers
+can compute and access attributes associated with the non-terminals in
+the BURS specification.  These attributes are stored as [[TEXT]]
+values in each node:
+
+<<revelations>>=
+TreeIR.T = TreeIR.Public BRANDED OBJECT
+  reg : Register.T := NIL;
+  nt  : ARRAY [1..25] OF TEXT;
+  inst: TreeIR.T := NIL;
+END;
+@ For a node [[t]], [[t.reg]], if non-NIL, is the register that holds
+the value computed by [[t]], and \verb|t.nt[i]| is the attribute for
+the non-terminal numbered [[i]]. The actual non-terminal numbers are
+unimportant because they are obtained from either the goal non-terminal
+passed to the reducer or from the data in [[Burm.nts]]; see
+Sec.~\ref{Burm:Output}. The number of attributes --- the ``25'' in the
+fragment above {\em is\/} important; this number must be greater than
+or equal to the number of non-terminals in the BURS specification.  The
+[[inst]] field points to the node that computes the value in [[reg]].
+Usually, [[t.inst]] is equal to [[t]], but the values of some node,
+like [[ESEQ]], are computed by their operands. [[inst]] is used to
+avoid move instructions; see Sec.~\ref{MIPS:Temporaries}.
+
+Attributes are assigned by assignments to [[lhs]], which is a local
+variable in [[ralloc]]:
+
+<<procedures>>=
+PROCEDURE ralloc (self: U; t: Burm.T; goalnt: INTEGER;
+                  target: Register.T := NIL) =
+  <<register allocation procedures>>
+  VAR eruleno := Burm.rule (t.state, goalnt);
+      nts := Burm.nts[eruleno];
+      kids: ARRAY [0..9] OF Burm.T;
+  BEGIN
+    Burm.kids (t, eruleno, kids);
+    WITH lhs = t.nt[goalnt] DO
+      CASE eruleno OF <*NOWARN*>
+      <<reduce1>>
+      ELSE recurs ()
+      END
+    END
+  END ralloc;
+
+<<register allocation procedures>>=
+PROCEDURE recurs ()=
+  VAR i := 0;
+  BEGIN
+    WHILE nts[i] # 0 DO do (i); INC (i) END;
+    IF i > 0 THEN t.nt[goalnt] := kids[0].nt[nts[0]] END
+  END recurs;
+
+PROCEDURE do (i:INTEGER; r: Register.T := NIL) =
+  BEGIN
+    IF r # NIL THEN target := r END;
+    ralloc (self, kids[i], nts[i], target)
+  END do;
+@ [[ralloc]] calls [[Burm.rule]] to find the external rule number, sets
+[[nts]] to point to the array of goal non-terminals for the subtrees
+appearing the rule, and calls [[Burm.kids]] to fill [[kids]] with
+pointers to these subtrees. [[target]] helps assign registers
+and is described below.  [[recurs]] reduces [[t]]'s subtrees, left to
+right; [[do]] simply abbreviates the recursive call to [[ralloc]],
+optionally setting [[target]] before the call.
+
+The preprocessor described in Sec.~\ref{Burm:HighLevel} generates the
+body of the [[CASE]] statement labeled $\langle${\sl
+reduce1\/}$\rangle$ above from the {\sl reduce}$_1$ fields in the BURS
+specification.  By default, it generates calls to [[recurs]] {\em
+before\/} the code in each {\sl reduce}$_1$ field.  Thus, [[ralloc]]
+reduces trees bottom up unlike [[printcover]], which reduces them top
+down. In addition, [[lhs]] is an alias for [[t]]'s attribute and is
+initialized by [[recurs]] to the attribute for the first subtree in the
+righthand side of the rule, if there is one.  For example, the lines
+
+<<code generation rules>>=
+acon:   UPLUS(name,con)         lhs := string("%0+%1")
+acon:   UPLUS(con,name)         lhs := string("%1+%0")
+acon:   name
+acon:   con
+@ specify rules for address constants. The preprocessor produces
+\begin{quote}\small
+\begin{verbatim}
+| 48 => recurs(); lhs := string("%0+%1")
+| 49 => recurs(); lhs := string("%1+%0")
+\end{verbatim}
+\end{quote}
+for the first two of these lines. No output is produced for the last
+two lines because the [[ELSE]] arm of the [[CASE]] statement in
+[[ralloc]] provides the necessary defaults.
+
+This example shows another useful abbreviation. [[string]] returns its
+[[TEXT]] argument with [[%]]$i$ replaced with the appropriate attribute
+for the $i^{\rm th}$ non-terminal on the righthand side of the rule.
+Thus, the call to [[string]] in the first line above returns a string
+consisting of the [[name]] attribute from [[UPLUS]]'s left operand,
+followed by a [[+]], followed by the [[con]] attribute from [[UPLUS]]'s
+right operand. This string is assigned to [[lhs]], which is an alias
+for the [[acon]] attribute of the [[UPLUS]] node.  [[string]], nested
+within [[ralloc]], calls [[format]] to do the actual formatting:
+
+<<register allocation procedures>>=
+PROCEDURE string (fmt: TEXT): TEXT =
+  VAR str: ARRAY [0..255] OF CHAR;
+  BEGIN
+    RETURN Text.FromChars (SUBARRAY (str, 0, format (fmt, str)))
+  END string;
+<<format>>
+@ [[format]] is also nested within [[ralloc]], so it can access the
+current node [[t]], [[t]]'s goal non-terminal [[goalnt]], the
+righthand side subtrees in [[kids]], and the righthand side goal
+non-terminals in [[nts]]. [[format]] copies its first argument into
+the array of characters passed as its second argument interpreting the
+format codes as it goes, and returns the number of characters it
+stores:
+
+<<format>>=
+PROCEDURE format (fmt: TEXT; VAR str: ARRAY OF CHAR): INTEGER =
+  VAR i, j := 0; len := Text.Length (fmt); c: CHAR; text: TEXT;
+  BEGIN
+    WHILE i < len DO
+      c := Text.GetChar (fmt, i);
+      INC (i);
+      IF c = '%' THEN
+        c := Text.GetChar (fmt, i);
+        INC (i);
+        CASE c OF
+        | '%'      => text := t.nt[goalnt]
+        | '0'..'9' =>
+            WITH k = ORD (c) - ORD ('0') DO text := kids[k].nt[nts[k]] END
+        ELSE
+            text := "%" & Text.FromChar (c)
+        END;
+        Text.SetChars (SUBARRAY (str, j, Text.Length (text)), text);
+        INC (j, Text.Length (text))
+      ELSIF c = '\n' THEN
+        Text.SetChars (SUBARRAY (str, j, Text.Length (self.newline)), self.newline);
+        INC (j, Text.Length (self.newline))
+      ELSE
+        str[j] := c;
+        INC (j)
+      END
+    END;
+    RETURN j
+  END format;
+@ The format code [[%%]] refers to [[t]]'s attribute, which is read
+during code emission.
+
+[[reduce]] is similar to [[ralloc]]; it does a bottom-up,
+left-to-right traversal:
+
+<<procedures>>=
+PROCEDURE reduce (self: U; t: Burm.T; goalnt: INTEGER) =
+  VAR eruleno := Burm.rule (t.state, goalnt);
+      nts := Burm.nts[eruleno];
+      kids: ARRAY [0..9] OF Burm.T;
+  <<emit procedures>>
+  BEGIN
+    Burm.kids (t, eruleno, kids);
+    self.loc (NIL, t.origin); (* assume that the file is correct *)
+    WITH lhs = t.nt[goalnt] DO
+      CASE eruleno OF <*NOWARN*>
+      <<reduce2>>
+      ELSE recurs ()
+      END
+    END
+  END reduce;
+
+<<emit procedures>>=
+PROCEDURE recurs () =
+  VAR i := 0;
+  BEGIN
+    WHILE nts[i] # 0 DO do (i); INC (i) END
+  END recurs;
+
+PROCEDURE do (i:INTEGER) =
+  BEGIN
+    reduce (self, kids[i], nts[i])
+  END do;
+@ Like [[ralloc]], [[reduce]] uses similarly named nested procedures so
+that they have access to [[t]], [[goalnt]], [[kids]], and [[nts]].  The
+preprocessor produces the body of [[reduce]]'s [[CASE]] statement
+labeled $\langle${\sl reduce2\/}$\rangle$ above from the {\sl
+reduce}$_2$ fields in the BURS specification, and, by default, it
+generates calls to [[recurs]] {\em before\/} the code in each {\sl
+reduce}$_2$ field.  It also helps abbreviate {\sl reduce}$_2$ actions:
+if the action is a quoted string, it is wrapped in a call to [[emit]].
+For example, the specification rules
+
+<<code generation rules>>=
+stm:    LABEL                lhs := label()    "%%:\n"
+stm:    JUMP(lab)    1       ;                 "b %0\n"
+@ yield the lines
+\begin{quote}\small
+\begin{verbatim}
+| 54 => recurs(); emit("%%:\n")
+| 55 => recurs(); emit("b %0\n")
+\end{verbatim}
+\end{quote}
+The semicolon in the second rule above specifies a null [[ralloc]]
+action, and the ``[[1]]'' specifies the cost of the generated
+instruction.  [[emit]] is like [[string]], except that it writes the
+formatted array:
+
+<<emit procedures>>=
+PROCEDURE emit (fmt: TEXT) =
+  <* FATAL Wr.Failure, Thread.Alerted *>
+  VAR str: ARRAY [0..255] OF CHAR;
+  BEGIN
+    Wr.PutString (self.wr, SUBARRAY (str, 0, format (fmt, str)))
+  END emit;
+<<format>>
+@
+%------------------------------------------------------------------------------
+\subsection{MIPS BURS Specification}\label{MIPS:BURSSpecification}
+
+The BURS specification for the MIPS is
+
+<<BURS specification>>=
+%{
+<<configuration section>>
+%}
+<<operators>>
+%start stm
+%%
+<<code generation rules>>
+%%
+@ The configuration section defines a C structure type that is
+isomorphic to [[TreeIR.Public]], macros for accessing the fields of a
+node, and a C prototype for calling [[Burm.trace]]:
+
+<<configuration section>>=
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct tree {
+  void (*_methods) (void);
+  int state;
+  unsigned char op;
+  struct tree *left, *right;
+} *NODEPTR_TYPE;
+
+#define OP_LABEL(p) ((p)->op)
+#define LEFT_CHILD(p) ((p)->left)
+#define RIGHT_CHILD(p) ((p)->right)
+#define PANIC printf
+#define STATE_LABEL(p) ((p)->state)
+
+/*** #define burm_trace Burm__trace ***/
+/*** extern void burm_trace(NODEPTR_TYPE, int, int, int); ***/
+
+#define burm_trace (*Burm__tracer)
+void (*Burm__tracer)(NODEPTR_TYPE, int, int, int);
+
+@
+
+The operators include those defined by [[TreeIR]], extended
+operators like [[IO]] defined above, and those revealed in the
+subsections below.
+
+<<operators>>=
+%term SEQ=1    LABEL=2   JUMP=3    CJUMP=4
+%term MEM=5    MOVE=6    ESEQ=7    NAME=8    CONST=9   CONSTF=10
+%term ALLOC=11 TEMP=12
+%term CALL=13  ARG=14    NOARGS=15
+%term FPLUS=16 FMINUS=17 FMUL=18   FDIV=19   FNEG=20
+%term CVTSU=21 CVTSS=22  CVTSF=23  CVTUU=24  CVTUS=25  CVTFS=26 CVTFF=27
+%term PLUS=28  MINUS=29  MUL=30    DIV=31    MOD=32    NEG=33
+%term UPLUS=34 UMINUS=35 UMUL=36   UDIV=37   UMOD=38
+%term AND=39   OR=40     LSHIFT=41 RSHIFT=42 ASHIFT=43 XOR=44   COMP=45
+%term EQ=46    NE=47     LT=48     GE=49     GT=50     LE=51
+%term ULT=52   UGE=53    UGT=54    ULE=55
+%term FEQ=56   FNE=57    FLT=58    FLE=59    FGT=60    FGE=61
+@ The specification gives rules that match IR trees for statements
+([[stm]]), expressions whose values appear in registers during
+execution ([[reg]]), and components of instructions, such as addresses
+([[adr]]) and constants ([[con]]).
+
+%------------------------------------------------------------------------------
+\subsection{Leaves}\label{MIPS:Leaves}
+
+Rules for the leaf operators [[NAME]], [[LABEL]], and [[CONST]], and [[I0]]
+assign leaf-specific attributes:
+
+<<code generation rules>>=
+name:   NAME            lhs := label()
+
+lab:    LABEL           lhs := label()
+lab:    NAME            lhs := label("f")
+
+con:    CONST           lhs := Int(NARROW(t, TreeIR.Int).i)
+con:    I5              "
+con:    I0              lhs := "0"
+@ [[label]] is a register-allocation function that returns the
+appropriate representation of [[t.name]] as an assembly-language
+label. It handles the temporary labels 1--9:
+
+<<register allocation procedures>>=
+PROCEDURE label (suffix: TEXT := ""): TEXT =
+  VAR lab := NARROW (t, TreeIR.Name).name;
+  BEGIN
+    CASE Text.GetChar (lab, 0) OF
+    | '-' =>
+        RETURN Text.Sub (lab, 1, 1) & "b"
+    | '0'..'9' =>
+        IF Text.Length (lab) > 1 THEN RETURN "L." & lab END;
+        RETURN lab & suffix
+    ELSE
+        RETURN lab
+    END
+  END label;
+@ When a [[NAME]] node is used as a target for jumps, as shown in the
+[[stm]] rules above, [[label]] is passed an optional argument that
+specifies the suffix for temporary labels. Negative labels are always
+the targets of ``backwards'' jumps to temporary labels and thus
+suffixed with a ``[[b]]''.
+
+Integers in [[CONST]] nodes become the values of [[con]] attributes.
+Floating-point constants, however, are treated differently:
+
+<<operators>>=
+%term CONSTD=72
+
+<<operator translations>>=
+| Op.oCONSTF => IF tree.size = 8 THEN op := 72 END
+
+<<code generation rules>>=
+scon:   CONSTF          lhs := real()
+dcon:   CONSTD          "
+@ [[real]] generates a variable, initializes it to the value of the
+floating-point constant, and returns the assembly-language name of the
+variable:
+
+<<register allocation procedures>>=
+PROCEDURE real (): TEXT =
+  VAR v: Var; pre: Target.Precision;
+  BEGIN
+    CASE t.size OF <*NOWARN*>
+    | 4 =>
+        v := self.declare_constant (NIL, Target.Real.size,
+                CG_Align_bytes[Type.Reel], Type.Reel, 0, FALSE, TRUE);
+        pre := Target.Precision.Short
+    | 8 =>
+        v := self.declare_constant (NIL, Target.Longreal.size,
+                CG_Align_bytes[Type.LReel], Type.LReel, 0, FALSE, TRUE);
+        pre := Target.Precision.Long
+    END;
+    self.begin_init (v);
+    self.init_float (0, Target.Float {
+        pre := pre, exponent := 0,
+        fraction := FLOAT (NARROW (t, TreeIR.Real).r, EXTENDED) });
+    self.end_init (v);
+    RETURN v.asmname
+  END real;
+@ These variables cannot be generated earlier because constant folding
+or other rules may eliminate the need for some constants.
+
+The following rules load leaves into general-purpose or floating-point
+registers; [[sreg]] and [[dreg]] denote single- and double-precision
+values, respectively.
+
+<<code generation rules>>=
+reg:    I0              t.reg := reg[0]; lhs := "$0"
+reg:    con     1       leaf(regs)      "li %%,%0\n"
+reg:    acon    2       "               "la %%,%0\n"
+
+sreg:   scon    1       leaf(fregs)     "l.s %%,%0\n"
+dreg:   dcon    1       leaf(fregs)     "l.d %%,%0\n"
+@ Register [[$0]] is used for the constant 0 because [[$0]] is always
+zero.  The other rules call [[leaf]] to allocate a register for the
+node.  [[leaf]] takes a register set and calls [[getreg]] to allocate
+a register:
+
+<<register allocation procedures>>=
+PROCEDURE leaf (set: Register.Set; r: Register.T := NIL) =
+  BEGIN
+    <<target [[t]], if possible>>
+    WITH tree = t DO <<allocate a register from [[set]] to [[tree]]>> END;
+    t.nt[goalnt] := t.reg.asmname;
+    t.inst := t
+  END leaf;
+@ [[leaf]] also sets the goal attribute for the node to the
+assembly-language name for the register allocated.  When [[reduce]]
+emits the instructions shown, [[%%]] specifies that attribute.
+[[leaf]] also takes an optional target register and performs register
+targeting when possible; see Secs.~\ref{MIPS:Calls}
+and~\ref{MIPS:Temporaries}. By default, [[leaf]] assumes that [[t]]
+computes [[reg]] and thus sets [[t.inst]] accordingly.
+
+[[getreg]] returns [[NIL]] if [[set]] is empty, and [[leaf]] calls
+[[note_error]] to announce that the expression or statement requires
+too many registers:
+
+<<allocate a register from [[set]] to [[tree]]>>=
+tree.reg := set.getreg ();
+IF tree.reg = NIL THEN
+  self.note_error ("Expression too complicated " & <<source coordinate>>);
+  tree.reg := reg[0]
+END;
+
+<<source coordinate>>=
+Fmt.F ("at \"%s\", line %s", self.errorFile, Int (tree.origin))
+@ A better implementation would spill a busy register, use it for [[t]],
+and arrange to reload it later.
+
+%------------------------------------------------------------------------------
+\subsection{Loads and Stores}\label{MIPS:LoadsandStores}
+
+The MIPS has only based addressing, but the assembler supports syntax
+for based, relocatable, and absolute addressing. The rules
+
+<<code generation rules>>=
+adr:    UPLUS(acon,reg)         use(1)        lhs := adr(0)
+adr:    UPLUS(reg,acon)         use(0)        lhs := adr(1)
+adr:    reg                     ;             lhs := adr()
+adr:    acon
+@ specify the addressing modes; [[acon]], shown above, specifies
+address constants.  The register allocation action [[use (i)]] for the
+first four rules specifies that the node should use the register
+associated with subtree [[i]].  [[use]] calls [[getagain]] to record
+another reference to the register used by \verb|kids[i]|, annotates
+[[t]] with that register, and sets the appropriate left-hand side
+attribute:
+
+<<register allocation procedures>>=
+PROCEDURE use (i: INTEGER) =
+  BEGIN
+    t.reg := getagain (kids[i].reg);
+    give (i);
+    t.nt[goalnt] := kids[i].nt[nts[i]];
+    t.inst := kids[i].inst
+  END use;
+@ [[give]] is described below. [[t]] ``inherits'' its [[inst]] field
+from \verb|kids[1].inst| because [[t]]'s value is actually computed by
+whatever node computed \verb|kids[1]|'s value.
+
+[[adr]] is called during code emission to format the correct
+assembly-language syntax for the address. It is passed the subtree
+number that holds the constant part of the address, if there is one.
+Most importantly, [[adr]] adds in the current procedure's [[framesize]]
+for addresses that are relative to the stack pointer:
+
+<<emit procedures>>=
+PROCEDURE adr (i: INTEGER := -1): TEXT =
+  VAR addr := "(" & t.reg.asmname & ")";
+      p: Proc := self.currentProc;
+  BEGIN
+    IF t.reg = sp.reg THEN
+      addr := "+" & Int (p.framesize) & addr
+    END;
+    IF i >= 0 THEN addr := kids[i].nt[nts[i]] & addr END;
+    RETURN addr
+  END adr;
+@ Note that [[lhs]] is computed during {\em both\/} reductions.  [[adr]]
+attributes are never used during register allocation; they are read
+only during code emission.
+
+Loads and stores are specified by [[MEM]] nodes where the [[size]]
+field gives the size of the quantity to load or store. Extended
+operators identify each of the four possible sizes:
+
+<<operators>>=
+%term MEM1=73 MEM2=74 MEM4=75 MEM8=76
+
+<<operator translations>>=
+| Op.oMEM =>
+    CASE tree.size OF <*NOWARN*>
+    | 1 => op := 73
+    | 2 => op := 74
+    | 4 => op := 75
+    | 8 => op := 76
+    END
+@ When [[MEM1]] and [[MEM2]] nodes are operands of [[CVTSS]] nodes, they
+specify signed widening and they specify unsigned widening when they
+are operands of [[CVTUU]] nodes. Floating-point [[MEM]] nodes are
+always operands of [[CVTFF]] nodes:
+
+<<code generation rules>>=
+reg:    CVTSS(MEM1(adr))        1       unary(regs)     "lb %%,%0\n"
+reg:    CVTUU(MEM1(adr))        1       "               "lbu %%,%0\n"
+reg:    CVTSS(MEM2(adr))        1       "               "lh %%,%0\n"
+reg:    CVTUU(MEM2(adr))        1       "               "lhu %%,%0\n"
+reg:    MEM4(adr)               1       "               "lw %%,%0\n"
+
+sreg:   CVTFF(MEM4(adr))        1       unary(fregs)    "l.s %%,%0\n"
+dreg:   CVTFF(MEM8(adr))        1       "               "l.d %%,%0\n"
+@ [[unary]] allocates a register from the specified set for a unary
+operator after releasing the register for the operand:
+
+<<register allocation procedures>>=
+PROCEDURE unary (set: Register.Set) =
+  BEGIN give (0); leaf (set) END unary;
+@ [[give (i,j)]] abbreviates the calls to [[givereg]] for the subtrees
+[[i]] and [[j]], if applicable:
+
+<<register allocation procedures>>=
+PROCEDURE give (i, j := -1) =
+  BEGIN
+    IF i >= 0 AND kids[i] # NIL THEN givereg (kids[i].reg) END;
+    IF j >= 0 AND kids[j] # NIL THEN givereg (kids[j].reg) END
+  END give;
+@
+
+Stores are similar to loads. The left operand [[MEM]] node requires no
+code; it merely identifies the size of the stored value.
+
+<<code generation rules>>=
+stm:    MOVE(MEM1(adr),reg)      1       give(0,1)       "sb %1,%0\n"
+stm:    MOVE(MEM2(adr),reg)      1       "               "sh %1,%0\n"
+stm:    MOVE(MEM4(adr),reg)      1       "               "sw %1,%0\n"
+stm:    MOVE(MEM4(adr),sreg)     1       "               "s.s %1,%0\n"
+stm:    MOVE(MEM8(adr),dreg)     1       "               "s.d %1,%0\n"
+@
+%------------------------------------------------------------------------------
+\subsection{Unary and Binary Operators}\label{MIPS:Operators}
+
+The rules for the unary operators call [[unary]] with the appropriate
+register set:
+
+<<code generation rules>>=
+reg:    NEG(reg)        1       unary(regs)     "neg %%,%0\n"
+reg:    COMP(reg)       1       "               "not %%,%0\n"
+reg:    CVTFS(sreg)     2       "               "trunc.w.s $f2,%0,%%; mfc1 %%,$f2\n"
+reg:    CVTFS(dreg)     2       "               "trunc.w.d $f2,%0,%%; mfc1 %%,$f2\n"
+
+sreg:   FNEG(sreg)      1       unary(fregs)    "neg.s %%,%0\n"
+sreg:   CVTSF(reg)      2       "               "mtc1 %0,%%; cvt.s.w %%,%%\n"
+sreg:   CVTFF(dreg)     1       "               "cvt.s.d %%,%0\n"
+
+dreg:   FNEG(dreg)      1       "               "neg.d %%,%0\n"
+dreg:   CVTSD(reg)      2       "               "mtc1 %0,%%; cvt.d.w %%,%%\n"
+dreg:   CVTFF(sreg)     1       "               "cvt.d.s %%,%0\n"
+@ [[CVTSD]] is the version of [[CVTSF]] that converts an integer to
+a double-precision floating point:
+
+<<operators>>=
+%term CVTSD=77
+
+<<operator translations>>=
+| Op.oCVTSF => IF tree.size = 8 THEN op := 77 END
+@ The remaining conversion nodes are no-ops:
+
+<<code generation rules>>=
+reg:    CVTSS(reg)              use(0)
+reg:    CVTUU(reg)              "
+reg:    CVTSU(reg)              "
+reg:    CVTUS(reg)              "
+
+reg:    sreg            1       give(0); leaf(regs)     "mfc1 %%,%0\n"
+@ The last rule applies when a single-precision floating-point value is
+[[LOOPHOLE]]'d to an integer. This rule is a chain rule: there are
+separate [[reg]] and [[sreg]] attributes, but only one [[t.reg]].
+[[ralloc]] first reduces the node as an [[sreg]], which sets [[t.reg]]
+and the [[sreg]] attribute. It then reduces it as a [[reg]]: the call
+to [[give]] frees the floating-point register in [[t.reg]], and the
+call to [[leaf]] allocates a general-purpose register, assigns it to
+[[t.reg]], and sets the [[reg]] attribute. Further uses of the node
+are as a [[reg]], and since [[emit]] reads only the attributes, no
+information is lost.
+
+The binary operators call [[binary]] to free their operand registers
+and allocate a register for their results:
+
+<<register allocation procedures>>=
+PROCEDURE binary(set: Register.Set) =
+  BEGIN give (0, 1); leaf (set) END binary;
+
+<<code generation rules>>=
+sreg:   FPLUS(sreg,sreg)        1       binary(fregs)   "add.s %%,%0,%1\n"
+sreg:   FMINUS(sreg,sreg)       1       "               "sub.s %%,%0,%1\n"
+sreg:   FMUL(sreg,sreg)         1       "               "mul.s %%,%0,%1\n"
+sreg:   FDIV(sreg,sreg)         1       "               "div.s %%,%0,%1\n"
+
+dreg:   FPLUS(dreg,dreg)        1       "               "add.d %%,%0,%1\n"
+dreg:   FMINUS(dreg,dreg)       1       "               "sub.d %%,%0,%1\n"
+dreg:   FMUL(dreg,dreg)         1       "               "mul.d %%,%0,%1\n"
+dreg:   FDIV(dreg,dreg)         1       "               "div.d %%,%0,%1\n"
+@ Some of the integer binary operators can take either a register or a
+constant as one of their operands:
+
+<<code generation rules>>=
+ri:     reg
+ri:     con
+
+reg:    PLUS(reg,ri)            1       binary(regs)    "add %%,%0,%1\n"
+reg:    PLUS(ri,reg)            1       "               "add %%,%1,%0\n"
+reg:    UPLUS(reg,reg)          1       "               "addu %%,%0,%1\n"
+reg:    MINUS(reg,ri)           1       "               "sub %%,%0,%1\n"
+reg:    UMINUS(reg,ri)          1       "               "subu %%,%0,%1\n"
+reg:    MUL(reg,reg)            1       "               "mulo %%,%0,%1\n"
+reg:    UMUL(reg,reg)           1       "               "mul %%,%0,%1\n"
+reg:    UDIV(reg,reg)           1       "               "divu %%,%0,%1\n"
+reg:    UMOD(reg,reg)           1       "               "remu %%,%0,%1\n"
+reg:    AND(reg,ri)             1       "               "and %%,%0,%1\n"
+reg:    AND(ri,reg)             1       "               "and %%,%1,%0\n"
+reg:    OR(reg,ri)              1       "               "or %%,%0,%1\n"
+reg:    OR(ri,reg)              1       "               "or %%,%1,%0\n"
+reg:    XOR(reg,ri)             1       "               "xor %%,%0,%1\n"
+reg:    XOR(ri,reg)             1       "               "xor %%,%1,%0\n"
+@ Computing the addresses of locals and parameters requires special
+rules for unsigned addition involving constants. These rules add the
+appropriate frame size if the addition computes an address relative to
+the stack pointer:
+
+<<code generation rules>>=
+reg:    UPLUS(reg,con)          1       binary(regs)    add("addu %%,%0,%1\n",0,1)
+reg:    UPLUS(con,reg)          1       "               add("addu %%,%1,%0\n",1,0)
+@ [[add]] is similar to [[adr]]. If the [[reg]] operand refers to the
+stack pointer, [[add]] appends the frame size to the resulting string
+to produce the correct operands for the instruction:
+
+<<emit procedures>>=
+PROCEDURE add (inst: TEXT; i, j: INTEGER) =
+  VAR p: Proc := self.currentProc;
+  BEGIN
+    IF kids[i].reg = sp.reg AND p.framesize # 0 THEN
+       WITH k = kids[j].nt[nts[j]] DO
+         k := k & "+" & Int (p.framesize)
+       END
+    END;
+    emit (inst)
+  END add;
+@
+
+Some operations in Modula-3 generate shifts by amounts greater than 31,
+which must yield 0. The MIPS shift instructions don't support such
+shifts, so the appropriate semantics are synthesized as shown below.
+An [[sra]] instruction suffices for [[ASHIFT]] because only the
+compiler generates such shifts and it never shifts by amounts larger
+than 31.
+
+<<code generation rules>>=
+sa:   I5                      lhs := Int(NARROW(t, TreeIR.Int).i)
+
+reg:  LSHIFT(reg,sa)     1    binary(regs)             "sll %%,%0,%1\n"
+reg:  RSHIFT(reg,sa)     1    "                        "srl %%,%0,%1\n"
+reg:  ASHIFT(reg,ri)     1    "                        "sra %%,%0,%1\n"
+
+reg:  LSHIFT(reg,reg)    4    "    "slt $2,%1,32; sll %%,%0,%1; neg $2,$2; and %%,%%,$2\n"
+reg:  RSHIFT(reg,reg)    4    "    "slt $2,%1,32; srl %%,%0,%1; neg $2,$2; and %%,%%,$2\n"
+@ The instruction sequences for the last two rules are examples of
+``super optimizations''~\cite{granlund:kenner:92}. The last rule emits a
+sequence that computes the same value as the C expression
+[[b < 32 ? a>>b : 0]] where [[a]] and [[b]] denote the operands
+[[%0]] and [[%1]], respectively. The [[slt]] instruction sets
+register~2 to 1 if [[b]] is less than 32 and to 0 otherwise, and the
+[[neg]] instruction changes these values to $-1$ and 0, respectively. The
+[[srl]] instruction performs the shift, but the result is valid only if
+[[b]] is less than 32. The [[and]] instruction applies the $-1$ to valid
+results and the 0 to invalid ones, thus computing the desired outcome.
+The left shift is computed similarly.
+
+Modula-3 gives specific definitions for signed [[DIV]] and [[MOD]] that
+may differ from what the instructions on most machines implement.  On
+the MIPS, for example, the [[div]] instruction, which computes both a
+quotient and remainder, truncates toward 0 regardless of the signs of
+its operands. Thus both $-12~[[div]]~5$ and $12$~[[div]]~$-5$ yield
+$-2$.  The Modula-3 definition for [[DIV]] dictates that $x~[[DIV]]~y$
+be the maximum integer not exceeding the real number $z$ such that $z
+\times y = x$.  Thus for $-12~[[DIV]]~5$ and $12$~[[DIV]]~$-5$, $z$ is
+$-2.4$, and the correct result is $-3$. Likewise, Modula-3 specifies
+that $x~[[MOD]]~y$ be $x - y \times (x~[[DIV]]~y)$, so $-12~[[MOD]]~5$
+must be $-12 - 5 \times (-3) = 3$ and $12~[[DIV]]~-5$ must be $12 -
+(-5) \times (-3) = -3$; the MIPS [[div]] instruction yields $-2$ and 2,
+respectively.
+
+The correct results for [[DIV]] and [[MOD]] can be computed by emitting
+instructions that adjust the results of the [[div]] instruction when
+necessary. $x~[[DIV]]~y$ is $x~[[div]]~y$ if $x$ and $y$ have the same
+signs or if the remainder is 0. Otherwise, the correct result is
+$(x~[[div]]~y) - 1$.  Similarly, $x~[[MOD]]~y$ is $x~[[rem]]~y$ if $x$
+and $y$ have the same signs or if the remainder is 0. Otherwise, the
+correct result is $(x~[[rem]]~y) + y$.  The instruction sequences below
+make just these adjustments. The [[xor]] instructions set register~2 to
+a negative number if the operands have different signs and to a
+non-negative number otherwise.
+
+<<code generation rules>>=
+reg:    DIV(reg,reg)    8    binary(regs)       \
+          "move $3,%0; div $3,%1; xor $2,%0,%1; \
+           mflo %%; bge $2,0,8f; mfhi $2; beq $2,0,8f; subu %%,%%,1; 8:\n"
+reg:    MOD(reg,reg)    7    leaf(regs); give(0,1); t.inst := NIL    \
+          "move $3,%0; div $3,%1; xor $2,%0,%1; \
+           mfhi %%; bge $2,0,8f; beq %%,0,8f; addu %%,%%,%1; 8:\n"
+@ The [[div]] instruction leaves the quotient the [[lo]] register and
+the remainder in the [[hi]] register. These registers are copied to the
+general-purpose registers with the [[mflo]] and [[mfhi]] instructions,
+respectively. The register allocation fragment for [[MOD]] allocates
+the result register {\em before\/} releasing the operands' registers
+because the second operand is referenced {\em after\/} the result
+register has been set.
+
+The tree idioms built by [[MD]]'s implementations of [[abs]],
+[[round]], [[floor]], and [[ceiling]] are translated into unary
+operators for each instruction:
+
+<<operators>>=
+%term ABS=78 ROUND=79 FLOOR=80 CEIL=81
+
+<<operator translations>>=
+| Op.oESEQ =>
+    IF tree.left.op = Op.oCONST THEN
+      op := 78 + NARROW (tree.left, TreeIR.Int).i;
+      tree.left := tree.right;
+      tree.right := NIL
+    END
+@ Once translated, these trees behave like unary operators:
+
+<<code generation rules>>=
+sreg:   ABS(sreg)               1       unary(fregs)    "abs.s %%,%0\n"
+dreg:   ABS(dreg)               1       "               "abs.d %%,%0\n"
+
+reg:    CVTFS(ROUND(sreg))      2       unary(regs)     "round.w.s $f2,%0,%%; mfc1 %%,$f2\n"
+reg:    CVTFS(FLOOR(sreg))      2       "               "floor.w.s $f2,%0,%%; mfc1 %%,$f2\n"
+reg:    CVTFS(CEIL(sreg))       2       "               "ceil.w.s $f2,%0,%%; mfc1 %%,$f2\n"
+
+reg:    CVTFS(ROUND(dreg))      2       "               "round.w.d $f2,%0,%%; mfc1 %%,$f2\n"
+reg:    CVTFS(FLOOR(dreg))      2       "               "floor.w.d $f2,%0,%%; mfc1 %%,$f2\n"
+reg:    CVTFS(CEIL(dreg))       2       "               "ceil.w.d $f2,%0,%%; mfc1 %%,$f2\n"
+@
+%------------------------------------------------------------------------------
+\subsection{Procedure Calls}\label{MIPS:Calls}
+
+Procedures return their values in fixed registers: [[$2]] or [[$f0]].
+Instead of allocating a register for [[CALL]] nodes, the appropriate
+fixed register is used. This is an example of register targeting,
+which [[ralloc]] and [[leaf]] collaborate to implement:
+
+<<target [[t]], if possible>>=
+IF r # NIL THEN target := r END;
+IF <<is [[target]] suitable?>> THEN
+  t.reg := getagain (target);
+  t.nt[goalnt] := t.reg.asmname;
+  RETURN
+END;
+@
+
+A non-[[NIL]] value for [[leaf]]'s optional argument, [[r]], specifies
+the target register. Otherwise, [[ralloc]]'s last argument, [[target]]
+specifies the target register.  The rules for [[CALL]]s pass the
+appropriate register to [[leaf]]:
+
+<<code generation rules>>=
+stm:    CALL(arg,dst)           1       give(1)                         "jal %1\n"
+reg:    CALL(arg,dst)           1       give(1); leaf(regs,  reg[2])    "
+sreg:   CVTFF(CALL(arg,dst))    1       give(1); leaf(fregs, freg[0])   "
+dreg:   CVTFF(CALL(arg,dst))    1       "                               "
+
+dst:	reg
+dst:	acon
+@ [[target]] is suitable if it's non-[[NIL]] and it's a member of the
+proper register set:
+
+<<is [[target]] suitable?>>=
+target # NIL AND target.set = set AND target.count = 1
+@ [[target]] must also have a [[count]] of 1. Free registers have a
+[[count]] of 0 and appear on a register set's [[list]].  Busy
+registers have a [[count]] of 1 or greater because they have been
+allocated by [[getreg]]. Some registers, like [[$2]] and [[$f0]], are
+never placed on a free list and have a [[count]] of~1 from their
+initialization.  These registers are used as [[target]]'s and can be
+allocated to a node if their [[count]] is~1. Once allocated, their
+[[count]] is incremented, which makes them busy.  As explained in
+Sec.~\ref{MIPS:Temporaries}, a similar scheme is used with temporaries.
+
+The rules for arguments must implement the MIPS calling sequence as
+described in Sec.~\ref{MIPS:ProcedureFrames}.
+
+<<code generation rules>>=
+arg:    noargs
+arg:    ARG(reg,arg)    1   @arg(4)    @arg("sw %0,%%\n",  "move %%,%0\n")
+arg:    ARG(sreg,arg)   1   "          @arg("s.s %0,%%\n", "mfc1 %%,%0\n")
+arg:    ARG(dreg,arg)   1   @arg(8)    @arg("s.d %0,%%\n", "mfc1.d %%,%0\n")
+arg:    arg2
+arg:    arg1
+
+arg2:   ARG(sreg,arg1)      @arg(4, freg[14])    @arg(NIL, "mov.s %%,%0\n")
+arg2:   ARG(dreg,arg1)      @arg(8, freg[14])    @arg(NIL, "mov.d %%,%0\n")
+
+arg1:   ARG(sreg,noargs)    @arg(4, freg[12])    @arg(NIL, "mov.s %%,%0\n")
+arg1:   ARG(dreg,noargs)    @arg(8, freg[12])    @arg(NIL, "mov.d %%,%0\n")
+
+noargs: NOARGS   WITH a = NARROW (self.currentProc, Proc).argbuildsize DO a := MAX(16, a) END
+@ The [[@]] in the reduction fragments causes the preprocessor to
+{\em omit\/} the calls to [[recurs]], so the [[arg]] procedure is
+responsible for reducing its subtrees.
+
+The register allocation variant of [[arg]] takes an alignment, [[a]], in bytes
+and a target floating-point register, [[r]].  The rules for [[arg1]] and
+[[arg2]] capture the conventions when floating-point values are passed
+as the first or first and second arguments.
+
+<<register allocation procedures>>=
+PROCEDURE arg (a: INTEGER; r: Register.T := NIL) =
+  VAR off: INTEGER; p: Proc := self.currentProc;
+  BEGIN
+    do (1);
+    off := roundup (kids[1].size, a);
+    IF off > 12 THEN
+      t.nt[goalnt] := Int(off) & "($sp)"
+    ELSE
+      IF r = NIL THEN r := reg[(off DIV 4) + 4] END;
+      t.reg := r;
+      t.nt[goalnt] := r.asmname;
+      target := r
+    END;
+    do (0); give (0);
+    t.size := off + kids[0].size;
+    p.argbuildsize := MAX (t.size, p.argbuildsize)
+  END arg;
+@ [[arg]] starts by reducing its second subtree because the [[ARG]]
+nodes specify the arguments in the reverse order. The [[size]] field
+of an [[ARG]] node gives the size of that and preceding arguments and
+is thus the offset into the argument build area associated with the
+argument.  If this offset is greater than 12, the target address of
+the argument is the slot in the argument build area.
+
+If this offset is less than or equal to 12, the target of the argument
+is either the floating-point register [[r]], which is [[$f12]] or
+[[$f14]], or, if [[r]] is omitted, the appropriate general-purpose
+register [[$4]]--[[$7]]. The appropriate register is assigned to
+[[target]], and the first subtree --- the argument itself -- is
+reduced. These registers are initialized with [[count]]s of 1, so
+[[leaf]] will use [[target]] if possible.
+
+The last lines of [[arg]] re-compute [[t.size]] and compute the size of
+the argument build area. The [[t.size]] values must be recomputed
+because the computation done when the [[ARG]]s were built did not
+account for alignment.
+
+Because registers are freed as soon as possible, [[target]] will be
+used, when possible, for the operands and results of unary operators
+and for the left operands and results of binary operators.  For
+example, the assignment to [[x]] in the module
+\begin{quote}\small
+\begin{verbatim}
+MODULE target EXPORTS Main;
+PROCEDURE g (a, b:INTEGER; c:LONGREAL): LONGREAL =
+  BEGIN RETURN c END g;
+VAR a,b: INTEGER;
+    x,y: LONGREAL;
+BEGIN
+  x := g(a,b,y + 0.5d0)
+END target.
+\end{verbatim}
+\end{quote}
+generates
+\begin{quote}\small
+\begin{verbatim}
+lw $4,_M_target+32    # a
+lw $5,_M_target+36    # b
+l.d $f4,_M_target+48  # y
+l.d $f6,L.11          # 0.5
+add.d $f6,$f4,$f6
+mfc1.d $6,$f6
+jal target__g
+mov.d $f20,$f0
+s.d $f20,_M_target+40 # x
+\end{verbatim}
+\end{quote}
+Targeting caused [[a]] to loaded directly into [[$4]], [[b]] to be
+loaded into [[$5]], the sum [[y + 0.5]] to be computed into [[$6]], and
+the result of [[g]] to be stored from [[$f0]]. [[g]]'s result is copied
+to [[$f20]] because the front end allocated a temporary to hold the
+result.
+
+This example illustrates the effect of the code emission variant of
+[[arg]]. It takes two arguments: the instruction that stores the
+argument in the argument build area and the instruction that moves the
+argument to the appropriate register, if necessary.  [[arg]] reduces
+its subtrees, right to left, and uses the size of its second subtree
+to choose the appropriate instruction:
+
+<<emit procedures>>=
+PROCEDURE arg (store: TEXT; move: TEXT) =
+  BEGIN
+    do (1); do (0);
+    IF kids[1].size > 12 THEN
+      emit (store)
+    ELSIF kids[0].reg # t.reg THEN
+      emit (move)
+    END
+  END arg;
+@ Note the [[arg]] emits the move instruction only if the actual
+argument landed in the wrong register.
+
+The register allocation action associated with [[noargs]] insures that
+the argument build area is at least 16 bytes, even if calls pass fewer
+parameters.
+
+%------------------------------------------------------------------------------
+\subsection{Temporaries}\label{MIPS:Temporaries}
+
+[[TEMP]] nodes reference temporaries, and new operator, [[TEMPF]] and
+[[TEMPD]], distinguish the floating-point temporaries:
+
+<<operators>>=
+%term TEMPF=82 TEMPD=83
+
+<<operator translations>>=
+| Op.oTEMP =>
+    CASE NARROW (tree, TreeIR.Temporary).temp.type OF <*NOWARN*>
+    | Type.Reel =>              op := 82
+    | Type.LReel, Type.XReel => op := 83
+    ELSE
+    END
+@
+
+The purpose of an [[ALLOC(TEMP,exp)]] node is to allocate a register to
+[[TEMP]] and then evaluate [[exp]], which presumably references
+[[TEMP]]. The result of an [[ALLOC]] node is the result of [[exp]].
+The rules for [[ALLOC]] nodes implement this scheme:
+
+<<code generation rules>>=
+reg:    ALLOC(TEMP,reg)         @alloc(t.left,  regs); use(0)
+sreg:   ALLOC(TEMP,sreg)        "
+dreg:   ALLOC(TEMP,dreg)        "
+reg:    ALLOC(TEMPF,reg)        @alloc(t.left, fregs); use(0)
+sreg:   ALLOC(TEMPF,sreg)       "
+dreg:   ALLOC(TEMPF,dreg)       "
+reg:    ALLOC(TEMPD,reg)        "
+sreg:   ALLOC(TEMPD,sreg)       "
+dreg:   ALLOC(TEMPD,dreg)       "
+@ [[alloc]] allocates a register for the temporary from the appropriate
+register set, sets the temporary's [[reg]] field to refer to that
+register, and reduces its [[reg]] subtree:
+
+<<register allocation procedures>>=
+PROCEDURE alloc (tree: TreeIR.Temporary; set: Register.Set) =
+  BEGIN
+    IF <<is [[target]] suitable?>> THEN
+      tree.reg := getagain (target)
+    ELSE
+      <<allocate a register from [[set]] to [[tree]]>>
+    END;
+    tree.temp.reg := tree.reg;
+    do (0);
+    givereg (tree.reg)
+  END alloc;
+@ Once the subtree is reduced, [[alloc]] frees the register.  If,
+however, the result of the [[ALLOC]] node is a [[TEMP]] node for the
+register, it will remain busy because its [[count]] will be positive.
+
+When there is a [[target]], the [[ALLOC]] can use it for the temporary
+if the [[target]]'s [[count]] is~1 and it is a member of the
+correct register set. [[target]]'s [[count]] is incremented so that it
+won't be used for another [[ALLOC]] node that might nested within the
+subtree.
+
+The module
+\begin{quote}\small
+\begin{verbatim}
+MODULE foo EXPORTS Main;
+PROCEDURE P(i: [0..8]) = BEGIN END P;
+VAR k: INTEGER;
+BEGIN
+  P(k)
+END foo.
+\end{verbatim}
+\end{quote}
+is an example of when [[alloc]] can use [[target]]. The front end
+generates a range check on [[k]] via [[check_range]] (see
+Sec.~\ref{MI:Traps}), which wraps its tree inside an [[ALLOC]] node.
+This [[ALLOC]] node appears in the argument, which is targeted for
+register~4 as described above. The generated code is
+\begin{quote}\small
+\begin{verbatim}
+lw $4,_M_foo+32   # k
+bleu $4,8,8f; li $2,I_RTHooks+40; jal $2; 8:
+jal foo__P
+\end{verbatim}
+\end{quote}
+The [[ALLOC]] node borrowed [[$4]] for the range check, but in doing so
+incremented [[$4]]'s [[count]] to 2, which caused [[k]] to be loaded
+into [[$8]]. The range-check code is described in Sec.~\ref{MIPS:Statements}.
+
+[[TEMP]] nodes reference temporaries:
+
+<<code generation rules>>=
+tmp:    TEMP                    temp()
+tmpf:   TEMPF                   "
+tmpd:   TEMPD                   "
+
+reg:    tmp
+sreg:   CVTFF(tmpf)             use(0)
+dreg:   CVTFF(tmpd)             "
+
+reg:    ESEQ(stm,reg)           use(1)
+sreg:   ESEQ(stm,sreg)          "
+dreg:   ESEQ(stm,dreg)          "
+@ [[temp]] annotates the tree with the temporary's register, calls
+[[getagain]] to record this additional reference, and sets [[lhs]]:
+
+<<register allocation procedures>>=
+PROCEDURE temp () =
+  BEGIN
+    t.reg := NARROW (t, TreeIR.Temporary).temp.reg;
+    t.nt[goalnt] := getagain (t.reg).asmname
+  END temp;
+@ As shown above, references to floating-point temporaries are always
+encased in [[CVTFF]] nodes, and [[ESEQ]] nodes use their second
+subtree's register.
+
+Assignments to temporaries present another opportunity for register
+targeting.
+
+<<code generation rules>>=
+stm:    MOVE(tmp,reg)               1    @move()        move("move %0,%1\n")
+stm:    MOVE(tmpf,sreg)             1    "              move("mov.s %0,%1\n")
+stm:    MOVE(tmpd,dreg)             1    "              move("mov.d %0,%1\n")
+
+stm:    MOVE(tmpf,reg)              1    give(0,1)      "mtc1 %1,%0\n"
+stm:    MOVE(tmp,sreg)              1    "              "mfc1 %0,%1\n"
+
+stm:    MOVE(tmp,con)               1    give(0)        "li %0,%1\n"
+stm:    MOVE(tmp,acon)              2    "              "la %0,%1\n"
+stm:    MOVE(tmpf,scon)             1    "              "l.s %0,%1\n"
+stm:    MOVE(tmpd,dcon)             1    "              "l.d %0,%1\n"
+@ After [[alloc]] assigns a register to a temporary, the register's
+[[count]] is 1, just as if it had been reserved for special uses like
+[[$2]], [[$4]]--[[$7]], and [[$f0]]. Thus, the first three assignments
+to temporaries above call [[move]] during register allocation to
+establish the temporary as [[target]] {\em before\/} reducing
+subtrees 1 through [[n]]:
+
+<<register allocation procedures>>=
+PROCEDURE move () =
+  BEGIN
+    do (0); give (0);
+    target := kids[0].reg;
+    do (1); give (1);
+    WITH src = kids[1] DO <<force [[src.inst]] to use [[target]]>> END
+  END move;
+@ The code emission variant of [[move]] is passed the appropriate move
+instruction, which it emits only if necessary:
+
+<<emit procedures>>=
+PROCEDURE move (inst: TEXT) =
+  BEGIN
+    IF kids[0].reg # kids[1].reg THEN emit (inst) END
+  END move;
+@ As an example, the Modula-3 code
+\begin{quote}\small
+\begin{verbatim}
+MODULE max EXPORTS Main;
+VAR x, y: LONGREAL;
+BEGIN
+  x := MAX(x, y)
+END max.
+\end{verbatim}
+\end{quote}
+generates
+\begin{quote}\small
+\begin{verbatim}
+l.d $f4,_M_max+40  # y
+l.d $f6,_M_max+32  # x
+c.le.d $f4,$f6; bc1f 2f
+mov.d $f4,$f6
+2:
+s.d $f4,_M_max+32  # x
+\end{verbatim}
+\end{quote}
+[[$f4]] is the temporary used in the code for [[MAX]] (see
+Sec.~\ref{MI:Predefined}).  Targeting caused [[y]] to be loaded
+directly into [[$f4]] and for the result of the [[mov.d]] to be placed
+into [[$f4]].
+
+The temporaries allocated by the front end via [[declare_temp]] cannot
+use [[target]] because [[target.count]] is $-1$.  Consequently,
+register-to-register [[move]]s are emitted to move results into the
+temporary. These can be avoided by forcing the outcome of the
+instruction that computes the source of a [[move]] to land in the
+temporary, if it's the proper type of register.  The [[inst]] field of
+[[MOVE]]'s right operand is the relevant instruction:
+
+<<force [[src.inst]] to use [[target]]>>=
+IF src.inst # NIL AND src.inst.reg.type = target.type THEN
+  src.inst.reg := target;
+  src.inst.nt[nts[1]] := target.asmname;
+  src.reg := target
+END;
+@ Both [[src.inst.reg]] is set to [[target]] so that [[src.inst]] will
+use [[target]] as its destination register, and [[src.reg]] is set to
+[[target]] so that the code-emission variant of [[move]] will {\em
+not\/} emit the [[move]] instruction.
+
+The module below illustrates the effect of this approach to avoiding
+[[move]] instructions.
+\begin{quote}\small
+\begin{verbatim}
+MODULE force EXPORTS Main;
+VAR s: SET OF [0..63]; i: INTEGER;
+PROCEDURE f(b: BOOLEAN) = BEGIN END f;
+BEGIN
+  f(i IN s)
+END force.
+\end{verbatim}
+\end{quote}
+The relevant part of the emitted code are
+\begin{quote}\small
+\begin{verbatim}
+li $16,0
+lw $8,_M_force+36      # i
+bgtu $8,63,L.11
+lw $8,_M_force+36
+sra $9,$8,5
+sll $9,$9,2
+lw $9,_M_force+28($9)  # s
+and $10,$8,31
+slt $2,$10,32; srl $10,$9,$10; neg $2,$2; and $10,$10,$2
+and $16,$10,1
+L.11:
+move $4,$16
+jal force__f
+\end{verbatim}
+\end{quote}
+[[declare_temp]] allocates register~16 for the temporary that the front
+end initializes to 0 to hold the outcome of [[i IN s]].  If
+[[i]] is in the range 0[[..]]63, the code from [[set_member]] tests the
+[[i]]$^th$ bit in [[s]]. The last [[and]] instruction shows the effect
+of the [[move]] code described above: the destination of the [[and]] was
+changed from register~10 to register~16, which avoids the [[move $16,$10]].
+
+
+%------------------------------------------------------------------------------
+\subsection{Statements}\label{MIPS:Statements}
+
+[[CASE]] statements generate trees that compute the destination of a
+[[JUMP]]:
+
+<<code generation rules>>=
+stm:    JUMP(reg)          1    give(0)      "j %0\n"        
+@
+
+The integer conditional comparisons can take either a register or a
+constant as their right operands, and these comparisons can occur only
+as operands of [[CJUMP]]. The floating-point comparisons are similar.
+
+<<code generation rules>>=
+cond:   EQ(reg,ri)         1    give(0,1)    "beq %0,%1,"        
+cond:   EQ(ri,reg)         1    "            "beq %1,%0,"        
+cond:   NE(reg,ri)         1    "            "bne %0,%1,"
+cond:   NE(ri,reg)         1    "            "bne %1,%0,"
+cond:   LT(reg,ri)         1    "            "blt %0,%1,"
+cond:   LE(reg,ri)         1    "            "ble %0,%1,"
+cond:   GT(reg,ri)         1    "            "bgt %0,%1,"
+cond:   GE(reg,ri)         1    "            "bge %0,%1,"
+cond:   ULT(reg,ri)        1    "            "bltu %0,%1,"
+cond:   ULE(reg,ri)        1    "            "bleu %0,%1,"
+cond:   UGT(reg,ri)        1    "            "bgtu %0,%1,"
+cond:   UGE(reg,ri)        1    "            "bgeu %0,%1,"
+
+cond:   FEQ(sreg,sreg)     2    "            "c.eq.s %0,%1; bc1t "
+cond:   FLT(sreg,sreg)     2    "            "c.lt.s %0,%1; bc1t "
+cond:   FLE(sreg,sreg)     2    "            "c.le.s %0,%1; bc1t "
+cond:   FNE(sreg,sreg)     2    "            "c.eq.s %0,%1; bc1f "
+cond:   FGT(sreg,sreg)     2    "            "c.le.s %0,%1; bc1f "
+cond:   FGE(sreg,sreg)     2    "            "c.lt.s %0,%1; bc1f "
+
+cond:   FEQ(dreg,dreg)     2    "            "c.eq.d %0,%1; bc1t "
+cond:   FLT(dreg,dreg)     2    "            "c.lt.d %0,%1; bc1t "
+cond:   FLE(dreg,dreg)     2    "            "c.le.d %0,%1; bc1t "
+cond:   FNE(dreg,dreg)     2    "            "c.eq.d %0,%1; bc1f "
+cond:   FGT(dreg,dreg)     2    "            "c.le.d %0,%1; bc1f "
+cond:   FGE(dreg,dreg)     2    "            "c.lt.d %0,%1; bc1f "
+
+stm:    CJUMP(cond,lab)         ;            "%1\n"        
+@ There are only three floating-point comparisons, so the last three
+comparisons in each group of six rules above use the ``branch if
+condition is false'' jump to implement the other three comparisons.
+
+[[MI]] generates jumps to constants for faults. The rules below
+recognize these idioms and generate calls to the fault handler.
+
+<<code generation rules>>=
+code:   con                2    lhs := handler()   "lw $2,%%; jal $2\n"
+
+tst:    EQ(reg,ri)         1    give(0,1)    "bne %0,%1,8f\n"
+tst:    NE(reg,ri)         1    "            "beq %0,%1,8f\n"
+tst:    LT(reg,ri)         1    "            "bge %0,%1,8f\n"
+tst:    GT(reg,ri)         1    "            "ble %0,%1,8f\n"
+tst:    GE(reg,ri)         1    "            "blt %0,%1,8f\n"
+tst:    UGT(reg,ri)        1    "            "bleu %0,%1,8f\n"
+
+stm:    JUMP(code)
+stm:    CJUMP(tst,code)         ;            "8:\n"
+
+<<register allocation procedures>>=
+PROCEDURE handler (): TEXT =
+  VAR code := NARROW (t, TreeIR.Int).i;  v: Var;
+  BEGIN
+    WITH h = self.fault_handler [code] DO
+      v := h.var;
+      RETURN Fmt.F ("%s+%s", v.asmname, Int (h.offset));
+    END;
+  END handler;
+@
+
+Finally, [[SEQ]] nodes stitch statements together, and Modula-3
+[[EVAL]] statements yield an expression that is treated as a
+statement, so its register must be released:
+
+<<code generation rules>>=
+stm:    SEQ(stm,stm)
+stm:    reg                     give(0)
+stm:    sreg                    "
+stm:    dreg                    "

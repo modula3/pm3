@@ -1,0 +1,42 @@
+/* Copyright (C) 1989, Digital Equipment Corporation           */
+/* All rights reserved.                                        */
+/* See the file COPYRIGHT for a full description.              */
+
+/* Last Modified On Mon Jun 10 22:58:37 1991 By kalsow         */
+/*      Modified On Mon Mar 18 22:26:19 1991 By muller         */
+
+/*
+#if defined (DEV_ENV)
+M3      = .ROOT/system/driver/m3.local
+#else
+M3      = $(PREFIX)/$(BINDIR)/m3
+#endif
+*/
+M3      = .ROOT/system/driver/m3.local
+
+M3FLAGS = -c -g -w1 -X0/-C/ -D../.. -k
+
+#define test_simple_module(m)                                               @@\
+test_interface (m)                                                          @@\
+test_module (m)
+
+#define test_interface(i)                                                   @@\
+test_file (i,i3,ic,io)
+
+#define test_module(m)                                                      @@\
+test_file (m,m3,mc,mo)
+
+#define test_file(file,src,cf,obj)                                          @@\
+source (file.src)                                                           @@\
+                                                                            @@\
+test:: file.cf                                                              @@\
+	-@/bin/rm -f file.obj                                               @@\
+file.cf: FRC                                                                @@\
+	-$(M3) $(M3FLAGS) file.src 2> file.src.errs                         @@\
+	-@/bin/rm -f core
+
+
+#define no_input input(/dev/null)
+
+#define input(stdin)
+
