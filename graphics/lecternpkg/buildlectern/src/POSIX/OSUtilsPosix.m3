@@ -6,7 +6,7 @@
 
 UNSAFE MODULE OSUtilsPosix EXPORTS OSUtils;
 
-IMPORT File, FilePosix, FileRd, FS, M3toC, OSError, OSErrorPosix, Unix;
+IMPORT File, FilePosix, FileRd, FS, M3toC, OSError, OSErrorPosix, Unix, Utypes;
 
 (* *)
 (* DupRd *)
@@ -35,7 +35,7 @@ PROCEDURE CreateFifo(p: TEXT) RAISES {OSError.E} =
   CONST Mode = Unix.fifo_special + Unix.MROWNER + Unix.MWOWNER;
   BEGIN
     <* ASSERT pFifo=NIL *>
-    IF Unix.mknod(M3toC.TtoS(p), Mode, 0) < 0 THEN
+    IF Unix.mknod(M3toC.TtoS(p), Mode, Utypes.makedev(0,0)) < 0 THEN
       OSErrorPosix.Raise();
     END;
     pFifo := p;
