@@ -1,4 +1,6 @@
 
+import("m3doc")
+
 HtmlFile("index")
 
 include_dir("m3defn")

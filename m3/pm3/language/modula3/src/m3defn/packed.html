@@ -4,14 +4,14 @@
 </HEAD>
 <BODY>
 
-<H2>Packed types</H2>
+<H1>Packed types</H1>
 <P>
 
 A declaration of a packed type has the form:
 <PRE>
     TYPE T = BITS n FOR Base
 </PRE>
-where <TT>Base</TT> is a type and <TT>n</TT> is an integer-valued constant 
+<P>where <TT>Base</TT> is a type and <TT>n</TT> is an integer-valued constant 
 expression. The values of type <TT>T</TT> are the same as the values 
 of type <TT>Base</TT>, but variables of type <TT>T</TT> that occur in 
 records, objects, or arrays will occupy exactly <TT>n</TT> bits and 
@@ -20,14 +20,13 @@ a variable of type
 <PRE>
     ARRAY [0..255] OF BITS 1 FOR BOOLEAN
 </PRE>
-is an array of 256 booleans, each of which occupies one bit of storage.
+<P>is an array of 256 booleans, each of which occupies one bit of storage.
 <P>
 
 The values allowed for <TT>n</TT> are implementation-dependent.  An 
 illegal value for <TT>n</TT> is a static error.  The legality of a packed 
 type can depend on its context; for example, an implementation could 
 prohibit packed integers from spanning word boundaries.
-<P>
 
 <PRE>
 Last modified on Wed Apr  3 09:39:01 PST 1996 by heydon

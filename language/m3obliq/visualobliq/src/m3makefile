@@ -14,9 +14,9 @@ import ("obliqlibm3")
 import ("obliqlibui")
 import ("obliq")
 
-include_dir ("../src/UI")
-include_dir ("../src/OBLIQ")
-include_dir ("../src/TEMPLATES")
+include_dir ("UI")
+include_dir ("OBLIQ")
+include_dir ("TEMPLATES")
 
 bundle ("DialogBundle")
 

@@ -4,14 +4,14 @@
 </HEAD>
 <BODY>
 
-<H2>Lock</H2>
+<H1>Lock</H1>
 <P>
 
 A <TT>LOCK</TT> statement has the form: 
 <PRE>
     LOCK mu DO S END
 </PRE>
-where <TT>S</TT> is a statement and <TT>mu</TT> is an expression.
+<P>where <TT>S</TT> is a statement and <TT>mu</TT> is an expression.
 It is equivalent to:
 <PRE>
     WITH m = mu DO
@@ -19,7 +19,7 @@ It is equivalent to:
       TRY S FINALLY Thread.Release(m) END
     END
 </PRE>
-where <TT>m</TT> stands for a variable that does not occur in <TT>S</TT>.
+<P>where <TT>m</TT> stands for a variable that does not occur in <TT>S</TT>.
 <P>
 
 <PRE>

@@ -4,16 +4,14 @@
 </HEAD>
 <BODY>
 
-<A NAME=idx.110>
-<H2>With</H2>
-</A>
+<H1 ID="idx.110">With</H1>
 <P>
 
 A <TT>WITH</TT> statement has the form: 
 <PRE>
     WITH id = e DO S END
 </PRE>
-where <TT>id</TT> is an identifier, <TT>e</TT> an expression,
+<P>where <TT>id</TT> is an identifier, <TT>e</TT> an expression,
 and <TT>S</TT> a statement.
 The statement declares <TT>id</TT> with scope <TT>S</TT> as an
 alias for the variable <TT>e</TT> or as a readonly name for 
@@ -26,7 +24,7 @@ is declared as:
 <PRE>
     PROCEDURE P(mode id: type of e) = BEGIN S END P;
 </PRE>
-If <TT>e</TT> is a
+<P>If <TT>e</TT> is a
 <A HREF="designators.html">writable designator</A>,
 <TT>mode</TT> is <TT>VAR</TT>; otherwise,
 <TT>mode</TT> is <TT>READONLY</TT>.
@@ -43,12 +41,11 @@ sequentially.  That is:
 <PRE>
     WITH id_1 = e_1, id_2 = e_2, ...
 </PRE>
-is equivalent to:
+<P>is equivalent to:
 <PRE>
     WITH id_1 = e_1 DO
       WITH id_2 = e_2 DO ....
 </PRE>
-<P>
 
 <PRE>
 Last modified on Wed Apr  3 09:38:51 PST 1996 by heydon

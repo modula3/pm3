@@ -4,7 +4,7 @@
 </HEAD>
 <BODY>
 
-<H2>Try Except</H2>
+<H1>Try Except</H1>
 <P>
 
 A <TT>TRY-EXCEPT</TT> statement has the form:
@@ -18,7 +18,7 @@ A <TT>TRY-EXCEPT</TT> statement has the form:
     ELSE Handler_0 
     END
 </PRE>
-where <TT>Body</TT> and each <TT>Handler</TT> are statements,
+<P>where <TT>Body</TT> and each <TT>Handler</TT> are statements,
 each <TT>id</TT> names an exception, and each <TT>v_i</TT> is an identifier.
 The "<TT>ELSE Handler_0</TT>" and each "<TT>(v_i)</TT>" are optional.  
 It is a static error for an exception to be named more than once 
@@ -54,7 +54,7 @@ That is:
 <PRE>
     id_1, ..., id_n => Handler
 </PRE>
-is shorthand for:
+<P>is shorthand for:
 <PRE>
     id_1 => Handler; ...; id_n => Handler
 </PRE>
@@ -64,7 +64,6 @@ is shorthand for:
 is a checked runtime error to raise an exception outside the dynamic 
 scope of a handler for that exception.  A "<TT>TRY EXCEPT ELSE</TT>"
 counts as a handler for all exceptions.
-<P>
 
 <PRE>
 Last modified on Wed Apr  3 09:38:53 PST 1996 by heydon

@@ -4,7 +4,7 @@
 </HEAD>
 <BODY>
 
-<H2>Designators</H2>
+<H1>Designators</H1>
 <P>
 
 An identifier is a <EM>writable designator</EM>
@@ -32,7 +32,7 @@ can also produce a designator.
 
 <A NAME=idx.157><TT>r^</TT></A>
 <BLOCKQUOTE>
-    denotes the the referent of 
+<P> denotes the the referent of 
     <TT>r</TT>; this operation is called <EM>dereferencing</EM>.  The
     expression <TT>r^</TT> is always a writable designator.  It is a
     static error if the type of <TT>r</TT> is <TT>REFANY</TT>,
@@ -44,7 +44,7 @@ can also produce a designator.
 
 <A NAME=idx.158><TT>a[i]</TT></A>
 <BLOCKQUOTE>
-    denotes the <TT>(i + 1 - FIRST(a))</TT>-th element of the 
+<P>    denotes the <TT>(i + 1 - FIRST(a))</TT>-th element of the 
     array <TT>a</TT>.  The expression <TT>a[i]</TT> is a designator
     if <TT>a</TT> is, and is writable if <TT>a</TT> is.
     The expression <TT>i</TT>
@@ -60,7 +60,7 @@ can also produce a designator.
 
 <A NAME=idx.159><TT>r.f, o.f, I.x, T.m, E.id</TT></A>
 <BLOCKQUOTE>
-    If <TT>r</TT> denotes a record,
+<P>    If <TT>r</TT> denotes a record,
     <TT>r.f</TT> denotes its <TT>f</TT> field.  In
     this case <TT>r.f</TT> is a designator if <TT>r</TT> is,
     and is writable if <TT>r</TT> is.
@@ -107,7 +107,7 @@ can also produce a designator.
 <TT>SUBARRAY(a: Array; from, for: CARDINAL): ARRAY OF ElemType(a)</TT>
 </A>
 <BLOCKQUOTE>
-    <TT>SUBARRAY</TT> produces a subarray of <TT>a</TT>.  It does not copy the
+<P>    <TT>SUBARRAY</TT> produces a subarray of <TT>a</TT>.  It does not copy the
     array; it is a designator if <TT>a</TT> is, and is writable if <TT>a</TT>
     is.  If <TT>a</TT> is a multi-dimensional array, <TT>SUBARRAY</TT> applies
     only to the top-level array.
@@ -125,7 +125,6 @@ can also produce a designator.
     or prohibit the <TT>SUBARRAY</TT> operation for arrays with packed
     element types.
 </BLOCKQUOTE>
-<P>
 
 <PRE>
 Last modified on Wed Apr  3 09:39:09 PST 1996 by heydon

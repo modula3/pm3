@@ -4,7 +4,7 @@
 </HEAD>
 <BODY>
 
-<H2>Modules</H2>
+<H1>Modules</H1>
 <P>
 
 A module has the form:
@@ -13,7 +13,7 @@ A module has the form:
       Imports;
     Block id.
 </PRE>
-where <TT>id</TT> is an identifier that names the module, <TT>Interfaces</TT> 
+<P>where <TT>id</TT> is an identifier that names the module, <TT>Interfaces</TT> 
 is a list of distinct names of interfaces exported by the module, 
 <TT>Imports</TT> is a list of import statements, and <TT>Block</TT> is 
 a block, the <EM>body</EM> of the module.  The name <TT>id</TT> must be 
@@ -85,7 +85,6 @@ exported interface is allowed, assuming the interface signature covers
 the module signature.  Within <TT>M</TT>, the interface declaration 
 determines the signature of <TT>I.X</TT> and the module declaration 
 determines the signature of <TT>X</TT>.
-<P>
 
 <PRE>
 Last modified on Wed Apr  3 09:39:03 PST 1996 by heydon

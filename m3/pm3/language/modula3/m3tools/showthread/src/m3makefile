@@ -7,6 +7,9 @@
 
 import ("ui")
 implementation ("Main")
+
+HtmlFile("index")
+
 Program ("showthread")
 
 ManPage ("showthread", 1)

@@ -11,6 +11,9 @@ import ("m3templates")
 import ("m3config")
 
 implementation ("Main")
+
+HtmlFile("index")
+
 Program ("m3where")
 
 

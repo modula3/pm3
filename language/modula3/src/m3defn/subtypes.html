@@ -4,7 +4,7 @@
 </HEAD>
 <BODY>
 
-<H2>Subtyping rules</H2>
+<H1>Subtyping rules</H1>
 <P>
 
 We write <TT>T &lt;: U</TT> to indicate that <TT>T</TT> is a subtype
@@ -47,12 +47,10 @@ both fixed and have the same size
 (as in the last p dimensions above).
 <P>
 
-<A NAME="idx.72">
-<PRE>
+<PRE ID="idx.72">
    NULL &lt;: REF T &lt;: REFANY
    NULL &lt;: UNTRACED REF T &lt;: ADDRESS
 </PRE>
-</A>
 <P>
 
 That is, <TT>REFANY</TT> and <TT>ADDRESS</TT> contain all traced and
@@ -61,50 +59,41 @@ of every reference type. These rules also apply to branded
 types.
 <P>
 
-<A NAME="idx.73">
-<PRE>
+<PRE ID="idx.73">
     NULL &lt;: PROCEDURE(A): R RAISES S   for any A, R, and S.
 </PRE>
-</A>
-That is, <TT>NIL</TT> is a member of every procedure type.  
-<P>
+<P>That is, <TT>NIL</TT> is a member of every procedure type.  
 
 <PRE>
     PROCEDURE(A): Q RAISES E  &lt;:  PROCEDURE(B): R RAISES F
     if signature "(B): R RAISES F" covers signature "(A): Q RAISES E".
 </PRE>
-That is, for procedure types, <TT>T &lt;: U</TT> if 
+<P>That is, for procedure types, <TT>T &lt;: U</TT> if 
 they are the same except for parameter names, defaults, 
 and raises sets, and the raises set for <TT>T</TT> is contained in the 
 raises set for <TT>U</TT>.
 <P>
 
-<A NAME="idx.74">
-<PRE>
+<PRE ID="idx.74">
     ROOT &lt;: REFANY
     UNTRACED ROOT &lt;: ADDRESS
     NULL &lt;: T OBJECT ... END &lt;: T
 </PRE>
-</A>
-That is, every object is a reference,
+<P>That is, every object is a reference,
 <TT>NIL</TT> is a member of every 
 object type, and every subtype is included in its supertype. 
 The third rule also applies to branded types.
-<P>
 
-<A NAME="idx.75">
-<PRE>
+<PRE ID="idx.75">
     BITS n FOR T &lt;: T   and  T &lt;: BITS n FOR T
 </PRE>
-</A>
-That is, <TT>BITS FOR T</TT> has the same values as <TT>T</TT>.
-<P>
+<P>That is, <TT>BITS FOR T</TT> has the same values as <TT>T</TT>.
 
 <PRE>
     T &lt;: T  for all T
     T &lt;: U  and   U &lt;: V  implies  T &lt;: V  for all T, U, V.
 </PRE>
-That is, <TT>&lt;:</TT> is reflexive and transitive. 
+<P>That is, <TT>&lt;:</TT> is reflexive and transitive. 
 <P>
 
 Note that <TT>T &lt;: U</TT> and <TT>U &lt;: T</TT> does not imply that
@@ -120,10 +109,9 @@ For example, consider:
       AT = ARRAY OF T;
       AU = ARRAY OF U;
 </PRE>
-The types <TT>T</TT> and <TT>U</TT> are subtypes of one another but are 
+<P>The types <TT>T</TT> and <TT>U</TT> are subtypes of one another but are 
 not the same. The types <TT>AT</TT> and <TT>AU</TT> are 
 unrelated by the subtype relation.
-<P>
 
 <PRE>
 Last modified on Wed Apr  3 09:38:55 PST 1996 by heydon

@@ -11,7 +11,7 @@ A procedure call has the form:
 <PRE>
     P(Bindings)
 </PRE>
-where <TT>P</TT> is a procedure-valued expression and <TT>Bindings</TT> 
+<P>where <TT>P</TT> is a procedure-valued expression and <TT>Bindings</TT> 
 is a list of <EM>keyword</EM> or <EM>positional</EM> bindings. A keyword 
 binding has the form <TT>name := actual</TT>, where <TT>actual</TT> is 
 an expression and <TT>name</TT> is an identifier.  A positional binding 
@@ -37,7 +37,7 @@ For example, suppose that the type of <TT>P</TT> is
 <PRE>
     PROCEDURE(ch: CHAR; n: INTEGER := 0)
 </PRE>
-Then the following calls are all equivalent: 
+<P>Then the following calls are all equivalent: 
 <PRE>
     P('a', 0)
     P('a')
@@ -45,7 +45,7 @@ Then the following calls are all equivalent:
     P(n := 0, ch := 'a')
     P('a', n := 0)
 </PRE>
-The call <TT>P()</TT> is illegal, since it doesn't bind
+<P>The call <TT>P()</TT> is illegal, since it doesn't bind
 <TT>ch</TT>.  The call <TT>P(n := 0, 'a')</TT> is illegal, since it has
 a keyword parameter before a positional parameter.
 <P>
@@ -102,12 +102,11 @@ procedure call can also have the form:
 <PRE>
     o.m(Bindings)
 </PRE>
-where <TT>o</TT> is an object and <TT>m</TT> names one of
+<P>where <TT>o</TT> is an object and <TT>m</TT> names one of
 <TT>o</TT>'s methods.  This is equivalent to:
 <PRE>
     (o's m method) (o, Bindings)
 </PRE>
-<P>
 
 <PRE>
 Last modified on Wed Apr  3 09:39:11 PST 1996 by heydon

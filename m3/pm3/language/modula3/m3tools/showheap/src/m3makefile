@@ -8,6 +8,9 @@
 
 import ("vbtkit")
 implementation ("ShowHeap")
+
+HtmlFile("index")
+
 Program ("showheap")
 
 ManPage ("showheap", 1)

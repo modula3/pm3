@@ -8,8 +8,11 @@ import ("libm3")
 import ("m3quake")
 import ("m3templates")
 import ("m3config")
+import("m3doc")
 
 implementation ("Main")
+
+HtmlFile("index")
 
 option("standalone","T")
 

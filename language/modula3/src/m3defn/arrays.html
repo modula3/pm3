@@ -39,7 +39,7 @@ fixed array type declaration has the form:
 <PRE>
     TYPE T = ARRAY Index OF Element
 </PRE>
-where <TT>Index</TT> is an ordinal type and <TT>Element</TT> is any type other
+<P>where <TT>Index</TT> is an ordinal type and <TT>Element</TT> is any type other
 than an open array type.  The values of type <TT>T</TT> are arrays whose
 element type is <TT>Element</TT> and whose length is the number of elements
 of the type <TT>Index</TT>.  
@@ -53,7 +53,7 @@ in <TT>Index</TT>.  For example, consider the declarations:
     VAR a := ARRAY [1..3] OF REAL {1.0, 2.0, 3.0};
     VAR b: ARRAY [-1..1] OF REAL := a;
 </PRE>
-Now <TT>a = b</TT> is <TT>TRUE</TT>;
+<P>Now <TT>a = b</TT> is <TT>TRUE</TT>;
 yet <TT>a[1] = 1.0</TT> while <TT>b[1] = 3.0</TT>.
 The interpretation of indexes is determined by an array's
 type, not its value; the assignment <TT>b := a</TT> changes <TT>b</TT>'s
@@ -68,7 +68,7 @@ expression of the form:
 <PRE>
     ARRAY Index_1, ..., Index_n OF Element
 </PRE>
-is shorthand for:
+<P>is shorthand for:
 <PRE>
     ARRAY Index_1 OF ... OF ARRAY Index_n OF Element
 </PRE>
@@ -85,7 +85,7 @@ open array type declaration has the form:
 <PRE>
     TYPE T = ARRAY OF Element
 </PRE>
-where <TT>Element</TT> is any type.  The values of <TT>T</TT> are arrays 
+<P>where <TT>Element</TT> is any type.  The values of <TT>T</TT> are arrays 
 whose element type is <TT>Element</TT> and whose length is arbitrary.  
 The index type of an open array is the integer subrange
 <TT>[0..n-1]</TT>, where <TT>n</TT> is the length of the array.  
@@ -103,7 +103,6 @@ Examples of array types:
        Vector    = ARRAY OF REAL;
        SkipTable = ARRAY CHAR OF INTEGER
 </PRE>
-<P>
 
 <PRE>
 Last modified on Wed Apr  3 09:39:13 PST 1996 by heydon

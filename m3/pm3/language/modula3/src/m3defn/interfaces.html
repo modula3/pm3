@@ -4,7 +4,7 @@
 </HEAD>
 <BODY>
 
-<H2>Interfaces</H2>
+<H1>Interfaces</H1>
 <P>
 
 An interface has the form:
@@ -13,14 +13,13 @@ An interface has the form:
       Imports;
       Decls
     END id.
-</PRE>	
-where <TT>id</TT> is an identifier that names the interface, <TT>
+</PRE>
+<P>where <TT>id</TT> is an identifier that names the interface, <TT>
 Imports</TT> is a sequence of import statements, and <TT>Decls</TT> is 
 a sequence of declarations that contains no procedure bodies or 
 non-constant variable initializations.  The names declared in <TT>
 Decls</TT> and the visible imported names must be distinct. It is a static 
 error for two or more interfaces to form an import cycle.
-<P>
 
 <PRE>
 Last modified on Wed Apr  3 09:39:04 PST 1996 by heydon

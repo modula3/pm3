@@ -4,7 +4,7 @@
 </HEAD>
 <BODY>
 
-<H2>Opaque types</H2>
+<H1>Opaque types</H1>
 <P>
 
 An <EM>opaque type</EM> is a name that denotes an unknown subtype of some
@@ -24,11 +24,10 @@ An opaque type declaration has the form:
 <PRE>
     TYPE T &lt;: U
 </PRE>
-where <TT>T</TT> is an identifier and <TT>U</TT> an expression denoting a
+<P>where <TT>T</TT> is an identifier and <TT>U</TT> an expression denoting a
 reference type.  It introduces the name <TT>T</TT> as an opaque type and
 reveals that <TT>U</TT> is a supertype of <TT>T</TT>. The concrete type of
 <TT>T</TT> must be revealed elsewhere in the program.
-<P>
 
 <PRE>
 Last modified on Wed Apr  3 09:39:01 PST 1996 by heydon

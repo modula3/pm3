@@ -4,7 +4,7 @@
 </HEAD>
 <BODY>
 
-<H2>Procedure types</H2>
+<H1>Procedure types</H1>
 <P>
 
 A <EM>procedure</EM> is either <TT>NIL</TT> or a triple consisting of:
@@ -39,12 +39,12 @@ A procedure type declaration has the form:
 <PRE>
     TYPE T = PROCEDURE sig
 </PRE>
-<A NAME=idx.57>where</A>
+<P><A NAME=idx.57>where</A>
 <TT>sig</TT> is a signature specification, which has the form:
 <PRE>
     (formal_1; ...; formal_n): R RAISES S
 </PRE>
-where
+<P>where
 <UL>
 <LI> Each <TT>formal_i</TT> is a formal parameter declaration, as
      described below.
@@ -62,7 +62,7 @@ A formal parameter declaration has the form
 <PRE>
     Mode Name: Type := Default
 </PRE>
-<A NAME=idx.58>where</A>
+<P><A NAME=idx.58>where</A>
 <UL>
 <LI> <TT>Mode</TT> is a parameter mode, which can be <TT>VALUE</TT>,
      <TT>VAR</TT>, or <TT>READONLY</TT>.  If <TT>Mode</TT> is omitted,
@@ -87,7 +87,7 @@ default are repeated for each identifier.  That is:
 <PRE>
     Mode v_1, ..., v_n: Type := Default
 </PRE>
-is shorthand for:
+<P>is shorthand for:
 <PRE>
     Mode v_1: Type := Default; ...; Mode v_n: Type := Default
 </PRE>
@@ -121,7 +121,7 @@ not its value.  For example, consider the declarations:
 
     VAR q: PROCEDURE(txt: TEXT := "Q") := P;
 </PRE>
-Now <TT>P = q</TT> is <TT>TRUE</TT>, yet <TT>P()</TT> prints "<TT>P</TT>"
+<P>Now <TT>P = q</TT> is <TT>TRUE</TT>, yet <TT>P()</TT> prints "<TT>P</TT>"
 and <TT>q()</TT> prints "<TT>Q</TT>". The interpretation of defaulted
 parameters is determined by a procedure's type, not its value; the
 assignment <TT>q := P</TT> changes <TT>q</TT>'s value, not its type.
@@ -148,7 +148,6 @@ That is, the parentheses are required in:
 <PRE>
     TYPE T = PROCEDURE (): (PROCEDURE ()) RAISES {}
 </PRE>
-<P>
 
 <PRE>
 Last modified on Wed Apr  3 09:39:00 PST 1996 by heydon

@@ -4,7 +4,7 @@
 </HEAD>
 <BODY>
 
-<H2>Return</H2>
+<H1>Return</H1>
 <P>
 
 A <TT>RETURN</TT> statement for a
@@ -13,7 +13,7 @@ has the form:
 <PRE>
     RETURN
 </PRE>
-The statement raises the return-exception without an argument.  It 
+<P>The statement raises the return-exception without an argument.  It 
 is allowed only in the body of a proper procedure.
 <P>
 
@@ -24,7 +24,7 @@ has the form:
 <PRE>
     RETURN Expr
 </PRE>
-where <TT>Expr</TT> is an expression assignable to the result type of 
+<P>where <TT>Expr</TT> is an expression assignable to the result type of 
 the procedure.  The statement raises the return-exception with the 
 argument <TT>Expr</TT>.  It is allowed only in the body of a function 
 procedure.
@@ -41,7 +41,7 @@ with body <TT>B</TT> is equivalent (after binding the arguments) to:
 <PRE>
     TRY B EXCEPT return-exception => (*skip*) END
 </PRE>
-A call on a function procedure with body <TT>B</TT> is equivalent to:
+<P>A call on a function procedure with body <TT>B</TT> is equivalent to:
 <PRE>
     TRY 
       B;  (error: no returned value)  
@@ -49,7 +49,6 @@ A call on a function procedure with body <TT>B</TT> is equivalent to:
       return-exception (v) => (the result becomes v)  
     END
 </PRE>
-<P>
 
 <PRE>
 Last modified on Wed Apr  3 09:38:57 PST 1996 by heydon

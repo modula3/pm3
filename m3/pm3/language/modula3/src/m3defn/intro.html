@@ -4,9 +4,9 @@
 </HEAD>
 <BODY>
 
-<H2>Introduction</H2>
+<H1>Introduction</H1>
 
-<BLOCKQUOTE><EM>
+<BLOCKQUOTE><P><EM>
 He that will not apply new remedies must expect new evils: for time is
 the greatest innovator, and if time of course alter things to the
 worse, and wisdom and counsel shall not alter them to the better, what
@@ -15,7 +15,7 @@ shall be the end?
 </EM></BLOCKQUOTE>
 <P>
 
-<H3><A NAME="idx.0">History</A></H3>
+<H2 ID="idx.0">History</H2>
 <P>
 
 On November 6th, 1986, Maurice Wilkes wrote to Niklaus Wirth proposing
@@ -43,8 +43,8 @@ languages with comparable power.
 is closely based on Modula-2+, which was designed at the
 Digital Equipment Corporation Systems Research Center and used to build
 the Topaz system
-[<A HREF="../../modula-3/html/bib.html#mcjones89">McJones89</A>,
-<A HREF="../../modula-3/html/bib.html#rovner86">Rovner86</A>].
+[<A HREF="../../../../intro/src/bib.html#mcjones89">McJones89</A>,
+<A HREF="../../../../intro/src/bib.html#rovner86">Rovner86</A>].
 The Modula-3 design was
 a joint project by Digital and Olivetti.  The language definition was
 published in August 1988, and immediately followed by implementation
@@ -55,13 +55,13 @@ A few final revisions were made for the publication of this book.
 
 <A NAME="idx.3">SRC Modula-3</A>
 is distributed by the DEC Systems Research Center under a liberal license.
-The <A HREF="../../modula-3/html/install.html">distribution</A>
+The distribution
 includes a compiler for Modula-3, the Modula-3 Abstract Syntax Tree
 toolkit developed at Olivetti, and a runtime system with configuration
 files for DEC, IBM, HP, and Sun workstations.
 <P>
 
-<H3><A NAME="idx.4">Perspective</A></H3>
+<H2 ID="idx.4">Perspective</H2>
 <P>
 
 Most systems programming today is done in the BCPL family of languages,
@@ -152,14 +152,13 @@ for programming entire systems from the highest-level applications
 down to the lowest-level device drivers.
 <P>
 
-<H3>Features</H3>
+<H2>Features</H2>
 <P>
 
 The remainder of the introduction is an overview of the most important
 features of Modula-3.  
-<P>
 
-<H4><A NAME="idx.9">Interfaces</A></H4>
+<H3 ID="idx.9">Interfaces</H3>
 <P>
 
 One of Modula-2's most successful features is the provision for explicit
@@ -189,7 +188,7 @@ either need super-human will power, or proper language support for
 interfaces.
 <P>
 
-<H4><A NAME="idx.10">Objects</A></H4>
+<H3 ID="idx.10">Objects</H3>
 <P>
 
 THe better we understand our programs, the bigger the building blocks
@@ -212,7 +211,7 @@ type can provide new implementations for the old methods (overriding).
 
 Objects were invented in the mid-sixties by the farsighted designers
 of Simula
-[<A HREF="../../modula-3/html/bib.html#birtwistle">Birtwistle</A>].
+[<A HREF="../../../../intro/src/bib.html#birtwistle">Birtwistle</A>].
 Objects in Modula-3 are very much like
 objects in Simula: they are always references, they have both data
 fields and methods, and they have single inheritance but not multiple
@@ -255,7 +254,7 @@ relations are all in the programmer's head: only with an object-oriented
 language is it possible to get object-oriented static typechecking.
 <P>
 
-<H4><A NAME="idx.13">Generics</A></H4>
+<H3 ID="idx.13">Generics</H3>
 <P>
 
 A generic module is a template in which some of the imported interfaces
@@ -284,7 +283,7 @@ where the type systems are less uniform.  (The rules associated with
 Ada generics are too complicated for our taste.)
 <P>
 
-<H4><A NAME="idx.14">Threads</A></H4>
+<H3 ID="idx.14">Threads</H3>
 <P>
 
 Dividing a computation into concurrent processes (or threads of control)
@@ -307,7 +306,7 @@ modules.
 <A NAME="idx.15">The</A>
 provisions for threads in Modula-2 are weak, amounting essentially
 to coroutines.  Hoare's monitors
-[<A HREF="../../modula-3/html/bib.html#hoare">Hoare</A>]
+[<A HREF="../../../../intro/src/bib.html#hoare">Hoare</A>]
 are a sounder basis for
 concurrent programming.  Monitors were used in Mesa, where they worked
 well; except that the requirement that a monitored data structure be
@@ -316,7 +315,7 @@ a monitored data structure to be an object instead of a module.  Mesa
 relaxed this requirement, made a slight change in the details of the
 semantics of Hoare's <TT>Signal</TT> primitive, and introduced the
 <TT>Broadcast</TT> primitive as a convenience
-[<A HREF="../../modula-3/html/bib.html#lampson80">Lampson</A>].
+[<A HREF="../../../../intro/src/bib.html#lampson80">Lampson</A>].
 The Mesa primitives were simplified in the Modula-2+ design, and the result
 was successful enough to be incorporated with no substantial changes
 in Modula-3.
@@ -334,7 +333,7 @@ equivocal support for this hope---Ada still allows shared variables,
 and apparently they are widely used.
 <P>
 
-<H4><A NAME="idx.17">Safety</A></H4>
+<H3 ID="idx.17">Safety</H3>
 <P>
 
 A language feature is <EM>unsafe</EM> if its misuse can corrupt the runtime
@@ -376,7 +375,7 @@ prevents any errors that could corrupt the runtime system; in an unsafe
 module, it is the programmer's responsibility to avoid them.
 <P>
 
-<H4><A NAME="idx.18">Garbage Collection</A></H4>
+<H3 ID="idx.18">Garbage Collection</H3>
 <P>
 
 A classic unsafe runtime error is to free a data structure that is
@@ -426,7 +425,7 @@ In most other respects, traced and untraced references behave
 identically.
 <P>
 
-<H4><A NAME="idx.19">Exceptions</A></H4>
+<H3 ID="idx.19">Exceptions</H3>
 <P>
 
 An exception is a control construct that exits many scopes at once.
@@ -451,7 +450,7 @@ is more robust, since it stops the program unless there is an explicit
 handler for it.
 <P>
 
-<H4>Type system</H4>
+<H3>Type system</H3>
 <P>
 
 Like all languages in the Algol family, Modula-3 is strongly typed.
@@ -483,7 +482,7 @@ treating objects with inheritance, but it is also useful for defining
 the type compatibility rules for conventional types.
 <P>
 
-<H4><A NAME="idx.20">Simplicity</A></H4>
+<H3 ID="idx.20">Simplicity</H3>
 <P>
 
 In the early days of the Ada project, a general in the Ada Program

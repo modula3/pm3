@@ -105,13 +105,13 @@ class Group {
   public:
     void           AddItem(Item* item);
     void           RemoveItem(Item* item);
-    const ItemSet& Items() const {return itemSet_; };
+    const ItemSet&amp; Items() const {return itemSet_; };
   private:
     ItemSet itemSet_; // a collection class to hold a set of items
 };
 </PRE>
 
-<B><A NAME="Listing1B">Listing One (b)</A></B><P>
+<P><B><A NAME="Listing1B">Listing One (b)</A></B><P>
 
 <PRE>
 void Group::AddItem(Item* item) {
@@ -120,7 +120,7 @@ void Group::AddItem(Item* item) {
 }
 </PRE>
 
-The disadvantage of this approach is that the details of the
+<P>The disadvantage of this approach is that the details of the
 implementation, although protected from inconsistent access, are
 specified in the class definition. This increases the cost of changing
 a class once it is in use and limits the range of possible extensions.
@@ -159,12 +159,12 @@ class AbstractGroup {
   public:
     virtual void           AddItem(AbstractItem* item) = 0;
     virtual void           RemoveItem(AbstractItem* item) = 0;
-    virtual const ItemSet& Items() const = 0;
+    virtual const ItemSet&amp; Items() const = 0;
 };
 AbstractGroup* CreateGroup(...);
 </PRE>
 
-<B><A NAME="Listing2B">Listing Two (b)</A></B><P>
+<P><B><A NAME="Listing2B">Listing Two (b)</A></B><P>
 
 <PRE>
 class ConcreteItem: public AbstractItem {
@@ -180,7 +180,7 @@ AbstractItem* CreateItem() {
 };
 </PRE>
 
-This isolates the users of a class from its implementation, but makes
+<P>This isolates the users of a class from its implementation, but makes
 reuse by inheritance difficult, as a subclass of the public
 <TT>AbstractItem</TT> will not inherit from the private
 <TT>ConcreteItem</TT>. Class designers may also use delegation, in
@@ -202,7 +202,7 @@ class Item: public AbstractItem {
 };
 </PRE>
 
-In addition, methods such as <TT>AddItem</TT> in the (public) 
+<P>In addition, methods such as <TT>AddItem</TT> in the (public) 
 abstract classes must be defined in terms of other abstract 
 classes because the (private) concrete classes are invisible at 
 this level. This means that the implementations of these methods 
@@ -238,7 +238,7 @@ class ITEM
 end -- ITEM
 </PRE>
 
-Ada 95 also distinguishes between public and private features of a
+<P>Ada 95 also distinguishes between public and private features of a
 type and uses its support for structured libraries to control access.
 Briefly, an Ada program unit (or package) has a specification, divided
 into visible and private sections, and a body. The logical interface
@@ -275,7 +275,7 @@ package Association is
 end Association;
 </PRE>
 
-Ada 95 supports hierarchies of packages. That is, given a package
+<P>Ada 95 supports hierarchies of packages. That is, given a package
 <TT>parent</TT>, you can write a package <TT>parent.child</TT> to
 extend it; the visible specification of the new package will inherit
 the visible features of the parent. More importantly, the (private)
@@ -353,7 +353,7 @@ TYPE
 END Association.
 </PRE>
 
-The phrase "<TT>type1 &lt;: type2</TT>" is an example of partial
+<P>The phrase "<TT>type1 &lt;: type2</TT>" is an example of partial
 revelation. It says that <TT>type1</TT> is a subtype of <TT>type2</TT>
 but that this is not the entire definition of type1; the rest will be
 revealed in other places, possibly in other files. The
@@ -404,7 +404,7 @@ BEGIN (* empty module initialization block *)
 END Association.
 </PRE>
 
-The phrase "<TT>REVEAL type1=type2</TT>" provides more information about
+<P>The phrase "<TT>REVEAL type1=type2</TT>" provides more information about
 the structure of <TT>type1</TT>. The use of "<TT>=</TT>" shows that
 this is the final revelation in the declaration of an object type;
 there can be multiple partial revelations about the structure of an
@@ -437,7 +437,7 @@ PROCEDURE LogGroupAddItem(self: LogGroup; item: Assocation.Item) =
   END;
 </PRE>
 
-With the addition of our new logging feature, the new 
+<P>With the addition of our new logging feature, the new 
 <TT>LogGroup</TT> object inherits all the hidden behavior of the 
 <TT>Association.Group</TT> object. This demonstrates subtyping the parent 
 type when not all is visible. The implementation of 
@@ -523,7 +523,7 @@ PROCEDURE NewItem(g: Group): Item;
 END Assocation.
 </PRE>
 
-<B><A NAME="Listing9">Listing Nine</A></B><P>
+<P><B><A NAME="Listing9">Listing Nine</A></B><P>
 
 <PRE>
 INTERFACE AssocClass;
@@ -550,7 +550,7 @@ REVEAL
 END AssocClass.
 </PRE>
 
-The next stage is to provide an implementation of items and groups, so
+<P>The next stage is to provide an implementation of items and groups, so
 I write an interface AssocImpl as a default version; see <A
 HREF="#Listing10A">Listing Ten (a)</A>. The subtypes declared
 here are still opaque, so a client knows only that they can be used
@@ -581,7 +581,7 @@ TYPE
 END AssocImpl.
 </PRE>
 
-<B><A Name="Listing10B">Listing Ten (b)</A></B><P>
+<P><B><A Name="Listing10B">Listing Ten (b)</A></B><P>
 
 <PRE>
 MODULE AssocImpl;
@@ -606,7 +606,7 @@ REVEAL
   END;
 </PRE>
 
-<B><A Name="Listing10C">Listing Ten (c)</A></B><P>
+<P><B><A Name="Listing10C">Listing Ten (c)</A></B><P>
 
 <PRE>
 PROCEDURE AddItem(self: Group; item: Association.Item) =
@@ -640,7 +640,7 @@ Association.AddItem(group, item2);
 Association.AddItem(group, item3);
 </PRE>
 
-<B><A NAME="Listing11B">Listing Eleven (b)</A></B><P>
+<P><B><A NAME="Listing11B">Listing Eleven (b)</A></B><P>
 
 <PRE>
 LOCK group DO
@@ -701,7 +701,7 @@ PROCEDURE NotifyNewItem(g: Association.Group; i: Association.Item);
 END UnsafeAssoc.
 </PRE>
 
-Now I can write the module <TT>Assocation.m3</TT>, which provides the
+<P>Now I can write the module <TT>Assocation.m3</TT>, which provides the
 final revelations about the item and group types and implements the
 procedures declared in <TT>Association</TT> and <TT>UnsafeAssoc</TT>.
 <A HREF="#Listing13A">Listing Thirteen (a)</A> shows the
@@ -745,7 +745,7 @@ REVEAL
   END;
 </PRE>
 
-<B><A NAME="Listing13B">Listing Thirteen (b)</A></B><P>
+<P><B><A NAME="Listing13B">Listing Thirteen (b)</A></B><P>
 
 <PRE>
 PROCEDURE UnsafeAddItem(group: Assocation.Group; item: Association.Item) =
@@ -763,7 +763,7 @@ PROCEDURE NotifyNewItem(group: Assocation.Group; item: Association.Item) =
   END NotifyNewItem;
 </PRE>
 
-<B><A NAME="Listing13C">Listing Thirteen (c)</A></B><P>
+<P><B><A NAME="Listing13C">Listing Thirteen (c)</A></B><P>
 
 <PRE>
 PROCEDURE AddItem(group: Group; item: Item) =
@@ -792,7 +792,7 @@ BEGIN (* empty module initialization block *)
 END Association.
 </PRE>
 
-The <TT>Association</TT> example, although contrived, shows how 
+<P>The <TT>Association</TT> example, although contrived, shows how 
 partial revelation can be used to partition an object type by 
 feature, rather than by the designer's conception of how it will 
 be used. Clients of the library can import just those features 

@@ -4,37 +4,31 @@
 </HEAD>
 <BODY>
 
-<H2>Type operations</H2>
+<H1>Type operations</H1>
 <P>
 
-<A NAME=idx.197>
-<PRE>
+<PRE ID="idx.197">
               ISTYPE  (x: Reference; T: RefType) : BOOLEAN
 </PRE>
-</A>
-<TT>ISTYPE(x, T)</TT> is <TT>TRUE</TT> if and only if <TT>x</TT> is a member 
+<P><TT>ISTYPE(x, T)</TT> is <TT>TRUE</TT> if and only if <TT>x</TT> is a member 
 of <TT>T</TT>. <TT>T</TT> must be an object type or traced reference 
 type, and <TT>x</TT> must be assignable to <TT>T</TT>.
 
-<A NAME=idx.198>
-<PRE>
+<PRE ID="idx.198">
               NARROW  (x: Reference; T: RefType): T
 </PRE>
-</A>
-<TT>NARROW(x, T)</TT> returns <TT>x</TT> after checking that <TT>x</TT> is 
+<P><TT>NARROW(x, T)</TT> returns <TT>x</TT> after checking that <TT>x</TT> is 
 a member of <TT>T</TT>.  If the check fails, a runtime error occurs. 
 <TT>T</TT> must be an object type or traced reference type,
 and <TT>x</TT> must be assignable to <TT>T</TT>.
 <P>
 
-<A NAME=idx.199>
-<PRE>
+<PRE ID="idx.199">
               TYPECODE (T: RefType)       : CARDINAL
                        (r: REFANY)        : CARDINAL
                        (r: UNTRACED ROOT) : CARDINAL
 </PRE>
-</A>
-Every object type or traced reference type (including <TT>NULL</TT>) 
+<P>Every object type or traced reference type (including <TT>NULL</TT>) 
 has an associated integer code.  Different types have different 
 codes.  The code for a type is constant for any single execution 
 of a program, but may differ for different executions.
@@ -44,13 +38,11 @@ It is a static error if <TT>T</TT> is <TT>REFANY</TT> or is not an object
 type or traced reference type.
 <P>
 
-<A NAME=idx.200>
-<PRE>
+<PRE ID="idx.200">
               ORD  (element: Ordinal): INTEGER
               VAL  (i: INTEGER; T: OrdinalType): T
 </PRE>
-</A>
-<TT>ORD</TT> converts an element of an enumeration to the integer that
+<P><TT>ORD</TT> converts an element of an enumeration to the integer that
 represents its position in the enumeration order.  The first value
 in any enumeration is represented by zero.  If the type
 of <TT>element</TT> is a subrange of an enumeration <TT>T</TT>, the result
@@ -68,14 +60,12 @@ of <TT>i</TT> to be out of range for <TT>T</TT>.
 If <TT>n</TT> is an integer, <TT>ORD(n) = VAL(n, INTEGER) = n</TT>.
 <P>
 
-<A NAME=idx.201>
-<PRE>
+<PRE ID="idx.201">
               NUMBER (T: OrdinalType)    : CARDINAL
                      (A: FixedArrayType) : CARDINAL
                      (a: Array)          : CARDINAL
 </PRE>
-</A>
-For an ordinal type <TT>T</TT>, <TT>NUMBER(T)</TT> returns the number of
+<P>For an ordinal type <TT>T</TT>, <TT>NUMBER(T)</TT> returns the number of
 elements in <TT>T</TT>.
 For a fixed array type <TT>A</TT>, <TT>NUMBER(A)</TT> is defined by 
 <TT>NUMBER(IndexType(A))</TT>.  Similarly, for an array <TT>a</TT>, 
@@ -84,8 +74,7 @@ this case, the expression <TT>a</TT> will be evaluated only if it
 denotes an open array.
 <P>
 
-<A NAME=idx.202>
-<PRE>
+<PRE ID="idx.202">
               FIRST (T: OrdinalType)    : BaseType(T)
                     (T: FloatType)      : T
                     (A: FixedArrayType) : BaseType(IndexType(A))
@@ -96,8 +85,7 @@ denotes an open array.
                     (A: FixedArrayType) : BaseType(IndexType(A))
                     (a: Array)          : BaseType(IndexType(a))
 </PRE>
-</A>
-For a non-empty ordinal type <TT>T</TT>, <TT>FIRST</TT> returns the 
+<P>For a non-empty ordinal type <TT>T</TT>, <TT>FIRST</TT> returns the 
 smallest value of <TT>T</TT> and <TT>LAST</TT> returns the largest 
 value.  If <TT>T</TT> is the empty enumeration, <TT>FIRST(T)</TT> and 
 <TT>LAST(T)</TT> are static errors.  If <TT>T</TT> is any other empty 
@@ -122,8 +110,7 @@ Note that if <TT>a</TT> is an open array,
 have type <TT>INTEGER</TT>.
 <P>
 
-<A NAME=idx.203>
-<PRE>
+<PRE ID="idx.203">
               BITSIZE  (x: Any)  : CARDINAL
                        (T: Type) : CARDINAL
 
@@ -133,14 +120,12 @@ have type <TT>INTEGER</TT>.
               ADRSIZE  (x: Any)  : CARDINAL
                        (T: Type) : CARDINAL
 </PRE>
-</A>
-These operations return the size of the variable <TT>x</TT> or of 
+<P>These operations return the size of the variable <TT>x</TT> or of 
 variables of type <TT>T</TT>.  <TT>BITSIZE</TT> returns the number of bits, 
 <TT>BYTESIZE</TT> the number of 8-bit bytes, and <TT>ADRSIZE</TT> the number 
 of addressable locations. In all cases, <TT>x</TT> must be a designator 
 and <TT>T</TT> must not be an open array type.  A designator <TT>x</TT> 
 will be evaluated only if its type is an open array type.
-<P>
 
 <PRE>
 Last modified on Wed Apr  3 09:38:52 PST 1996 by heydon

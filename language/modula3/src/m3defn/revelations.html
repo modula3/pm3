@@ -4,7 +4,7 @@
 </HEAD>
 <BODY>
 
-<H2>Revelations</H2>
+<H1>Revelations</H1>
 <P>
 
 A <EM>revelation</EM> introduces information about an opaque type into
@@ -20,7 +20,7 @@ type; it must contain exactly one complete revelation.
 <PRE>
     REVEAL T &lt;: V
 </PRE>
-where <TT>V</TT> is a type expression (possibly just a name)
+<P>where <TT>V</TT> is a type expression (possibly just a name)
 and <TT>T</TT> is an identifier (possibly
 <A HREF="imports.html#idx.139">qualified</A>)
 declared as an opaque type.  It reveals that
@@ -38,7 +38,7 @@ A complete revelation has the form:
 <PRE>
     REVEAL T = V
 </PRE>
-where <TT>V</TT> is a type expression (not just a name) whose outermost
+<P>where <TT>V</TT> is a type expression (not just a name) whose outermost
 type constructor is a branded reference or object type and <TT>T</TT>
 is an identifier (possibly qualified) that has been declared as an
 opaque type.  The revelation specifies that <TT>V</TT> is the concrete
@@ -67,7 +67,7 @@ For example, consider:
     INTERFACE IRep; IMPORT I;
       REVEAL I.T = MUTEX BRANDED OBJECT count: INTEGER END;
     END IRep.
-</PRE>  
+</PRE> <P> 
 An importer of <TT>I</TT> sees <TT>I.T</TT> as an opaque subtype of
 <TT>ROOT</TT>, and is limited to allocating objects of type <TT>I.T</TT>,
 passing them to <TT>I.P</TT>, or declaring subtypes of <TT>I.T</TT>.
@@ -75,7 +75,6 @@ An importer of <TT>IClass</TT> sees that every <TT>I.T</TT> is a
 <TT>MUTEX</TT>, and can therefore lock objects of type <TT>I.T</TT>.
 Finally, an importer of <TT>IRep</TT> sees the concrete type,
 and can access the <TT>count</TT> field.
-<P>
 
 <PRE>
 Last modified on Wed Apr  3 09:38:57 PST 1996 by heydon

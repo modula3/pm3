@@ -5,8 +5,8 @@
 <BODY>
 
 <H1>GNU emacs support</H1>
-<P>
 
+<P>
 SRC Modula-3 comes with a mode for editing Modula-3 programs under
 <TT>gnuemacs</TT>.  Here is a list of the main features this mode
 provides:
@@ -17,7 +17,7 @@ provides:
 
 Modula-3 mode provides two methods of formatting code, one ``batch''
 and one ``interactive.'' The batch method invokes the program <A
-HREF="pprint.html"><TT>m3pp</TT></A>, which takes a program unit such
+HREF="../../pp/src"><TT>m3pp</TT></A>, which takes a program unit such
 as a procedure and formats it completely. The <TT>gnuemacs</TT>
 commands (and their keyboard shortcuts) that invoke <A
 HREF="../../pp/src"><TT>m3pp</TT></A> are: <P> <DL> <DT> <TT>M-x
@@ -26,8 +26,9 @@ m3::pp-buffer</TT> (C-c b) <DD> Pretty prints the current buffer. <P>
 between mark and point. <P> <DT> <TT>M-x m3::pp-unit</TT> (C-c u) <DD>
 Pretty-prints the ``unit'' containing the cursor. (A unit is a
 top-level construct such as <TT>CONST</TT>, <TT>TYPE</TT>,
-<TT>VAR</TT>, or <TT>PROCEDURE</TT>.) </DL> <P>
+<TT>VAR</TT>, or <TT>PROCEDURE</TT>.) </DL> 
 
+<P>
 The other method of formatting text is a more traditional one for
 <TT>gnuemacs</TT>, in which the language mode provides a key that
 indents the current line appropriately.  In keeping with the
@@ -35,14 +36,13 @@ convention used in modes for other languages such as Lisp and C, the
 key used is <TT>TAB</TT>.  Typing <TT>TAB</TT> on a line indents the
 current line in a way that is (we hope) appropriate given the lines
 that precede it.
-<P>
 
+<P>
 The two formatting methods are not mutually exclusive; perhaps
 you like the way <TT>m3pp</TT> lines up columns in declarations,
 but you also like to keep things indented while you type.  You
 can use the electric mode to get things close, then invoke
-<A HREF="pprint.html"><TT>m3pp</TT></A> when you're done. 
-<P>
+<A HREF="../../pp/src"><TT>m3pp</TT></A> when you're done. 
 
 <LI> Avoidance of typing
 <P>
@@ -62,7 +62,6 @@ first in an ordering intended to capture frequency of use; it
 also presents the other choices, and typing <TT>TAB</TT> repeatedly
 cycles through these choices.
 <P>
-
 A pair of related features are ``<TT>END</TT>-completion'' and
 ``<TT>END</TT>-matching.''  If the elisp variable
 <TT>m3::electric-end</TT> is set to <TT>'all</TT>, completing the
@@ -76,11 +75,9 @@ real names, never keyword comments.  Independently, a non-<TT>nil</TT>
 value of the elisp variable <TT>m3::blink-end-matchers</TT> causes
 completion of <TT>END</TT> to blink the cursor briefly at the
 beginning of the completed construct.
-<P>
 
 <LI> Finding files
 <P>
-
 The key <TT>C-c i</TT> is bound to <TT>m3::show-interface</TT>, which
 expects the point to be in an interface name, and attempts to
 find that interface and display it in another window.
@@ -95,11 +92,10 @@ current buffer.  As distributed, this function relies on SRC-specific
 conventions. Obviously, this may not work outside of SRC, and
 <TT>m3::show-implementation</TT> may need to be re-implemented or abandoned.
 </UL>
-<P>
 
+<P>
 To have the Modula-3 mode automatically invoked when visiting a
 Modula-3 source file, you should put in your <TT>.emacs</TT>:
-<P>
 
 <PRE>
     (autoload 'modula-3-mode "modula3")
@@ -110,24 +106,25 @@ Modula-3 source file, you should put in your <TT>.emacs</TT>:
                    ("\\.m3$" . modula-3-mode))
                    auto-mode-alist))	
 </PRE>
-<P>
 
+<P>
 It is also convenient to have the lines:
+
 <PRE>
     (setq completion-ignored-extensions
        (append '(".mo" ".mx" ".mc" ".io" ".ix") completion-ignored-extensions))
 </PRE>
+<P>
 so that you don't get the files with those extensions offered as
 possible completions.
-<P>
 
+<P>
 Your system administrator may have inserted these lines in the default
 macro files for your system.
-<P>
 
 <H2>Tags</H2>
-<P>
 
+<P>
 There is also a program to build tags file for Modula-3 programs:
 <TT>m3tags</TT>; see the manpage for the details.  When the system is
 installed, a tag file for the public interfaces is built.  To access
@@ -136,9 +133,9 @@ the line:
 <PRE>
     (visit-tags-table "LIB_USE/FTAGS")
 </PRE>
+<P>
 where <TT>LIB_USE</TT> is the place where the Modula-3 libraries have
 been installed.
-<P>
 
 <PRE>
 Last modified on Mon Jul 22 12:51:08 PDT 1996 by heydon 

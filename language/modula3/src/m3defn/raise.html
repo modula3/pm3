@@ -4,20 +4,20 @@
 </HEAD>
 <BODY>
 
-<H2>Raise</H2>
+<H1>Raise</H1>
 <P>
 
 A <TT>RAISE</TT> statement without an argument has the form:
 <PRE>
     RAISE e
 </PRE>
-where <TT>e</TT> is an exception that takes no argument.  The outcome 
+<P>where <TT>e</TT> is an exception that takes no argument.  The outcome 
 of the statement is the exception <TT>e</TT>.  A <TT>RAISE</TT> statement 
 with an argument has the form:
 <PRE>
     RAISE e(x)
 </PRE>
-where <TT>e</TT> is an exception that takes an argument and <TT>x</TT> is
+<P>where <TT>e</TT> is an exception that takes an argument and <TT>x</TT> is
 an expression assignable to <TT>e</TT>'s argument type.  The outcome is
 the exception <TT>e</TT> paired with the argument <TT>x</TT>.
 <P>

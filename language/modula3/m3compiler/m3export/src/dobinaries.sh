@@ -3,6 +3,7 @@
 ARCH=`arch`
 OS=`uname -s`
 REV=`uname -r`
+ZZP=`cat zzp`
 
 case ${ARCH}-${OS}-${REV} in
   i[3456789]86-Linux-*)
@@ -72,9 +73,9 @@ ftp -n <<EOF
 open m3.polymtl.ca
 user ftp ${TARGET}@m3.polymtl.ca
 site group binaries
-site gpass `cat zzp`
+site gpass ${ZZP}
 binary
-cd /pub/m3/binaries/${TARGET}
+cd /tmp/pm3/binaries/${TARGET}
 put ${VERSION}.tgz
 put TODO DONE
 EOF
@@ -83,9 +84,9 @@ ftp -n <<EOF
 open m3.polymtl.ca
 user ftp ${TARGET}@m3.polymtl.ca
 site group binaries
-site gpass `cat zzp`
+site gpass ${ZZP}
 binary
-cd /pub/m3/binaries/${TARGET}
+cd /tmp/pm3/binaries/${TARGET}
 put errs.tmp NOTDONE.errs
 put out.tmp NOTDONE.out
 EOF

@@ -14,7 +14,7 @@ arguments to those functions.
 
 <H2><A NAME="instantiators">Generic Instantiation Functions</A></H2>
 
-Many of the packages that export generic interfaces and modules
+<P>Many of the packages that export generic interfaces and modules
 also define m3build procedures that will instantiate
 the generic source and add it to the list of Modula-3 sources
 to be compiled. The instantiated interfaces and modules are created in
@@ -22,7 +22,7 @@ the build directory, so they won't clutter up your source directory.
 <P>
 
 <B> array_sort(nm, elt) </B>
-       instantiates the <A HREF="../../../m3sources/html/sort/src/ArraySort.ig.html"><TT>ArraySort</TT></A> generics to produce
+       instantiates the <TT>ArraySort</TT> generics to produce
        <TT>nmArraySort.i3</TT> and  <TT>nmArraySort.m3</TT> which implement
        a sort for arrays of <TT>elt.T</TT> values.
 <P>
@@ -33,7 +33,7 @@ the build directory, so they won't clutter up your source directory.
 <P>
 
 <B> list(nm, elt) </B>
-       instantiates the <A HREF="../../../m3sources/html/list/src/List.ig.html"><TT>List</TT></A> generics to produce
+       instantiates the <TT>List</TT> generics to produce
        <TT>nmList.i3</TT> and  <TT>nmList.m3</TT> which implement
        linked lists of <TT>elt.T</TT> values.
 <P>
@@ -44,7 +44,7 @@ the build directory, so they won't clutter up your source directory.
 <P>
 
 <B> list_sort(nm, elt) </B>
-       instantiates the <A HREF="../../../m3sources/html/list/src/ListSort.ig.html"><TT>ListSort</TT></A> generics to produce
+       instantiates the <TT>ListSort</TT> generics to produce
        <TT>nmListSort.i3</TT> and  <TT>nmListSort.m3</TT> which implement
        a sorting procedure for lists of <TT>elt.T</TT> values.  This
        procedure assumes that <TT>list(nm,elt)</TT> has been called.
@@ -56,7 +56,7 @@ the build directory, so they won't clutter up your source directory.
 <P>
 
 <B> pqueue(nm, elt) </B>
-       instantiates the <A HREF="../../../m3sources/html/pqueue/src/PQueue.ig.html"><TT>PQueue</TT></A> generics to produce
+       instantiates the <TT>PQueue</TT> generics to produce
        <TT>nmPQ.i3</TT> and  <TT>nmPQ.m3</TT> which implement
        a priority queue of <TT>elt.T</TT> values.
 <P>
@@ -67,7 +67,7 @@ the build directory, so they won't clutter up your source directory.
 <P>
 
 <B> sequence(nm, elt) </B>
-       instantiates the <A HREF="../../../m3sources/html/sequence/src/Sequence.ig.html"><TT>Sequence</TT></A> generics to produce
+       instantiates the <TT>Sequence</TT> generics to produce
        <TT>nmSeq.i3</TT>, <TT>nmSeqRep.i3</TT> and
        <TT>nmSeq.m3</TT> which implement
        a sequence of <TT>elt.T</TT> values.
@@ -79,7 +79,7 @@ the build directory, so they won't clutter up your source directory.
 <P>
 
 <B> sorted_table(nm, key, value) </B>
-       instantiates the <A HREF="../../../m3sources/html/sortedtable/src/SortedTable.ig.html"><TT>SortedTable</TT></A> generics to produce
+       instantiates the <TT>SortedTable</TT> generics to produce
        <TT>nmSortedTbl.i3</TT> and <TT>nmSortedTbl.m3</TT> which implement
        a sorted table mapping from type <TT>key.T</TT> to <TT>value.T</TT>.
 <P>
@@ -90,7 +90,7 @@ the build directory, so they won't clutter up your source directory.
 <P>
 
 <B> table(nm, key, value) </B>
-       instantiates the <A HREF="../../../m3sources/html/table/src/Table.ig.html"><TT>Table</TT></A> generics to produce
+       instantiates the <TT>Table</TT> generics to produce
        <TT>nmTbl.i3</TT> and <TT>nmTbl.m3</TT> which implement
        a table mapping from type <TT>key.T</TT> to <TT>value.T</TT>.
 <P>
@@ -102,10 +102,10 @@ the build directory, so they won't clutter up your source directory.
 
 <H2><A NAME="basicTypes">Interfaces for Basic Types</A></H2>
 
-Many generic interfaces, such as
-<A HREF="../../../../../libs/libm3/src/table/Table.ig"><TT>Table</TT></A>
+<P>Many generic interfaces, such as
+<A HREF="../../../../../../libs/libm3/src/table/Table.ig"><TT>Table</TT></A>
 and
-<A HREF="../../../../../libs/libm3/src/sequence/Sequence.ig"><TT>Sequence</TT></A>,
+<A HREF="../../../../../../libs/libm3/src/sequence/Sequence.ig"><TT>Sequence</TT></A>,
 require one or more of their argument interfaces to have a certain
 form. For example, the expect the principle type of the argument
 interface to be named "<CODE>T</CODE>", and they expect the interface
@@ -116,28 +116,28 @@ in parentheses):
 
 <UL>
 <LI>
-<A HREF="../../../../../libs/m3core/src/text/Text.i3"><TT>Text</TT></A>
+<A HREF="../../../../../../libs/m3core/src/text/Text.i3"><TT>Text</TT></A>
 (<CODE>TEXT</CODE>)
 <LI>
-<A HREF="../../../../../libs/libm3/src/atom/Atom.i3"><TT>Atom</TT></A>
+<A HREF="../../../../../../libs/libm3/src/atom/Atom.i3"><TT>Atom</TT></A>
 (<CODE>Atom.T</CODE>)
 <LI>
-<A HREF="../../../../../libs/libm3/src/types/Refany.i3"><TT>Refany</TT></A>
+<A HREF="../../../../../../libs/libm3/src/types/Refany.i3"><TT>Refany</TT></A>
 (<CODE>REFANY</CODE>)
 <LI>
-<A HREF="../../../../../libs/libm3/src/types/Char.i3"><TT>Char</TT></A>
+<A HREF="../../../../../../libs/libm3/src/types/Char.i3"><TT>Char</TT></A>
 (<CODE>CHAR</CODE>)
 <LI>
-<A HREF="../../../../../libs/libm3/src/types/Boolean.i3"><TT>Boolean</TT></A>
+<A HREF="../../../../../../libs/libm3/src/types/Boolean.i3"><TT>Boolean</TT></A>
 (<CODE>BOOLEAN</CODE>)
 <LI>
-<A HREF="../../../../../libs/libm3/src/types/Integer.i3"><TT>Integer</TT></A>
+<A HREF="../../../../../../libs/libm3/src/types/Integer.i3"><TT>Integer</TT></A>
 (<CODE>INTEGER</CODE>)
 <LI>
-<A HREF="../../../../../libs/libm3/src/types/RealType.i3"><TT>RealType</TT></A>
+<A HREF="../../../../../../libs/libm3/src/types/RealType.i3"><TT>RealType</TT></A>
 (<CODE>REAL</CODE>)
 <LI>
-<A HREF="../../../../../libs/libm3/src/types/LongrealType.i3"><TT>LongrealType</TT></A>
+<A HREF="../../../../../../libs/libm3/src/types/LongrealType.i3"><TT>LongrealType</TT></A>
 (<CODE>LONGREAL</CODE>)
 </UL>
 

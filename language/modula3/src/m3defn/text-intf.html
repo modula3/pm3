@@ -4,7 +4,7 @@
 </HEAD>
 <BODY>
 
-<H2>The Text interface</H2>
+<H1>The Text interface</H1>
 <P>
 
 <PRE>
@@ -13,83 +13,71 @@ INTERFACE Text;
 TYPE
   T = TEXT;
 </PRE>
-A non-nil <TT>TEXT</TT> represents a zero-based sequence of characters.
+<P>A non-nil <TT>TEXT</TT> represents a zero-based sequence of characters.
 <TT>NIL</TT> does not represent any sequence of characters, it will not
 be returned from any procedure in the interface, and it is a checked
 runtime error to pass it to any procedure in the interface.
-<P>
 
 <PRE>
 PROCEDURE Cat(t, u: T): T;
 </PRE>
-The concatenation of <TT>t</TT> and <TT>u</TT>.
-<P>
+<P>The concatenation of <TT>t</TT> and <TT>u</TT>.
 
 <PRE>
 PROCEDURE Equal(t, u: T): BOOLEAN;
 </PRE>
-<TT>TRUE</TT> if <TT>t</TT> and <TT>u</TT> have the same length
+<P><TT>TRUE</TT> if <TT>t</TT> and <TT>u</TT> have the same length
 and (case-sensitive) contents. 
-<P>
 
 <PRE>
 PROCEDURE GetChar(t: T; i: CARDINAL): CHAR;
 </PRE>
-Character <TT>i</TT> of <TT>t</TT>.  A checked runtime error
+<P>Character <TT>i</TT> of <TT>t</TT>.  A checked runtime error
 if <TT>i &gt;= Length(t)</TT>. 
-<P>
 
 <PRE>
 PROCEDURE Length(t: T): CARDINAL;
 </PRE>
-The number of characters in <TT>t</TT>. 
-<P>
+<P>The number of characters in <TT>t</TT>. 
 
 <PRE>
 PROCEDURE Empty(t: T): BOOLEAN;
 </PRE>
-<TT>TRUE</TT> if <TT>Length(t) = 0</TT>. 
-<P>
+<P><TT>TRUE</TT> if <TT>Length(t) = 0</TT>. 
 
 <PRE>
 PROCEDURE Sub(t: T; start, length: CARDINAL): T;
 </PRE>
-Return a subsequence of <TT>t</TT>: empty if <TT>start &gt;= Length(t)</TT> 
+<P>Return a subsequence of <TT>t</TT>: empty if <TT>start &gt;= Length(t)</TT> 
 or <TT>length = 0</TT>; otherwise the subsequence ranging from
 <TT>start</TT> to the minimum of <TT>start+length-1</TT> and
 <TT>Length(t)-1</TT>. 
-<P>
 
 <PRE>
 PROCEDURE SetChars(VAR a: ARRAY OF CHAR; t: T);
 </PRE>
-For each <TT>i</TT> from <TT>0</TT> to <TT>MIN(LAST(a),
+<P>For each <TT>i</TT> from <TT>0</TT> to <TT>MIN(LAST(a),
 Length(t)-1)</TT>, set <TT>a[i]</TT> to
 <TT>GetChar(t, i)</TT>. 
-<P>
 
 <PRE>
 PROCEDURE FromChar(ch: CHAR): T;
 </PRE>
-A text containing the single character <TT>ch</TT>. 
-<P>
+<P>A text containing the single character <TT>ch</TT>. 
 
 <PRE>
 PROCEDURE FromChars(READONLY a: ARRAY OF CHAR): T;
 </PRE>
-A text containing the characters of <TT>a</TT>. 
-<P>
+<P>A text containing the characters of <TT>a</TT>. 
 
 <PRE>
 PROCEDURE Hash(t: T): INTEGER;
 </PRE>
-Return a hash function of the contents of <TT>t</TT>. 
-<P>
+<P>Return a hash function of the contents of <TT>t</TT>. 
 
 <PRE>
 END Text.
 </PRE>
-<P>
 
 <PRE>
 Last modified on Wed Apr  3 09:43:27 PST 1996 by heydon

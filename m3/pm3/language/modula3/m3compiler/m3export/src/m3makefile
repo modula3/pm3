@@ -207,6 +207,10 @@ readonly proc InstallNextVersion() is
 
   CheckExec(["rm", EXPORT_TMP_BOOTSTRAP & "/" & TARGET & "/" & "TODO"],[],"",
       "remove TODO failed")
+
+  local ret = Exec(["rm", EXPORT_ROOT & "/" & "pkgf" & "/" & "pm3"],[],"")
+  CheckExec(["ln","-s",EXPORT_SRC & "/" & versionName,
+      EXPORT_ROOT & "/" & "pkgf" & "/" & "pm3"],[],"","link in pkgf failed")
 end
 
 %

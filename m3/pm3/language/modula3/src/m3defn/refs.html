@@ -4,7 +4,7 @@
 </HEAD>
 <BODY>
 
-<H2>Reference types</H2>
+<H1>Reference types</H1>
 <P>
 
 A <EM>reference</EM> value is either <TT>NIL</TT> or the address of
@@ -27,7 +27,7 @@ declaration for a traced reference type has the form:
 <PRE>
     TYPE T = REF Type
 </PRE>
-where <TT>Type</TT> is any type.  The values of <TT>T</TT> are traced 
+<P>where <TT>Type</TT> is any type.  The values of <TT>T</TT> are traced 
 references to variables of type <TT>Type</TT>, which is called 
 the <EM>referent type</EM> of <TT>T</TT>.  
 <P>
@@ -37,7 +37,7 @@ declaration for an untraced reference type has the form:
 <PRE>
     TYPE T = UNTRACED REF Type
 </PRE>
-where <TT>Type</TT> is any untraced type.
+<P>where <TT>Type</TT> is any untraced type.
 (This restriction is lifted in <A HREF="unsafe.html">unsafe modules</A>.)
 The values of <TT>T</TT> are the untraced references 
 to variables of type <TT>Type</TT>.    
@@ -61,7 +61,7 @@ following reference types are predeclared:
     ADDRESS   Contains all untraced references
     NULL      Contains only <TT>NIL</TT>
 </PRE>
-The <A HREF="typecase.html"><TT>TYPECASE</TT></A> statement
+<P>The <A HREF="typecase.html"><TT>TYPECASE</TT></A> statement
 can be used to test the referent type 
 of a <TT>REFANY</TT> or object, but there is 
 no such test for an <TT>ADDRESS</TT>.
@@ -82,7 +82,6 @@ Examples of reference types:
     Apple  = BRANDED REF INTEGER;
     Orange = BRANDED REF INTEGER;
 </PRE>
-<P>
 
 <PRE>
 Last modified on Wed Apr  3 09:38:58 PST 1996 by heydon

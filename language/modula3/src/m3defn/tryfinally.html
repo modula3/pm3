@@ -4,21 +4,20 @@
 </HEAD>
 <BODY>
 
-<H2>Try Finally</H2>
+<H1>Try Finally</H1>
 <P>
 
 A statement of the form:
 <PRE>
     TRY S_1 FINALLY S_2 END
 </PRE>
-executes statement <TT>S_1</TT> and then statement <TT>S_2</TT>.  
+<P>executes statement <TT>S_1</TT> and then statement <TT>S_2</TT>.  
 If the outcome of <TT>S_1</TT> is normal, the <TT>TRY</TT> statement 
 is equivalent to <TT>S_1; S_2</TT>.  If the outcome of <TT>
 S_1</TT> is an exception and the outcome of <TT>S_2</TT> is normal, 
 the exception from <TT>S_1</TT> is re-raised after <TT>S_2</TT> 
 is executed.  If both outcomes are exceptions, the outcome of the 
 <TT>TRY</TT> is the exception from <TT>S_2</TT>.
-<P>
 
 <PRE>
 Last modified on Wed Apr  3 09:38:53 PST 1996 by heydon

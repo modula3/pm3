@@ -38,7 +38,7 @@ instantiating generic interfaces and modules, respectively.
 
 <H2>Example</H2>
 
-The above quake procedures are most commonly used in quake templates
+<P>The above quake procedures are most commonly used in quake templates
 associated with packages that export generic interfaces and
 implementations. For example, consider the template file "list.tmpl",
 which provides procedures for instantiating the generic "List" and
@@ -47,7 +47,7 @@ instantiating "List":
 
 <PRE>
   readonly proc _list (nm, elt, vis) is
-    local list = nm & "List"
+    local list = nm &amp; "List"
     build_generic_intf (list, "List", [elt], vis)
     build_generic_impl (list, "List", [elt])
   end
@@ -89,8 +89,8 @@ the generic "ListSort" interface:
 
 <PRE>
   readonly proc _list_sort (nm, elt, vis) is
-    local list = nm & "List"
-    local listsort = nm & "ListSort"
+    local list = nm &amp; "List"
+    local listsort = nm &amp; "ListSort"
     build_generic_intf (listsort, "ListSort", [elt, list], vis)
     build_generic_impl (listsort, "ListSort", [elt])
   end

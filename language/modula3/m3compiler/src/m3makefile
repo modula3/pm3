@@ -1,7 +1,8 @@
 
-HtmlFile("index.html")
-HtmlFile("gc")
+import("m3doc")
+
 HtmlFile("index")
+HtmlFile("gc")
 HtmlFile("m3args")
 HtmlFile("pragmas")
 HtmlFile("restrictions")

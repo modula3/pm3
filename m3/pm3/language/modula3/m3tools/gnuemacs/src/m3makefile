@@ -6,8 +6,6 @@
 %      modified on Fri Nov  5 16:41:57 PST 1993 by detlefs
 %      modified on Mon Jan 18 19:09:20 PST 1993 by muller
 
-m3_option("-commands")
-VERBOSE="TRUE"
 
 if equal (TARGET, "LINUX") or equal (TARGET, "LINUXELF")
   include_dir ("flex-bison")
@@ -20,12 +18,15 @@ end
 import_lib("c", "/lib")
 c_source  ("m3tags")
 h_source  ("hash")
-C_program ("m3tags")
 ManPage   ("m3tags", 1)
+import("m3doc")
+HtmlFile("index")
 
 CompiledGnuemacs ("m3tags")
 CompiledGnuemacs ("modula3")
 CompiledGnuemacs ("ispell19-3.0")
 % CompiledGnuemacs ("m3-debug")
 % CompiledGnuemacs ("shell-compile")
+
+C_program ("m3tags")
 

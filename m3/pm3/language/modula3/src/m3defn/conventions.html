@@ -4,7 +4,7 @@
 </HEAD>
 <BODY>
 
-<H2>Conventions for describing operations</H2>
+<H1>Conventions for describing operations</H1>
 <P>
 
 To describe the argument and result types of operations,
@@ -19,7 +19,7 @@ specifies a type class instead of a type.  For example:
 <PRE>
     ORD (x: Ordinal): INTEGER
 </PRE>
-The formal type <TT>Any</TT> specifies an argument of any type.
+<P>The formal type <TT>Any</TT> specifies an argument of any type.
 <P>
 
 <A NAME=idx.152>A</A>
@@ -30,7 +30,7 @@ for each of the operations.  For example:
     ABS (x: INTEGER) : INTEGER
         (x: Float)   : Float
 </PRE>
-The particular operation will be selected so that each actual argument
+<P>The particular operation will be selected so that each actual argument
 type is a subtype of the corresponding formal type or a member
 of the corresponding formal type class.  
 <P>
@@ -40,7 +40,7 @@ In this case, we write <TT>Type</TT> as the argument type.  For example:
 <PRE>
     BYTESIZE (T: Type): CARDINAL
 </PRE>
-The result type of an operation can depend on its argument values
+<P>The result type of an operation can depend on its argument values
 (although the result type can always be determined statically).  In
 this case, the expression for the result type contains the
 appropriate arguments.
@@ -48,7 +48,7 @@ For example:
 <PRE>
     FIRST (T: FixedArrayType): IndexType(T)
 </PRE>
-<TT>IndexType(T)</TT> denotes the index type of the array type <TT>
+<P><TT>IndexType(T)</TT> denotes the index type of the array type <TT>
 T</TT> and <TT>IndexType(a)</TT> denotes the index type of the array <TT>
 a</TT>. The definitions of <TT>ElemType(T)</TT> and <TT>ElemType(a)</TT> 
 are similar.

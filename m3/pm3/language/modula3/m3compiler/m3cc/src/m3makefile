@@ -50,28 +50,37 @@ if not defined ("M3CC_CONFIG")  M3CC_CONFIG = get_config (M3CC_TARGET) end
 
 % figure out where we're going to build the beast
 local build_dir = "."  % let m3build set the build directory
-if not equal (M3CC_HOST, M3CC_TARGET)
-  build_dir = "../" & BUILD_DIR & "-" & M3CC_TARGET
-end
 
-% make sure the derived directory exists
-if stale (build_dir, build_dir)
-  ret = exec (["mkdir", build_dir])
+if not equal (M3CC_HOST, M3CC_TARGET)
+  build_dir = ".." & SL & BUILD_DIR & "-" & M3CC_TARGET
+
+  if stale (build_dir, build_dir)
+    ret = exec (["mkdir", build_dir])
+  end
 end
 
 if not defined ("no_config")
   % configure the sources
-  ret = exec (["../gcc/configure", M3CC_CONFIG, "--srcdir=../gcc",
+  local cmd = ["../gcc/configure", M3CC_CONFIG, "--srcdir=../gcc",
            "--host=" & gnu_platform (M3CC_HOST),
            "--build=" & gnu_platform (M3CC_BUILD),
-           "--target=" & gnu_platform (M3CC_TARGET)],[],build_dir)
+           "--target=" & gnu_platform (M3CC_TARGET)]
+  if equal(OS_TYPE,"WIN32")
+    > tmpsh in
+      write("#! /bin/sh",CR)
+      write(cmd,CR)
+    end
+    ret = exec(["sh","tmpsh"],[],build_dir)
+  else
+    ret = exec(cmd,[],build_dir)
+  end
   if not equal(ret,0) error("Failed to configure m3cc") end
 end
 
 % misc fixups & ship commands
 pgms = "m3cgc1"
 if equal (M3CC_HOST, M3CC_TARGET)
-  LibdExport ("m3cgc1")
+  LibdExport ("m3cgc1" & NAMING_CONVENTIONS[20])
   if equal (M3CC_HOST, "DS3100") or equal (M3CC_HOST, "ALPHA_OSF")
     pgms = "m3cgc1 mips-tfile"
     LibdExport ("mips-tfile")

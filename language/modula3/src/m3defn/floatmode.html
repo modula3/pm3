@@ -4,7 +4,7 @@
 </HEAD>
 <BODY>
 
-<H2> The FloatMode interface </H2>
+<H1> The FloatMode interface </H1>
 <P>
 
 The <TT>FloatMode</TT> interface allows you to test the behavior
@@ -21,60 +21,54 @@ INTERFACE FloatMode;
 
 CONST IEEE: BOOLEAN = ...;
 </PRE>
-<TT>TRUE</TT> for fully-compliant IEEE implementations.
-<P>
+<P><TT>TRUE</TT> for fully-compliant IEEE implementations.
 
 <PRE>
 EXCEPTION Failure;
 </PRE>
-Raised by attempts to set modes that are not supported by
+<P>Raised by attempts to set modes that are not supported by
 the implementation.
-<P>
 
 <PRE>
 TYPE RoundingMode = 
   {NearestElseEven, TowardMinusInfinity, TowardPlusInfinity,
    TowardZero, NearestElseAwayFromZero, IBM370, Other};
 </PRE>
-Rounding modes.  The first four are the IEEE modes.
-<P>
+<P>Rounding modes.  The first four are the IEEE modes.
 
 <PRE>
 CONST RoundDefault: RoundingMode = ...;
 </PRE>
-Implementation-dependent: the default mode for rounding arithmetic
+<P>Implementation-dependent: the default mode for rounding arithmetic
 operations, used by a newly forked thread.  This also specifies
 the behavior of the <TT>ROUND</TT> operation in half-way cases.
-<P>
 
 <PRE>
 PROCEDURE SetRounding(md: RoundingMode) RAISES {Failure};
 </PRE>
-Change the rounding mode for the calling thread to <TT>md</TT>, or raise
+<P>Change the rounding mode for the calling thread to <TT>md</TT>, or raise
 the exception if this cannot be done.  This affects the implicit
 rounding in floating-point operations; it does not affect the
 <TT>ROUND</TT> operation.  Generally this can be done only on IEEE
 implementations and only if <TT>md</TT> is an IEEE mode.
-<P>
 
 <PRE>
 PROCEDURE GetRounding(): RoundingMode;
 </PRE>
- Return the rounding mode for the calling thread. 
-<P>
+<P> Return the rounding mode for the calling thread. 
 
 <PRE>
 TYPE Flag = 
      {Invalid, Inexact, Overflow, Underflow,
       DivByZero, IntOverflow, IntDivByZero};
 </PRE>
-Associated with each thread is a set of boolean status flags recording
+<P>Associated with each thread is a set of boolean status flags recording
 whether the condition represented by the flag has occurred in the
 thread since the flag was last reset.  The meaning of the first
 five flags is defined precisely in the IEEE floating point standard;
 roughly they mean:
 <BLOCKQUOTE>
-    <TT>Invalid</TT> = invalid argument to an operation.  
+<P>    <TT>Invalid</TT> = invalid argument to an operation.  
     <P>
 
     <TT>Inexact</TT> = an operation produced an inexact result.
@@ -95,7 +89,7 @@ roughly they mean:
 
 The meaning of the last two flags is:
 <BLOCKQUOTE>
-    <TT>IntOverflow</TT> = an integer operation produced a result whose
+<P>    <TT>IntOverflow</TT> = an integer operation produced a result whose
     absolute value is too large to be represented.
     <P>
 
@@ -106,26 +100,22 @@ The meaning of the last two flags is:
 <PRE>
 CONST NoFlags = SET OF Flags {};
 </PRE>
-<P>
 
 <PRE>
 PROCEDURE GetFlags(): SET OF Flag;
 </PRE>
-Return the set of flags for the current thread.
-<P>
+<P>Return the set of flags for the current thread.
 
 <PRE>
 PROCEDURE SetFlags(s: SET OF Flag): SET OF Flag RAISES{Failure};
 </PRE>
-Set the flags for the current thread to <TT>s</TT>, and return their previous
+<P>Set the flags for the current thread to <TT>s</TT>, and return their previous
 values. 
-<P>
 
 <PRE>
 PROCEDURE ClearFlag(f: Flag);
 </PRE>
-Turn off the flag <TT>f</TT> for the current thread. 
-<P>
+<P>Turn off the flag <TT>f</TT> for the current thread. 
 
 <PRE>
 EXCEPTION
@@ -134,9 +124,9 @@ EXCEPTION
 TYPE
   Behavior = {Trap, SetFlag, Ignore};
 </PRE>
-The behavior of an operation that causes one of the flag conditions is either
+<P>The behavior of an operation that causes one of the flag conditions is either
 <BLOCKQUOTE>
-    <TT>Ignore</TT> = return some result and do nothing.
+<P>    <TT>Ignore</TT> = return some result and do nothing.
     <P>
 
     <TT>SetFlag</TT> = return some result and set the condition
@@ -149,20 +139,17 @@ The behavior of an operation that causes one of the flag conditions is either
     raise the <TT>Trap</TT> exception with the appropriate flag as the
     argument.
 </BLOCKQUOTE>
-<P>
 
 <PRE>
 PROCEDURE SetBehavior(f: Flag; b: Behavior) RAISES {Failure};
 </PRE>
-Set the behavior of the current thread for the flag <TT>f</TT>
+<P>Set the behavior of the current thread for the flag <TT>f</TT>
 to be <TT>b</TT>, or raise <TT>Failure</TT> if this cannot be done.  
-<P>
 
 <PRE>
 PROCEDURE GetBehavior(f: Flag): Behavior;
 </PRE>
-Return the behavior of the current thread for the flag <TT>f</TT>. 
-<P>
+<P>Return the behavior of the current thread for the flag <TT>f</TT>. 
 
 <PRE>
 END FloatMode.

@@ -45,15 +45,31 @@ if defined ("quick")
   if not equal(ret,0) error("Failed to build m3gdb") end
 else
   % configure the sources & compile
-  ret = exec (["../gdb/configure", % M3GDB_CONFIG,
-           "--srcdir=../gdb", "--disable-gdbtk", gnu_platform (M3GDB_HOST)])
+  local cmd = [".." & "/" & "gdb" & "/" & "configure", % M3GDB_CONFIG,
+      "--srcdir=../gdb", "--disable-gdbtk", gnu_platform (M3GDB_HOST)]
+  if equal(OS_TYPE,"WIN32")
+    > "tmpsh" in
+      write("#! /bin/sh",CR)
+      write(cmd,CR)
+    end
+    ret = exec(["sh","tmpsh"])
+  else
+    ret = exec (cmd)
+  end
   ret = exec ([M3GDB_MAKE, ARG0, ARG1])
   if not equal(ret,0) error("Failed to build m3gdb") end
 end
 
 % finally, build the exportable link and man page and export them
-ret = exec(["mv","gdb/gdb", "m3gdb"])
+ret = exec(["mv","gdb/gdb" & NAMING_CONVENTIONS[20], 
+    "m3gdb" & NAMING_CONVENTIONS[20])
 if not equal(ret,0) error("Failed to rename gdb to m3gdb") end
 
 BindExport ("m3gdb")
 ManPage ("m3gdb","1")
+
+import("m3doc")
+HtmlFile("index")
+
+OtherPackage("m3gdb")
+

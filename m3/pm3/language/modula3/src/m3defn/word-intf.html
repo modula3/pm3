@@ -4,7 +4,7 @@
 </HEAD>
 <BODY>
 
-<H2>The Word interface</H2>
+<H1>The Word interface</H1>
 <P>
 
 <PRE>
@@ -14,7 +14,7 @@ TYPE T = INTEGER;
 
 CONST Size = BITSIZE(T);
 </PRE>
-A <TT>Word.T</TT> <TT>w</TT> represents a sequence of <TT>Word.Size</TT> bits
+<P>A <TT>Word.T</TT> <TT>w</TT> represents a sequence of <TT>Word.Size</TT> bits
 <TT>w_0</TT>, ..., <TT>w_(Word.Size-1)</TT>.
 It also represents the unsigned number <TT>SUM (w_i * 2^i)</TT>.
 Finally, it also represents a signed <TT>INTEGER</TT> by some
@@ -53,7 +53,7 @@ And here are additional operations on bit sequences:
 <PRE>
 PROCEDURE Shift(x: T; n: INTEGER): T;
 </PRE>
-For all <TT>i</TT> such that both <TT>i</TT> and <TT>i - n</TT>
+<P>For all <TT>i</TT> such that both <TT>i</TT> and <TT>i - n</TT>
 are in the range 
 <TT>[0..Word.Size - 1]</TT>, bit <TT>i</TT> of the result equals
 bit <TT>i - n</TT> of <TT>x</TT>.  
@@ -68,14 +68,14 @@ is the usual way of writing 2^n in a constant expression.
 <PRE>
 PROCEDURE Rotate(x: T; n: INTEGER): T;
 </PRE>
-Bit <TT>i</TT> of the result is bit <TT>((i - n) MOD Word.Size)</TT>
+<P>Bit <TT>i</TT> of the result is bit <TT>((i - n) MOD Word.Size)</TT>
 of <TT>x</TT>. 
 <P>
 
 <PRE>
 PROCEDURE Extract(x: T; i, n: CARDINAL): T;
 </PRE>
-Take <TT>n</TT> bits from <TT>x</TT>, with bit <TT>i</TT> as the
+<P>Take <TT>n</TT> bits from <TT>x</TT>, with bit <TT>i</TT> as the
 least significant bit, and return them as the least significant
 <TT>n</TT> bits of a word whose other bits are <TT>0</TT>.
 A checked runtime error if <TT>n + i > Word.Size</TT>.  
@@ -84,7 +84,7 @@ A checked runtime error if <TT>n + i > Word.Size</TT>.
 <PRE>
 PROCEDURE Insert(x: T; y: T; i, n: CARDINAL): T;
 </PRE>
-Result of replacing <TT>n</TT> bits of <TT>x</TT>,
+<P>Result of replacing <TT>n</TT> bits of <TT>x</TT>,
 with bit <TT>i</TT> as the least 
 significant  bit, by the least significant <TT>n</TT> bits of <TT>y</TT>.  
 The other bits of <TT>x</TT> are unchanged.  A checked runtime 
@@ -94,7 +94,6 @@ error if <TT>n + i > Word.Size</TT>.
 <PRE>
 END Word.
 </PRE>
-<P>
 
 <PRE>
 Last modified on Wed Apr  3 09:38:50 PST 1996 by heydon

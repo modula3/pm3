@@ -28,7 +28,7 @@ pgm = "analyze_coverage" & NAMING_CONVENTIONS[20] % .exe
 
 if defined ("_all")
   if stale (pgm, src)
-    ret = m3_compile_c(src,obj,["../src"])
+    ret = m3_compile_c(src,obj,[".." & SL & "src"])
     if not equal(ret, 0) error("command failed with error code: ", ret) end
     ret = m3_link(pgm,[obj],[])
     if not equal(ret, 0) error("command failed with error code: ", ret) end

@@ -4,7 +4,7 @@
 </HEAD>
 <BODY>
 
-<H2>Typecase</H2>
+<H1>Typecase</H1>
 <P>
 
 A <TT>TYPECASE</TT> statement has the form:
@@ -16,7 +16,7 @@ A <TT>TYPECASE</TT> statement has the form:
     ELSE S_0
     END
 </PRE>
-where <TT>Expr</TT> is an expression whose type is a reference type, 
+<P>where <TT>Expr</TT> is an expression whose type is a reference type, 
 the <TT>S</TT>'s are statements, the <TT>T</TT>'s are reference types, 
 and the <TT>v</TT>'s are identifiers.  It is a static error if <TT>
 Expr</TT> has type <TT>ADDRESS</TT> or if any <TT>T</TT> is not a subtype of 
@@ -47,7 +47,7 @@ That is:
 <PRE>
     T_1, ..., T_n => S
 </PRE>
-is shorthand for:
+<P>is shorthand for:
 <PRE>
     T_1 => S | ... | T_n => S
 </PRE>	
@@ -65,7 +65,6 @@ For example:
         END
       END ToText;
 </PRE>
-<P>
 
 <PRE>
 Last modified on Wed Apr  3 09:38:52 PST 1996 by heydon

@@ -34,6 +34,9 @@ module         ("Parse")
 module         ("NewFormatter")
 implementation ("Main")
 
+import("m3doc")
+HtmlFile("index")
+
 Program ("m3pp")
 ManPage ("m3pp",1)
 

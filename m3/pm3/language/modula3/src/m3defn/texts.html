@@ -4,9 +4,7 @@
 </HEAD>
 <BODY>
 
-<A NAME=idx.171>
-<H2>Text and character literals</H2>
-</A>
+<H1 ID="idx.171">Text and character literals</H1>
 <P>
 
 A character literal is a pair of single quotes enclosing either a
@@ -28,7 +26,7 @@ are the legal escape sequences and the characters they denote:
     \r   carriage return        \"    double quote 
     \'   single quote           \nnn  char with code <TT>8_nnn</TT>
 </PRE>
-A <TT>\</TT> followed by exactly three octal digits specifies the character
+<P>A <TT>\</TT> followed by exactly three octal digits specifies the character
 whose code is that octal value.  A <TT>\</TT> that is not a part
 of one of these escape sequences is a static error.
 <P>
@@ -36,7 +34,6 @@ of one of these escape sequences is a static error.
 For example, <TT>'a'</TT> and <TT>'\''</TT> are valid character
 literals, <TT>'''</TT> is not; <TT>""</TT> and <TT>"Don't\n"</TT>
 are valid text literals, <TT>"""</TT> is not.
-<P>
 
 <PRE>
 Last modified on Wed Apr  3 09:38:54 PST 1996 by heydon

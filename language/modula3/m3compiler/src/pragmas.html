@@ -23,11 +23,9 @@ SRC Modula-3 recognizes the following pragmas:
 </UL>
 <P>
 
-<A NAME="EXTERNAL">
-<H3>&lt;*EXTERNAL*&gt;</H3>
-</A>
-<P>
+<H2 ID="EXTERNAL">&lt;*EXTERNAL*&gt;</H2>
 
+<P>
 The pragma <TT>&lt;*EXTERNAL N:L*&gt;</TT> may precede an interface
 or a procedure or variable declaration in an interface.  It asserts
 that the following entity is named ``N'' and implemented in language ``L''
@@ -38,10 +36,8 @@ The ``<TT>:</TT>'' is only
 required when specifying ``L''.  ``N'' and ``L'' may be
 Modula-3 identifiers or string literals.
 <P>
-
 On Unix platforms, the default and only recognized language is <TT>C</TT>.
 <P>
-
 On Windows/NT, two calling standards are supported,
 <TT>__cdecl</TT> and <TT>__stdcall</TT>.  They are treated
 as languages by the <TT>&lt;*EXTERNAL*&gt;</TT> pragma.
@@ -50,7 +46,6 @@ as languages by the <TT>&lt;*EXTERNAL*&gt;</TT> pragma.
 <TT>APIPRIVATE</TT>, and <TT>PASCAL</TT> are
 aliases for <TT>__stdcall</TT>.  The default is <TT>C</TT>.
 <P>
-
 The names of external procedures and variables are passed through
 the back end unchanged.  <EM>The types of external variables, the
 types of formal parameters, the types of results, and the raises
@@ -58,11 +53,9 @@ clauses of external procedures are all assumed to be correct and
 are not checked
 against their external implementation.</EM>
 <P>
-
 Beginning an interface with <TT>&lt;*EXTERNAL*&gt;</TT> declares all of the
 procedures and variables in that interface external.
 <P>
-
 For example:
 <PRE>
     &lt;*EXTERNAL*&gt; INTERFACE OS;
@@ -70,11 +63,10 @@ For example:
     PROCEDURE exit (i: INTEGER);
     END OS.
 </PRE>
-allows importers of <TT>OS</TT> to access the standard <TT>Unix</TT> symbols
+<P>allows importers of <TT>OS</TT> to access the standard <TT>Unix</TT> symbols
 <TT>errno</TT> and <TT>exit</TT> through the names <TT>OS.errno</TT> and
 <TT>OS.exit</TT> respectively.
 <P>
-
 Alternatively, the following interface provides access to
 the same two symbols, but uses a more conventional Modula-3 name
 for the procedure:
@@ -85,11 +77,9 @@ for the procedure:
     END OS.
 </PRE>
 <P>
-
 If several variables are declared within a single <TT>&lt;*EXTERNAL*&gt; VAR</TT>
 declaration, they are all assumed to be external.
 <P>
-
 The external pragma may optionally specify a name different from the
 Modula-3 name.
 For example:
@@ -99,20 +89,16 @@ For example:
       PROCEDURE CheckSubclassFlag (...);
       ...
 </PRE>
-defines a procedure named <TT>Xt.CheckSubclassFlag</TT> in Modula-3
+<P>defines a procedure named <TT>Xt.CheckSubclassFlag</TT> in Modula-3
 and named <TT>_XtCheckSubclassFlag</TT> in the generated C.
-<P>
 
-<A NAME="INLINE">
-<H3>&lt;*INLINE*&gt;</H3>
-</A>
+<H2 ID="INLINE">&lt;*INLINE*&gt;</H2>
 <P>
-
 The pragma <TT>&lt;*INLINE*&gt;</TT> may precede a procedure
 declaration.  The pragma is allowed in interfaces and modules.
 SRC Modula-3 parses but ignores this pragma.
-<P>
 
+<P>
 For example:
 <PRE>
     INTERFACE X;
@@ -120,62 +106,51 @@ For example:
     &lt;*INLINE*&gt; PROCEDURE Q ();
     END X.
 </PRE>
-declares <TT>X.P</TT> and <TT>X.Q</TT> to be inlined procedures.
-<P>
+<P>declares <TT>X.P</TT> and <TT>X.Q</TT> to be inlined procedures.
 
-<A NAME="ASSERT">
-<H3>&lt;*ASSERT*&gt;</H3>
-</A>
+<H2 ID="ASSERT">&lt;*ASSERT*&gt;</H2>
 <P>
-
 The pragma <TT>&lt;*ASSERT expr*&gt;</TT> may appear anywhere a statement
 may appear.  It is a static error if ``expr'' is not of type <TT>BOOLEAN</TT>.
 At runtime ``expr'' is evaluated.  It is a checked
 runtime error if the result is <TT>FALSE</TT>.
 <P>
-
 Assertion checking can be disabled with the <TT>-a</TT> compiler
 switch.
-<P>
 
-<A NAME="TRACE">
-<H3>&lt;*TRACE*&gt;</H3>
-</A>
+<H2 ID="TRACE">&lt;*TRACE*&gt;</H2>
 <P>
-
 The pragma <TT>&lt;*TRACE expr*&gt;</TT> may appear at the end of any variable
 or formal declaration.  This pragma will generate tracing calls whenever
 the declared variable is modified.  
 <P>
-
 The ``expr'' must evaluate to a procedure of two arguments.
 The first argument is the name of the traced variable, a <TT>TEXT</TT>.
 The second argument is the traced variable.
 Note that any of the formal passing modes may be used with the
 second argument.
 <P>
-
 For example:
 <PRE>
     MODULE M;
     VAR x: Foo &lt;*TRACE MyTrace.FooChanged*&gt;;
 </PRE>
-will cause
+<P>will cause
 <PRE>
     MyTrace.FooChanged ("M.x", x)
 </PRE>
-to be generated after each statement that modifies x.
+<P>to be generated after each statement that modifies x.
 Variable aliasing is not tracked, so
 <PRE>
     WITH  alias = x DO  INC(alias) END
 </PRE>
-will not generate any tracing.
+<P>will not generate any tracing.
 <P>
 
 The pieces of Modula-3 grammar affected by <TT>&lt;*TRACE expr*&gt;</TT> are:
 <PRE>
-    VariableDecl = IdList (":" Type & ":=" Expr) V_TRACE.
-    Formal       = [Mode] IdList (":" Type & ":=" ConstExpr) V_TRACE.
+    VariableDecl = IdList (":" Type &amp; ":=" Expr) V_TRACE.
+    Formal       = [Mode] IdList (":" Type &amp; ":=" ConstExpr) V_TRACE.
     ForSt        = FOR Id V_TRACE ":=" Expr TO Expr [BY Expr] DO S END.
     Handler      = QualId {"," QualId} ["(" Id V_TRACE ")"] "=>" S.
     TCase        = Type {"," Type} ["(" Id V_TRACE ")"] "=>" S.
@@ -193,13 +168,10 @@ statement of the block started by the <TT>BEGIN</TT>.  For example:
       j := i;
     END;
 </PRE>
-will generate <TT>INC(cnt); MyTrace(cnt)</TT>  after each of
+<P>will generate <TT>INC(cnt); MyTrace(cnt)</TT>  after each of
 the assignment statements.
-<P>
 
-<A NAME="FATAL">
-<H3>&lt;*FATAL*&gt;</H3>
-</A>
+<H2 ID="FATAL">&lt;*FATAL*&gt;</H2>
 <P>
 
 The pragma <TT>&lt;*FATAL id-list*&gt;</TT> may appear anywhere a
@@ -218,7 +190,7 @@ For example:
     EXCEPTION InternalError;
     &lt;*FATAL InternalError*&gt;
 </PRE>
-at the top-level of a module <TT>M</TT> means that no warnings will be
+<P>at the top-level of a module <TT>M</TT> means that no warnings will be
 generated for procedures in <TT>M</TT> that raise but don't list
 <TT>InternalError</TT> in their <TT>RAISES</TT> clauses.
 <P>
@@ -234,13 +206,10 @@ Similarly,
       ...
     END X;
 </PRE>
-specifies that although <TT>X</TT> raises no exceptions and <TT>List.Walk</TT>
+<P>specifies that although <TT>X</TT> raises no exceptions and <TT>List.Walk</TT>
 may, no warnings should be generated.
-<P>
 
-<A NAME="UNUSED">
-<H3>&lt;*UNUSED*&gt;</H3>
-</A>
+<H2 ID="UNUSED">&lt;*UNUSED*&gt;</H2>
 <P>
 
 The pragma <TT>&lt;*UNUSED*&gt;</TT> may precede any declaration.  It asserts
@@ -254,11 +223,8 @@ for an object may not need all of the actual parameters:
     PROCEDURE DefaultClose (&lt;*UNUSED*&gt; wr: Wr.T) =
        BEGIN (* do nothing *) END DefaultClose;
 </PRE>
-<P>
 
-<A NAME="OBSOLETE">
-<H3>&lt;*OBSOLETE*&gt;</H3>
-</A>
+<H2 ID="OBSOLETE">&lt;*OBSOLETE*&gt;</H2>
 <P>
 
 The pragma <TT>&lt;*OBSOLETE*&gt;</TT> may precede any declaration
@@ -268,9 +234,7 @@ to warn clients of an evolving interface that they are using
 features that will disappear in the future.
 <P>
 
-<A NAME="NOWARN">
-<H3>&lt;*NOWARN*&gt;</H3>
-</A>
+<H2 ID="NOWARN">&lt;*NOWARN*&gt;</H2>
 <P>
 
 The pragma <TT>&lt;*NOWARN*&gt;</TT> may appear anywhere.  It prevents warning
@@ -279,9 +243,7 @@ probably better to use this pragma in a few places and enable
 all warnings with the <TT>-w1</TT> switch than to ignore all warnings.
 <P>
 
-<A NAME="LINE">
-<H3>&lt;*LINE*&gt;</H3>
-</A>
+<H2 ID="LINE">&lt;*LINE*&gt;</H2>
 <P>
 
 For the benefit of preprocessors that generate Modula-3 programs, the
@@ -290,7 +252,7 @@ compiler recognizes a <TT>&lt;*LINE ... *&gt;</TT> pragma, in two forms:
     &lt;*LINE number filename *&gt;
     &lt;*LINE number *&gt;
 </PRE>
-where <TT>number</TT> is an integer literal and <TT>filename</TT> is a
+<P>where <TT>number</TT> is an integer literal and <TT>filename</TT> is a
 text literal.
 This pragma causes the compiler to believe, for purposes of error
 messages and debugging, that the line number of the following source line is
@@ -299,11 +261,8 @@ If <TT>filename</TT> is omitted, it is assumed to be unchanged.
 <TT>&lt;*LINE ... *&gt;</TT> may appear between any two Modula-3 tokens; it
 applies to the source line following the line on which it appears.
 Here's an example: <TT>&lt;*LINE 32 "SourceLoc.nw" *&gt;</TT>.
-<P>
 
-<A NAME="PRAGMA">
-<H3>&lt;*PRAGMA*&gt;</H3>
-</A>
+<H2 ID="PRAGMA">&lt;*PRAGMA*&gt;</H2>
 <P>
 
 The pragma <TT>&lt;*PRAGMA id-list*&gt;</TT> may appear anywhere.  It notifies
@@ -312,11 +271,8 @@ may occur in this compilation unit.  Since the compiler is free to
 ignore any pragma, the real effect of <TT>&lt;*PRAGMA*&gt;</TT> is to tell
 the compiler that pragmas it doesn't implement are coming, but they
 shouldn't cause ``unrecognized pragma'' warnings.
-<P>
 
-<A NAME="CALLCONV">
-<H3>&lt;*calling convention*&gt;</H3>
-</A>
+<H2 ID="CALLCONV">&lt;*calling convention*&gt;</H2>
 <P>
 
 Any of the ``languages'' allowed in the <TT>&lt;*EXTERNAL*&gt;</TT>
@@ -330,13 +286,12 @@ For example:
     &lt;*CALLBACK*&gt; PROCEDURE Foo (h: HANDLE) =
        BEGIN ....
 </PRE>
-declares a procedure and procedure type that use the Windows/NT
+<P>declares a procedure and procedure type that use the Windows/NT
 <TT>CALLBACK</TT> (i.e. <TT>__stdcall</TT>) calling convention.
 <P>
 
 The SRC Modula-3 compiler treats procedure types that are equal
 except for their calling conventions as different types.
-<P>
 
 <PRE>
 Last modified on Thu Jan  4 11:07:59 PST 1996 by heydon 

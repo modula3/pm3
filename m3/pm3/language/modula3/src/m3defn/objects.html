@@ -4,7 +4,7 @@
 </HEAD>
 <BODY>
 
-<H2>Object types</H2>
+<H1>Object types</H1>
 <P>
 
 An <EM>object</EM> is either <TT>NIL</TT> or a reference to a data
@@ -68,7 +68,7 @@ declaration of an object type has the form:
                Overrides
              END
 </PRE>
-where <TT>ST</TT> is an optional supertype, <TT>Fields</TT> is a list of
+<P>where <TT>ST</TT> is an optional supertype, <TT>Fields</TT> is a list of
 field declarations, exactly as in a record type, <TT>Methods</TT> is a
 list of <EM>method declarations</EM> and <TT>Overrides</TT> is a list of
 <EM>method overrides</EM>.  The fields of <TT>T</TT> consist of the fields
@@ -100,7 +100,7 @@ method declaration has the form:
 <PRE>
     m sig := proc
 </PRE>
-where <TT>m</TT> is an identifier, <TT>sig</TT> is a procedure signature,
+<P>where <TT>m</TT> is an identifier, <TT>sig</TT> is a procedure signature,
 and <TT>proc</TT> is a top-level procedure constant.  It specifies that
 <TT>T</TT>'s <TT>m</TT> method has signature <TT>sig</TT>
 and value <TT>proc</TT>.
@@ -116,7 +116,7 @@ method override has the form:
 <PRE>
     m := proc
 </PRE>
-where <TT>m</TT> is the name of a method of the supertype <TT>ST</TT> and
+<P>where <TT>m</TT> is the name of a method of the supertype <TT>ST</TT> and
 <TT>proc</TT> is a top-level procedure constant.  It specifies that the
 <TT>m</TT> method for <TT>T</TT> is proc, rather than <TT>ST.m</TT>.
 If <TT>proc</TT> is non-nil,
@@ -134,32 +134,32 @@ that is covered by the signature of <TT>ST</TT>'s <TT>m</TT> method.
     PROCEDURE Pa(self: A) = ... ; 
     PROCEDURE Pab(self: AB) = ... ;
 </PRE>
-The procedures <TT>Pa</TT> and <TT>Pab</TT> are candidate values for
+<P>The procedures <TT>Pa</TT> and <TT>Pab</TT> are candidate values for
 the <TT>p</TT>
 methods of objects of types <TT>A</TT> and <TT>AB</TT>.  For example:
 <PRE>
     TYPE T1 = AB OBJECT OVERRIDES p := Pab END
 </PRE>
-declares a type with an <TT>AB</TT> data record and a <TT>p</TT> method
+<P>declares a type with an <TT>AB</TT> data record and a <TT>p</TT> method
 that expects an <TT>AB</TT>.
 <TT>T1</TT> is a valid subtype of <TT>AB</TT>.  Similarly,
 <PRE>
     TYPE T2 = A OBJECT OVERRIDES p := Pa END
 </PRE>
-declares a type with an <TT>A</TT> data record and a method that expects
+<P>declares a type with an <TT>A</TT> data record and a method that expects
 an <TT>A</TT>.  <TT>T2</TT> is a valid subtype of <TT>A</TT>.  A more
 interesting example is:
 <PRE>
     TYPE T3 = AB OBJECT OVERRIDES p := Pa END
 </PRE>
-which declares a type with an <TT>AB</TT> data record and a <TT>p</TT> method
+<P>which declares a type with an <TT>AB</TT> data record and a <TT>p</TT> method
 that expects an <TT>A</TT>.  Since every <TT>AB</TT> is an <TT>A</TT>,
 the method is not too choosy for the objects in which it will be placed.
 <TT>T3</TT> is a valid subtype of <TT>AB</TT>.  In contrast,
 <PRE>
     TYPE T4 = A OBJECT OVERRIDES p := Pab END
 </PRE>
-attempts to declare a type with an <TT>A</TT> data record and a method 
+<P>attempts to declare a type with an <TT>A</TT> data record and a method 
 that expects an <TT>AB</TT>; since not every <TT>A</TT> is an <TT>AB</TT>, 
 the method is too choosy for the objects in which it would
 be placed.  The declaration of <TT>T4</TT> is a static error.
@@ -177,13 +177,13 @@ a new method and overriding an existing method.
     VAR
       a := NEW(A); b := NEW(B); c := NEW(C);
 </PRE>
-we have that 
+<P>we have that 
 <PRE>
     a.m()  activates  P(a) 
     b.m()  activates  Q(b) 
     c.m()  activates  Q(c) 
 </PRE>
-So far there is no difference between overriding and extending.  But
+<P>So far there is no difference between overriding and extending.  But
 <TT>c</TT>'s method suite has two methods, while <TT>b</TT>'s has only one,
 as can be revealed if <TT>b</TT> and <TT>c</TT> are viewed as members of
 type <TT>A</TT>:
@@ -191,7 +191,7 @@ type <TT>A</TT>:
     NARROW(b, A).m()   activates  Q(b) 
     NARROW(c, A).m()   activates  P(c) 
 </PRE>
-Here <TT>NARROW</TT> is used to view a variable of a subtype as a value
+<P>Here <TT>NARROW</TT> is used to view a variable of a subtype as a value
 of its supertype.
 It is more often used for the opposite purpose, when it requires a
 <A HREF="typeops.html#idx.198">runtime check</A>.

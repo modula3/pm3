@@ -28,7 +28,6 @@ field (packed or unpacked) can be loaded by a simple ``load, shift, and mask''
 sequence on the machine.  So, for example, its not possible to
 have a 32-bit integer that crosses a 32-bit alignment boundary
 on a machine which only supports aligned 32-bit loads.
-<P>
 
 <H2>Stack overflow checking</H2>
 <P>
@@ -41,7 +40,6 @@ interface has been augmented with
 the <TT>SizedClosure</TT> type to allow arbitrary sized stacks. The default
 size can be adjusted with <TT>Thread.MinDefaultStackSize</TT> and
 <TT>Thread.IncDefaultStackSize</TT>.
-<P>
 
 <H2>Exception semantics</H2>
 <P>
@@ -64,12 +62,11 @@ For example, consider
       j := i;
     END;
 </PRE>
-where <TT>P</TT> raises exception <TT>E</TT>.
+<P>where <TT>P</TT> raises exception <TT>E</TT>.
 The compiler generates a <TT>setjmp</TT> at the beginning of
 the try statement.  If the C compiler allocates variable <TT>i</TT>
 to a register, the assignment of <TT>3</TT> may be lost during the
 <TT>longjmp</TT> and branch that gets to the handler.
-<P>
 
 <H2>Method constants</H2>
 <P>
@@ -85,7 +82,7 @@ For example,
 <PRE>
     CONST P = T.m;  BEGIN P (...) ...
 </PRE>
-will work, since no initialized <TT>C</TT> storage is allocated for <TT>P</TT>.
+<P>will work, since no initialized <TT>C</TT> storage is allocated for <TT>P</TT>.
 But the following generates initialized storage and will fail
 <PRE>
     CONST X = ARRAY [0..2] OF Proc { T.m, ..};
@@ -97,7 +94,6 @@ evaluated at compile time
 <PRE>
     CONST X = (T.m = MyProcedure);
 </PRE>
-<P>
 
 <PRE>
 Last modified on Thu Jan  4 11:07:59 PST 1996 by heydon 

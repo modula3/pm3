@@ -4,10 +4,10 @@
 </HEAD>
 <BODY>
 
-<H2>Syntax</H2>
+<H1>Syntax</H1>
 <P>
 
-<BLOCKQUOTE><EM>
+<BLOCKQUOTE><P><EM>
 Care should be taken, when using colons and semicolons in the same
 sentence,  that the reader understands how far the force of each sign
 carries.  
@@ -15,9 +15,7 @@ carries.
 </EM></BLOCKQUOTE>
 <P>
 
-<A NAME=idx.213>
-<H3>Keywords</H3>
-</A>
+<H2 ID="idx.213">Keywords</H2>
 <P>
 
 <PRE>
@@ -35,9 +33,7 @@ DIV       FOR         MODULE      REF         UNSAFE
 </PRE>
 <P>
 
-<A NAME=idx.214>
-<H3>Reserved identifiers</H3>
-</A>
+<H2 ID="idx.214">Reserved identifiers</H2>
 <P>
 
 <PRE>
@@ -50,9 +46,7 @@ BOOLEAN   DISPOSE    INC       MAX        NULL    SUBARRAY
 </PRE>
 <P>
 
-<A NAME=idx.215>
-<H3>Operators</H3>
-</A>
+<H2 ID="idx.215">Operators</H2>
 <P>
 
 <PRE>
@@ -63,18 +57,14 @@ BOOLEAN   DISPOSE    INC       MAX        NULL    SUBARRAY
 </PRE>
 <P>
 
-<A NAME=idx.216>
-<H3>Comments</H3>
-</A>
+<H2 ID="idx.216">Comments</H2>
 <P>
 
 A comment is an arbitrary character sequence opened by <TT>(*</TT> and closed
 by <TT>*)</TT>.  Comments can be nested and can extend over more than one line.
 <P>
 
-<A NAME=idx.217>
-<H3>Pragmas</H3>
-</A>
+<H2 ID="idx.217">Pragmas</H2>
 <P>
 
 A pragma is an arbitrary character sequence opened by <TT>&lt;*</TT>
@@ -98,9 +88,7 @@ the external name is determined from the Modula-3 name in some
 implementation-dependent way.
 <P>
 
-<A NAME=idx.219>
-<H3>Conventions for syntax</H3>
-</A>
+<H2 ID="idx.219">Conventions for syntax</H2>
 <P>
 
 We use the following notation for defining syntax:
@@ -111,7 +99,7 @@ We use the following notation for defining syntax:
     {X}      A possibly empty sequence of <TT>X</TT>'s 
     X&amp;Y      <TT>X</TT> or <TT>Y</TT> or <TT>X</TT> <TT>Y</TT>
 </PRE>
-"Followed by" has greater binding power than <TT>|</TT> or <TT>&</TT>;
+<P>"Followed by" has greater binding power than <TT>|</TT> or <TT>&amp;</TT>;
 parentheses are used to override this precedence rule.  Non-terminals
 begin with an upper-case letter.  Terminals are either keywords or
 quoted operators.  The symbols <TT>Ident</TT>, <TT>Number</TT>,
@@ -124,7 +112,7 @@ include explicit productions for <TT>NEW</TT>, <TT>INC</TT>, and <TT>DEC</TT>,
 which parse like procedure calls.
 <P>
 
-<H3>Compilation unit productions</H3>
+<H2>Compilation unit productions</H2>
 <P>
 
 <PRE>
@@ -155,18 +143,18 @@ ImportItem     = Id | Id AS Id.
 ConstDecl      = Id [":" Type] "=" ConstExpr.
 TypeDecl       = Id ("=" | "&lt;:") Type.
 ExceptionDecl  = Id ["(" Type ")"].
-VariableDecl   = IdList (":" Type & ":=" Expr).
+VariableDecl   = IdList (":" Type &amp; ":=" Expr).
 ProcedureHead  = PROCEDURE Id Signature.
 
 Signature      = "(" Formals ")" [":" Type] [RAISES Raises].
 Formals        = [ Formal {";" Formal} [";"] ].
-Formal         = [Mode] IdList (":" Type & ":=" ConstExpr).
+Formal         = [Mode] IdList (":" Type &amp; ":=" ConstExpr).
 Mode           = VALUE | VAR | READONLY.
 Raises         = "{" [ QualId {"," QualId} ] "}" | ANY.
 </PRE>
 <P>
 
-<H3>Statement productions</H3>
+<H2>Statement productions</H2>
 <P>
 
 <PRE>
@@ -201,9 +189,8 @@ TCase   = Type {"," Type} ["(" Id ")"] "=&gt;" S.
 Binding = Id "=" Expr.
 Actual  = Type | [Id ":="] Expr .
 </PRE>
-<P>
 
-<H3>Type productions</H3>
+<H2>Type productions</H2>
 <P>
 
 <PRE>
@@ -224,15 +211,14 @@ SubrangeType  = "[" ConstExpr ".." ConstExpr "]".
 
 Brand     = BRANDED [ConstExpr].
 Fields    = [ Field {";" Field} [";"] ].
-Field     = IdList (":" Type & ":=" ConstExpr).
+Field     = IdList (":" Type &amp; ":=" ConstExpr).
 Methods   = [ Method {";" Method} [";"] ].
 Method    = Id Signature [":=" ConstExpr].
 Overrides = [ Override {";" Override} [";"] ].
 Override  = Id ":=" ConstExpr .
 </PRE>
-<P>
 
-<H3>Expression productions</H3>
+<H2>Expression productions</H2>
 <P>
 
 <PRE>
@@ -264,10 +250,8 @@ RecordCons = RecordElt {"," RecordElt}.
 RecordElt = [Id ":="] Expr.
 ArrayCons =  Expr {"," Expr} ["," ".."].
 </PRE>
-<P>
 
-<H3>Miscellaneous productions</H3>
-<P>
+<H2>Miscellaneous productions</H2>
 
 <PRE>
 IdList      =  Id {"," Id}.
@@ -276,9 +260,7 @@ TypeName    =  QualId | ROOT | UNTRACED ROOT.
 </PRE>
 <P>
 
-<A NAME=idx.220>
-<H3>Token productions</H3>
-</A>
+<H2 ID="idx.220">Token productions</H2>
 <P>
 
 To read a token, first skip all blanks, tabs, newlines, carriage 
@@ -301,7 +283,6 @@ and an ordinary identifier otherwise.
 In the following grammar, terminals are characters surrounded by
 double-quotes and the special terminal <TT>DQUOTE</TT> represents
 double-quote itself.
-<P>
 
 <PRE>
 Id = Letter {Letter | Digit | "_"}.
@@ -336,12 +317,11 @@ Letter = "A"  | "B"  | ... | "Z"  | "a"  | "b"  | ... | "z".
 OtherChar = " " | "!" | "#" | "$" | "%" | "&amp;" | "(" | ")"
           | "*" | "+" | "," | "-" | "." | "/" | ":" | ";"
           | "&lt;" | "=" | "&gt;" | "?" | "@" | "[" | "]" | "^"
-          | "_" | "`" | "{" | "|" | "}" | " "
+          | "_" | "`" | "{" | "|" | "}" | "~"
           | ExtendedChar
 
 ExtendedChar = any char with ISO-Latin-1 code in [8_ 240..8_ 377].
 </PRE>
-<P>
 
 <PRE>
 Last modified on Wed Apr  3 09:38:55 PST 1996 by heydon

@@ -17,10 +17,11 @@ FormsVBT forms may be shown, somewhat like in formsedit.
 The first step is set your emacs path to include
 /usr/local/pm3-1.1/lib/elisp and
 to load m3setup.el from your .emacs file.
-<TT><PRE>
+
+<PRE><TT>
 (setq load-path (append (list "/usr/local/pm3-1.1/lib/elisp") load-path))
 (load-library "m3setup.el")
-</PRE></TT>
+</TT></PRE>
 <P>
 This will setup the automatic loading of the m3ide (within the modula3)
 mode when a file ending in .i3, .m3, .ig, .mg, .fv is loaded. Then,
@@ -56,7 +57,7 @@ executable anyway. In the longer term, it could be interesting to
 move even more functionality into Modula-3 code. Here is a whish
 list. I will not have time in the foreseeable future to do
 any of it. Volunteers are more than welcome. Thanks to
-Lennart Staflin <lenst@lysator.liu.se> for converting the xemacs menus
+Lennart Staflin &lt;lenst@lysator.liu.se&gt; for converting the xemacs menus
 to emacs and miscellaneous elisp code improvements.
 
 <UL>

@@ -4,7 +4,7 @@
 </HEAD>
 <BODY>
 
-<H2>The Thread interface</H2>
+<H1>The Thread interface</H1>
 <P>
 
 If a shared variable is written concurrently by two threads, or written
@@ -15,7 +15,6 @@ concurrently writes <TT>a[1]</TT>, one of the writes might be lost.
 Thus, portable programs must
 use the <TT>Thread</TT> interface to provide mutual exclusion for shared
 variables.
-<P>
 
 <PRE>
 INTERFACE Thread;
@@ -26,110 +25,95 @@ TYPE
   Condition &lt;: ROOT;
   Closure = OBJECT METHODS apply(): REFANY END;
 </PRE>
-A <TT>Thread.T</TT> is a handle on a thread.  A <TT>Mutex</TT> is locked
+<P>A <TT>Thread.T</TT> is a handle on a thread.  A <TT>Mutex</TT> is locked
 by some thread, or unlocked.  A <TT>Condition</TT> is a set of waiting
 threads.  A newly-allocated <TT>Mutex</TT> is unlocked; a newly-allocated
 <TT>Condition</TT> is empty.  It is a checked runtime error to pass the
 <TT>NIL</TT> <TT>Mutex</TT>, <TT>Condition</TT>, or <TT>T</TT> to any
 procedure in this interface.
-<P>
 
 <PRE>
 PROCEDURE Fork(cl: Closure): T;
 </PRE>
-A handle on a newly-created thread executing <TT>cl.apply()</TT>. 
-<P>
+<P>A handle on a newly-created thread executing <TT>cl.apply()</TT>. 
 
 <PRE>
 PROCEDURE Join(t: T): REFANY;
 </PRE>
-Wait until <TT>t</TT> has terminated and return its result.  It is a
+<P>Wait until <TT>t</TT> has terminated and return its result.  It is a
 checked error to call this more than once for any <TT>t</TT>. 
-<P>
 
 <PRE>
 PROCEDURE Wait(m: Mutex; c: Condition);
 </PRE>
-The calling thread must have <TT>m</TT> locked.  Atomically unlocks 
+<P>The calling thread must have <TT>m</TT> locked.  Atomically unlocks 
 <TT>m</TT> and waits on <TT>c</TT>.  Then relocks <TT>m</TT> and returns. 
-<P>
 
 <PRE>
 PROCEDURE Acquire(m: Mutex);
 </PRE>
-Wait until <TT>m</TT> is unlocked and then lock it. 
+<P>Wait until <TT>m</TT> is unlocked and then lock it. 
 <P>
 
 <PRE>
 PROCEDURE Release(m: Mutex);
 </PRE>
-The calling thread must have <TT>m</TT> locked.  Unlocks <TT>m</TT>. 
-<P>
+<P>The calling thread must have <TT>m</TT> locked.  Unlocks <TT>m</TT>. 
 
 <PRE>
 PROCEDURE Broadcast(c: Condition);
 </PRE>
-All threads waiting on <TT>c</TT> become eligible to run.  
-<P>
+<P>All threads waiting on <TT>c</TT> become eligible to run.  
 
 <PRE>
 PROCEDURE Signal(c: Condition);
 </PRE>
-One or more threads waiting on <TT>c</TT> become eligible to run. 
-<P>
+<P>One or more threads waiting on <TT>c</TT> become eligible to run. 
 
 <PRE>
 PROCEDURE Self(): T;
 </PRE>
-Return the handle of the calling thread. 
-<P>
+<P>Return the handle of the calling thread. 
 
 <PRE>
 EXCEPTION Alerted;
 </PRE>
-Used to approximate asynchronous interrupts.
-<P>
+<P>Used to approximate asynchronous interrupts.
 
 <PRE>
 PROCEDURE Alert(t: T);
 </PRE>
-Mark <TT>t</TT> as an alerted thread. 
-<P>
+<P>Mark <TT>t</TT> as an alerted thread. 
 
 <PRE>
 PROCEDURE TestAlert(): BOOLEAN;
 </PRE>
-<TT>TRUE</TT> if the calling thread has been marked alerted. 
-<P>
+<P><TT>TRUE</TT> if the calling thread has been marked alerted. 
 
 <PRE>
 PROCEDURE AlertWait(m: Mutex; c: Condition) RAISES {Alerted};
 </PRE>
-Like <TT>Wait</TT>, but if the thread is marked alerted at the time of
+<P>Like <TT>Wait</TT>, but if the thread is marked alerted at the time of
 call or sometime during the wait, lock <TT>m</TT> and raise <TT>Alerted</TT>. 
-<P>
 
 <PRE>
 PROCEDURE AlertJoin(t: T): REFANY RAISES {Alerted};
 </PRE>
-Like <TT>Join</TT>, but if the calling thread is marked alerted at 
+<P>Like <TT>Join</TT>, but if the calling thread is marked alerted at 
 the time of call or sometime during the wait, raise <TT>Alerted</TT>.  
-<P>
 
 <PRE>
 CONST
   AtomicSize = ...;
 </PRE>
-An implementation-dependent integer constant: the number of bits in
+<P>An implementation-dependent integer constant: the number of bits in
 a memory-coherent block.  If two components of a record or array fall
 in different blocks, they can be accessed concurrently by different
 threads without locking.
-<P>
 
 <PRE>
 END Thread.
 </PRE>	
-<P>
 
 <PRE>
 Last modified on Wed Apr  3 09:38:54 PST 1996 by heydon

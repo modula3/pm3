@@ -55,6 +55,12 @@ end
 % Write the global bootstrap makefile
 
 readonly proc CreateMakefile(file,target,header,options) is
+  local exportrpath = "-DEXPORTRPATH=binaries/" & target
+
+  if equal(target,"NT386GNU") 
+    exportrpath = "-DEXPORTRPATH=binaries\\\\" & target
+  end
+
   > file in
     write(header,CR,CR)
 
@@ -69,7 +75,7 @@ readonly proc CreateMakefile(file,target,header,options) is
     write("exportpackages:", CR)
     write("\tboot-" & target & "/" & "m3build" & "/" & target & "/" &
         "m3build -T ../m3config/src -DRECURSIVE -DBOOTSTRAP=TRUE " &
-        "-DEXPORTRPATH=binaries/" & target , CR, CR)
+        exportrpath, CR, CR)
 
     write("boot:", CR)
     WriteMakefileLine("m3core",target,options)
@@ -224,8 +230,9 @@ readonly proc BootstrapTarget(target) is
     else 
       write("option(\"optimization\",\"T\")",CR)
     end
-    write("option(\"debuginfo\",\"\")",CR)
+    write("option(\"debuginfo\",\"" & BOOTDEBUG & "\")",CR)
     write("HOST=\"" & host & "\"",CR)
+    write("USE_M3DOC=\"\"",CR)
     write("setDefault(\"\",\"\")",CR)
     write("BACKEND=[\"" & path() & SL & ".." & SL & host & SL & "pm3-" & 
         target & SL & "m3cgc1-" & target & 
@@ -240,6 +247,7 @@ readonly proc BootstrapTarget(target) is
   % Build all the packages required for m3build and m3ship
   % to obtain a bootstrap m3build and m3ship.
 
+  BootstrapPkg("../../../../../text/sgmltools","m3doc",target,host)
   BootstrapPkg("../../../../../libs","m3core",target,host)
   BootstrapPkg("../../../../../libs","libm3",target,host)
   BootstrapPkg("../..","m3middle",target,host)
@@ -251,6 +259,7 @@ readonly proc BootstrapTarget(target) is
   BootstrapPkg("../../../../..","m3config",target,host)
   BootstrapPkg("../..","m3build",target,host)
   BootstrapPkg("../..","m3ship",target,host)
+  CleanPkg("m3doc",target)
   CleanPkg("m3core",target)
   CleanPkg("libm3",target)
   CleanPkg("m3middle",target)
@@ -272,7 +281,7 @@ readonly proc BootstrapTarget(target) is
 
   if equal(target,"NT386GNU")
     header = header & 
-        "EXTRALIBS=-lkernel32 -luser32 -lgdi32 -ladvapi32 -lnetapi32 -lm" & CR
+        "EXTRALIBS=-ladvapi32" & CR
   else
     header = header & "EXTRALIBS=-lm" & CR
   end
@@ -299,6 +308,7 @@ end
 %
 
 CACHE_CROSS_COMPILERS = lookup("CACHE_CROSS_COMPILERS","")
+BOOTDEBUG = lookup("BOOTDEBUG","")
 
 if defined("BOOTTARGET")
   BootstrapTarget(BOOTTARGET)

@@ -4,7 +4,7 @@
 </HEAD>
 <BODY>
 
-<H2>Variables</H2>
+<H1>Variables</H1>
 <P>
 
 If <TT>id</TT> is an identifier, <TT>T</TT> a non-empty type other than 
@@ -12,7 +12,7 @@ an open array type, and <TT>E</TT> an expression, then:
 <PRE>
     VAR id: T := E
 </PRE>
-declares <TT>id</TT> as a variable of type <TT>T</TT> whose initial value 
+<P>declares <TT>id</TT> as a variable of type <TT>T</TT> whose initial value 
 is the value of <TT>E</TT>.  Either "<TT>:= E</TT>" or "<TT>: T</TT>" 
 can be omitted, but not both.  If <TT>T</TT> is omitted, it is taken 
 to be the type of <TT>E</TT>.  If <TT>E</TT> is omitted, the initial value 
@@ -29,15 +29,14 @@ in the order they are declared.  For example:
 <PRE>
     VAR i: [0..5] := j; j: [0..5] := i; BEGIN S END
 </PRE>	
-initializes <TT>i</TT> and <TT>j</TT> to the same arbitrary value
+<P>initializes <TT>i</TT> and <TT>j</TT> to the same arbitrary value
 in <TT>[0..5]</TT>; 
 it is equivalent to:
 <PRE>
     VAR i: [0..5]; j: [0..5]; BEGIN i := j; j := i; S END
 </PRE>	
-<P>
 
-If a sequence of identifiers share the same type and initial value,
+<P>If a sequence of identifiers share the same type and initial value,
 <TT>id</TT> can be a list of identifiers separated by commas.  Such
 a list is shorthand for a list in which the type and
 initial value are repeated for each identifier.
@@ -45,12 +44,11 @@ That is:
 <PRE>
     VAR v_1, ..., v_n: T := E
 </PRE>	
-is shorthand for:
+<P>is shorthand for:
 <PRE>
     VAR v_1: T := E; ...; VAR v_n: T := E
 </PRE>	
-This means that <TT>E</TT> is evaluated <TT>n</TT> times.
-<P>
+<P>This means that <TT>E</TT> is evaluated <TT>n</TT> times.
 
 <PRE>
 Last modified on Wed Apr  3 09:38:51 PST 1996 by heydon

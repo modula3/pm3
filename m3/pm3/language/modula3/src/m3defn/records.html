@@ -4,7 +4,7 @@
 </HEAD>
 <BODY>
 
-<H2>Record types</H2>
+<H1>Record types</H1>
 <P>
 
 A <EM>record</EM> is a sequence of named variables, called the
@@ -18,12 +18,12 @@ A record type declaration has the form:
 <PRE>
     TYPE T = RECORD FieldList END
 </PRE>
-where <TT>FieldList</TT> is a list of field declarations,
+<P>where <TT>FieldList</TT> is a list of field declarations,
 each of which has the form:
 <PRE>
     fieldName: Type := default
 </PRE>
-where <TT>fieldName</TT> is an identifier,
+<P>where <TT>fieldName</TT> is an identifier,
 <TT>Type</TT> is any non-empty type other 
 than an open array type, and <TT>default</TT> is a constant expression.  
 The field names must be distinct.
@@ -52,11 +52,11 @@ for each identifier.  That is:
 <PRE>
     f_1, ..., f_m: Type := default
 </PRE>
-is shorthand for:
+<P>is shorthand for:
 <PRE>
     f_1: Type := default; ...; f_m: Type := default
 </PRE>
-This shorthand is eliminated from the expanded definition
+<P>This shorthand is eliminated from the expanded definition
 of the type.  The default values are included.
 <P>
 
