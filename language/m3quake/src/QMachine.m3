@@ -9,7 +9,7 @@ MODULE QMachine EXPORTS QMachine, QMachRep;
 
 IMPORT Atom, AtomList, IntRefTbl, Env, Fmt, Text, FileWr;
 IMPORT Wr, Thread, OSError, TextSeq, TextF, Pipe;
-IMPORT Pathname, Process, File, FS, RTParams, FileRd, Rd;
+IMPORT Pathname, Process, File, FS, FileRd, Rd;
 IMPORT M3ID, M3Buf, M3File, RegularFile;
 IMPORT QValue, QVal, QCode, QCompiler, QVTbl, QVSeq, QScanner;
 FROM Quake IMPORT Error;
@@ -259,10 +259,8 @@ PROCEDURE Eval (t: T; end_on_return: BOOLEAN := FALSE)
           bind := LookUp (t, arg);
           IF (bind # NIL) THEN
             Push (t, bind.value);
-          ELSIF strict_variables THEN
-            Err (t, "undefined variable: " & M3ID.ToText (arg));
           ELSE
-            PushString (t, M3ID.ToText (arg));
+            Err (t, "undefined variable: " & M3ID.ToText (arg));
           END;
 
       | Op.Assign =>
@@ -1636,6 +1634,5 @@ PROCEDURE SplitArgs (txt: TEXT): TextSeq.T =
     RETURN seq;
   END SplitArgs;
 
-VAR strict_variables := RTParams.IsPresent ("newquake");
 BEGIN
 END QMachine.
