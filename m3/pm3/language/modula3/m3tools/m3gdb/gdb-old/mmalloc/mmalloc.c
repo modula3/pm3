@@ -336,16 +336,3 @@ malloc (size)
   return (result);
 }
 
-/* Don't forget calloc! */
-PTR
-calloc (nmemb, size)
-  size_t nmemb;
-  size_t size;
-{
-  PTR result;
-
-  result = mmalloc ((PTR) NULL, nmemb*size);
-  if (result) memset(result, 0, nmemb*size);
-  return (result);
-}
-
