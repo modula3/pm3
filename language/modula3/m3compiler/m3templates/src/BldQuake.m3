@@ -2870,7 +2870,7 @@ PROCEDURE DoMakeDir(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
     END;
   END DoMakeDir;
 
-PROCEDURE MakeDir(t: BldQuake.T; dir: TEXT) RAISES {Quake.Error} =
+PROCEDURE MakeDir(t: T; dir: TEXT) RAISES {Error} =
   VAR
     val: QValue.T;
     dirs := NEW(TextSeq.T).init();
@@ -2887,7 +2887,11 @@ PROCEDURE MakeDir(t: BldQuake.T; dir: TEXT) RAISES {Quake.Error} =
         dir := Pathname.Prefix(dir);
       END;
     END;
-    FOR i := 0 TO dirs.size() - 1 DO FS.CreateDirectory(dirs.get(i)); END;
+    TRY
+      FOR i := 0 TO dirs.size() - 1 DO FS.CreateDirectory(dirs.get(i)); END;
+    EXCEPT OSError.E =>
+        FErr("unable to create directory \"" & dir & "\"");
+    END;
   END MakeDir;
 
 PROCEDURE CopyIfNew (<* UNUSED *> t: T; src, dest: TEXT) RAISES {Error} =
