@@ -149,12 +149,11 @@ ArrDim<VAR dim:TEXT>           (. VAR id : TEXT; .)
 Type<VAR type : TEXT;> = BuiltinType<type> .
 
 BuiltinType<VAR type : TEXT;>
-   = "LOGICAL"      (. type := "BOOLEAN" .)
-   | "CHARACTER"    (. type := "CHAR" .)
-   | "INTEGER"      (. type := "INTEGER" .)
-   | ("DOUBLE"      (. type := "LONGREAL" .)
-     |"SINGLE"      (. type := "REAL" .)
-     ) "PRECISION"
+   = "LOGICAL"                 (. type := "BOOLEAN" .)
+   | "CHARACTER"               (. type := "CHAR" .)
+   | "INTEGER"                 (. type := "INTEGER" .)
+   | "REAL"                    (. type := "REAL" .)
+   | "DOUBLE" "PRECISION"      (. type := "LONGREAL" .)
    .
 
 TypeComments<paramInfo:ParamTbl.T>        (. VAR name:TEXT; pi :Parameter.T; known:BOOLEAN; .)
