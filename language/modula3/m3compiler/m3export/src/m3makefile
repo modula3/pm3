@@ -147,11 +147,6 @@ readonly proc MoveBootstraps() is
           "/pm3-" & platform,
           EXPORT_TMP_BOOTSTRAP & "/" & platform & "/" & versionName],
           [], "", "moving the bootstraps failed")
-      if not(NOEXEC)
-        > EXPORT_TMP_BOOTSTRAP & "/" & platform & "/" & "TODO" in
-          write(versionName,CR)
-        end
-      end
     end
   end
 end
@@ -198,6 +193,11 @@ readonly proc InstallNextVersion() is
       CheckExec(["mv", 
           EXPORT_TMP_BOOTSTRAP & "/" & platform & "/" & versionName,
           EXPORT_BOOTSTRAP & "/" & platform],[],"","export bootstrap failed")
+      if not(NOEXEC)
+        > EXPORT_TMP_BOOTSTRAP & "/" & platform & "/" & "TODO" in
+          write(versionName,CR)
+        end
+      end
     end
   end
 

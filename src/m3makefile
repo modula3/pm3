@@ -7,9 +7,18 @@
 %
 
 %
-% Please comment out the sections below that you don't want built.
-% Note that some of the earlier sections are required when building
-% later sections.
+% This m3makefile is in two parts. The first part builds recursively
+% all the other packages, when RECURSIVE is defined.
+%
+% The second part just builds the documentation associated with this level.
+%
+
+if defined("RECURSIVE")
+
+%
+% When BOOTSTRAP is true, m3build and m3ship are taken from the "boot"
+% directory. If EXPORTPATH or EXPORTRPATH are set, the binaries are
+% shipped in the absolute or relative path specified.
 %
 
 > "config.tmpl" in
@@ -53,21 +62,14 @@ if EXPORTPATH
     write("TARGET_LIB_USE = LIB_USE", CR)
     write("TARGET_PKG_USE = PKG_USE", CR)
 
-    write("BIN_INSTALL = \"" & EXPORTPATH & "\" & BIN_INSTALL", CR)
-    write("LIB_INSTALL = \"" & EXPORTPATH & "\" & LIB_INSTALL", CR)
-    write("DOC_INSTALL = \"" & EXPORTPATH & "\" & DOC_INSTALL", CR)
-    write("PKG_INSTALL = \"" & EXPORTPATH & "\" & PKG_INSTALL", CR)
-    write("EMACS_INSTALL = \"" & EXPORTPATH & "\" & EMACS_INSTALL", CR)
-    write("MAN_INSTALL = \"" & EXPORTPATH & "\" & MAN_INSTALL", CR)
-    write("HTML_INSTALL = \"" & EXPORTPATH & "\" & HTML_INSTALL", CR)
-    write("BIN_USE = \"" & EXPORTPATH & "\" & BIN_USE", CR)
-    write("LIB_USE = \"" & EXPORTPATH & "\" & LIB_USE", CR)
-    write("PKG_USE = \"" & EXPORTPATH & "\" & PKG_USE", CR)
+    write("INSTALL_ROOT = \"" & EXPORTPATH & "\" & INSTALL_ROOT",CR)
+    write("setInstallRoot(\"\",\"\")",CR)
   end
 end
 
 readonly proc BuildChunk (dir,pkg) is
   local ret = 0
+  local cmd = m3build
 
   if equal(OS_TYPE,"WIN32") dir = p2w(dir) end
 
@@ -83,23 +85,40 @@ readonly proc BuildChunk (dir,pkg) is
   % let'm know what we're doing
   write (CR, "---------- building ", pkg," in ",dir," ----------", CR,CR)
 
+  %
+  % In the first phase, the documentation processing tools are not built
+  % yet. Thus their use is skipped but the compiled files are kept for
+  % the second pass shortly thereafter.
+  %
+
+  if firstPhase cmd += "-DUSE_M3DOC=" end
+
   % build and ship the chunk
-  write(m3build, CR)
-  ret = exec (m3build, [], wd)
+  write(cmd, CR)
+  ret = exec (cmd, [], wd)
   if not equal(ret, 0) error ("m3build failed with error code: ", ret) end
   write(m3ship, CR)
   ret = exec (m3ship, [], wd)
   if not equal(ret, 0) error ("m3ship failed with error code: ", ret) end
 
-  % If you don't want to delete derived objects as soon as they are
-  % installed, comment out the following line.
-  ret = exec ([ "rm", "-rf", BUILD_DIR] , [], wd)
+  if not firstPhase
+    % If you don't want to delete derived objects as soon as they are
+    % installed, comment out the following line.
+    ret = exec ([ "rm", "-rf", BUILD_DIR] , [], wd)
 
-  % remember that we've built this chunk
-  ret = exec (["touch", pkg])
-  if not equal(ret, 0) error ("touch failed with error code: ", ret) end
+    % remember that we've built this chunk
+    ret = exec (["touch", pkg])
+    if not equal(ret, 0) error ("touch failed with error code: ", ret) end
+  end
 end
 
+firstPhase = ""
+
+%
+% Please comment out the sections below that you don't want built.
+% Note that some of the earlier sections are required when building
+% later sections.
+%
 
 %--- m3cc --- utility -------------------------------------------------
 % m3cc is a code generation backend based on gcc, called by the compiler
@@ -112,6 +131,14 @@ BuildChunk("language/modula3/m3compiler","m3cc")
 % requires:
 BuildChunk("text","mtex")
 
+firstPhase = "T"
+
+%--- m3doc --- utility -------------------------------------------------
+% m3doc is a quake function that is used to produce
+% both html and latex/postscript from the same source
+% requires:
+BuildChunk("text/sgmltools","m3doc")
+
 %--- m3core --- library -------------------------------------------------
 % m3core is the minimal base library.  It must be built before any others.
 % requires:
@@ -121,6 +148,68 @@ BuildChunk("libs","m3core")
 % libm3 is the library that most others need.
 % requires: m3core
 BuildChunk("libs","libm3")
+
+%--- m3coco --- utility -------------------------------------------------
+% a parser generator
+% requires: libm3
+BuildChunk("language/parsing","m3coco")
+
+%--- sgml --- library -------------------------------------------------
+% SGML/XML parsing library
+% requires: libm3, m3coco
+BuildChunk("text/sgmltools","sgml")
+
+%--- m3tosgml --- utility -------------------------------------------------
+% translate commented Modula-3 units into html files
+% requires: libm3
+BuildChunk("text/sgmltools","m3tosgml")
+
+%--- sgmlconv --- utility -------------------------------------------------
+% filter HTML files and convert HTML files to LaTeX
+% requires: libm3, sgml
+BuildChunk("text/sgmltools","sgmlconv")
+
+%--- sgmllinear --- utility -------------------------------------------------
+% Group several HTML files into a linear document
+% requires: libm3, sgml
+BuildChunk("text/sgmltools","sgmllinear")
+
+%
+% The following packages were only partially built (without SGML documentation)
+% as part of the "first phase". Now that the documentation tools are built,
+% their construction gets completed.
+%
+
+firstPhase = ""
+
+BuildChunk("text/sgmltools","m3doc")
+BuildChunk("libs","m3core")
+BuildChunk("libs","libm3")
+BuildChunk("language/parsing","m3coco")
+BuildChunk("text/sgmltools","sgml")
+BuildChunk("text/sgmltools","m3tosgml")
+BuildChunk("text/sgmltools","sgmlconv")
+BuildChunk("text/sgmltools","sgmllinear")
+
+%--- m3textohtml --- utility -------------------------------------------------
+% Convert Modula-3 units from LaTeX markup to HTML markup
+% requires: libm3
+%BuildChunk("text/sgmltools","m3textohtml")
+
+%--- sgmlnormalize --- demo -------------------------------------------------
+% Convert a SGML file to its canonical form
+% requires: libm3, sgml
+%BuildChunk("text/sgmltools","sgmlnormalize")
+
+%--- sgmlstructure --- demo -------------------------------------------------
+% Show the tree structure of a SGML file
+% requires: libm3, sgml
+%BuildChunk("text/sgmltools","sgmlstructure")
+
+%--- sgmltom3 --- utility -------------------------------------------------
+% Convert back a Modula-3 unit from HTML to M3
+% requires: libm3, sgml
+BuildChunk("text/sgmltools","sgmltom3")
 
 %--- sil --- demo -------------------------------------------------
 % Sil is a simple drawing program that runs on Windows/NT.  It's included
@@ -655,6 +744,11 @@ BuildChunk("language/m3obliq","obliqsrvstd")
 % requires: obliq, obliqlibm3, obliqlibui
 BuildChunk("language/m3obliq","obliqsrvui")
 
+%--- sgmlobliq --- demo -------------------------------------------------
+% Integrate the sgml library to Obliq
+% requires: libm3, sgml, obliq
+%BuildChunk("text/sgmltools","sgmlobliq")
+
 %--- m3zume --- utility -------------------------------------------
 % the "interesting event" preprocessor needed by zeus
 % requires: formsvbt, stubgen
@@ -841,3 +935,5 @@ BuildChunk("network/www","http")
 % program that takes a URL and prints out the web document
 % requires: http
 BuildChunk("network/www","webcat")
+
+end

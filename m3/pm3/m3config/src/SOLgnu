@@ -13,50 +13,16 @@ X11ROOT = "/usr/openwin/lib"
 PLATFORM_SUPPORTS_MOTIF  = "TRUE"
 PLATFORM_SUPPORTS_SHARED_LIB = "TRUE"
 
-CC = [ "gcc", "-compat-bsd", "-c" ]
-LINK = [ "gcc", "-compat-bsd" ]
+CC = [ "gcc", "-Wa,P", "-c" ]
+LINK = [ "gcc" ]
 MAKELIB = [ "/usr/ccs/bin/ar", "cru" ]
 MAKESHLIB = [ "/usr/ccs/bin/ld", "-dy", "-G", "-z", "text" ]
 ASM = [ "/usr/ccs/bin/as", "-s", "-o" ]
 
 STATIC_FLAG = [ "-Xlinker", "-dy", "-Xlinker", "-Bstatic" ]
-LINK_suffix = ["-lDYNAMIC_LINKING_AFTER_THIS", "-lsocket", "-lnsl", "-lm" ]
+LINK_suffix = [ "-lsocket", "-lnsl", "-lm" ]
 
 setDefault("","")
-
-proc m3_make_lib (lib, objects, imported_libs) is
-  local ret = 0
-
-  if Options{"static_lib"}[0]
-    local lib_a    = format ("lib%s.a", lib)
-    local cmd = [ MAKELIB_CMD, lib_a, objects, imported_libs ]
-    if VERBOSE write(cmd, CR) end
-    ret = exec (cmd)
-    if not equal(ret, 0) return ret end
-    cmd = [ RANLIB_CMD, lib_a ]
-    if VERBOSE write(cmd, CR) end
-    ret = exec (cmd)
-  end
-
-  if Options{"shared_lib"}[0] and PLATFORM_SUPPORTS_SHARED_LIB
-    local lib_so   = format ("lib%s.so", lib)
-    local cmd = [MAKESHLIB_CMD, "-o", lib_so, objects]
-
-    if VERBOSE write(cmd, CR) end
-    ret = exec (cmd)
-    if not equal(ret, 0) return ret end
-  end
-  return ret
-end
-
-proc m3_note_shlib(lib) is
-  local lib_so   = format ("lib%s.so", lib)
-  if defined ("_all")
-    install_derived (lib_so)
-    install_link_to_derived (lib_so, LIB_INSTALL)
-  end
-  deriveds (lib_so, [""])
-end
 
 proc m3_assemble (source, object) is
   local cmd = [ ASM_CMD, object, source ]
@@ -65,3 +31,4 @@ proc m3_assemble (source, object) is
   if VERBOSE write(cmd, CR) end
   return exec (cmd)
 end
+

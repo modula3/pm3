@@ -12,78 +12,36 @@ readonly PLATFORM_SUPPORTS_MOTIF  = "TRUE"
 
 %PLATFORM_SUPPORTS_SHARED_LIB = "TRUE"  % does not seem to work with many libs
 
-LINK = [ "/bin/cc", "-ieee_with_no_inexact")
-MAKELIB = [ "/bin/ar", "crusl" ])
+setDefault("","")
+
+CC = [ "/bin/cc", "-ieee_with_no_inexact", "-c" ]
+LINK = [ "/bin/cc", "-ieee_with_no_inexact" ]
+MAKELIB = [ "/bin/ar", "crusl" ]
 MAKESHLIB = ["/usr/bin/ld", "-shared", "-expect_unresolved", "end" ,"-o"]
 ASM = ["/bin/as","-o"]         % Assembler
 FIXOBJ = [ LIB_USE & "/mips-tfile" ]
 
 OPT_FLAG = "-O"
+DEBUG_FLAG = "-g3"
 STATIC_FLAG = "-non_shared"
 LINK_suffix = ["-ldnet_stub", "-lm"]     % Tail of the link command
 % Do we need "-call_shared" or is it the default
 
-setDefault("","")
-
-proc m3_compile_c (source, object, includes) is
-  local cmd = [ "/bin/cc", "-ieee_with_no_inexact", "-c", source]
-  foreach i in includes
-    cmd += "-I" & i
-  end
-
-  if object  cmd += [ "-o", object ] end
-  if Options{"optimization"}[0] cmd += "-O" end
-  if Options{"debuginfo"}[0] cmd += "-g3"  end
-  if Options{"coverage"}[0] cmd += "-pg"
-
-  if PLATFORM_SUPPORTS_SHARED_LIB and Options{"shared_lib"}[0] 
-    cmd += "-fPIC" 
-  end
+proc m3_make_shared_lib (lib, objects, imported_libs) is
+  local lib_a    = format ("lib%s.a", lib)
+  local lib_so   = format ("lib%s.so", lib)
+  local cmd = [MAKESHLIB_CMD, lib_so, "-all", lib_a, "-none", objects,
+      "-ldnet_stub", "-lm", "-lc"]
 
   if VERBOSE write(cmd, CR) end
-  return exec(cmd)
-end
-
-proc m3_make_lib (lib, objects, imported_libs) is
-  local ret = 0
-
-  if Options{"static_lib"}[0]
-    local lib_a    = format ("lib%s.a", lib)
-    local cmd = [ MAKELIB_CMD, lib_a, objects, imported_libs ]
-    if VERBOSE write(cmd, CR) end
-    ret = exec (cmd)
-    if not equal(ret, 0) return ret end
-    cmd = [ RANLIB_CMD, lib_a ]
-    if VERBOSE write(cmd, CR) end
-    ret = exec (cmd)
-  end
-
-  if Options{"shared_lib"}[0] and PLATFORM_SUPPORTS_SHARED_LIB
-    local lib_so   = format ("lib%s.so", lib)
-    local cmd = [MAKESHLIB_CMD, lib_so, "-all", lib_a, "-none", objects,
-        "-ldnet_stub", "-lm", "-lc"]
-
-    if VERBOSE write(cmd, CR) end
-    ret = exec (cmd)
-    if not equal(ret, 0) return ret end
-  end
-  return ret
-end
-
-proc m3_note_shlib(lib) is
-  local lib_so   = format ("lib%s.so", lib)
-  if defined ("_all")
-    install_derived (lib_so)
-    install_link_to_derived (lib_so, LIB_INSTALL)
-  end
-  deriveds (lib_so, [""])
+  return exec (cmd)
 end
 
 proc m3_assemble (source, object, optimize, debug, shared) is
   local cmd = [ ASM_CMD, object, source ]
   local ret = 0
 
-  if Options{"optimization}[0] cmd += [ "-O" ] end
+  if Options{"optimization"}[0] cmd += [ "-O" ] end
   if Options{"debuginfo"}[0] cmd += [ "-g3" ] end
 
   if VERBOSE write(cmd, CR) end

@@ -13,6 +13,8 @@ DEBUG_FLAG = "-g2"
 
 readonly PLATFORM_SUPPORTS_MOTIF  = "TRUE"
 
+setDefault("","")
+
 CC = [ "/bin/cc", "-c" ]
 LINK = [ "/bin/cc" ]
 MAKELIB = [ "/bin/ar", "cru" ]
@@ -20,8 +22,6 @@ MAKESHLIB = [ "ld" ]
 RANLIB = [ "/usr/bin/ranlib" ]
 ASM = [ "/bin/as" ]
 FIXOBJ = [ LIB_USE & "/mips-tfile" ]
-
-setDefault("","")
 
 proc m3_assemble (source, object) is
   local cmd = [ ASM_CMD, object, source ]

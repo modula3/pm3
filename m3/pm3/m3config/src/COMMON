@@ -32,14 +32,14 @@ INSTALL_ROOT = "/usr/local/pm3-1.1"
 CC = ["gcc","-c"]         % C compiler
 LINK = ["gcc"]            % Linker
 LINK_suffix = ["-lm"]     % Tail of the link command
-LINK_path_prefix = "-Wl," % Prefix for each library path argument
 MAKELIB = ["ar","crus"]   % Library archiver
-MAKESHLIB = ["gcc","-shared","-Wl,-soname"]  % Shared library builder
+MAKESHLIB = ["gcc","-shared"]  % Shared library builder
 RANLIB = ["touch"]        % Library index creator
 ASM = ["as","-o"]         % Assembler
 
 OPT_FLAG = "-O2"          % optimisation
 DEBUG_FLAG = "-g"         % debugging info
+BDEBUG_FLAG = "-g"         % debugging info
 LDEBUG_FLAG = "-g"
 PROF_FLAG = "-pg"         % profiling for gcc
 BPROF_FLAG = "-p"         % profiling for m3cgc1
@@ -48,6 +48,7 @@ BPIC_FLAG = "-fPIC"       % position independent code for m3cgc1
 STATIC_FLAG = "-static"   % standalone executable
 DYNAMIC_FLAG = ""         % executable with shared libs
 RPATH_FLAG = "-Wl,-rpath" % run time path for shared library
+RPATH_prefix = "-Wl," % Prefix for each library path argument
 
 GNU_CC     = "gcc"        % C compiler for m3cc and m3gdb
 GNU_CFLAGS = "-O2"        % options for GNU_CC
@@ -62,11 +63,11 @@ GNU_MAKE   = "make"       % make program for m3cc and m3gdb
 
 POSIX_CONVENTIONS = [".i3", ".ic", ".is", ".io", ".m3", ".mc", ".ms", 
     ".mo",".ig", ".mg", ".c", ".h", ".s", ".o", ".a", ".m3x", ".m3x", "",
-    ".ix", ".mx", "", "a.out","lib","/","\n",":","\000","",""]
+    ".ix", ".mx", "", "a.out","lib","/","\n",":","\n","",""]
 
 GRUMPY_POSIX_CONVENTIONS = [".i3", ".ic", ".is", "_i.o", ".m3", ".mc", ".ms", 
     "_m.o",".ig", ".mg", ".c", ".h", ".s", ".o", ".a", ".m3x", ".m3x", "",
-    ".ix", ".mx", "", "a.out","lib","/","\n",":","\000","",""]
+    ".ix", ".mx", "", "a.out","lib","/","\n",":","\n","",""]
 
 WIN32_CONVENTIONS = [".i3", ".ic", ".is", ".io", ".m3", ".mc", ".ms", 
     ".mo",".ig", ".mg", ".c", ".h", ".s", ".obj", ".lib", ".m3x", ".m3x", "",
@@ -197,7 +198,7 @@ proc setCommands (opt,val) is
   if Options{"debuginfo"}[0]
     CC_CMD += DEBUG_FLAG
     LINK_CMD += LDEBUG_FLAG
-    BACKEND_CMD += DEBUG_FLAG
+    BACKEND_CMD += BDEBUG_FLAG
   end
 
   if Options{"coverage"}[0]
@@ -217,7 +218,7 @@ proc setCommands (opt,val) is
   if PLATFORM_SUPPORTS_SHARED_LIB
     if Options{"shared_lib"}[0]
       CC_CMD += PIC_FLAG
-      BACKEND_CMD += PIC_FLAG
+      BACKEND_CMD += BPIC_FLAG
     end
 
     if Options{"standalone"}[0]
@@ -225,8 +226,8 @@ proc setCommands (opt,val) is
       LINK_libpath = ""
     else
       if DYNAMIC_FLAG LINK_CMD += DYNAMIC_FLAG end
-      if defined("TARGET_LIB_USE") 
-        LINK_CMD += [RPATH_FLAG, LINK_path_prefix & TARGET_LIB_USE]
+      if defined("TARGET_LIB_USE") and RPATH_FLAG
+        LINK_CMD += [RPATH_FLAG, RPATH_prefix & TARGET_LIB_USE]
       end
       LINK_libpath = RPATH_FLAG
     end
@@ -299,7 +300,9 @@ end
 
 readonly proc emacs_compile (el) is
   local ret = 0
-  ret = exec (["emacs", "-batch", "-f", "batch-byte-compile", el])
+  local cmd = ["emacs", "-batch", "-f", "batch-byte-compile", el]
+  if VERBOSE write(cmd, CR) end
+  ret = exec (cmd)
   if not equal(ret, 0) error("emacs failed with error code: ", ret) end
 end
 
@@ -329,7 +332,7 @@ proc m3_link (prog, objects, imported_libs) is
     if not empty(i[0])
       cmd += "-L" & i[0]
       if LINK_libpath
-        cmd += [LINK_libpath, LINK_path_prefix & i[0]]
+        cmd += [RPATH_FLAG, RPATH_prefix & i[0]]
       end
     end
     cmd += "-l" & i[1]
@@ -343,51 +346,54 @@ end
 
 %
 % Build library "lib" from "objects and "imported_libs".
+% A separate procedure is defined for static and dynamic libraries
+% and may be overriden independently.
 %
 
 proc m3_make_lib (lib, objects, imported_libs) is
   local ret = 0
 
   if Options{"static_lib"}[0]
-    local lib_a    = format ("lib%s.a", lib)
-    local cmd = [ MAKELIB_CMD, lib_a, objects, imported_libs ]
-    if VERBOSE write(cmd, CR) end
-    ret = exec (cmd)
-    if not equal(ret, 0) return ret end
-    cmd = [ RANLIB_CMD, lib_a ]
-    if VERBOSE write(cmd, CR) end
-    ret = exec (cmd)
+    ret = m3_make_static_lib(lib, objects, imported_libs)
   end
 
-  if Options{"shared_lib"}[0] and PLATFORM_SUPPORTS_SHARED_LIB
-    local lib_so   = format ("lib%s.so", lib)
-    local lib_sox  = format ("lib%s.so.3", lib)
-    local lib_soxx = format ("lib%s.so.3.6", lib)
-    local cmd = [MAKESHLIB_CMD, LINK_path_prefix & lib_so, "-o",
-        lib_soxx, objects]
+  if not equal(ret,0) return ret end
 
-    if VERBOSE write(cmd, CR) end
-    ret = exec (cmd)
-    if not equal(ret, 0) return ret end
-    link_file(lib_soxx, lib_sox)
-    link_file(lib_soxx, lib_so)
+  if Options{"shared_lib"}[0] and PLATFORM_SUPPORTS_SHARED_LIB
+    ret = m3_make_shared_lib(lib, objects, imported_libs)
   end
   return ret
 end
 
+proc m3_make_static_lib (lib, objects, imported_libs) is
+  local lib_a    = format ("lib%s.a", lib)
+  local cmd = [ MAKELIB_CMD, lib_a, objects, imported_libs ]
+  if VERBOSE write(cmd, CR) end
+  local ret = exec (cmd)
+  if not equal(ret, 0) return ret end
+  cmd = [ RANLIB_CMD, lib_a ]
+  if VERBOSE write(cmd, CR) end
+  return exec(cmd)
+end
+
+proc m3_make_shared_lib (lib, objects, imported_libs) is
+  local lib_so   = format ("lib%s.so", lib)
+  local cmd = [MAKESHLIB_CMD, "-o", lib_so, objects]
+
+  if VERBOSE write(cmd, CR) end
+  return exec(cmd)
+end
+
+%
+% Register the shared libraries to install. Their name is system dependent.
+%
+
 proc m3_note_shlib(lib) is
   local lib_so   = format ("lib%s.so", lib)
-  local lib_sox  = format ("lib%s.so.3", lib)
-  local lib_soxx = format ("lib%s.so.3.6", lib)
   if defined ("_all")
-    install_derived (lib_soxx)
-    install_derived (lib_sox)
     install_derived (lib_so)
-    install_link_to_derived (lib_sox, LIB_INSTALL)
     install_link_to_derived (lib_so, LIB_INSTALL)
   end
-  deriveds (lib_soxx, [""])
-  deriveds (lib_sox, [""])
   deriveds (lib_so, [""])
 end
 
@@ -410,7 +416,11 @@ proc m3_backend (source, object) is
   local cmd = [ BACKEND_CMD, "-o", object, source ]
   
   if VERBOSE write(cmd, CR) end
-  return exec(cmd)
+  local ret = exec(cmd)
+  if not equal(ret,0) 
+    write("Compiler error, code generation failed: " & cmd,CR) 
+  end
+  return ret
 end
 
 %
@@ -419,8 +429,8 @@ end
 
 proc install_file (src, dest, mode) is
   Note_install (src, dest)
-  local ret = exec ([ "cp", "-a", src, dest ])
-  % exec (["install", "-c", "-m", mode, src, dest])
+  local ret = exec (["install", "-c", "-m", mode, src, dest])
+  if not equal(ret, 0) error("install failed with error code: ", ret) end
 end
 
 %
@@ -485,6 +495,16 @@ readonly proc OtherPackage(name) is
 end
 
 %
+% Exec a command, provide "echo", check the result
+%
+
+readonly proc checkExec (cmd,io,wd) is
+  if VERBOSE write(cmd,CR) end
+  local ret = exec(cmd,io,wd)
+  if not equal(ret,0) error("command failed: ",cmd) end
+end
+
+%
 % Basic properties of the supported platforms. It is useful to define these
 % in COMMON for cross-compiling purposes. Each entry contains the OS_TYPE,
 % WORD_SIZE, GNU_PLATFORM, and whether it is an active platform for which
@@ -493,7 +513,7 @@ end
 
 readonly Platforms = {
   "AIX386"    : [ "POSIX", "32BITS", "i486-ibm-aix", ""       ],
-  "ALPHA_OSF" : [ "POSIX", "64BITS", "alpha-dec-osf1", "T"    ],
+  "ALPHA_OSF" : [ "POSIX", "64BITS", "alpha-dec-osf1", ""    ],
   "AP3000"    : [ "POSIX", "32BITS", "apollo68-bsd", ""       ],
   "ARM"       : [ "POSIX", "32BITS", "arm--riscos", ""        ],
   "DS3100"    : [ "POSIX", "32BITS", "decstation", "T"        ],
@@ -501,12 +521,12 @@ readonly Platforms = {
   "FreeBSD2"  : [ "POSIX", "32BITS", "i486-unknown-bsd", "T"  ],
   "HP300"     : [ "POSIX", "32BITS", "m68k-hp-hpux", ""       ],
   "HPPA"      : [ "POSIX", "32BITS", "hppa1.1-hp-hpux", "T"   ],
-  "IBMR2"     : [ "POSIX", "32BITS", "rs6000-ibm-aix3.2", "T" ],
+  "IBMR2"     : [ "POSIX", "32BITS", "rs6000-ibm-aix3.2", "" ],
   "IBMRT"     : [ "POSIX", "32BITS", "romp-ibm-aos", ""       ],
   "IRIX5"     : [ "POSIX", "32BITS", "mips-sgi-irix5", "T"    ],
   "LINUX"     : [ "POSIX", "32BITS", "i486--linux", ""        ],
   "LINUXELF"  : [ "POSIX", "32BITS", "i486--linuxelf", "T"    ],
-  "NEXT"      : [ "POSIX", "32BITS", "next-bsd", ""           ],
+  "NEXT"      : [ "POSIX", "32BITS", "next-bsd", ""          ],
   "NT386"     : [ "WIN32", "32BITS", "i486--nt", ""           ],
   "NT386GNU"  : [ "WIN32", "32BITS", "i486--cygwin32", "T"    ],
   "OKI"       : [ "POSIX", "32BITS", "i860--sysv4.0", ""      ],

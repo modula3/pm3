@@ -54,8 +54,10 @@ end
 %
 % Write the global bootstrap makefile
 
-readonly proc CreateMakefile(file,target,options) is
+readonly proc CreateMakefile(file,target,header,options) is
   > file in
+    write(header,CR,CR)
+
     write("all: boot packages", CR, CR)
 
     write("exportall: boot exportpackages", CR, CR)
@@ -216,7 +218,12 @@ readonly proc BootstrapTarget(target) is
 
   > "pm3-" & target & SL & "config.tmpl" in
     write("option(\"bootstrap\",\"T\")",CR)
-    write("option(\"optimization\",\"T\")",CR)
+    write("option(\"shared_lib\",\"\")",CR)
+    if equal(target,"HPPA") or equal(target,"DS3100") or equal(target,"IRIX5")
+      write("option(\"optimization\",\"\")",CR)
+    else 
+      write("option(\"optimization\",\"T\")",CR)
+    end
     write("option(\"debuginfo\",\"\")",CR)
     write("HOST=\"" & host & "\"",CR)
     write("setDefault(\"\",\"\")",CR)
@@ -256,10 +263,30 @@ readonly proc BootstrapTarget(target) is
   CleanPkg("m3build",target)
   CleanPkg("m3ship",target)
 
+  local header = ""
+  local options = "\"CC=${CC}\" \"CCFLAGS=${CCFLAGS}\"" &
+      " \"AS=${AS}\" \"ASFLAGS=${ASFLAGS}\"" &
+      " \"AR=${AR}\" \"ARFLAGS=${ARFLAGS}\"" &
+      " \"RANLIB=${RANLIB}\" \"EXTRALIBS=${EXTRALIBS}\"" & 
+      " \"LDFLAGS=${LDFLAGS}\""
+
+  if equal(target,"NT386GNU")
+    header = header & 
+        "EXTRALIBS=-lkernel32 -luser32 -lgdi32 -ladvapi32 -lnetapi32 -lm" & CR
+  else
+    header = header & "EXTRALIBS=-lm" & CR
+  end
+
+  if equal(target,"SOLgnu")
+    header = header & "ASFLAGS=-s -P" & CR
+  end
+
+  header = header & "RANLIB=touch" & CR
+
   CreateMakefile("pm3-" & target & SL & "Makefile." & target,target,
-      "RANLIB=touch EXTRALIBS=-lm")
+      header, options)
   CreateMakefile("pm3-" & target & SL & "Makefile",target,
-      "RANLIB=touch EXTRALIBS=-lm")
+      header, options)
   CreateReadme("pm3-" & target & SL & "README." & target,target)
   CreateReadme("pm3-" & target & SL & "README",target)
 
@@ -273,22 +300,12 @@ end
 
 CACHE_CROSS_COMPILERS = lookup("CACHE_CROSS_COMPILERS","")
 
-foreach platform in Platforms
-  if Platforms{platform}[3] BootstrapTarget(platform) end
+if defined("BOOTTARGET")
+  BootstrapTarget(BOOTTARGET)
+else
+  foreach platform in Platforms
+    if Platforms{platform}[3] BootstrapTarget(platform) end
+  end
 end
-
-%BootstrapTarget("ALPHA_OSF")
-%BootstrapTarget("DS3100")
-%BootstrapTarget("FreeBSD2")
-%BootstrapTarget("HPPA")
-%BootstrapTarget("IBMR2")
-%BootstrapTarget("IRIX5")
-%BootstrapTarget("LINUXELF")
-%BootstrapTarget("NEXT")
-%BootstrapTarget("NT386")
-%BootstrapTarget("NT386GNU")
-%BootstrapTarget("SOLgnu")
-%BootstrapTarget("SPARC")
-
 
 

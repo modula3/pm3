@@ -1550,7 +1550,7 @@ PROCEDURE InstallLinkToDerived(t: T; src, dest: TEXT) RAISES {Error}=
     IF t.get(M3ID.Add("HAVE_PKGTOOLS"), val) AND QVal.ToBool(t, val) THEN
       InstallFile(t, src, dest, "0755", TRUE);
     ELSE
-      target := t.PKG_INSTALL & t.SL & t.build_package & t.SL & t.build_dir & t.SL & src;
+      target := t.PKG_USE & t.SL & t.build_package & t.SL & t.build_dir & t.SL & src;
       link := dest & t.SL & src;
 
       TRY

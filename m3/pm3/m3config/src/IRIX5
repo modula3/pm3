@@ -10,7 +10,7 @@ include("COMMON")
 %INSTALL_ROOT = "/usr/local"
 
 PLATFORM_SUPPORTS_MOTIF  = "TRUE"
-PLATFORM_SUPPORTS_SHARED_LIB
+PLATFORM_SUPPORTS_SHARED_LIB = "TRUE"
 
 CC = [ "/bin/cc", "-Dvfork=fork", "-cckr" ]
 LINK = [ "/bin/cc" ]
@@ -23,39 +23,13 @@ STATIC_FLAG = "-Wl,-B,static"
 
 setDefault("","")
 
-proc m3_make_lib (lib, objects, imported_libs) is
-  local ret = 0
-
-  if Options{"static_lib"}[0]
-    local lib_a    = format ("lib%s.a", lib)
-    local cmd = [ MAKELIB_CMD, lib_a, objects, imported_libs ]
-    if VERBOSE write(cmd, CR) end
-    ret = exec (cmd)
-    if not equal(ret, 0) return ret end
-    cmd = [ RANLIB_CMD, lib_a ]
-    if VERBOSE write(cmd, CR) end
-    ret = exec (cmd)
-  end
-
-  if Options{"shared_lib"}[0] and PLATFORM_SUPPORTS_SHARED_LIB
-    local lib_so   = format ("lib%s.so", lib)
-    local cmd = [MAKESHLIB_CMD, "-o", lib_so, "-all", lib_a, "-none", 
-        imported_libs, "-lm -lc")
-
-    if VERBOSE write(cmd, CR) end
-    ret = exec (cmd)
-    if not equal(ret, 0) return ret end
-  end
-  return ret
-end
-
-proc m3_note_shlib(lib) is
+proc m3_make_shared_lib (lib, objects, imported_libs) is
+  local lib_a    = format ("lib%s.a", lib)
   local lib_so   = format ("lib%s.so", lib)
-  if defined ("_all")
-    install_derived (lib_so)
-    install_link_to_derived (lib_so, LIB_INSTALL)
-  end
-  deriveds (lib_so, [""])
+  local cmd = [MAKESHLIB_CMD, "-o", lib_so, "-all", lib_a, "-none", 
+      imported_libs, "-lm -lc"]
+  if VERBOSE write(cmd, CR) end
+  return exec (cmd)
 end
 
 proc m3_assemble (source, object) is
