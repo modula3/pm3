@@ -27,14 +27,14 @@ source, the following steps are required.
   determines where the Modula-3 programs, libraries and documentation will be
   installed and used, as well as default options for various needed tools.
   Typically you only need to change the INSTALL_ROOT variable if the default
-  does not suit you.  The configuration file is located in cm3-PLATFORM.cfg
-  (e.g., cm3-LINUXLIBC5.cfg).
+  does not suit you.  The configuration file is located in pm3-PLATFORM.cfg
+  (e.g., pm3-LINUXLIBC5.cfg).
 
-- Copy the file cm3-PLATFORM.cfg to the file cm3.cfg in the directory that was
+- Copy the file pm3-PLATFORM.cfg to the file pm3.cfg in the directory that was
   defined as the location of the installed executables (i.e., the value of the
   variable BIN_INSTALL, usually INSTALL_ROOT/bin).  Set the environment
   variable M3CONFIG to refer to this installed configuration file:
-  BIN_INSTALL/cm3.cfg.
+  BIN_INSTALL/pm3.cfg.
 
 - The file src/m3makefile is used in the following steps to build all the
   packages. By default, almost all the available packages are built.
@@ -42,7 +42,7 @@ source, the following steps are required.
   and disk space.
 
 - Run "make", which will execute the commands in Makefile. It will build
-  bootstrap versions of "cm3", the Modula-3 compiler, and then use it to
+  bootstrap versions of "pm3", the Modula-3 compiler, and then use it to
   rebuild and install all the libraries and programs in the distribution.
 
   NOTE: If you downloaded bootstraps for several platforms, the Makefile is
