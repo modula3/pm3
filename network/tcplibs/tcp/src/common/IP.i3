@@ -107,7 +107,10 @@ PROCEDURE GetCanonicalByAddr(addr: Address): TEXT RAISES {Error};
 (* "GetCanonicalByAddr" is has the same semantics as "GetCanonicalByName"
    except that it takes an address rather than a name. *)
 
-PROCEDURE GetHostAddr(): Address;
-(* Return an address of the machine executing the call to "GetHostAddr". *)
+PROCEDURE GetHostAddr(): Address RAISES {Error};
+(* Return an address of the machine executing the call to "GetHostAddr".
+   If the lookup cannot complete, typically because no address was assigned
+   to the host, then "Error" is raised with "LookupFailure" in the error 
+   list. *)
 
 END IP.

@@ -65,7 +65,7 @@ PROCEDURE GetAddress (ent: Unetdb.struct_hostent_star): Address =
     RETURN LOOPHOLE(ua.s_addr, Address);
   END GetAddress;
 
-PROCEDURE GetHostAddr(): Address =
+PROCEDURE GetHostAddr(): Address RAISES {Error} =
   VAR hname: ARRAY [0..255] OF CHAR;
   BEGIN
     LOCK mu DO
@@ -73,7 +73,7 @@ PROCEDURE GetHostAddr(): Address =
         RAISE FatalError;
       END;
       VAR h := Unetdb.gethostbyname(ADR(hname[0])); BEGIN
-        IF h = NIL THEN RAISE FatalError; END;
+        IF h = NIL THEN InterpretError(); END;
         RETURN GetAddress(h);
       END;
     END;

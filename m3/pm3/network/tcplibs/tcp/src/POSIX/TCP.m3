@@ -81,6 +81,7 @@ PROCEDURE GetEndPoint(c: Connector): IP.Endpoint =
   VAR
     namelen  : INTEGER;
     name  : SockAddrIn;
+  <*FATAL IP.Error*>
   BEGIN
     IF c.ep.addr = IP.NullAddress THEN
       c.ep.addr := IP.GetHostAddr();
