@@ -32,4 +32,4 @@ m3ship2		m3/pkg/SRC-m3/m3ship2
 m3templates	m3/pkg/SRC-m3/m3templates
 m3where2	m3/pkg/SRC-m3/m3where2
 m3core		m3/pkg/SRC-m3/m3core
-m3gdb		m3/pkg/gpl/m3gdb
+m3gdb		m3/pkg/gnu/m3gdb
