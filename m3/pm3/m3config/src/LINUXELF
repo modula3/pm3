@@ -367,7 +367,7 @@ end
 
 readonly proc install_file (src, dest, mode) is
   Note_install (src, dest)
-  exec ([ "cp", "-p", "-d", "-f", src, dest ])
+  local ret = exec ([ "cp", "-p", "-d", "-f", src, dest ])
   % exec (["install", "-c", "-m", mode, src, dest])
 end
 
