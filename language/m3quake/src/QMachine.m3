@@ -11,7 +11,7 @@ IMPORT Atom, AtomList, IntRefTbl, Env, Fmt, Text, FileWr;
 IMPORT Wr, Thread, OSError, TextSeq, TextF, Pipe;
 IMPORT Pathname, Process, File, FS, FileRd, Rd;
 IMPORT M3ID, M3Buf, M3File, RegularFile;
-IMPORT QValue, QVal, QCode, QCompiler, QVTbl, QVSeq, QScanner, Stdio;
+IMPORT QValue, QVal, QCode, QCompiler, QVTbl, QVSeq, QScanner;
 FROM Quake IMPORT Error;
 
 TYPE
@@ -1209,30 +1209,21 @@ PROCEDURE Exec (t: T;  cmd: TEXT; args: REF ARRAY OF TEXT;
         END;
       END;
       IF stdout_file = NIL OR stderr_file = NIL THEN
-        IF t.writer = Stdio.stdout THEN
-          VAR dumb: File.T; 
-          BEGIN
-            Process.GetStandardFileHandles(dumb, stdout_file, stderr_file);
-          END;
-        ELSE
-          Pipe.Open (hr := hrSelf,  hw := hwChildOut);
-          IF stdout_file = NIL THEN
-            stdout_file := hwChildOut;
-          END;
-          IF stderr_file = NIL THEN
-            stderr_file := hwChildOut;
-          END;
+        Pipe.Open (hr := hrSelf,  hw := hwChildOut);
+        IF stdout_file = NIL THEN
+          stdout_file := hwChildOut;
+        END;
+        IF stderr_file = NIL THEN
+          stderr_file := hwChildOut;
         END;
       END;
 
       handle := Process.Create(cmd, args^, env, wd, stdin_file, stdout_file,
                                stderr_file);
       IF stdin_file  # NIL THEN stdin_file.close()  END;
-      IF t.writer # Stdio.stdout THEN
-        IF stdout_file # NIL THEN stdout_file.close() END;
-        IF stderr_file # NIL AND stderr_file # stdout_file THEN 
-          stderr_file.close() END;
-      END;
+      IF stdout_file # NIL THEN stdout_file.close() END;
+      IF stderr_file # NIL AND stderr_file # stdout_file THEN 
+        stderr_file.close() END;
 
       IF hrSelf # NIL THEN
         rd := NEW(FileRd.T).init(hrSelf);
