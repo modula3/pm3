@@ -1,114 +1,115 @@
 
-/*  A Bison parser, made from ../Parse.yacc with Bison version GNU Bison version 1.22
+/*  A Bison parser, made from ../Parse.yacc
+ by  GNU Bison version 1.27
   */
 
 #define YYBISON 1  /* Identify Bison output.  */
 
-#define	ENDOFFILE	258
-#define	AMPERSAND	259
-#define	ASSIGN	260
-#define	ASTERISK	261
-#define	BAR	262
-#define	COLON	263
-#define	COMMA	264
-#define	DOT	265
-#define	DOTDOT	266
-#define	EQUAL	267
-#define	GREATER	268
-#define	GREQUAL	269
-#define	LESS	270
-#define	LSEQUAL	271
-#define	MINUS	272
-#define	SHARP	273
-#define	PERIOD	274
-#define	PLUS	275
-#define	RARROW	276
-#define	RBRACE	277
-#define	RBRACKET	278
-#define	RPAREN	279
-#define	SEMICOLON	280
-#define	SLASH	281
-#define	SUBTYPE	282
-#define	UPARROW	283
-#define	LPAREN	284
-#define	LBRACKET	285
-#define	LBRACE	286
-#define	IDENT	287
-#define	CARD_CONST	288
-#define	REAL_CONST	289
-#define	CHAR_CONST	290
-#define	STR_CONST	291
-#define	PR_EXTERNAL	292
-#define	PR_INLINE	293
-#define	PR_OBSOLETE	294
-#define	PR_UNUSED	295
-#define	AND	296
-#define	ANY	297
-#define	ARRAY	298
-#define	AS	299
-#define	BGN	300
-#define	BITS	301
-#define	BRANDED	302
-#define	BY	303
-#define	CASE	304
-#define	CONST	305
-#define	DIV	306
-#define	DO	307
-#define	ELSE	308
-#define	ELSIF	309
-#define	END	310
-#define	EVAL	311
-#define	EXCEPT	312
-#define	EXCEPTION	313
-#define	EXIT	314
-#define	EXPORTS	315
-#define	FINALLY	316
-#define	FOR	317
-#define	FROM	318
-#define	GENERIC	319
-#define	IF	320
-#define	IMPORT	321
-#define	IN	322
-#define	INTERFACE	323
-#define	LOCK	324
-#define	LOOP	325
-#define	METHODS	326
-#define	MOD	327
-#define	MODULE	328
-#define	NOT	329
-#define	OBJECT	330
-#define	OF	331
-#define	OR	332
-#define	OVERRIDES	333
-#define	PROCEDURE	334
-#define	RAISE	335
-#define	RAISES	336
-#define	READONLY	337
-#define	RECORD	338
-#define	REF	339
-#define	REPEAT	340
-#define	RETURN	341
-#define	REVEAL	342
-#define	ROOT	343
-#define	SET	344
-#define	THEN	345
-#define	TO	346
-#define	TRY	347
-#define	TYPE	348
-#define	TYPECASE	349
-#define	UNSAFE	350
-#define	UNTIL	351
-#define	UNTRACED	352
-#define	VALUE	353
-#define	VAR	354
-#define	WHILE	355
-#define	WITH	356
-#define	BAD	357
-#define	WHITESPACE	358
-#define	MODUNIT	359
-#define	DEFUNIT	360
+#define	ENDOFFILE	257
+#define	AMPERSAND	258
+#define	ASSIGN	259
+#define	ASTERISK	260
+#define	BAR	261
+#define	COLON	262
+#define	COMMA	263
+#define	DOT	264
+#define	DOTDOT	265
+#define	EQUAL	266
+#define	GREATER	267
+#define	GREQUAL	268
+#define	LESS	269
+#define	LSEQUAL	270
+#define	MINUS	271
+#define	SHARP	272
+#define	PERIOD	273
+#define	PLUS	274
+#define	RARROW	275
+#define	RBRACE	276
+#define	RBRACKET	277
+#define	RPAREN	278
+#define	SEMICOLON	279
+#define	SLASH	280
+#define	SUBTYPE	281
+#define	UPARROW	282
+#define	LPAREN	283
+#define	LBRACKET	284
+#define	LBRACE	285
+#define	IDENT	286
+#define	CARD_CONST	287
+#define	REAL_CONST	288
+#define	CHAR_CONST	289
+#define	STR_CONST	290
+#define	PR_EXTERNAL	291
+#define	PR_INLINE	292
+#define	PR_OBSOLETE	293
+#define	PR_UNUSED	294
+#define	AND	295
+#define	ANY	296
+#define	ARRAY	297
+#define	AS	298
+#define	BGN	299
+#define	BITS	300
+#define	BRANDED	301
+#define	BY	302
+#define	CASE	303
+#define	CONST	304
+#define	DIV	305
+#define	DO	306
+#define	ELSE	307
+#define	ELSIF	308
+#define	END	309
+#define	EVAL	310
+#define	EXCEPT	311
+#define	EXCEPTION	312
+#define	EXIT	313
+#define	EXPORTS	314
+#define	FINALLY	315
+#define	FOR	316
+#define	FROM	317
+#define	GENERIC	318
+#define	IF	319
+#define	IMPORT	320
+#define	IN	321
+#define	INTERFACE	322
+#define	LOCK	323
+#define	LOOP	324
+#define	METHODS	325
+#define	MOD	326
+#define	MODULE	327
+#define	NOT	328
+#define	OBJECT	329
+#define	OF	330
+#define	OR	331
+#define	OVERRIDES	332
+#define	PROCEDURE	333
+#define	RAISE	334
+#define	RAISES	335
+#define	READONLY	336
+#define	RECORD	337
+#define	REF	338
+#define	REPEAT	339
+#define	RETURN	340
+#define	REVEAL	341
+#define	ROOT	342
+#define	SET	343
+#define	THEN	344
+#define	TO	345
+#define	TRY	346
+#define	TYPE	347
+#define	TYPECASE	348
+#define	UNSAFE	349
+#define	UNTIL	350
+#define	UNTRACED	351
+#define	VALUE	352
+#define	VAR	353
+#define	WHILE	354
+#define	WITH	355
+#define	BAD	356
+#define	WHITESPACE	357
+#define	MODUNIT	358
+#define	DEFUNIT	359
 
-#line 91 "../Parse.yacc"
+#line 92 "../Parse.yacc"
 
 
 #define lexbufsize 500
@@ -182,23 +183,6 @@ STYLE style = SRC_STYLE;
 
 typedef enum {NonOptimal, OptimalBreak, OptimalNoBreak} Formatter_BreakType;
 
-
-#ifndef YYLTYPE
-typedef
-  struct yyltype
-    {
-      int timestamp;
-      int first_line;
-      int first_column;
-      int last_line;
-      int last_column;
-      char *text;
-   }
-  yyltype;
-
-#define YYLTYPE yyltype
-#endif
-
 #ifndef YYSTYPE
 #define YYSTYPE int
 #endif
@@ -216,7 +200,7 @@ typedef
 #define	YYFLAG		-32768
 #define	YYNTBASE	106
 
-#define YYTRANSLATE(x) ((unsigned)(x) <= 360 ? yytranslate[x] : 488)
+#define YYTRANSLATE(x) ((unsigned)(x) <= 359 ? yytranslate[x] : 488)
 
 static const char yytranslate[] = {     0,
      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -244,17 +228,17 @@ static const char yytranslate[] = {     0,
      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     1,     2,     3,     4,     5,
-     6,     7,     8,     9,    10,    11,    12,    13,    14,    15,
-    16,    17,    18,    19,    20,    21,    22,    23,    24,    25,
-    26,    27,    28,    29,    30,    31,    32,    33,    34,    35,
-    36,    37,    38,    39,    40,    41,    42,    43,    44,    45,
-    46,    47,    48,    49,    50,    51,    52,    53,    54,    55,
-    56,    57,    58,    59,    60,    61,    62,    63,    64,    65,
-    66,    67,    68,    69,    70,    71,    72,    73,    74,    75,
-    76,    77,    78,    79,    80,    81,    82,    83,    84,    85,
-    86,    87,    88,    89,    90,    91,    92,    93,    94,    95,
-    96,    97,    98,    99,   100,   101,   102,   103,   104,   105
+     2,     2,     2,     2,     2,     1,     3,     4,     5,     6,
+     7,     8,     9,    10,    11,    12,    13,    14,    15,    16,
+    17,    18,    19,    20,    21,    22,    23,    24,    25,    26,
+    27,    28,    29,    30,    31,    32,    33,    34,    35,    36,
+    37,    38,    39,    40,    41,    42,    43,    44,    45,    46,
+    47,    48,    49,    50,    51,    52,    53,    54,    55,    56,
+    57,    58,    59,    60,    61,    62,    63,    64,    65,    66,
+    67,    68,    69,    70,    71,    72,    73,    74,    75,    76,
+    77,    78,    79,    80,    81,    82,    83,    84,    85,    86,
+    87,    88,    89,    90,    91,    92,    93,    94,    95,    96,
+    97,    98,    99,   100,   101,   102,   103,   104,   105
 };
 
 #if YYDEBUG != 0
@@ -574,69 +558,73 @@ static const short yyrhs[] = {    -1,
 
 #if YYDEBUG != 0
 static const short yyrline[] = { 0,
-   206,   207,   208,   208,   209,   209,   212,   214,   217,   219,
-   222,   224,   225,   226,   229,   231,   234,   236,   237,   240,
-   242,   243,   244,   245,   246,   249,   254,   258,   262,   266,
-   273,   280,   282,   285,   287,   290,   292,   295,   297,   300,
-   302,   303,   304,   307,   311,   315,   317,   320,   322,   323,
-   324,   325,   326,   327,   328,   329,   330,   331,   332,   335,
-   337,   338,   339,   340,   343,   345,   348,   351,   354,   356,
-   359,   361,   364,   366,   369,   373,   376,   381,   384,   387,
-   390,   393,   397,   401,   403,   406,   408,   409,   412,   414,
-   415,   416,   419,   421,   424,   428,   432,   434,   435,   436,
-   439,   441,   442,   445,   447,   448,   453,   455,   456,   460,
-   462,   466,   468,   471,   473,   476,   478,   479,   480,   481,
-   482,   483,   484,   485,   486,   487,   488,   489,   490,   491,
-   492,   493,   494,   497,   502,   506,   508,   511,   513,   516,
-   520,   522,   525,   527,   530,   534,   539,   546,   548,   551,
-   555,   557,   560,   562,   565,   569,   573,   577,   581,   585,
-   587,   590,   594,   596,   599,   601,   604,   606,   609,   611,
-   614,   616,   619,   621,   624,   628,   632,   634,   637,   641,
-   643,   646,   648,   651,   653,   658,   660,   663,   665,   666,
-   667,   668,   671,   675,   677,   680,   682,   683,   684,   685,
-   686,   687,   688,   689,   692,   694,   698,   700,   701,   702,
-   705,   707,   710,   714,   716,   719,   721,   724,   726,   727,
-   730,   732,   733,   734,   737,   739,   742,   745,   749,   751,
-   752,   753,   756,   758,   761,   763,   764,   767,   769,   770,
-   773,   775,   776,   777,   780,   782,   785,   789,   795,   796,
-   796,   798,   799,   799,   801,   801,   803,   804,   804,   805,
-   805,   805,   805,   805,   805,   805,   807,   808,   808,   809,
-   809,   809,   811,   812,   812,   813,   813,   813,   813,   815,
-   815,   815,   818,   820,   820,   820,   820,   820,   821,   821,
-   823,   825,   828,   830,   833,   834,   835,   836,   837,   843,
-   844,   844,   846,   847,   847,   849,   849,   851,   852,   852,
-   854,   855,   855,   857,   858,   858,   860,   860,   860,   862,
-   863,   864,   865,   866,   867,   868,   869,   870,   873,   873,
-   873,   873,   875,   877,   880,   882,   885,   886,   887,   888,
-   889,   892,   894,   901,   903,   904,   904,   906,   908,   909,
-   910,   911,   916,   918,   921,   923,   926,   928,   931,   933,
-   936,   938,   939,   942,   944,   947,   949,   952,   954,   960,
-   960,   961,   961,   962,   962,   963,   963,   964,   964,   965,
-   965,   966,   966,   967,   967,   968,   968,   969,   969,   970,
-   970,   971,   971,   972,   972,   973,   973,   974,   974,   975,
-   975,   976,   976,   977,   977,   978,   978,   979,   979,   980,
-   980,   981,   982,   982,   983,   983,   984,   984,   987,   987,
-   988,   988,   989,   989,   990,   990,   995,   995,   996,   996,
-   997,   997,   998,   998,  1000,  1000,  1001,  1001,  1002,  1002,
-  1003,  1003,  1004,  1004,  1005,  1005,  1007,  1007,  1008,  1008,
-  1009,  1009,  1010,  1010,  1011,  1011,  1012,  1012,  1013,  1013,
-  1014,  1014,  1015,  1015,  1016,  1016,  1017,  1017,  1018,  1018,
-  1019,  1019,  1020,  1020,  1021,  1021,  1022,  1022,  1023,  1023,
-  1024,  1024,  1025,  1025,  1026,  1026,  1027,  1027,  1028,  1028,
-  1029,  1029,  1030,  1030,  1031,  1031,  1032,  1032,  1033,  1033,
-  1034,  1034,  1035,  1035,  1036,  1036,  1037,  1037,  1038,  1038,
-  1039,  1039,  1040,  1040,  1041,  1041,  1042,  1042,  1043,  1043,
-  1044,  1044,  1045,  1045,  1046,  1046,  1049,  1049,  1050,  1050,
-  1051,  1051,  1052,  1052,  1053,  1053,  1054,  1054,  1055,  1055,
-  1056,  1056,  1057,  1057,  1058,  1058,  1059,  1059,  1060,  1060,
-  1061,  1061,  1062,  1062,  1063,  1063,  1064,  1064,  1065,  1065,
-  1066,  1066,  1067,  1067,  1068,  1068,  1069,  1069,  1073,  1077,
-  1079,  1084,  1085,  1086,  1087,  1088,  1089,  1091,  1092,  1093,
-  1095,  1096,  1097,  1099,  1100,  1101,  1103,  1105,  1106,  1107,
-  1108,  1110,  1112,  1113,  1114,  1116,  1117
+   207,   208,   209,   209,   210,   210,   213,   215,   218,   220,
+   223,   225,   226,   227,   230,   232,   235,   237,   238,   241,
+   243,   244,   245,   246,   247,   250,   255,   259,   263,   267,
+   274,   281,   283,   286,   288,   291,   293,   296,   298,   301,
+   303,   304,   305,   308,   312,   316,   318,   321,   323,   324,
+   325,   326,   327,   328,   329,   330,   331,   332,   333,   336,
+   338,   339,   340,   341,   344,   346,   349,   352,   355,   357,
+   360,   362,   365,   367,   370,   374,   377,   382,   385,   388,
+   391,   394,   398,   402,   404,   407,   409,   410,   413,   415,
+   416,   417,   420,   422,   425,   429,   433,   435,   436,   437,
+   440,   442,   443,   446,   448,   449,   454,   456,   457,   461,
+   463,   467,   469,   472,   474,   477,   479,   480,   481,   482,
+   483,   484,   485,   486,   487,   488,   489,   490,   491,   492,
+   493,   494,   495,   498,   503,   507,   509,   512,   514,   517,
+   521,   523,   526,   528,   531,   535,   540,   547,   549,   552,
+   556,   558,   561,   563,   566,   570,   574,   578,   582,   586,
+   588,   591,   595,   597,   600,   602,   605,   607,   610,   612,
+   615,   617,   620,   622,   625,   629,   633,   635,   638,   642,
+   644,   647,   649,   652,   654,   659,   661,   664,   666,   667,
+   668,   669,   672,   676,   678,   681,   683,   684,   685,   686,
+   687,   688,   689,   690,   693,   695,   699,   701,   702,   703,
+   706,   708,   711,   715,   717,   720,   722,   725,   727,   728,
+   731,   733,   734,   735,   738,   740,   743,   746,   750,   752,
+   753,   754,   757,   759,   762,   764,   765,   768,   770,   771,
+   774,   776,   777,   778,   781,   783,   786,   790,   796,   797,
+   797,   799,   800,   800,   802,   802,   804,   805,   805,   806,
+   806,   806,   806,   806,   806,   806,   808,   809,   809,   810,
+   810,   810,   812,   813,   813,   814,   814,   814,   814,   816,
+   816,   816,   819,   821,   821,   821,   821,   821,   822,   822,
+   824,   826,   829,   831,   834,   835,   836,   837,   838,   844,
+   845,   845,   847,   848,   848,   850,   850,   852,   853,   853,
+   855,   856,   856,   858,   859,   859,   861,   861,   861,   863,
+   864,   865,   866,   867,   868,   869,   870,   871,   874,   874,
+   874,   874,   876,   878,   881,   883,   886,   887,   888,   889,
+   890,   893,   895,   902,   904,   905,   905,   907,   909,   910,
+   911,   912,   917,   919,   922,   924,   927,   929,   932,   934,
+   937,   939,   940,   943,   945,   948,   950,   953,   955,   961,
+   961,   962,   962,   963,   963,   964,   964,   965,   965,   966,
+   966,   967,   967,   968,   968,   969,   969,   970,   970,   971,
+   971,   972,   972,   973,   973,   974,   974,   975,   975,   976,
+   976,   977,   977,   978,   978,   979,   979,   980,   980,   981,
+   981,   982,   983,   983,   984,   984,   985,   985,   988,   988,
+   989,   989,   990,   990,   991,   991,   996,   996,   997,   997,
+   998,   998,   999,   999,  1001,  1001,  1002,  1002,  1003,  1003,
+  1004,  1004,  1005,  1005,  1006,  1006,  1008,  1008,  1009,  1009,
+  1010,  1010,  1011,  1011,  1012,  1012,  1013,  1013,  1014,  1014,
+  1015,  1015,  1016,  1016,  1017,  1017,  1018,  1018,  1019,  1019,
+  1020,  1020,  1021,  1021,  1022,  1022,  1023,  1023,  1024,  1024,
+  1025,  1025,  1026,  1026,  1027,  1027,  1028,  1028,  1029,  1029,
+  1030,  1030,  1031,  1031,  1032,  1032,  1033,  1033,  1034,  1034,
+  1035,  1035,  1036,  1036,  1037,  1037,  1038,  1038,  1039,  1039,
+  1040,  1040,  1041,  1041,  1042,  1042,  1043,  1043,  1044,  1044,
+  1045,  1045,  1046,  1046,  1047,  1047,  1050,  1050,  1051,  1051,
+  1052,  1052,  1053,  1053,  1054,  1054,  1055,  1055,  1056,  1056,
+  1057,  1057,  1058,  1058,  1059,  1059,  1060,  1060,  1061,  1061,
+  1062,  1062,  1063,  1063,  1064,  1064,  1065,  1065,  1066,  1066,
+  1067,  1067,  1068,  1068,  1069,  1069,  1070,  1070,  1074,  1078,
+  1080,  1085,  1086,  1087,  1088,  1089,  1090,  1092,  1093,  1094,
+  1096,  1097,  1098,  1100,  1101,  1102,  1104,  1106,  1107,  1108,
+  1109,  1111,  1113,  1114,  1115,  1117,  1118
 };
+#endif
 
-static const char * const yytname[] = {   "$","error","$illegal.","ENDOFFILE",
+
+#if YYDEBUG != 0 || defined (YYERROR_VERBOSE)
+
+static const char * const yytname[] = {   "$","error","$undefined.","ENDOFFILE",
 "AMPERSAND","ASSIGN","ASTERISK","BAR","COLON","COMMA","DOT","DOTDOT","EQUAL",
 "GREATER","GREQUAL","LESS","LSEQUAL","MINUS","SHARP","PERIOD","PLUS","RARROW",
 "RBRACE","RBRACKET","RPAREN","SEMICOLON","SLASH","SUBTYPE","UPARROW","LPAREN",
@@ -689,7 +677,7 @@ static const char * const yytname[] = {   "$","error","$illegal.","ENDOFFILE",
 "@93","Type","@94","Typecase","@95","Unsafe","@96","Until","@97","Untraced",
 "@98","Value","@99","Var","@100","While","@101","With","@102","InitialNPS","NPS",
 "G","B0","B","B2","E","EF","A","AO","AX","V","VZ","VC","Z","SP","XSP","BL","AL2",
-"AL3","ALZ5","EA","ALNL","SPNL","QSP","NL","Inc","Dec",""
+"AL3","ALZ5","EA","ALNL","SPNL","QSP","NL","Inc","Dec", NULL
 };
 #endif
 
@@ -1945,14 +1933,15 @@ static const short yycheck[] = {    23,
     -1,    -1,  1411
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
-#line 3 "/contrib/share/lib/bison.simple"
+#line 3 "/p/gnu/lib/bison-1.27/bison.simple"
+/* This file comes from bison-1.27.  */
 
 /* Skeleton output parser for bison,
-   Copyright (C) 1984, 1989, 1990 Bob Corbett and Richard Stallman
+   Copyright (C) 1984, 1989, 1990 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 1, or (at your option)
+   the Free Software Foundation; either version 2, or (at your option)
    any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -1962,42 +1951,66 @@ static const short yycheck[] = {    23,
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
+   Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.  */
 
-
-#ifndef alloca
-#ifdef __GNUC__
-#define alloca __builtin_alloca
-#else /* not GNU C.  */
-#if (!defined (__STDC__) && defined (sparc)) || defined (__sparc__) || defined (__sparc) || defined (__sgi)
-#include <alloca.h>
-#else /* not sparc */
-#if defined (MSDOS) && !defined (__TURBOC__)
-#include <malloc.h>
-#else /* not MSDOS, or __TURBOC__ */
-#if defined(_AIX)
-#include <malloc.h>
- #pragma alloca
-#else /* not MSDOS, __TURBOC__, or _AIX */
-#ifdef __hpux
-#ifdef __cplusplus
-extern "C" {
-void *alloca (unsigned int);
-};
-#else /* not __cplusplus */
-void *alloca ();
-#endif /* not __cplusplus */
-#endif /* __hpux */
-#endif /* not _AIX */
-#endif /* not MSDOS, or __TURBOC__ */
-#endif /* not sparc.  */
-#endif /* not GNU C.  */
-#endif /* alloca not defined.  */
+/* As a special exception, when this file is copied by Bison into a
+   Bison output file, you may use that output file without restriction.
+   This special exception was added by the Free Software Foundation
+   in version 1.24 of Bison.  */
 
 /* This is the parser code that is written into each bison parser
   when the %semantic_parser declaration is not specified in the grammar.
   It was written by Richard Stallman by simplifying the hairy parser
   used when %semantic_parser is specified.  */
+
+#ifndef YYSTACK_USE_ALLOCA
+#ifdef alloca
+#define YYSTACK_USE_ALLOCA
+#else /* alloca not defined */
+#ifdef __GNUC__
+#define YYSTACK_USE_ALLOCA
+#define alloca __builtin_alloca
+#else /* not GNU C.  */
+#if (!defined (__STDC__) && defined (sparc)) || defined (__sparc__) || defined (__sparc) || defined (__sgi) || (defined (__sun) && defined (__i386))
+#define YYSTACK_USE_ALLOCA
+#include <alloca.h>
+#else /* not sparc */
+/* We think this test detects Watcom and Microsoft C.  */
+/* This used to test MSDOS, but that is a bad idea
+   since that symbol is in the user namespace.  */
+#if (defined (_MSDOS) || defined (_MSDOS_)) && !defined (__TURBOC__)
+#if 0 /* No need for malloc.h, which pollutes the namespace;
+	 instead, just don't use alloca.  */
+#include <malloc.h>
+#endif
+#else /* not MSDOS, or __TURBOC__ */
+#if defined(_AIX)
+/* I don't know what this was needed for, but it pollutes the namespace.
+   So I turned it off.   rms, 2 May 1997.  */
+/* #include <malloc.h>  */
+ #pragma alloca
+#define YYSTACK_USE_ALLOCA
+#else /* not MSDOS, or __TURBOC__, or _AIX */
+#if 0
+#ifdef __hpux /* haible@ilog.fr says this works for HPUX 9.05 and up,
+		 and on HPUX 10.  Eventually we can turn this on.  */
+#define YYSTACK_USE_ALLOCA
+#define alloca __builtin_alloca
+#endif /* __hpux */
+#endif
+#endif /* not _AIX */
+#endif /* not MSDOS, or __TURBOC__ */
+#endif /* not sparc */
+#endif /* not GNU C */
+#endif /* alloca not defined */
+#endif /* YYSTACK_USE_ALLOCA not defined */
+
+#ifdef YYSTACK_USE_ALLOCA
+#define YYSTACK_ALLOC alloca
+#else
+#define YYSTACK_ALLOC malloc
+#endif
 
 /* Note: there must be only one dollar sign in this file.
    It is replaced by the list of actions, each action
@@ -2007,8 +2020,8 @@ void *alloca ();
 #define yyclearin	(yychar = YYEMPTY)
 #define YYEMPTY		-2
 #define YYEOF		0
-#define YYACCEPT	return(0)
-#define YYABORT 	return(1)
+#define YYACCEPT	goto yyacceptlab
+#define YYABORT 	goto yyabortlab
 #define YYERROR		goto yyerrlab1
 /* Like YYERROR except do call yyerror.
    This remains here temporarily to ease the
@@ -2037,10 +2050,18 @@ while (0)
 
 #ifdef YYPURE
 #ifdef YYLSP_NEEDED
+#ifdef YYLEX_PARAM
+#define YYLEX		yylex(&yylval, &yylloc, YYLEX_PARAM)
+#else
 #define YYLEX		yylex(&yylval, &yylloc)
+#endif
+#else /* not YYLSP_NEEDED */
+#ifdef YYLEX_PARAM
+#define YYLEX		yylex(&yylval, YYLEX_PARAM)
 #else
 #define YYLEX		yylex(&yylval)
 #endif
+#endif /* not YYLSP_NEEDED */
 #endif
 
 /* If nonreentrant, generate the variables here */
@@ -2081,24 +2102,24 @@ int yydebug;			/*  nonzero means print parse trace	*/
 #ifndef YYMAXDEPTH
 #define YYMAXDEPTH 10000
 #endif
-
-/* Prevent warning if -Wstrict-prototypes.  */
-#ifdef __GNUC__
-int yyparse (void);
-#endif
 
+/* Define __yy_memcpy.  Note that the size argument
+   should be passed with type unsigned int, because that is what the non-GCC
+   definitions require.  With GCC, __builtin_memcpy takes an arg
+   of type size_t, but it can handle unsigned int.  */
+
 #if __GNUC__ > 1		/* GNU C and GNU C++ define this.  */
-#define __yy_bcopy(FROM,TO,COUNT)	__builtin_memcpy(TO,FROM,COUNT)
+#define __yy_memcpy(TO,FROM,COUNT)	__builtin_memcpy(TO,FROM,COUNT)
 #else				/* not GNU C or C++ */
 #ifndef __cplusplus
 
 /* This is the most reliable way to avoid incompatibilities
    in available built-in functions on various systems.  */
 static void
-__yy_bcopy (from, to, count)
-     char *from;
+__yy_memcpy (to, from, count)
      char *to;
-     int count;
+     char *from;
+     unsigned int count;
 {
   register char *f = from;
   register char *t = to;
@@ -2113,10 +2134,10 @@ __yy_bcopy (from, to, count)
 /* This is the most reliable way to avoid incompatibilities
    in available built-in functions on various systems.  */
 static void
-__yy_bcopy (char *from, char *to, int count)
+__yy_memcpy (char *to, char *from, unsigned int count)
 {
-  register char *f = from;
   register char *t = to;
+  register char *f = from;
   register int i = count;
 
   while (i-- > 0)
@@ -2126,9 +2147,39 @@ __yy_bcopy (char *from, char *to, int count)
 #endif
 #endif
 
-#line 184 "/contrib/share/lib/bison.simple"
+#line 216 "/p/gnu/lib/bison-1.27/bison.simple"
+
+/* The user can define YYPARSE_PARAM as the name of an argument to be passed
+   into yyparse.  The argument should have type void *.
+   It should actually point to an object.
+   Grammar actions can access the variable by casting it
+   to the proper pointer type.  */
+
+#ifdef YYPARSE_PARAM
+#ifdef __cplusplus
+#define YYPARSE_PARAM_ARG void *YYPARSE_PARAM
+#define YYPARSE_PARAM_DECL
+#else /* not __cplusplus */
+#define YYPARSE_PARAM_ARG YYPARSE_PARAM
+#define YYPARSE_PARAM_DECL void *YYPARSE_PARAM;
+#endif /* not __cplusplus */
+#else /* not YYPARSE_PARAM */
+#define YYPARSE_PARAM_ARG
+#define YYPARSE_PARAM_DECL
+#endif /* not YYPARSE_PARAM */
+
+/* Prevent warning if -Wstrict-prototypes.  */
+#ifdef __GNUC__
+#ifdef YYPARSE_PARAM
+int yyparse (void *);
+#else
+int yyparse (void);
+#endif
+#endif
+
 int
-yyparse()
+yyparse(YYPARSE_PARAM_ARG)
+     YYPARSE_PARAM_DECL
 {
   register int yystate;
   register int yyn;
@@ -2154,6 +2205,7 @@ yyparse()
 #endif
 
   int yystacksize = YYINITDEPTH;
+  int yyfree_stacks = 0;
 
 #ifdef YYPURE
   int yychar;
@@ -2238,18 +2290,32 @@ yynewstate:
       if (yystacksize >= YYMAXDEPTH)
 	{
 	  yyerror("parser stack overflow");
+	  if (yyfree_stacks)
+	    {
+	      free (yyss);
+	      free (yyvs);
+#ifdef YYLSP_NEEDED
+	      free (yyls);
+#endif
+	    }
 	  return 2;
 	}
       yystacksize *= 2;
       if (yystacksize > YYMAXDEPTH)
 	yystacksize = YYMAXDEPTH;
-      yyss = (short *) alloca (yystacksize * sizeof (*yyssp));
-      __yy_bcopy ((char *)yyss1, (char *)yyss, size * sizeof (*yyssp));
-      yyvs = (YYSTYPE *) alloca (yystacksize * sizeof (*yyvsp));
-      __yy_bcopy ((char *)yyvs1, (char *)yyvs, size * sizeof (*yyvsp));
+#ifndef YYSTACK_USE_ALLOCA
+      yyfree_stacks = 1;
+#endif
+      yyss = (short *) YYSTACK_ALLOC (yystacksize * sizeof (*yyssp));
+      __yy_memcpy ((char *)yyss, (char *)yyss1,
+		   size * (unsigned int) sizeof (*yyssp));
+      yyvs = (YYSTYPE *) YYSTACK_ALLOC (yystacksize * sizeof (*yyvsp));
+      __yy_memcpy ((char *)yyvs, (char *)yyvs1,
+		   size * (unsigned int) sizeof (*yyvsp));
 #ifdef YYLSP_NEEDED
-      yyls = (YYLTYPE *) alloca (yystacksize * sizeof (*yylsp));
-      __yy_bcopy ((char *)yyls1, (char *)yyls, size * sizeof (*yylsp));
+      yyls = (YYLTYPE *) YYSTACK_ALLOC (yystacksize * sizeof (*yylsp));
+      __yy_memcpy ((char *)yyls, (char *)yyls1,
+		   size * (unsigned int) sizeof (*yylsp));
 #endif
 #endif /* no yyoverflow */
 
@@ -2410,544 +2476,544 @@ yyreduce:
   switch (yyn) {
 
 case 1:
-#line 207 "../Parse.yacc"
+#line 208 "../Parse.yacc"
 { depth=0; ;
     break;}
 case 3:
-#line 208 "../Parse.yacc"
+#line 209 "../Parse.yacc"
 { depth=0; ;
     break;}
 case 4:
-#line 208 "../Parse.yacc"
+#line 209 "../Parse.yacc"
 { Flush(); ;
     break;}
 case 5:
-#line 209 "../Parse.yacc"
+#line 210 "../Parse.yacc"
 { depth=0; ;
     break;}
 case 6:
-#line 209 "../Parse.yacc"
+#line 210 "../Parse.yacc"
 { Flush(); ;
     break;}
 case 370:
-#line 960 "../Parse.yacc"
+#line 961 "../Parse.yacc"
 { PR ("&");;
     break;}
 case 372:
-#line 961 "../Parse.yacc"
+#line 962 "../Parse.yacc"
 { PR (":=");;
     break;}
 case 374:
-#line 962 "../Parse.yacc"
+#line 963 "../Parse.yacc"
 { PR ("*");;
     break;}
 case 376:
-#line 963 "../Parse.yacc"
+#line 964 "../Parse.yacc"
 { PR ("|");;
     break;}
 case 378:
-#line 964 "../Parse.yacc"
+#line 965 "../Parse.yacc"
 { PR (":");;
     break;}
 case 380:
-#line 965 "../Parse.yacc"
+#line 966 "../Parse.yacc"
 { PR (",");;
     break;}
 case 382:
-#line 966 "../Parse.yacc"
+#line 967 "../Parse.yacc"
 { PR (".");;
     break;}
 case 384:
-#line 967 "../Parse.yacc"
+#line 968 "../Parse.yacc"
 { PR ("..");;
     break;}
 case 386:
-#line 968 "../Parse.yacc"
+#line 969 "../Parse.yacc"
 { PR ("=");;
     break;}
 case 388:
-#line 969 "../Parse.yacc"
+#line 970 "../Parse.yacc"
 { PR (">");;
     break;}
 case 390:
-#line 970 "../Parse.yacc"
+#line 971 "../Parse.yacc"
 { PR (">=");;
     break;}
 case 392:
-#line 971 "../Parse.yacc"
+#line 972 "../Parse.yacc"
 { PR ("<");;
     break;}
 case 394:
-#line 972 "../Parse.yacc"
+#line 973 "../Parse.yacc"
 { PR ("<=");;
     break;}
 case 396:
-#line 973 "../Parse.yacc"
+#line 974 "../Parse.yacc"
 { PR ("-");;
     break;}
 case 398:
-#line 974 "../Parse.yacc"
+#line 975 "../Parse.yacc"
 { PR ("\043");;
     break;}
 case 400:
-#line 975 "../Parse.yacc"
+#line 976 "../Parse.yacc"
 { PR ("+");;
     break;}
 case 402:
-#line 976 "../Parse.yacc"
+#line 977 "../Parse.yacc"
 { PR ("=>");;
     break;}
 case 404:
-#line 977 "../Parse.yacc"
+#line 978 "../Parse.yacc"
 { PR ("}");;
     break;}
 case 406:
-#line 978 "../Parse.yacc"
+#line 979 "../Parse.yacc"
 { PR ("]");;
     break;}
 case 408:
-#line 979 "../Parse.yacc"
+#line 980 "../Parse.yacc"
 { PR (")");;
     break;}
 case 410:
-#line 980 "../Parse.yacc"
-{ PR (";");;
-    break;}
-case 412:
 #line 981 "../Parse.yacc"
 { PR (";");;
     break;}
-case 413:
+case 412:
 #line 982 "../Parse.yacc"
+{ PR (";");;
+    break;}
+case 413:
+#line 983 "../Parse.yacc"
 { PR ("/");;
     break;}
 case 415:
-#line 983 "../Parse.yacc"
+#line 984 "../Parse.yacc"
 { PR ("<:");;
     break;}
 case 417:
-#line 984 "../Parse.yacc"
+#line 985 "../Parse.yacc"
 { PR ("^");;
     break;}
 case 419:
-#line 987 "../Parse.yacc"
-{ PR ("("); ;
-    break;}
-case 421:
 #line 988 "../Parse.yacc"
 { PR ("("); ;
     break;}
-case 423:
+case 421:
 #line 989 "../Parse.yacc"
+{ PR ("("); ;
+    break;}
+case 423:
+#line 990 "../Parse.yacc"
 { PR ("["); ;
     break;}
 case 425:
-#line 990 "../Parse.yacc"
+#line 991 "../Parse.yacc"
 { PR ("{"); ;
     break;}
 case 427:
-#line 995 "../Parse.yacc"
-{ PF (&lexbuf[yyvsp[0]], fonts->fixedComment);;
-    break;}
-case 429:
 #line 996 "../Parse.yacc"
 { PF (&lexbuf[yyvsp[0]], fonts->fixedComment);;
     break;}
-case 431:
+case 429:
 #line 997 "../Parse.yacc"
 { PF (&lexbuf[yyvsp[0]], fonts->fixedComment);;
     break;}
-case 433:
+case 431:
 #line 998 "../Parse.yacc"
 { PF (&lexbuf[yyvsp[0]], fonts->fixedComment);;
     break;}
+case 433:
+#line 999 "../Parse.yacc"
+{ PF (&lexbuf[yyvsp[0]], fonts->fixedComment);;
+    break;}
 case 435:
-#line 1000 "../Parse.yacc"
+#line 1001 "../Parse.yacc"
 { PRID (&lexbuf[yyvsp[0]]);;
     break;}
 case 437:
-#line 1001 "../Parse.yacc"
+#line 1002 "../Parse.yacc"
 { PF (&lexbuf[yyvsp[0]], fonts->procName);;
     break;}
 case 439:
-#line 1002 "../Parse.yacc"
-{ PR (&lexbuf[yyvsp[0]]);;
-    break;}
-case 441:
 #line 1003 "../Parse.yacc"
 { PR (&lexbuf[yyvsp[0]]);;
     break;}
-case 443:
+case 441:
 #line 1004 "../Parse.yacc"
-{ PF (&lexbuf[yyvsp[0]], fonts->fixed);;
+{ PR (&lexbuf[yyvsp[0]]);;
     break;}
-case 445:
+case 443:
 #line 1005 "../Parse.yacc"
 { PF (&lexbuf[yyvsp[0]], fonts->fixed);;
     break;}
+case 445:
+#line 1006 "../Parse.yacc"
+{ PF (&lexbuf[yyvsp[0]], fonts->fixed);;
+    break;}
 case 447:
-#line 1007 "../Parse.yacc"
+#line 1008 "../Parse.yacc"
 { PK ("AND");;
     break;}
 case 449:
-#line 1008 "../Parse.yacc"
+#line 1009 "../Parse.yacc"
 { PK ("ANY");;
     break;}
 case 451:
-#line 1009 "../Parse.yacc"
+#line 1010 "../Parse.yacc"
 { PK ("ARRAY");;
     break;}
 case 453:
-#line 1010 "../Parse.yacc"
+#line 1011 "../Parse.yacc"
 { PK ("AS");;
     break;}
 case 455:
-#line 1011 "../Parse.yacc"
+#line 1012 "../Parse.yacc"
 { PK ("BEGIN");;
     break;}
 case 457:
-#line 1012 "../Parse.yacc"
+#line 1013 "../Parse.yacc"
 { PK ("BITS");;
     break;}
 case 459:
-#line 1013 "../Parse.yacc"
+#line 1014 "../Parse.yacc"
 { PK ("BRANDED");;
     break;}
 case 461:
-#line 1014 "../Parse.yacc"
+#line 1015 "../Parse.yacc"
 { PK ("BY");;
     break;}
 case 463:
-#line 1015 "../Parse.yacc"
+#line 1016 "../Parse.yacc"
 { PK ("CASE");;
     break;}
 case 465:
-#line 1016 "../Parse.yacc"
+#line 1017 "../Parse.yacc"
 { PK ("CONST");;
     break;}
 case 467:
-#line 1017 "../Parse.yacc"
+#line 1018 "../Parse.yacc"
 { PR ("DIV");;
     break;}
 case 469:
-#line 1018 "../Parse.yacc"
+#line 1019 "../Parse.yacc"
 { PK ("DO");;
     break;}
 case 471:
-#line 1019 "../Parse.yacc"
+#line 1020 "../Parse.yacc"
 { PK ("ELSE");;
     break;}
 case 473:
-#line 1020 "../Parse.yacc"
+#line 1021 "../Parse.yacc"
 { PK ("ELSIF");;
     break;}
 case 475:
-#line 1021 "../Parse.yacc"
+#line 1022 "../Parse.yacc"
 { PK ("END");;
     break;}
 case 477:
-#line 1022 "../Parse.yacc"
+#line 1023 "../Parse.yacc"
 { PK ("EVAL");;
     break;}
 case 479:
-#line 1023 "../Parse.yacc"
+#line 1024 "../Parse.yacc"
 { PK ("EXCEPT");;
     break;}
 case 481:
-#line 1024 "../Parse.yacc"
+#line 1025 "../Parse.yacc"
 { PK ("EXCEPTION");;
     break;}
 case 483:
-#line 1025 "../Parse.yacc"
+#line 1026 "../Parse.yacc"
 { PK ("EXIT");;
     break;}
 case 485:
-#line 1026 "../Parse.yacc"
+#line 1027 "../Parse.yacc"
 { PK ("EXPORTS");;
     break;}
 case 487:
-#line 1027 "../Parse.yacc"
+#line 1028 "../Parse.yacc"
 { PK ("FINALLY");;
     break;}
 case 489:
-#line 1028 "../Parse.yacc"
+#line 1029 "../Parse.yacc"
 { PK ("FOR");;
     break;}
 case 491:
-#line 1029 "../Parse.yacc"
+#line 1030 "../Parse.yacc"
 { PK ("FROM");;
     break;}
 case 493:
-#line 1030 "../Parse.yacc"
+#line 1031 "../Parse.yacc"
 { PK ("GENERIC");;
     break;}
 case 495:
-#line 1031 "../Parse.yacc"
+#line 1032 "../Parse.yacc"
 { PK ("IF");;
     break;}
 case 497:
-#line 1032 "../Parse.yacc"
+#line 1033 "../Parse.yacc"
 { PK ("IMPORT");;
     break;}
 case 499:
-#line 1033 "../Parse.yacc"
+#line 1034 "../Parse.yacc"
 { PK ("IN");;
     break;}
 case 501:
-#line 1034 "../Parse.yacc"
+#line 1035 "../Parse.yacc"
 { PK ("INTERFACE");;
     break;}
 case 503:
-#line 1035 "../Parse.yacc"
+#line 1036 "../Parse.yacc"
 { PK ("LOCK");;
     break;}
 case 505:
-#line 1036 "../Parse.yacc"
+#line 1037 "../Parse.yacc"
 { PK ("LOOP");;
     break;}
 case 507:
-#line 1037 "../Parse.yacc"
+#line 1038 "../Parse.yacc"
 { PK ("METHODS");;
     break;}
 case 509:
-#line 1038 "../Parse.yacc"
+#line 1039 "../Parse.yacc"
 { PK ("MOD");;
     break;}
 case 511:
-#line 1039 "../Parse.yacc"
+#line 1040 "../Parse.yacc"
 { PK ("MODULE");;
     break;}
 case 513:
-#line 1040 "../Parse.yacc"
+#line 1041 "../Parse.yacc"
 { PK ("NOT");;
     break;}
 case 515:
-#line 1041 "../Parse.yacc"
+#line 1042 "../Parse.yacc"
 { PK ("OBJECT");;
     break;}
 case 517:
-#line 1042 "../Parse.yacc"
+#line 1043 "../Parse.yacc"
 { PK ("OF");;
     break;}
 case 519:
-#line 1043 "../Parse.yacc"
+#line 1044 "../Parse.yacc"
 { PK ("OR");;
     break;}
 case 521:
-#line 1044 "../Parse.yacc"
+#line 1045 "../Parse.yacc"
 { PK ("OVERRIDES");;
     break;}
 case 523:
-#line 1045 "../Parse.yacc"
+#line 1046 "../Parse.yacc"
 { PK ("PROCEDURE");;
     break;}
 case 525:
-#line 1046 "../Parse.yacc"
+#line 1047 "../Parse.yacc"
 { PK ("RAISE");;
     break;}
 case 527:
-#line 1049 "../Parse.yacc"
+#line 1050 "../Parse.yacc"
 { DoBreak(1, 2, 0.0); PK ("RAISES");;
     break;}
 case 529:
-#line 1050 "../Parse.yacc"
+#line 1051 "../Parse.yacc"
 { PK ("READONLY");;
     break;}
 case 531:
-#line 1051 "../Parse.yacc"
+#line 1052 "../Parse.yacc"
 { PK ("RECORD");;
     break;}
 case 533:
-#line 1052 "../Parse.yacc"
+#line 1053 "../Parse.yacc"
 { PK ("REF");;
     break;}
 case 535:
-#line 1053 "../Parse.yacc"
+#line 1054 "../Parse.yacc"
 { PK ("REPEAT");;
     break;}
 case 537:
-#line 1054 "../Parse.yacc"
+#line 1055 "../Parse.yacc"
 { PK ("RETURN");;
     break;}
 case 539:
-#line 1055 "../Parse.yacc"
+#line 1056 "../Parse.yacc"
 { PK ("REVEAL");;
     break;}
 case 541:
-#line 1056 "../Parse.yacc"
+#line 1057 "../Parse.yacc"
 { PK ("ROOT");;
     break;}
 case 543:
-#line 1057 "../Parse.yacc"
+#line 1058 "../Parse.yacc"
 { PK ("SET");;
     break;}
 case 545:
-#line 1058 "../Parse.yacc"
+#line 1059 "../Parse.yacc"
 { PK ("THEN");;
     break;}
 case 547:
-#line 1059 "../Parse.yacc"
+#line 1060 "../Parse.yacc"
 { PK ("TO");;
     break;}
 case 549:
-#line 1060 "../Parse.yacc"
+#line 1061 "../Parse.yacc"
 { PK ("TRY");;
     break;}
 case 551:
-#line 1061 "../Parse.yacc"
+#line 1062 "../Parse.yacc"
 { PK ("TYPE");;
     break;}
 case 553:
-#line 1062 "../Parse.yacc"
+#line 1063 "../Parse.yacc"
 { PK ("TYPECASE");;
     break;}
 case 555:
-#line 1063 "../Parse.yacc"
+#line 1064 "../Parse.yacc"
 { PK ("UNSAFE");;
     break;}
 case 557:
-#line 1064 "../Parse.yacc"
+#line 1065 "../Parse.yacc"
 { PK ("UNTIL");;
     break;}
 case 559:
-#line 1065 "../Parse.yacc"
+#line 1066 "../Parse.yacc"
 { PK ("UNTRACED");;
     break;}
 case 561:
-#line 1066 "../Parse.yacc"
+#line 1067 "../Parse.yacc"
 { PK ("VALUE");;
     break;}
 case 563:
-#line 1067 "../Parse.yacc"
+#line 1068 "../Parse.yacc"
 { PK ("VAR");;
     break;}
 case 565:
-#line 1068 "../Parse.yacc"
+#line 1069 "../Parse.yacc"
 { PK ("WHILE");;
     break;}
 case 567:
-#line 1069 "../Parse.yacc"
+#line 1070 "../Parse.yacc"
 { PK ("WITH");;
     break;}
 case 569:
-#line 1074 "../Parse.yacc"
+#line 1075 "../Parse.yacc"
 { blanklinep = 0; PrintNPS(1); ;
     break;}
 case 570:
-#line 1078 "../Parse.yacc"
+#line 1079 "../Parse.yacc"
 { blanklinep = 0; ;
     break;}
 case 571:
-#line 1079 "../Parse.yacc"
+#line 1080 "../Parse.yacc"
 { blanklinep = 0; PrintNPS(0); ;
     break;}
 case 572:
-#line 1084 "../Parse.yacc"
+#line 1085 "../Parse.yacc"
 { GR (); ;
     break;}
 case 573:
-#line 1085 "../Parse.yacc"
+#line 1086 "../Parse.yacc"
 { BE (0.0); ;
     break;}
 case 574:
-#line 1086 "../Parse.yacc"
+#line 1087 "../Parse.yacc"
 { BE (offset); ;
     break;}
 case 575:
-#line 1087 "../Parse.yacc"
+#line 1088 "../Parse.yacc"
 { BE (offset*2); ;
     break;}
 case 576:
-#line 1088 "../Parse.yacc"
+#line 1089 "../Parse.yacc"
 { EN (); ;
     break;}
 case 577:
-#line 1089 "../Parse.yacc"
+#line 1090 "../Parse.yacc"
 { ENF (); ;
     break;}
 case 578:
-#line 1091 "../Parse.yacc"
+#line 1092 "../Parse.yacc"
 { DoBreak (1, 2, 0.0); ;
     break;}
 case 579:
-#line 1092 "../Parse.yacc"
+#line 1093 "../Parse.yacc"
 { DoBreak (1, 3, 0.0); ;
     break;}
 case 580:
-#line 1093 "../Parse.yacc"
+#line 1094 "../Parse.yacc"
 { DoBreak (0, 3, 0.0); ;
     break;}
 case 581:
-#line 1095 "../Parse.yacc"
+#line 1096 "../Parse.yacc"
 { DoBreak (1, 1, 0.0); ;
     break;}
 case 582:
-#line 1096 "../Parse.yacc"
+#line 1097 "../Parse.yacc"
 { DoBreak (1, 1, -offset); ;
     break;}
 case 583:
-#line 1097 "../Parse.yacc"
+#line 1098 "../Parse.yacc"
 { DoBreak (1, 1, -offset + 2.0 * bodySpaceWidth); ;
     break;}
 case 584:
-#line 1099 "../Parse.yacc"
+#line 1100 "../Parse.yacc"
 { DoBreak (0, 0, 0.0); ;
     break;}
 case 585:
-#line 1100 "../Parse.yacc"
+#line 1101 "../Parse.yacc"
 { DoBreak (1, 0, 0.0); ;
     break;}
 case 586:
-#line 1101 "../Parse.yacc"
+#line 1102 "../Parse.yacc"
 { P2 (' '); ;
     break;}
 case 587:
-#line 1103 "../Parse.yacc"
+#line 1104 "../Parse.yacc"
 { BL (); ;
     break;}
 case 588:
-#line 1105 "../Parse.yacc"
+#line 1106 "../Parse.yacc"
 { DoAlign (2, 0); ;
     break;}
 case 589:
-#line 1106 "../Parse.yacc"
+#line 1107 "../Parse.yacc"
 { DoAlign (3, 0); ;
     break;}
 case 590:
-#line 1107 "../Parse.yacc"
+#line 1108 "../Parse.yacc"
 { DoAlign (5, 1); ;
     break;}
 case 591:
-#line 1108 "../Parse.yacc"
+#line 1109 "../Parse.yacc"
 { EndAlign (); ;
     break;}
 case 592:
-#line 1110 "../Parse.yacc"
+#line 1111 "../Parse.yacc"
 { ALNL(); ;
     break;}
 case 593:
-#line 1112 "../Parse.yacc"
+#line 1113 "../Parse.yacc"
 { DoSPNL (); ;
     break;}
 case 594:
-#line 1113 "../Parse.yacc"
+#line 1114 "../Parse.yacc"
 { DoQSP (); ;
     break;}
 case 595:
-#line 1114 "../Parse.yacc"
+#line 1115 "../Parse.yacc"
 { NL (); ;
     break;}
 case 596:
-#line 1116 "../Parse.yacc"
+#line 1117 "../Parse.yacc"
 { depth++; ;
     break;}
 case 597:
-#line 1117 "../Parse.yacc"
+#line 1118 "../Parse.yacc"
 { depth--; ;
     break;}
 }
    /* the action file gets copied in in place of this dollarsign */
-#line 465 "/contrib/share/lib/bison.simple"
+#line 542 "/p/gnu/lib/bison-1.27/bison.simple"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -3142,8 +3208,32 @@ yyerrhandle:
 
   yystate = yyn;
   goto yynewstate;
+
+ yyacceptlab:
+  /* YYACCEPT comes here.  */
+  if (yyfree_stacks)
+    {
+      free (yyss);
+      free (yyvs);
+#ifdef YYLSP_NEEDED
+      free (yyls);
+#endif
+    }
+  return 0;
+
+ yyabortlab:
+  /* YYABORT comes here.  */
+  if (yyfree_stacks)
+    {
+      free (yyss);
+      free (yyvs);
+#ifdef YYLSP_NEEDED
+      free (yyls);
+#endif
+    }
+  return 1;
 }
-#line 1119 "../Parse.yacc"
+#line 1120 "../Parse.yacc"
 
 
 /*-------- additional C code to implement the semantic routines -----------*/
@@ -3385,6 +3475,7 @@ DoBreak (blank, breakpt, offs)
 #define PRODUCE(x) {fprintf (stderr, "%d ", x); return (x); }
 
 #include <stdio.h>
+#include <string.h>
 #include "hash.h"
 #include "lex.yy.c"
 #include "lex_help.h"
@@ -3467,9 +3558,9 @@ yyerror(s) char *s; {
   temp2 = input();   /* input comes from the lex library. */
   if ((calledFromEmacs && (temp2 == '\001')) || (temp2 == 0)) return;
   temp = input();
-  while ((temp != 0) && (!calledFromEmacs || (temp != '\001')))
+  while ((temp > 0) && (!calledFromEmacs || (temp != '\001')))
     {P (temp2); temp2 = temp; temp = input();}
-  if ((temp2 != '\n') || (temp != 0)) P(temp2);
+  if ((temp2 != '\n') || (temp > 0)) P(temp2);
 }
 
 /* Print out first comment.  Hidden down here so it can see the comment
