@@ -15,8 +15,6 @@
 #endif
 #include <stdio.h>
 
-#define MAX_LINES=10000
-
 #define TRUE 1
 #define FALSE 0
 
