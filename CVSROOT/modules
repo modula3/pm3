@@ -23,3 +23,4 @@
 # spread out over the entire source repository.
 
 m3build2	m3/pkg/SRC-m3/m3build2
+m3driver	m3/pkg/SRC-m3/m3driver
