@@ -187,6 +187,8 @@ typedef enum {NonOptimal, OptimalBreak, OptimalNoBreak} Formatter_BreakType;
 %token PR_LINE PR_PRAGMA PR_CALLBACK
 %token PR_LL PR_LLsup PR_EXPORTED PR_SPEC
 
+/* special symbols allowed in SPEC pragmas */
+%token IDENTPRIME UPARROWPRIME
 /* reserved words for ESC specifications in SPEC pragmas */
 %token ALL AXIOM DEPENDS
 %token ENSURES EXISTS FUNC IFF IMPLIES INV IS
@@ -971,11 +973,11 @@ spec_proc_signature:
 spec_var: Var spec_typed_id_list ;
 
 spec_depend:
-      Depends qqid spec_opt_typed_id On spec_term_list ;
+      Depends qqid spec_opt_typed_id Colon spec_term_list ;
 
 spec_abstract:
-      Rep qqid spec_opt_typed_id Iff   spec_pred
-    | Rep qqid spec_opt_typed_id Equal expr
+      Rep qqid spec_opt_typed_id Colon qqid Lbracket qqid Rbracket Iff   spec_pred
+    | Rep qqid spec_opt_typed_id Colon qqid Lbracket qqid Rbracket Equal expr
     ;
 
 spec_opt_typed_id:
@@ -1022,6 +1024,7 @@ spec_term_selector:
     | qqid Lparen spec_term_list Rparen
     | spec_term_selector Lbracket spec_term_list Rbracket
     | spec_term_selector Uparrow
+    | spec_term_selector UparrowPrime
     ;
 
 spec_term_paren:
@@ -1036,15 +1039,16 @@ spec_term_list:
 
 spec_prim_term:
       Card_const
-    | qqid /* [ "'" ] */
+    | qqid
+    | qqidp
     ;
 
 spec_pred: spec_quant ;
 
 spec_quant:
       spec_concl
-    | Lparen All    Lbracket spec_typed_id_list Rbracket spec_concl Rparen
-    | Lparen Exists Lbracket spec_typed_id_list Rbracket spec_concl Rparen
+    | All    Lbracket spec_typed_id_list Rbracket spec_concl
+    | Exists Lbracket spec_typed_id_list Rbracket spec_concl
     ;
 
 spec_concl:
@@ -1081,7 +1085,11 @@ spec_typed_id_list:
 
 spec_typed_id: Ident Colon spec_type ;
 
-spec_type: qqid | Map spec_type To spec_type ;
+spec_type:
+      qqid
+    | qqid Lbracket spec_type Rbracket
+    | Map spec_type To spec_type
+    ;
 
 spec_bin_rel: Less | Greater | Lsequal | Grequal | Equal | Notequal ;
 
@@ -1123,6 +1131,11 @@ qqid:
 qqid_list:
       qqid
     | qqid_list Comma qqid
+    ;
+
+qqidp:
+      IdentPrime
+    | qqid Dot IdentPrime
     ;
 
 
@@ -1320,6 +1333,7 @@ Semi1:         SEMICOLON { PR (";");} ;
 Slash:         SLASH { PR ("/");} NPS ;
 Subtype:       SUBTYPE { PR ("<:");} NPS ;
 Uparrow:       UPARROW { PR ("^");} NPS ;
+UparrowPrime:  UPARROWPRIME { PR ("^'");} NPS ;
 
 /* These used to do CommentPragmaAfterOpen or CommentPragmaAfterOpen2. */
 Lparen:        LPAREN { PR ("("); } NPS ;
@@ -1350,6 +1364,7 @@ Pr_Spec:       PR_SPEC     { PF ("<* SPEC",     fonts->fixedComment);} NPS ;
 
 Ident:         IDENT { PRID (&lexbuf[$1]);} NPS ;
 IdentP:	       IDENT { PF (&lexbuf[$1], fonts->procName);} NPS ;
+IdentPrime:    IDENTPRIME { PRID (&lexbuf[$1]);} NPS ; /* primed identifiers are allowed in SPEC pragmas */
 Card_const:    CARD_CONST { PR (&lexbuf[$1]);} NPS ;
 Real_const:    REAL_CONST { PR (&lexbuf[$1]);} NPS ;
 Char_const:    CHAR_CONST { PF (&lexbuf[$1], fonts->fixed);} NPS ;
@@ -1442,8 +1457,8 @@ Mut_ge:        MUT_GE { PK ("MUT_GE");} NPS ;
 Mut_gt:        MUT_GT { PK ("MUT_GT");} NPS ;
 Mut_le:        MUT_LE { PK ("MUT_LE");} NPS ;
 Mut_lt:        MUT_LT { PK ("MUT_LT");} NPS ;
-*/
 On:            ON { PK ("ON");} NPS ;
+*/
 Pred:          PRED { PK ("PRED");} NPS ;
 Protect:       PROTECT { PK ("PROTECT");} NPS ;
 Rep:           REP { PK ("REP");} NPS ;

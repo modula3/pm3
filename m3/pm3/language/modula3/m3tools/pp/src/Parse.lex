@@ -71,6 +71,7 @@
 "["		{BufferLexeme(1); return(LBRACKET);}
 "{"		{BufferLexeme(1); return(LBRACE);}
 "^"		{BufferLexeme(1); return(UPARROW);}
+"^'"		{BufferLexeme(1); return(UPARROWPRIME);}
 "="		{BufferLexeme(1); return(EQUAL);}
 "=>"		{BufferLexeme(1); return(RARROW);}
 "#"		{BufferLexeme(1); return(SHARP);}
@@ -86,12 +87,6 @@
 "}"		{BufferLexeme(1); return(RBRACE);}
 "|"		{BufferLexeme(1); return(BAR);}
 
-[a-zA-Z][a-zA-Z0-9_]*	{PTRKEYWORDENTRY tempp;
-				 if ((tempp=lookup(yytext))!=NULL){
-				        CapBufferLexeme(1);
-					return(tempp->lexval);}
-				 else {BufferLexeme(1); return(IDENT);}}
-
 [0-9]+(_[0-9A-Fa-f]+)?        {BufferLexeme(1); return(CARD_CONST);}
 
 [0-9]+"."[0-9]*([EeDdXx][-+]?[0-9]+)?/[^.] {BufferLexeme(1); return(REAL_CONST);}
@@ -104,6 +99,19 @@
 
 W[']([^'\\\001\n]|\\[0-7]{6,6}|\\x[0-9a-zA-Z]{4,4}|\\[^0-9\001])['] {
 				 BufferLexeme(1); return(STR_CONST);}
+
+%{
+/* Primed identifiers as used in SPEC pragams are difficult to handle
+   because primes introduce character literals in Modula 3 program text.
+   A primed identifier like W' cannot be handled. */
+%}
+[a-zA-Z][a-zA-Z0-9_]*[']	{BufferLexeme(1); return(IDENTPRIME);}
+
+[a-zA-Z][a-zA-Z0-9_]*	{PTRKEYWORDENTRY tempp;
+				 if ((tempp=lookup(yytext))!=NULL){
+				        CapBufferLexeme(1);
+					return(tempp->lexval);}
+				 else {BufferLexeme(1); return(IDENT);}}
 
 [\001]	{
 	BufferLexeme(0);

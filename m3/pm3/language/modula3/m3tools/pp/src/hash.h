@@ -147,14 +147,14 @@ static KEYWORDENTRY aok[] = {
 "AXIOM", AXIOM,
 /*"CONCAT", CONCAT,*/
 /*"DELETE", DELETE,*/
-"DEPENDS", DEPENDS,
+"DEPEND", DEPENDS, /* documentation differs here */
 "ENSURES", ENSURES,
 "EXISTS", EXISTS,
 "FUNC", FUNC,
 "IFF", IFF,
 "IMPLIES", IMPLIES,
 /*"INSERT", INSERT,*/
-"INV", INV,
+"INVARIANT", INV, /* documentation differs here */
 "IS", IS,
 "LET", LET,
 "MAP", MAP,
@@ -165,11 +165,11 @@ static KEYWORDENTRY aok[] = {
 "MUT_GT", MUT_GT,
 "MUT_LE", MUT_LE,
 "MUT_LT", MUT_LT,
-*/
 "ON", ON,
+*/
 "PRED", PRED,
 "PROTECT", PROTECT,
-"REP", REP,
+"ABSTRACT", REP, /* documentation differs here */
 "REQUIRES", REQUIRES,
 /*
 "SHARED", SHARED,
