@@ -13,6 +13,7 @@ IMPORT Text, IntIntTbl, IntRefTbl, Fmt, Word;
 IMPORT Scanner, Error, Module, Runtime, WebInfo;
 IMPORT M3, M3CG, M3CG_Ops, M3CG_Check;
 IMPORT Host, Target, TInt, TFloat, TWord, TargetMap, M3RT (**, RTObject **);
+FROM M3Compiler IMPORT FrontError;
 
 CONST
   Max_init_chars = 256; (* max size of a single init_chars string *)
@@ -103,7 +104,7 @@ VAR
 
 (*---------------------------------------------------------------------------*)
 
-PROCEDURE Init () =
+PROCEDURE Init () RAISES {FrontError} =
   BEGIN
     Max_alignment := Target.Alignments [LAST (Target.Alignments)];
 

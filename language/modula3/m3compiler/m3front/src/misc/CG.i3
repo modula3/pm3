@@ -9,6 +9,7 @@
 INTERFACE CG;
 
 IMPORT Target, M3CG, M3;
+FROM M3Compiler IMPORT FrontError;
 
 (*
 This interface provides a single front-end specific veneer over
@@ -46,7 +47,7 @@ CONST (* see M3CG for the interpretation of these values *)
 VAR (* maximum possible machine alignment *)
   Max_alignment: CARDINAL;
 
-PROCEDURE Init ();
+PROCEDURE Init () RAISES {FrontError};
 (* creates a fresh, initialized code generator *)
 
 (*----------------------------------------------------------- ID counters ---*)

@@ -7,7 +7,7 @@
 
 INTERFACE External;
 
-IMPORT M3ID, Module, Value;
+IMPORT M3ID, Module, Value, M3Compiler;
 
 TYPE Set <: REFANY;
 
@@ -21,6 +21,8 @@ PROCEDURE LoadImports  (s: Set;  self: Module.T);
 
 PROCEDURE GenLinkInfo  (s: Set);
 PROCEDURE GenImports   (s: Set);
+
+PROCEDURE GetImports   (s: Set): M3Compiler.IDList;
 
 PROCEDURE NeedGlobalInit (s: Set): BOOLEAN;
 PROCEDURE InitGlobals  (s: Set);

@@ -16,13 +16,16 @@ INTERFACE M3Compiler;
 IMPORT File, Fingerprint;
 IMPORT M3ID, M3CG;
 
+EXCEPTION
+  FrontError;
+
 PROCEDURE ParseImports (READONLY input : SourceFile;
                                  env   : Environment): IDList;
 (* Returns the names of the interfaces directly imported by 'input'. *)
 
 PROCEDURE Compile (READONLY input    : SourceFile;
                             env      : Environment;
-                   READONLY options  : ARRAY OF TEXT): BOOLEAN;
+                   READONLY options  : ARRAY OF TEXT): BOOLEAN RAISES {FrontError};
 
 (* Reads and compiles a Modula-3 unit from "input".
    Evironmental queries and reports are made through "env".
@@ -30,6 +33,8 @@ PROCEDURE Compile (READONLY input    : SourceFile;
    Returns "TRUE" iff the compilation succeeded with no errors.
    It is the caller's responsibility to initialize the Target interface
    prior to calling Compile. *)
+
+PROCEDURE GetImports (interface: REFANY): IDList;
 
 TYPE
   TypeID     = INTEGER;  (* A compiler generated type id. *)
@@ -71,7 +76,7 @@ TYPE
 
     note_type (type: TypeID;  imported: BOOLEAN);
 
-    init_code_generator (): M3CG.T;
+    init_code_generator (): M3CG.T RAISES {FrontError};
 
     note_webinfo (t: TEXT);
   END;
@@ -150,5 +155,6 @@ END M3Compiler.
      -load_map      generate the load map comment in the output
      -No_load_map   don't generate the load map comment in the output
 *)
- 
+
+
 

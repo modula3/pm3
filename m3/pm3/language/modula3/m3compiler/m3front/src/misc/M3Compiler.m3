@@ -6,7 +6,7 @@
 (* Last modified on Tue Dec  6 08:16:20 PST 1994 by kalsow     *)
 (*      modified on Sun Jan 21 06:56:46 1990 by muller         *)
 
-MODULE M3Compiler;
+UNSAFE MODULE M3Compiler;
 
 IMPORT Wr, Fmt, Thread(** , RTCollector, RTCollectorSRC **);
 IMPORT Token, Error, Scanner, Value, Scope, M3String, RefType;
@@ -37,7 +37,8 @@ PROCEDURE ParseImports (READONLY input : SourceFile;
 
 PROCEDURE Compile (READONLY input    : SourceFile;
                             env      : Environment;
-                   READONLY options  : ARRAY OF TEXT): BOOLEAN =
+                   READONLY options  : ARRAY OF TEXT): BOOLEAN 
+  RAISES {FrontError} =
   VAR ok: BOOLEAN;  start: Time.T;
   BEGIN
     LOCK mu DO
@@ -109,7 +110,7 @@ PROCEDURE Reset () =
   END Reset;
 
 
-PROCEDURE DoCompile () =
+PROCEDURE DoCompile () RAISES {FrontError} =
   VAR m: Module.T;  cs := M3.OuterCheckState;  m_name, filename: M3ID.T;
   BEGIN
 (***
@@ -222,6 +223,14 @@ PROCEDURE Finalize (): BOOLEAN =
 
     RETURN (errs <= 0);
   END Finalize;
+
+PROCEDURE GetImports (interface : REFANY): IDList =
+  VAR intf : Module.T;
+  BEGIN
+    intf := interface;
+   (* WITH m = NARROW(interface, Module.T) DO*)
+      RETURN Module.GetImports(intf);
+  END GetImports;
 
 BEGIN
   M3String.Initialize ();

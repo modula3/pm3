@@ -12,6 +12,7 @@ IMPORT M3, M3ID, CG, Value, ValueRep, Scope, Stmt, Error, ESet,  External;
 IMPORT Variable, Type, Procedure, Ident, M3Buf, BlockStmt;
 IMPORT Host, Token, Revelation, Coverage, Decl, Scanner, WebInfo;
 IMPORT ProcBody, Target, M3RT, Marker, M3FP, File, Tracer;
+IMPORT M3Compiler;
 
 FROM Scanner IMPORT GetToken, Fail, Match, MatchID, cur;
 
@@ -757,6 +758,11 @@ PROCEDURE IsExternal (): BOOLEAN =
   BEGIN
     RETURN (curModule # NIL) AND (curModule.external);
   END IsExternal;
+
+PROCEDURE GetImports (t: T): M3Compiler.IDList =
+  BEGIN
+    RETURN External.GetImports (t.externals);
+  END GetImports;
 
 PROCEDURE ExportScope (t: T): Scope.T =
   BEGIN

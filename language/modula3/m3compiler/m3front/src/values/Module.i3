@@ -8,7 +8,7 @@
 
 INTERFACE Module;
 
-IMPORT M3ID, Type, Value, Scope, CG;
+IMPORT M3ID, Type, Value, Scope, CG, M3Compiler;
 
 TYPE T <: Value.T;
 
@@ -27,6 +27,8 @@ PROCEDURE Compile (t: T);
 PROCEDURE IsSafe (): BOOLEAN;
 PROCEDURE IsInterface (): BOOLEAN;
 PROCEDURE IsExternal (): BOOLEAN;
+
+PROCEDURE GetImports(t: T): M3Compiler.IDList;
 
 PROCEDURE ExportScope (t: T): Scope.T;
 

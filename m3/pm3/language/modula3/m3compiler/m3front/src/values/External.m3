@@ -9,6 +9,7 @@ MODULE External;
 
 IMPORT M3, M3ID, Value, ValueRep, Token, Scope, Module, Error;
 IMPORT Type, Expr, Variable, Ident, Scanner, Runtime, CG, Host;
+IMPORT M3Compiler;
 FROM Scanner IMPORT GetToken, Match, MatchID, cur;
 
 TYPE TK = Token.T;
@@ -359,6 +360,18 @@ PROCEDURE GenImports (s: Set) =
       p := p.next;
     END;
   END GenImports;
+
+PROCEDURE GetImports (s: Set): M3Compiler.IDList =
+  VAR p : Port;
+      list : M3Compiler.IDList:= NIL;
+  BEGIN
+    p := s.imports;
+    WHILE (p # NIL) DO
+      list := NEW(M3Compiler.IDList, interface := p.module.name, next := list);
+      p := p.next;
+    END;
+    RETURN list;
+  END GetImports;
 
 (*---------------------------------------------------------------------------*)
 
