@@ -472,7 +472,7 @@ struct stat *buf;
 
   ENTER_CRITICAL;
   MAKE_WRITABLE(buf);
-  result = _fxstat(3, fd, buf);
+  result = __fstat(fd, buf);
   EXIT_CRITICAL;
   return result;
 }
@@ -719,7 +719,7 @@ struct stat *buf;
   ENTER_CRITICAL;
   MAKE_READABLE(path);
   MAKE_WRITABLE(buf);
-  result = _lxstat(3, path, buf);
+  result = __lstat(path, buf);
   EXIT_CRITICAL;
   return result;
 }
@@ -737,14 +737,14 @@ mode_t mode;
 }
 
 int mknod(path, mode, dev)
-char *path;
+const char *path;
 mode_t mode;
-int dev;
+dev_t dev;
 { int result;
 
   ENTER_CRITICAL;
   MAKE_READABLE(path);
-  result = _xmknod(1, path, mode, &dev);
+  result = __mknod(path, mode, dev);
   EXIT_CRITICAL;
   return result;
 }
@@ -1400,7 +1400,7 @@ struct stat *buf;
   ENTER_CRITICAL;
   MAKE_READABLE(path);
   MAKE_WRITABLE(buf);
-  result = _xstat(3, path, buf);
+  result = __stat(path, buf);
   EXIT_CRITICAL;
   return result;
 }

@@ -245,6 +245,8 @@ readonly proc RemovePreviousVersion() is
           [],".")
       ret = Exec(["rm", EXPORT_ROOT & "/SRPMS/" & 
           VersionName(previousVersion) & "-1.src.rpm"],[],".")
+      ret = Exec(["rm", EXPORT_ROOT & "/targzip/" & 
+          VersionName(previousVersion) & "-src.tgz"],[],".")
       ret = Exec(["rm", EXPORT_DOWNLOAD & "/" & VersionName(previousVersion) &
           ".html"],[],".")
     end
@@ -254,6 +256,11 @@ readonly proc RemovePreviousVersion() is
         ret = Exec(["rm", "-r", 
             EXPORT_BOOTSTRAP & "/" & platform & "/" & 
             VersionName(previousVersion)],[],".")
+
+        ret = Exec(["rm", "-r", 
+            EXPORT_SRC & "/" & "targzip" & "/" & 
+            VersionName(previousVersion) & "-" & platform & "-boot.tgz"],
+            [],".")
 
         if Binaries contains platform
           ret = Exec(["rm", "-r", 
@@ -276,6 +283,20 @@ end
 %
 
 readonly proc InstallNextVersion() is
+
+  %
+  % Create a pre-built tar file for the source
+  %
+
+  CheckExec(["tar", "cfz", versionName & "-src.tgz", versionName],[],
+      EXPORT_TMP_SRC,"building src.tgz failed")
+  CheckExec(["mv", EXPORT_TMP_SRC & "/" & versionName & "-src.tgz",
+      EXPORT_SRC & "/" & "targzip"],[],".","export tar source failed")
+
+  %
+  % Move the source tree
+  %
+
   ret = Exec(["rm", "-r", EXPORT_SRC & "/" & versionName],[],".")
   CheckExec(["mv", EXPORT_TMP_SRC & "/" & versionName,
       EXPORT_SRC],[],".","export source failed")
@@ -287,6 +308,23 @@ readonly proc InstallNextVersion() is
 
   foreach platform in Platforms
     if Platforms{platform}[3] 
+
+      %
+      % Create pre-built bootstrap tar file for the platform.
+      %
+
+      CheckExec(["tar", "cfz", versionName & "-" & platform & "-boot.tgz", 
+          versionName],[], EXPORT_TMP_BOOTSTRAP & "/" & platform, 
+          "building boot.tgz failed")
+      CheckExec(["mv", EXPORT_TMP_BOOTSTRAP & "/" & platform & "/" & 
+          versionName & "-" & platform & "-boot.tgz", 
+          EXPORT_SRC & "/" & "targzip"],
+          [],".","export tar boot failed")
+
+      %
+      % Move the bootstrap trees
+      %
+
       ret = Exec(["rm", "-r", 
           EXPORT_BOOTSTRAP & "/" & platform & "/" & versionName],[],".")
       CheckExec(["mv", 
@@ -361,15 +399,23 @@ readonly proc DownloadMenu() is
         "and bootstrap for the first one, and the bootstrap only for the",CR,
         "others. Finally, for some",CR,
         "platforms, you may directly use the provided pre-compiled binaries.",
-        CR)
+        CR,
+        "<P>The source, the individual bootstrap files, and the RPM files",CR,
+        "are pre-built. Thus, those with slow and unreliable network",CR,
+        "connections may want to download these by FTP and benefit from",CR,
+        "the <I>reget</I> option to continue where they left.",CR)
 
     write("<P>Source code only (requires a Modula-3 compiler): ",
         "as a compressed tar file, ",CR,
-        "<A HREF=\"",DownloadQuery(VersionName(version),"T","NONE","",""),
-        "\">",VersionName(version) & "-src.tgz","</A>",CR,
+        "<A HREF=\"../targzip/",VersionName(version),"-src.tgz\">",
+        VersionName(version) & "-src.tgz","</A>",CR,
+        "(same by <A HREF=\"ftp://m3.polymtl.ca/pub/m3/targzip/",
+        VersionName(version),"-src.tgz\">FTP</A>)",CR,
         ", or as a source RPM package, ",CR,
         "<A HREF=\"../SRPMS/",VersionName(version),"-1.src.rpm\">",
-        VersionName(version),"-1.src.rpm</A>",CR)
+        VersionName(version),"-1.src.rpm</A>",CR,
+        "(same by <A HREF=\"ftp://m3.polymtl.ca/pub/m3/SRPMS/",
+        VersionName(version),"-1.src.rpm\">FTP</A>).",CR)
 
     write("<DL>",CR)
     foreach platform in Platforms
@@ -377,10 +423,11 @@ readonly proc DownloadMenu() is
         write("<DT>",platform,"<DD>Source and bootstrap <A HREF=\"",
             DownloadQuery(VersionName(version),"T",platform,"T",""),
             "\">",VersionName(version) & "-src-" & platform & "-boot.tgz",
-            "</A>",", bootstrap only <A HREF=\"",
-            DownloadQuery(VersionName(version),"",platform,"T",""),
-            "\">",VersionName(version) & "-" & platform & "-boot.tgz",
-            "</A>",CR)
+            "</A>",", bootstrap only <A HREF=\"../targzip/",
+            VersionName(version),"-",platform,"-boot.tgz\">",
+            VersionName(version),"-",platform,"-boot.tgz</A>",CR,
+        "(same by <A HREF=\"ftp://m3.polymtl.ca/pub/m3/targzip/",
+        VersionName(version),"-",platform,"-boot.tgz\">FTP</A>)",CR)
 
         if Binaries contains platform
           write(", binaries <A HREF=\"",
@@ -392,7 +439,9 @@ readonly proc DownloadMenu() is
         if RPMBinaries contains platform
           write(", RPM binaries <A HREF=\"../binaries/",platform,
               "/",VersionName(version),"-RPMS\">",
-              VersionName(version),"-RPMS</A>",CR)
+              VersionName(version),"-RPMS</A>",CR,
+              "(same by <A HREF=\"ftp://m3.polymtl.ca/pub/m3/binaries/",
+              platform,"/",VersionName(version),"-RPMS\">FTP</A>)",CR)
         end
       end
     end

@@ -13,7 +13,6 @@ VAR
 PROCEDURE Win95(): BOOLEAN =
   BEGIN
     IF NOT inited THEN
-      inited := TRUE;
       VAR
         os_version : WinBase.OSVERSIONINFO;
         b: INTEGER;
@@ -23,6 +22,7 @@ PROCEDURE Win95(): BOOLEAN =
         <*ASSERT b # 0*>
         win95 := os_version.dwPlatformId = WinBase.VER_PLATFORM_WIN32_WINDOWS;
       END;
+      inited := TRUE;
     END;
     RETURN win95;
   END Win95;

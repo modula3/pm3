@@ -11,6 +11,8 @@
 /*     The err package implements a simple error routine.      */
 /***************************************************************/
 
+extern const char *const sys_errlist[];
+
 #include <stdio.h>
 #include <varargs.h>
 #include "SRCstdlib.h"

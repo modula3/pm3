@@ -81,6 +81,18 @@ GNU_WIN32_CONVENTIONS = [".i3", ".ic", ".is", ".io", ".m3", ".mc", ".ms",
     ".ix", ".mx", ".exe", ".dll", "NONAME.EXE","lib","\\","\r\n",":",":","","T"]
 
 %
+% In case you need to differentiate based on M3 versions you can check
+% if pm3_version is defined and call it.
+%
+
+proc pm3_version() is
+  if not defined("VERSION")
+    include("VERSION")
+  end
+  return VERSION
+end
+
+%
 % Provide for "hooks" to be called at the end of the m3makefile,
 % after all the information is set and before the real processing starts.
 %

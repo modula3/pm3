@@ -6,7 +6,7 @@ include("COMMON")
 PLATFORM_SUPPORTS_INTERNAL_BACKEND = "T"
 PLATFORM_SUPPORTS_SHARED_LIB = "T"
 
-X11ROOT = "/usr/X11/lib"
+X11ROOT = "/usr/X11R6/lib"
 OPENGLROOT = "/usr/lib"
 %INSTALL_ROOT = "/usr/local"
 

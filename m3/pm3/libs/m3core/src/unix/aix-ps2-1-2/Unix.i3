@@ -741,7 +741,7 @@ CONST (* mode *)
 
   (* lower bits used for the access permissions *)
 
-<*EXTERNAL*> PROCEDURE mknod (path: char_star; mode, dev: int): int;
+<*EXTERNAL*> PROCEDURE mknod (path: char_star; mode: int; dev: dev_t): int;
 
 
 (*** mount, umount - mount or unmount a file system ***)

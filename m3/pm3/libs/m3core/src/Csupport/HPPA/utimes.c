@@ -14,8 +14,8 @@
  * parts of the times are ignored.
  */
 int utimes(file, tvp)
-  char *file;
-  struct timeval *tvp;
+  const char *file;
+  const struct timeval tvp[2];
 { struct utimbuf t;
 
   t.actime  = tvp [0].tv_sec;

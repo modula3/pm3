@@ -7,14 +7,47 @@ readonly TARGET = "HPPA"
 include("COMMON")
 
 %INSTALL_ROOT = "/usr/local"
-X11ROOT = "/usr/lib/X11"
+X11ROOT = "/usr/X11R6/lib"
+
+PLATFORM_SUPPORTS_SHARED_LIB = "T"
+PLATFORM_SUPPORTS_MOTIF  = "TRUE"
 
 MAKELIB = [ "/bin/ar", "cru" ]
-MAKESHLIB = [ "/usr/bin/ld", "-Bshareable",  "-assert",  "pure-text" ]
+MAKESHLIB = [ "/opt/softbench/bin/ld", "-b" ]
 ASM = ["gas","-o"]         % Assembler
 
+GNU_MAKE = ["gmake"]
+M3CC_MAKE=["gmake", "BISON=yacc"]
+
+LINK = ["gcc"]            % Linker
 LINK_suffix = ["-lm", "-lBSD"]
 
-readonly PLATFORM_SUPPORTS_MOTIF  = "TRUE"
+RPATH_FLAG = "" % run time path for shared library
+
+proc m3_make_shared_lib (lib, objects, imported_libs) is
+  local lib_so   = format ("lib%s.sl", lib)
+  local cmd = [MAKESHLIB_CMD, "-o", lib_so, objects]
+
+  if VERBOSE write(cmd, CR) end
+  return exec(cmd)
+end
+
+proc m3_note_shlib(lib) is
+  if Options{"shared_lib"}[0] and PLATFORM_SUPPORTS_SHARED_LIB
+    local lib_so   = format ("lib%s.sl", lib)
+    if defined ("_all")
+      install_derived (lib_so)
+      install_link(lib_so, LIB_TO_PKG_USE & SL & PACKAGE & SL & BUILD_DIR,
+          LIB_INSTALL)
+    end
+    deriveds (lib_so, [""])
+  end
+end
+
+proc install_file (src, dest, mode) is
+  Note_install (src, dest)
+  local ret = exec(["/opt/imake/bin/install", "-c", src, dest])
+  if not equal(ret, 0) error("install failed with error code: ", ret) end
+end
 
 setDefault("","")

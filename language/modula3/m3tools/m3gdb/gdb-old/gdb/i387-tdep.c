@@ -136,9 +136,15 @@ i387_print_register (raw_regs, regnum)
       switch (regnum)
 	{
 	case FPCWD_REGNUM:
+#if FPCWD_REGNUM != FPSWD_REGNUM        
 	case FPSWD_REGNUM:
+#endif
+#if (FPCWD_REGNUM != FPTWD_REGNUM) && (FPSWD_REGNUM != FPTWD_REGNUM)
 	case FPTWD_REGNUM:
+#endif
+#if (FPCWD_REGNUM != FPOPS_REGNUM) && (FPSWD_REGNUM != FPOPS_REGNUM) && (FPTWD_REGNUM != FPOPS_REGNUM)
 	case FPOPS_REGNUM:
+#endif
 	  /* Don't print the un-modifiable bytes. */
 	  sprintf(string, "0x%04x", val & 0xffff);
 	  break;

@@ -9,13 +9,20 @@
 GENERIC INTERFACE Set(Elem);
 (* Where "Elem.T" is a type that is not an open array type and "Elem" contains
 
+| CONST Brand = <text-constant>;
 | PROCEDURE Equal(e1, e2: Elem.T): BOOLEAN;
+
+   "Brand" must be a text constant. It will be used to construct a brand for
+   any generic types instantiated with the "Set" interface. For a non-generic
+   interface, we recommend choosing the name of the interface.
 
    "Equal" must be an equivalence relation.
 
    "Equal" may be declared with a parameter mode of either "VALUE" or
    "READONLY", but not "VAR".
 *)
+
+CONST Brand = "(Set " & Elem.Brand & ")";
 
 TYPE 
   Public = OBJECT METHODS

@@ -256,18 +256,26 @@ readonly proc BootstrapTarget(target) is
       " \"LDFLAGS=${LDFLAGS}\""
 
   if equal(target,"NT386GNU")
-    header = header & 
-        "EXTRALIBS=-ladvapi32" & CR
+    header = header & "EXTRALIBS=-ladvapi32" & CR
   else
     if equal(target,"SOLsun")
       header = header & "EXTRALIBS=-lsunmath -lm" & CR
     else
-      header = header & "EXTRALIBS=-lm" & CR
+      if equal(target,"HPPA")
+        header = header & "EXTRALIBS=-lm -lBSD" & CR
+      else
+        header = header & "EXTRALIBS=-lm" & CR
+      end
     end
   end
 
   if equal(target,"SOLgnu") or equal(target,"SOLsun")
     header = header & "ASFLAGS=-s -P" & CR
+  end
+
+  if equal(target,"HPPA")
+    header = header & "AS=gas" & CR
+    header = header & "CC=gcc" & CR
   end
 
   header = header & "RANLIB=touch" & CR

@@ -39,6 +39,8 @@
 #include <varrayptr.h>
 #include <inttable.h>
 
+extern const char *const sys_errlist[]; 
+
 extern int errno;
 
 extern int sys_nerr;
