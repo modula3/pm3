@@ -1254,6 +1254,7 @@ PROCEDURE GenerateTFile(t: T) RAISES {Error} =
     units: List;
     ref: REFANY;
     d: TEXT;
+    val: QValue.T;
   BEGIN
     WalkUnits(t.interface_sources);
     WalkUnits(t.generic_interface_sources);
@@ -1284,6 +1285,10 @@ PROCEDURE GenerateTFile(t: T) RAISES {Error} =
     EXCEPT
       M3Driver.Error => CErr("Unit.PushTable");
     END;
+    (* define M3SEARCH_TABLES *)
+    val.kind := QValue.Kind.String;
+    val.int  := M3ID.Add("-T" & M3TFILE);
+    t.put(M3ID.Add("M3SEARCH_TABLES"), val);
   END GenerateTFile;
 
 PROCEDURE DoGenerateTFile(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
