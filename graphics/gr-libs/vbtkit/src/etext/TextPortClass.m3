@@ -272,8 +272,11 @@ PROCEDURE DeleteToStartOfLine (v: T): Extent =
     left := MTextUnit.StartOfLine (v.vtext.mtext, here);
   BEGIN
     IF here = left THEN
-      (* We're already at the start of line; delete one char. *)
-      RETURN v.replace (here - 1, here, "")
+      (* Already at the start of line; delete preceding newline if any. *)
+      IF here > 0
+        THEN RETURN v.replace (here - 1, here, "")
+        ELSE RETURN NotFound
+      END
     ELSE
       RETURN v.replace (left, here, "")
     END
