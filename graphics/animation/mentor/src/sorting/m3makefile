@@ -23,7 +23,7 @@ resource       ("Insertion.m3")
 resource       ("Insertion.pas")
 resource       ("InsertionVar.fv")
 
-if AT_SRC and equal (OS_TYPE, "POSIX")
+if defined("AT_SRC") and equal (OS_TYPE, "POSIX")
   /* audio assumes a MIDI device accessible through the EtherNet. */
   include_dir ("audio")
 end

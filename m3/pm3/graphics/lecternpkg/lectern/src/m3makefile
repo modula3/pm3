@@ -8,7 +8,7 @@
 /*                                                             */
 /* Makefile for Lectern                                        */
 
-if AT_SRC and equal (OS_TYPE, "POSIX")
+if defined("AT_SRC") and equal (OS_TYPE, "POSIX")
   import         ("cmon")
 end
 import         ("formsvbt")

@@ -5,7 +5,7 @@
 % Last modified on Mon Mar 21 23:13:11 PST 1994 by luca  
 %      modified on Wed Dec 22 15:07:31 PST 1993 by kalsow
 
-if AT_SRC m3_option("-O") end
+if defined("AT_SRC") m3_option("-O") end
 remove_m3_option("-w1")
 m3_option("-w2")
 
