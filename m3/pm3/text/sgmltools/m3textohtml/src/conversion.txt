@@ -1,0 +1,939 @@
+Processing graphics/animation/anim3D/src/AmbientLightGO.i3
+Unknown LaTeX command \begin{verbatim}
+Unknown LaTeX command \begin{verbatim}
+Processing graphics/animation/anim3D/src/AnimHandle.i3
+Processing graphics/animation/anim3D/src/BoxGO.i3
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \begin{verbatim}
+Unknown LaTeX command \begin{verbatim}
+Processing graphics/animation/anim3D/src/CameraGO.i3
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Processing graphics/animation/anim3D/src/ConeGO.i3
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \psfig
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \begin{verbatim}
+Unknown LaTeX command \begin{verbatim}
+Processing graphics/animation/anim3D/src/CylinderGO.i3
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \psfig
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \begin{verbatim}
+Unknown LaTeX command \begin{verbatim}
+Processing graphics/animation/anim3D/src/DiskGO.i3
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \psfig
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \begin{verbatim}
+Unknown LaTeX command \begin{verbatim}
+Processing graphics/animation/anim3D/src/GO.i3
+Processing graphics/animation/anim3D/src/GraphicsBasePrivate.i3
+Unknown LaTeX command \
+Processing graphics/animation/anim3D/src/GroupGO.i3
+Unknown character escape sequence \[
+Unknown LaTeX command \circ
+Unknown LaTeX command \left\
+Unknown LaTeX command \begin{array}
+Nested TeX groups not handled
+Unknown LaTeX command \mbox
+Nested TeX groups not handled
+Found } while not in a TeX group
+Unknown LaTeX command \\
+Unknown LaTeX command \mbox
+Unknown LaTeX command \\
+Unknown LaTeX command \oplus
+Unknown LaTeX command \mbox
+Unknown LaTeX command \begin{array}
+Unknown LaTeX command \right
+Unknown character escape sequence \]
+Unknown LaTeX command \oplus
+Unknown LaTeX command \oplus
+Unknown LaTeX command \times
+Unknown LaTeX command \oplus
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \psfig
+Unknown LaTeX command \begin{center}
+Processing graphics/animation/anim3D/src/KeyCB.i3
+Processing graphics/animation/anim3D/src/LightGO.i3
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Processing graphics/animation/anim3D/src/LineGO.i3
+Unknown LaTeX command \type
+Unknown LaTeX command \begin{verbatim}
+Unknown LaTeX command \begin{verbatim}
+Processing graphics/animation/anim3D/src/MarkerGO.i3
+Unknown LaTeX command \type
+Processing graphics/animation/anim3D/src/Matrix4.i3
+Unknown LaTeX command \begin{verbatim}
+Unknown LaTeX command \begin{verbatim}
+Processing graphics/animation/anim3D/src/MouseCB.i3
+Processing graphics/animation/anim3D/src/OrthoCameraGO.i3
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \psfig
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \begin{verbatim}
+Unknown LaTeX command \begin{verbatim}
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Processing graphics/animation/anim3D/src/PerspCameraGO.i3
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \psfig
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \begin{verbatim}
+Unknown LaTeX command \begin{verbatim}
+Processing graphics/animation/anim3D/src/Point3.i3
+Unknown LaTeX command \times
+Processing graphics/animation/anim3D/src/PointLightGO.i3
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown character escape sequence \[
+Unknown LaTeX command \frac
+Unknown character escape sequence \]
+Unknown character escape sequence \[
+Unknown LaTeX command \frac
+Unknown character escape sequence \]
+Unknown LaTeX command \begin{verbatim}
+Unknown LaTeX command \begin{verbatim}
+Processing graphics/animation/anim3D/src/PolygonGO.i3
+Unknown LaTeX command \sl
+Processing graphics/animation/anim3D/src/PositionCB.i3
+Processing graphics/animation/anim3D/src/QuadMeshGO.i3
+Unknown LaTeX command \times
+Unknown LaTeX command \times
+Processing graphics/animation/anim3D/src/RootGO.i3
+Processing graphics/animation/anim3D/src/RootGOPrivate.i3
+Unknown LaTeX command \
+Processing graphics/animation/anim3D/src/SphereGO.i3
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \begin{verbatim}
+Unknown LaTeX command \begin{verbatim}
+Processing graphics/animation/anim3D/src/SpotLightGO.i3
+Unknown LaTeX command \interface
+Unknown LaTeX command \
+Unknown LaTeX command \alpha
+Unknown LaTeX command \gamma
+Unknown LaTeX command \beta
+Unknown LaTeX command \rm
+Unknown LaTeX command \gamma
+Unknown LaTeX command \beta
+Unknown LaTeX command \gamma
+Unknown LaTeX command \begin{verbatim}
+Unknown LaTeX command \begin{verbatim}
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Processing graphics/animation/anim3D/src/SurfaceGO.i3
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Processing graphics/animation/anim3D/src/TorusGO.i3
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \psfig
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \begin{verbatim}
+Unknown LaTeX command \begin{verbatim}
+Processing graphics/animation/anim3D/src/VectorLightGO.i3
+Unknown LaTeX command \begin{verbatim}
+Unknown LaTeX command \begin{verbatim}
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Unknown LaTeX command \type
+Processing graphics/animation/anim3D/src/Win_OpenGL_Base.i3
+Unknown LaTeX command \type
+Processing graphics/animation/anim3D/src/X_OpenGL_Base.i3
+Unknown LaTeX command \type
+Processing graphics/animation/anim3D/src/X_PEX_Base.i3
+Unknown LaTeX command \type
+Processing graphics/games/bicycle/src/ZShape.i3
+Processing graphics/lecternpkg/buildlectern/src/FromPS.i3
+Processing graphics/animation/codeview/src/CodeView.i3
+Processing graphics/animation/codeview/src/oldCodeView.i3
+Processing graphics/forms/formsedit/src/FormsEditVBT.i3
+Processing graphics/forms/formsvbt/src/FormsVBT.i3
+Citation to TrestleTutorial
+Ref to realize
+Unknown LaTeX command \label
+Ref to ap:longcatalog
+Unknown LaTeX command \label
+Found } while not in a TeX group
+Unknown LaTeX command \vspace
+Unknown LaTeX command \vspace
+Found } while not in a TeX group
+Citation to XSpec
+Unknown LaTeX command \label
+Unknown LaTeX command \label
+Unknown LaTeX command \label
+Processing network/www/http/src/HTTPApp.i3
+Processing graphics/lecternpkg/lectern/src/FileBrowserVBT.i3
+Unknown LaTeX command \label
+Unknown LaTeX command \label
+Ref to FBHelper
+Processing graphics/lecternpkg/lectern/src/MyFileBrowserVBT.i3
+Unknown LaTeX command \label
+Unknown LaTeX command \label
+Ref to FBHelper
+Processing graphics/lecternpkg/lecterntohtml/src/FSPosix.i3
+Processing libs/libm3/src/atom/Atom.i3
+Processing libs/libm3/src/fmtlex/Fmt.i3
+Citation to Steele
+Citation to Gay
+Processing libs/libm3/src/fmtlex/Lex.i3
+Processing libs/libm3/src/fmtlex/OldFmt.i3
+Processing libs/libm3/src/fmtlex/OldLex.i3
+Processing libs/libm3/src/formatter/Formatter.i3
+Processing libs/libm3/src/geometry/Path.i3
+Processing libs/libm3/src/geometry/Trapezoid.i3
+Processing libs/libm3/src/list/List.ig
+Processing libs/libm3/src/list/ListSort.ig
+Processing libs/libm3/src/os/Common/FS.i3
+Processing libs/libm3/src/os/Common/File.i3
+Processing libs/libm3/src/os/Common/OSError.i3
+Processing libs/libm3/src/os/Common/Pathname.i3
+Processing libs/libm3/src/os/Common/Pipe.i3
+Processing libs/libm3/src/os/Common/Process.i3
+Processing libs/libm3/src/os/Common/RegularFile.i3
+Processing libs/libm3/src/os/Common/Terminal.i3
+Processing libs/libm3/src/params/Env.i3
+Processing libs/libm3/src/params/Params.i3
+Processing libs/libm3/src/pickle/Pickle.i3
+Processing libs/libm3/src/pqueue/PQueue.ig
+Processing libs/libm3/src/pqueue/PQueueRep.ig
+Processing libs/libm3/src/random/Common/Random.i3
+Citation to Knuth:Vol2
+Processing libs/libm3/src/random/Common/RandomPerm.i3
+Processing libs/libm3/src/rw/Common/FileRd.i3
+Processing libs/libm3/src/rw/Common/FileWr.i3
+Processing libs/libm3/src/rw/Common/IO.i3
+Processing libs/libm3/src/rw/Common/MsgRd.i3
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Processing libs/libm3/src/rw/Common/MsgWr.i3
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Processing libs/libm3/src/rw/Common/Rd.i3
+Processing libs/libm3/src/rw/Common/Stdio.i3
+Processing libs/libm3/src/rw/Common/Wr.i3
+Processing libs/libm3/src/sequence/Sequence.ig
+Processing libs/libm3/src/sort/ArraySort.ig
+Citation to Sedgewick:Alg
+Processing libs/libm3/src/sortedtable/SortedTable.ig
+Citation to Aragon
+Processing libs/libm3/src/statistics/Stat.i3
+Processing libs/libm3/src/sx/Sx.i3
+Unknown LaTeX command \def\ttSlashBackslash
+Nested TeX groups not handled
+Nested TeX groups not handled
+Found } while not in a TeX group
+Unknown LaTeX command \ttSlashBackslash
+Found } while not in a TeX group
+Processing libs/libm3/src/table/Table.ig
+Processing libs/libm3/src/types/ASCII.i3
+Processing libs/m3core/src/C/Common/M3toC.i3
+Processing libs/m3core/src/fingerprint/Fingerprint.i3
+Citation to Rabin
+Citation to Broder
+Processing libs/m3core/src/float/Common/Float.ig
+Unknown LaTeX command \hbox
+Unknown LaTeX command \cdot
+Unknown LaTeX command \hbox
+Unknown LaTeX command \hbox
+Unknown LaTeX command \hbox
+Unknown LaTeX command \
+Citation to Steele
+Citation to Gay
+Processing libs/m3core/src/float/DS3100/FloatMode.i3
+Processing libs/m3core/src/float/IEEE-default/FloatMode.i3
+Processing libs/m3core/src/float/IRIX5/FloatMode.i3
+Processing libs/m3core/src/float/SOLsun/FloatMode.i3
+Processing libs/m3core/src/float/SPARC/FloatMode.i3
+Processing libs/m3core/src/float/SUN386/FloatMode.i3
+Processing libs/m3core/src/float/VAX/FloatMode.i3
+Processing libs/m3core/src/runtime/common/RTAllocator.i3
+Processing libs/m3core/src/runtime/common/RTCollector.i3
+Processing libs/m3core/src/runtime/common/RTCollectorSRC.i3
+Processing libs/m3core/src/runtime/common/RTHeap.i3
+Processing libs/m3core/src/runtime/common/RTType.i3
+Processing libs/m3core/src/runtime/common/RTTypeFP.i3
+Processing libs/m3core/src/thread/Common/Thread.i3
+Processing libs/m3core/src/time/Common/Date.i3
+Processing libs/m3core/src/time/Common/FmtTime.i3
+Processing libs/m3core/src/time/Common/Tick.i3
+Unknown LaTeX command \hbox
+Unknown LaTeX command \hbox
+Processing libs/m3core/src/time/Common/Time.i3
+Processing libs/m3core/src/weakref/WeakRef.i3
+Unknown LaTeX command \
+Unknown LaTeX command \
+Processing language/modula3/m3tools/m3markup/src/XFormat.i3
+Processing language/modula3/m3compiler/m3middle/src/M3File.i3
+Processing language/modula3/m3compiler/m3middle/src/Target.i3
+Processing language/modula3/m3compiler/m3tests/src/c1/c130/BuffOWr.i3
+Processing language/modula3/m3tools/m3tk/src/ast/M3AST.i3
+Processing language/modula3/m3tools/m3tk/src/ast/M3AST_AS.i3
+Processing language/modula3/m3tools/m3tk/src/ast/M3AST_LX.i3
+Processing language/modula3/m3tools/m3tk/src/ast/M3AST_PL.i3
+Processing language/modula3/m3tools/m3tk/src/ast/M3AST_SM.i3
+Processing language/modula3/m3tools/m3tk/src/ast/M3AST_TM.i3
+Processing language/modula3/m3tools/m3tk/src/astdisplay/StdFormat.i3
+Processing language/modula3/m3tools/m3tk/src/files/Common/M3DirFindFile.i3
+Processing language/modula3/m3tools/m3tk/src/files/Common/M3PathElem.i3
+Processing language/modula3/m3tools/m3tk/src/files/Common/M3PathElemList.i3
+Processing language/modula3/m3tools/m3tk/src/files/Common/M3PathFile.i3
+Processing language/modula3/m3tools/m3tk/src/gast/AST.i3
+Processing language/modula3/m3tools/m3tk/src/gast/ASTCopy.i3
+Processing language/modula3/m3tools/m3tk/src/gast/ASTWalk.i3
+Processing language/modula3/m3tools/m3tk/src/gast/AST_CopyRep.i3
+Processing language/modula3/m3tools/m3tk/src/gast/AST_Iter.i3
+Processing language/modula3/m3tools/m3tk/src/misc/M3Args.i3
+Processing language/modula3/m3tools/m3tk/src/misc/M3Args_LM3.i3
+Processing language/modula3/m3tools/m3tk/src/pl/M3LMain.i3
+Processing language/modula3/m3tools/m3tk/src/syn/M3CHash.i3
+Processing language/modula3/m3tools/m3tk/src/syn/M3CLex.i3
+Processing language/modula3/m3tools/m3tk/src/syn/M3CParse.i3
+Unknown LaTeX command \begin{}
+Found } while not in a TeX group
+Processing language/modula3/m3tools/m3tk/src/syn/M3CToken.i3
+Unknown LaTeX command \extension
+Processing language/modula3/m3tools/m3tk/src/toolframe/M3PathTool.i3
+Processing graphics/animation/mentor/src/kpaths/ShortestPath.i3
+Processing graphics/animation/mentor/src/kpaths/ShortestPathNoZeus.i3
+Processing graphics/animation/mg/src/R2Path.i3
+Processing network/netobjects/netobj/src/netobjrt/NetObj.i3
+Unknown LaTeX command \ttindex
+Unknown LaTeX command \ttindex
+Unknown LaTeX command \ttindex
+Unknown LaTeX command \ttindex
+Unknown LaTeX command \ttindex
+Unknown LaTeX command \ttindex
+Processing network/netobjects/netobj/src/netobjrt/NetObjNotifier.i3
+Unknown LaTeX command \ttindex
+Processing network/netobjects/netobj/src/netobjrt/NetObjRT.i3
+Processing network/netobjects/netobj/src/netobjrt/NetStream.i3
+Unknown LaTeX command \ttindex
+Unknown LaTeX command \ttindex
+Unknown LaTeX command \ttindex
+Unknown LaTeX command \ttindex
+Processing network/netobjects/netobj/src/netobjrt/SpecialObj.i3
+Processing network/netobjects/netobj/src/netobjrt/StubConn.i3
+Unknown LaTeX command \ttindex
+Citation to Modula3
+Processing network/netobjects/netobj/src/netobjrt/StubLib.i3
+Unknown LaTeX command \ttindex
+Unknown LaTeX command \ttindex
+Unknown LaTeX command \ttindex
+Unknown LaTeX command \ttindex
+Unknown LaTeX command \ttindex
+Unknown LaTeX command \ttindex
+Unknown LaTeX command \ttindex
+Unknown LaTeX command \ttindex
+Unknown LaTeX command \ttindex
+Unknown LaTeX command \ttindex
+Unknown LaTeX command \ttindex
+Unknown LaTeX command \ttindex
+Unknown LaTeX command \ttindex
+Unknown LaTeX command \ttindex
+Unknown LaTeX command \ttindex
+Processing network/netobjects/netobj/src/netobjrt/Transport.i3
+Unknown LaTeX command \ttmindex
+Nested TeX groups not handled
+Unknown LaTeX command \rm
+Found } while not in a TeX group
+Unknown LaTeX command \ttmindex
+Nested TeX groups not handled
+Unknown LaTeX command \rm
+Found } while not in a TeX group
+Unknown LaTeX command \ttmindex
+Nested TeX groups not handled
+Unknown LaTeX command \rm
+Found } while not in a TeX group
+Unknown LaTeX command \ttmindex
+Nested TeX groups not handled
+Unknown LaTeX command \rm
+Found } while not in a TeX group
+Unknown LaTeX command \ttindex
+Unknown LaTeX command \ttindex
+Processing network/netobjects/netobj/src/netobjrt/Voucher.i3
+Processing network/netobjects/netobj/src/netobjrt/WireRep.i3
+Processing network/netobjects/netobj/src/NetObjMon.i3
+Processing language/m3obliq/obliqprint/src/ObliqPrinter.i3
+Processing graphics/lecternpkg/ocr/src/Common/OCR.i3
+Processing libs/parseparams/src/ParseParams.i3
+Processing network/mail/postcard/src/MailUtilities.i3
+Processing language/modula3/m3tools/pp/src/NewFormatter.i3
+Processing libs/realgeometry/src/RealPath.i3
+Processing graphics/sharedboard/board/src/Board.i3
+Processing graphics/sharedboard/board/src/BoardServer.i3
+Processing graphics/sharedboard/board/src/Callback.i3
+Processing graphics/sharedboard/board/src/Item.i3
+Processing graphics/sharedboard/boardclient/src/View.i3
+Processing graphics/sharedboard/boardclient/src/Win.i3
+Processing graphics/sharedboard/boardserver/src/NotifyQueue.i3
+Processing database/stableobjects/stable/example/src/Fib.i3
+Processing database/stableobjects/stable/src/LogManager.i3
+Processing database/stableobjects/stable/src/Stable.ig
+Processing database/stableobjects/stable/src/StableLog.i3
+Unknown LaTeX command \
+Processing database/stableobjects/stable/src/StableRep.ig
+Processing graphics/gr-libs/ui/src/vbt/Trestle.i3
+Processing graphics/gr-libs/ui/src/vbt/VBTPatch.i3
+Processing graphics/gr-libs/ui/src/vbt/VBTRep.i3
+Processing graphics/gr-libs/ui/src/split/ComposeKey.i3
+Processing graphics/gr-libs/ui/src/split/DblBufferVBT.i3
+Processing graphics/gr-libs/vbtkit/src/color/Color.i3
+Processing graphics/gr-libs/vbtkit/src/color/ColorName.i3
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \begin{tt}
+Unknown LaTeX command \\
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \\
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \\
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \\
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \\
+Unknown LaTeX command \dag
+Unknown LaTeX command \\
+Unknown LaTeX command \ddag
+Unknown LaTeX command \dag
+Unknown LaTeX command \\
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \\
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \\
+Unknown LaTeX command \ddag
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \\
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \\
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \\
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \\
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \\
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \\
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \\
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \\
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \\
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \\
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \\
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \\
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \\
+Unknown LaTeX command \dag
+Unknown LaTeX command \dag
+Unknown LaTeX command \\
+Unknown LaTeX command \dag
+Unknown LaTeX command \\
+Unknown LaTeX command \begin{tt}
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \dag
+Unknown LaTeX command \ddag
+Unknown LaTeX command \dots
+Unknown LaTeX command \dots
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \\
+Unknown LaTeX command \hline
+Unknown LaTeX command \strut\begin
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \hline
+Unknown LaTeX command \strut\begin
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \hline
+Unknown LaTeX command \strut\begin
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \vcenter
+Unknown LaTeX command \hbox
+Nested TeX groups not handled
+Unknown LaTeX command \strut
+Unknown LaTeX command \hbox
+Unknown LaTeX command \strut
+Found } while not in a TeX group
+Unknown LaTeX command \\
+Unknown LaTeX command \hline
+Unknown LaTeX command \strut\begin
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \vcenter
+Unknown LaTeX command \hbox
+Nested TeX groups not handled
+Unknown LaTeX command \strut
+Unknown LaTeX command \hbox
+Unknown LaTeX command \strut
+Found } while not in a TeX group
+Unknown LaTeX command \\
+Unknown LaTeX command \hline
+Unknown LaTeX command \strut\begin
+Unknown LaTeX command \\
+Unknown LaTeX command \hline
+Unknown LaTeX command \strut\begin
+Unknown LaTeX command \\
+Unknown LaTeX command \hline
+Unknown LaTeX command \strut\begin
+Unknown LaTeX command \\
+Unknown LaTeX command \hline
+Unknown LaTeX command \strut\begin
+Unknown LaTeX command \\
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \it\
+Unknown LaTeX command \\
+Unknown LaTeX command \hline
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \begin{center}
+Processing graphics/gr-libs/vbtkit/src/lego/AnchorHelpSplit.i3
+Processing graphics/gr-libs/vbtkit/src/lego/AnchorHelpVBT.i3
+Processing graphics/gr-libs/vbtkit/src/lego/AnchorSplit.i3
+Processing graphics/gr-libs/vbtkit/src/lego/ChoiceVBT.i3
+Processing graphics/gr-libs/vbtkit/src/lego/FeedbackVBT.i3
+Processing graphics/gr-libs/vbtkit/src/lego/FileBrowserVBT.i3
+Unknown LaTeX command \label
+Unknown LaTeX command \label
+Ref to FBHelper
+Processing graphics/gr-libs/vbtkit/src/lego/FlexVBT.i3
+Ref to flexvbt
+Processing graphics/gr-libs/vbtkit/src/lego/Image.i3
+Unknown LaTeX command \frac
+Unknown LaTeX command \frac
+Unknown LaTeX command \verb
+Unknown LaTeX command \verb
+Unknown LaTeX command \verb
+Unknown LaTeX command \verb
+Processing graphics/gr-libs/vbtkit/src/lego/ListVBT.i3
+Unknown LaTeX command \linebreak
+Found } while not in a TeX group
+Unknown LaTeX command \display
+Nested TeX groups not handled
+Unknown LaTeX command \leq
+Found } while not in a TeX group
+Processing graphics/gr-libs/vbtkit/src/lego/MarginFeedbackVBT.i3
+Ref to fig:marginfeedbacks
+Processing graphics/gr-libs/vbtkit/src/lego/MultiClass.i3
+Processing graphics/gr-libs/vbtkit/src/lego/MultiSplit.i3
+Unknown LaTeX command \sloppy
+Processing graphics/gr-libs/vbtkit/src/lego/ReactivityVBT.i3
+Processing graphics/gr-libs/vbtkit/src/lego/ScrollerVBT.i3
+Processing graphics/gr-libs/vbtkit/src/lego/ScrollerVBTClass.i3
+Unknown LaTeX command \dots
+Processing graphics/gr-libs/vbtkit/src/lego/Shadow.i3
+Ref to fig:shadows
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \\
+Unknown LaTeX command \hline
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \begin{center}
+Ref to ShadowedFeedbackVBTSection
+Processing graphics/gr-libs/vbtkit/src/lego/ShadowedBarVBT.i3
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \hline
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \\
+Unknown LaTeX command \begin{center}
+Processing graphics/gr-libs/vbtkit/src/lego/SourceVBT.i3
+Processing graphics/gr-libs/vbtkit/src/lego/SplitterVBT.i3
+Processing graphics/gr-libs/vbtkit/src/lego/ViewportVBT.i3
+Processing graphics/gr-libs/vbtkit/src/lego/ZChassisVBT.i3
+Ref to fig:zchassis
+Ref to ZChildVBTSection
+Ref to fig:zchassis
+Processing graphics/gr-libs/vbtkit/src/lego/oldViewportVBT.i3
+Processing graphics/gr-libs/vbtkit/src/etext/EmacsModel.i3
+Ref to MetaOptionKeys
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \begin{tabbing}
+Unknown character escape sequence \=
+Unknown LaTeX command \kill
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \begin{tabbing}
+Unknown LaTeX command \begin{center}
+Processing graphics/gr-libs/vbtkit/src/etext/ISOChar.i3
+Processing graphics/gr-libs/vbtkit/src/etext/IvyModel.i3
+Citation to IvyRefman
+Ref to MetaOptionKeys
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \begin{tabbing}
+Unknown character escape sequence \=
+Unknown LaTeX command \kill
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \begin{tabbing}
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \begin{tabbing}
+Unknown character escape sequence \=
+Unknown character escape sequence \=
+Unknown LaTeX command \kill
+Unknown character escape sequence \>
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown character escape sequence \>
+Unknown LaTeX command \begin{tabbing}
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \label
+Processing graphics/gr-libs/vbtkit/src/etext/KeyFilter.i3
+Unknown LaTeX command \copyright
+Unknown LaTeX command \c
+Unknown LaTeX command \copyright
+Unknown character escape sequence \`
+Unknown character escape sequence \`
+Processing graphics/gr-libs/vbtkit/src/etext/KeyTrans.i3
+Processing graphics/gr-libs/vbtkit/src/etext/MTextUnit.i3
+Processing graphics/gr-libs/vbtkit/src/etext/MacModel.i3
+Missing argument for \cite
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \begin{tabbing}
+Unknown character escape sequence \=
+Unknown LaTeX command \kill
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown LaTeX command \begin{tabbing}
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \copyright
+Unknown LaTeX command \ddag
+Unknown character escape sequence \'
+Ref to MacExtendedCharacters
+Processing graphics/gr-libs/vbtkit/src/etext/TextPort.i3
+Ref to ReplaceMode
+Ref to ReplaceMode
+Ref to EmacsModel
+Ref to XtermModel
+Unknown LaTeX command \label
+Unknown LaTeX command \label
+Unknown LaTeX command \label
+Ref to TextEditVBTSection
+Processing graphics/gr-libs/vbtkit/src/etext/TextPortClass.i3
+Ref to TextPortKeybindings
+Ref to TextPortSelections
+Ref to TextPortHighlighting
+Processing graphics/gr-libs/vbtkit/src/etext/TypescriptVBT.i3
+Ref to ReplaceMode
+Ref to ReplaceMode
+Processing graphics/gr-libs/vbtkit/src/etext/XtermModel.i3
+Unknown LaTeX command \begin{center}
+Unknown LaTeX command \begin{tabbing}
+Unknown character escape sequence \=
+Unknown LaTeX command \kill
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \\
+Unknown character escape sequence \>
+Unknown LaTeX command \begin{tabbing}
+Unknown LaTeX command \begin{center}
+Processing graphics/gr-libs/vbtkit/src/mtext/MText.i3
+Processing graphics/gr-libs/vbtkit/src/vbtkitutils/AutoRepeat.i3
+Processing graphics/gr-libs/vbtkit/src/vbtkitutils/Rsrc.i3
+Processing graphics/gr-libs/vbtkit/src/vbtkitutils/XParam.i3
+Processing graphics/gr-libs/vbtkit/src/vbtkitutils/XTrestle.i3
+Citation to XWindowSystem
+Processing graphics/gr-libs/vbtkit/src/vtext/VText.i3
+Unknown LaTeX command \t
+Unknown character escape sequence \0
+Unknown LaTeX command \t
+Processing language/m3obliq/visualobliq/src/Attributes.i3
+Unknown LaTeX command \n
+Processing language/m3obliq/visualobliq/src/GenerateObliq.i3
+Processing network/www/webcard/src/MailUtilities.i3

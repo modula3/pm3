@@ -38,17 +38,15 @@ TYPE
       
 (* The "nextMsg" methods affects the abstract reader state as follows:
     
-\begin{tabular}{ll}
-        & \\
-        "len(rd)"          &   is the length of the next message \\
-        "src(rd)"          &   is the contents of the next message \\
-        "cur(rd)"          &   is zero \\
-        "avail(rd)"        &   is unspecified \\
-        "closed(rd)"       &   is unchanged \\ 
-        "seekable(rd)"     &   is unchanged \\
-        "intermittent(rd)" &   is unchanged \\
-        & \\
-\end{tabular}
+<TABLE>
+<TR>    "len(rd)"          <TD>   is the length of the next message
+<TR>    "src(rd)"          <TD>   is the contents of the next message
+<TR>    "cur(rd)"          <TD>   is zero
+<TR>    "avail(rd)"        <TD>   is unspecified
+<TR>    "closed(rd)"       <TD>   is unchanged
+<TR>    "seekable(rd)"     <TD>   is unchanged
+<TR>    "intermittent(rd)" <TD>   is unchanged
+</TABLE>
 
    Message reader buffers must be word-aligned in memory. More
    precisely, if byte "i" in the data stream is stored in the

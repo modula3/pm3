@@ -8,7 +8,11 @@
 
 (* "SortedTable" is a generic interface defining partial maps over
    a totally ordered domain.
-   \index{map!updatable}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>map</SPAN>
+<SPAN CLASS=INDEX.KEY>updatable</SPAN>
+</SPAN>
+
 *)
 
 GENERIC INTERFACE SortedTable(Key, Tbl);
@@ -82,7 +86,7 @@ END SortedTable.
    is in decreasing order.
 
    The type "Default" is an implementation of "T" using randomized
-   heap-ordered binary trees or ``treaps'' (see \cite{Aragon}).  In
+   heap-ordered binary trees or ``treaps'' (see <A REL=BIB.ENTRY HREF="../../../html/references.html#Aragon"> [Aragon] </A>).  In
    this implementation, seeking forward (relative to the iterator's
    order) is more efficient than seeking backward.  If a forward seek
    skips over "d" key-value pairs, the expected time for the seek is

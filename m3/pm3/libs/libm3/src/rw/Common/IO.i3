@@ -43,9 +43,9 @@ PROCEDURE GetLine(rd: Rd.T := NIL): TEXT RAISES {Error};
 (* A line of text is either zero or more characters terminated by a
    line break, or one or more characters terminated by an end-of-file.
    In the former case, "GetLine" consumes the line break but does not
-   include it in the returned value.  A line break is either {\tt
-   \char'42\char'134n\char'42} or {\tt
-   \char'42\char'134r\char'134n\char'42}. *)
+   include it in the returned value.  A line break is either <TT>
+   &#42;&#134;n&#42;</TT> or <TT>
+   &#42;&#134;r&#134;n&#42;</TT>. *)
 
 PROCEDURE GetChar(rd: Rd.T := NIL): CHAR RAISES {Error};
 (* Read the next character from "rd" and return it. *)

@@ -6,6 +6,7 @@
 %      modified on Mon Apr 26 13:38:32 PDT 1993 by mcjones
 
 Generic_module("Table")
+HtmlGenericInterface("Table")
 
 template ("table")
 

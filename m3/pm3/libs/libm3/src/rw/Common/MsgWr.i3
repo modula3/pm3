@@ -34,17 +34,15 @@ TYPE
 
 (* The "nextMsg" method affects the abstract writer state as follows:
       
-\begin{tabular}{ll}
-        & \\
-          "len(wr)"      &      is zero \\
-          "c(wr)"        &      is empty \\
-          "cur(wr)"      &      is zero \\
-          "target(wr)"   &      is empty \\
-          "closed(wr)"   &      is unchanged \\
-          "seekable(wr)" &      is unchanged \\
-          "buffered(wr)" &      is unchanged \\
-        & \\
-\end{tabular}
+<TABLE>
+<TR>      "len(wr)"      <TD>      is zero
+<TR>      "c(wr)"        <TD>      is empty
+<TR>      "cur(wr)"      <TD>      is zero
+<TR>      "target(wr)"   <TD>      is empty
+<TR>      "closed(wr)"   <TD>      is unchanged
+<TR>      "seekable(wr)" <TD>      is unchanged
+<TR>      "buffered(wr)" <TD>      is unchanged
+</TABLE>
 
    Message writer buffers must be word-aligned in memory. More
    precisely, if byte "i" in the data stream is stored in the

@@ -17,7 +17,10 @@
 |
 | List =  {Sx}.
 
-   \index{symbolic expression}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>symbolic expression</SPAN>
+</SPAN>
+
 
    A "Char" is a Modula-3 character literal; the corresponding "Sx.T"
    is of type "REF CHAR".
@@ -39,12 +42,11 @@
    An "Atom" is either (1) a Modula-3 identifier, or (2) a non-empty
    sequence of characters from the set
 
-|  ! # $ % & * + - . / : < = > ? @ [ ] ^ _ { } `{\tt \char'176}`
+|  ! # $ % & * + - . / : < = > ? @ [ ] ^ _ { } ~
 
    or (3) a sequence of characters and escape sequences surrounded by
    vertical bars ("|"s).  The escape sequences are the same as those
-   allowed in Modula-3 text literals, with the addition of
-   {\def\ttSlashBackslash{{\tt \char'134\char'174}} \ttSlashBackslash}
+   allowed in Modula-3 text literals, with the addition of \|
    to allow an atom to contain "|".  In all three cases, the
    corresponding "Sx.T" is an "Atom.T".
 
@@ -110,8 +112,8 @@ PROCEDURE FromBool(b: BOOLEAN): Atom.T;
    "Sx.T". *)
 
 VAR (*CONST*) True, False: Atom.T;
-(* {\tt True = Atom.FromText(\char'42TRUE\char'42)},
-    {\tt False = Atom.FromText(\char'42FALSE\char'42)}. *)
+(* <TT>True = Atom.FromText(&#42;TRUE&#42;)</TT>,
+    <TT>False = Atom.FromText(&#42;FALSE&#42;)</TT>. *)
 
 PROCEDURE Read(rd: Rd.T; syntax: Syntax := NIL): T
   RAISES {ReadError, Rd.EndOfFile, Thread.Alerted};

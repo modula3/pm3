@@ -5,7 +5,11 @@
 (* Last modified on Mon Nov  8 17:00:45 PST 1993 by mcjones                  *)
 (*      modified on Fri Feb  5 15:45:03 PST 1993 by kalsow                   *)
 
-(* \index{sorting!arrays} *)
+(* <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>sorting</SPAN>
+<SPAN CLASS=INDEX.KEY>arrays</SPAN>
+</SPAN>
+ *)
 
 GENERIC INTERFACE ArraySort(Elem);
 (* Where "Elem.T" is a type that is not an open array type and "Elem"
@@ -30,12 +34,12 @@ END ArraySort.
 | cmp(a[i], a[j]) <= 0.
    
    The algorithm used is QuickSort:
-   \begin{itemize}
-   \item It is not stable.
-   \item On average, it requires "O(N ln N)" comparison and assignment
+   <UL>
+   <LI>It is not stable.
+   <LI>On average, it requires "O(N ln N)" comparison and assignment
          operations.  In the worst case it may require "O(N*N)" operations.
-   \end{itemize}
+   </UL>
 
-   For an expanded description of QuickSort, see \cite{Sedgewick:Alg}.
+   For an expanded description of QuickSort, see <A REL=BIB.ENTRY HREF="../../../html/references.html#Sedgewick:Alg"> [Sedgewick:Alg] </A>.
 *)
 

@@ -6,8 +6,15 @@
 (*      modified on Sat Aug  3 00:45:49 1991 by kalsow         *)
 
 (* A "FileWr.T", or file writer, is a writer on a "File.T".
-   \index{buffered file I/O}
-   \index{file!buffered I/O}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>buffered file I/O</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>file</SPAN>
+<SPAN CLASS=INDEX.KEY>buffered I/O</SPAN>
+</SPAN>
+
 *)
      
 INTERFACE FileWr;

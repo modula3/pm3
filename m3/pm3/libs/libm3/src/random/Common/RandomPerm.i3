@@ -76,8 +76,8 @@ TYPE
    "size(p)=n", "index(p)=0", and "perm(p)" containing a pseudo-random
    permutation that depends on "r" and the subtype. *)
 
-(* "HighQuality" permutations use Algorithm 3.4.2P of Knuth's {\it
-    Seminumerical Algorithms} (second edition), and thus require space
+(* "HighQuality" permutations use Algorithm 3.4.2P of Knuth's <I>
+    Seminumerical Algorithms</I> (second edition), and thus require space
     "O(n)".  "LowQuality" permutations are not really very random but
     use constant space and work for "n" up to "2^(BITSIZE(INTEGER)-2)-1".  *)
 

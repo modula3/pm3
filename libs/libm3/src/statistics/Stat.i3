@@ -83,7 +83,7 @@ PROCEDURE Var (READONLY s: T): REAL;
 
 PROCEDURE SDev (READONLY s: T): REAL;
 (* The standard deviation, sqrt(sum((x[i]-mean)^2)/(num-1)). *)
-(* Returns 0.0 if num < 2 *)
+(* Returns 0.0 if num &lt; 2 *)
 
 PROCEDURE RMS (READONLY s: T): REAL;
 (* The root mean square value, sqrt(sum(x[i]^2)/num) *)
@@ -98,7 +98,7 @@ PROCEDURE Print (wr: Wr.T;  READONLY s: T) RAISES {Wr.Failure, Thread.Alerted};
 (* Prints the text string
 |     "num: %d  min: %g  max: %g  mean: %g  dev: %g"
    on the given writer.  If num=0, all other entries are omitted.
-   The "dev" entry is the standard deviation, and is omitted if num<=1. *)
+   The "dev" entry is the standard deviation, and is omitted if num&lt;=1. *)
 
 END Stat.
 

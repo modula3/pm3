@@ -9,7 +9,11 @@
 (* "Stdio" provides streams for standard input, standard output, and
    standard error. These streams correspond to file handles returned
    by the "GetStandardFileHandles" procedure in the "Process" interface.
-   \index{standard I/O!streams}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>standard I/O</SPAN>
+<SPAN CLASS=INDEX.KEY>streams</SPAN>
+</SPAN>
+
 *)
 
 INTERFACE Stdio;

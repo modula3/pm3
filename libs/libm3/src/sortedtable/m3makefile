@@ -8,6 +8,7 @@
 %      modified on Wed Oct  7 16:21:30 PDT 1992 by johnh
 
 Generic_module("SortedTable")
+HtmlGenericInterface("SortedTable")
 
 template ("sortedtable")
 

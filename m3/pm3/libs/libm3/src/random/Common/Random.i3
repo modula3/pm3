@@ -10,7 +10,10 @@
 
 (* A "Random.T" (or just a generator) is a pseudo-random number
    generator.
-   \index{pseudo-random number}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>pseudo-random number</SPAN>
+</SPAN>
+
 *)
 
 INTERFACE Random;
@@ -53,7 +56,7 @@ END Random.
    chooses a random seed in such a way that different sequences result
    even if "init" is called many times in close proximity.
 
-\paragraph*{Example.} A good pseudo-random permutation of an array "a"
+<H4> Example. </H4> A good pseudo-random permutation of an array "a"
    can be generated as follows:
 
 | WITH rand = NEW(Random.Default).init() DO
@@ -64,8 +67,8 @@ END Random.
 |   END
 | END
 
-\paragraph*{SRC Modula-3 implementation details.} The object returned
+<H4> SRC Modula-3 implementation details. </H4> The object returned
    by a call of "New(Default).init" uses an additive generator based
-   on Knuth's Algorithm 3.2.2A (see \cite{Knuth:Vol2}).
+   on Knuth's Algorithm 3.2.2A (see <A REL=BIB.ENTRY HREF="../../../../html/references.html#Knuth:Vol2"> [Knuth:Vol2] </A>).
 
 *)

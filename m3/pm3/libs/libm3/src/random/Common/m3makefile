@@ -8,4 +8,4 @@
 Module ("Random")
 Module ("RandomPerm")
 Interface ("RandomReal")
-
+HtmlInterface("Random")

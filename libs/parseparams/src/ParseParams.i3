@@ -10,7 +10,14 @@
 (* This interface provides simple and robust tools for parsing
    the command line arguments given to a process when it is 
    started (see "Params" and "Process.Create"). 
-   \index{parameters of a process} \index{process!parameters}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>parameters of a process</SPAN>
+</SPAN>
+ <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>process</SPAN>
+<SPAN CLASS=INDEX.KEY>parameters</SPAN>
+</SPAN>
+
 *)
 
 INTERFACE ParseParams;

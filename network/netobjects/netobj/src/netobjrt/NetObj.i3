@@ -5,26 +5,45 @@
 (*      modified on Mon Dec  7 18:34:14 1992 by gnelson    *)
 (*      modified on Thu Jul 30 18:51:00 PDT 1992 by evers  *)
 (*      modified on Mon Jun 29  8:45:58 PDT 1992 by owicki *)
-(* A {\it network object} is an object whose methods can be invoked by
+
+(* A <I>network object</I> is an object whose methods can be invoked by
    other programs, in addition to the program that allocated the object.
-   The program invoking the method is called the {\it client} and the
-   program containing the network object is called the {\it owner}.  The
+   The program invoking the method is called the <I>client</I> and the
+   program containing the network object is called the <I>owner</I>.  The
    client and owner can be running on different machines or in different
    address spaces on the same machine.
-   \index{network object}\index{network object!client}
-   \index{network object!owner} *)
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>network object</SPAN>
+</SPAN>
+
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>network object</SPAN>
+<SPAN CLASS=INDEX.KEY>client</SPAN>
+</SPAN>
+
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>network object</SPAN>
+<SPAN CLASS=INDEX.KEY>owner</SPAN>
+</SPAN>
+*)
 
 (* This is the primary public interface for using network objects.
    Before listing the interface, here are a few definitions.
 
-   A {\it program instance} is an activation of a program.
+   A <I>program instance</I> is an activation of a program.
    The same program can have many instances running concurrently
    or consecutively.  A program instance can be thought of 
    as an address space, although the design does not 
    preclude the implementation of a program instance by a
-   suite of address spaces.\index{program instance}
+   suite of address spaces.<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>program instance</SPAN>
+</SPAN>
 
-   An {\it agent}\index{agent} is a program that provides a table that
+
+   An <I>agent</I><SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>agent</SPAN>
+</SPAN>
+ is a program that provides a table that
    maps names to network objects.  Any program can be an agent, but every
    machine has a particular default agent.  Owners typically make 
    network objects available to clients by inserting them 
@@ -43,15 +62,31 @@ TYPE
 
 (* "NetObj.T" is the root type of all network objects.
    A "NetObj.Address" designates a program instance.
-   \ttindex{NetObj.T}\ttindex{NetObj.Address} *)
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>NetObj.T</SPAN>
+<SPAN CLASS=INDEX.TEXT><TT>NetObj.T</TT></SPAN>
+</SPAN>
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>NetObj.Address</SPAN>
+<SPAN CLASS=INDEX.TEXT><TT>NetObj.Address</TT></SPAN>
+</SPAN>
+*)
 
 PROCEDURE Locate (host: TEXT): Address
     RAISES {Invalid, Error, Thread.Alerted};
 (* Return an address for the standard agent at the machine whose
-   human-sensible name is "host". \ttindex{NetObj.Locate} *)
+   human-sensible name is "host".
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>NetObj.Locate</SPAN>
+<SPAN CLASS=INDEX.TEXT><TT>NetObj.Locate</TT></SPAN>
+</SPAN>
+*)
 
 (* The naming convention used by "Locate" is system-dependent.  For 
-   example, in an Internet environment, "Locate(\dq decsrc.pa.dec.com\dq )" 
+   example, in an Internet environment, 
+
+| Locate("decsrc.pa.dec.com") 
+
    returns the address of the default agent on the machine "decsrc" in 
    the DEC Palo Alto Internet domain.
 
@@ -67,14 +102,24 @@ PROCEDURE Export(
 (* Set "table[name] := obj" where "table" is the table provided by the
    agent whose address is "where", or by the default agent for the local
    machine if "where = NIL".  This can be used with "obj=NIL" to
-   remove an entry from the table.  \ttindex{NetObj.Export} *)
+   remove an entry from the table.
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>NetObj.Export</SPAN>
+<SPAN CLASS=INDEX.TEXT><TT>NetObj.Export</TT></SPAN>
+</SPAN>
+*)
 
 PROCEDURE Import(name: TEXT; where: Address := NIL): T
     RAISES {Error, Thread.Alerted};
 (* Return "table[name]" where "table" is the table provided by the
    agent whose address is "where", or by the default agent for the local
    machine if "where = NIL".  "Import" returns "NIL" if "table"
-   contains no entry for "name". \ttindex{NetObj.Import} *)
+   contains no entry for "name".
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>NetObj.Import</SPAN>
+<SPAN CLASS=INDEX.TEXT><TT>NetObj.Import</TT></SPAN>
+</SPAN>
+*)
     
 EXCEPTION
   Error(AtomList.T);  
@@ -87,14 +132,21 @@ VAR (*CONST*)
 
 END NetObj.
 
-(* \ttindex{NetObj.Error}%
+(*
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>NetObj.Error</SPAN>
+<SPAN CLASS=INDEX.TEXT><TT>NetObj.Error</TT></SPAN>
+</SPAN>
    The exception "NetObj.Error" indicates possible failures in a remote 
    method invocation.  Every remote method should therefore include
    "NetObj.Error" in its raises clause.  If "NetObj.Error" is not raised,
    then the invocation completed successfully.  If it is raised, it may
    or may not have completed successfully.  It is possible that an
-   {\it orphaned} remote invocation continued to execute at the owner,
-   while the client raised "NetObj.Error".\index{orphan computation}
+   <I>orphaned</I> remote invocation continued to execute at the owner,
+   while the client raised "NetObj.Error".<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>orphan computation</SPAN>
+</SPAN>
+
 
    The first atom in the argument to "NetObj.Error" explains the
    reason for the failure.  The subsequent atoms may provide additional

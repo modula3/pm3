@@ -15,10 +15,23 @@
    they also allow setting the current position anywhere in the
    source.  For example, readers from random access files are
    seekable; readers from terminals and sequential files are not.
-   \index{character input stream}
-   \index{input stream}
-   \index{stream!input}
-   \index{reader}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>character input stream</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>input stream</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>stream</SPAN>
+<SPAN CLASS=INDEX.KEY>input</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>reader</SPAN>
+</SPAN>
+
 
    Some readers are ``intermittent'', which means that the source of
    the reader trickles in rather than being available to the
@@ -130,11 +143,11 @@ PROCEDURE EOF(rd: T): BOOLEAN RAISES {Failure, Alerted};
    until the user types one before it can determine whether he typed the
    special key signalling end-of-file. If you are using "EOF" in an
    interactive input loop, the right sequence of operations is:
-   \begin{enumerate}
-   \item prompt the user;
-   \item call "EOF", which probably waits on user input;
-   \item presuming that "EOF" returned "FALSE", read the user's input.
-   \end{enumerate} *)
+   <OL>
+   <LI>prompt the user;
+   <LI>call "EOF", which probably waits on user input;
+   <LI>presuming that "EOF" returned "FALSE", read the user's input.
+   </OL> *)
 
 PROCEDURE UnGetChar(rd: T) RAISES {};
 (* ``Push back'' the last character read from "rd", so that the next
@@ -230,8 +243,8 @@ PROCEDURE GetLine(rd: T): TEXT
 (* If "EOF(rd)" then raise "EndOfFile".  Otherwise, read characters
    until a line break is read or "rd" is exhausted, and return the
    result as a "TEXT"---but discard the line break if it is present.
-   A line break is either {\tt \char'42\char'134n\char'42} or {\tt
-   \char'42\char'134r\char'134n\char'42} More precisely, this is
+   A line break is either <TT>"\n"</TT> or <TT>
+   "\r\n"</TT> More precisely, this is
    equivalent to the following, in which "ch" and "res" are local
    variables: *)
 (*

@@ -28,7 +28,7 @@ CONST SpecialT = T {byte := ARRAY [0..15] OF BITS 8 FOR [0..255]
    been generated relative to a specific "SpaceID.T".   However, there 
    are two well-known values which are exceptions to this rule.  The 
    value "NullT" corresponds to the "NIL" network object, and the 
-   value "SpecialT" corresponds a {\it special object} which is a 
+   value "SpecialT" corresponds a <I>special object</I> which is a 
    distinguished concrete object in every address space.  This special 
    object is private to the implementation of the network object 
    runtime. *)

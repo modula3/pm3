@@ -11,21 +11,36 @@
    Each stub module provides type-dependent network 
    support for marshaling and unmarshaling method calls for a 
    specific subtype of "NetObj.T".  Usually, stubs are 
-   built automatically.\ttindex{NetObj.T}
+   built automatically.
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>NetObj.T</SPAN>
+<SPAN CLASS=INDEX.TEXT><TT>NetObj.T</TT></SPAN>
+</SPAN>
 
    For each "NetObj.T" subtype "T" intended to support remote method 
    invocation there must be both a client and a server stub. 
-   \index{stubs}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>stubs</SPAN>
+</SPAN>
+
 
    The client stub defines a subtype of "T" in which every method is 
    overridden by a procedure implementing remote method invocation. 
-   Such a {\it surrogate} object is constructed by the network 
+   Such a <I>surrogate</I> object is constructed by the network 
    object runtime whenever a reference to a non-local object 
-   is encountered.\index{stubs!client} 
+   is encountered.<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>stubs</SPAN>
+<SPAN CLASS=INDEX.KEY>client</SPAN>
+</SPAN>
+ 
 
    The server stub consists of a single procedure of type "Dispatcher"
    that is called to unmarshal and dispatch remote invocations.
-   \index{stubs!server}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>stubs</SPAN>
+<SPAN CLASS=INDEX.KEY>server</SPAN>
+</SPAN>
+
 
    A surrogate type and null dispatcher for "NetObj.T" are defined and
    registered by the network object system itself. *)
@@ -44,7 +59,12 @@ TYPE
    to clients who wish to hand-code stubs for efficiency.
 
    A "Conn" is unmonitored: clients must not access it from two threads
-   concurrently. \ttindex{StubLib.Conn} *)
+   concurrently.
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>StubLib.Conn</SPAN>
+<SPAN CLASS=INDEX.TEXT><TT>StubLib.Conn</TT></SPAN>
+</SPAN>
+*)
 
 TYPE
   Byte8 = BITS 8 FOR [0..255];
@@ -58,7 +78,15 @@ VAR (*CONST*) NativeRep: DataRep;
    integers, and floating point numbers in network data.  Data is 
    always marshaled in the sender's native format.  "NativeRep" is 
    a runtime constant that describes the native format of the current 
-   environment.\ttindex{StubLib.DataRep}\ttindex{StubLib.NativeRep}
+   environment.
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>StubLib.DataRep</SPAN>
+<SPAN CLASS=INDEX.TEXT><TT>StubLib.DataRep</TT></SPAN>
+</SPAN>
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>StubLib.NativeRep</SPAN>
+<SPAN CLASS=INDEX.TEXT><TT>StubLib.NativeRep</TT></SPAN>
+</SPAN>
    
    Stubs may optimize in-line unmarshaling by first checking that the 
    incoming representation is the same as the native one for all data types
@@ -86,13 +114,25 @@ CONST
    network object can coexist within the same program (for example, 
    the outputs of different stub compilers).  During surrogate creation,
    the network object runtime negotiates the stub protocol version
-   with the object owner.\ttindex{StubLib.StubProtocol}
+   with the object owner.
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>StubLib.StubProtocol</SPAN>
+<SPAN CLASS=INDEX.TEXT><TT>StubLib.StubProtocol</TT></SPAN>
+</SPAN>
 
    "NullStubProtocol" is a placeholder to indicate the absence of
    a stub protocol value.  "SystemStubProtocol" indicates the fixed
    stub encoding used by the runtime to implement primitives
    that operate prior to any version negotiation.
-   \ttindex{StubLib.NullStubProtocol}\ttindex{StubLib.SystemStubProtocol} *)
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>StubLib.NullStubProtocol</SPAN>
+<SPAN CLASS=INDEX.TEXT><TT>StubLib.NullStubProtocol</TT></SPAN>
+</SPAN>
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>StubLib.SystemStubProtocol</SPAN>
+<SPAN CLASS=INDEX.TEXT><TT>StubLib.SystemStubProtocol</TT></SPAN>
+</SPAN>
+*)
 
 VAR (*CONST*) UnmarshalFailure: Atom.T;
 
@@ -105,7 +145,10 @@ VAR (*CONST*) UnmarshalFailure: Atom.T;
 TYPE Typecode = CARDINAL;
   
 (* "Typecode" is the type of those values returned by the Modula-3
-    "TYPECODE" operator. \index{typecodes}
+    "TYPECODE" operator. <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>typecodes</SPAN>
+</SPAN>
+
  *)  
     
 PROCEDURE Register(
@@ -119,7 +162,11 @@ PROCEDURE Register(
    for "T" to be "srgT" and "disp", respectively.
    The "stubProt" parameter indicates the stub compiler
    version that generated the stub being registered.
-   \ttindex{StubLib.Register}  *)
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>SubLib.Register</SPAN>
+<SPAN CLASS=INDEX.TEXT><TT>StubLib.Register</TT></SPAN>
+</SPAN>
+*)
 
 (* The following constraint applies to stub registration.
    If stubs are registered for types "A" and "B", where "B" is 
@@ -137,8 +184,12 @@ PROCEDURE Register(
    marshaled or unmarshaled.  *)
 
 (*
-\paragraph{Client stub procedures.}
-\index{stubs!client}
+<H4> Client stub procedures. </H4>
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>stubs</SPAN>
+<SPAN CLASS=INDEX.KEY>client</SPAN>
+</SPAN>
+
 
 Here is a simplified sketch of the procedure calls performed by a 
 client to make a remote call to a method of "obj":
@@ -174,7 +225,12 @@ PROCEDURE StartCall(obj: NetObj.T;
    perform a remote method call to "obj", using the 
    data representation "NativeRep".  The value "stubProt" is the
    stub protocol version under which the arguments and results
-   will be encoded.\ttindex{StubLib.StartCall} *)
+   will be encoded.
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>StubLib.StartCall</SPAN>
+<SPAN CLASS=INDEX.TEXT><TT>StubLib.StartCall</TT></SPAN>
+</SPAN>
+*)
 
 (* Upon return from "StartCall",  the client stub should marshal 
    a specification of the method being invoked followed by any arguments. *)
@@ -186,7 +242,12 @@ PROCEDURE AwaitResult(c: Conn): DataRep
     method invocation, and blocks waiting for a reply message
     containing the result of the invocation.  It returns
     the data representation used to encode the result
-    message.\ttindex{StubLib.AwaitResult} *)
+    message.
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>StubLib.AwaitResult</SPAN>
+<SPAN CLASS=INDEX.TEXT><TT>StubLib.AwaitResult</TT></SPAN>
+</SPAN>
+*)
 
 (*  Upon return from "AwaitResult" the client stub should unmarshal
     any results. *)
@@ -201,7 +262,11 @@ PROCEDURE EndCall(c: Conn; reUse: BOOLEAN)
    normal or exceptional result. It is always safe to 
    call "EndCall" with "reUse" set to "FALSE", but performance 
    will be improved if "reUse" is "TRUE" whenever possible.
-   \ttindex{StubLib.EndCall} *)
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>StubLib.EndCall</SPAN>
+<SPAN CLASS=INDEX.TEXT><TT>StubLib.EndCall</TT></SPAN>
+</SPAN>
+*)
    
 (* "EndCall" determines, by examining "c", whether the result message 
    requires acknowledgment, that is, whether the result contained 
@@ -209,8 +274,15 @@ PROCEDURE EndCall(c: Conn; reUse: BOOLEAN)
    "EndCall" then releases "c".  After "EndCall" returns, "c" should not 
    be used.
 
-\paragraph{Server dispatcher procedures.}  
-\index{stubs!server}\index{dispatching}
+<H4> Server dispatcher procedures. </H4>  
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>stubs</SPAN>
+<SPAN CLASS=INDEX.KEY>server</SPAN>
+</SPAN>
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>dispatching</SPAN>
+</SPAN>
+
 Next we consider the server-side stub, which consists of
 a registered dispatcher procedure.
 *)
@@ -229,7 +301,11 @@ TYPE
    indicates the data representation used to encode the arguments of the
    invocation.  The "stubProt" argument indicates the version of
    stub protocol used to encode the call arguments.  The same protocol
-   should be used to encode any results.\ttindex{StubLib.Dispatcher}
+   should be used to encode any results.
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>StubLib.Dispatcher</SPAN>
+<SPAN CLASS=INDEX.TEXT><TT>StubLib.Dispatcher</TT></SPAN>
+</SPAN>
    
    The dispatcher procedure is responsible for unmarshaling the method
    number and any arguments, invoking the concrete object's
@@ -252,13 +328,21 @@ PROCEDURE StartResult(c: Conn)
     RAISES {Wr.Failure, Thread.Alerted};
 (* "StartResult" must be called by the server stub to initiate return 
    from a remote invocation before marshaling any results.
-   \ttindex{StubLib.StartResult} *)  
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>StubLib.StartResult</SPAN>
+<SPAN CLASS=INDEX.TEXT><TT>StubLib.StartResult</TT></SPAN>
+</SPAN>
+*)  
    
 (* Upon return from "StartResult" the stub 
    code should marshal any results or error indications on "c". 
  
-\paragraph{Marshaling of reference types.}  
-\index{marshaling!of reference types}
+<H4> Marshaling of reference types. </H4>  
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>marshaling</SPAN>
+<SPAN CLASS=INDEX.KEY>of reference types</SPAN>
+</SPAN>
+
   The following procedures are made available for marshaling of 
   subtypes of "REFANY". *)
 
@@ -272,7 +356,11 @@ PROCEDURE OutRef(c: Conn; r: REFANY)
    custom code for speed.  All others are marshaled by copying as pickles.
    Subtypes of "NetObj.T", "Rd.T", and "Wr.T" which are embedded within
    other datatypes are also marshaled by reference.
-   \ttindex{StubLib.OutRef} *)
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>StubLib.OutRef</SPAN>
+<SPAN CLASS=INDEX.TEXT><TT>StubLib.OutRef</TT></SPAN>
+</SPAN>
+*)
 
 PROCEDURE InRef(c: Conn; rep: DataRep; tc:=-1): REFANY
     RAISES {NetObj.Error, Rd.Failure, Thread.Alerted};
@@ -281,7 +369,11 @@ PROCEDURE InRef(c: Conn; rep: DataRep; tc:=-1): REFANY
    type of the reference.  The exception "NetObj.Error(UnmarshalFailure)" 
    is raised if the unpickled result is not a subtype of this type.  If
    "tc" is negative, no type checking is performed.
-   \ttindex{StubLib.InRef} *)
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>StubLib.InRef</SPAN>
+<SPAN CLASS=INDEX.TEXT><TT>StubLib.InRef</TT></SPAN>
+</SPAN>
+*)
 
 (* For any subtypes of "NetObj.T" in the pickled datatype, a surrogate
    network object is substituted for the concrete object.  The runtime
@@ -295,8 +387,12 @@ PROCEDURE InRef(c: Conn; rep: DataRep; tc:=-1): REFANY
    is the target of the concrete writer.  The operations on
    surrogate streams are described in "NetStream.i3".
    
-\paragraph{Marshaling of generic data.}  
-\index{marshaling!of generic data}
+<H4> Marshaling of generic data. </H4>  
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>marshaling</SPAN>
+<SPAN CLASS=INDEX.KEY>of generic data</SPAN>
+</SPAN>
+
   The following procedures are made available to permit the generic
   marshaling of various primitive data types. *)
 
@@ -405,11 +501,11 @@ PROCEDURE InCardinal(
 (* Unmarshal a cardinal, checking that its value is in "[0..lim]". *)
 
 
-(* \smallskip
+(* 
 
    Here are two procedures for raising "NetObj" exceptions conveniently:
 
-   \smallskip
+   
 *)
 
 PROCEDURE RaiseUnmarshalFailure()

@@ -8,7 +8,11 @@
 
 (* "Table" is a generic interface defining partial maps that support
    update and iteration.
-   \index{map!updatable}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>map</SPAN>
+<SPAN CLASS=INDEX.KEY>updatable</SPAN>
+</SPAN>
+
 *)
 
 GENERIC INTERFACE Table(Key, Value);
@@ -73,7 +77,7 @@ END Table.
 | map(tbl)   `a map from elements of "Key.T" to elements of "Value.T"`
 
    "canon(tbl)" represents an equivalence relation: "canon(tbl)(k)" is
-   the {\em canonical representative} of all the keys that are
+   the <EM>canonical representative</EM> of all the keys that are
    equivalent to "k".  The domain of "map(tbl)" includes only
    canonical representatives, that is, elements in the range of
    "canon(tbl)".  The equivalence relation underlying "canon(tbl)"

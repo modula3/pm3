@@ -11,9 +11,18 @@
    Elements can be added or removed at either end of a sequence; they
    can also be accessed or updated at specified indexes.  The expected
    cost of every method of a sequence is constant.
-   \index{stack: {\tt Sequence} generic interface}
-   \index{queue: {\tt Sequence} generic interface}
-   \index{deque: {\tt Sequence} generic interface}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>stack: {\tt Sequence} generic interface</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>queue: {\tt Sequence} generic interface</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>deque: {\tt Sequence} generic interface</SPAN>
+</SPAN>
+
 *)
 
 GENERIC INTERFACE Sequence(Elem);
@@ -47,7 +56,7 @@ TYPE
     get(i: CARDINAL): Elem.T
   END;
 
-(* A "Sequence(Elem).T" (or just a {\it sequence}) represents an
+(* A "Sequence(Elem).T" (or just a <I>sequence</I>) represents an
    extensible sequence of "Elem.T"s.  
      
    The first group of methods have side effects on the sequence.  The
@@ -127,7 +136,7 @@ PROCEDURE Sub(s: T; start: CARDINAL;
 
 (* "Cat" and "Sub" create new sequences; they have no side-effects.
 
-\smallskip
+
    Sequences are unmonitored: a client accessing a sequence from
    multiple threads must ensure that if two operations are active
    concurrently, then neither of them has side effects on the

@@ -12,10 +12,23 @@
    ``seekable writers'') also allow overwriting in the middle of the
    sequence.  For example, writers to random access files are
    seekable, but writers to terminals and sequential files are not.
-   \index{character output stream}
-   \index{output stream}
-   \index{stream!output}
-   \index{writer}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>character output stream</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>output stream</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>stream</SPAN>
+<SPAN CLASS=INDEX.KEY>output</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>writer</SPAN>
+</SPAN>
+
 
    Writers can be (and usually are) buffered. This means that
    operations on the writer don't immediately affect the underlying
@@ -105,8 +118,8 @@ EXCEPTION Failure(AtomList.T);
 VAR (*CONST*) EOL: TEXT;
 (* End of line. *)
 
-(* On POSIX, "EOL" is {\tt \char'42\char'134n\char'42}; on Win32,
-   "EOL" is {\tt \char'42\char'134r\char'134n\char'42}. *)
+(* On POSIX, "EOL" is <TT>"\n"</TT>; on Win32,
+   "EOL" is <TT>"\r\n"</TT>. *)
 
 PROCEDURE PutChar(wr: T; ch: CHAR) RAISES {Failure, Alerted};
 (* Output "ch" to "wr".  More precisely, this is equivalent to: *)

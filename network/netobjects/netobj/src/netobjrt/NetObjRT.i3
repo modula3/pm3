@@ -6,7 +6,7 @@
 (*      modified on Wed Aug  5 17:49:51 PDT 1992 by evers  *)
 
 (* The "NetObjRT" interface defines procedures which are necessary for
-   the maintenance of the network object runtime {\it object table}.
+   the maintenance of the network object runtime <I>object table</I>.
    This table is a mapping from "WireRep.T" to "NetObj.T".  All
    surrogate objects appear in this table, as do all concrete objects
    which might be remotely referenced. *)
@@ -59,7 +59,7 @@ PROCEDURE InsertAndPin(o: NetObj.T) : WireRep.T;
    as part of marshalling a "NetObj.T".
    
    "InsertAndPin" increments a reference count associated with "o" 
-   which {\it pins} it in the object table, this is, "o" is considered 
+   which <I>pins</I> it in the object table, this is, "o" is considered 
    unremovable.  When marshalling of "o" is complete, and the 
    destination is known to have either successfully unmarshalled "o" 
    or failed in doing so, then this reference count must be decremented 

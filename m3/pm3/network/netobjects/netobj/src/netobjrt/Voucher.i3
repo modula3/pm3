@@ -9,7 +9,7 @@
    This object is marshalled as the network representation of a "Rd.T" 
    or "Wr.T" during normal argument or result transmission.  The 
    destination can initiate the network transfer of the reader's 
-   source or the writer's target by invoking the appropriate {\it claim}
+   source or the writer's target by invoking the appropriate <I>claim</I>
    method. *)
 
 INTERFACE Voucher;

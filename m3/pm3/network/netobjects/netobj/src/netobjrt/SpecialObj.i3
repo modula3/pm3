@@ -5,8 +5,8 @@
 (*      modified on Wed Sep  2 13:12:53 PDT 1992 by evers  *)
 (*      modified on Wed Jun 10 16:57:23 PDT 1992 by owicki *)
 
-(* The "SpecialObj" interface defines the network object runtime {\it 
-   special object}.  This object provides methods for maintenance 
+(* The "SpecialObj" interface defines the network object runtime <I>
+   special object</I>.  This object provides methods for maintenance 
    of the per-space agent export table (see "NetObj.i3") as well as 
    methods to support object marshalling and garbage collection.  
    There is one such concrete object per address space instance.  
@@ -44,7 +44,7 @@ TYPE
                "(StubLib.StubProtocol,INTEGER)";
 
        for any element "ver(v,n)":
-           version "v" stubs exist for "fp[i]" where "n <= i"
+           version "v" stubs exist for "fp[i]" where "n &lt;= i"
 
    We adopt a more restrictive scheme where "ver" is simply an
    array of "StubLib.StubProtocol".  This corresponds exactly to

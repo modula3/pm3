@@ -28,7 +28,11 @@ PROCEDURE AddNotifier(obj: NetObj.T; cl: NotifierClosure);
    If "obj" is not a surrogate object then "AddNotifier" has no effect.
    If "obj" is already inaccessible at the time "AddNotifier" is called,
    then a call to "cl.notify" is scheduled immediately.
-   \ttindex{NetObjNotifier.AddNotifier} *)
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>NetObjNotifier.AddNotifier</SPAN>
+<SPAN CLASS=INDEX.TEXT><TT>NetObjNotifier.AddNotifier</TT></SPAN>
+</SPAN>
+*)
 
 END NetObjNotifier.
 

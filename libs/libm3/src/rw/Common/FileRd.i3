@@ -6,8 +6,15 @@
 (*      modified on Fri Aug 17 01:56:52 1990 by muller         *)
 
 (* A "FileRd.T", or file reader, is a reader on a "File.T".
-   \index{buffered file I/O}
-   \index{file!buffered I/O}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>buffered file I/O</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>file</SPAN>
+<SPAN CLASS=INDEX.KEY>buffered I/O</SPAN>
+</SPAN>
+
 *)
 
 INTERFACE FileRd;
