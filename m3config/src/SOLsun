@@ -24,11 +24,7 @@ PLATFORM_SUPPORTS_LATEX = ""
 SKIP_LLSCAN = "T"
 
 CC = [ "/opt/SUNWspro/bin/cc", "-Wa,-P", "-c" ]
-%LINK = [ "/opt/SUNWspro/bin/cc" ]
-% There seems to be a problem with direct linking via
-% Process.Create from m3quake.  Running it via truss
-% gives no problems.
-LINK = [ "/usr/bin/truss", "-o", "/dev/null", "/opt/SUNWspro/bin/cc" ]
+LINK = [ "/opt/SUNWspro/bin/cc", "-xildoff" ]
 MAKELIB = [ "/usr/ccs/bin/ar", "cru" ]
 MAKESHLIB = [ "/usr/ccs/bin/ld", "-dy", "-G", "-z", "text" ]
 ASM = [ "/usr/ccs/bin/as", "-s", "-o" ]
