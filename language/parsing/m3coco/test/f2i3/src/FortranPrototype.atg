@@ -2,6 +2,8 @@
 
 COMPILER FortranPrototype
 
+IMPORT Scan, Fmt, Wr, IO ;
+
 CHARACTERS
   letter  = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
           + "abcdefghijklmnopqrstuvwxyz" .
@@ -28,26 +30,38 @@ PRODUCTIONS
 
 (* Compilation unit productions *)
 
-FortranPrototype = Subroutine .
+FortranPrototype = Procedure .
 
-Subroutine       = SubroutineHead Declarations SubroutineBody .
+Procedure      = (SubroutineHead | FunctionHead) Declarations ProcedureBody .
 
-SubroutineHead   = ("SUBROUTINE" | Type "FUNCTION") id Signature .
+SubroutineHead      (. VAR name,sig : TEXT; .)
+   = "SUBROUTINE" Ident<name> Signature<sig>
+	(. IO.Put("PROCEDURE "&name&sig&";\n") .) .
 
-Declarations     = id .
+FunctionHead        (. VAR name,sig,rettype : TEXT; .)
+   = Type<rettype> "FUNCTION" Ident<name> Signature<sig>
+	(. IO.Put("PROCEDURE "&name&sig&":"&rettype&";\n") .) .
 
-SubroutineBody   = Assignment Trash .
+Declarations  = id .
 
-Signature     = "(" Formals ")" .
-Formals       = [Formal {"," Formal}] .
-Formal        = id .
+ProcedureBody = Assignment Trash .
 
-Type          = BuiltinType .
+Signature<VAR sig:TEXT>        (. VAR formal:TEXT; .)
+   = "("                       (. sig:="(" .)
+       [Ident<formal>          (. sig:="("&formal .)
+       {"," Ident<formal>      (. sig:=sig&"; "&formal .)
+       }]                      (. sig:=sig&")" .)
+     ")" .
+
+Type<VAR type : TEXT;>
+              = BuiltinType (. type := p.string() .) .
 
 BuiltinType   = "LOGICAL"
               | "CHARACTER"
               | "INTEGER"
               | ("DOUBLE" | "SINGLE") "PRECISION" .
+
+Ident <VAR t:TEXT;> = id (. t := p.string() .).
 
 Assignment    = id "=" id .
 

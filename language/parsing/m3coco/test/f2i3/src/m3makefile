@@ -1,8 +1,6 @@
+import("libm3")
 import("m3coco")
 
-%include("coco.tmpl")
+coco_c("FortranPrototype")
 
-coco("FortranPrototype")
-
-implementation("Main")
 program("f2i3")

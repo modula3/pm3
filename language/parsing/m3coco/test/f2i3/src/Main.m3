@@ -1,6 +1,0 @@
-MODULE Main;
-
-IMPORT Wr, IO;
-
-BEGIN
-END Main.
