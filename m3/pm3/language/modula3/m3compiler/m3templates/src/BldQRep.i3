@@ -2,7 +2,6 @@ INTERFACE BldQRep;
 
 IMPORT BldQuake, TextRefTbl, Pathname, IntTextTbl, TextLocTbl;
 IMPORT IntMapTbl, IntM3LibsTbl, TextSeq, QVSeq, M3Buf, TextTextTbl;
-IMPORT Quake;
 
 TYPE
   DelFileProc = PROCEDURE (t: BldQuake.T; x: TEXT);

@@ -1,6 +1,6 @@
 INTERFACE BldPosix;
 
-IMPORT BldQuake, Quake;
+IMPORT BldQuake;
 
 CONST
   SL = "/";       (* the path separator *)

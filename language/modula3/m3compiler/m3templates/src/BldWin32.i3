@@ -1,6 +1,6 @@
 INTERFACE BldWin32;
 
-IMPORT BldQuake, Quake;
+IMPORT BldQuake;
 
 CONST
   SL = "\\";      (* the path separator *)

@@ -1,6 +1,6 @@
 INTERFACE BldHooks;
 
-IMPORT IntM3LibsTbl, QValue, QVSeq, M3DriverRep;
+IMPORT IntM3LibsTbl, QValue, QVSeq;
 FROM BldQuake IMPORT T;
 FROM Quake IMPORT Error;
 
