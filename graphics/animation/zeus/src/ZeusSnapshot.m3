@@ -30,7 +30,7 @@ IMPORT Algorithm, AlgorithmClass, Atom, Classes, Env, Fmt, File,
        StableVBT, Sx, Text, TextRd, TextWr, Thread, Trestle,
        TrestleComm, VBT, View, ViewClass, Wr, Zeus, ZeusClass,
        ZeusPanel, ZeusPanelFriends, ZeusPanelPrivate,
-       ZeusPrivate, ZeusUtil;
+       ZeusPrivate, ZeusUtil, Process, Stdio;
 
 <*FATAL FormsVBT.Error, FormsVBT.Unimplemented, 
         TrestleComm.Failure, Thread.Alerted, Wr.Failure *>
@@ -748,16 +748,24 @@ PROCEDURE KeywordCheck (arg: REFANY; t: TEXT) RAISES {BadSnapshot} =
     END;
   END KeywordCheck;
 
-
 PROCEDURE StateDirFile (file: TEXT): Pathname.T =
   <* LL = arbitrary *>
   <* FATAL Pathname.Invalid *>
-  VAR path := Pathname.Decompose(Env.Get(HomeDir));
+  VAR home := Env.Get (HomeDir);
   BEGIN
-    path.addhi(StateDir);
-    MakeStateDir(Pathname.Compose(path));
-    path.addhi(file);
-    RETURN Pathname.Compose(path)
+    IF home = NIL THEN
+      Wr.PutText (Stdio.stderr,
+        "Error: the HOME environment variable is undefined.\n");
+      Wr.PutText (Stdio.stderr,
+        "Please set it to the path of your home directory and try again.\n");
+      Process.Exit (0);
+    END;
+    WITH path = Pathname.Decompose (home) DO
+      path.addhi(StateDir);
+      MakeStateDir(Pathname.Compose(path));
+      path.addhi(file);
+      RETURN Pathname.Compose(path)
+    END;
   END StateDirFile;
 
 PROCEDURE MakeStateDir (path: Pathname.T) =
