@@ -1,0 +1,83 @@
+readonly db_config = {
+  "AIX386"    : "--with-mutex=x86/gcc-assembly",
+  "ALPHA_OSF" : "--with-mutex=ALPHA/gcc-assembly",
+  "AP3000"    : "",
+  "ARM"       : "--with-mutex=ARM/gcc-assembly",
+  "BSDI4"     : "--with-mutex=x86/gcc-assembly",
+  "DS3100"    : "",
+  "FBSD_ALPHA": "--with-mutex=ALPHA/gcc-assembly",
+  "FreeBSD"   : "--with-mutex=x86/gcc-assembly",
+  "FreeBSD2"  : "--with-mutex=x86/gcc-assembly",
+  "FreeBSD3"  : "--with-mutex=x86/gcc-assembly",
+  "FreeBSD4"  : "--with-mutex=x86/gcc-assembly",
+  "HP300"     : "--with-mutex=68K/gcc-assembly",
+  "HPPA"      : "--with-mutex=HPPA/gcc-assembly",
+  "IBMR2"     : "",
+  "IBMRT"     : "",
+  "IRIX5"     : "",
+  "LINUX"     : "--with-mutex=x86/gcc-assembly",
+  "LINUXELF"  : "--with-mutex=x86/gcc-assembly",
+  "LINUXLIBC6": "--with-mutex=x86/gcc-assembly",
+  "NEXT"      : "",
+  "NT386"     : "",
+  "NT386GNU"  : "",
+  "OKI"       : "",
+  "SEQUENT"   : "--with-mutex=x86/gcc-assembly",
+  "SOLgnu"    : "--with-mutex=Sparc/gcc-assembly",
+  "SOLsun"    : "--with-mutex=Sparc/gcc-assembly",
+  "SPARC"     : "--with-mutex=Sparc/gcc-assembly",
+  "SUN3"      : "--with-mutex=68K/gcc-assembly",
+  "SUN386"    : "--with-mutex=x86/gcc-assembly",
+  "Tru64v5"   : "--with-mutex=ALPHA/gcc-assembly",
+  "UMAX"      : "",
+  "VAX"       : "",
+  "I386_DARWIN" : "--with-mutex=x86/gcc-assembly",
+  "PPC_DARWIN"  : "--with-mutex=PPC_APPLE/gcc-assembly"
+}
+
+readonly proc get_config (target) is
+  if db_config contains target
+    return db_config {target}
+  else
+    return ""
+  end
+end
+
+if not defined("SL")
+  if equal(TARGET, "NT386")
+    % we assume that we use cygwin for everything under NT386GNU
+    SL = "\\"
+  else
+    SL = "/"
+  end
+end
+
+readonly proc get_overrides (nm, ov) is
+  if equal (ov, "*")
+    return ""
+  else
+    return format ("%s=\"%s\" ", nm, ov)
+  end
+end
+
+% check for overrides, otherwise use the defaults from the configuration file
+if not defined ("DB_HOST")    DB_HOST   = TARGET     end
+if not defined ("DB_TARGET")  DB_TARGET = TARGET     end
+if not defined ("DB_CC")      DB_CC     = GNU_CC     end
+if not defined ("DB_CFLAGS")  DB_CFLAGS = GNU_CFLAGS end
+if not defined ("DB_MAKE")    DB_MAKE   = GNU_MAKE   end
+if not defined ("DB_CONFIG")  DB_CONFIG = get_config (DB_TARGET) end
+
+done  = ".configure-done"
+if not defined ("no_config")
+  % configure the sources
+  if stale(done, done)
+    exec ("env CC=" & DB_CC, ".." & SL & "db" & SL & "dist" & SL & "configure", DB_CONFIG,
+          "--enable-debug",
+	  "--prefix=" & INSTALL_ROOT,
+          "&& echo \"done\" > " & done)
+  end
+end
+
+% finally, compile it
+exec ([DB_MAKE, "install"])
