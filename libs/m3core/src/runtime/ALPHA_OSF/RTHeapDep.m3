@@ -123,9 +123,6 @@ PROCEDURE Init () =
       WITH i = Usignal.sigaddset(new.sa_mask, Usignal.SIGVTALRM) DO
         <*ASSERT i = 0*>
       END;
-      WITH i = Usignal.sigaddset(new.sa_mask, Usignal.SIGINT) DO
-        <*ASSERT i = 0*>
-      END;
       WITH i = Usignal.sigaction(Usignal.SIGSEGV, new, old) DO
         <*ASSERT i = 0*>
       END;

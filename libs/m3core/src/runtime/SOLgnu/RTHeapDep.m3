@@ -57,7 +57,6 @@ PROCEDURE Init () =
       EVAL Usignal.sigemptyset(vec.sa_mask);
       (* block the "SIGVTALRM" signal when signal handlers are called *)
       EVAL Usignal.sigaddset(vec.sa_mask, Usignal.SIGVTALRM);
-      EVAL Usignal.sigaddset(vec.sa_mask, Usignal.SIGINT);
       ret := Usignal.sigaction(Usignal.SIGSEGV, vec, ovec);
       <* ASSERT ret = 0 *>
       defaultSIGSEGV := ovec.sa_handler;

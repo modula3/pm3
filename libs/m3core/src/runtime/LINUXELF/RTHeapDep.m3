@@ -49,9 +49,7 @@ PROCEDURE Init () =
       newHandler := LOOPHOLE(Fault,Usignal.SignalActionHandler);
       vec := Usignal.struct_sigaction{
                sa_handler := newHandler,
-               sa_mask :=
-                   Word.Or(Word.LeftShift(1, Usignal.SIGVTALRM - 1),
-                           Word.LeftShift(1, Usignal.SIGINT - 1)),
+               sa_mask := Word.LeftShift(1, Usignal.SIGVTALRM - 1),
                sa_flags := Word.Or(Usignal.SA_RESTART, Usignal.SA_NODEFER),
                sa_restorer := NIL};
       ovec: Usignal.struct_sigaction;

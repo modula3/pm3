@@ -56,8 +56,7 @@ PROCEDURE Init () =
       ret, tmp: Ctypes.int;
 
     BEGIN
-      vec.sa_mask.val[0] := Word.Or(Word.LeftShift(1, Usignal.SIGVTALRM - 1),
-                                    Word.LeftShift(1, Usignal.SIGINT - 1));
+      vec.sa_mask.val[0] := Word.LeftShift(1, Usignal.SIGVTALRM - 1);
       tmp := Usignal.SA_RESTART;
       ret := Usignal.sigaction(Usignal.SIGSEGV, ADR(vec), ADR(ovec));
       <* ASSERT ret = 0 *>
