@@ -72,9 +72,11 @@ Procedure
        VAR
          p:=params;
          pi:Parameter.T;
+         contained:BOOLEAN;
        BEGIN
          WHILE p#NIL DO
-           <*ASSERT paramInfo.get(p.head,pi)*>
+           contained := paramInfo.get(p.head,pi);
+           <*ASSERT contained*>
            IF pi.function THEN
              pi.type := "PROCEDURE (): "&pi.type;  (* the signature of this function is unknown *)
            END;
@@ -116,9 +118,14 @@ Declarations<paramInfo:ParamTbl.T>   (. VAR type : TEXT; .)
      } .
 
 External<paramInfo:ParamTbl.T>    (. VAR name : TEXT; pi:Parameter.T; .)
-   = Ident<name>               (. <*ASSERT paramInfo.get(name,pi) *>
-                                  pi.function := TRUE;
-                                  <*ASSERT paramInfo.put(name,pi) *> EVAL FALSE .)
+   = Ident<name>               (. VAR
+                                    contained := paramInfo.get(name,pi);
+                                  BEGIN
+                                    <*ASSERT contained *>
+                                    pi.function := TRUE;
+                                    contained := paramInfo.put(name,pi);
+                                    <*ASSERT contained *>
+                                  END .)
    .
 
 VarDecl<paramInfo:ParamTbl.T; type:TEXT>    (. VAR name, dim : TEXT; typecons:=""; .)
@@ -126,10 +133,14 @@ VarDecl<paramInfo:ParamTbl.T; type:TEXT>    (. VAR name, dim : TEXT; typecons:="
      ["(" ArrDim<dim>          (. typecons := "ARRAY "&dim&"OF " .)
       {"," ArrDim<dim>         (. typecons := "ARRAY "&dim&"OF "&typecons .)
       }                        (. typecons := "(* "&typecons&"*) " .)
-      ")"]                     (. <*ASSERT NOT paramInfo.put(name,Parameter.T
+      ")"]                     (. VAR
+                                    contained := paramInfo.put(name,Parameter.T
                                         {type:=typecons&type,
                                          writeable:=FALSE,
-                                         function:=FALSE}) *> EVAL FALSE .)
+                                         function:=FALSE});
+                                  BEGIN
+                                    <*ASSERT NOT contained *>
+                                  END .)
      .
 
 ArrDim<VAR dim:TEXT>           (. VAR id : TEXT; .)
@@ -152,7 +163,7 @@ TypeComments<paramInfo:ParamTbl.T>        (. VAR name:TEXT; pi :Parameter.T; kno
    = {"*" Ident<name>
               (. known := paramInfo.get(name,pi); pi.writeable:=FALSE .)
           "(" ParamMode<pi.writeable> | {"/" ParamMode<pi.writeable>} ")"
-              (. <*ASSERT NOT known OR paramInfo.put(name,pi) *> EVAL FALSE .)
+              (. VAR success := NOT known OR paramInfo.put(name,pi); BEGIN <*ASSERT success*> END .)
      newline } .
 
 ParamMode<VAR writeable:BOOLEAN>
