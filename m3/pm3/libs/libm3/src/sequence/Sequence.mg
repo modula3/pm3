@@ -40,7 +40,7 @@ PROCEDURE Init(s: Seq.T; sizeHint: CARDINAL): Seq.T =
       (* Clear the previous entries to help the GC *)
       FOR i := s.st TO MIN(s.st + s.sz - 1, LAST(s.elem^)) DO 
         s.elem[i] := zero;
-      END
+      END;
       FOR i := 0 TO MAX(-1, s.st + s.sz - 1 - NUMBER(s.elem^)) DO
         s.elem[i] := zero;
       END;
