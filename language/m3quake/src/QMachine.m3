@@ -387,6 +387,7 @@ PROCEDURE TraceInstruction (t: T) =
            Wr.PutText (t.writer, Fmt.Int (t.reg.pc + 1 + arg));
     END;
     Wr.PutText (t.writer, "\n");
+    Wr.Flush(t.writer);
   END TraceInstruction;
 (*------------------------------------------------------- procedure calls ---*)
 
@@ -555,7 +556,7 @@ PROCEDURE PushScope (t: T): QValue.Scope =
   BEGIN
     IF (t.reg.xp >= NUMBER (t.scopes^)) THEN ExpandScopes (t); END;
     WITH s = t.scopes [t.reg.xp] DO
-      IF (s = NIL) THEN s := NEW (QValue.Scope); END;
+      s := NEW (QValue.Scope);
       IF (t.reg.xp > 0)
         THEN s.parent := t.scopes[t.reg.xp-1];
         ELSE s.parent := NIL;
@@ -1654,17 +1655,15 @@ PROCEDURE StripPrefix (t: T;  prefix, path: Pathname.Arcs): Pathname.Arcs
       Err (t, "internal error: invalid pathname in StripPrefix");
     END;
 
-    FOR i := 0 TO MIN(prefix.size(), path.size()) - 1 DO
+    (* check whether prefix is  a prefix of path *)
+    IF prefix.size() > path.size() THEN RETURN path; END;
+
+    FOR i := 0 TO prefix.size() - 1 DO
       IF NOT Text.Equal(prefix.get(i), path.get(i)) THEN
-        VAR sub := TextSeq.Sub(path, i);
-        BEGIN
-          sub.addlo(NIL);       (* make relative *)
-          RETURN sub;
-        END;
+        (* This is not a prefix *)
+        RETURN path;
       END;
     END;
-
-    IF prefix.size() >= path.size() THEN RETURN path; END;
 
     VAR sub := TextSeq.Sub(path, prefix.size());
     BEGIN
