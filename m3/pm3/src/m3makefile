@@ -28,7 +28,7 @@ readonly proc BuildChunk (x) is
     return
   end
 
-  local goto_chunk = format ("cd ..%s%s", SL, x)
+  local wd = format ("..%s%s", SL, x)
 
   % let'm know what we're doing
   write (CR, "---------------------- building ", x,
@@ -51,23 +51,28 @@ readonly proc BuildChunk (x) is
       write ("@echo y | del ", BUILD_DIR, " > nul:", CR)
     end
 
-    exec ("@", BATCH_FILE)
+    local ret = exec ([ BATCH_FILE ])
+    if not equal(ret, 0)
+      error ("execution of batch file failed with error code: ", ret) end
     local sink = unlink_file (BATCH_FILE)
 
   else % OS_TYPE is POSIX
 
     % build and ship the chunk
-    exec ("@", goto_chunk, ";", new_m3build)
-    exec ("@", goto_chunk, ";", new_m3ship)
+    local ret = exec ([ new_m3build ], [], wd)
+    if not equal(ret, 0) error ("m3build failed with error code: ", ret) end
+    ret = exec ([ new_m3ship ], [], wd)
+    if not equal(ret, 0) error ("m3ship failed with error code: ", ret) end
   
     % If you don't want to delete derived objects as soon as they are
     % installed, comment out the following line.
-    exec ("@-", goto_chunk, ";", "rm -rf", BUILD_DIR)
+    ret = exec ([ "rm", "-rf", BUILD_DIR] , [], wd)
 
   end
 
   % remember that we've built this chunk
-  exec ("@", TOUCH, x)
+  ret = exec ([TOUCH, x])
+  if not equal(ret, 0) error ("touch failed with error code: ", ret) end
 end
 
 
