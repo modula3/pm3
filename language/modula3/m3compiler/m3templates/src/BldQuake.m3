@@ -3357,6 +3357,12 @@ PROCEDURE Setup(t: T) RAISES {Error}=
     val.int := M3ID.Add("HIDDEN");
     t.put(M3ID.Add("HIDDEN"), val);
 
+    (* define IMPORTED and LOCAL *)
+    val.int := QValue.BoolID[FALSE];
+    t.put(M3ID.Add("IMPORTED"), val);
+    val.int := QValue.BoolID[TRUE];
+    t.put(M3ID.Add("LOCAL"), val);
+
     IF t.get(all, val) THEN
       t.all := TRUE;
     END;
