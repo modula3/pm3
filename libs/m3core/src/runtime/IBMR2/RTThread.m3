@@ -72,7 +72,7 @@ PROCEDURE setup_sigvtalrm (handler: Usignal.SignalHandler) =
   BEGIN
     sa.sa_handler := handler;
     sa.sa_mask    := Usignal.empty_sigset_t;
-    sa.sa_flags   := 0;
+    sa.sa_flags   := Usignal.SA_RESTART;
     i := Usignal.sigaction (Usignal.SIGVTALRM, sa, osa);
     <* ASSERT i = 0 *>
   END setup_sigvtalrm;
