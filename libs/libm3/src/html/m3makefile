@@ -12,3 +12,6 @@ HtmlFile("runtime")
 HtmlFile("standard")
 HtmlFile("structure")
 HtmlFile("useful")
+HtmlInterface("Bundle")
+HtmlInterface("FloatMode")
+
