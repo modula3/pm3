@@ -534,7 +534,7 @@ readonly proc BuildCvsup() is
   include("../../../../../src/PACKAGES")
 
   ret = Exec(["rm","-r","/etc/cvsup/sup.old"],[],".")
-  ret = Exec(["mv","/etc/cvsup/sup","/etc/cvsup/sup.old"],[],".")
+  ret = Exec(["mv","/etc/cvsup/sup","/etc/cvsup/sup.old",[],".")
   CheckExec(["mv","sup","/etc/cvsup/sup"],[],".","Moving sup")
 end
 
@@ -676,8 +676,8 @@ proc BuildRPM() is
 
   local ret = Exec(["rm","-r","RPMS.old"],[],EXPORT_ROOT)
   ret = Exec(["rm","-r","SRPMS.old"],[],EXPORT_ROOT)
-  ret = Exec(["mv","RPMS","RPMS.old"],[],EXPORT_ROOT)
-  ret = Exec(["mv","SRPMS","SRPMS.old"],[],EXPORT_ROOT)
+  ret = Exec(["mv","RPMS","RPMS.old",[],EXPORT_ROOT)
+  ret = Exec(["mv","SRPMS","SRPMS.old",[],EXPORT_ROOT)
   CheckExec(["mv","RPMS",EXPORT_ROOT],[],".",dir,"Moving RPMS")
   CheckExec(["mv","SRPMS",EXPORT_ROOT],[],".",dir,"Moving SRPMS")
 end
