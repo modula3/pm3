@@ -5,10 +5,12 @@
 % Last modified on Sat Feb 25 09:39:05 PST 1995 by kalsow  
 
 import ("libm3")
-import ("m3middle")
 import ("m3quake")
+import ("m3templates")
 
 implementation ("Main")
+
+build_standalone()
 Program ("m3ship")
 
 

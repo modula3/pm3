@@ -7,9 +7,9 @@
 
 MODULE Main;
 
-IMPORT Text, TextList, TextSeq, M3Config, Stdio, Wr, FS, OSError;
+IMPORT Text, TextList, M3Config, Stdio, Wr, FS, OSError;
 IMPORT Process, ASCII, Thread, Params, Pathname, Env;
-IMPORT Quake, M3File;
+IMPORT Quake, M3File, BldQuake;
 
 CONST
   SL         = M3Config.PATH_SEP;
@@ -24,13 +24,9 @@ TYPE
 
 VAR
   default_template_dir := M3Config.PKG_USE &SL& "m3build" &SL& "templates";
-  other_template_dir_1 := ".." & SL & "lib" & SL & "m3" & SL & "pkg" & SL &
-      "m3build" & SL & "templates";
-  other_template_dir_2 := ".." & SL & other_template_dir_1;
-
-  template_dir    : TEXT := Env.Get("M3TEMPLATES");
-  template        : TEXT := M3Config.BUILD_DIR;
-  build_dir       : TEXT := M3Config.BUILD_DIR;
+  template_dir    : TEXT := NIL;
+  template        : TEXT := NIL;
+  build_dir       : TEXT := NIL;
   start_dir       : TEXT := ".";
   base            : TEXT := NIL;
   parent          : TEXT := NIL;
@@ -169,67 +165,6 @@ PROCEDURE MkDir (dir: TEXT) =
     END;
   END MkDir;
 
-PROCEDURE CheckTemplateDir() =
-  <*FATAL OSError.E*>
-  VAR
-    path, trial1, trial2: TEXT;
-    trials: TextSeq.T;
-    pos: INTEGER;
-  BEGIN
-    IF template_dir = NIL AND M3File.IsDirectory(default_template_dir) THEN
-      template_dir := default_template_dir;
-    END;
-
-    IF template_dir = NIL THEN
-      WITH m3buildPaths = NEW(TextSeq.T).init(),
-           programDir = Pathname.Prefix(Params.Get(0)) DO
-        trials := NEW(TextSeq.T).init();
-        trials.addhi(default_template_dir);
-
-        IF Pathname.Absolute(programDir) THEN
-          m3buildPaths.addhi(programDir);
-        ELSE
-          m3buildPaths.addhi(Pathname.Join(Process.GetWorkingDirectory(),
-              programDir));
-          path := Env.Get("PATH");
-          WHILE path # NIL DO
-            IF Text.Length(path) = 0 THEN path := NIL;
-            ELSE
-              pos := Text.FindChar(path,':');
-              IF pos < 0 THEN
-                m3buildPaths.addhi(path);
-                path := NIL;
-              ELSIF pos = 0 THEN path := Text.Sub(path,1);
-              ELSE
-                m3buildPaths.addhi(Text.Sub(path,0,pos));
-                path := Text.Sub(path,pos + 1);
-              END;
-            END;
-          END;
-        END;
-
-        FOR i := 0 TO m3buildPaths.size() - 1 DO
-          trial1 := Pathname.Join(m3buildPaths.get(i),other_template_dir_1);
-          trial2 := Pathname.Join(m3buildPaths.get(i),other_template_dir_2);
-          trials.addhi(trial1); trials.addhi(trial2);
-          IF M3File.IsDirectory(trial1) THEN
-            template_dir := trial1; RETURN;
-          ELSIF M3File.IsDirectory(trial2) THEN
-            template_dir := trial2; RETURN;
-          END;
-        END;
-      END;
-    END;
-
-    IF template_dir = NIL THEN
-      path := "";
-      FOR i := 0 TO trials.size() - 1 DO
-        path := path & "\n" & trials.get(i);
-      END;
-      Err("unable to find template directory", path);
-    END;
-  END CheckTemplateDir;
-
 PROCEDURE GotoInitialDirectory () =
   BEGIN
     ChDir (start_dir);
@@ -314,16 +249,18 @@ PROCEDURE QDefine (m: Quake.Machine;  sym, val: TEXT) RAISES {Quake.Error} =
 PROCEDURE QRun (m: Quake.Machine;  file: TEXT) RAISES {Quake.Error} =
   BEGIN
     IF (verbose) THEN Out ("EVAL (", file, ")\n") END;
-    Quake.Run (m, file);
+    Quake.RunSourceFile (m, file);
   END QRun;
 
 PROCEDURE RunQuake (build_target: TEXT) =
   VAR
-    mach := Quake.NewMachine ();
+    mach : BldQuake.T;
     defn : DefineList;
     load : TextList.T;
   BEGIN
     TRY
+      mach := NEW(BldQuake.T).init(Stdio.stdout, package, package_dir, 
+                                   build_dir);
       TRY
         (* preload the environment *)
         QDefine (mach, "_" & build_target, "TRUE");
@@ -347,12 +284,11 @@ PROCEDURE RunQuake (build_target: TEXT) =
           load := load.tail;
         END;
 
+        (* setup *)
+        mach.setup();
+
         (* run the user's shipfile *)
         QRun (mach, shipfile);
-
-        (* run the cleanup template *)
-        QRun (mach, template_dir &SL& "CLEANUP");
-  
       FINALLY
         (* free any temp files & garbage *)
         Quake.Done (mach);
@@ -363,9 +299,66 @@ PROCEDURE RunQuake (build_target: TEXT) =
     END;
   END RunQuake;
 
+PROCEDURE FindTemplateDir()=
+  VAR 
+    m3_template := Env.Get("M3_TEMPLATE_DIR");
+    path        : TEXT;
+    subpath     : TEXT;
+    nextsep     : INTEGER := 0;
+    prevsep     : INTEGER := 0;
+    sep         : CHAR;
+  BEGIN
+    IF m3_template # NIL THEN
+      template_dir := m3_template;
+    ELSE
+      path := Env.Get("PATH");
+      IF Text.Equal(M3Config.OS_TYPE, "POSIX") THEN
+        sep := ':';
+      ELSIF Text.Equal(M3Config.OS_TYPE, "WIN32") THEN
+        sep := ';';
+      ELSE
+        Err("FindTemplate does not know how to handle OS_TYPE: ", 
+            M3Config.OS_TYPE);
+      END;
+      REPEAT
+        nextsep := Text.FindChar(path, sep, prevsep + 1);
+        IF nextsep # -1 THEN
+          subpath := Text.Sub(path, prevsep, nextsep - prevsep - 1);
+        ELSE
+          subpath := Text.Sub(path, prevsep);
+        END;
+        IF M3File.IsReadable(subpath & template) THEN
+          template_dir := subpath;
+          RETURN;
+        END;
+        prevsep := nextsep;
+      UNTIL prevsep = -1;
+      IF template_dir = NIL THEN
+        template_dir := default_template_dir;
+      END;
+    END;
+  END FindTemplateDir;
+
+PROCEDURE FindTemplate()=
+  VAR 
+    m3_template := Env.Get("M3_TEMPLATE");
+  BEGIN
+    IF m3_template # NIL THEN
+      template     := Pathname.Last(m3_template);
+    ELSE
+      template     := M3Config.BUILD_DIR;
+    END;
+    build_dir    := template;
+  END FindTemplate;
+
 BEGIN
   ParseCommandLine ();
-  CheckTemplateDir();
+  IF template = NIL THEN
+    FindTemplate();
+  END;
+  IF template_dir = NIL THEN
+    FindTemplateDir();
+  END;
   GotoInitialDirectory ();
   GotoDerivedDirectory ();
   CheckForShipfile ();
