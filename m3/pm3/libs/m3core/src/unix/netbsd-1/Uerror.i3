@@ -8,8 +8,6 @@
 
 INTERFACE Uerror;
 
-FROM Ctypes IMPORT int, char_star;
-
 (*** <errno.h> ***)
 
 CONST
@@ -111,23 +109,7 @@ CONST
   EILSEQ            =   85;    (* Illegal byte sequence *)
   ELAST             =   85;    (* Must equal largest errno *)
 
-<*EXTERNAL*>
-VAR
-  errno: int;
-
 CONST
   Max = ELAST;
-
-<*EXTERNAL "__sys_nerr14"*> VAR sys_nerr: int;
-<*EXTERNAL "__sys_errlist14"*>
-	VAR sys_errlist: UNTRACED REF ARRAY [0..Max] OF char_star;
-
-<*EXTERNAL*> PROCEDURE strerror(n: int): char_star;
-
-PROCEDURE GetFrom_sys_errlist(n: INTEGER): char_star RAISES {};
-(* returns entry 'n' of the 'sys_errlist' array; a checked runtime error
-   unless 0 <= n <= sys_nerr. Its safer and more portable to use this 
-   procedure than to access the array directly.
-*)
 
 END Uerror.
