@@ -110,8 +110,8 @@ PROCEDURE Eval (t: T; end_on_return: BOOLEAN := FALSE)
             Pop (t, val);  
             IF val.kind = QValue.Kind.Array THEN
               WITH seq = QVal.ToArray(t, val) DO
-                FOR i := 0 TO seq.size() - 1 DO
-                  arr.addhi(seq.get(i));
+                FOR i := seq.size() - 1 TO 0 BY -1 DO
+                  arr.addlo(seq.get(i));
                 END;
               END;
             ELSE
@@ -1404,6 +1404,7 @@ PROCEDURE DoWrite (t: T;  n_args: INTEGER) RAISES {Error} =
     M3Buf.Flush (buf, wr);
     M3Buf.AttachDrain (buf, NIL);
     FreeBuf (t, buf);
+    Wr.Flush(wr);
   END DoWrite;
 
 PROCEDURE DoTrace (t: T;  n_args: INTEGER) =
