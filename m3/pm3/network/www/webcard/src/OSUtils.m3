@@ -14,7 +14,6 @@ IMPORT Atom, FileRd, FileWr, Fmt, OSError, OSErrorPosix, Pipe, Process, Rd,
 IMPORT M3toC, Uerror, Unix, Ustat, Utime;
 
 FROM Ctypes IMPORT char_star, int, long;
-FROM Utypes IMPORT u_short, ino_t;
 
 (* *)
 (* Internal subroutines *)
@@ -63,18 +62,6 @@ PROCEDURE ConvertPath(t: Text.T) : char_star =
       RETURN M3toC.TtoS(t);
     END;
   END ConvertPath;
-
-CONST
-  MaxDirNameLen = 64;
-  
-TYPE
-  DirEntry = RECORD    (* directory types somehow missing from Unix.i3 *)
-    d_ino: ino_t;
-    d_reclen: u_short;
-    d_namelen: u_short;
-    d_name: ARRAY [0..MaxDirNameLen-1] OF CHAR;
-  END;
-
 
 (* *)
 (* File system operations *)
@@ -170,51 +157,6 @@ PROCEDURE MakeDir(path: TEXT) RAISES { FileError } =
       RAISE FileError(ErrorMessage(Uerror.errno));
     END;
   END MakeDir;
-
-<*UNUSED*> PROCEDURE OldEnumerate (path: Text.T): TextList.T RAISES {FileError} =
-  VAR
-    head: TextList.T := NIL;
-    tail, this: TextList.T;
-    t: TEXT;
-    length: int;
-    buffer: ARRAY [0..1023] OF CHAR;
-    de: UNTRACED REF DirEntry;
-    pbase: long;
-    i: INTEGER;
-    p := ConvertPath(path);
-    f := Unix.open(p, Unix.O_RDONLY, 0);
-  BEGIN
-    IF f < 0 THEN RAISE FileError(ErrorMessage(Uerror.errno)); END;
-    TRY
-      LOOP
-        length := Unix.getdirentries(
-          f, ADR(buffer), BYTESIZE(buffer), pbase);
-        IF length < 0 THEN RAISE FileError(ErrorMessage(Uerror.errno)); END;
-        IF length = 0 THEN EXIT; END;
-        i := 0;
-        LOOP
-          de := LOOPHOLE(ADR(buffer[i]), UNTRACED REF DirEntry);
-          IF (de^.d_ino # 0) THEN
-            t := M3toC.CopyStoT (ADR(de^.d_name));
-            IF NOT (Text.Equal (t, ".") OR Text.Equal (t, "..")) THEN
-              this := TextList.Cons(t, NIL);
-              IF head = NIL THEN
-                head := this;
-              ELSE
-                tail.tail := this;
-              END;
-              tail := this;
-            END;
-          END;
-          INC(i, de^.d_reclen);
-          IF i >= length THEN EXIT; END;
-        END;
-      END;
-    FINALLY
-      EVAL Unix.close(f);
-    END;
-    RETURN head
-  END OldEnumerate;
 
 PROCEDURE Enumerate(path: TEXT): TextList.T RAISES { FileError } =
   VAR
