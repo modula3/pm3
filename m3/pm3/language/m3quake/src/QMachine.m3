@@ -1298,6 +1298,11 @@ PROCEDURE Include (t: T;  path: TEXT) RAISES {Error} =
     IF NOT Pathname.Absolute (path) THEN
       old_path := M3ID.ToText (t.includes[t.reg.ip-1].file.source_file);
       path := Pathname.Join (Pathname.Prefix (old_path), path, NIL);
+      TRY
+        path := Pathname.Compose(CanonicalizePath(Pathname.Decompose(path)));
+      EXCEPT
+      | Pathname.Invalid => Err(t,"invalid path in include");
+      END;
     END;
 
     TRY
@@ -1604,15 +1609,18 @@ PROCEDURE CanonicalizePath (path: Pathname.Arcs): Pathname.Arcs =
       IF Text.Equal (arc, Pathname.Current) THEN
         (* skip it *)
       ELSIF Text.Equal(arc, Pathname.Parent) THEN
-        INC(pending);
-      ELSIF pending > 0 THEN
-        DEC(pending);
+        IF pending > 0 THEN
+          DEC(pending);
+          EVAL new.remhi();
+        ELSE
+          new.addhi(arc);
+        END;
       ELSE
+        INC(pending);
         new.addhi(arc);
       END;
     END;
 
-    WHILE pending > 0 DO new.addhi(Pathname.Parent); DEC(pending); END;
     RETURN new;
   END CanonicalizePath;
 
