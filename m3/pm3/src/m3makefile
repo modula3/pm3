@@ -165,6 +165,12 @@ BuildChunk("language/parsing","m3coco")
 % requires: libm3
 BuildChunk("libs","tempfiles")
 
+%--- m3config --- library --------------------------------------------------
+% quake templates and default bin, lib, pkg... locations for m3build
+% requires: libm3
+BuildChunk(".","m3config")
+%-- built as part of the bootstrap process
+
 %--- sgml --- library -------------------------------------------------
 % SGML/XML parsing library
 % requires: libm3, m3coco
@@ -199,6 +205,7 @@ BuildChunk("libs","libm3")
 BuildChunk("language/modula3/m3tools","m3bundle")
 BuildChunk("language/parsing","m3coco")
 BuildChunk("libs","tempfiles")
+BuildChunk(".","m3config")
 BuildChunk("text/sgmltools","sgml")
 BuildChunk("text/sgmltools","m3tosgml")
 BuildChunk("text/sgmltools","sgmlconv")
@@ -292,12 +299,6 @@ BuildChunk("language","m3quake")
 % quake builtin functions for m3build
 % requires: libm3, m3quake, m3middle, m3driver
 BuildChunk("language/modula3/m3compiler","m3templates")
-%-- built as part of the bootstrap process
-
-%--- m3config --- library --------------------------------------------------
-% quake templates and default bin, lib, pkg... locations for m3build
-% requires: libm3
-BuildChunk(".","m3config")
 %-- built as part of the bootstrap process
 
 %--- m3build --- utility ------------------------------------------------
