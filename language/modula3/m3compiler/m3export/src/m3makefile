@@ -493,9 +493,8 @@ readonly proc BuildCvsup() is
   end
 
   > "sup/pm3" & "/releases" in
-    write("cvs	list=files prefix=/home/cvsroot/m3/" & 
-        subdirectory," keywordprefix=/home/cvsroot/m3/" & 
-        subdirectory & " norsync",CR)
+    write("cvs	list=files prefix=/home/cvsroot/m3",
+        " keywordprefix=/home/cvsroot/m3" & " norsync",CR)
   end
 
   % define a procedure to be called for each package. This procedure
@@ -534,7 +533,7 @@ readonly proc BuildCvsup() is
   include("../../../../../src/PACKAGES")
 
   ret = Exec(["rm","-r","/etc/cvsup/sup.old"],[],".")
-  ret = Exec(["mv","/etc/cvsup/sup","/etc/cvsup/sup.old",[],".")
+  ret = Exec(["mv","/etc/cvsup/sup","/etc/cvsup/sup.old"],[],".")
   CheckExec(["mv","sup","/etc/cvsup/sup"],[],".","Moving sup")
 end
 
@@ -550,8 +549,8 @@ readonly proc BuildSpec() is
   CheckExec(["mkdir","files"],[],".","Creating files lists directory")
   ret = Exec(["rm","-r","rpm"],[],EXPORT_TMP_ROOT)
   CheckExec(["mkdir","rpm"],[],EXPORT_TMP_ROOT,"Creating rpm directory")
-  CheckExec(["mkdir","BUILD","RPMS","SOURCES","SPECS","SRPMS","tmp"],[],
-      EXPORT_TMP_ROOT & "/" & rpm,"Creating rpm subdirectories")
+  CheckExec(["mkdir","BUILD","RPMS","RPMS/i386","SOURCES","SPECS","SRPMS",
+      "tmp"],[],EXPORT_TMP_ROOT & "/" & "rpm","Creating rpm subdirectories")
 
   local bundles = {}
 
@@ -570,7 +569,7 @@ readonly proc BuildSpec() is
 "# PM3 runs on several platforms but for Linux only on i386.",CR,
 "# Since RPM is mostly popular on Linux... let's stick to i386/Linux",CR,
 "ExclusiveArch: i386",CR,
-"ExclusiveOS: linux",CR,
+"ExclusiveOS: Linux",CR,
 "%description",CR,
 "The Polytechnique Montreal Modula-3 distribution is based on the DEC SRC",CR,
 "Modula-3 programming environment.",CR,
@@ -659,9 +658,22 @@ end
 
 proc BuildRPM() is
   local dir = EXPORT_TMP_ROOT & "/" & "rpm"
+  local tmplDir = versionName & "/" & "m3config" & "/" & "src"
 
   > dir & "/" & "rpmrc" in
     write("topdir: " & dir,CR)
+  end
+
+  % Save the default install root
+
+  CheckExec(["cp","-p",EXPORT_TMP_SRC & "/" & tmplDir & "/" & COMMON,
+      EXPORT_TMP_TMP & "/" & tmplDir & "/" & "COMMON"],[],".")
+
+  % Set the default install root for RPM
+
+  >> EXPORT_TMP_SRC & "/" & tmplDir & "/" & "COMMON" in
+  write("% With RPM, no problem to install in /usr",CR,
+      "INSTALL_ROOT = \"/usr\"",CR)
   end
 
   CheckExec(["tar","zcf",dir & "/" & "SOURCES" & "/" & versionName & ".tgz",
@@ -669,17 +681,31 @@ proc BuildRPM() is
       "--directory",EXPORT_TMP_BOOTSTRAP & "/" & TARGET,versionName],[],".",
       "Preparing source tar file for rpm")
 
+  % Restore the previous default install root
+
+  CheckExec(["cp","-p",EXPORT_TMP_TMP & "/" & tmplDir & "/" & COMMON,
+      EXPORT_TMP_SRC & "/" & tmplDir & "/" & "COMMON"],[],".")
+
   CheckExec(["rpm","-ba","--buildroot",dir & "/" & "tmp",
       "--rcfile",dir & "/" & "rpmrc",
       versionName & ".spec"], ["","rpm.out","rpm.err"],
       dir & "/" & "SPECS", "building rpm failed")
+end
+
+
+%
+% Install the rpm files
+%
+
+proc InstallRPM() is
+  local dir = EXPORT_TMP_ROOT & "/" & "rpm"
 
   local ret = Exec(["rm","-r","RPMS.old"],[],EXPORT_ROOT)
   ret = Exec(["rm","-r","SRPMS.old"],[],EXPORT_ROOT)
-  ret = Exec(["mv","RPMS","RPMS.old",[],EXPORT_ROOT)
-  ret = Exec(["mv","SRPMS","SRPMS.old",[],EXPORT_ROOT)
-  CheckExec(["mv","RPMS",EXPORT_ROOT],[],".",dir,"Moving RPMS")
-  CheckExec(["mv","SRPMS",EXPORT_ROOT],[],".",dir,"Moving SRPMS")
+  ret = Exec(["mv","RPMS","RPMS.old"],[],EXPORT_ROOT)
+  ret = Exec(["mv","SRPMS","SRPMS.old"],[],EXPORT_ROOT)
+  CheckExec(["mv","RPMS",EXPORT_ROOT],[],dir,"Moving RPMS")
+  CheckExec(["mv","SRPMS",EXPORT_ROOT],[],dir,"Moving SRPMS")
 end
 
 %
@@ -829,6 +855,10 @@ end
 
 if DoStep("BuildRPM")
   BuildRPM()
+end
+
+if DoStep("InstallRPM")
+  InstallRPM()
 end
 
 if DoStep("RemovePreviousVersion")

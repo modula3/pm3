@@ -18,19 +18,26 @@ Help on these items is most appreciated!
 compilation servers. We have NT386GNU, SPARC, and SOLgnu computers readily
 accessible.
 
-<LI>Test on NT the new release and adapt to gnu-win32 Beta 19 whenever it
-comes out. It works but there seems to be a problem with the time related
+<LI>Test on NT the new release and adapt to gnu-win32 Beta 19.
+It works but there seems to be a problem with the time related
 routines; TimeStamp generates a range fault which prevents many packages
 using it from working, and files are often recompiled when they should not.
 Perhaps using mingw32 together with gnu-win32 will redirect all the time
-related calls to native windows libraries and cure the problem.
+related calls to native win32 libraries and cure the problem. Another
+possibility is to use a native port of gcc, binutils and gdb to win32 as
+a base; egcs may already offer native gcc and binutils. Using mingw32 gets
+rid of the cygwin32 dll for Modula-3 executables; using a native gcc and
+friends would get rid of cygwin32.dll for the compilation and debugging
+phases as well.
 
-<LI>Add bug fixes and contributed packages. Blair's Pickle (in progress),
-Spencer's emacs files, m3na, and M3 TXL are 
-among the items on the list. Check enumerating environment variables 
-under NT386GNU, proper deallocation
-of file handles, critical sections, and other handles in Win32 
-m3core/libm3 runtime.
+<LI>Add Spencer's emacs files, m3na, and M3 TXL; if the authors submit
+an up to date version with HTML documentation, the inclusion will be
+immediate. Remove redundancy between the StubLib in
+Pickle and the one in Netobjrt. Check enumerating environment variables 
+under NT386GNU. A few things need to be fixed in Trestle over win32
+(fonts, deallocate some handles). Check if m3_strtod is still required
+in m3core/src/Csupport/LINUXLIBC6/dtoa.c, because of conflicts with
+strtod in libc.
 
 <LI>Decouple m3ship and m3where from m3templates. Currently m3ship is much
 too large needlessly.

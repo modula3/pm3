@@ -6,7 +6,7 @@
 
 import ("m3middle")
 
-if equal(TARGET,"LINUXELF")
+if equal(TARGET,"LINUXELF") or equal(TARGET,"LINUXLIBC6")
   include_dir("linux")
 else 
   if equal(TARGET,"NT386")

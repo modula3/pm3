@@ -338,7 +338,7 @@ PROCEDURE GetWorkingDirectory(): Pathname.T RAISES {OSError.E} =
   BEGIN
     LOCK wdCacheMutex DO
       IF wdCache = NIL THEN
-        rc := Unix.getwd(ADR(buffer[0]));
+        rc := Unix.getcwd(ADR(buffer[0]), Unix.MaxPathLen+1);
         IF rc = NIL THEN
           RAISE OSError.E(
             NEW(AtomList.T,

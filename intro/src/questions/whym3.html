@@ -1,0 +1,130 @@
+<HTML>
+<HEAD>
+<TITLE>Why use Modula-3?</TITLE>
+</HEAD>
+<BODY>
+<H1>Why use Modula-3?</H1>
+
+<P>
+Here is what John Polstra, author of the popular CVSup, replied:
+
+<PRE><TT>
+<B>Subject:</B> Re: SUP on sup.freebsd.org
+<B>Date:</B>Wed, 06 Nov 1996 12:31:26 -0800
+<B>From:</B>John Polstra <jdp>
+</TT></PRE>
+
+<PRE><TT>
+&gt; Erhm, why on earth did you chose Modula3 ?? I newer got the warm
+&gt; fuzzies by mr. Wirth's languages
+</TT></PRE>
+
+<P>
+Modula-3 came out of DEC's Systems Research Center, and as far as I
+know, Wirth had nothing to do with it.
+
+<PRE><TT>
+&gt; they are maybe good educational tools, but for real world apps,
+&gt; nah.... :)
+</TT></PRE>
+
+<P>I've used the original Wirth Pascal and Algol-W, and that's certainly
+true of both of them.  I've never used Wirth's Modula, so I can't
+comment on it.
+
+<P>Modula-3 really is a different language, designed specifically for
+systems programming by some extremely competent and experienced
+people who knew what they were doing.
+
+<PRE><TT>
+&gt; Oh and yes I have seen apps written in modula3, all of which was
+&gt; horrible performers, and impossible to port to new platforms, so
+&gt; the management decide a complete rewrite in, guess what, C!
+</TT></PRE>
+
+<P>Are you sure it was Modula-3 and not something else with "Modula"
+in the name?  The SRC Modula-3 compiler supports about 25 different
+platforms.
+
+<P>Plenty of real world apps (*big* ones) have been written in Modula-3,
+and they perform pretty well.  There's also the SPIN OS project
+<A HREF="http://www.cs.washington.edu/research/projects/spin/www/">[SPIN]</A>
+at University of Washington, in which the kernel was written in
+Modula-3.  It performs well, too.
+
+
+<P>Now, you can always argue that a program would be somewhat faster
+and somewhat smaller if it had been written in C.  Hey, guess what?
+I was around when Unix V6 came out, and the same stuff was written
+about it.  Just substitute "C" for "Modula-3" and "assembly language"
+for "C".  The answer is the same in both cases:  Unix would not
+exist as we know it today if it had been written in assembly
+language.  CVSup would not exist as we know it today if it had been
+written in C (or C++, for that matter).
+
+<P>OK, so why on earth did I choose Modula-3?  In no particular order:
+
+<OL>
+<LI>I needed application level threads, and threads are an integral
+part of the Modula-3 language.  About the only reasonable alternative
+was to use pthreads with C or C++.  But pthreads was not well
+supported under FreeBSD at that time.
+
+<LI>I needed a graphical display during development so that I could
+monitor the 3 client threads as they were running, debug them,
+appraise their relative performance, and find the bottlenecks.
+Modula-3 has a very nice toolkit for creating GUIs quickly and
+painlessly.  (OK, so the scrollbars are as ugly as sin.)
+
+<LI>Modula-3 is a compiled language that is reasonably efficient.
+
+<LI>I needed to use some low level system functions, e.g., mapping
+files into memory.  Modula-3 provides good access to such functions,
+and it is quite easy to add interfaces to foreign libraries such
+as "libz".
+
+<LI>Modula-3 has good support for networking.
+
+<LI>It is a mature and stable language that has been used in a number
+of serious, large projects.  The language and compiler have been
+stable for about 5 years, which is more than you can say for C++.
+
+<LI>It has nice support for object oriented programming, including a good
+type system, a nice exception model, and a modern high-performance
+garbage collector.  These traits, IMHO, contribute powerfully to
+producing well-structured, maintainable programs.
+
+<P>Now before you label me an unstudly OO weenie, please consider
+this.  I've been programming in C professionally for 19 years.  I
+made my living for many years writing C compilers and related tools
+such as assemblers, linkers, and disassemblers.  I still use C and
+C++ when I feel they are appropriate for a project, not to mention
+when I have to because that's what the client wants to use.  I have
+experience programming in many many different languages.  Different
+languages are good for different things.  I still like programming
+in C (and C++ for some things), but I'm glad I didn't use it for
+CVSup.
+
+<LI>I had just come off a huge 3+ year C++ project.  During that time, I
+learned just how much C++ sucks.  I did not feel like doing it again
+right away "for fun."
+
+<LI>I have spent my entire professional career getting paid to use the
+wrong tools, because, e.g., the manager read that C++ was "popular."
+For once, just once, on a _hobby_ project, I decided I was going to use
+the tool I felt was the best for the job at hand.  I thought about it
+long and hard, evaluated several options (C and C++ among them), and
+eventually chose Modula-3.  I have never regretted that decision.
+</OL>
+
+<P>Any questions? :-)
+
+<PRE><TT>
+John
+- --
+   John Polstra                                       jdp@polstra.com
+   John D. Polstra &amp; Co., Inc.                Seattle, Washington USA
+   "Self-knowledge is always bad news."                 -- John Barth
+</TT></PRE>
+</BODY>
+</HTML>

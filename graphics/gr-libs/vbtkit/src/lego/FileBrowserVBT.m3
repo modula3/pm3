@@ -33,6 +33,7 @@ REVEAL
         toSelect: TEXT; (* if non-empty/NIL, select this string *)
         truthInHelper: BOOLEAN;   (* where to look for the value *)
         time         : Time.T;  (* last time we looked at this directory *)
+        forceRefresh := FALSE;  (* look at it now *)
         statThread   : Thread.T;
         isDir        : REF ARRAY OF BOOLEAN
       OVERRIDES
@@ -192,7 +193,11 @@ PROCEDURE Refresh (v: T) =
     LOCK v.mu DO
       IF VBT.Domain (v) = Rect.Empty THEN RETURN END;
       TRY
-        IF FS.Status (v.dir).modificationTime > v.time THEN DisplayDir (v) END
+        IF v.forceRefresh OR
+           FS.Status (v.dir).modificationTime > v.time THEN
+          DisplayDir (v);
+          v.forceRefresh := FALSE;
+        END
       EXCEPT
       | OSError.E (code) =>
           CallError (v, code);
@@ -320,6 +325,7 @@ PROCEDURE SetSuffixes (v: T; suffixes: TEXT) =
       LOCK v.mu DO
         v.suffixes := list;
         v.time := 0.0D0;             (* force true redisplay next chance *)
+        v.forceRefresh := TRUE;      (* even on NT *)
         VBT.Mark (v)
       END
     END
@@ -393,6 +399,7 @@ PROCEDURE Set (v: T; path: Pathname.T; time: VBT.TimeStamp := 0)
       END;                       (* outer TRY *)
       v.toSelect := file;
       v.time := 0.0D0;           (* That'll trigger the Watcher. *)
+      v.forceRefresh := TRUE;    (* even on NT *)
       ShowFileInHelper (v, file, time);
     END                          (* LOCK *)
   END Set;

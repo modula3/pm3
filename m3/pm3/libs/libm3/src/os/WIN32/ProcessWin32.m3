@@ -146,13 +146,20 @@ PROCEDURE Wait(p: T): ExitCode =
   BEGIN
     IF NOT p.waitOk THEN RAISE WaitAlreadyCalled END;
     p.waitOk := FALSE;
-    IF WinBase.WaitForSingleObject(p.info.hProcess, WinBase.INFINITE) #
-       WinBase.WAIT_OBJECT_0 THEN RAISE InternalError 
+
+    TRY
+      IF WinBase.WaitForSingleObject(p.info.hProcess, WinBase.INFINITE) #
+         WinBase.WAIT_OBJECT_0 THEN RAISE InternalError 
+      END;
+      IF WinBase.GetExitCodeProcess(p.info.hProcess, ADR(status)) = 0 THEN
+        error := WinBase.GetLastError();
+        RAISE InternalError
+      END;
+    FINALLY
+      CloseHandle(p.info.hProcess) ;
+      CloseHandle(p.info.hThread) ;
     END;
-    IF WinBase.GetExitCodeProcess(p.info.hProcess, ADR(status)) = 0 THEN
-      error := WinBase.GetLastError();
-      RAISE InternalError
-    END;
+
     RETURN Word.And(status, LAST(ExitCode))
   END Wait;
 

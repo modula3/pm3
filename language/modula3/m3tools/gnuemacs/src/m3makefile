@@ -7,7 +7,8 @@
 %      modified on Mon Jan 18 19:09:20 PST 1993 by muller
 
 
-if equal (TARGET, "LINUX") or equal (TARGET, "LINUXELF")
+if equal (TARGET, "LINUX") or equal (TARGET, "LINUXELF") or
+    equal(TARGET, "LINUXLIBC6")
   include_dir ("flex-bison")
 else
   include_dir ("lex-yacc")

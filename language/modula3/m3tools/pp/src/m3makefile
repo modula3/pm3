@@ -15,7 +15,8 @@
 
 import ("libm3")
 
-if equal (TARGET, "LINUX") or equal (TARGET, "LINUXELF")
+if equal (TARGET, "LINUX") or equal (TARGET, "LINUXELF") or 
+    equal(TARGET, "LINUXLIBC6")
   include_dir ("flex-bison")
 else
   include_dir ("lex-yacc")

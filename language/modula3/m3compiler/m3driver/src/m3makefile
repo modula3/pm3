@@ -15,7 +15,7 @@ interface ("M3Backend")
 
 IBACK = lookup("IBACK", "TRUE")
 
-if equal(TARGET,"LINUXELF") and IBACK
+if (equal(TARGET,"LINUXELF") or equal(TARGET,"LINUXLIBC6")) and IBACK
   import ("m3back")
   import ("m3objfile")
   implementation ("M3BackLinux")

@@ -26,6 +26,7 @@ readonly _RandomPieces = {
   "IRIX5"      : [ _BigEndian ],
   "LINUX"      : [ _LittleEndian ],
   "LINUXELF"   : [ _LittleEndian ],
+  "LINUXLIBC6" : [ _LittleEndian ],
   "NEXT"       : [ _BigEndian ],
   "NT386"      : [ _LittleEndian ],
   "NT386GNU"   : [ _LittleEndian ],

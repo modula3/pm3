@@ -8,7 +8,8 @@
 %      modified on Mon Apr  4 10:56:24 PDT 1994 by wobber
 
 readonly _osf_like_systems = {
-  "ALPHA_OSF", "SPARC", "SOLsun", "SOLgnu", "HPPA", "LINUX", "LINUXELF"
+  "ALPHA_OSF", "SPARC", "SOLsun", "SOLgnu", "HPPA", "LINUX", "LINUXELF",
+  "LINUXLIBC6"
 }
 
 if _osf_like_systems contains TARGET

@@ -9,7 +9,7 @@ import ("libm3")
 import ("m3middle")
 import ("m3objfile")
 
-if equal(TARGET,"LINUXELF")
+if equal(TARGET,"LINUXELF") or equal(TARGET,"LINUXLIBC6")
   include_dir("linux")
 else 
   if equal(TARGET,"NT386")

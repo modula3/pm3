@@ -62,14 +62,18 @@ and POSIX or WIN32; if not, additional work will be required.
 
 <UL>
 <LI>Install PM3 on a supported platform.
+
 <LI>Select a short unique name for the new platform.
+
 <LI>Add an entry for the platform in table <I>Platforms</I>
     of the template file <TT>m3config/src/COMMON</TT>. Add a platform
     specific template in directory <TT>m3config/src</TT>.
+
 <LI>In file <TT>language/modula3/m3compiler/m3middle/src/Target.m3</TT>,
     add an entry in table <I>Systems</I>, and a section describing the
     new platform in the <TT>CASE sys OF</TT> statement in the <I>Init</I>
     procedure.
+
 <LI>In directory <TT>libs/m3core/src/C</TT>, add a platform specific
     subdirectory defining the interface to C functions such as
     <TT>setjmp</TT>, <TT>longjmp</TT>, <TT>_setjmp</TT>, <TT>_longjmp</TT>,
@@ -99,6 +103,16 @@ and POSIX or WIN32; if not, additional work will be required.
 
 <LI>In file <TT>libs/libm3/src/random/m3makefile</TT> add an entry for the
     new platform in table <I>_RandomPieces</I>.
+
+<LI>Check in <TT>network/pkgserver/pkgobj/src/POSIX/m3makefile</TT>,
+    <TT>libs/m3core/src/runtime/ex_frame/m3makefile</TT>,
+    <TT>language/modula3/m3tools/pp/src/m3makefile</TT>,
+    <TT>language/modula3/m3tools/gnuemacs/src/m3makefile</TT>,
+    <TT>language/modula3/m3compiler/m3objfile/src/m3makefile</TT>,
+    <TT>language/modula3/m3compiler/m3driver/src/m3makefile</TT>, and
+    <TT>language/modula3/m3compiler/m3back/src/m3makefile</TT>, to enable
+    some system specific features such as integrated backend, 
+    or yacc vs bison.
 
 <LI>In package <TT>language/modula3/m3compiler/m3bootstrap</TT> issue the
     command <TT>m3build -DBOOTTARGET=XXX</TT>, where XXX should be replaced

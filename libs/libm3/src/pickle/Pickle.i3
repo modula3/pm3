@@ -45,20 +45,30 @@
    
    For example, if you compile and run the following program:
 
-| MODULE P1 EXPORTS Main;  IMPORT Pickle, IO;
+| MODULE P1 EXPORTS Main;  
+| IMPORT Pickle, IO, Thread, Wr;
+| <* FATAL Pickle.Error, Wr.Failure, Thread.Alerted *>
 |   TYPE T = REF RECORD val: INTEGER END;
+| VAR wr := IO.OpenWrite("A.pickle");
 | BEGIN
-|   Pickle.Write(NEW(T, val := 6), IO.OpenWrite("A.pickle"))
+|   Pickle.Write(wr, NEW(T, val := 6));
+|   Wr.Close(wr)
 | END P1.
 
    and then in the same directory, you compile and run the
    following program:
 
-| MODULE P2 EXPORTS Main; IMPORT Pickle, IO;
-|   TYPE U = REF RECORD val: INTEGER END;
-|   VAR v: U := Pickle.Read(IO.OpenRead("A.pickle"));
+| MODULE P2 EXPORTS Main;
+|  
+| IMPORT Pickle, IO, Rd, Thread;
+| <* FATAL Pickle.Error, Rd.EndOfFile, Rd.Failure, Thread.Alerted *>
+| 
+| TYPE U = REF RECORD val: INTEGER END;
+| 
+| VAR rd := IO.OpenRead("A.pickle"); u: U;
 | BEGIN
-|   IO.Put(Fmt.Int(v.val) & "\n")
+|   u := Pickle.Read(rd);
+|   IO.PutInt(u.val); IO.Put("\n");
 | END P2.
 
    then "P2" will read the pickle written by "P1" and will
