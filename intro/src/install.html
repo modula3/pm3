@@ -5,9 +5,16 @@
 <H1>Installation</H1>
 
 <P>The latest version of PM3 may be obtained from m3.polymtl.ca by
-<A HREF="http://m3.polymtl.ca/m3/download">WWW</A>
-(or <A HREF="ftp://m3.polymtl.ca/pub/m3">FTP</A> in subdirectories
-pkg, bootstrap, binaries, SRPMS).
+<A HREF="http://www.elegosoft.com/pm3/download.html">FTP</A>,
+<a href="http://www.elegosoft.com/pm3/cvsup-pm3.html">CVSup</a>, or
+<a href="http://www.elegosoft.com/pm3/cvs-pm3.html">Anonymous CVS</a>.
+
+<p>
+  <b>Note:</b> This document is somewhat outdated, as it describes the
+  installation with paths, names, and packages from m3.polymtl.ca, which
+  is no more online. I've made a quick attempt to change some things,
+  but this won't be enough to be really accurate again, I'm afraid.
+</p>
 
 <H2>RPM installation</H2>
 
@@ -61,16 +68,15 @@ installation may look like (the ftp transfer is only needed if you dont use
 the simpler WWW download menu):
 <PRE><TT>
 cassis> cd
-cassis>ftp m3.polymtl.ca
+cassis>ftp www.elegosoft.com
 ftp> binary
-ftp> cd pub/m3/binaries/<I>TARGET</I>
+ftp> cd pub/pm3/
 ftp> ls
-ftp> cd <I>version</I>
-ftp> get usr.tgz
+ftp> get pm3-bin-<i>version</i>.tar.gz
 ftp> quit
 cassis> cd /
-cassis> tar xpfz ~/usr.tgz
-cassis> rm ~/usr.tgz
+cassis> tar xpfz ~/pm3-bin-<i>version</i>.tar.gz
+cassis> rm ~/pm3-bin-<i>version</i>.tar.gz
 cassis> setenv PATH /usr/local/pm3/bin:${PATH}
 cassis> setenv LD_LIBRARY_PATH \
 > /usr/local/pm3/lib/m3/<I>TARGET</I>:${LD_LIBRARY_PATH}
@@ -99,14 +105,14 @@ following procedure.
 
 <PRE><TT>
 cassis> cd
-cassis>ftp m3.polymtl.ca
+cassis>ftp www.elegosoft.com
 ftp> binary
-ftp> cd pub/m3/pkg
+ftp> cd pub/pm3
 ftp> ls
-ftp> get <I>version</I>.tgz
+ftp> get pm3-src-<I>version</I>.tar.gz
 ftp> quit
-cassis> tar xpfz <I>version</I>.tgz
-cassis> rm <I>version</I>.tgz
+cassis> tar xpfz pm3-src-<I>version</I>.tar.gz
+cassis> rm pm3-src-<I>version</I>.tgz
 cassis> setenv PATH /usr/local/pm3/bin:${PATH}
 cassis> setenv LD_LIBRARY_PATH \
 > /usr/local/pm3/lib/m3/<I>TARGET</I>:${LD_LIBRARY_PATH}
@@ -129,21 +135,20 @@ as a single file.
 
 <PRE><TT>
 cassis> cd
-cassis>ftp m3.polymtl.ca
+cassis>ftp www.elegosoft.com
 ftp> binary
-ftp> cd /pub/m3/pkg
+ftp> cd /pub/pm3
 ftp> ls
-ftp> get <I>version</I>.tgz
-ftp> cd /pub/m3/bootstrap/<I>TARGET</I>
-ftp> get <I>version</I>.tgz boot.tgz
+ftp> get pm3-src-<I>version</I>.tar.gz
+ftp> get pm3-<I>version</I>-boot.tgz boot.tgz
 ftp> quit
-cassis> tar xpfz <I>version</I>.tgz
-cassis> tar xpfz boot.tgz
-cassis> rm <I>version</I>.tgz boot.tgz
+cassis> tar xpfz pm3-src-<I>version</I>.tar.gz
+cassis> cd pm3
+cassis> tar xpfz ../boot.tgz
+cassis> rm ../pm3-src-<I>version</I>.tar.gz ../boot.tgz
 cassis> setenv PATH /usr/local/pm3/bin:${PATH}
 cassis> setenv LD_LIBRARY_PATH \
 > /usr/local/pm3/lib/m3/<I>TARGET</I>:${LD_LIBRARY_PATH}
-cassis> cd <I>version</I>
 cassis> make
 </TT></PRE>
 
