@@ -6,43 +6,60 @@
 
 if defined("_all")
   local md_nw = path_of ("MD.nw")
+  local ret = 0
 
   % extract the machine description
   if stale("md", md_nw)
-    exec("notangle -R'BURS specification'", md_nw,
-	 "| sed -e 's/:  */:	/g' -e 's/    */	/g'",
-         "> .md")
+    write ("executing notangle\n")
+    ret = exec(["notangle", "-RBURS specification", md_nw ], [ "", ".md.tmp" ])
+    if not equal(ret, 0)
+      error("notangle failed in m3makefile with code: ", ret) end
+    ret = exec(["sed", "-e", "s/:  */:	/g", "-e", "s/    */	/g" ],
+         [ ".md.tmp", ".md" ])
+    if not equal(ret, 0)
+      error("sed failed in m3makefile with code: ", ret) end
   end
   cp_if (".md", "md")
 
   % build the input to iburg
   if stale("md.brg", ["md", "pp"])
-    exec("pp < md > md.brg")
+    write ("executing pp\n")
+    ret = exec(["pp"], [ "md", "md.brg"])
+    if not equal(ret, 0) error("pp failed in m3makefile with code: ", ret) end
   end
 
   % build burm.c
   if stale("burm.c", "md.brg")
-    exec("iburg -I -T < md.brg > burm.c")
+    write ("execuging iburg\n")
+    ret = exec([ "iburg", "-I", "-T" ], [ "md.brg", "burm.c" ])
+    if not equal(ret, 0)
+      error("iburg failed in m3makefile with code: ", ret) end
   end
 
   % extract the reducer cases
   foreach i in {"1", "2", "3"}
     if stale("reduce" & i, "md")
-      exec("pp", "-" & i, "<", "md", ">", "reduce" & i)
+      write ("executing pp\n")
+      ret = exec([ "pp", "-" & i ], [ "md", "reduce" & i ])
+      if not equal(ret, 0)
+        error("pp failed in m3makefile with code: ", ret) end
     end
   end
 
   % build MD.m3
   if stale("MD.m3", [md_nw, "reduce1", "reduce2", "reduce3"])
-    exec("notangle -L'<*LINE %L \"%F\" *>%N' -Rimplementation",
-	  md_nw, "reduce1", "reduce2", "reduce3", "> .MD.m3")
+    write ("executing notangle\n")
+    ret = exec([ "notangle", "-L<*LINE %L \"%F\" *>%N", "-Rimplementation",
+	  md_nw, "reduce1", "reduce2", "reduce3" ], [ ".MD.m3" ])
+    if not equal(ret, 0)
+      error("notangle failed in m3makefile with code: ", ret) end
   end
   cp_if (".MD.m3", "MD.m3")
 
 end % if defined ("_all")
 
-foreach i in [".md", "md", "md.brg", "reduce1", "reduce2", "reduce3",
-              ".MD.m3", "MD.m3"]
+foreach i in [".md", ".md.tmp", "md", "md.brg", "reduce1", "reduce2",
+              "reduce3", ".MD.m3", "MD.m3"]
   deriveds(i, [""])
 end
 
