@@ -1,0 +1,135 @@
+Thu Jun 25 19:09:56 1998  H.J. Lu  <hjl@gnu.org>
+
+	* Makefile.in (VERSION): Changed to "4.17.0.4 with Linux/x86
+	hardware watchpoint and FPU support".
+
+	* i386lnx-nat.c (i386_insert_aligned_watchpoint): Reuse the
+	old lookup address. Ignore large variable.
+
+Mon Jun  1 08:05:07 1998  H.J. Lu  <hjl@gnu.org>
+
+	* Makefile.in (VERSION): Changed to "4.17.0.3 with Linux/x86 FPU
+	support".
+
+	* i386lnx-nat.c (old_fetch_inferior_registers,
+	old_store_inferior_registers): Fake FP registers.
+
+Fri May 29 07:33:08 1998  H.J. Lu  <hjl@gnu.org>
+
+	* Makefile.in (i386lnx-nat.o): Add dependency.
+	(VERSION): Changed to 4.17.0.2.
+
+	* c-exp.y (parse_number): Fix comment.
+
+	* findvar.c (read_register_bytes): Use ARCH_NUM_REGS instead of
+	NUM_REGS.
+	(write_register_bytes): Likewise.
+	* i386-tdep.c (i386_frame_find_saved_regs): Likewise.
+	(i386_push_dummy_frame): Likewise.
+
+	* i386-tdep.c (i386_do_registers_info): Use RUNTIME_NUM_REGS
+	instead of DO_REGISTERS_INFO_NUM_REGS.
+	* i387-tdep.c (i387_float_info): Likewise.
+	* config/i386/tm-i386.h: Likewise.
+	* config/i386/tm-linux.h: Likewise.
+
+	* i386-tdep.c (i386_do_registers_info): Use INFO_REGMAP for
+	read_relative_register_raw_bytes and i387_print_register.
+	* i387-tdep.c (i387_float_info): Likewise.
+
+	* i386-tdep.c (i386_print_register): Fix a typo.
+
+	* i386lnx-nat.c (fetch_register, old_fetch_inferior_registers,
+	store_register, old_store_inferior_registers,
+	new_fetch_inferior_registers, new_store_inferior_registers,
+	i386_register_u_addr, supply_gregset, fill_gregset,
+	supply_fpregset, fill_fpregset, fetch_core_registers): Rewrite.
+	(get_runtime_num_regs): Renamed from get_reg_info_num_regs.
+
+	* config/i386/tm-linux.h (REGISTER_NAMES): Fixed according to
+	gcc register numbering scheme.
+	(SP_REGNUM, PS_REGNUM, FP0_REGNUM, FPC_REGNUM, FPSWD_REGNUM,
+	FPTWD_REGNUM, FPIPO_REGNUM, FPIPS_REGNUM, FPOOS_REGNUM,
+	FPOPS_REGNUM): Rearranged according to REGISTER_NAMES.
+	(REGISTER_CONVERTIBLE, REGISTER_BYTE, REGISTER_RAW_SIZE,
+	REGISTER_CONVERT_TO_VIRTUAL, REGISTER_CONVERT_TO_RAW): Updated.
+	(GREGISTER, GREGISTER_BYTE, FPREGISTER_BYTE): New.
+
+Mon May 25 22:18:03 1998  H.J. Lu  <hjl@gnu.org>
+
+	* breakpoint.c (VALUE_FIT_IN_REG): New.
+	(can_use_hardware_watchpoint): Use it.
+
+	* config/i386/linux.mh (NATDEPFILES): Remove i386v-nat.o
+	i386v4-nat.o and add i386lnx-nat.o.
+
+	* config/i386/nm-linux.h (FETCH_INFERIOR_REGISTERS): Defined.
+	(NO_SYS_REG_H): Removed.
+	(NO_PTRACE_H): undefined.
+	Include <sys/user.h> if HAVE_SYS_REG_H is not defined.
+
+	* config/i386/tm-i386.h (FPC_REGNUM): Defined as -1.
+	(FPCWD_REGNUM, FPSWD_REGNUM, FPTWD_REGNUM, FPIPO_REGNUM,
+	FPIPS_REGNUM, FPOOS_REGNUM, FPOPS_REGNUM): New.
+	(INFO_REGMAP): New.
+	(DO_REGISTERS_INFO_NUM_REGS): new.
+
+	* config/i386/tm-linux.h (NUM_FREGS, NUM_REGS: New.
+	(INFO_REGMAP): New.
+	(DO_REGISTERS_INFO_NUM_REGS): New.
+	(REGISTER_NAMES): New.
+	(FP_REGNUM, SP_REGNUM, PS_REGNUM, PC_REGNUM, FP0_REGNUM,
+	FPC_REGNUM, FPCWD_REGNUM, FPSWD_REGNUM, FPTWD_REGNUM,
+	FPIPO_REGNUM, FPIPS_REGNUM, FPOOS_REGNUM, FPOPS_REGNUM): New.
+	(GREGISTER_BYTES, gregister_set): New.
+	(FPEGISTER_BYTES, fpregister_set): New.
+	(REGISTER_BYTES): New.
+	(REGISTER_BYTE): New.
+	(VALUE_FIT_IN_REG): New.
+
+	* configure.in (AC_CHECK_HEADERS): Add sys/reg.h.
+	* configure: Regenerated.
+	* config.in: Likewise.
+
+	* i386-tdep.c (i386_print_status_word): New.
+
+	* i386lnx-nat.c: New.
+
+	* target.c (target_read_string): Handle partial read.
+
+	Based on patch from Bill Metzenthen <billm@suburbia.net>:
+	* config/i386/tm-linux.h (I386_LINUX_TARGET): New.
+	(MAX_REGISTER_RAW_SIZE, MAX_REGISTER_VIRTUAL_SIZE): New.
+	(TARGET_LONG_DOUBLE_BIT): New.
+	(HEX_LONG_DOUBLE_INPUT): new.
+	(REGISTER_CONVERTIBLE): New.
+	(REGISTER_CONVERT_TO_VIRTUAL, REGISTER_CONVERT_TO_RAW): New.
+	(REGISTER_VIRTUAL_TYPE): New.
+	(FLOAT_INFO): New.
+	(DO_REGISTERS_INFO): New.
+
+	* findvar.c (extract_floating): Also check
+	TARGET_LONG_DOUBLE_BIT for long double.
+
+	* i386-tdep.c (i386_extract_return_value): On Linux floating
+	point values are returned in floating registers.
+	(i386_do_registers_info): New.
+	(i386_print_register): New.
+
+	* i387-tdep.c (print_387_control_bits): Renamed from
+	print_387_control_word.
+	(print_387_status_bits: Renamed from print_387_status_word.
+	(print_387_control_word): New.
+	(print_387_status_word): New.
+	(i387_print_register): New.
+	(i387_float_info): New.
+	(i387_hex_long_double_input): New.
+
+	* valprint.c (print_floating): Handle TARGET_LONG_DOUBLE_BIT ==
+	80.
+
+Wed Feb 18 17:11:38 1998 Bill Metzenthen <billm@suburbia.net>
+
+	* c-exp.y (parse_number): Add long double support.
+
+	* config/i386/xm-linux.h (HOST_I386): New.

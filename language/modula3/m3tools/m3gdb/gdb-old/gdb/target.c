@@ -76,6 +76,15 @@ find_default_run_target PARAMS ((char *));
 static void
 update_current_target PARAMS ((void));
 
+/* Transfer LEN bytes between target address MEMADDR and GDB address MYADDR.
+   Returns 0 for success, errno code for failure (which includes partial
+   transfers--if you want a more useful response to partial transfers, try
+   target_read_memory_partial).  */
+
+static int
+target_xfer_memory PARAMS ((CORE_ADDR memaddr, char *myaddr, int len,
+			    int write, asection *bfd_section));
+
 static void
 debug_to_open PARAMS ((char *, int));
 
@@ -202,9 +211,9 @@ struct target_ops dummy_target = {
   0,				/* to_stop */
   dummy_stratum,		/* to_stratum */
   0,				/* to_next */
-  0,				/* to_next */
   0,				/* to_has_all_memory */
   0,				/* to_has_memory */
+  0,				/* to_has_stack */
   0,				/* to_has_registers */
   0,				/* to_has_execution */
   0,				/* to_sections */
@@ -647,11 +656,11 @@ target_read_string (memaddr, string, len, errnop)
 
   while (len > 0)
     {
-      tlen = MIN (len, 4 - (memaddr & 3));
       offset = memaddr & 3;
 
-      errcode = target_xfer_memory (memaddr & ~3, buf, 4, 0);
-      if (errcode != 0)
+      tlen = target_read_memory_partial (memaddr & ~3, buf, 4,
+					 &errcode);
+      if (tlen == 0 && errcode != 0)
 	goto done;
 
       if (bufptr - buffer + tlen > buffer_allocated)
@@ -669,6 +678,7 @@ target_read_string (memaddr, string, len, errnop)
 	  if (buf[i + offset] == '\000')
 	    {
 	      nbytes_read += i + 1;
+	      errcode = 0;
 	      goto done;
 	    }
 	}
@@ -701,7 +711,17 @@ target_read_memory (memaddr, myaddr, len)
      char *myaddr;
      int len;
 {
-  return target_xfer_memory (memaddr, myaddr, len, 0);
+  return target_xfer_memory (memaddr, myaddr, len, 0, NULL);
+}
+
+int
+target_read_memory_section (memaddr, myaddr, len, bfd_section)
+     CORE_ADDR memaddr;
+     char *myaddr;
+     int len;
+     asection *bfd_section;
+{
+  return target_xfer_memory (memaddr, myaddr, len, 0, bfd_section);
 }
 
 /* Read LEN bytes of target memory at address MEMADDR, placing the results
@@ -720,7 +740,7 @@ target_read_memory_partial (memaddr, myaddr, len, errnoptr)
   int errcode;	/* Error from last read. */
 
   /* First try a complete read. */
-  errcode = target_xfer_memory (memaddr, myaddr, len, 0);
+  errcode = target_xfer_memory (memaddr, myaddr, len, 0, NULL);
   if (errcode == 0)
     {
       /* Got it all. */
@@ -731,7 +751,7 @@ target_read_memory_partial (memaddr, myaddr, len, errnoptr)
       /* Loop, reading one byte at a time until we get as much as we can. */
       for (errcode = 0, nread = 0; len > 0 && errcode == 0; nread++, len--)
 	{
-	  errcode = target_xfer_memory (memaddr++, myaddr++, 1, 0);
+	  errcode = target_xfer_memory (memaddr++, myaddr++, 1, 0, NULL);
 	}
       /* If an error, the last read was unsuccessful, so adjust count. */
       if (errcode != 0)
@@ -752,9 +772,15 @@ target_write_memory (memaddr, myaddr, len)
      char *myaddr;
      int len;
 {
-  return target_xfer_memory (memaddr, myaddr, len, 1);
+  return target_xfer_memory (memaddr, myaddr, len, 1, NULL);
 }
  
+/* This variable is used to pass section information down to targets.  This
+   *should* be done by adding an argument to the target_xfer_memory function
+   of all the targets, but I didn't feel like changing 50+ files.  */
+
+asection *target_memory_bfd_section = NULL;
+
 /* Move memory to or from the targets.  Iterate until all of it has
    been moved, if necessary.  The top target gets priority; anything
    it doesn't want, is offered to the next one down, etc.  Note the
@@ -765,17 +791,20 @@ target_write_memory (memaddr, myaddr, len)
 
    Result is 0 or errno value.  */
 
-int
-target_xfer_memory (memaddr, myaddr, len, write)
+static int
+target_xfer_memory (memaddr, myaddr, len, write, bfd_section)
      CORE_ADDR memaddr;
      char *myaddr;
      int len;
      int write;
+     asection *bfd_section;
 {
   int curlen;
   int res;
   struct target_ops *t;
   struct target_stack_item *item;
+
+  target_memory_bfd_section = bfd_section;
 
   /* to_xfer_memory is not guaranteed to set errno, even when it returns
      0.  */
@@ -1112,6 +1141,7 @@ static struct {
   {"SIG62", "Real-time event 62"},
   {"SIG63", "Real-time event 63"},
 
+#if defined(MACH) || defined(__MACH__)
   /* Mach exceptions */
   {"EXC_BAD_ACCESS", "Could not access memory"},
   {"EXC_BAD_INSTRUCTION", "Illegal instruction/operand"},
@@ -1119,7 +1149,7 @@ static struct {
   {"EXC_EMULATION", "Emulation instruction"},
   {"EXC_SOFTWARE", "Software generated exception"},
   {"EXC_BREAKPOINT", "Breakpoint"},
-
+#endif
   {NULL, "Unknown signal"},
   {NULL, "Internal error: printing TARGET_SIGNAL_DEFAULT"},
 

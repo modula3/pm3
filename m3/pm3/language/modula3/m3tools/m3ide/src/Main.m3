@@ -90,7 +90,8 @@ PROCEDURE Interact() =
     arrayResult: REF ARRAY OF TEXT;
     error: TEXT;
   BEGIN
-    Wr.PutText(Stdio.stdout,"Started\n");
+    Wr.PutText(Stdio.stdout,
+        "Started (if you see this, you are not within emacs as you should)\n");
     Wr.Flush(Stdio.stdout);
     LOOP
       command := Rd.GetLine(Stdio.stdin);

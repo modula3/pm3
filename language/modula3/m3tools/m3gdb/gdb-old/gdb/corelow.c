@@ -1,5 +1,5 @@
 /* Core dump and executable file functions below target vector, for GDB.
-   Copyright 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995
+   Copyright 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997
    Free Software Foundation, Inc.
 
 This file is part of GDB.
@@ -41,7 +41,7 @@ static struct core_fns *core_file_fns = NULL;
 static void core_files_info PARAMS ((struct target_ops *));
 
 #ifdef SOLIB_ADD
-static long solib_add_stub PARAMS ((char *));
+static int solib_add_stub PARAMS ((char *));
 #endif
 
 static void core_open PARAMS ((char *, int));
@@ -80,10 +80,10 @@ core_close (quitting)
 {
   char *name;
 
-  inferior_pid = 0;		/* Avoid confusion from thread stuff */
-
   if (core_bfd)
     {
+      inferior_pid = 0;		/* Avoid confusion from thread stuff */
+
       name = bfd_get_filename (core_bfd);
       if (!bfd_close (core_bfd))
 	warning ("cannot close \"%s\": %s",
@@ -106,7 +106,7 @@ core_close (quitting)
 /* Stub function for catch_errors around shared library hacking.  FROM_TTYP
    is really an int * which points to from_tty.  */
 
-static long
+static int 
 solib_add_stub (from_ttyp)
      char *from_ttyp;
 {
@@ -278,9 +278,9 @@ get_core_registers (regno)
   sec_ptr reg_sec;
   unsigned size;
   char *the_regs;
-  char secname[10];
+  char secname[30];
   enum bfd_flavour our_flavour = bfd_get_flavour (core_bfd);
-  struct core_fns *cf;
+  struct core_fns *cf = NULL;
 
   if (core_file_fns == NULL)
     {
@@ -417,8 +417,17 @@ struct target_ops core_ops = {
   OPS_MAGIC,			/* to_magic */
 };
 
+/* non-zero if we should not do the add_target call in
+   _initialize_corelow; not initialized (i.e., bss) so that
+   the target can initialize it (i.e., data) if appropriate.
+   This needs to be set at compile time because we don't know
+   for sure whether the target's initialize routine is called
+   before us or after us. */
+int coreops_suppress_target;
+
 void
 _initialize_corelow()
 {
-  add_target (&core_ops);
+  if (!coreops_suppress_target)
+    add_target (&core_ops);
 }

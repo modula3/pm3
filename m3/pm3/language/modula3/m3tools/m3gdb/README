@@ -1,6 +1,4 @@
 #
-# Last modified on Mon Jan  9 09:00:16 PST 1995 by kalsow
-#
 
 This package contains a version of gdb, m3gdb, that's been modified
 to handle Modula-3 symbol table entries.
@@ -8,5 +6,300 @@ to handle Modula-3 symbol table entries.
 To build the package, run  "m3build".  To install the
 result, run "m3ship".
 
+#
+# Summary of needed actions when upgrading to a new gdb version
+#
+# Need merging to include Modula-3 related functionality:
+#
+merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/Makefile.in
+merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/defs.h
+merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/eval.c
+merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/expression.h
+merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/expprint.c
+merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/gdbtypes.h
+merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/language.c
+merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/language.h
+merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/parse.c
+merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/symtab.h
+merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/valarith.c
+merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/value.h
+merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/values.c
+merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/stack.c
+merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/valops.c
+# Must distinguish between SYMBOL_TYPE and SET_SYMBOL_TYPE
+merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/coffread.c
+merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/dwarf2read.c
+merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/dstread.c
+merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/dwarfread.c
+merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/hpread.c
+merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/jv-lang.c
+merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/xcoffread.c
+#
+# Non M3 specific fixes which should eventually not be needed.
+# Some have been dropped but are remembered here in case they
+# should be brought back.
+#
+# sanity checks on stack frames
+~merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/alpha-tdep.c
+# configuration switch for LD on Sun (dropped)
+~merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/configure
+! 		CONFIG_LDFLAGS="${CONFIG_LDFLAGS} -Xlinker -export-dynamic"
+! 		CONFIG_LDFLAGS="${CONFIG_LDFLAGS}"
+# sanity check to read an integer from memory while going up the stack(dropped)
+~merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/corefile.c
++ read_memory_integer_check (memaddr, len)
+# support %llc, may be dropped eventually
+~merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/valprint.c
+# A bit of support for m3, many checks for sym = 0, new argument
+#   for find_function_start_sal... not sure if this is m3 specific
+drop/merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/symtab.c
+# A few things for m3 symbols
+drop/merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/mdebugread.c
+# Many fixes now in gdb. A few m3 specific lines remain
+drop/merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/stabsread.c
+# A few M3 specific things
+drop/merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/symfile.c
+# Have m3gdb the prompt
+drop/merge: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/top.c
+# The following were mostly due to problems with gnu-win32, dropped
+drop: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/breakpoint.c
+drop: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/corelow.c
+drop: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/infrun.c
+drop: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/irix5-nat.c
+drop: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/remote.c
+drop: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/symmisc.c
+drop: m3/pm3/language/modula3/m3tools/m3gdb/gdb/mmalloc/mmalloc.c
+# should not differ
+~drop: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/m3-nat.c
+# I did add thread support and sent it to cygnus. However it does not
+# appear in gdb-4.17. Reimplanted but not tested.
+~drop: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/win32-nat.c
+# A test was added to stop unwinding the stack at an invalid access.
+# This should probably be fixed elsewhere and is not m3 specific. (dropped)
+~drop: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/config/i386/tm-i386.h
+# One more library (-ldl) for the link. Kept for now.
+~drop: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/config/sparc/sun4sol2.mh
+# Fix now part of gdb-4.17 (dropped).
+~drop: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/solib.c
+# M3 specific files
+new: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/m3-exp.c
+new: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/m3-lang.c
+new: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/m3-lang.h
+new: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/m3-token.c
+new: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/m3-token.h
+new: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/m3-typeprint.c
+new: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/m3-uid.c
+new: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/m3-uid.h
+new: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/m3-valprint.c
+# CVS artefact, they contain a $version$ expension, no difference
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/configure
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/bfd/doc/bfd.texinfo
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/gdb.1
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/doc/gdbint.texinfo
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/gdb/doc/stabs.texinfo
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/mmalloc/mmalloc.texi
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/sim/mips/gencode.c
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/sim/mips/interp.c
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/sim/mips/support.h
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/texinfo/texinfo.tex
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/texinfo/cygnus/texinfo.tex
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/texinfo/cygnus/texiplus.tex
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/texinfo/util/texi2dvi
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/utils/amd-udi/mondfe/Makefile.in
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/utils/amd-udi/montip/Makefile.in
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/utils/amd-udi/udi/Makefile.in
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/utils/amd-udi/udi/dos2udip.c
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/utils/amd-udi/udi/dos386c.c
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/utils/amd-udi/udi/dos386c.h
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/utils/amd-udi/udi/dosdfe.asm
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/utils/amd-udi/udi/dostip.asm
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/utils/amd-udi/udi/udidos.ah
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/utils/amd-udi/udi/udidos.h
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/utils/amd-udi/udi/udip2dos.c
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/utils/amd-udi/udi/udiphdos.h
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/utils/amd-udi/udi/udiphsun.h
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/utils/amd-udi/udi/udiproc.h
+version: m3/pm3/language/modula3/m3tools/m3gdb/gdb/utils/amd-udi/udi/udipt29k.h
 
+#
+# Summary of remaining differences between PM3 m3gdb and the 
+# Aachen version (ftp://hobbes.informatik.rwth-aachen.de/pub/modula3)
+# They did almost all the work recently...
 
+diff -r symfile.c
+1864d1863
+<   /* LDD: might cause bugs in 4.16 */
+1866c1865,1866
+<   SYMBOL_INIT_DEMANGLED_NAME (psym, &objfile->psymbol_obstack);
+---
+>   SYMBOL_INIT_DEMANGLED_NAME (&psymbol, &objfile->psymbol_obstack);
+>   /* SYMBOL_INIT_LANGUAGE_SPECIFIC (&psymbol, language); */
+diff -r /home/m3/tmp/import/gdb/gdb/alpha-tdep.c gdb/gdb/alpha-tdep.c
+337a338,380
+> /*------------------------------------------- simple-minded sanity checks ---*/
+> 
+> static CORE_ADDR
+> check_reg (addr, tag)
+>      CORE_ADDR addr;
+>      char *tag;
+> {
+>   if ((addr <= 0x7fffffff) || (addr >> 48)) {
+>     warning ("suspicious %s encountered: 0x%lx, zero used instead", tag, addr);
+>     addr = 0;
+>   }
+>   return addr;
+> }
+> 
+> #define CHECK_PC(x) check_reg(x, "program counter")
+> #define CHECK_SP(x) check_reg(x, "stack pointer")
+> #define CHECK_FP(x) check_reg(x, "frame pointer")
+> 
+> static CORE_ADDR
+> check_sp (addr, callee)
+>      CORE_ADDR addr;
+>      struct frame_info *callee;
+> {
+>   if (callee) {
+>     long delta;
+>     delta = addr - callee->frame;
+>     if (delta < 0) {
+>       warning ("caller's stack pointer (0x%lx) is less than callee's (0x%lx)",
+> 	        addr, callee->frame);
+>       warning ("  using zero instead");
+>       return 0;
+>     } else if (delta > 1000000) {
+>       warning ("caller's stack pointer (0x%lx) is much larger (%ld bytes) than callee's (0x%lx)",
+> 	       addr, delta, callee->frame);
+>       warning ("  using zero instead");
+>       return 0;
+>     }
+>   }
+>   return CHECK_SP (addr);
+> }
+> 
+> /*---------------------------------------------------------------------------*/
+> 
+370c413
+<       return read_memory_integer(frame->frame - 8, 8);
+---
+>       return CHECK_PC (read_memory_integer(frame->frame - 8, 8));
+372c415
+<   return read_next_frame_reg(frame, pcreg);
+---
+>   return CHECK_PC (read_next_frame_reg(frame, pcreg));
+395c438
+<     return read_register (pcreg);
+---
+>     return CHECK_PC (read_register (pcreg));
+833a877,878
+> 
+>       frame->frame = check_sp (frame->frame, frame->next);
+diff -r /home/m3/tmp/import/gdb/gdb/config/sparc/sun4sol2.mh gdb/gdb/config/sparc/sun4sol2.mh
+5c5
+< XM_CLIBS= -lsocket -lnsl
+---
+> XM_CLIBS= -lsocket -lnsl -ldl
+diff -r /home/m3/tmp/import/gdb/gdb/dstread.c gdb/gdb/dstread.c
+1250c1250
+< 		SYMBOL_TYPE(sym) = decode_type_desc(objfile, &symtype,
+---
+> 		SET_SYMBOL_TYPE(sym) = decode_type_desc(objfile, &symtype,
+1365c1365
+< 	SYMBOL_TYPE(sym) = type->function_type;
+---
+> 	SET_SYMBOL_TYPE(sym) = type->function_type;
+diff -r /home/m3/tmp/import/gdb/gdb/eval.c gdb/gdb/eval.c
+430a480
+> #if bad_for_m3
+456a507
+> #endif
+477a536
+>     case OP_M3_TEXT:
+diff -r /home/m3/tmp/import/gdb/gdb/hpread.c gdb/gdb/hpread.c
+1318c1318
+< 	  SYMBOL_TYPE (xsym) = type;
+---
+> 	  SET_SYMBOL_TYPE (xsym) = type;
+1402c1402
+<       SYMBOL_TYPE (sym) = hpread_type_lookup (paramp->dfparam.type, objfile);
+---
+>       SET_SYMBOL_TYPE (sym) = hpread_type_lookup (paramp->dfparam.type, objfile);
+1853c1853
+<       SYMBOL_TYPE (sym) = hpread_read_function_type (hp_type, dn_bufp, objfile);
+---
+>       SET_SYMBOL_TYPE (sym) = hpread_read_function_type (hp_type, dn_bufp, objfile);
+1947c1947
+<       SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->dfparam.type, objfile);
+---
+>       SET_SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->dfparam.type, objfile);
+1954c1954
+<       SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->dsvar.type, objfile);
+---
+>       SET_SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->dsvar.type, objfile);
+1973c1973
+<       SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->ddvar.type, objfile);
+---
+>       SET_SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->ddvar.type, objfile);
+1985c1985
+<       SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->dconst.type, objfile);
+---
+>       SET_SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->dconst.type, objfile);
+1995c1995
+<       SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->dtype.type, objfile);
+---
+>       SET_SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->dtype.type, objfile);
+2005c2005
+<       SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->dtype.type, objfile);
+---
+>       SET_SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->dtype.type, objfile);
+2016c2016
+<       SYMBOL_TYPE (sym) = lookup_pointer_type (hpread_type_lookup
+---
+>       SET_SYMBOL_TYPE (sym) = lookup_pointer_type (hpread_type_lookup
+2023c2023
+<       SYMBOL_TYPE (sym) = hpread_read_enum_type (hp_type, dn_bufp, objfile);
+---
+>       SET_SYMBOL_TYPE (sym) = hpread_read_enum_type (hp_type, dn_bufp, objfile);
+2029c2029
+<       SYMBOL_TYPE (sym) = hpread_read_set_type (hp_type, dn_bufp, objfile);
+---
+>       SET_SYMBOL_TYPE (sym) = hpread_read_set_type (hp_type, dn_bufp, objfile);
+2033c2033
+<       SYMBOL_TYPE (sym) = hpread_read_subrange_type (hp_type, dn_bufp,
+---
+>       SET_SYMBOL_TYPE (sym) = hpread_read_subrange_type (hp_type, dn_bufp,
+2038c2038
+<       SYMBOL_TYPE (sym) = hpread_read_array_type (hp_type, dn_bufp, objfile);
+---
+>       SET_SYMBOL_TYPE (sym) = hpread_read_array_type (hp_type, dn_bufp, objfile);
+2044c2044
+<       SYMBOL_TYPE (sym) = hpread_read_struct_type (hp_type, dn_bufp, objfile);
+---
+>       SET_SYMBOL_TYPE (sym) = hpread_read_struct_type (hp_type, dn_bufp, objfile);
+diff -r /home/m3/tmp/import/gdb/gdb/language.h gdb/gdb/language.h
+38a39
+> #define _LANG_m3
+diff -r /home/m3/tmp/import/gdb/gdb/mdebugread.c gdb/gdb/mdebugread.c
+< 	  if ((TYPE_CODE (tp) == TYPE_CODE_ENUM
+---
+> 	  if (((TYPE_CODE (tp) == TYPE_CODE_ENUM
+1652a1655
+> 	      && !M3_TYPEP (TYPE_CODE (tp)))
+2854a2858,2860
+> 		  /* Unless language is Modula-3 (fake C structures
+> 		   * are used to pass type and symbol information!)
+> 		   */
+diff -r /home/m3/tmp/import/gdb/gdb/valprint.c gdb/gdb/valprint.c
+345a346,348
+>     case 'c':
+>       fprintf_filtered (stream, "%c", (char)val_long);
+>       break;
+diff -r /home/m3/tmp/import/gdb/gdb/xcoffread.c gdb/gdb/xcoffread.c
+1522c1522
+<       SYMBOL_TYPE (sym) = func_symbol_type;
+---
+>       SET_SYMBOL_TYPE (sym) = func_symbol_type;
+1535c1535
+<       SYMBOL_TYPE (sym) = var_symbol_type;
+---
+>       SET_SYMBOL_TYPE (sym) = var_symbol_type;

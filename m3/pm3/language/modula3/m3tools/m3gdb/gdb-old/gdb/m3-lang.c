@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#define MAX_SYMBOLLEN 150
+
 #include "defs.h"
 #include "symtab.h"
 #include "gdbtypes.h"
@@ -1056,7 +1058,7 @@ m3_demangle (mangled)
      char *mangled;
 {
   int i, uid;
-  char demangled [100];
+  char demangled [MAX_SYMBOLLEN];
 
   char *u;
 
@@ -1290,7 +1292,7 @@ struct type *
 find_m3_type_named (name)
      char *name;
 {
-  char struct_name [100];
+  char struct_name [MAX_SYMBOLLEN];
   struct symbol *s;
 
   sprintf (struct_name, "B$%s", name);
@@ -1309,7 +1311,7 @@ find_m3_exported_interfaces (name)
 	interface; note that if the result is NIL, this means
         that the module exports itself only. */
 {
-  char struct_name [100];
+  char struct_name [MAX_SYMBOLLEN];
   struct symbol *s;
 
   sprintf (struct_name, "H$%s", name);
@@ -1325,7 +1327,7 @@ find_m3_ir (kind, name)
      int kind; 
      char *name;
 {
-  char struct_name [100];
+  char struct_name [MAX_SYMBOLLEN];
   sprintf (struct_name, "%c$%s", kind, name);
   return lookup_symbol (struct_name, 0, VAR_NAMESPACE, 0, 0);
 }
@@ -1335,7 +1337,7 @@ find_m3_type_name (t)
      struct type *t;
 {
   char *uid = TYPE_TAG_NAME (t);
-  char struct_name [100];
+  char struct_name [MAX_SYMBOLLEN];
   struct symbol *sym;
 
   if (TYPE_NAME (t) == 0) {

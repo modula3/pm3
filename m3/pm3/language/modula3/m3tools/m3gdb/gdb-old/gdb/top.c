@@ -1,5 +1,5 @@
 /* Top level stuff for GDB, the GNU debugger.
-   Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
+   Copyright 1986, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 1998
    Free Software Foundation, Inc.
 
 This file is part of GDB.
@@ -67,8 +67,6 @@ static void init_signals PARAMS ((void));
 static void stop_sig PARAMS ((int));
 #endif
 
-static void disconnect PARAMS ((int));
-
 static char * line_completion_function PARAMS ((char *, int, char *, int));
 
 static char * readline_line_completion_function PARAMS ((char *, int));
@@ -110,8 +108,6 @@ static void init_signals PARAMS ((void));
 
 static void set_verbose PARAMS ((char *, int, struct cmd_list_element *));
 
-#ifdef TARGET_BYTE_ORDER_SELECTABLE
-
 static void set_endian PARAMS ((char *, int));
 
 static void set_endian_big PARAMS ((char *, int));
@@ -122,7 +118,11 @@ static void set_endian_auto PARAMS ((char *, int));
 
 static void show_endian PARAMS ((char *, int));
 
-#endif
+static void set_architecture PARAMS ((char *, int));
+
+static void show_architecture PARAMS ((char *, int));
+
+static void info_architecture PARAMS ((char *, int));
 
 static void show_history PARAMS ((char *, int));
 
@@ -155,9 +155,11 @@ static void complete_command PARAMS ((char *, int));
 
 static void do_nothing PARAMS ((int));
 
-static long quit_cover PARAMS ((char *));
+#ifdef SIGHUP
+static int quit_cover PARAMS ((char *));
 
 static void disconnect PARAMS ((int));
+#endif
 
 static void source_cleanup PARAMS ((FILE *));
 
@@ -237,11 +239,9 @@ struct cmd_list_element *unsetlist;
 
 struct cmd_list_element *showlist;
 
-#ifdef TARGET_BYTE_ORDER_SELECTABLE
 /* Chain containing the \"set endian\" commands.  */
 
 struct cmd_list_element *endianlist;
-#endif
 
 /* Chain containing all defined \"set history\".  */
 
@@ -378,7 +378,7 @@ static void stop_sig PARAMS ((int));
 /* Called after most modules have been initialized, but before taking users
    command file.  */
 
-void (*init_ui_hook) PARAMS ((void));
+void (*init_ui_hook) PARAMS ((char *argv0));
 
 /* Called instead of command_loop at top level.  Can be invoked via
    return_to_top_level.  */
@@ -458,9 +458,9 @@ NORETURN void (*error_hook) PARAMS ((void)) ATTR_NORETURN;
 
 
 /* Where to go for return_to_top_level (RETURN_ERROR).  */
-jmp_buf error_return;
+SIGJMP_BUF error_return;
 /* Where to go for return_to_top_level (RETURN_QUIT).  */
-jmp_buf quit_return;
+SIGJMP_BUF quit_return;
 
 /* Return for reason REASON.  This generally gets back to the command
    loop, but can be caught via catch_errors.  */
@@ -490,7 +490,7 @@ return_to_top_level (reason)
 	break;
       }
 
-  (NORETURN void) longjmp
+  (NORETURN void) SIGLONGJMP
     (reason == RETURN_ERROR ? error_return : quit_return, 1);
 }
 
@@ -513,17 +513,17 @@ return_to_top_level (reason)
    catch_errors.  Note that quit should return to the command line
    fairly quickly, even if some further processing is being done.  */
 
-long
+int
 catch_errors (func, args, errstring, mask)
-     long (*func) PARAMS ((char *));
+     int (*func) PARAMS ((char *));
      PTR args;
      char *errstring;
      return_mask mask;
 {
-  jmp_buf saved_error;
-  jmp_buf saved_quit;
-  jmp_buf tmp_jmp;
-  long val;
+  SIGJMP_BUF saved_error;
+  SIGJMP_BUF saved_quit;
+  SIGJMP_BUF tmp_jmp;
+  int val;
   struct cleanup *saved_cleanup_chain;
   char *saved_error_pre_print;
   char *saved_quit_pre_print;
@@ -534,21 +534,21 @@ catch_errors (func, args, errstring, mask)
 
   if (mask & RETURN_MASK_ERROR)
     {
-      memcpy ((char *)saved_error, (char *)error_return, sizeof (jmp_buf));
+      memcpy ((char *)saved_error, (char *)error_return, sizeof (SIGJMP_BUF));
       error_pre_print = errstring;
     }
   if (mask & RETURN_MASK_QUIT)
     {
-      memcpy (saved_quit, quit_return, sizeof (jmp_buf));
+      memcpy (saved_quit, quit_return, sizeof (SIGJMP_BUF));
       quit_pre_print = errstring;
     }
 
-  if (setjmp (tmp_jmp) == 0)
+  if (SIGSETJMP (tmp_jmp) == 0)
     {
       if (mask & RETURN_MASK_ERROR)
-	memcpy (error_return, tmp_jmp, sizeof (jmp_buf));
+	memcpy (error_return, tmp_jmp, sizeof (SIGJMP_BUF));
       if (mask & RETURN_MASK_QUIT)
-	memcpy (quit_return, tmp_jmp, sizeof (jmp_buf));
+	memcpy (quit_return, tmp_jmp, sizeof (SIGJMP_BUF));
       val = (*func) (args);
     }
   else
@@ -558,12 +558,12 @@ catch_errors (func, args, errstring, mask)
 
   if (mask & RETURN_MASK_ERROR)
     {
-      memcpy (error_return, saved_error, sizeof (jmp_buf));
+      memcpy (error_return, saved_error, sizeof (SIGJMP_BUF));
       error_pre_print = saved_error_pre_print;
     }
   if (mask & RETURN_MASK_QUIT)
     {
-      memcpy (quit_return, saved_quit, sizeof (jmp_buf));
+      memcpy (quit_return, saved_quit, sizeof (SIGJMP_BUF));
       quit_pre_print = saved_quit_pre_print;
     }
   return val;
@@ -571,7 +571,7 @@ catch_errors (func, args, errstring, mask)
 
 /* Handler for SIGHUP.  */
 
-#ifndef _WIN32
+#ifdef SIGHUP
 static void
 disconnect (signo)
 int signo;
@@ -581,11 +581,10 @@ int signo;
   signal (SIGHUP, SIG_DFL);
   kill (getpid (), SIGHUP);
 }
-#endif
 
 /* Just a little helper function for disconnect().  */
 
-static long
+static int
 quit_cover (s)
 char *s;
 {
@@ -594,6 +593,7 @@ char *s;
   quit_command((char *)0, 0);
   return 0;
 }
+#endif /* defined SIGHUP */
 
 /* Line number we are currently in in a file which is being sourced.  */
 static int source_line_number;
@@ -639,7 +639,8 @@ extern void init_proc PARAMS ((void));
 void (*pre_init_ui_hook) PARAMS ((void));
 
 void
-gdb_init ()
+gdb_init (argv0)
+     char *argv0;
 {
   if (pre_init_ui_hook)
     pre_init_ui_hook ();
@@ -665,7 +666,7 @@ gdb_init ()
   expected_language = current_language;	/* don't warn about the change.  */
 
   if (init_ui_hook)
-    init_ui_hook ();
+    init_ui_hook (argv0);
 }
 
 /* Allocate, initialize a new command line structure for one of the
@@ -813,6 +814,7 @@ execute_control_command (cmd)
   struct command_line *current;
   struct cleanup *old_chain = 0;
   value_ptr val;
+  value_ptr val_mark;
   int loop;
   enum command_control_type ret;
   char *new_line;
@@ -852,13 +854,18 @@ execute_control_command (cmd)
 	/* Keep iterating so long as the expression is true.  */
 	while (loop == 1)
 	  {
+	    int cond_result;
+
 	    QUIT;
 
 	    /* Evaluate the expression.  */
+	    val_mark = value_mark ();
 	    val = evaluate_expression (expr);
+	    cond_result = value_true (val);
+	    value_free_to_mark (val_mark);
 
 	    /* If the value is false, then break out of the loop.  */
-	    if (!value_true (val))
+	    if (!cond_result)
 	      break;
 
 	    /* Execute the body of the while statement.  */
@@ -906,6 +913,7 @@ execute_control_command (cmd)
 	ret = simple_control;
 
 	/* Evaluate the conditional.  */
+	val_mark = value_mark ();
 	val = evaluate_expression (expr);
 
 	/* Choose which arm to take commands from based on the value of the
@@ -914,6 +922,7 @@ execute_control_command (cmd)
 	  current = *cmd->body_list;
 	else if (cmd->body_count == 2)
 	  current = *(cmd->body_list + 1);
+	value_free_to_mark (val_mark);
 
 	/* Execute commands in the given arm.  */
 	while (current)
@@ -1019,6 +1028,9 @@ setup_user_args (p)
   while (*p)
     {
       char *start_arg;
+      int squote = 0;
+      int dquote = 0;
+      int bsquote = 0;
 
       if (arg_count >= MAXUSERARGS)
 	{
@@ -1036,8 +1048,36 @@ setup_user_args (p)
       user_args->a[arg_count].arg = p;
 
       /* Get to the end of this argument.  */
-      while (*p && *p != ' ' && *p != '\t')
-	p++;
+      while (*p)
+	{
+	  if (((*p == ' ' || *p == '\t')) && !squote && !dquote && !bsquote)
+	    break;
+	  else
+	    {
+	      if (bsquote)
+		bsquote = 0;
+	      else if (*p == '\\')
+		bsquote = 1;
+	      else if (squote)
+		{
+		  if (*p == '\'')
+		    squote = 0;
+		}
+	      else if (dquote)
+		{
+		  if (*p == '"')
+		    dquote = 0;
+		}
+	      else
+		{
+		  if (*p == '\'')
+		    squote = 1;
+		  else if (*p == '"')
+		    dquote = 1;
+		}
+	      p++;
+	    }
+	}
 
       user_args->a[arg_count].len = p - start_arg;
       arg_count++;
@@ -1171,17 +1211,19 @@ execute_command (p, from_tty)
   register enum language flang;
   static int warned = 0;
   /* FIXME: These should really be in an appropriate header file */
-  extern FILE *serial_logfp;
   extern void serial_log_command PARAMS ((const char *));
 
   free_all_values ();
+
+  /* Force cleanup of any alloca areas if using C alloca instead of
+     a builtin alloca.  */
+  alloca (0);
 
   /* This can happen when command_line_input hits end of file.  */
   if (p == NULL)
       return;
 
-  if (serial_logfp != NULL)
-    serial_log_command (p);
+  serial_log_command (p);
 
   while (*p == ' ' || *p == '\t') p++;
   if (*p)
@@ -1872,6 +1914,13 @@ static void
 do_nothing (signo)
 int signo;
 {
+  /* Under System V the default disposition of a signal is reinstated after
+     the signal is caught and delivered to an application process.  On such
+     systems one must restore the replacement signal handler if one wishes
+     to continue handling the signal in one's program.  On BSD systems this
+     is not needed but it is harmless, and it simplifies the code to just do
+     it unconditionally. */
+  signal (signo, do_nothing);
 }
 
 static void
@@ -1893,8 +1942,8 @@ init_signals ()
      might be in memory, shared between the two).  Since we establish
      a handler for SIGQUIT, when we call exec it will set the signal
      to SIG_DFL for us.  */
-#ifndef _WIN32
   signal (SIGQUIT, do_nothing);
+#ifdef SIGHUP
   if (signal (SIGHUP, do_nothing) != SIG_IGN)
     signal (SIGHUP, disconnect);
 #endif
@@ -2750,28 +2799,42 @@ document_command (comname, from_tty)
 }
 
 void
-print_gnu_advertisement ()
-{
-    printf_unfiltered ("\
-GDB is free software and you are welcome to distribute copies of it\n\
- under certain conditions; type \"show copying\" to see the conditions.\n\
-There is absolutely no warranty for GDB; type \"show warranty\" for details.\n\
-");
-}
-
-void
 print_gdb_version (stream)
   GDB_FILE *stream;
 {
+  /* From GNU coding standards, first line is meant to be easy for a
+     program to parse, and is just canonical program name and version
+     number, which starts after last space. */
+
+  fprintf_filtered (stream, "GNU gdb %s\n", version);
+
+  /* Second line is a copyright notice. */
+
+  fprintf_filtered (stream, "Copyright 1998 Free Software Foundation, Inc.\n");
+
+  /* Following the copyright is a brief statement that the program is
+     free software, that users are free to copy and change it on
+     certain conditions, that it is covered by the GNU GPL, and that
+     there is no warranty. */
+
   fprintf_filtered (stream, "\
-GDB %s (%s", version, host_name);
+GDB is free software, covered by the GNU General Public License, and you are\n\
+welcome to change it and/or distribute copies of it under certain conditions.\n\
+Type \"show copying\" to see the conditions.\n\
+There is absolutely no warranty for GDB.  Type \"show warranty\" for details.\n");
 
+  /* After the required info we print the configuration information. */
+
+  fprintf_filtered (stream, "This GDB was configured as \"");
   if (!STREQ (host_name, target_name))
-    fprintf_filtered (stream, " --target %s", target_name);
-
-  fprintf_filtered (stream, "), ");
-  wrap_here("");
-  fprintf_filtered (stream, "Copyright 1996 Free Software Foundation, Inc.");
+    {
+      fprintf_filtered (stream, "--host=%s --target=%s", host_name, target_name);
+    }
+  else
+    {
+      fprintf_filtered (stream, "%s", host_name);
+    }
+  fprintf_filtered (stream, "\".");
 }
 
 /* ARGSUSED */
@@ -2781,7 +2844,6 @@ show_version (args, from_tty)
      int from_tty;
 {
   immediate_quit++;
-  print_gnu_advertisement ();
   print_gdb_version (gdb_stdout);
   printf_filtered ("\n");
   immediate_quit--;
@@ -2796,9 +2858,41 @@ print_prompt ()
   printf_unfiltered ("%s", prompt);
   gdb_flush (gdb_stdout);
 }
+
+/* This replaces the above for the frontends: it returns a pointer
+   to the prompt. */
+char *
+get_prompt ()
+{
+  return prompt;
+}
 
+/* If necessary, make the user confirm that we should quit.  Return
+   non-zero if we should quit, zero if we shouldn't.  */
+
+int
+quit_confirm ()
+{
+  if (inferior_pid != 0 && target_has_execution)
+    {
+      char *s;
+
+      if (attach_flag)
+	s = "The program is running.  Quit anyway (and detach it)? ";
+      else
+	s = "The program is running.  Exit anyway? ";
+
+      if (! query (s))
+	return 0;
+    }
+
+  return 1;
+}
+
+/* Quit without asking for confirmation.  */
+
 void
-quit_command (args, from_tty)
+quit_force (args, from_tty)
      char *args;
      int from_tty;
 {
@@ -2816,20 +2910,11 @@ quit_command (args, from_tty)
   if (inferior_pid != 0 && target_has_execution)
     {
       if (attach_flag)
-	{
-	  if (query ("The program is running.  Quit anyway (and detach it)? "))
-	    target_detach (args, from_tty);
-	  else
-	    error ("Not confirmed.");
-	}
+	target_detach (args, from_tty);
       else
-	{
-	  if (query ("The program is running.  Quit anyway (and kill it)? "))
-	    target_kill ();
-	  else
-	    error ("Not confirmed.");
-	}
+	target_kill ();
     }
+
   /* UDI wants this, to kill the TIP.  */
   target_close (1);
 
@@ -2837,7 +2922,21 @@ quit_command (args, from_tty)
   if (write_history_p && history_filename)
     write_history (history_filename);
 
+  do_final_cleanups(ALL_CLEANUPS);	/* Do any final cleanups before exiting */
+
   exit (exit_code);
+}
+
+/* Handle the quit command.  */
+
+void
+quit_command (args, from_tty)
+     char *args;
+     int from_tty;
+{
+  if (! quit_confirm ())
+    error ("Not confirmed.");
+  quit_force (args, from_tty);
 }
 
 /* Returns whether GDB is running on a terminal and whether the user
@@ -3068,17 +3167,17 @@ dont_repeat_command (ignored, from_tty)
 			   necessarily reading from stdin.  */
 }
 
-#ifdef TARGET_BYTE_ORDER_SELECTABLE
-
 /* Functions to manipulate the endianness of the target.  */
 
+#ifdef TARGET_BYTE_ORDER_SELECTABLE
 #ifndef TARGET_BYTE_ORDER_DEFAULT
 #define TARGET_BYTE_ORDER_DEFAULT BIG_ENDIAN
 #endif
-
 int target_byte_order = TARGET_BYTE_ORDER_DEFAULT;
-
-static int target_byte_order_auto = 1;
+int target_byte_order_auto = 1;
+#else
+static int target_byte_order_auto = 0;
+#endif
 
 /* Called if the user enters ``set endian'' without an argument.  */
 static void
@@ -3096,8 +3195,13 @@ set_endian_big (args, from_tty)
      char *args;
      int from_tty;
 {
+#ifdef TARGET_BYTE_ORDER_SELECTABLE
   target_byte_order = BIG_ENDIAN;
   target_byte_order_auto = 0;
+#else
+  printf_unfiltered ("Byte order is not selectable.");
+  show_endian (args, from_tty);
+#endif
 }
 
 /* Called by ``set endian little''.  */
@@ -3106,8 +3210,13 @@ set_endian_little (args, from_tty)
      char *args;
      int from_tty;
 {
+#ifdef TARGET_BYTE_ORDER_SELECTABLE
   target_byte_order = LITTLE_ENDIAN;
   target_byte_order_auto = 0;
+#else
+  printf_unfiltered ("Byte order is not selectable.");
+  show_endian (args, from_tty);
+#endif
 }
 
 /* Called by ``set endian auto''.  */
@@ -3116,7 +3225,12 @@ set_endian_auto (args, from_tty)
      char *args;
      int from_tty;
 {
+#ifdef TARGET_BYTE_ORDER_SELECTABLE
   target_byte_order_auto = 1;
+#else
+  printf_unfiltered ("Byte order is not selectable.");
+  show_endian (args, from_tty);
+#endif
 }
 
 /* Called by ``show endian''.  */
@@ -3131,8 +3245,6 @@ show_endian (args, from_tty)
      : "The target is assumed to be %s endian\n");
   printf_unfiltered ((char *) msg, TARGET_BYTE_ORDER == BIG_ENDIAN ? "big" : "little");
 }
-
-#endif /* defined (TARGET_BYTE_ORDER_SELECTABLE) */
 
 /* Set the endianness from a BFD.  */
 void
@@ -3163,6 +3275,130 @@ set_endian_from_file (abfd)
 	     TARGET_BYTE_ORDER == BIG_ENDIAN ? "big" : "little");
 
 #endif /* ! defined (TARGET_BYTE_ORDER_SELECTABLE) */
+}
+
+/* Functions to manipulate the architecture of the target */
+
+int target_architecture_auto = 1;
+extern const bfd_arch_info_type bfd_default_arch_struct;
+const bfd_arch_info_type *target_architecture = &bfd_default_arch_struct;
+int (*target_architecture_hook) PARAMS ((const bfd_arch_info_type *ap));
+
+static void
+set_arch (arch)
+     const bfd_arch_info_type *arch;
+{
+  /* FIXME: Is it compatible with gdb? */
+  /* Check with the target on the setting */
+  if (target_architecture_hook != NULL
+      && !target_architecture_hook (arch))
+    printf_unfiltered ("Target does not support `%s' architecture.\n",
+		       arch->printable_name);
+  else
+    {
+      target_architecture_auto = 0;
+      target_architecture = arch;
+    }
+}
+
+
+/* Called if the user enters ``set architecture'' with or without an
+   argument. */
+static void
+set_architecture (args, from_tty)
+     char *args;
+     int from_tty;
+{
+  if (args == NULL)
+    {
+      printf_unfiltered ("\"set architecture\" must be followed by \"auto\" or an architecture name.\n");
+    }
+  else if (strcmp (args, "auto") == 0)
+    {
+      target_architecture_auto = 1;
+    }
+  else
+    {
+      const bfd_arch_info_type *arch = bfd_scan_arch (args);
+      if (arch != NULL)
+	set_arch (arch);
+      else
+	printf_unfiltered ("Architecture `%s' not reconized.\n", args);
+    }
+}
+
+/* Called if the user enters ``show architecture'' without an argument. */
+static void
+show_architecture (args, from_tty)
+     char *args;
+     int from_tty;
+{
+  const char *arch;
+  arch = target_architecture->printable_name;
+  if (target_architecture_auto)
+    printf_filtered ("The target architecture is set automatically (currently %s)\n", arch);
+  else
+    printf_filtered ("The target architecture is assumed to be %s\n", arch);
+}
+
+/* Called if the user enters ``info architecture'' without an argument. */
+static void
+info_architecture (args, from_tty)
+     char *args;
+     int from_tty;
+{
+  enum bfd_architecture a;
+  printf_filtered ("Available architectures are:\n");
+  for (a = bfd_arch_obscure + 1; a < bfd_arch_last; a++)
+    {
+      const bfd_arch_info_type *ap = bfd_lookup_arch (a, 0);
+      if (ap != NULL)
+	{
+	  do
+	    {
+	      printf_filtered (" %s", ap->printable_name);
+	      ap = ap->next;
+	    }
+	  while (ap != NULL);
+	  printf_filtered ("\n");
+	}
+    }
+}
+
+/* Set the architecture from arch/machine */
+void
+set_architecture_from_arch_mach (arch, mach)
+     enum bfd_architecture arch;
+     unsigned long mach;
+{
+  const bfd_arch_info_type *wanted = bfd_lookup_arch (arch, mach);
+  if (wanted != NULL)
+    set_arch (wanted);
+  else
+    fatal ("hardwired architecture/machine not reconized");
+}
+
+
+/* Set the architecture from a BFD */
+void
+set_architecture_from_file (abfd)
+     bfd *abfd;
+{
+  const bfd_arch_info_type *wanted = bfd_get_arch_info (abfd);
+  if (target_architecture_auto)
+    {
+      if (target_architecture_hook != NULL
+	  && !target_architecture_hook (wanted))
+	warning ("Target may not support %s architecture",
+		 wanted->printable_name);
+      target_architecture = wanted;
+    }
+  else if (wanted != target_architecture)
+    {
+      warning ("%s architecture file may be incompatible with %s target.",
+	       wanted->printable_name,
+	       target_architecture->printable_name);
+    }
 }
 
 /* Functions to manipulate command line editing control variables.  */
@@ -3334,9 +3570,7 @@ init_cmd_lists ()
   setlist = NULL;
   unsetlist = NULL;
   showlist = NULL;
-#ifdef TARGET_BYTE_ORDER_SELECTABLE
   endianlist = NULL;
-#endif
   sethistlist = NULL;
   showhistlist = NULL;
   unsethistlist = NULL;
@@ -3387,8 +3621,6 @@ init_main ()
 {
   struct cmd_list_element *c;
 
-#ifdef TARGET_BYTE_ORDER_SELECTABLE
-
   add_prefix_cmd ("endian", class_support, set_endian,
 		  "Set endianness of target.",
 		  &endianlist, "set endian ", 0, &setlist);
@@ -3401,7 +3633,14 @@ init_main ()
   add_cmd ("endian", class_support, show_endian,
 	   "Show endianness of target.", &showlist);
 
-#endif /* defined (TARGET_BYTE_ORDER_SELECTABLE) */
+  add_cmd ("architecture", class_support, set_architecture,
+	   "Set architecture of target.", &setlist);
+  add_alias_cmd ("processor", "architecture", class_support, 1, &setlist);
+  add_cmd ("architecture", class_support, show_architecture,
+	   "Show architecture of target.", &showlist);
+  add_cmd ("architecture", class_support, info_architecture,
+	   "List supported target architectures", &infolist);
+
 
 #ifdef DEFAULT_PROMPT
   prompt = savestring (DEFAULT_PROMPT, strlen(DEFAULT_PROMPT));
@@ -3515,7 +3754,7 @@ hitting return.");
   add_show_from_set
     (add_set_cmd ("editing", class_support, var_boolean, (char *)&command_editing_p,
 	   "Set editing of command lines as they are typed.\n\
-Use \"on\" to enable to enable the editing, and \"off\" to disable it.\n\
+Use \"on\" to enable the editing, and \"off\" to disable it.\n\
 Without an argument, command line editing is enabled.  To edit, use\n\
 EMACS-like or VI-like commands like control-P or ESC.", &setlist),
      &showlist);
@@ -3536,7 +3775,7 @@ Without an argument, history expansion is enabled.", &sethistlist),
   add_show_from_set
     (add_set_cmd ("save", no_class, var_boolean, (char *)&write_history_p,
 	   "Set saving of the history record on exit.\n\
-Use \"on\" to enable to enable the saving, and \"off\" to disable it.\n\
+Use \"on\" to enable the saving, and \"off\" to disable it.\n\
 Without an argument, saving is enabled.", &sethistlist),
      &showhistlist);
 
@@ -3617,4 +3856,11 @@ is displayed.", &setlist),
 This value is used to set the time limit for gdb to wait for a response\n\
 from he target.", &setlist),
 		     &showlist);
+
+  c = add_set_cmd ("annotate", class_obscure, var_zinteger, 
+		   (char *)&annotation_level, "Set annotation_level.\n\
+0 == normal;     1 == fullname (for use when running under emacs)\n\
+2 == output annotated suitably for use by programs that control GDB.",
+		 &setlist);
+  c = add_show_from_set (c, &showlist);
 }

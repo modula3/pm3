@@ -127,10 +127,10 @@
 )
 
 (if (file-exists-p "/usr/local/pm3/lib/m3/pkg")
-  (defvar m3-www "file:/usr/local/pm3"
+  (defvar m3-www "file:/usr/local/pm3/lib/m3/pkg"
     "Path where modula-3 packages are located"
   )
-  (defvar m3-www "file:/usr"
+  (defvar m3-www "file:/usr/lib/m3/pkg"
     "Path where modula-3 packages are located"
   )
 )
@@ -358,7 +358,7 @@
 
 (defun m3-help-bdam3 () (interactive)
   "Show the Building distributed applications with Modula-3 book"
-  (m3-fetch-url (concat m3-www "/lib/m3/www/modula3/src/index.html"))
+  (m3-fetch-url (concat m3-www "/modula3/src/index.html"))
 )
 
 (defun m3-build () (interactive)

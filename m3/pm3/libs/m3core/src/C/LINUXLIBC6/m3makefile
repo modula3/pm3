@@ -11,3 +11,5 @@ Interface ("Cstring")
 
 Module ("Cstdio")
 
+s_source("CsetjmpASM")
+

@@ -335,4 +335,3 @@ malloc (size)
   result = mmalloc ((PTR) NULL, size);
   return (result);
 }
-

@@ -1,5 +1,5 @@
 /* Handle SunOS and SVR4 shared libraries for GDB, the GNU Debugger.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998
    Free Software Foundation, Inc.
    
 This file is part of GDB.
@@ -67,10 +67,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #ifdef SVR4_SHARED_LIBS
 static char *solib_break_names[] = {
-  "rtld_db_dlactivity",
   "r_debug_state",
   "_r_debug_state",
   "_dl_debug_state",
+  "rtld_db_dlactivity",
   NULL
 };
 #endif
@@ -149,10 +149,15 @@ static struct so_list *so_list_head;	/* List of known shared objects */
 static CORE_ADDR debug_base;		/* Base of dynamic linker structures */
 static CORE_ADDR breakpoint_addr;	/* Address where end bkpt is set */
 
+static int solib_cleanup_queued = 0;    /* make_run_cleanup called */
+
 extern int
 fdmatch PARAMS ((int, int));		/* In libiberty */
 
 /* Local function prototypes */
+
+static void
+do_clear_solib PARAMS ((PTR));
 
 static int
 match_main PARAMS ((char *));
@@ -169,7 +174,7 @@ enable_break PARAMS ((void));
 static void
 info_sharedlibrary_command PARAMS ((char *, int));
 
-static long
+static int
 symbol_add_stub PARAMS ((char *));
 
 static struct so_list *
@@ -683,8 +688,7 @@ elf_locate_base ()
   /* Find the DT_DEBUG entry in the the .dynamic section.
      For mips elf we look for DT_MIPS_RLD_MAP, mips elf apparently has
      no DT_DEBUG entries.  */
-  /* FIXME: In lack of a 64 bit ELF ABI the following code assumes
-     a 32 bit ELF ABI target.  */
+#ifndef TARGET_ELF64
   for (bufend = buf + dyninfo_sect_size;
        buf < bufend;
        buf += sizeof (Elf32_External_Dyn))
@@ -715,6 +719,25 @@ elf_locate_base ()
 	}
 #endif
     }
+#else /* ELF64 */
+  for (bufend = buf + dyninfo_sect_size;
+       buf < bufend;
+       buf += sizeof (Elf64_External_Dyn))
+    {
+      Elf64_External_Dyn *x_dynp = (Elf64_External_Dyn *)buf;
+      long dyn_tag;
+      CORE_ADDR dyn_ptr;
+
+      dyn_tag = bfd_h_get_64 (exec_bfd, (bfd_byte *) x_dynp->d_tag);
+      if (dyn_tag == DT_NULL)
+	break;
+      else if (dyn_tag == DT_DEBUG)
+	{
+	  dyn_ptr = bfd_h_get_64 (exec_bfd, (bfd_byte *) x_dynp->d_un.d_ptr);
+	  return dyn_ptr;
+	}
+    }
+#endif
 
   /* DT_DEBUG entry not found.  */
   return 0;
@@ -940,6 +963,13 @@ find_solib (so_list_ptr)
       else
 	{
 	  so_list_head = new;
+
+	  if (! solib_cleanup_queued)
+	    {
+	      make_run_cleanup (do_clear_solib);
+	      solib_cleanup_queued = 1;
+	    }
+	  
 	}      
       so_list_next = new;
       read_memory ((CORE_ADDR) lm, (char *) &(new -> lm),
@@ -969,17 +999,39 @@ find_solib (so_list_ptr)
 
 /* A small stub to get us past the arg-passing pinhole of catch_errors.  */
 
-static long
+static int
 symbol_add_stub (arg)
      char *arg;
 {
   register struct so_list *so = (struct so_list *) arg;	/* catch_errs bogon */
+  CORE_ADDR text_addr = 0;
+
+  if (so -> textsection)
+    text_addr = so -> textsection -> addr;
+  else
+    {
+      asection *lowest_sect;
+
+      /* If we didn't find a mapped non zero sized .text section, set up
+	 text_addr so that the relocation in symbol_file_add does no harm.  */
+
+      lowest_sect = bfd_get_section_by_name (so -> abfd, ".text");
+      if (lowest_sect == NULL)
+	bfd_map_over_sections (so -> abfd, find_lowest_section,
+			       (PTR) &lowest_sect);
+      if (lowest_sect)
+	text_addr = bfd_section_vma (so -> abfd, lowest_sect)
+		    + (CORE_ADDR) LM_ADDR (so);
+    }
   
+  ALL_OBJFILES (so -> objfile)
+    {
+      if (strcmp (so -> objfile -> name, so -> so_name) == 0)
+	return 1;
+    }
   so -> objfile =
     symbol_file_add (so -> so_name, so -> from_tty,
-		     (so->textsection == NULL
-		      ? 0
-		      : (unsigned int) so -> textsection -> addr),
+		     text_addr,
 		     0, 0, 0);
   return (1);
 }
@@ -1156,30 +1208,41 @@ info_sharedlibrary_command (ignore, from_tty)
 {
   register struct so_list *so = NULL;  	/* link map state variable */
   int header_done = 0;
-  
+  int addr_width;
+  char *addr_fmt;
+
   if (exec_bfd == NULL)
     {
       printf_unfiltered ("No exec file.\n");
       return;
     }
+
+#ifndef TARGET_ELF64
+  addr_width = 8+4;
+  addr_fmt = "08l";
+#else
+  addr_width = 16+4;
+  addr_fmt = "016l";
+#endif
+
   while ((so = find_solib (so)) != NULL)
     {
       if (so -> so_name[0])
 	{
 	  if (!header_done)
 	    {
-	      printf_unfiltered("%-12s%-12s%-12s%s\n", "From", "To", "Syms Read",
-		     "Shared Object Library");
+	      printf_unfiltered("%-*s%-*s%-12s%s\n", addr_width, "From",
+				addr_width, "To", "Syms Read",
+				"Shared Object Library");
 	      header_done++;
 	    }
-	  /* FIXME-32x64: need print_address_numeric with field width or
-	     some such.  */
-	  printf_unfiltered ("%-12s",
+
+	  printf_unfiltered ("%-*s", addr_width,
 		  local_hex_string_custom ((unsigned long) LM_ADDR (so),
-					   "08l"));
-	  printf_unfiltered ("%-12s",
+					   addr_fmt));
+	  printf_unfiltered ("%-*s", addr_width,
 		  local_hex_string_custom ((unsigned long) so -> lmend,
-					   "08l"));
+					   addr_fmt));
 	  printf_unfiltered ("%-12s", so -> symbols_loaded ? "Yes" : "No");
 	  printf_unfiltered ("%s\n",  so -> so_name);
 	}
@@ -1265,6 +1328,34 @@ clear_solib()
     }
   debug_base = 0;
 }
+
+static void
+do_clear_solib (dummy)
+     PTR dummy;
+{
+  solib_cleanup_queued = 0;
+  clear_solib ();
+}
+
+#ifdef SVR4_SHARED_LIBS
+
+/* Return 1 if PC lies in the dynamic symbol resolution code of the
+   SVR4 run time loader.  */
+
+static CORE_ADDR interp_text_sect_low;
+static CORE_ADDR interp_text_sect_high;
+static CORE_ADDR interp_plt_sect_low;
+static CORE_ADDR interp_plt_sect_high;
+
+int
+in_svr4_dynsym_resolve_code (pc)
+     CORE_ADDR pc;
+{
+  return ((pc >= interp_text_sect_low && pc < interp_text_sect_high)
+	  || (pc >= interp_plt_sect_low && pc < interp_plt_sect_high)
+	  || in_plt_section (pc, NULL));
+}
+#endif
 
 /*
 
@@ -1426,6 +1517,9 @@ enable_break ()
   remove_solib_event_breakpoints ();
 
 #ifdef SVR4_SHARED_LIBS
+  interp_text_sect_low = interp_text_sect_high = 0;
+  interp_plt_sect_low = interp_plt_sect_high = 0;
+
   /* Find the .interp section; if not found, warn the user and drop
      into the old breakpoint at symbol code.  */
   interp_sect = bfd_get_section_by_name (exec_bfd, ".interp");
@@ -1450,7 +1544,7 @@ enable_break ()
 
 	 This address is stored on the stack.  However, I've been unable
 	 to find any magic formula to find it for Solaris (appears to
-	 be trivial on Linux).  Therefore, we have to try an alternate
+	 be trivial on GNU/Linux).  Therefore, we have to try an alternate
 	 mechanism to find the dynamic linker's base address.  */
       tmp_bfd = bfd_openr (buf, gnutarget);
       if (tmp_bfd == NULL)
@@ -1468,6 +1562,25 @@ enable_break ()
 	 current pc (which point at the entry point for the dynamic
 	 linker) and subtracting the offset of the entry point.  */
       load_addr = read_pc () - tmp_bfd->start_address;
+
+      /* Record the relocated start and end address of the dynamic linker
+	 text and plt section for in_svr4_dynsym_resolve_code.  */
+      interp_sect = bfd_get_section_by_name (tmp_bfd, ".text");
+      if (interp_sect)
+	{
+	  interp_text_sect_low =
+	    bfd_section_vma (tmp_bfd, interp_sect) + load_addr;
+	  interp_text_sect_high =
+	    interp_text_sect_low + bfd_section_size (tmp_bfd, interp_sect);
+	}
+      interp_sect = bfd_get_section_by_name (tmp_bfd, ".plt");
+      if (interp_sect)
+	{
+	  interp_plt_sect_low =
+	    bfd_section_vma (tmp_bfd, interp_sect) + load_addr;
+	  interp_plt_sect_high =
+	    interp_plt_sect_low + bfd_section_size (tmp_bfd, interp_sect);
+	}
 
       /* Now try to set a breakpoint in the dynamic linker.  */
       for (bkpt_namep = solib_break_names; *bkpt_namep != NULL; bkpt_namep++)
@@ -1510,7 +1623,7 @@ bkpt_at_symbol:
     }
 
   /* Nothing good happened.  */
-  return 0;
+  success = 0;
 
 #endif	/* BKPT_AT_SYMBOL */
 
@@ -1592,8 +1705,8 @@ solib_create_inferior_hook()
       return;
     }
 
-#ifndef SVR4_SHARED_LIBS
-  /* Only SunOS needs the loop below, other systems should be using the
+#if !defined(SVR4_SHARED_LIBS) || defined(_SCO_DS)
+  /* SCO and SunOS need the loop below, other systems should be using the
      special shared library breakpoints and the shared library breakpoint
      service routine.
 
@@ -1612,7 +1725,8 @@ solib_create_inferior_hook()
     }
   while (stop_signal != TARGET_SIGNAL_TRAP);
   stop_soon_quietly = 0;
-  
+
+#if !defined(_SCO_DS)
   /* We are now either at the "mapping complete" breakpoint (or somewhere
      else, a condition we aren't prepared to deal with anyway), so adjust
      the PC as necessary after a breakpoint, disable the breakpoint, and
@@ -1631,6 +1745,7 @@ solib_create_inferior_hook()
 
   if (auto_solib_add)
     solib_add ((char *) 0, 0, (struct target_ops *) 0);
+#endif /* ! _SCO_DS */
 #endif
 }
 
@@ -1751,14 +1866,14 @@ must be loaded manually, using `sharedlibrary'.",
   add_show_from_set
     (add_set_cmd ("solib-absolute-prefix", class_support, var_filename,
 		  (char *) &solib_absolute_prefix,
-		  "Set prefix for loading absolute shared library symbol files.\n
+		  "Set prefix for loading absolute shared library symbol files.\n\
 For other (relative) files, you can add values using `set solib-search-path'.",
 		  &setlist),
      &showlist);
   add_show_from_set
     (add_set_cmd ("solib-search-path", class_support, var_string,
 		  (char *) &solib_search_path,
-		  "Set the search path for loading non-absolute shared library symbol files.\n
+		  "Set the search path for loading non-absolute shared library symbol files.\n\
 This takes precedence over the environment variables PATH and LD_LIBRARY_PATH.",
 		  &setlist),
      &showlist);

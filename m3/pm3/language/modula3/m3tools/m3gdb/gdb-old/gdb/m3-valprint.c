@@ -14,11 +14,8 @@
 
 
 LONGEST
-m3_unpack_ord (valaddr, bitpos, bitsize, sign_extend)
-     char *valaddr;
-     int bitpos;
-     int bitsize;
-     int sign_extend;
+m3_unpack_ord (char* valaddr, int bitpos, int bitsize, int sign_extend)
+
 {
   LONGEST res, mask; 
 
@@ -59,8 +56,8 @@ m3_unpack_ord (valaddr, bitpos, bitsize, sign_extend)
 }
 
 LONGEST
-m3_unpack_int2 (val)
-     value_ptr val;
+m3_unpack_int2 (value_ptr val)
+
 {
   LONGEST lower, upper;
   struct type * type = VALUE_TYPE (val);
@@ -74,24 +71,23 @@ m3_unpack_int2 (val)
 
 
 CORE_ADDR
-m3_unpack_pointer (valaddr, bitpos)
-     char *valaddr;
-     int bitpos;
+m3_unpack_pointer (char* valaddr, int bitpos)
+
 {
   return (CORE_ADDR) m3_unpack_ord (valaddr, bitpos, TARGET_PTR_BIT, 0);
 }
 
 CORE_ADDR
-m3_unpack_pointer2 (val)
-     value_ptr val;
+m3_unpack_pointer2 (value_ptr val)
+
 {
   return *(CORE_ADDR*) VALUE_CONTENTS (val);
 }
 
 
 double 
-m3_unpack_float2 (val)
-     value_ptr val;
+m3_unpack_float2 (value_ptr val)
+
 {
   double res;
   int size = TYPE_LENGTH (VALUE_TYPE (val));
@@ -105,39 +101,41 @@ m3_unpack_float2 (val)
 
 
 static void 
-m3_print_scalar (valaddr, bitpos, bitsize, stream, format, sign_extend)
-     char *valaddr;
-     int bitpos, bitsize;
-     FILE *stream;
-     int format;
-     int sign_extend;
+m3_print_scalar (
+     char *valaddr,
+     int bitpos,
+     int bitsize,
+     FILE *stream,
+     int format,
+     int sign_extend)
+
 {
   LONGEST v = m3_unpack_ord (valaddr, bitpos, bitsize, sign_extend);
 
   switch (format) {
-    case 'x': 
-    case 'o': 
+    case 'x':
+      if (v == 0)
+	fputs_filtered ("NIL", stream);
+      else
+	fprintf_filtered (stream, "16_%lx", v); break;
+    case 'o': fprintf_filtered (stream, "8_%lo", v);  break;
     case 'd':
-      break;
-    default:
-      format = 'd';
-      break;
-  }
-
-  print_longest(stream,format,0,v);
+    default:  fprintf_filtered (stream, "%ld", v);    break; }
 }
 
 static 
-m3_print_object_1 (valaddr, tc_addr, stream, format)
-     char *valaddr;
-     CORE_ADDR tc_addr;
-     FILE *stream;
-     int format;
+m3_print_object_1 (
+     char *valaddr,
+     CORE_ADDR tc_addr,
+     FILE *stream,
+     int format)
+
 {
   char name [100];
   struct type *this_obj;
   struct symbol *this_obj_sym;
   int i, data_offset; 
+
   if (tc_addr == 0) {
     return; }
 
@@ -151,10 +149,15 @@ m3_print_object_1 (valaddr, tc_addr, stream, format)
 
   data_offset = tc_address_to_dataOffset (tc_addr);
 
-  fputs_filtered ("{", stream);
+  if (TYPE_M3_OBJ_NFIELDS (this_obj) > 0) {
+    fputs_filtered ("(* ", stream);
+    m3_print_type(this_obj, 0, stream, 0, 0);
+    fputs_filtered (" *) ", stream);
+  }
+
   for (i = 0; i < TYPE_M3_OBJ_NFIELDS (this_obj); i++) {
     if (i != 0) {
-      fputs_filtered (", ", stream);
+      fputs_filtered ("; ", stream);
       wrap_here ("    "); }
     fputs_filtered (TYPE_M3_OBJ_FIELD_NAME (this_obj, i), stream);
     fputs_filtered (" = ", stream);
@@ -164,14 +167,16 @@ m3_print_object_1 (valaddr, tc_addr, stream, format)
 		      TYPE_M3_OBJ_FIELD_BITPOS (this_obj, i),
 		   TYPE_M3_OBJ_FIELD_BITSIZE (this_obj, i),
 		   stream, format, 0, 0); }
-  fputs_filtered ("}", stream);
+  if (i > 0) {
+    fputs_filtered ("; ", stream);
+    wrap_here ("    "); }
 }
 
-void m3_read_object_fields_bits (ref, type, tc_addr_res, bits)
-     CORE_ADDR ref;
-     struct type *type;
-     CORE_ADDR *tc_addr_res;
-     char **bits;
+void m3_read_object_fields_bits (
+     CORE_ADDR ref,
+     struct type *type,
+     CORE_ADDR *tc_addr_res,
+     char **bits)
 {
   int typecode;
   CORE_ADDR typecode_addr, tc_addr;
@@ -191,12 +196,13 @@ void m3_read_object_fields_bits (ref, type, tc_addr_res, bits)
 }
 
 static void
-m3_print_object (valaddr, bitpos, type, stream, format)
-     char *valaddr;
-     int bitpos;
-     struct type *type;
-     FILE *stream;
-     int format;
+m3_print_object(
+     char* valaddr,
+     int bitpos,
+     struct type* type,
+     FILE* stream,
+     int format)
+
 {
   char *bits;
   CORE_ADDR ref, tc_addr;
@@ -209,7 +215,9 @@ m3_print_object (valaddr, bitpos, type, stream, format)
     return;
   }
 
+  fputs_filtered ("OBJECT ", stream);
   m3_print_object_1 (bits, tc_addr, stream, format);
+  fputs_filtered (" END", stream);
 }
 
 
@@ -242,15 +250,15 @@ extern unsigned int repeat_count_threshold;
 extern void m3_printchar(int, FILE *);
 
 int
-m3_val_print2 (type, valaddr, bitpos, bitsize, stream, format, deref_ref, toplevel)
-     struct type *type;
-     char *valaddr;
-     int bitpos;
-     int bitsize;
-     FILE *stream;
-     int format;
-     int deref_ref;
-     int toplevel;
+m3_val_print2 (
+     struct type *type,
+     char *valaddr,
+     int bitpos,
+     int bitsize,
+     GDB_FILE *stream,
+     int format,
+     int deref_ref,
+     int toplevel)
 {
   register unsigned int i = 0;		/* Number of characters printed */
   unsigned len;
@@ -270,7 +278,7 @@ m3_val_print2 (type, valaddr, bitpos, bitsize, stream, format, deref_ref, toplev
       struct type *elt   = TYPE_M3_ARRAY_ELEM (type);
       LONGEST lower, upper, n;
       
-      fputs_filtered ("{", stream);
+      fputs_filtered ("[", stream);
 
       m3_ordinal_bounds (index, &lower, &upper);
       n = upper - lower + 1;
@@ -298,7 +306,7 @@ m3_val_print2 (type, valaddr, bitpos, bitsize, stream, format, deref_ref, toplev
       if (i < n) {
 	fputs_filtered ("...", stream); }
 
-      fputs_filtered ("}", stream);
+      fputs_filtered ("]", stream);
       break; }
       
     case TYPE_CODE_M3_OPEN_ARRAY: {
@@ -328,7 +336,7 @@ m3_val_print2 (type, valaddr, bitpos, bitsize, stream, format, deref_ref, toplev
 	error ("another improper alignment"); }
       eltsize = eltsize / 8;
 
-      fputs_filtered ("{", stream);
+      fputs_filtered ("[", stream);
       if (TYPE_CODE (elt_type) == TYPE_CODE_M3_OPEN_ARRAY) {
 	for (i = things_printed = 0; 
 	     i < nelems && things_printed < print_max; i++) {
@@ -393,7 +401,7 @@ m3_val_print2 (type, valaddr, bitpos, bitsize, stream, format, deref_ref, toplev
 	      things_printed++; }}}}
       if (things_printed < nelems) {
 	fputs_filtered ("...", stream); }
-      fputs_filtered ("}", stream);
+      fputs_filtered ("]", stream);
       break; }
 
     case TYPE_CODE_M3_PACKED: {
@@ -410,13 +418,8 @@ m3_val_print2 (type, valaddr, bitpos, bitsize, stream, format, deref_ref, toplev
       if ((lower <= val) && (val <= upper)) {
         fputs_filtered (TYPE_M3_ENUM_VALNAME (type, val), stream);
       } else {
-	fprintf_filtered (stream, "<enum value ");
-        print_longest(stream,'d',0,val);
-        fprintf_filtered (stream, " out of range [");
-        print_longest(stream,'d',0,lower);
-        fprintf_filtered (stream, "..");
-        print_longest(stream,'d',0,upper);
-        fprintf_filtered(stream, "]>");
+	fprintf_filtered (stream, "<enum value %ld out of range [%ld..%ld]>",
+			  val, lower, upper);
       };
       break; }
       
@@ -434,28 +437,24 @@ m3_val_print2 (type, valaddr, bitpos, bitsize, stream, format, deref_ref, toplev
       break; }
       
     case TYPE_CODE_M3_PROC: {
-      m3_print_scalar (valaddr, bitpos, bitsize, stream, format, 0);
+      m3_print_scalar (valaddr, bitpos, bitsize, stream,
+		       format ? format : 'x', 0);
       break; }
       
     case TYPE_CODE_M3_RECORD: {
-      int nonfirst = 0;
-
-      fputs_filtered ("{", stream);
+      fputs_filtered ("RECORD ", stream);
       for (i = 0; i < TYPE_M3_REC_NFIELDS (type); i++) {
 	if (TYPE_M3_REC_FIELD_NAME (type, i)[0] != '_') {
-	  if (nonfirst != 0) {
-	    fputs_filtered (", ", stream);
-	    wrap_here ("    "); }
-	  nonfirst = 1;
-
 	  fputs_filtered (TYPE_M3_REC_FIELD_NAME (type, i), stream);
 	  fputs_filtered (" = ", stream);
           tmpbitsize = TYPE_M3_SIZE (TYPE_M3_REC_FIELD_TYPE (type, i));
 	  m3_val_print2 (TYPE_M3_REC_FIELD_TYPE (type, i), valaddr,
 			 bitpos + TYPE_M3_REC_FIELD_BITPOS (type, i),
 			 tmpbitsize,
-			 stream, format, 0, 0);  }}
-      fputs_filtered ("}", stream);
+			 stream, format, 0, 0);
+	  fputs_filtered ("; ", stream);
+	  wrap_here ("    ");  }}
+      fputs_filtered (" END", stream);
       break; }
       
     case TYPE_CODE_M3_SET: {
@@ -476,21 +475,17 @@ m3_val_print2 (type, valaddr, bitpos, bitsize, stream, format, deref_ref, toplev
 	val = m3_unpack_ord (valaddr, bitpos, TARGET_LONG_BIT, 0);
 	for (j = 0; j < TARGET_LONG_BIT; j++) {
 	  LONGEST ord = i * TARGET_LONG_BIT + j + lower;
-	  if (val & 1 << j) {
+	  if ((val & 1 << j) && (ord <= upper)) {
 	    if (n > 0) {
 	      fputs_filtered (", ", stream); }
 	    if (en) {
 	      fputs_filtered (TYPE_FIELD_NAME (target, ord), stream); }
 	    else if (ch) {
-              fprintf_filtered(stream, "'");
-	      print_longest(stream,'c',0,ord);
-              fprintf_filtered(stream, "'"); }
+	      fprintf_filtered (stream, "'%c'", ord); }
 	    else if (chs) {
-              fprintf_filtered(stream, "'");
-	      print_longest(stream,'c',0,ord);
-              fprintf_filtered(stream, "'"); }
+	      fprintf_filtered (stream, "'%c'", ord); }
 	    else {
-	      print_longest (stream, 'd', 0, ord); }
+	      fprintf_filtered (stream, "%ld", ord); }
 	    n++; }}
 	valaddr += sizeof (long); }
       
@@ -504,13 +499,8 @@ m3_val_print2 (type, valaddr, bitpos, bitsize, stream, format, deref_ref, toplev
       m3_ordinal_bounds (type, &lower, &upper);
       val = m3_unpack_ord (valaddr, bitpos, bitsize, (lower < 0));
       if ((val < lower) || (upper < val)) {
-        fprintf_filtered(stream,"<subrange value ");
-        print_longest(stream,'d',0,val);
-        fprintf_filtered(stream," out of range [");
-        print_longest(stream,'d',0,lower);
-        fprintf_filtered(stream,"..");
-        print_longest(stream,'d',0,upper);
-        fprintf_filtered(stream,"]>");
+        fprintf_filtered(stream,"<subrange value %ld out of range [%ld..%ld]>",
+			 val, lower, upper);
       } else if (TYPE_CODE (target) == TYPE_CODE_M3_ENUM) {
         fputs_filtered (TYPE_M3_ENUM_VALNAME (target, val), stream);
       } else {
@@ -531,7 +521,7 @@ m3_val_print2 (type, valaddr, bitpos, bitsize, stream, format, deref_ref, toplev
       break;
 
     case TYPE_CODE_M3_CHAR:
-      m3_printchar (m3_unpack_ord (valaddr, bitpos, 8, 0), stream);
+      m3_printchar ((int) m3_unpack_ord (valaddr, bitpos, 8, 0), stream);
       break;
 
     case TYPE_CODE_M3_INTEGER:
@@ -568,9 +558,9 @@ m3_val_print2 (type, valaddr, bitpos, bitsize, stream, format, deref_ref, toplev
 	else {
 	  target_read_memory (text_value, &chars_addr, TYPE_M3_SIZE (type));
 	  val_print_string (chars_addr, 0, stream); }}
-      else {
+      else
 	m3_print_scalar (valaddr, bitpos, bitsize, stream, 
-			 format ? format : 'x', 0); }
+			 format ? format : 'x', 0);
 
       break; }
 
@@ -583,6 +573,12 @@ m3_val_print2 (type, valaddr, bitpos, bitsize, stream, format, deref_ref, toplev
 	print_floating (valaddr + bitpos / 8, type, stream); }
       break; }
 
+    case TYPE_CODE_STRING:
+      fputs_filtered ("\"", stream);
+      fputs_filtered (valaddr, stream);
+      fputs_filtered ("\"", stream);
+      break;
+
     default: 
      return 1; }
 
@@ -591,16 +587,16 @@ m3_val_print2 (type, valaddr, bitpos, bitsize, stream, format, deref_ref, toplev
 }
 
 int
-m3_val_print (type, valaddr, address, stream, format, deref_ref, recurse,
-	     pretty)
-     struct type *type;
-     char *valaddr;
-     CORE_ADDR address;
-     FILE *stream;
-     int format;
-     int deref_ref;
-     int recurse;
-     enum val_prettyprint pretty;
+m3_val_print (
+     struct type *type,
+     char *valaddr,
+     CORE_ADDR address,
+     GDB_FILE *stream,
+     int format,
+     int deref_ref,
+     int recurse,
+     enum val_prettyprint pretty)
+
 {
   int tmpbitsize = TYPE_M3_SIZE(type);
 
@@ -612,39 +608,26 @@ m3_val_print (type, valaddr, address, stream, format, deref_ref, recurse,
 }
 
 int
-m3_value_print (val, stream, format, pretty)
-     value_ptr val;
-     GDB_FILE *stream;
-     int format;
-     enum val_prettyprint pretty;
+m3_value_print (
+     value_ptr val,
+     GDB_FILE *stream,
+     int format,
+     enum val_prettyprint pretty)
+
 {
-      struct type *type = VALUE_TYPE (val);
+  struct type *type = VALUE_TYPE (val);
 
-      /* If it is a pointer, indicate what it points to.
+  /* on top-level, prefix pointer value with (type) if it's not a text */
+    if (TYPE_CODE (type) == TYPE_CODE_M3_POINTER) {
+      struct type *target = TYPE_M3_POINTER_TARGET (type);
+      if (TYPE_CODE (target) != TYPE_CODE_M3_OPEN_ARRAY
+	  || TYPE_CODE (TYPE_M3_OPEN_ARRAY_ELEM (target)) != TYPE_CODE_M3_CHAR) {
+	fprintf_filtered (stream, "(* ");
+	m3_print_type (type, "", stream, 0, 0);
+	fprintf_filtered (stream, " *) ");
+      }
+    }
 
-	 Print type also if it is a reference.
-
-         C++: if it is a member pointer, we will take care
-	 of that when we print it.  */
-      if (TYPE_CODE (type) == TYPE_CODE_PTR ||
-	  TYPE_CODE (type) == TYPE_CODE_REF)
-	{
-	  /* Hack:  remove (char *) for char strings.  Their
-	     type is indicated by the quoted string anyway. */
-          if (TYPE_CODE (type) == TYPE_CODE_PTR &&
-	      TYPE_LENGTH (TYPE_TARGET_TYPE (type)) == sizeof(char) &&
-	      TYPE_CODE (TYPE_TARGET_TYPE (type)) == TYPE_CODE_INT &&
-	      !TYPE_UNSIGNED (TYPE_TARGET_TYPE (type)))
-	    {
-		/* Print nothing */
-	    }
-	  else
-	    {
-	      fprintf_filtered (stream, "(");
-	      type_print (type, "", stream, -1);
-	      fprintf_filtered (stream, ") ");
-	    }
-	}
-      return (val_print (type, VALUE_CONTENTS (val),
-			 VALUE_ADDRESS (val), stream, format, 1, 0, pretty));
+  return (val_print (type, VALUE_CONTENTS (val),
+		     VALUE_ADDRESS (val), stream, format, 1, 0, pretty));
 }

@@ -9,7 +9,7 @@
 /* This is RTHeapDepC.c for Linux. */
 
 /* This file implements wrappers for almost all Linux system calls
-   that take pointers as arguments.  These wrappers allow the system
+   that take pointers as arguments. These wrappers allow the system
    calls to take arguments that might point to the traced heap, which
    may be VM-protected in the Ultrix implementation of the collector.
    The wrappers read and write the referents of all pointers about to
@@ -19,6 +19,11 @@
    Each wrapper is a critical section, with RT0u__inCritical non-zero,
    so that another thread cannot cause the pages to become reprotected
    before the system call is performed.
+*/
+
+/*
+   (Copied from the SunOS version, some comments about unavailable information
+   does not apply for Linux). 
 
    A few system calls are not handled here, or are handled only
    partially.  This restricts the system calls that can be made from
@@ -1672,3 +1677,4 @@ pid_t clone(sp, flags)
   }
   return result;
 }
+

@@ -732,6 +732,15 @@ proc InstallRPM() is
 end
 
 %
+% Remove all temporary files created during a release
+%
+
+readonly proc RmTempFiles() is
+  ret = Exec(["rm", "-r", EXPORT_TMP_TMP],[],".")
+  ret = Exec(["rm", "-r", EXPORT_TMP_ROOT & "/" & "rpm"],[],".")
+end
+
+%
 % The processing begins here.
 %
 
@@ -913,6 +922,10 @@ end
 
 if DoStep("UpdateVersionNumbers")
   UpdateVersionNumbers()
+end
+
+if DoStep("RmTempFiles")
+  RmTempFiles()
 end
 
 write("Finished export",CR)

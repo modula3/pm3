@@ -42,6 +42,8 @@ environment variable will need to include
 For some platforms (LINUXELF, SPARC, SOLgnu), the shared libraries paths 
 are specified at link time and LD_LIBRARY_PATH need not contain 
 anything, if the shared libraries are at the location specified at link time.
+Be careful not to have LD_LIBRARY_PATH point to older versions of the
+PM3 libraries, which is likely to cause problems for executing PM3 programs.
 <P>
 Some programs require data files at run time. The locations for these files may
 be specified as a command line option for the program. Default locations

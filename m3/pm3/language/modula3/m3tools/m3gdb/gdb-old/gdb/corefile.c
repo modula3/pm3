@@ -137,7 +137,7 @@ specify_exec_file_hook (hook)
 void
 close_exec_file ()
 {
-#ifdef FIXME
+#if 0 /* FIXME */
   if (exec_bfd)
     bfd_tempclose (exec_bfd);
 #endif
@@ -146,7 +146,7 @@ close_exec_file ()
 void
 reopen_exec_file ()
 {
-#ifdef FIXME
+#if 0 /* FIXME */
   if (exec_bfd)
     bfd_reopen (exec_bfd);
 #endif
@@ -225,6 +225,19 @@ read_memory (memaddr, myaddr, len)
     memory_error (status, memaddr);
 }
 
+void
+read_memory_section (memaddr, myaddr, len, bfd_section)
+     CORE_ADDR memaddr;
+     char *myaddr;
+     int len;
+     asection *bfd_section;
+{
+  int status;
+  status = target_read_memory_section (memaddr, myaddr, len, bfd_section);
+  if (status != 0)
+    memory_error (status, memaddr);
+}
+
 /* Like target_read_memory, but slightly different parameters.  */
 
 int
@@ -283,22 +296,12 @@ read_memory_integer (memaddr, len)
   return extract_signed_integer (buf, len);
 }
 
-int
-read_memory_integer_check (memaddr, len)
-     CORE_ADDR memaddr;
-     int len;
-{
-  char buf[sizeof (LONGEST)];
-
-  return (target_read_memory (memaddr, buf, len) == 0);
-}
-
-unsigned LONGEST
+ULONGEST
 read_memory_unsigned_integer (memaddr, len)
      CORE_ADDR memaddr;
      int len;
 {
-  char buf[sizeof (unsigned LONGEST)];
+  char buf[sizeof (ULONGEST)];
 
   read_memory (memaddr, buf, len);
   return extract_unsigned_integer (buf, len);

@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "target.h"
 #include "gdb_string.h"
 #include "floatformat.h"
+#include "symfile.h"	/* for overlay functions */
 
 /* This is used to indicate that we don't know the format of the floating point
    number.  Typically, this is useful for native ports, where the actual format
@@ -39,18 +40,8 @@ const struct floatformat floatformat_unknown;
 #define CANNOT_STORE_REGISTER(regno) 0
 #endif
 
-#ifndef TARGET_WRITE_PC
-static void
-write_register_pid PARAMS ((int regno, LONGEST val, int pid));
-#endif
-
 static void
 write_register_gen PARAMS ((int, char *));
-
-#ifndef TARGET_READ_PC
-static CORE_ADDR
-read_register_pid PARAMS ((int, int));
-#endif
 
 /* Basic byte-swapping routines.  GDB has needed these for a long time...
    All extract a target-format integer at ADDR which is LEN bytes long.  */
@@ -99,20 +90,20 @@ That operation is not available on integers of more than %d bytes.",
   return retval;
 }
 
-unsigned LONGEST
+ULONGEST
 extract_unsigned_integer (addr, len)
      PTR addr;
      int len;
 {
-  unsigned LONGEST retval;
+  ULONGEST retval;
   unsigned char *p;
   unsigned char *startaddr = (unsigned char *)addr;
   unsigned char *endaddr = startaddr + len;
 
-  if (len > (int) sizeof (unsigned LONGEST))
+  if (len > (int) sizeof (ULONGEST))
     error ("\
 That operation is not available on integers of more than %d bytes.",
-	   sizeof (unsigned LONGEST));
+	   sizeof (ULONGEST));
 
   /* Start at the most significant end of the integer, and work towards
      the least significant.  */
@@ -226,7 +217,7 @@ void
 store_unsigned_integer (addr, len, val)
      PTR addr;
      int len;
-     unsigned LONGEST val;
+     ULONGEST val;
 {
   unsigned char *p;
   unsigned char *startaddr = (unsigned char *)addr;
@@ -282,21 +273,13 @@ store_address (addr, len, val)
     }                                                                   \
   while (0)
 
-/* There are various problems with the extract_floating and store_floating
-   routines.
+/* Extract a floating-point number from a target-order byte-stream at ADDR.
+   Returns the value as type DOUBLEST.
 
-   1.  These routines only handle byte-swapping, not conversion of
-   formats.  So if host is IEEE floating and target is VAX floating,
-   or vice-versa, it loses.  This means that we can't (yet) use these
-   routines for extendeds.  Extendeds are handled by
-   REGISTER_CONVERTIBLE.  What we want is to use floatformat.h, but that
-   doesn't yet handle VAX floating at all.
-
-   2.  We can't deal with it if there is more than one floating point
-   format in use.  This has to be fixed at the unpack_double level.
-
-   3.  We probably should have a LONGEST_DOUBLE or DOUBLEST or whatever
-   we want to call it which is long double where available.  */
+   If the host and target formats agree, we just copy the raw data into the
+   appropriate type of variable and return, letting the host increase precision
+   as necessary.  Otherwise, we call the conversion routine and let it do the
+   dirty work.  */
 
 DOUBLEST
 extract_floating (addr, len)
@@ -329,7 +312,8 @@ extract_floating (addr, len)
       else
 	floatformat_to_doublest (TARGET_DOUBLE_FORMAT, addr, &dretval);
     }
-  else if (len == sizeof (DOUBLEST))
+  else if (len == sizeof (DOUBLEST)
+	   || len == (TARGET_LONG_DOUBLE_BIT / 8))
     {
       if (HOST_LONG_DOUBLE_FORMAT == TARGET_LONG_DOUBLE_FORMAT)
 	{
@@ -377,7 +361,8 @@ store_floating (addr, len, val)
       else
 	floatformat_from_doublest (TARGET_DOUBLE_FORMAT, &val, addr);
     }
-  else if (len == sizeof (DOUBLEST))
+  else if (len == sizeof (DOUBLEST)
+	   || len == (TARGET_LONG_DOUBLE_BIT / 8))
     {
       if (HOST_LONG_DOUBLE_FORMAT == TARGET_LONG_DOUBLE_FORMAT)
 	memcpy (addr, &val, sizeof (val));
@@ -616,6 +601,13 @@ registers_changed ()
 
   registers_pid = -1;
 
+  /* Force cleanup of any alloca areas if using C alloca instead of
+     a builtin alloca.  This particular call is used to clean up
+     areas allocated by low level target code which may build up
+     during lengthy interactions between gdb and the target before
+     gdb gives control to the user (ie watchpoints).  */
+  alloca (0);
+
   for (i = 0; i < numregs; i++)
     register_valid[i] = 0;
 
@@ -670,12 +662,15 @@ read_register_bytes (inregbyte, myaddr, inlen)
   /* See if we are trying to read bytes from out-of-date registers.  If so,
      update just those registers.  */
 
-  for (regno = 0; regno < NUM_REGS; regno++)
+  for (regno = 0; regno < ARCH_NUM_REGS; regno++)
     {
       int regstart, regend;
       int startin, endin;
 
       if (register_valid[regno])
+	continue;
+
+      if (reg_names[regno] == NULL || *reg_names[regno] == '\0')
 	continue;
 
       regstart = REGISTER_BYTE (regno);
@@ -779,7 +774,7 @@ write_register_bytes (myregstart, myaddr, inlen)
      like handling threads, and avoiding updates when the new and old contents
      are the same.  */
 
-  for (regno = 0; regno < NUM_REGS; regno++)
+  for (regno = 0; regno < ARCH_NUM_REGS; regno++)
     {
       int regstart, regend;
       int startin, endin;
@@ -836,9 +831,7 @@ read_register (regno)
 			  REGISTER_RAW_SIZE(regno));
 }
 
-#ifndef TARGET_READ_PC
-
-static CORE_ADDR
+CORE_ADDR
 read_register_pid (regno, pid)
      int regno, pid;
 {
@@ -858,8 +851,6 @@ read_register_pid (regno, pid)
 
   return retval;
 }
-
-#endif	/* !TARGET_READ_PC */
 
 /* Store VALUE, into the raw contents of register number REGNO.  */
 
@@ -902,9 +893,7 @@ write_register (regno, val)
   target_store_registers (regno);
 }
 
-#ifndef TARGET_WRITE_PC
-
-static void
+void
 write_register_pid (regno, val, pid)
      int regno;
      LONGEST val;
@@ -927,25 +916,33 @@ write_register_pid (regno, val, pid)
   inferior_pid = save_pid;
 }
 
-#endif	/* ifndef TARGET_WRITE_PC */
-
 /* Record that register REGNO contains VAL.
    This is used when the value is obtained from the inferior or core dump,
-   so there is no need to store the value there.  */
+   so there is no need to store the value there.
+
+   If VAL is a NULL pointer, then it's probably an unsupported register.  We
+   just set it's value to all zeros.  We might want to record this fact, and
+   report it to the users of read_register and friends.
+*/
 
 void
 supply_register (regno, val)
      int regno;
      char *val;
 {
+#if 1
   if (registers_pid != inferior_pid)
     {
       registers_changed ();
       registers_pid = inferior_pid;
     }
+#endif
 
   register_valid[regno] = 1;
-  memcpy (&registers[REGISTER_BYTE (regno)], val, REGISTER_RAW_SIZE (regno));
+  if (val)
+    memcpy (&registers[REGISTER_BYTE (regno)], val, REGISTER_RAW_SIZE (regno));
+  else
+    memset (&registers[REGISTER_BYTE (regno)], '\000', REGISTER_RAW_SIZE (regno));
 
   /* On some architectures, e.g. HPPA, there are a few stray bits in some
      registers, that the rest of the code would like to ignore.  */
@@ -960,16 +957,6 @@ supply_register (regno, val)
    Ditto for write_pc.  */
 
 CORE_ADDR
-read_pc ()
-{
-#ifdef TARGET_READ_PC
-  return TARGET_READ_PC (inferior_pid);
-#else
-  return ADDR_BITS_REMOVE ((CORE_ADDR) read_register_pid (PC_REGNUM, inferior_pid));
-#endif
-}
-
-CORE_ADDR
 read_pc_pid (pid)
      int pid;
 {
@@ -980,39 +967,35 @@ read_pc_pid (pid)
 #endif
 }
 
+CORE_ADDR
+read_pc ()
+{
+  return read_pc_pid (inferior_pid);
+}
+
 void
-write_pc (val)
-     CORE_ADDR val;
+write_pc_pid (pc, pid)
+     CORE_ADDR pc;
+     int pid;
 {
 #ifdef TARGET_WRITE_PC
-  TARGET_WRITE_PC (val, inferior_pid);
+  TARGET_WRITE_PC (pc, pid);
 #else
-  write_register_pid (PC_REGNUM, val, inferior_pid);
+  write_register_pid (PC_REGNUM, pc, pid);
 #ifdef NPC_REGNUM
-  write_register_pid (NPC_REGNUM, val + 4, inferior_pid);
+  write_register_pid (NPC_REGNUM, pc + 4, pid);
 #ifdef NNPC_REGNUM
-  write_register_pid (NNPC_REGNUM, val + 8, inferior_pid);
+  write_register_pid (NNPC_REGNUM, pc + 8, pid);
 #endif
 #endif
 #endif
 }
 
 void
-write_pc_pid (val, pid)
-     CORE_ADDR val;
-     int pid;
+write_pc (pc)
+     CORE_ADDR pc;
 {
-#ifdef TARGET_WRITE_PC
-  TARGET_WRITE_PC (val, pid);
-#else
-  write_register_pid (PC_REGNUM, val, pid);
-#ifdef NPC_REGNUM
-  write_register_pid (NPC_REGNUM, val + 4, pid);
-#ifdef NNPC_REGNUM
-  write_register_pid (NNPC_REGNUM, val + 8, pid);
-#endif
-#endif
-#endif
+  write_pc_pid (pc, inferior_pid);
 }
 
 /* Cope with strage ways of getting to the stack and frame pointers */
@@ -1118,6 +1101,8 @@ read_var_value (var, frame)
 
   v = allocate_value (type);
   VALUE_LVAL (v) = lval_memory;	/* The most likely possibility.  */
+  VALUE_BFD_SECTION (v) = SYMBOL_BFD_SECTION (var);
+
   len = TYPE_LENGTH (type);
 
   if (frame == NULL) frame = selected_frame;
@@ -1133,7 +1118,13 @@ read_var_value (var, frame)
 
     case LOC_LABEL:
       /* Put the constant back in target format.  */
-      store_address (VALUE_CONTENTS_RAW (v), len, SYMBOL_VALUE_ADDRESS (var));
+      if (overlay_debugging)
+	store_address (VALUE_CONTENTS_RAW (v), len, 
+		       symbol_overlayed_address (SYMBOL_VALUE_ADDRESS (var),
+						 SYMBOL_BFD_SECTION (var)));
+      else
+	store_address (VALUE_CONTENTS_RAW (v), len, 
+		       SYMBOL_VALUE_ADDRESS (var));
       VALUE_LVAL (v) = not_lval;
       return v;
 
@@ -1147,7 +1138,11 @@ read_var_value (var, frame)
       }
 
     case LOC_STATIC:
-      addr = SYMBOL_VALUE_ADDRESS (var);
+      if (overlay_debugging)
+	addr = symbol_overlayed_address (SYMBOL_VALUE_ADDRESS (var),
+					 SYMBOL_BFD_SECTION (var));
+      else
+	addr = SYMBOL_VALUE_ADDRESS (var);
       break;
 
     case LOC_ARG:
@@ -1194,7 +1189,11 @@ read_var_value (var, frame)
       break;
 
     case LOC_BLOCK:
-      VALUE_ADDRESS (v) = BLOCK_START (SYMBOL_BLOCK_VALUE (var));
+      if (overlay_debugging)
+	VALUE_ADDRESS (v) = symbol_overlayed_address 
+	  (BLOCK_START (SYMBOL_BLOCK_VALUE (var)), SYMBOL_BFD_SECTION (var));
+      else
+	VALUE_ADDRESS (v) = BLOCK_START (SYMBOL_BLOCK_VALUE (var));
       return v;
 
     case LOC_REGISTER:
@@ -1228,7 +1227,11 @@ read_var_value (var, frame)
 	msym = lookup_minimal_symbol (SYMBOL_NAME (var), NULL, NULL);
 	if (msym == NULL)
 	  return 0;
-	addr = SYMBOL_VALUE_ADDRESS (msym);
+	if (overlay_debugging)
+	  addr = symbol_overlayed_address (SYMBOL_VALUE_ADDRESS (msym),
+					   SYMBOL_BFD_SECTION (msym));
+	else
+	  addr = SYMBOL_VALUE_ADDRESS (msym);
       }
       break;
 
@@ -1478,8 +1481,12 @@ locate_var_value (var, frame)
   if (VALUE_LAZY (lazy_value)
       || TYPE_CODE (type) == TYPE_CODE_FUNC)
     {
+      value_ptr val;
+
       addr = VALUE_ADDRESS (lazy_value);
-      return value_from_longest (lookup_pointer_type (type), (LONGEST) addr);
+      val =  value_from_longest (lookup_pointer_type (type), (LONGEST) addr);
+      VALUE_BFD_SECTION (val) = VALUE_BFD_SECTION (lazy_value);
+      return val;
     }
 
   /* Not a memory address; check what the problem was.  */

@@ -79,7 +79,9 @@ and POSIX or WIN32; if not, additional work will be required.
     subdirectory defining the interface to C functions such as
     <TT>setjmp</TT>, <TT>longjmp</TT>, <TT>_setjmp</TT>, <TT>_longjmp</TT>,
     to <TT>stdio.h</TT>, and to <TT>string.h</TT>.  Be careful to
-    get the size of the <TT>jmp_buf</TT> right.
+    get the size of the <TT>jmp_buf</TT> right. The procedure
+    <TT>Csetjmp.setjmp</TT> saves the execution state including the signal
+    mask while <TT>Csetjmp.usetjmp</TT> does not include the signal mask.
 
 <LI>In directory <TT>libs/m3core/src/Csupport</TT>, add a platform specific
     subdirectory containing a properly configured <TT>dtoa.c</TT>.

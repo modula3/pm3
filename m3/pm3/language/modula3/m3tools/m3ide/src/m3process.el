@@ -186,7 +186,7 @@
             )
           )
           (process-kill-without-query m3-ide-process)
-          (while (< (buffer-size) 8)
+          (while (< (buffer-size) 66)
             ;;(sit-for 0.1)
             (accept-process-output m3-ide-process)
             )

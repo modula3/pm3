@@ -1,5 +1,5 @@
 /* Perform arithmetic and other operations on values, for GDB.
-   Copyright 1986, 1989, 1991, 1992, 1993, 1994, 1995, 1996
+   Copyright 1986, 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997
    Free Software Foundation, Inc.
 
 This file is part of GDB.
@@ -58,6 +58,8 @@ value_add (arg1, arg2)
        || TYPE_CODE (type2) == TYPE_CODE_INT))
     /* Exactly one argument is a pointer, and one is an integer.  */
     {
+      value_ptr retval;
+
       if (TYPE_CODE (type1) == TYPE_CODE_PTR)
 	{
 	  valptr = arg1;
@@ -71,10 +73,13 @@ value_add (arg1, arg2)
 	  valptrtype = type2;
 	}
       len = TYPE_LENGTH (check_typedef (TYPE_TARGET_TYPE (valptrtype)));
-      if (len == 0) len = 1;	/* For (void *) */
-      return value_from_longest (valptrtype,
-			      value_as_long (valptr)
-			      + (len * value_as_long (valint)));
+      if (len == 0)
+	len = 1;		/* For (void *) */
+      retval = value_from_longest (valptrtype,
+				   value_as_long (valptr)
+				   + (len * value_as_long (valint)));
+      VALUE_BFD_SECTION (retval) = VALUE_BFD_SECTION (valptr);
+      return retval;
     }
 
   return value_binop (arg1, arg2, BINOP_ADD);
@@ -435,8 +440,9 @@ value_x_unop (arg1, op, noside)
     case UNOP_LOGICAL_NOT:	strcpy(ptr,"!"); break;
     case UNOP_COMPLEMENT:	strcpy(ptr,"~"); break;
     case UNOP_NEG:		strcpy(ptr,"-"); break;
+    case UNOP_IND:		strcpy(ptr,"*"); break;
     default:
-      error ("Invalid binary operation specified.");
+      error ("Invalid unary operation specified.");
     }
 
   argvec[0] = value_struct_elt (&arg1, argvec+1, tstr, &static_memfuncp, "structure");
@@ -769,12 +775,12 @@ value_binop (arg1, arg2, op)
 
       if (unsigned_operation)
 	{
-	  unsigned LONGEST v1, v2, v;
-	  v1 = (unsigned LONGEST) value_as_long (arg1);
-	  v2 = (unsigned LONGEST) value_as_long (arg2);
+	  ULONGEST v1, v2, v;
+	  v1 = (ULONGEST) value_as_long (arg1);
+	  v2 = (ULONGEST) value_as_long (arg2);
 
 	  /* Truncate values to the type length of the result.  */
-	  if (result_len < sizeof (unsigned LONGEST))
+	  if (result_len < sizeof (ULONGEST))
 	    {
 	      v1 &= ((LONGEST) 1 << HOST_CHAR_BIT * result_len) - 1;
 	      v2 &= ((LONGEST) 1 << HOST_CHAR_BIT * result_len) - 1;
@@ -1039,6 +1045,66 @@ value_logical_not (arg1)
   return len < 0;
 }
 
+/* Simulate the Modula-3  operator = by returning a 1
+   iff ARG1 and ARG2 have equal contents.  */
+
+int
+m3_value_equal (arg1, arg2)
+     register value_ptr arg1, arg2;
+
+{
+  register int len;
+  register char *p1, *p2;
+  enum type_code code1;
+  enum type_code code2;
+
+  COERCE_ARRAY (arg1);
+  COERCE_ARRAY (arg2);
+
+  code1 = TYPE_CODE (VALUE_TYPE (arg1));
+  code2 = TYPE_CODE (VALUE_TYPE (arg2));
+
+  if (code1 == TYPE_CODE_M3_INTEGER) { code1 = TYPE_CODE_INT; }
+  if (code2 == TYPE_CODE_M3_INTEGER) { code2 = TYPE_CODE_INT; }
+  if (code1 == TYPE_CODE_M3_POINTER) { code1 = TYPE_CODE_PTR; }
+  if (code2 == TYPE_CODE_M3_POINTER) { code2 = TYPE_CODE_PTR; }
+
+  if (code1 == TYPE_CODE_M3_INTEGER && code2 == TYPE_CODE_M3_INTEGER)
+    return m3_unpack_int2 (arg1) == m3_unpack_int2 (arg2);
+  else if (code1 == TYPE_CODE_FLT && code2 == TYPE_CODE_M3_INTEGER)
+    return m3_unpack_float2 (arg1) == (double) m3_unpack_int2 (arg2);
+  else if (code2 == TYPE_CODE_FLT && code1 == TYPE_CODE_M3_INTEGER)
+    return m3_unpack_float2 (arg2) == (double) m3_unpack_int2 (arg1);
+  else if (code1 == TYPE_CODE_FLT && code2 == TYPE_CODE_FLT)
+    return m3_unpack_float2 (arg1) == m3_unpack_float2 (arg2);
+
+  /* FIXME: Need to promote to either CORE_ADDR or LONGEST, whichever
+     is bigger.  */
+  else if (code1 == TYPE_CODE_M3_POINTER && code2 == TYPE_CODE_M3_INTEGER)
+    return m3_unpack_pointer2 (arg1) == (CORE_ADDR) m3_unpack_int2 (arg2);
+  else if (code2 == TYPE_CODE_M3_POINTER && code1 == TYPE_CODE_M3_INTEGER)
+    return (CORE_ADDR) m3_unpack_int2 (arg1) == m3_unpack_pointer2 (arg2);
+
+  else if (code1 == code2
+           && ((len = TYPE_LENGTH (VALUE_TYPE (arg1)))
+               == TYPE_LENGTH (VALUE_TYPE (arg2))))
+    {
+      p1 = VALUE_CONTENTS (arg1);
+      p2 = VALUE_CONTENTS (arg2);
+      while (--len >= 0)
+        {
+          if (*p1++ != *p2++)
+            break;
+        }
+      return len < 0;
+    }
+  else
+    {
+      error ("Invalid type combination in equality test.");
+      return 0;  /* For lint -- never reached */
+    }
+}
+
 /* Simulate the C operator == by returning a 1
    iff ARG1 and ARG2 have equal contents.  */
 
@@ -1095,61 +1161,6 @@ value_equal (arg1, arg2)
     }
 }
 
-/* Simulate the Modula-3  operator = by returning a 1
-   iff ARG1 and ARG2 have equal contents.  */
-
-int
-m3_value_equal (arg1, arg2)
-     register value_ptr arg1, arg2;
-
-{
-  register int len;
-  register char *p1, *p2;
-  enum type_code code1;
-  enum type_code code2;
-
-  COERCE_ARRAY (arg1);
-  COERCE_ARRAY (arg2);
-
-  code1 = TYPE_CODE (VALUE_TYPE (arg1));
-  code2 = TYPE_CODE (VALUE_TYPE (arg2));
-
-  if (code1 == TYPE_CODE_M3_INTEGER && code2 == TYPE_CODE_M3_INTEGER)
-    return m3_unpack_int2 (arg1) == m3_unpack_int2 (arg2);
-  else if (code1 == TYPE_CODE_FLT && code2 == TYPE_CODE_M3_INTEGER)
-    return m3_unpack_float2 (arg1) == (double) m3_unpack_int2 (arg2);
-  else if (code2 == TYPE_CODE_FLT && code1 == TYPE_CODE_M3_INTEGER)
-    return m3_unpack_float2 (arg2) == (double) m3_unpack_int2 (arg1);
-  else if (code1 == TYPE_CODE_FLT && code2 == TYPE_CODE_FLT)
-    return m3_unpack_float2 (arg1) == m3_unpack_float2 (arg2);
-
-  /* FIXME: Need to promote to either CORE_ADDR or LONGEST, whichever
-     is bigger.  */
-  else if (code1 == TYPE_CODE_M3_POINTER && code2 == TYPE_CODE_M3_INTEGER)
-    return m3_unpack_pointer2 (arg1) == (CORE_ADDR) m3_unpack_int2 (arg2);
-  else if (code2 == TYPE_CODE_M3_POINTER && code1 == TYPE_CODE_M3_INTEGER)
-    return (CORE_ADDR) m3_unpack_int2 (arg1) == m3_unpack_pointer2 (arg2);
-
-  else if (code1 == code2
-	   && ((len = TYPE_LENGTH (VALUE_TYPE (arg1)))
-	       == TYPE_LENGTH (VALUE_TYPE (arg2))))
-    {
-      p1 = VALUE_CONTENTS (arg1);
-      p2 = VALUE_CONTENTS (arg2);
-      while (--len >= 0)
-	{
-	  if (*p1++ != *p2++)
-	    break;
-	}
-      return len < 0;
-    }
-  else
-    {
-      error ("Invalid type combination in equality test.");
-      return 0;  /* For lint -- never reached */
-    }
-}
-
 /* Simulate the C operator < by returning 1
    iff ARG1's contents are less than ARG2's.  */
 
@@ -1168,12 +1179,6 @@ value_less (arg1, arg2)
   type2 = check_typedef (VALUE_TYPE (arg2));
   code1 = TYPE_CODE (type1);
   code2 = TYPE_CODE (type2);
-
-  if (code1 == TYPE_CODE_M3_INTEGER) { code1 = TYPE_CODE_INT; }
-  if (code2 == TYPE_CODE_M3_INTEGER) { code2 = TYPE_CODE_INT; }
-  if (code1 == TYPE_CODE_M3_POINTER) { code1 = TYPE_CODE_PTR; }
-  if (code2 == TYPE_CODE_M3_POINTER) { code2 = TYPE_CODE_PTR; }
-   
 
   if (code1 == TYPE_CODE_INT && code2 == TYPE_CODE_INT)
     return longest_to_int (value_as_long (value_binop (arg1, arg2,

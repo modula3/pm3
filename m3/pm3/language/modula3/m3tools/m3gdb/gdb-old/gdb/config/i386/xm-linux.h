@@ -1,4 +1,4 @@
-/* Native support for linux, for GDB, the GNU debugger.
+/* Native support for GNU/Linux, for GDB, the GNU debugger.
    Copyright (C) 1986, 1987, 1989, 1992 Free Software Foundation, Inc.
 
 This file is part of GDB.
@@ -19,6 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #ifndef XM_LINUX_H
 #define XM_LINUX_H
+
+#define HOST_I386
 
 #define HOST_BYTE_ORDER LITTLE_ENDIAN
 

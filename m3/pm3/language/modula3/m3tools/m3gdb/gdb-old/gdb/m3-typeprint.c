@@ -155,6 +155,10 @@ m3_type_print_base (type, stream, show, level)
       fputs_filtered (n, stream);
       return; }}
 
+  if (show < 0) {
+    fprintf_filtered (stream, "..."); 
+    return; }
+
   switch (TYPE_CODE (type))
     {
     case TYPE_CODE_M3_ARRAY:
@@ -196,13 +200,14 @@ m3_type_print_base (type, stream, show, level)
 	 fprintf_filtered (stream, "UNTRACED "); }
        else {
 	 m3_type_print_base (TYPE_M3_OBJ_SUPER (type) , stream, show-1, level);
+	 fprintf_filtered (stream, " ");
          wrap_here ("  "); }
 
       if (TYPE_M3_OBJ_BRANDED (type)) {
-	fprintf_filtered (stream, " BRANDED \"%s\"", 
+	fprintf_filtered (stream, "BRANDED \"%s\" ", 
 			  TYPE_M3_OBJ_BRAND (type)); }
 
-      fprintf_filtered (stream, " OBJECT ");
+      fprintf_filtered (stream, "OBJECT ");
       for (i = 0; i < TYPE_M3_OBJ_NFIELDS (type); i++) {
 	fprintf_filtered (stream, "%s: ", TYPE_M3_OBJ_FIELD_NAME (type, i));
 	m3_type_print_base (TYPE_M3_OBJ_FIELD_TYPE (type, i), 
@@ -210,13 +215,13 @@ m3_type_print_base (type, stream, show, level)
 	fprintf_filtered (stream, "; ");
 	wrap_here ("    "); }
 
-      fprintf_filtered (stream, "METHODS ");
+      if (TYPE_M3_OBJ_NMETHODS (type) > 0) fprintf_filtered (stream, "METHODS ");
       for (i = 0; i < TYPE_M3_OBJ_NMETHODS (type); i++) {
-	fprintf_filtered (stream, "%s ", TYPE_M3_OBJ_METHOD_NAME (type, i));
+	fprintf_filtered (stream, "%s: ", TYPE_M3_OBJ_METHOD_NAME (type, i));
 	m3_type_print_base (TYPE_M3_OBJ_METHOD_TYPE (type, i), stream, show-1, level);
 	fprintf_filtered (stream, "; ");
 	wrap_here ("    "); }
-      fprintf_filtered (stream, "END;");
+      fprintf_filtered (stream, "END");
       break; }
 
     case TYPE_CODE_M3_PROC:
@@ -229,14 +234,15 @@ m3_type_print_base (type, stream, show, level)
 	if (i != 0) {
 	  fprintf_filtered (stream, "; ");
 	  wrap_here ("    "); }
-	fprintf_filtered (stream, "%s: ", TYPE_M3_PROC_ARG_NAME (type, i));
+	fprintf_filtered (stream, "%s: ", TYPE_M3_PROC_ARG_NAME (type, i) + 1);
 	m3_type_print_base (TYPE_M3_PROC_ARG_TYPE (type, i), 
-			    stream, show-1, level); }
+			    stream, 0, level); }
       fprintf_filtered (stream, ")");
-      if (M3_TYPEP (TYPE_M3_PROC_RESTYPE (type))) {
+      if (M3_TYPEP (TYPE_CODE (TYPE_M3_PROC_RESTYPE (type)))
+	  && TYPE_CODE (TYPE_M3_PROC_RESTYPE (type)) != TYPE_CODE_M3_VOID) {
 	fprintf_filtered (stream, ": ");
 	m3_type_print_base (TYPE_M3_PROC_RESTYPE (type),
-			    stream, show-1, level); }
+			    stream, 0, level); }
       switch (TYPE_M3_PROC_NRAISES (type))
 	{
 	case -1: fprintf_filtered (stream, " RAISES ANY");  break;
@@ -259,7 +265,7 @@ m3_type_print_base (type, stream, show, level)
 			    stream, show-1, level);
 	fprintf_filtered (stream, "; ");
 	wrap_here ("    "); }
-      fprintf_filtered (stream, "END; ");
+      fprintf_filtered (stream, "END");
       break;
       
     case TYPE_CODE_M3_SET:
@@ -268,19 +274,26 @@ m3_type_print_base (type, stream, show, level)
       break; 
 
     case TYPE_CODE_M3_POINTER: {
-      if (! TYPE_M3_POINTER_TRACED (type)) {
-	fprintf_filtered (stream, "UNTRACED "); }
-	
-      if (TYPE_M3_POINTER_BRANDED (type)) {
-	fprintf_filtered (stream, "BRANDED \"%s\" ",
-			  TYPE_M3_POINTER_BRAND (type)); }
-      fprintf_filtered (stream, "REF ");
-      if (show >= 0) {
-	m3_type_print_base (TYPE_M3_POINTER_TARGET (type), stream,
-			    show-1, level); }
+      /* Texts are passed as TYPE_CODE_M3_POINTER, not as TYPE_CODE_M3_TEXT ... */
+      struct type *target = TYPE_M3_POINTER_TARGET (type);
+      if (TYPE_CODE (target) == TYPE_CODE_M3_OPEN_ARRAY
+	  && TYPE_CODE (TYPE_M3_OPEN_ARRAY_ELEM (target)) == TYPE_CODE_M3_CHAR) {
+	fprintf_filtered (stream, "TEXT"); }
       else {
-	fprintf_filtered (stream, "..."); }
-      break; }
+	if (! TYPE_M3_POINTER_TRACED (type)) {
+	  fprintf_filtered (stream, "UNTRACED "); }
+	
+	if (TYPE_M3_POINTER_BRANDED (type)) {
+	  fprintf_filtered (stream, "BRANDED \"%s\" ",
+			    TYPE_M3_POINTER_BRAND (type)); }
+	fprintf_filtered (stream, "REF ");
+	if (show >= 0) {
+	  m3_type_print_base (TYPE_M3_POINTER_TARGET (type), stream,
+			      show-1, level); }
+	else {
+	  fprintf_filtered (stream, "..."); }
+      }
+	break; }
 	
     case TYPE_CODE_M3_SUBRANGE: {
       LONGEST lower, upper;
@@ -292,12 +305,12 @@ m3_type_print_base (type, stream, show, level)
       if (en) {
 	fputs_filtered (TYPE_M3_ENUM_VALNAME (target, lower), stream); }
       else {
-	print_longest (stream, 'd', 0, lower); }
+	fprintf_filtered (stream, "%ld", lower); }
       fprintf_filtered (stream, " .. ");
       if (en) {
 	fputs_filtered (TYPE_M3_ENUM_VALNAME (target, upper), stream); }
       else {
-	print_longest (stream, 'd', 0, upper); }
+	fprintf_filtered (stream, "%ld", upper); }
       fprintf_filtered (stream, "]");
       break; }
 

@@ -1,5 +1,5 @@
 /* Evaluate expressions for GDB.
-   Copyright 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996
+   Copyright 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997
    Free Software Foundation, Inc.
 
 This file is part of GDB.
@@ -602,6 +602,9 @@ evaluate_subexp_standard (expect_type, exp, pos, noside)
 		}
 	      else
 		{
+		  if (index > high_bound)
+		    /* to avoid memory corruption */
+		    error ("Too many array elements");
 		  memcpy (VALUE_CONTENTS_RAW (array)
 			  + (index - low_bound) * element_size,
 			  VALUE_CONTENTS (element),
@@ -1038,7 +1041,6 @@ evaluate_subexp_standard (expect_type, exp, pos, noside)
 				   NULL, "structure pointer");
 	}
 
-
     case STRUCTOP_MEMBER:
       arg1 = evaluate_subexp_for_address (exp, pos, noside);
       goto handle_pointer_to_member;
@@ -1467,7 +1469,8 @@ evaluate_subexp_standard (expect_type, exp, pos, noside)
       arg2 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
       if (noside == EVAL_SKIP)
 	goto nosideret;
-      if (TYPE_CODE (VALUE_TYPE (arg2)) != TYPE_CODE_INT)
+      type = check_typedef (VALUE_TYPE (arg2));
+      if (TYPE_CODE (type) != TYPE_CODE_INT)
 	error ("Non-integral right operand for \"@\" operator.");
       if (noside == EVAL_AVOID_SIDE_EFFECTS)
 	{
@@ -1518,7 +1521,9 @@ evaluate_subexp_standard (expect_type, exp, pos, noside)
       arg1 = evaluate_subexp (expect_type, exp, pos, noside);
       if (noside == EVAL_SKIP)
 	goto nosideret;
-      if (noside == EVAL_AVOID_SIDE_EFFECTS)
+      if (unop_user_defined_p (op, arg1))
+	return value_x_unop (arg1, op, noside);
+      else if (noside == EVAL_AVOID_SIDE_EFFECTS)
 	{
 	  type = check_typedef (VALUE_TYPE (arg1));
 	  if (TYPE_CODE (type) == TYPE_CODE_PTR
@@ -1582,7 +1587,8 @@ evaluate_subexp_standard (expect_type, exp, pos, noside)
 	return value_zero (exp->elts[pc + 1].type, lval_memory);
       else
 	return value_at_lazy (exp->elts[pc + 1].type,
-			      value_as_pointer (arg1));
+			      value_as_pointer (arg1),
+			      NULL);
 
     case UNOP_PREINCREMENT:
       arg1 = evaluate_subexp (expect_type, exp, pos, noside);
@@ -1688,19 +1694,19 @@ evaluate_subexp_standard (expect_type, exp, pos, noside)
 
       if (TYPE_CODE (t) == TYPE_CODE_M3_POINTER
 	  || TYPE_CODE (t) == TYPE_CODE_M3_INDIRECT) {
-	arg1 = value_at_lazy (TYPE_M3_TARGET (t), value_as_pointer (arg1)); 
+	arg1 = value_at_lazy (TYPE_M3_TARGET (t), value_as_pointer (arg1),NULL); 
         goto deref; }
 
       else if (TYPE_CODE (t) == TYPE_CODE_M3_OBJECT) {
 	tc_addr = find_m3_heap_tc_addr (value_as_pointer (arg1));
 	while (TYPE_CODE (t) == TYPE_CODE_M3_OBJECT) {
 	  if (find_m3_obj_field (t, field_name, 0, &offset, &t)) {
-	    arg1 = value_at_lazy (t, value_as_pointer (arg1));
+	    arg1 = value_at_lazy (t, value_as_pointer (arg1),NULL);
 	    offset += 8 * tc_address_to_dataOffset (tc_addr); 
 	    goto found; }
 
 	  if (find_m3_obj_method (t, field_name, 0, &offset, &t)) {
-	    arg1 = value_at_lazy (t, tc_address_to_defaultMethods (tc_addr));
+	    arg1 = value_at_lazy (t, tc_address_to_defaultMethods (tc_addr),NULL);
 	    offset += 8 * tc_address_to_methodOffset (tc_addr);
 	    goto found; }
 
@@ -1751,7 +1757,7 @@ evaluate_subexp_standard (expect_type, exp, pos, noside)
 
       while (TYPE_CODE (arg1_type) == TYPE_CODE_M3_INDIRECT) {
 	arg1_type = TYPE_M3_TARGET (arg1_type);
-	arg1 = value_at_lazy (arg1_type, m3_unpack_pointer2 (arg1)); }
+	arg1 = value_at_lazy (arg1_type, m3_unpack_pointer2 (arg1),NULL); }
 
       if ((TYPE_CODE (arg1_type) == TYPE_CODE_M3_REFANY
            || TYPE_CODE (arg1_type) == TYPE_CODE_M3_ROOT
@@ -1777,7 +1783,7 @@ evaluate_subexp_standard (expect_type, exp, pos, noside)
 
       while (TYPE_CODE (arg1_type) == TYPE_CODE_M3_INDIRECT) {
 	arg1_type = TYPE_M3_TARGET (arg1_type);
-	arg1 = value_at_lazy (arg1_type, m3_unpack_pointer2 (arg1)); }
+	arg1 = value_at_lazy (arg1_type, m3_unpack_pointer2 (arg1),NULL); }
 
       if (value_as_pointer (arg1) == 0) {
         error ("^ applied to NIL"); }
@@ -1791,7 +1797,7 @@ evaluate_subexp_standard (expect_type, exp, pos, noside)
       else {
         error ("^ applied to a non-REF"); }
 
-      return value_at_lazy (res_type, m3_unpack_pointer2 (arg1)); }
+      return value_at_lazy (res_type, m3_unpack_pointer2 (arg1),NULL); }
 
     case UNOP_M3_NEG: {
       arg1 = evaluate_subexp (0, exp, pos, noside);
@@ -1820,7 +1826,7 @@ evaluate_subexp_standard (expect_type, exp, pos, noside)
       while (TYPE_CODE (array_type) == TYPE_CODE_M3_POINTER
 	     || TYPE_CODE (array_type) == TYPE_CODE_M3_INDIRECT) {
 	array_type = TYPE_M3_TARGET (array_type);
-	array = value_at_lazy (array_type, m3_unpack_pointer2 (array));
+	array = value_at_lazy (array_type, m3_unpack_pointer2 (array),NULL);
         if (array == 0) {
           error ("FIRST, LAST or NUMBER applied to NIL");  }}
 
@@ -2085,7 +2091,7 @@ evaluate_subexp_standard (expect_type, exp, pos, noside)
       while (TYPE_CODE (array_type) == TYPE_CODE_M3_POINTER
 	     || TYPE_CODE (array_type) == TYPE_CODE_M3_INDIRECT) {
 	array_type = TYPE_M3_TARGET (array_type);
-	array = value_at_lazy (array_type, m3_unpack_pointer2 (array)); }
+	array = value_at_lazy (array_type, m3_unpack_pointer2 (array),NULL); }
 
       if (TYPE_CODE (array_type) == TYPE_CODE_M3_ARRAY) {
 	index_type = TYPE_M3_ARRAY_INDEX (array_type);
@@ -2190,7 +2196,7 @@ evaluate_subexp_standard (expect_type, exp, pos, noside)
 	{
 	case TYPE_CODE_M3_INDIRECT:
 	  arg1_type = TYPE_M3_TARGET (arg1_type);
-	  arg1 = value_at_lazy (arg1_type, m3_unpack_pointer2 (arg1));
+	  arg1 = value_at_lazy (arg1_type, m3_unpack_pointer2 (arg1), NULL);
 	  goto restart; 
 	case TYPE_CODE_M3_PACKED:
 	  arg1_type = TYPE_M3_TARGET (arg1_type);
@@ -2227,7 +2233,7 @@ evaluate_subexp_standard (expect_type, exp, pos, noside)
 	{
 	case TYPE_CODE_M3_INDIRECT:
 	  arg2_type = TYPE_M3_TARGET (arg2_type);
-	  arg2 = value_at_lazy (arg2_type, m3_unpack_pointer2 (arg2));
+	  arg2 = value_at_lazy (arg2_type, m3_unpack_pointer2 (arg2), NULL);
 	  goto restart2; 
 	case TYPE_CODE_M3_PACKED:
 	  arg2_type = TYPE_M3_TARGET (arg2_type);
@@ -2534,6 +2540,10 @@ evaluate_subexp_for_sizeof (exp, pos)
       (*pos)++;
       val = evaluate_subexp (NULL_TYPE, exp, pos, EVAL_AVOID_SIDE_EFFECTS);
       type = check_typedef (VALUE_TYPE (val));
+      if (TYPE_CODE (type) != TYPE_CODE_PTR
+	  && TYPE_CODE (type) != TYPE_CODE_REF
+	  && TYPE_CODE (type) != TYPE_CODE_ARRAY)
+	error ("Attempt to take contents of a non-pointer value.");
       type = check_typedef (TYPE_TARGET_TYPE (type));
       return value_from_longest (builtin_type_int, (LONGEST)
 		      TYPE_LENGTH (type));

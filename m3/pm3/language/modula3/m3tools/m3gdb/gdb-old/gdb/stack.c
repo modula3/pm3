@@ -37,6 +37,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "symfile.h"
 #include "objfiles.h"
 
+/* Functions exported for more general use: */
+
+void args_info PARAMS ((char *, int));
+
+void locals_info PARAMS ((char *, int));
+
+/* Local functions: */
+
 static void return_command PARAMS ((char *, int));
 
 static void down_command PARAMS ((char *, int));
@@ -51,13 +59,9 @@ static void frame_command PARAMS ((char *, int));
 
 static void select_frame_command PARAMS ((char *, int));
 
-static void args_info PARAMS ((char *, int));
-
 static void print_frame_arg_vars PARAMS ((struct frame_info *, GDB_FILE *));
 
 static void catch_info PARAMS ((char *, int));
-
-static void locals_info PARAMS ((char *, int));
 
 static void print_frame_label_vars PARAMS ((struct frame_info *, int,
 					    GDB_FILE *));
@@ -108,10 +112,10 @@ struct print_stack_frame_args {
   int args;
 };
 
-static long print_stack_frame_stub PARAMS ((char *));
+static int print_stack_frame_stub PARAMS ((char *));
 
 /* Pass the args the way catch_errors wants them.  */
-static long
+static int
 print_stack_frame_stub (args)
      char *args;
 {
@@ -152,11 +156,11 @@ struct print_args_args {
   struct frame_info *fi;
 };
 
-static long print_args_stub PARAMS ((char *));
+static int print_args_stub PARAMS ((char *));
 
 /* Pass the args the way catch_errors wants them.  */
 
-static long
+static int
 print_args_stub (args)
      char *args;
 {
@@ -275,12 +279,12 @@ print_frame_info (fi, level, source, args)
 	  /* We also don't know anything about the function besides
 	     its address and name.  */
 	  func = 0;
-	  funname = SYMBOL_NAME (msymbol);
+	  funname = SYMBOL_SOURCE_NAME (msymbol);
 	  funlang = SYMBOL_LANGUAGE (msymbol);
 	}
       else
 	{
-	  funname = SYMBOL_NAME (func);
+	  funname = SYMBOL_SOURCE_NAME (func);
 	  funlang = SYMBOL_LANGUAGE (func);
 	}
     }
@@ -289,7 +293,7 @@ print_frame_info (fi, level, source, args)
       struct minimal_symbol *msymbol = lookup_minimal_symbol_by_pc (fi->pc);
       if (msymbol != NULL)
 	{
-	  funname = SYMBOL_NAME (msymbol);
+	  funname = SYMBOL_SOURCE_NAME (msymbol);
 	  funlang = SYMBOL_LANGUAGE (msymbol);
 	}
     }
@@ -541,7 +545,7 @@ frame_info (addr_exp, from_tty)
   s = find_pc_symtab(fi->pc);
   if (func)
     {
-      funname = SYMBOL_NAME (func);
+      funname = SYMBOL_SOURCE_NAME (func);
       funlang = SYMBOL_LANGUAGE (func);
     }
   else
@@ -549,7 +553,7 @@ frame_info (addr_exp, from_tty)
       register struct minimal_symbol *msymbol = lookup_minimal_symbol_by_pc (fi->pc);
       if (msymbol != NULL)
 	{
-	  funname = SYMBOL_NAME (msymbol);
+	  funname = SYMBOL_SOURCE_NAME (msymbol);
 	  funlang = SYMBOL_LANGUAGE (msymbol);
 	}
     }
@@ -1009,7 +1013,7 @@ print_frame_label_vars (fi, this_level_only, stream)
 }
 
 /* ARGSUSED */
-static void
+void
 locals_info (args, from_tty)
      char *args;
      int from_tty;
@@ -1094,7 +1098,7 @@ print_frame_arg_vars (fi, stream)
     }
 }
 
-static void
+void
 args_info (ignore, from_tty)
      char *ignore;
      int from_tty;
@@ -1103,6 +1107,7 @@ args_info (ignore, from_tty)
     error ("No frame selected.");
   print_frame_arg_vars (selected_frame, gdb_stdout);
 }
+
 
 /* Select frame FI, and note that its stack level is LEVEL.
    LEVEL may be -1 if an actual level number is not known.  */

@@ -98,16 +98,25 @@ print_subexp (exp, pos, stream, prec)
     case OP_VAR_VALUE:
       {
 	struct block *b;
+        char* sym_name;
 	(*pos) += 3;
 	b = exp->elts[pc + 1].block;
 	if (b != NULL
 	    && BLOCK_FUNCTION (b) != NULL
-	    && SYMBOL_SOURCE_NAME (BLOCK_FUNCTION (b)) != NULL)
-	  {
-	    fputs_filtered (SYMBOL_SOURCE_NAME (BLOCK_FUNCTION (b)), stream);
-	    fputs_filtered ("::", stream);
-	  }
-	fputs_filtered (SYMBOL_SOURCE_NAME (exp->elts[pc + 2].symbol), stream);
+	    && SYMBOL_SOURCE_NAME (BLOCK_FUNCTION (b)) != NULL) {
+
+            if (exp->language_defn->la_language != language_m3) {
+	      fputs_filtered (SYMBOL_SOURCE_NAME (BLOCK_FUNCTION (b)), stream);
+	      fputs_filtered ("::", stream);
+            }
+	}
+        sym_name = SYMBOL_SOURCE_NAME (exp->elts[pc + 2].symbol);
+        if ((exp->language_defn->la_language == language_m3) &&
+           ((sym_name[0] == 'I' || sym_name[0] == 'M') &&
+             sym_name[1] == '$'))
+	  fputs_filtered (sym_name+2, stream);
+        else
+	  fputs_filtered (sym_name, stream);
       }
       return;
 
@@ -300,7 +309,6 @@ print_subexp (exp, pos, stream, prec)
       fputs_filtered (&exp->elts[pc + 2].string, stream);
       return;
 
-
     case BINOP_SUBSCRIPT:
       print_subexp (exp, pos, stream, PREC_SUFFIX);
       fputs_filtered ("[", stream);
@@ -342,7 +350,8 @@ print_subexp (exp, pos, stream, prec)
 	   its type; print the value in the type of the MEMVAL.  */
 	(*pos) += 4;
 	val = value_at_lazy (exp->elts[pc + 1].type,
-			     (CORE_ADDR) exp->elts[pc + 5].longconst);
+			     (CORE_ADDR) exp->elts[pc + 5].longconst,
+			     NULL);
 	value_print (val, stream, 0, Val_no_prettyprint);
       } else {
 	fputs_filtered ("{", stream);
@@ -408,6 +417,63 @@ print_subexp (exp, pos, stream, prec)
     case BINOP_INCL:
     case BINOP_EXCL:
       error("print_subexp:  Not implemented.");
+
+    /* Modula-3 ops */
+
+    case OP_M3_LONG:
+    case OP_M3_CHAR:
+      (*pos) += 3;
+      value_print (value_from_longest (exp->elts[pc + 1].type,
+				       exp->elts[pc + 2].longconst),
+		   stream, 0, Val_no_prettyprint);
+      return;
+
+    case OP_M3_REEL:
+    case OP_M3_LREEL:
+    case OP_M3_XREEL:
+      (*pos) += 3;
+      value_print (value_from_double (exp->elts[pc + 1].type,
+				      exp->elts[pc + 2].doubleconst),
+		   stream, 0, Val_no_prettyprint);
+      return;
+
+    case OP_M3_TEXT: 
+      /* like OP_STRING */
+      nargs = longest_to_int (exp -> elts[pc + 1].longconst);
+      (*pos) += 3 + BYTES_TO_EXP_ELEM (nargs + 1);
+      LA_PRINT_STRING (stream, &exp->elts[pc + 2].string, nargs, 0);
+      return;
+
+    case M3_FINAL_TYPE:
+      print_subexp (exp, pos, stream, PREC_PREFIX);
+      return;
+
+    case UNOP_M3_DEREF:
+      print_subexp (exp, pos, stream, PREC_SUFFIX);
+      fprintf_unfiltered(stream,"^");
+      return;
+      
+    case STRUCTOP_M3_MODULE:
+    case STRUCTOP_M3_INTERFACE:
+    case STRUCTOP_M3_STRUCT: {
+      char *field_name;
+
+      field_name = &exp->elts[pc + 2].string;
+      tem = longest_to_int (exp->elts[pc + 1].longconst);
+      (*pos) += 3 + BYTES_TO_EXP_ELEM (tem + 1);
+      print_subexp (exp, pos, stream, PREC_PREFIX);
+      fprintf_unfiltered(stream,".");
+      fputs_filtered (field_name, stream);
+      return;
+    }
+
+    case BINOP_M3_SUBSCRIPT:
+      /* like BINOP_SUBSCRIPT */
+      print_subexp (exp, pos, stream, PREC_SUFFIX);
+      fprintf_unfiltered(stream,"[");
+      print_subexp (exp, pos, stream, PREC_ABOVE_COMMA);
+      fprintf_unfiltered(stream,"]");
+      return;
 
     /* Default ops */
 
@@ -612,7 +678,7 @@ dump_expression (exp, stream, note)
 	}
       fprintf_filtered (stream, "%20s  ", opcode_name);
       fprintf_filtered (stream,
-#if defined (PRINTF_HAS_LONG_LONG)
+#if defined (CC_HAS_LONG_LONG) && defined (PRINTF_HAS_LONG_LONG)
 			"%ll16x  ",
 #else
 			"%l16x  ",

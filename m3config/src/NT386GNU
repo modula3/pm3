@@ -3,7 +3,10 @@ readonly TARGET = "NT386GNU"
 
 include("COMMON")
 
+PLATFORM_SUPPORTS_OPENGL = "TRUE"
 PLATFORM_SUPPORTS_LATEX = ""
+
+CYGNUS_LIB_DIR = "/usr/local/lib/i386-cygwin32"
 
 INSTALL_ROOT = "\\usr\\pm3"
 LINK_suffix = [ "-luser32", "-lgdi32", "-ladvapi32", "-lnetapi32", "-lm" ]
@@ -11,12 +14,12 @@ LINK_suffix = [ "-luser32", "-lgdi32", "-ladvapi32", "-lnetapi32", "-lm" ]
 setDefault("","")
 
 readonly proc import_OpenGL() is
-  import_lib ("opengl32", "/usr/local/lib/i386-cygwin32")
-  import_lib ("glu32",    "/usr/local/lib/i386-cygwin32")
+  import_lib ("opengl32", CYGNUS_LIB_DIR)
+  import_lib ("glu32",    CYGNUS_LIB_DIR)
 end
 
 readonly proc import_TCP() is
-  import_lib("wsock32", "/usr/local/lib/i386-cygwin32")
+  import_lib("wsock32", CYGNUS_LIB_DIR)
 end
 
 proc install_file (src, dest, mode) is

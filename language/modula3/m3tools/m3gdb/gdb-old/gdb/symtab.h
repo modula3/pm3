@@ -84,18 +84,21 @@ struct general_symbol_info
 
   union
     {
-      struct cplus_specific      /* For C++ */
+      struct cplus_specific      /* For C++ and Java */
 	{
 	  char *demangled_name;
 	} cplus_specific;
-      struct m3_specific	 /* For M3 */
-	{
-	  char *demangled_name;
-	} m3_specific;
+
+      struct m3_specific         /* For Modula-3 */
+        {
+          char *demangled_name;
+        } m3_specific;
+
       struct chill_specific      /* For Chill */
 	{
 	  char *demangled_name;
 	} chill_specific;
+
     } language_specific;
 
   /* Record the source code language that applies to this symbol.
@@ -112,7 +115,13 @@ struct general_symbol_info
      also tries to set it correctly).  */
 
   short section;
+
+  /* The bfd section associated with this symbol. */
+
+  asection *bfd_section;
 };
+
+extern CORE_ADDR symbol_overlayed_address PARAMS((CORE_ADDR, asection *));
 
 #define SYMBOL_NAME(symbol)		(symbol)->ginfo.name
 #define SYMBOL_VALUE(symbol)		(symbol)->ginfo.value.ivalue
@@ -122,24 +131,27 @@ struct general_symbol_info
 #define SYMBOL_VALUE_CHAIN(symbol)	(symbol)->ginfo.value.chain
 #define SYMBOL_LANGUAGE(symbol)		(symbol)->ginfo.language
 #define SYMBOL_SECTION(symbol)		(symbol)->ginfo.section
+#define SYMBOL_BFD_SECTION(symbol)	(symbol)->ginfo.bfd_section
 
 #define SYMBOL_CPLUS_DEMANGLED_NAME(symbol)	\
   (symbol)->ginfo.language_specific.cplus_specific.demangled_name
 
-#define SYMBOL_M3_DEMANGLED_NAME(symbol)	\
+/* ----- Modula-3 */
+#define SYMBOL_M3_DEMANGLED_NAME(symbol)        \
   (symbol)->ginfo.language_specific.m3_specific.demangled_name
-  
+
 /* Macro that initializes the language dependent portion of a symbol
    depending upon the language for the symbol. */
 
 #define SYMBOL_INIT_LANGUAGE_SPECIFIC(symbol,language)			\
   do {									\
     SYMBOL_LANGUAGE (symbol) = language;				\
-    if (SYMBOL_LANGUAGE (symbol) == language_m3)			\
-      {									\
-	SYMBOL_M3_DEMANGLED_NAME (symbol) = NULL;			\
-      }									\
-    else if (SYMBOL_LANGUAGE (symbol) == language_cplus)		\
+    if (SYMBOL_LANGUAGE (symbol) == language_m3)                        \
+      {                                                                 \
+        SYMBOL_M3_DEMANGLED_NAME (symbol) = NULL;                       \
+      }                                                                 \
+    else if (SYMBOL_LANGUAGE (symbol) == language_cplus			\
+	|| SYMBOL_LANGUAGE (symbol) == language_java)			\
       {									\
 	SYMBOL_CPLUS_DEMANGLED_NAME (symbol) = NULL;			\
       }									\
@@ -166,30 +178,47 @@ struct general_symbol_info
 #define SYMBOL_INIT_DEMANGLED_NAME(symbol,obstack)			\
   do {									\
     char *demangled = NULL;						\
-    if (SYMBOL_LANGUAGE (symbol) == language_m3			        \
-	|| SYMBOL_LANGUAGE (symbol) == language_auto)			\
-      {									\
-	demangled = m3_demangle (SYMBOL_NAME (symbol));                 \
-	if (demangled != NULL)						\
-	  {								\
-	    SYMBOL_LANGUAGE (symbol) = language_m3;			\
-	    SYMBOL_M3_DEMANGLED_NAME (symbol) = 			\
-	      obsavestring (demangled, strlen (demangled), (obstack));	\
-	    free (demangled);						\
-	  }								\
-	else								\
-	  {								\
-	    SYMBOL_M3_DEMANGLED_NAME (symbol) = NULL;			\
-	  }								\
-      }									\
-    if (SYMBOL_LANGUAGE (symbol) == language_cplus			\
-	|| SYMBOL_LANGUAGE (symbol) == language_auto)			\
-      {									\
+    if (SYMBOL_LANGUAGE (symbol) == language_m3                         \
+        || SYMBOL_LANGUAGE (symbol) == language_auto)                   \
+      {                                                                 \
+        demangled = m3_demangle (SYMBOL_NAME (symbol));                 \
+        if (demangled != NULL)                                          \
+          {                                                             \
+            SYMBOL_LANGUAGE (symbol) = language_m3;                     \
+            SYMBOL_M3_DEMANGLED_NAME (symbol) =                         \
+              obsavestring (demangled, strlen (demangled), (obstack));  \
+            free (demangled);                                           \
+          }                                                             \
+        else                                                            \
+          {                                                             \
+            SYMBOL_M3_DEMANGLED_NAME (symbol) = NULL;                   \
+          }                                                             \
+      }                                                                 \
+    if (SYMBOL_LANGUAGE (symbol) == language_cplus                      \
+        || SYMBOL_LANGUAGE (symbol) == language_auto)                   \
+      {                                                                 \
 	demangled =							\
 	  cplus_demangle (SYMBOL_NAME (symbol), DMGL_PARAMS | DMGL_ANSI);\
 	if (demangled != NULL)						\
 	  {								\
 	    SYMBOL_LANGUAGE (symbol) = language_cplus;			\
+	    SYMBOL_CPLUS_DEMANGLED_NAME (symbol) = 			\
+	      obsavestring (demangled, strlen (demangled), (obstack));	\
+	    free (demangled);						\
+	  }								\
+	else								\
+	  {								\
+	    SYMBOL_CPLUS_DEMANGLED_NAME (symbol) = NULL;		\
+	  }								\
+      }									\
+    if (SYMBOL_LANGUAGE (symbol) == language_java)			\
+      {									\
+	demangled =							\
+	  cplus_demangle (SYMBOL_NAME (symbol),				\
+			  DMGL_PARAMS | DMGL_ANSI | DMGL_JAVA);		\
+	if (demangled != NULL)						\
+	  {								\
+	    SYMBOL_LANGUAGE (symbol) = language_java;			\
 	    SYMBOL_CPLUS_DEMANGLED_NAME (symbol) = 			\
 	      obsavestring (demangled, strlen (demangled), (obstack));	\
 	    free (demangled);						\
@@ -226,14 +255,17 @@ struct general_symbol_info
 /* Macro that returns the demangled name for a symbol based on the language
    for that symbol.  If no demangled name exists, returns NULL. */
 
-#define SYMBOL_DEMANGLED_NAME(symbol)					\
-  (SYMBOL_LANGUAGE (symbol) == language_m3				\
-   ? SYMBOL_M3_DEMANGLED_NAME (symbol)					\
-   : (SYMBOL_LANGUAGE (symbol) == language_cplus		       	\
-      ? SYMBOL_CPLUS_DEMANGLED_NAME (symbol)				\
-      : (SYMBOL_LANGUAGE (symbol) == language_chill			\
-         ? SYMBOL_CHILL_DEMANGLED_NAME (symbol)				\
-         : NULL)))
+#define SYMBOL_DEMANGLED_NAME(symbol)                                   \
+  (SYMBOL_LANGUAGE (symbol) == language_m3                              \
+   ? SYMBOL_M3_DEMANGLED_NAME (symbol)                                  \
+   : (SYMBOL_LANGUAGE (symbol) == language_cplus                        \
+      ? SYMBOL_CPLUS_DEMANGLED_NAME (symbol)                            \
+      : (SYMBOL_LANGUAGE (symbol) == language_java                      \
+         ? SYMBOL_CPLUS_DEMANGLED_NAME (symbol)                         \
+         : (SYMBOL_LANGUAGE (symbol) == language_chill                  \
+            ? SYMBOL_CHILL_DEMANGLED_NAME (symbol)                      \
+            : NULL))))
+
 
 #define SYMBOL_CHILL_DEMANGLED_NAME(symbol)				\
   (symbol)->ginfo.language_specific.chill_specific.demangled_name
@@ -349,7 +381,6 @@ struct minimal_symbol
       mst_file_data,		/* Static version of mst_data */
       mst_file_bss		/* Static version of mst_bss */
     } type BYTE_BITFIELD;
-
 };
 
 #define MSYMBOL_INFO(msymbol)		(msymbol)->info
@@ -607,6 +638,22 @@ enum address_class
   LOC_OPTIMIZED_OUT
 };
 
+/* Linked list of symbol's live ranges. */
+
+struct range_list		
+{
+  CORE_ADDR start;
+  CORE_ADDR end;
+  struct range_list *next;	
+};
+
+/* Linked list of aliases for a particular main/primary symbol.  */
+struct alias_list
+  {
+    struct symbol *sym;
+    struct alias_list *next;
+  };
+
 struct symbol
 {
 
@@ -616,7 +663,9 @@ struct symbol
 
   /* Data type of value */
 
+  /* ----- Modula-3 */
   char m3_uid[9];
+
   struct type *type;
 
   /* Name space code.  */
@@ -647,15 +696,27 @@ struct symbol
       short basereg;
     }
   aux_value;
+
+
+  /* Link to a list of aliases for this symbol.
+     Only a "primary/main symbol may have aliases.  */
+  struct alias_list *aliases;
+
+  /* List of ranges where this symbol is active.  This is only
+     used by alias symbols at the current time.  */
+  struct range_list *ranges;
 };
+
 
 #define SYMBOL_NAMESPACE(symbol)	(symbol)->namespace
 #define SYMBOL_CLASS(symbol)		(symbol)->aclass
-#define SET_SYMBOL_TYPE(symbol) (symbol)->type
-#define SYMBOL_TYPE(symbol)	((symbol)->type ? (symbol)->type : \
-		 ((symbol)->type = m3_resolve_type ((symbol)->m3_uid)))
+#define SET_SYMBOL_TYPE(symbol)		(symbol)->type
+#define SYMBOL_TYPE(symbol)     ((symbol)->type ? (symbol)->type : \
+                 ((symbol)->type = m3_resolve_type ((symbol)->m3_uid)))
 #define SYMBOL_LINE(symbol)		(symbol)->line
 #define SYMBOL_BASEREG(symbol)		(symbol)->aux_value.basereg
+#define SYMBOL_ALIASES(symbol)		(symbol)->aliases
+#define SYMBOL_RANGES(symbol)		(symbol)->ranges
 
 /* A partial_symbol records the name, namespace, and address class of
    symbols whose types we have not parsed yet.  For functions, it also
@@ -832,6 +893,13 @@ struct symtab
     /* Language of this source file.  */
 
     enum language language;
+
+    /* String that identifies the format of the debugging information, such
+       as "stabs", "dwarf 1", "dwarf 2", "coff", etc.  This is mostly useful
+       for automated testing of gdb but may also be information that is
+       useful to the user. */
+
+    char *debugformat;
 
     /* String of version information.  May be zero.  */
 
@@ -1018,16 +1086,26 @@ extern int currently_reading_symtab;
 extern int demangle;
 extern int asm_demangle;
 
+/* symtab.c lookup functions */
+
+/* lookup a symbol table by source file name */
+
 extern struct symtab *
 lookup_symtab PARAMS ((char *));
+
+/* lookup a symbol by name (optional block, optional symtab) */
 
 extern struct symbol *
 lookup_symbol PARAMS ((const char *, const struct block *,
 		       const namespace_enum, int *, struct symtab **));
 
+/* lookup a symbol by name, within a specified block */
+  
 extern struct symbol *
 lookup_block_symbol PARAMS ((const struct block *, const char *,
  			     const namespace_enum));
+
+/* lookup a [struct, union, enum] by name, within a specified block */
 
 extern struct type *
 lookup_struct PARAMS ((char *, struct block *));
@@ -1038,29 +1116,67 @@ lookup_union PARAMS ((char *, struct block *));
 extern struct type *
 lookup_enum PARAMS ((char *, struct block *));
 
+/* lookup the function corresponding to the block */
+
 extern struct symbol *
 block_function PARAMS ((struct block *));
+
+/* from blockframe.c: */
+
+/* lookup the function symbol corresponding to the address */
 
 extern struct symbol *
 find_pc_function PARAMS ((CORE_ADDR));
 
-extern int find_pc_partial_function
-  PARAMS ((CORE_ADDR, char **, CORE_ADDR *, CORE_ADDR *));
+/* lookup the function corresponding to the address and section */
+
+extern struct symbol *
+find_pc_sect_function PARAMS ((CORE_ADDR, asection *));
+  
+/* lookup function from address, return name, start addr and end addr */
+
+extern int find_pc_partial_function PARAMS ((CORE_ADDR, char **, 
+					     CORE_ADDR *, CORE_ADDR *));
 
 extern void
 clear_pc_function_cache PARAMS ((void));
 
+/* from symtab.c: */
+
+/* lookup partial symbol table by filename */
+
 extern struct partial_symtab *
 lookup_partial_symtab PARAMS ((char *));
+
+/* lookup partial symbol table by address */
 
 extern struct partial_symtab *
 find_pc_psymtab PARAMS ((CORE_ADDR));
 
+/* lookup partial symbol table by address and section */
+
+extern struct partial_symtab *
+find_pc_sect_psymtab PARAMS ((CORE_ADDR, asection *));
+
+/* lookup full symbol table by address */
+
 extern struct symtab *
 find_pc_symtab PARAMS ((CORE_ADDR));
 
+/* lookup full symbol table by address and section */
+
+extern struct symtab *
+find_pc_sect_symtab PARAMS ((CORE_ADDR, asection *));
+
+/* lookup partial symbol by address */
+
 extern struct partial_symbol *
 find_pc_psymbol PARAMS ((struct partial_symtab *, CORE_ADDR));
+
+/* lookup partial symbol by address and section */
+
+extern struct partial_symbol *
+find_pc_sect_psymbol PARAMS ((struct partial_symtab *, CORE_ADDR, asection *));
 
 extern int
 find_pc_line_pc_range PARAMS ((CORE_ADDR, CORE_ADDR *, CORE_ADDR *));
@@ -1092,6 +1208,7 @@ extern struct minimal_symbol *prim_record_minimal_symbol_and_info
   PARAMS ((const char *, CORE_ADDR,
 	   enum minimal_symbol_type,
 	   char *info, int section,
+	   asection *bfd_section,
 	   struct objfile *));
 
 #ifdef SOFUN_ADDRESS_MAYBE_MISSING
@@ -1115,6 +1232,9 @@ extern struct minimal_symbol *
 lookup_minimal_symbol_by_pc PARAMS ((CORE_ADDR));
 
 extern struct minimal_symbol *
+lookup_minimal_symbol_by_pc_section PARAMS ((CORE_ADDR, asection *));
+
+extern struct minimal_symbol *
 lookup_solib_trampoline_symbol_by_pc PARAMS ((CORE_ADDR));
 
 extern CORE_ADDR
@@ -1136,7 +1256,7 @@ extern void msymbols_sort PARAMS ((struct objfile *objfile));
 struct symtab_and_line
 {
   struct symtab *symtab;
-
+  asection      *section;
   /* Line number.  Line numbers start at 1 and proceed through symtab->nlines.
      0 is never a valid line number; it is used to indicate that line number
      information is not available.  */
@@ -1145,6 +1265,14 @@ struct symtab_and_line
   CORE_ADDR pc;
   CORE_ADDR end;
 };
+
+#define INIT_SAL(sal) { \
+  (sal)->symtab  = 0;   \
+  (sal)->section = 0;   \
+  (sal)->line    = 0;   \
+  (sal)->pc      = 0;   \
+  (sal)->end     = 0;   \
+}
 
 struct symtabs_and_lines
 {
@@ -1157,6 +1285,11 @@ struct symtabs_and_lines
 
 extern struct symtab_and_line
 find_pc_line PARAMS ((CORE_ADDR, int));
+
+/* Same function, but specify a section as well as an address */
+
+extern struct symtab_and_line
+find_pc_sect_line PARAMS ((CORE_ADDR, asection *, int));
 
 /* Given an address, return the nearest symbol at or below it in memory.
    Optionally return the symtab it's from through 2nd arg, and the
@@ -1255,6 +1388,10 @@ find_main_psymtab PARAMS ((void));
 extern struct blockvector *
 blockvector_for_pc PARAMS ((CORE_ADDR, int *));
 
+
+extern struct blockvector *
+blockvector_for_pc_sect PARAMS ((CORE_ADDR, asection *, int *, 
+				 struct symtab *));
 /* symfile.c */
 
 extern void
@@ -1263,6 +1400,7 @@ clear_symtab_users PARAMS ((void));
 extern enum language
 deduce_language_from_filename PARAMS ((char *));
 
+/* ----- Modula-3 */
 extern char *
 m3_demangle PARAMS ((char *));
 
@@ -1270,5 +1408,8 @@ m3_demangle PARAMS ((char *));
 
 extern int
 in_prologue PARAMS ((CORE_ADDR pc, CORE_ADDR func_start));
+
+extern struct symbol *
+fixup_symbol_section PARAMS ((struct symbol  *, struct objfile *));
 
 #endif /* !defined(SYMTAB_H) */

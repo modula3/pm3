@@ -1,5 +1,5 @@
 /* Target-vector operations for controlling win32 child processes, for GDB.
-   Copyright 1995, 1996 Free Software Foundation, Inc.
+   Copyright 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
    This file is part of GDB.
@@ -16,7 +16,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+*/
 
 /* by Steve Chamberlain, sac@cygnus.com */
 
@@ -32,7 +33,14 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <stdlib.h>
+
+#ifdef _MSC_VER
+#include "windefs.h"
+#else /* other WIN32 compiler */
 #include <windows.h>
+#endif
+
 #include "buildsym.h"
 #include "symfile.h"
 #include "objfiles.h"
@@ -98,7 +106,6 @@ struct regmappings
     char *incontext;
     int mask;
   };
-
 
 static const struct regmappings  mappings[] =
 {
@@ -175,7 +182,6 @@ static const struct regmappings  mappings[] =
   {(char *) &context.Fpr30, CONTEXT_FLOATING_POINT},
   {(char *) &context.Fpr31, CONTEXT_FLOATING_POINT},
 
-
   {(char *) &context.Iar, CONTEXT_CONTROL},
   {(char *) &context.Msr, CONTEXT_CONTROL},
   {(char *) &context.Cr,  CONTEXT_INTEGER},
@@ -212,7 +218,6 @@ static const struct regmappings  mappings[] =
 #endif
 };
 
-
 /* This vector maps the target's idea of an exception (extracted
    from the DEBUG_EVENT structure) to GDB's idea. */
 
@@ -221,7 +226,6 @@ struct xlate_exception
     int them;
     enum target_signal us;
   };
-
 
 static const struct xlate_exception
   xlate[] =
@@ -305,7 +309,6 @@ child_store_inferior_registers (int r)
 /* Wait for child to do something.  Return pid of child, or -1 in case
    of error; store status through argument pointer OURSTATUS.  */
 
-
 static int
 handle_load_dll (char *eventp)
 {
@@ -387,7 +390,6 @@ handle_load_dll (char *eventp)
  	      return 1;
  	    }
  	}
- 
 
       context.ContextFlags = CONTEXT_FULL | CONTEXT_FLOATING_POINT;
 
@@ -411,7 +413,7 @@ handle_load_dll (char *eventp)
 }
 
 
-static void
+static int
 handle_exception (DEBUG_EVENT * event, struct target_waitstatus *ourstatus)
 {
   int i;
@@ -448,6 +450,12 @@ handle_exception (DEBUG_EVENT * event, struct target_waitstatus *ourstatus)
       ourstatus->value.sig = TARGET_SIGNAL_TRAP;
       break;
     default:
+      /* This may be a structured exception handling exception.  In
+         that case, we want to let the program try to handle it, and
+         only break if we see the exception a second time.  */
+      if (event->u.Exception.dwFirstChance)
+	return 0;
+
       printf_unfiltered ("gdb: unknown target exception 0x%08x at 0x%08x\n",
 			 event->u.Exception.ExceptionRecord.ExceptionCode,
 			 event->u.Exception.ExceptionRecord.ExceptionAddress);
@@ -458,6 +466,7 @@ handle_exception (DEBUG_EVENT * event, struct target_waitstatus *ourstatus)
   win32_get_context(win32_thread_to_pid(current_process_id, 
       current_thread_id));
   exception_count++;
+  return 1;
 }
 
 static int
@@ -475,11 +484,14 @@ child_wait (int pid, struct target_waitstatus *ourstatus)
       BOOL t = WaitForDebugEvent (&event, INFINITE);
       char *p;
       struct win32_thread_info *tp;
+      DWORD continue_status;
 
       event_count++;
 
       current_thread_id = event.dwThreadId;
       current_process_id = event.dwProcessId;
+
+      continue_status = DBG_CONTINUE;
 
       switch (event.dwDebugEventCode)
 	{
@@ -537,8 +549,10 @@ child_wait (int pid, struct target_waitstatus *ourstatus)
 	  DEBUG_EVENTS (("gdb: kernel event for pid=%d tid=%d code=%s)\n",
 			event.dwProcessId, event.dwThreadId,
 			"EXCEPTION_DEBUG_EVENT"));
-	  handle_exception (&event, ourstatus);
-	  return win32_thread_to_pid(current_process_id, current_thread_id);
+	  if (handle_exception (&event, ourstatus))
+	    return win32_thread_to_pid(current_process_id, current_thread_id);
+	  continue_status = DBG_EXCEPTION_NOT_HANDLED;
+	  break;
 
 	case OUTPUT_DEBUG_STRING_EVENT: /* message from the kernel */
 	  DEBUG_EVENTS (("gdb: kernel event for pid=%d tid=%d code=%s)\n",
@@ -564,10 +578,9 @@ child_wait (int pid, struct target_waitstatus *ourstatus)
       DEBUG_THREADS(("In Wait for child event"));
       CHECK (ContinueDebugEvent (current_process_id,
 				 current_thread_id,
-				 DBG_CONTINUE));
+				 continue_status));
     }
 }
-
 
 /* Attach to process PID, then initialize for debugging it.  */
 
@@ -587,7 +600,6 @@ child_attach (args, from_tty)
 
   if (!ok)
     error ("Can't attach to process.");
-
 
   exception_count = 0;
   event_count = 0;
@@ -611,7 +623,6 @@ child_attach (args, from_tty)
   push_target (&child_ops);
 }
 
-
 static void
 child_detach (args, from_tty)
      char *args;
@@ -629,7 +640,6 @@ child_detach (args, from_tty)
   inferior_pid = 0;
   unpush_target (&child_ops);
 }
-
 
 /* Print status information about what we're accessing.  */
 
@@ -814,10 +824,12 @@ child_create_inferior (exec_file, allargs, env)
 static void
 child_mourn_inferior ()
 {
+  (void) ContinueDebugEvent (current_process_id,
+			     current_thread_id,
+			     DBG_CONTINUE);
   unpush_target (&child_ops);
   generic_mourn_inferior ();
 }
-
 
 static int 
 child_thread_alive(int pid)
@@ -862,6 +874,22 @@ void
 child_kill_inferior (void)
 {
   CHECK (TerminateProcess (current_process, 0));
+  
+  for (;;)
+    {
+      DEBUG_EVENT event;
+      if (!ContinueDebugEvent (current_process_id,
+			       current_thread_id,
+			       DBG_CONTINUE))
+	break;
+      if (!WaitForDebugEvent (&event, INFINITE))
+	break;
+      current_thread_id = event.dwThreadId;
+      current_process_id = event.dwProcessId;
+      if (event.dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT)
+	break;
+    }
+
   CHECK (CloseHandle (current_process));
   CHECK (CloseHandle (current_thread));
   target_mourn_inferior();	/* or just child_mourn_inferior? */

@@ -12,7 +12,7 @@ IMPORT Thread, ThreadF, M3toC, Cstring, Ctypes, Csetjmp, RTProcedure;
 
 VAR
   DEBUG := FALSE;
-  dump_enabled := TRUE;
+  dump_enabled := FALSE;
 
 TYPE
   FinallyProc = PROCEDURE () RAISES ANY;
@@ -226,7 +226,10 @@ PROCEDURE DumpStack () =
     proc: RTProcedure.Proc;
     offset: INTEGER;
   BEGIN
-    IF NOT DEBUG AND NOT dump_enabled THEN RETURN; END;
+    IF NOT DEBUG AND NOT dump_enabled THEN 
+      RTIO.PutText ("  use option @M3stackdump to get a stack trace\n");
+      RETURN; 
+    END;
 
     RTOS.LockHeap (); (* disable thread switching... (you wish!) *)
 

@@ -140,6 +140,7 @@ PROCEDURE PushPixmap (hdc  : WinDef.HDC;
       IF NOT Rect.IsEmpty (dom) THEN
         delta := Point.T {(delta.h + dom.west) MOD (dom.east - dom.west),
                           (delta.v + dom.north) MOD (dom.south - dom.north)};
+        IF st.depth = 24 THEN INC (delta.h) END; (* JK, 21-JUL-1998 *)
       END;
     END;
 

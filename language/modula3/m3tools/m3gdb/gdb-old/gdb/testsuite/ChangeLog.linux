@@ -1,0 +1,3 @@
+Thu Jun 25 19:09:56 1998  H.J. Lu  <hjl@gnu.org>
+
+	* default.exp: Check "No registers." for "info float".

@@ -2,8 +2,6 @@
 readonly TARGET = "LINUXLIBC6"
 
 include("COMMON")
-% A problem appeared with the internal backend between Red Hat 5.0 and 5.1
-option("internal_backend","")
 
 PLATFORM_SUPPORTS_INTERNAL_BACKEND = "T"
 PLATFORM_SUPPORTS_SHARED_LIB = "T"
