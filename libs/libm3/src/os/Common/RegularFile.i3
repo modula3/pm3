@@ -144,18 +144,26 @@ END RegularFile.
 |   locked(file(h)) := Process.NullID
 | END
    
-   The call
+   If the file h is not already locked by the calling process 
+   (i.e., if locked(file(h)) # Process.GetMyID()), the call 
 
 | h.lock()
 
-   is equivalent to:
+   is equivalent to: 
 
 | IF locked(file(h)) = Process.NullID THEN
 |   locked(file(h)) := Process.GetMyID();
 |   RETURN TRUE
+| ELSIF locked(file(h)) = Process.GetMyID() THEN
+|   RETURN TRUE
 | END;
 | RETURN FALSE
-  
+
+   In the event that h is already locked by the calling process, the result of 
+   h.lock() is implementation-dependent. However, clients can work around the
+   undefined nature of the operation in this case by keeping track of 
+   locked(file(h)) explicitly. 
+
    The call
 
 | h.unlock()
