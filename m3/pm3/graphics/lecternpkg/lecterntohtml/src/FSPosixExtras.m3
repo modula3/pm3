@@ -8,7 +8,7 @@
 UNSAFE MODULE FSPosixExtras EXPORTS FSPosix;
 
 IMPORT Atom, File, FS, M3toC, OSError, OSErrorPosix, Pathname, Pipe,
-  RegularFile, Terminal, Unix, Ustat, Word;
+  RegularFile, Terminal, Unix, Ustat, Word, Utypes;
 
 PROCEDURE LinkStatus(p: Pathname.T): File.Status RAISES {OSError.E} = 
   VAR status: File.Status; statBuf: Ustat.struct_stat;
@@ -20,7 +20,7 @@ PROCEDURE LinkStatus(p: Pathname.T): File.Status RAISES {OSError.E} =
     (* StatBufToStatus(statBuf, status); *)
       status.type := (*FilePosix.*)FileTypeFromStatbuf(statBuf);
       status.modificationTime := FLOAT(statBuf.st_mtime, LONGREAL);
-      status.size := statBuf.st_size;
+      status.size := Utypes.asLong(statBuf.st_size);
     RETURN status
   END LinkStatus;
 
