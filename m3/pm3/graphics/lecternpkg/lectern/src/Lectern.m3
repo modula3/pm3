@@ -4,10 +4,10 @@
 (* Lectern: a user interface for viewing documents stored as images *)
 (* Main program *)
 
-(* Last modified on Mon Jun 24 08:37:49 PDT 1996 by mcjones   *)
+(* Last modified on Tue Oct  8 14:25:43 PDT 1996 by birrell   *)
+(*      modified on Mon Jun 24 08:37:49 PDT 1996 by mcjones   *)
 (*      modified on Fri Sep  8 15:45:25 PDT 1995 by weihl     *)
 (*      modified on Thu Aug 31 17:10:34 PDT 1995 by perl      *)
-(*      modified on Wed Apr 19 14:25:45 PDT 1995 by birrell   *)
 
 MODULE Lectern EXPORTS Main;
 
@@ -39,7 +39,7 @@ IMPORT
 <*FATAL Wr.Failure *>
 
 (********* Version ********)
-CONST Version = "Version 1.2.3 of 24th June 1996";
+CONST Version = "Version 1.2.4 of 8th October 1996";
 
 
 (* *)
@@ -275,7 +275,7 @@ TYPE Lectern = MUTEX OBJECT
      of state. *)
   (* The following field is constant after creation *)
     initLink: Links.Link;                (* Argument for Op.Init *)
-  (* The following fields are read-only after initialization *)
+  (* The following fields are read-only after Op.Init completes *)
     rsrcPath: Rsrc.Path;                 (* constant *)
     waitCursor := Cursor.DontCare;       (* for passive state in each VBT *)
     bg: PaintOp.T;                       (* for image and thumbnail VBT's *)
@@ -337,7 +337,6 @@ TYPE Lectern = MUTEX OBJECT
     server: ServerClosure := NIL;        (* server for LecternClient *)
     clientRequest: REF ARRAY OF TEXT := NIL; (* pending request from server *)
     clientError: TEXT := NIL;            (* pending error from server *)
-    clientTime: VBT.TimeStamp;           (* event time for pending request *)
     reshapeWanted := FALSE;              (* pending Op.Reshape *)
     closeWanted := FALSE;                (* pending Op.Close *)
     spare1, spare2, spare3: ImageRd.T := NIL; (* idle images to save storage *)
@@ -820,12 +819,17 @@ PROCEDURE RunServer(self: ServerClosure): REFANY =
            of self.lect, since a newer request is always better. *)
         self.lect.clientRequest := newRequest;
         self.lect.clientError := newError;
-        (* Poke lect.iw, to get an event time *)
-        EVAL ShowWindow(self.lect.iw, self.lect.iw, self.lect.imageTitle);
-        TRY
-          VBT.Forge(self.lect.iw, self.lect.clientMiscCode);
-        EXCEPT VBT.Error =>
-          (* Uninstalled.  I can't imagine what we could do here. *)
+        (* We need to go through clientMiscCode to get an event time.  However,
+           it's remotely possible the self.lect.iw isn't initialized yet
+           because self.lect is still executing Op.Init.  In that case
+           the code at the end of ForkedOp will notice the pending request and
+           cause the clientMiscCode event. *)
+        IF self.lect.worker = NIL THEN
+          TRY
+            VBT.Forge(self.lect.iw, self.lect.clientMiscCode);
+          EXCEPT VBT.Error =>
+            (* Uninstalled.  I can't imagine what we could do here. *)
+          END;
         END;
       END;
       IF newError # NIL THEN EXIT END;
@@ -879,11 +883,11 @@ PROCEDURE KeyFilterMisc(v: LectFilterVBT; READONLY cd: VBT.MiscRec) =
     ELSIF cd.type = VBT.Lost AND cd.selection = VBT.KBFocus THEN
       (* It's for us - don't pass it down to our children *)
     ELSIF cd.type = v.lect.clientMiscCode THEN
-        v.lect.clientTime := cd.time;
         IF v.lect.worker = NIL THEN v.lect.applyOp(Op.Request, cd.time) END;
-        (* Otherwise, the request will be dealt with in lect.passive(FALSE).
-           The code there allows for the slim possibility that our request
-           has been serviced by the current worker thread. *)
+        (* Otherwise, the request will be dealt with at the end of ForkedOp,
+           by creating another clientMiscCode event.   The code in ForkedOp
+           (at Op.Request and at the end) allows for the slim possibility that
+            our request has been serviced by the current worker thread. *)
     ELSE
       IF cd.type = VBT.Deleted OR cd.type = VBT.Disconnected THEN
         IF (NOT v.lect.closed) AND v = v.lect.iw THEN
@@ -3330,6 +3334,9 @@ PROCEDURE Request(lect: Lectern; request: REF ARRAY OF TEXT; error: TEXT;
         END;
       END ToInt;
   BEGIN
+    LOCK VBT.mu DO
+      EVAL ShowWindow(lect.iw, lect.iw, lect.imageTitle);
+    END;
     IF error # NIL THEN
       lect.error(error);
     ELSIF request # NIL THEN
@@ -3715,16 +3722,15 @@ PROCEDURE ForkedOp(cl: ForkedOpClosure): REFANY =
         | Op.Init => lect.initInstance(lect.initLink);
       (* External *)
         | Op.Request =>
-            VAR r: REF ARRAY OF TEXT; e: TEXT; t: VBT.TimeStamp;
+            VAR r: REF ARRAY OF TEXT; e: TEXT;
             BEGIN
               LOCK VBT.mu DO
                 r := lect.clientRequest;
                 e := lect.clientError;
-                t := lect.clientTime;
                 lect.clientRequest := NIL;
                 lect.clientError := NIL;
               END;
-              lect.request(r, e, t);
+              lect.request(r, e, cl.time);
             END;
         | Op.Reshape =>
             IF lect.reshapeWanted THEN
@@ -4060,7 +4066,12 @@ PROCEDURE ForkedOp(cl: ForkedOpClosure): REFANY =
         lect.worker := NIL;
         lect.passive(FALSE);
         IF lect.clientRequest # NIL OR lect.clientError # NIL THEN
-          lect.applyOp(Op.Request, lect.clientTime);
+          TRY (* retry the miscCode, which will be given an event
+                 time and will call ApplyOp, unless we're again too busy. *)
+            VBT.Forge(lect.iw, lect.clientMiscCode);
+          EXCEPT VBT.Error =>
+            (* Uninstalled: don't be silly, this can't happen *)
+          END;
         ELSIF lect.closeWanted THEN
           lect.applyOp(Op.Close, cl.time);
         ELSIF lect.reshapeWanted THEN
@@ -4164,7 +4175,6 @@ PROCEDURE ApplyOp(lect: Lectern; op: Op; time: VBT.TimeStamp;
                 child.server := lect.server;
                 child.clientRequest := lect.clientRequest;
                 child.clientError := lect.clientError;
-                child.clientTime := lect.clientTime;
                 child.server.lect := child;
                 lect.server := NIL;
                 lect.clientRequest := NIL;
