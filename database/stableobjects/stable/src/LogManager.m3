@@ -243,10 +243,8 @@ PROCEDURE EmptyLog (lm: Default; nm: Pathname.T): BOOLEAN
                 Atom.FromText(
                   "no checkpointfile for log in " & nm)));
     END;
-    IF TestFile(lm.logfn(nm)) THEN
-      RETURN FS.Status(nm).size > 0
-    ELSE
-      RETURN TRUE
+    WITH logNm = lm.logfn(nm) DO
+      RETURN NOT TestFile(logNm) OR FS.Status(logNm).size = 0
     END;
   END EmptyLog;
 
