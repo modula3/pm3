@@ -1,0 +1,95 @@
+This is Info file bfd.info, produced by Makeinfo version 1.68 from the
+input file ../../../devo/bfd/doc/bfd.texinfo.
+
+START-INFO-DIR-ENTRY
+* Bfd: (bfd).                   The Binary File Descriptor library.
+END-INFO-DIR-ENTRY
+
+   This file documents the BFD library.
+
+   Copyright (C) 1991 Free Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, subject to the
+terms of the GNU General Public License, which includes the provision
+that the entire resulting derived work is distributed under the terms
+of a permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions.
+
+
+Indirect:
+bfd.info-1: 964
+bfd.info-2: 37604
+bfd.info-3: 78576
+bfd.info-4: 113366
+bfd.info-5: 161997
+bfd.info-6: 188062
+
+Tag Table:
+(Indirect)
+Node: Top964
+Node: Overview1229
+Node: History2279
+Node: How It Works3220
+Node: What BFD Version 2 Can Do4761
+Node: BFD information loss6075
+Node: Canonical format8598
+Node: BFD front end12959
+Node: Memory Usage31702
+Node: Initialization32925
+Node: Sections33302
+Node: Section Input33780
+Node: Section Output35136
+Node: typedef asection37604
+Node: section prototypes51180
+Node: Symbols57000
+Node: Reading Symbols58590
+Node: Writing Symbols59764
+Node: Mini Symbols61454
+Node: typedef asymbol62419
+Node: symbol handling functions67383
+Node: Archives71438
+Node: Formats75056
+Node: Relocations77857
+Node: typedef arelent78576
+Node: howto manager93409
+Node: Core Files110384
+Node: Targets111405
+Node: bfd_target113366
+Node: Architectures131120
+Node: Opening and Closing142290
+Node: Internal145885
+Node: File Caching151067
+Node: Linker Functions153845
+Node: Creating a Linker Hash Table155511
+Node: Adding Symbols to the Hash Table157238
+Node: Differing file formats158128
+Node: Adding symbols from an object file159861
+Node: Adding symbols from an archive161997
+Node: Performing the Final Link164396
+Node: Information provided by the linker165627
+Node: Relocating the section contents166763
+Node: Writing the symbol table168500
+Node: Hash Tables171094
+Node: Creating and Freeing a Hash Table172285
+Node: Looking Up or Entering a String173441
+Node: Traversing a Hash Table174683
+Node: Deriving a New Hash Table Type175461
+Node: Define the Derived Structures176516
+Node: Write the Derived Creation Routine177582
+Node: Write Other Derived Routines180281
+Node: BFD back ends181581
+Node: What to Put Where181800
+Node: aout181938
+Node: coff188062
+Node: elf214093
+Node: Index214926
+
+End Tag Table

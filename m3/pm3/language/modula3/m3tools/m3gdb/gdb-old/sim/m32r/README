@@ -1,0 +1,10 @@
+This is the m32r simulator directory.
+
+It is still work-in-progress.  The current sources are reasonably
+well tested and lots of features are in.  However, there's lots
+more yet to come.
+
+There are some machine generated files in this directory and yet
+there is no visible machine generator.  The machine generator
+isn't ready to check in.  For the time being, pretend the files
+are not machine generated - the onus is on me to avoid lossage.
