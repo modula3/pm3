@@ -149,19 +149,22 @@ scan_number (input, tok)
 {
   char *c;
   int i;
+  int digit;
+  LONGEST val;
 
   /* scan the leading decimal digits */
-  c = input;
-  while ('0' <= *c && *c <= '9') { c++; }
+  val = 0;
+  for (c = input; '0' <= *c && *c <= '9'; c++) {
+    digit = *c - '0';
+    val = val * 10 + digit;
+  }
 
   if (*c == '_') {
     /* scan a based integer */
-    LONGEST base, val;
-    int digit;
+    LONGEST base = val;
 
     /* get the base */
-    i = sscanf (input, "%ld", &base);
-    if ((i <= 0) || (base < 2) || (16 < base)) {
+    if ((base < 2) || (16 < base)) {
       error ("illegal base for based literal, 10 used");
       base = 10;
     }
@@ -228,8 +231,7 @@ scan_number (input, tok)
   } else {
     /* already scanned a decimal integer */
     tok->kind   = TK_CARD_LIT;
-    sscanf (input, "%ld", &tok->intval);
-
+    tok->intval = val;
   }
   return c;
 } /* scan_number */
