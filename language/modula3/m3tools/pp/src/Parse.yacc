@@ -884,7 +884,7 @@ loopinv_pragma:    Pr_LoopInv    SP spec_pred SP Rpragma ;
 
 
 
-fatal_pragma:      Pr_Fatal      SP fatal_exc_list SP Rpragma ;
+fatal_pragma:      Pr_Fatal      SP B0 fatal_exc_list SP Rpragma E ;
 
 fatal_exc_list:
       qid_list
