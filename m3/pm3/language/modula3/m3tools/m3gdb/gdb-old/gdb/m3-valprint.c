@@ -115,10 +115,16 @@ m3_print_scalar (valaddr, bitpos, bitsize, stream, format, sign_extend)
   LONGEST v = m3_unpack_ord (valaddr, bitpos, bitsize, sign_extend);
 
   switch (format) {
-    case 'x': fprintf_filtered (stream, "16_%lx", v); break;
-    case 'o': fprintf_filtered (stream, "8_%lo", v);  break;
+    case 'x': 
+    case 'o': 
     case 'd':
-    default:  fprintf_filtered (stream, "%ld", v);    break; }
+      break;
+    default:
+      format = 'd';
+      break;
+  }
+
+  print_longest(stream,format,0,v);
 }
 
 static 
@@ -402,8 +408,13 @@ m3_val_print2 (type, valaddr, bitpos, bitsize, stream, format, deref_ref, toplev
       if ((lower <= val) && (val <= upper)) {
         fputs_filtered (TYPE_M3_ENUM_VALNAME (type, val), stream);
       } else {
-	fprintf_filtered (stream, "<enum value %ld out of range [%ld..%ld]>",
-			  val, lower, upper);
+	fprintf_filtered (stream, "<enum value ");
+        print_longest(stream,'d',0,val);
+        fprintf_filtered (stream, " out of range [");
+        print_longest(stream,'d',0,lower);
+        fprintf_filtered (stream, "..");
+        print_longest(stream,'d',0,upper);
+        fprintf_filtered(stream, "]>");
       };
       break; }
       
@@ -469,11 +480,15 @@ m3_val_print2 (type, valaddr, bitpos, bitsize, stream, format, deref_ref, toplev
 	    if (en) {
 	      fputs_filtered (TYPE_FIELD_NAME (target, ord), stream); }
 	    else if (ch) {
-	      fprintf_filtered (stream, "'%c'", ord); }
+              fprintf_filtered(stream, "'");
+	      print_longest(stream,'c',0,ord);
+              fprintf_filtered(stream, "'"); }
 	    else if (chs) {
-	      fprintf_filtered (stream, "'%c'", ord); }
+              fprintf_filtered(stream, "'");
+	      print_longest(stream,'c',0,ord);
+              fprintf_filtered(stream, "'"); }
 	    else {
-	      fprintf_filtered (stream, "%ld", ord); }
+	      print_longest (stream, 'd', 0, ord); }
 	    n++; }}
 	valaddr += sizeof (long); }
       
@@ -487,8 +502,13 @@ m3_val_print2 (type, valaddr, bitpos, bitsize, stream, format, deref_ref, toplev
       m3_ordinal_bounds (type, &lower, &upper);
       val = m3_unpack_ord (valaddr, bitpos, bitsize, (lower < 0));
       if ((val < lower) || (upper < val)) {
-        fprintf_filtered(stream,"<subrange value %ld out of range [%ld..%ld]>",
-			 val, lower, upper);
+        fprintf_filtered(stream,"<subrange value ");
+        print_longest(stream,'d',0,val);
+        fprintf_filtered(stream," out of range [");
+        print_longest(stream,'d',0,lower);
+        fprintf_filtered(stream,"..");
+        print_longest(stream,'d',0,upper);
+        fprintf_filtered(stream,"]>");
       } else if (TYPE_CODE (target) == TYPE_CODE_M3_ENUM) {
         fputs_filtered (TYPE_M3_ENUM_VALNAME (target, val), stream);
       } else {

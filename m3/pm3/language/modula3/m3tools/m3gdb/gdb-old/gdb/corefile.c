@@ -283,6 +283,16 @@ read_memory_integer (memaddr, len)
   return extract_signed_integer (buf, len);
 }
 
+int
+read_memory_integer_check (memaddr, len)
+     CORE_ADDR memaddr;
+     int len;
+{
+  char buf[sizeof (LONGEST)];
+
+  return (target_read_memory (memaddr, buf, len) == 0);
+}
+
 unsigned LONGEST
 read_memory_unsigned_integer (memaddr, len)
      CORE_ADDR memaddr;

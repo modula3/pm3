@@ -156,8 +156,8 @@ scan_number (input, tok)
 
   if (*c == '_') {
     /* scan a based integer */
-    LONGEST base, val;
-    int digit;
+    LONGEST val;
+    int base, digit;
 
     /* get the base */
     i = sscanf (input, "%ld", &base);

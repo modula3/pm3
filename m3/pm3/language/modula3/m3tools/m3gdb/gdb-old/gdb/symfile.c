@@ -291,6 +291,8 @@ struct symtab *
 psymtab_to_symtab (pst)
      register struct partial_symtab *pst;
 {
+  int i;
+
   /* If it's been looked up before, return it. */
   if (pst->symtab)
     return pst->symtab;
@@ -304,7 +306,13 @@ psymtab_to_symtab (pst)
       do_cleanups (back_to);
     }
 
-  if (pst->symtab->language == language_m3) {
+  for (i = 0; i < pst->number_of_dependencies; i++) {
+    if (pst->dependencies[i]->symtab &&
+	pst->dependencies[i]->symtab->language == language_m3)
+      m3_fix_symtab (pst->dependencies[i]->symtab);
+  }
+
+  if (pst->symtab && pst->symtab->language == language_m3) {
     m3_fix_symtab (pst->symtab); }
 
   return pst->symtab;

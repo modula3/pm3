@@ -2071,7 +2071,8 @@ evaluate_subexp_standard (expect_type, exp, pos, noside)
     }
 
     case BINOP_M3_SUBSCRIPT: {
-      long lowerbound, upperbound, index_val; 
+      LONGEST lowerbound, upperbound;
+      long index_val; 
       long offset;
       struct type *index_type, *elem_type, *array_type;
       value_ptr v, array, index;

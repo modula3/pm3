@@ -530,6 +530,14 @@ static int regno_to_jmpbuf [] = {
    2, 35};
 #endif
 
+#if defined(linux) && defined(i386)
+
+#define HAVE_REGISTER_MAP
+static int regno_to_jmpbuf [] = {
+   0,0,0,0,4,3,1,2,5,0,0,0,0,0,0,0
+};
+#endif
+
 /*---------------------------------------------------- thread enumeration ---*/
 
 typedef struct {
@@ -540,9 +548,11 @@ typedef struct {
 
 static void
 get_m3_thread (ref, t)
-     CORE_ADDR ref;
+     LONGEST ref;
      M3_THREAD *t;
 {
+    CORE_ADDR tmpref = ref;
+
     /* in case we get stuck */
     t->ref   = ref;
     t->id    = 0;
@@ -550,7 +560,7 @@ get_m3_thread (ref, t)
 
     if (!ref) return;
 
-    m3_read_object_fields_bits (ref, thread__t, 0, &(t->bits));
+    m3_read_object_fields_bits (tmpref, thread__t, 0, &(t->bits));
     if (!t->bits) return;
 
     t->id = m3_unpack_ord (t->bits, thread__t__id_offset,thread__t__id_size,0);
@@ -890,7 +900,7 @@ m3_decode_struct (t)
      struct type *t;
 {
   int i;
-  long size;
+  long size, tmp1, tmp2, tmp3;
   char *key, *type_specific_info;
   
   /* the format is M<kind>_<uid>_<size>_<other info>
@@ -944,9 +954,10 @@ m3_decode_struct (t)
 
     case 'O':
       TYPE_CODE (t) = TYPE_CODE_M3_OBJECT;
-      sscanf (type_specific_info, "%ld_%ld_%ld_",
-	      &TYPE_M3_OBJ_NFIELDS (t), &TYPE_M3_OBJ_TRACED (t),
-	      &TYPE_M3_OBJ_BRANDED (t));
+      sscanf (type_specific_info, "%ld_%ld_%ld_", &tmp1, &tmp2, &tmp3);
+      TYPE_M3_OBJ_NFIELDS (t) = tmp1;
+      TYPE_M3_OBJ_TRACED (t) = tmp2;
+      TYPE_M3_OBJ_BRANDED (t) = tmp3;
       if (TYPE_M3_OBJ_BRANDED (t)) {
 	TYPE_M3_OBJ_BRAND (t) = skip_underscores (type_specific_info, 3); }
       else {
@@ -970,16 +981,17 @@ m3_decode_struct (t)
 
     case 'Z':
       TYPE_CODE (t) = TYPE_CODE_M3_SUBRANGE;
-      sscanf (type_specific_info, "%ld_%ld", 
-	      &TYPE_M3_SUBRANGE_MIN (t), &TYPE_M3_SUBRANGE_MAX (t));
+      sscanf (type_specific_info, "%ld_%ld", &tmp1, &tmp2);
+      TYPE_M3_SUBRANGE_MIN (t) = tmp1;
+      TYPE_M3_SUBRANGE_MAX (t) = tmp2;
       set_field_uid (t, 0);
       break;
 
     case 'Y':
       TYPE_CODE (t) = TYPE_CODE_M3_POINTER;
-      sscanf (type_specific_info, "%ld_%ld_", 
-	      &TYPE_M3_POINTER_TRACED (t),
-	      &TYPE_M3_POINTER_BRANDED (t));
+      sscanf (type_specific_info, "%ld_%ld_", &tmp1, &tmp2);
+      TYPE_M3_POINTER_TRACED (t) = tmp1;
+      TYPE_M3_POINTER_BRANDED (t) = tmp2;
       if (TYPE_M3_POINTER_BRANDED (t)) {
 	TYPE_M3_POINTER_BRAND (t) = skip_underscores (type_specific_info, 2); }
       else {
@@ -995,7 +1007,8 @@ m3_decode_struct (t)
     case 'P': {
       char c;
       TYPE_CODE (t) = TYPE_CODE_M3_PROC;
-      sscanf (type_specific_info, "%c%ld", &c, &TYPE_M3_PROC_NRAISES (t));
+      sscanf (type_specific_info, "%c%ld", &c, &tmp1);
+      TYPE_M3_PROC_NRAISES (t) = tmp1;
       if (c == 'A') {		/* RAISES ANY */
 	TYPE_M3_PROC_NARGS (t) = TYPE_NFIELDS (t) - 1;
 	TYPE_M3_PROC_NRAISES (t) = -1;
@@ -1022,7 +1035,8 @@ m3_decode_struct (t)
     TYPE_M3_SIZE (t) = 0;
     TYPE_LENGTH (t) = 0;
   } else {
-    sscanf (key + 3 + M3UID_LEN, "_%ld", &TYPE_M3_SIZE (t));
+    sscanf (key + 3 + M3UID_LEN, "_%ld", &tmp1);
+    TYPE_M3_SIZE (t) = tmp1;
     TYPE_LENGTH (t) = (TYPE_M3_SIZE (t) + 7) / 8;
   }
 
