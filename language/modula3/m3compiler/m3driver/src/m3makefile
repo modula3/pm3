@@ -6,9 +6,6 @@
 % Last modified on Tue Jan 24 13:10:54 PST 1995 by kalsow
 %      modified on Wed Jun  2 12:06:33 PDT 1993 by muller
 
-remove_m3_option ("-gui")
-%m3_option ("-times")
-
 import ("libm3")
 import ("m3middle")
 import ("m3linker")
@@ -16,15 +13,13 @@ import ("m3front")
 
 interface ("M3Backend")
 
-IBACK = lookup("IBACK", "")
+IBACK = lookup("IBACK", "TRUE")
 
-if equal(IBACK, "gpl")
-  % For Linux
+if equal(TARGET,"LINUXELF") and IBACK
   import ("m3back")
   import ("m3objfile")
   implementation ("M3BackLinux")
-else if equal(IBACK, "dec")
-  % For NT:
+else if equal(TARGET, "NT386") and IBACK
   import ("m3back")
   import ("m3objfile")
   implementation ("M3BackWin32")

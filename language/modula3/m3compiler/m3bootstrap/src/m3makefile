@@ -1,0 +1,269 @@
+%
+% Build a specific package, residing in dir, for target
+
+readonly proc BootstrapPkg(dir,pkg,target,host) is
+  local ret = 0
+
+  % Create a directory for the package e.g. boot-LINUXELF/m3core
+
+  local targetPkg = "pm3-" & target & SL & "boot-" & target & SL & pkg
+  ret = exec(["mkdir", targetPkg])
+
+  % Create a soft link to the source in the real package
+
+  ret = exec(["ln", "-s", ".." & SL & ".." & SL & ".." & SL & dir & SL & pkg & 
+      SL & "src", "."], [], targetPkg)
+
+  % Issue the m3build command for the package
+
+  write("---------- Building " & pkg & " ----------" & CR)
+  ret = exec(["m3build", "-b", target, "-DHOST=" & host,
+      "-T", ".." & SL & ".." & SL & ".." & SL & 
+      ".." & SL & ".." & SL & ".." & SL & 
+      ".." & SL & ".." & SL & ".." & SL & 
+      "m3config" & SL & "src" , 
+      "-F", ".." & SL & ".." & SL & ".." & SL & "config.tmpl" ], 
+      [], targetPkg)
+  if not equal(ret, 0) error ("m3build failed for " & pkg & " in " &
+      target & CR) end
+
+  >> "pm3-" & target & SL & "config.tmpl" in
+    write("override(\"" & pkg & "\",\".." & SL & "..\")")
+  end
+end
+
+%
+% Remove the links to the real source directory
+
+readonly proc CleanPkg(pkg,target) is
+  local ret = 0
+  ret = exec(["rm", "pm3-" & target & SL & "boot-" & target & SL & pkg & SL &
+      "src"])
+end
+
+%
+% Write the command to "make" one package
+
+readonly proc WriteMakefileLine(pkg,target,options) is
+  % In a makefile, only real / may work
+  write("\tcd boot-" & target & "/" & pkg & "/" & target & 
+      "; make -f make.boot " & options, CR)
+
+end
+
+%
+% Write the global bootstrap makefile
+
+readonly proc CreateMakefile(file,target,options) is
+  > file in
+    write("all: boot packages", CR, CR)
+
+    write("exportall: boot exportpackages", CR, CR)
+
+    write("packages:", CR)
+    write("\tboot-" & target & "/" & "m3build" & "/" & target & "/" &
+        "m3build -T ../m3config/src -DBOOTSTRAP=TRUE", CR, CR)
+
+    write("exportpackages:", CR)
+    write("\tboot-" & target & "/" & "m3build" & "/" & target & "/" &
+        "m3build -T ../m3config/src -DBOOTSTRAP=TRUE " &
+        "-DEXPORTRPATH=binaries/" & target , CR, CR)
+
+    write("boot:", CR)
+    WriteMakefileLine("m3core",target,options)
+    WriteMakefileLine("libm3",target,options)
+    WriteMakefileLine("m3middle",target,options)
+    WriteMakefileLine("m3front",target,options)
+    WriteMakefileLine("m3linker",target,options)
+    WriteMakefileLine("m3driver",target,options)
+    WriteMakefileLine("m3quake",target,options)
+    WriteMakefileLine("m3templates",target,options)
+    WriteMakefileLine("m3config",target,options)
+    WriteMakefileLine("m3build",target,options)
+    WriteMakefileLine("m3ship",target,options)
+  end
+end
+
+%
+% Write the introduction and installation instructions
+
+readonly proc CreateReadme(file,target) is
+  > file in
+    write(
+"The Polytechnique Montreal Distribution of Modula-3",CR,
+"",CR,
+"This distribution is based on the DEC SRC Modula-3 release 3.6. Local",CR,
+"enhancements by Louis Dubeau, Jerome Collin and myself (Michel Dagenais)",CR,
+"were added, and several packages (libraries, programs, and documentation)",CR,
+"from other sources were added as well. The online documentation may be",CR,
+"accessed before the build by pointing your favourite WWW browser to",CR,
+"src/index.html.",CR,
+"",CR,
+"This file is normally part of a source code + bootstrap distribution.",CR,
+"To compile the bootstrap program, and compile and install the Modula-3",CR,
+"source, the following steps are required.",CR,
+"",CR,
+"- insure that you have the usual development tools (make, gcc, ar).",CR,
+"",CR,
+"- check, and modify if needed, the template for your platform. This",CR,
+"  template determines where the Modula-3 programs, libraries and ",CR,
+"  documentation will be installed and used, as well as default options",CR,
+"  for various needed tools. Typically you only need to change the",CR,
+"  INSTALL_ROOT variable if the default does not suit you.",CR,
+"  The template is located in m3config/src/" & target & ".",CR,
+"",CR,
+"- The file src/m3makefile is used in the following steps to build all the",CR,
+"  packages. By default, almost all the available packages are built.",CR,
+"  You may comment out some of these in src/m3makefile to save build time",CR,
+"  and disk space.",CR,
+"",CR,
+"- insure that the BIN_USE path specified in the template is on your path",CR,
+"  such that programs installed there will be available during the build.",CR,
+"",CR,
+"- run \"make\", which will execute the commands in Makefile. It will",CR,
+"  build bootstrap versions of \"m3build\" and \"m3ship\" and then use",CR, 
+"  these programs to rebuild and install all the libraries and programs in",CR,
+"  the distribution.",CR,
+"",CR,
+"  If you downloaded bootstraps for several platforms, the remaining ",CR,
+"  Makefile is the last one you downloaded. In that case, you can use ",CR,
+"  the correct platform specific Makefile as Makefile.PLATFORM ",CR,
+"  (e.g. Makefile." & target & 
+") and use it with \"make -f Makefile.PLATFORM\". ",CR,
+"  Similarly the correct README is found as README.PLATFORM.",CR)
+  end
+end
+
+%
+% Compile m3cc as a cross compiler for the specified target
+
+readonly proc CompileCrossCompiler(target,host) is
+  local ret = 0
+  local m3ccdir = "pm3-" & target & SL & "m3cc"
+
+  % Create a subdirectory for m3cc and make links to the source code.
+  % Then build it as a cross compiler.
+
+  write("---------- Creating cross compiler " & host & " to " & target)
+  write(" ----------" & CR)
+
+  ret = exec(["mkdir", m3ccdir])
+  ret = exec(["ln", "-s", ".." & SL & ".." & SL & ".." & SL & ".." & SL &
+      "m3cc" & SL & "src", "."], [], m3ccdir)
+  ret = exec(["ln", "-s", ".." & SL & ".." & SL & ".." & SL & ".." & SL &
+      "m3cc" & SL & "gcc", "."], [], m3ccdir)
+  ret = exec(["m3build",  "-b", host, 
+      "-T", ".." & SL & ".." & SL & 
+      ".." & SL & ".." & SL & ".." & SL & 
+      ".." & SL & ".." & SL & ".." & SL & 
+      "m3config" & SL & "src" , 
+      "-DM3CC_TARGET=" & target,
+      "-DGNU_CC=gcc", "-DGNU_CFLAGS=-O", "-DGNU_MAKE=make"], [], m3ccdir)
+  if not equal(ret, 0) error ("m3build failed for m3cc in " & target & CR) end
+
+  % Keep the cross compiler under target-m3cgc1 and remove everything else.
+
+  if equal(host,target)
+    ret = exec(["mv", target & SL & "m3cgc1", ".." & SL & "m3cgc1-" & target], 
+        [], m3ccdir)
+    ret = exec(["rm", "-r", target], [], m3ccdir)
+  else
+    ret = exec(["mv", host & "-" & target & SL & "m3cgc1", ".." & SL & 
+        "m3cgc1-" & target], [], m3ccdir)
+    ret = exec(["rm", "-r", host & "-" & target], [], m3ccdir)
+  end
+  ret = exec(["rm", "src", "gcc"], [], m3ccdir)
+  ret = exec(["rmdir", m3ccdir])
+  write("---------- Finished cross compiler ----------")
+end
+
+%
+% Create everything needed for bootstrapping on platform "target"
+
+readonly proc BootstrapTarget(target) is
+  local ret = 0
+  local host = "LINUXELF"
+
+  ret = exec(["mkdir", "pm3-" & target])
+
+  CompileCrossCompiler(target,host)
+
+  % Prepare a config file with bootstrap specific overrides
+  % The -O option should prevent using the integrated backend
+  % which does not produce assembly; moreover, it may reduce the
+  % bootstrap code size.
+
+  > "pm3-" & target & SL & "config.tmpl" in
+    write("m3_option(\"-boot -O\")",CR)
+    write("remove_m3_option(\"-g\")",CR)
+    write("BACKEND=[\"" & path() & SL & ".." & SL & host & SL & "pm3-" & 
+        target & SL & "m3cgc1-" & target & 
+        "\",\"-fno-strength-reduce\",\"-quiet\"]", CR)
+    write("IBACK=\"\"", CR)
+    write("HOST_OS_TYPE=\"POSIX\"", CR)
+    write("TARGET_NAMING_CONVENTIONS=NAMING_CONVENTIONS", CR)
+    write("NAMING_CONVENTIONS=0", CR)
+    write("if defined(\"m3_backend_external\") m3_backend_external() end", CR)
+  end
+
+  write("---------- Config file ----------", CR)
+  ret = exec(["cat", "pm3-" & target & SL & "config.tmpl"])
+
+  ret = exec(["mkdir", "pm3-" & target & SL & "boot-" & target])
+
+  % Build all the packages required for m3build and m3ship
+  % to obtain a bootstrap m3build and m3ship.
+
+  BootstrapPkg("../../../../../libs","m3core",target,host)
+  BootstrapPkg("../../../../../libs","libm3",target,host)
+  BootstrapPkg("../..","m3middle",target,host)
+  BootstrapPkg("../..","m3front",target,host)
+  BootstrapPkg("../..","m3linker",target,host)
+  BootstrapPkg("../..","m3driver",target,host)
+  BootstrapPkg("../../../..","m3quake",target,host)
+  BootstrapPkg("../..","m3templates",target,host)
+  BootstrapPkg("../../../../..","m3config",target,host)
+  BootstrapPkg("../..","m3build",target,host)
+  BootstrapPkg("../..","m3ship",target,host)
+  CleanPkg("m3core",target)
+  CleanPkg("libm3",target)
+  CleanPkg("m3middle",target)
+  CleanPkg("m3front",target)
+  CleanPkg("m3linker",target)
+  CleanPkg("m3driver",target)
+  CleanPkg("m3quake",target)
+  CleanPkg("m3templates",target)
+  CleanPkg("m3config",target)
+  CleanPkg("m3build",target)
+  CleanPkg("m3ship",target)
+
+  CreateMakefile("pm3-" & target & SL & "Makefile." & target,target,
+      "RANLIB=touch EXTRALIBS=-lm")
+  CreateMakefile("pm3-" & target & SL & "Makefile",target,
+      "RANLIB=touch EXTRALIBS=-lm")
+  CreateReadme("pm3-" & target & SL & "README." & target,target)
+  CreateReadme("pm3-" & target & SL & "README",target)
+
+  ret = exec(["rm", "pm3-" & target & SL & "config.tmpl"])
+  ret = exec(["rm", "pm3-" & target & SL & "m3cgc1-" & target])
+  write("---------- bootstrap finished for " & target & " ----------", CR)
+end
+
+% Create a bootstrap for each of these "target" in boot-target
+%
+
+%BootstrapTarget("ALPHA_OSF")
+%BootstrapTarget("DS3100")
+%BootstrapTarget("FreeBSD2")
+%BootstrapTarget("HPPA")
+%BootstrapTarget("IBMR2")
+%BootstrapTarget("IRIX5")
+BootstrapTarget("LINUXELF")
+%BootstrapTarget("NEXT")
+%BootstrapTarget("NT386")
+%BootstrapTarget("NT386GNU")
+%BootstrapTarget("SOLgnu")
+%BootstrapTarget("SPARC")
+
+
+

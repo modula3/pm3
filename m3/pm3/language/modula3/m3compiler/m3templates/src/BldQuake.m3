@@ -1770,7 +1770,7 @@ PROCEDURE DoRemoveM3Option(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
     <* ASSERT n_args = 1 *>
     t.pop(arg); x := QVal.ToText(t, arg);
     WITH t = NARROW(t, T) DO
-      opts := NEW(TextSeq.T).init(t.m3_options.size() - 1);
+      opts := NEW(TextSeq.T).init(MAX(1,t.m3_options.size() - 1));
       FOR i := 0 TO t.m3_options.size() - 1 DO
         opt := t.m3_options.get(i);
         IF NOT Text.Equal(x, opt) THEN
@@ -1920,6 +1920,25 @@ PROCEDURE DoM3FrontOption(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
     NARROW(t, T).m3front_options.addhi(QVal.ToText(t, arg));
   END DoM3FrontOption;
 
+PROCEDURE DoRemoveM3FrontOption(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
+  VAR 
+    arg  : QValue.T;
+    x    : TEXT;
+    opt  : TEXT;
+    opts : TextSeq.T;
+  BEGIN
+    <* ASSERT n_args = 1 *>
+    t.pop(arg); x := QVal.ToText(t, arg);
+    WITH t = NARROW(t, T) DO
+      opts := NEW(TextSeq.T).init(MAX(1,t.m3front_options.size() - 1));
+      FOR i := 0 TO t.m3front_options.size() - 1 DO
+        opt := t.m3front_options.get(i);
+        IF NOT Text.Equal(x, opt) THEN
+          opts.addhi(opt) END;
+      END;
+      t.m3front_options := opts;
+    END;
+  END DoRemoveM3FrontOption;
 
 (*------------------------------------------------------ hiding/exporting ---*)
 (* These are forwarded in the exports file *)
@@ -2427,6 +2446,18 @@ PROCEDURE NoteOverrides(t: T)RAISES {Error}=
     END;
   END NoteOverrides;
 
+PROCEDURE DoInstallFile(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
+  VAR src, dest, mode, derived: QValue.T;
+  BEGIN
+    <* ASSERT n_args = 4 *>
+    t.pop(derived);
+    t.pop(mode);
+    t.pop(dest);
+    t.pop(src);
+    InstallFile(t, QVal.ToText(t, src), QVal.ToText(t,dest),
+        QVal.ToText(t,mode),QVal.ToBool(t,derived));
+  END DoInstallFile;
+
 PROCEDURE InstallFile(t: T; src, dest,  mode: TEXT; derived: BOOLEAN) RAISES {Error} =
   VAR 
     new_src  := PathOf(t, src);
@@ -2871,6 +2902,45 @@ PROCEDURE W2P(string: TEXT): TEXT=
     RETURN Text.FromChars(chars^);
   END W2P;
 
+PROCEDURE DoP2W (t: QMachine.T;  n_args: INTEGER) RAISES {Error} =
+  VAR
+    string: QValue.T;
+    ret: TEXT;
+  BEGIN
+    <* ASSERT n_args = 1 *>
+    t.pop(string);
+    ret := P2W(QVal.ToText(t, string));
+    string.int := M3ID.Add(ret);
+    t.push(string);
+  END DoP2W;
+
+PROCEDURE P2W(string: TEXT): TEXT=
+  VAR 
+    chars: REF ARRAY OF CHAR;
+    i := 0;
+    j := 0;
+    len := Text.Length(string);
+    car: CHAR;
+  BEGIN
+    IF len >= 3 AND Text.GetChar(string,0) = '/' AND
+      Text.GetChar(string,1) = '/' THEN
+      chars := NEW(REF ARRAY OF CHAR, len - 1);
+      chars[0] := Text.GetChar(string,2);
+      chars[1] := ':';
+      INC(i,3);
+      INC(j,2);
+    ELSE
+      chars := NEW(REF ARRAY OF CHAR, len);
+    END;
+    WHILE i < len DO
+      car := Text.GetChar(string,i);
+      IF car = '/' THEN car := '\\'; END;
+      chars[j] := car;
+      INC(i); INC(j);
+    END;
+    RETURN Text.FromChars(chars^);
+  END P2W;
+
 (*-------------------------------------------------------------- dummy ------*)
 
 PROCEDURE DoDummy(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
@@ -3054,7 +3124,7 @@ PROCEDURE NewProc (nm      : TEXT;
 
 PROCEDURE InitProcs(): REF ARRAY OF ProcRec =
   VAR
-    Procs := NEW(REF ARRAY OF ProcRec, 113);
+    Procs := NEW(REF ARRAY OF ProcRec, 116);
   BEGIN
     Procs[0].proc := NewProc ("reset_cache", DoResetCache, 0, FALSE);
     Procs[1].proc := NewProc ("m3", DoM3, -1, FALSE);
@@ -3180,12 +3250,16 @@ PROCEDURE InitProcs(): REF ARRAY OF ProcRec =
     Procs[104].proc := NewProc("_define_pgm", DoDummy, 1, FALSE);
     Procs[105].proc := NewProc("_define_lib", DoDummy, 1, FALSE);
     Procs[106].proc := NewProc("m3front_option", DoM3FrontOption, 1, FALSE);
-    Procs[107].proc := NewProc("replacechar", DoReplaceChar, 3, TRUE);
-    Procs[108].proc := NewProc("w2p", DoW2P, 1, TRUE);
-    Procs[109].proc := NewProc("derived_resource", DoDerivedResource, 1, FALSE);
-    Procs[110].proc := NewProc("generate_tfile", DoGenerateTFile, 0, FALSE);
-    Procs[111].proc := NewProc("gen_m3exports", DoGenM3Exports, 1, FALSE);
-    Procs[112].proc := NewProc("install_sources", DoInstallSources, 0, FALSE);
+    Procs[107].proc := NewProc("remove_m3front_option", 
+        DoRemoveM3FrontOption, 1, FALSE);
+    Procs[108].proc := NewProc("replacechar", DoReplaceChar, 3, TRUE);
+    Procs[109].proc := NewProc("w2p", DoW2P, 1, TRUE);
+    Procs[110].proc := NewProc("p2w", DoP2W, 1, TRUE);
+    Procs[111].proc := NewProc("derived_resource", DoDerivedResource,1, FALSE);
+    Procs[112].proc := NewProc("generate_tfile", DoGenerateTFile, 0, FALSE);
+    Procs[113].proc := NewProc("gen_m3exports", DoGenM3Exports, 1, FALSE);
+    Procs[114].proc := NewProc("install_sources", DoInstallSources, 0, FALSE);
+    Procs[115].proc := NewProc("_install_file", DoInstallFile, 4, FALSE);
     RETURN Procs;
   END InitProcs;
 
