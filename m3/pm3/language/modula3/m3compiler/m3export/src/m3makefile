@@ -204,6 +204,9 @@ readonly proc InstallNextVersion() is
   CheckExec(["mv", 
       EXPORT_TMP_BINARIES & "/" & TARGET & "/" & versionName,
       EXPORT_BINARIES & "/" & TARGET],[],"","export binaries failed")
+
+  CheckExec(["rm", EXPORT_TMP_BOOTSTRAP & "/" & TARGET & "/" & "TODO"],[],"",
+      "remove TODO failed")
 end
 
 %
@@ -336,9 +339,6 @@ if not(NOEXEC)
     write(versionName,CR)
   end
 end
-
-CheckExec(["rm", EXPORT_TMP_BOOTSTRAP & "/" & TARGET & "/" & "TODO"],[],"",
-    "remove TODO failed")
 
 RemovePreviousVersion()
 
