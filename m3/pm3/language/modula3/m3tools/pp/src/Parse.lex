@@ -21,21 +21,21 @@
 "<*"[ \t\f\n\r]*"UNUSED"        {BufferLexeme(1); return(PR_UNUSED);}
 "<*"[ \t\f\n\r]*"OBSOLETE"      {BufferLexeme(1); return(PR_OBSOLETE);}
 "<*"[ \t\f\n\r]*"LINE"          {BufferLexeme(1); return(PR_LINE);}
-"<*"[ \t\f\n\r]*"PRAGMA"        {BufferLexeme(1); return(PR_PRAGMA);}
 "<*"[ \t\f\n\r]*"CALLBACK"      {BufferLexeme(1); return(PR_CALLBACK);}
-"<*"[ \t\f\n\r]*"LL"            {BufferLexeme(1); return(PR_LL);}
 "<*"[ \t\f\n\r]*"EXPORTED"      {BufferLexeme(1); return(PR_EXPORTED);}
-"<*"[ \t\f\n\r]*"SPEC"          {BufferLexeme(1); return(PR_SPEC);}
 %{
 /*
 "<*"		{BufferLexeme(1); return(LPRAGMA);}
+"<*"[ \t\f\n\r]*"PRAGMA"        {BufferLexeme(1); return(PR_PRAGMA);}
+"<*"[ \t\f\n\r]*"LL"            {BufferLexeme(1); return(PR_LL);}
+"<*"[ \t\f\n\r]*"SPEC"          {BufferLexeme(1); return(PR_SPEC);}
 "<*"[ \t\f\n\r]*"NOWARN"        {BufferLexeme(1); return(PR_NOWARN);}
-"<*"		{ return (HandleNPS()); }
 */
 %}
 "*>"		{BufferLexeme(1); return(RPRAGMA);}
 
-[ \t\f\n\r]	{ return (HandleNPS()); }
+[ \t\f\n\r]	{ return (HandleSpaces()); }
+"<"/"*"		{ return (HandleNPS()); }
 "("/"*"		{ return (HandleNPS()); }
 %{
 /*"<*"[ \t\f\n\r]*"NOWARN"        {BufferLexeme(1); return (HandleNPS()); }*/

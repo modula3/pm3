@@ -54,6 +54,7 @@ AddChar(c)
 BufferLexeme (addLength)
 int addLength;
 { 
+	StopNPS();
 	if (addLength) AddLexLength();
 	lexptr = lexbufsize - lexptr;
 	yylval = lexptr;
@@ -67,6 +68,7 @@ CapBufferLexeme (addLength)
 int addLength;
 { 
 	char *p, *q = yytext;
+	StopNPS();
 
 	if (addLength) AddLexLength();
 	lexptr = lexbufsize - lexptr;
@@ -174,6 +176,49 @@ static int IsWhite(c)
     return c == ' ' || c == '\t' || c == '\f' || c == '\n' || c == '\r';
 }
 
+typedef enum {false, true} bool;
+
+static bool inNPS = false;
+
+StartNPS ()
+{
+    if (inNPS) {
+        return;
+    }
+    inNPS = true;
+    commentLevel = 0;
+    AllocComments(2);
+    commTextPtr = commText;
+    nComments = 0;
+    comments[0].NLs = 0;
+}
+
+StopNPS ()
+{
+    inNPS = false;
+}
+
+/* Handle white spaces.
+   This was formerly part of HandleNPS. */
+int HandleSpaces ()
+{
+    StartNPS();
+    /* Now deal with the main loop. */
+    int c = yytext[0];
+    do {
+	if (!IsWhite(c)) {
+	    unput(c);
+	    return WHITESPACE;
+	}
+	if (c == '\n') {
+	    ++comments[nComments].NLs;
+	}
+	SaveChar(c);
+        c = input();
+    } while (c > 0 /* EOF */);
+    return WHITESPACE;
+}
+
 /* Handle a "non-program-sequence."  This is a sequence of whitespace,
    comments and pragmas.  We only remember newlines, comments, and pragmas
    in the stuff we send to the parser.  The start column of the comments
@@ -181,14 +226,13 @@ static int IsWhite(c)
 
    When we arrive, the first character of whitespace or comment is in
    yytext, and we're responsible for taking care of the rest. */
-HandleNPS ()
+int HandleNPS ()
 {
     /* use 'int' instead of 'char' for distinguishing between end of file
        and characters above 127 */
     register int c, c2;
-    char target;
+#ifdef CHECKPRAGMAS
     int tok;
-    char *p;
     /* Magic variable to tell us we found a special pragma last time. */
     static int pragmaToken = -1;
 
@@ -203,16 +247,13 @@ HandleNPS ()
 	BufferLexeme(0);
 	return tok;
     }
-    commentLevel = 0;
-    AllocComments(2);
-    commTextPtr = commText;
-    nComments = 0;
-    comments[0].NLs = 0;
+#endif
+    StartNPS();
     /* Now deal with the main loop. */
     c = yytext[0];
     do {
 	/* Check for a comment start whether we're in or out of a comment. */
-	if ((commentLevel == 0 && (c == '(' /*|| c == '<'*/)) ||
+	if ((commentLevel == 0 && (c == '(' || c == '<')) ||
 	    (commentLevel > 0 && c == commentChar)) {
 	    c2 = input();
 	    if (c2 == '*') {
@@ -245,7 +286,7 @@ HandleNPS ()
 	    SaveChar(c);
 	    if (c == '*') {
 		c2 = input();
-		target = commentChar == '(' ? ')' : '>';
+		char target = commentChar == '(' ? ')' : '>';
 		if (c2 == target) {
 		    SaveChar(c2);
 		    EndComment();
@@ -264,11 +305,10 @@ HandleNPS ()
    on flex/bison. Disable for now the special case for recognized
    pragmas since it currently generates a syntax error message
    when they are encountered by m3pp. */
- 
-/*		    if (commentLevel == 0 && (tok = CheckPragma()) != -1
+
+#ifdef CHECKPRAGMAS
+		    if (commentLevel == 0 && (tok = CheckPragma()) != -1
 			&& strlen(comments[0].text) < lexbufsize - 1) {
-*/
-                    if (0) {
 			/* Save it for next time. */
 			--nComments;
 			currentCol = comments[nComments].startCol;
@@ -279,6 +319,7 @@ HandleNPS ()
 			unput('<');
 			return WHITESPACE;
 		    }
+#endif
 		}
 		else
 		    unput(c2);

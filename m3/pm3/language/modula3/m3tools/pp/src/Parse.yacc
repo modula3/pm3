@@ -1193,7 +1193,7 @@ InitialNPS:
 
 NPS:
       /* empty */ { blanklinep = 0; }
-    | WHITESPACE { blanklinep = 0; PrintNPS(0); }
+    | WHITESPACE { blanklinep = 0; PrintNPS(0); } NPS
     ;
 
 /*----------------- formatting semantic routines -----------------------*/
