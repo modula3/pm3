@@ -520,7 +520,7 @@ PROCEDURE CreateXWindow (trsl                : T;
       BEGIN
         ur.sh := sh;
         ur.sv := sv;
-        SetSizeHints(xSizeHints, width, height, sh, sv, st, userPosition);
+        SetSizeHints(xSizeHints, width, height, sh, sv, st);
       END;
       xwa.border_pixel := 0;
       xwa.bit_gravity := X.NorthWestGravity;
@@ -1122,7 +1122,7 @@ PROCEDURE SetXShape (v: T; ch: VBT.T) =
     sh                                  := s[Axis.T.Hor];
     sv                                  := s[Axis.T.Ver];
   BEGIN
-    SetSizeHints(xhints, width, height, sh, sv, st, ur.userPosition);
+    SetSizeHints(xhints, width, height, sh, sv, st);
     TRY
       Enter(v);
       TRY
