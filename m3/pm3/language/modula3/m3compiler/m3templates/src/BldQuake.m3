@@ -1404,6 +1404,14 @@ PROCEDURE GenM3Exports(t: T; x: TEXT; type: GenType) RAISES {Error}=
     END;
   END GenM3Exports;
 
+PROCEDURE DoGenM3Exports(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
+  VAR x: QValue.T;
+  BEGIN
+    <* ASSERT n_args = 1 *>
+    t.pop(x);
+    GenM3Exports(t, QVal.ToText(t, x), GenType.Other);
+  END DoGenM3Exports;
+
 (*------------------------------------------------------ program building ---*)
 
 PROCEDURE U_Program(t: T; x: TEXT) RAISES {Error}=
@@ -1722,6 +1730,13 @@ PROCEDURE InstallSources(t: T) RAISES {Error}=
         Wr.Failure => FErr(M3SHIP_FILE);
     END;
   END InstallSources;
+
+PROCEDURE DoInstallSources(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
+  BEGIN
+    <* ASSERT n_args = 0 *>
+    InstallSources(t);
+  END DoInstallSources;
+
 
 (*--------------------------------------------- internal export utilities ---*)
 
@@ -3019,7 +3034,7 @@ PROCEDURE NewProc (nm      : TEXT;
 
 PROCEDURE InitProcs(): REF ARRAY OF ProcRec =
   VAR
-    Procs := NEW(REF ARRAY OF ProcRec, 111);
+    Procs := NEW(REF ARRAY OF ProcRec, 113);
   BEGIN
     Procs[0].proc := NewProc ("reset_cache", DoResetCache, 0, FALSE);
     Procs[1].proc := NewProc ("m3", DoM3, -1, FALSE);
@@ -3149,6 +3164,8 @@ PROCEDURE InitProcs(): REF ARRAY OF ProcRec =
     Procs[108].proc := NewProc("w2p", DoW2P, 1, TRUE);
     Procs[109].proc := NewProc("derived_resource", DoDerivedResource, 1, FALSE);
     Procs[110].proc := NewProc("generate_tfile", DoGenerateTFile, 0, FALSE);
+    Procs[111].proc := NewProc("gen_m3exports", DoGenM3Exports, 1, FALSE);
+    Procs[112].proc := NewProc("install_sources", DoInstallSources, 0, FALSE);
     RETURN Procs;
   END InitProcs;
 
