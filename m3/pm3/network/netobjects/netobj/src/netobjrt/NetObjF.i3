@@ -12,27 +12,6 @@
  * Last Modified By: Blair MacIntyre
  * Last Modified On: Mon Oct 14 15:13:16 1996
  * Update Count    : 3
- * 
- * $Source$
- * $Date$
- * $Author$
- * $Revision$
- * 
- * $Log$
- * Revision 1.1  2003/04/08 22:00:34  hosking
- * Merge of PM3 with Persistent M3 and CM3 release 5.1.8
- *
- * Revision 1.2  2003/01/26 02:34:59  hosking
- * Merge with CM3 5.1.8.
- *
- * Revision 1.1.3.1  2003/01/26 01:36:05  hosking
- * Import of CM3 5.1.8
- *
- * Revision 1.1.1.1  2001/01/14 13:20:05  wagner
- * Critical Mass M3 libraries from release 5.1
- *
- * 
- * HISTORY
  *)
 
 INTERFACE NetObjF;
