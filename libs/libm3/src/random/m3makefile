@@ -24,6 +24,7 @@ readonly _RandomPieces = {
   "LINUXELF"   : [ IEEE-le ],
   "NEXT"       : [ IEEE-be ],
   "NT386"      : [ IEEE-le ],
+  "NT386GNU"   : [ IEEE-le ],
   "OKI"        : [ IEEE-le ],
   "SEQUENT"    : [ IEEE-le ],
   "SOLgnu"     : [ IEEE-be ],
