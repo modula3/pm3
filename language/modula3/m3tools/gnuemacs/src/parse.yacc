@@ -701,6 +701,7 @@ setinput(fp)
 
 char qualifier[200];
 recordQual(name)
+	char *name;
 {
 	strcpy(qualifier, name);
 }

@@ -1,5 +1,6 @@
 
-/*  A Bison parser, made from ../parse.yacc with Bison version GNU Bison version 1.22
+/*  A Bison parser, made from ../parse.yacc
+ by  Bison version A2.6 (Andrew Consortium)
   */
 
 #define YYBISON 1  /* Identify Bison output.  */
@@ -119,23 +120,6 @@ int comdepth = 0;
   /* depth of comments, used only by lexer. */
 int pragdepth = 0;
   /* depth of pragmas, used only by lexer. */
-
-
-#ifndef YYLTYPE
-typedef
-  struct yyltype
-    {
-      int timestamp;
-      int first_line;
-      int first_column;
-      int last_line;
-      int last_column;
-      char *text;
-   }
-  yyltype;
-
-#define YYLTYPE yyltype
-#endif
 
 #ifndef YYSTYPE
 #define YYSTYPE int
@@ -366,8 +350,12 @@ static const short yyrline[] = { 0,
    638,   640,   643,   645,   648,   650,   651,   654,   656,   659,
    661,   662,   665,   667,   670,   672,   675,   677
 };
+#endif
 
-static const char * const yytname[] = {   "$","error","$illegal.","ENDOFFILE",
+
+#if YYDEBUG != 0
+
+static const char * const yytname[] = {   "$","error","$undefined.","ENDOFFILE",
 "AMPERSAND","ASSIGN","ASTERISK","BAR","COLON","COMMA","DOT","DOTDOT","EQUAL",
 "GREATER","GREQUAL","LESS","LSEQUAL","MINUS","SHARP","PERIOD","PLUS","RARROW",
 "RBRACE","RBRACKET","RPAREN","SEMICOLON","SLASH","SUBTYPE","UPARROW","LPAREN",
@@ -397,7 +385,7 @@ static const char * const yytname[] = {   "$","error","$illegal.","ENDOFFILE",
 "override_semi_list","override_semi","override","expr","zexpr","e1","ze1","e2",
 "e3","ze3","relop","e4","ze4","addop","e5","ze5","mulop","e6","e7","e8","selector_list",
 "selector","expr_list","actual_list","actual","elem_list","elem","elem_tail",
-"opt_id_list","id_list",""
+"opt_id_list","id_list", NULL
 };
 #endif
 
@@ -825,14 +813,14 @@ static const short yycheck[] = {   119,
     -1,    -1,    93,    95
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
-#line 3 "/contrib/share/lib/bison.simple"
+#line 3 "/usr/lib/bison.simple"
 
 /* Skeleton output parser for bison,
-   Copyright (C) 1984, 1989, 1990 Bob Corbett and Richard Stallman
+   Copyright (C) 1984, 1989, 1990 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 1, or (at your option)
+   the Free Software Foundation; either version 2, or (at your option)
    any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -844,6 +832,10 @@ static const short yycheck[] = {   119,
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+/* As a special exception, when this file is copied by Bison into a
+   Bison output file, you may use that output file without restriction.
+   This special exception was added by the Free Software Foundation
+   in version 1.24 of Bison.  */
 
 #ifndef alloca
 #ifdef __GNUC__
@@ -917,10 +909,18 @@ while (0)
 
 #ifdef YYPURE
 #ifdef YYLSP_NEEDED
+#ifdef YYLEX_PARAM
+#define YYLEX		yylex(&yylval, &yylloc, YYLEX_PARAM)
+#else
 #define YYLEX		yylex(&yylval, &yylloc)
+#endif
+#else /* not YYLSP_NEEDED */
+#ifdef YYLEX_PARAM
+#define YYLEX		yylex(&yylval, YYLEX_PARAM)
 #else
 #define YYLEX		yylex(&yylval)
 #endif
+#endif /* not YYLSP_NEEDED */
 #endif
 
 /* If nonreentrant, generate the variables here */
@@ -968,14 +968,14 @@ int yyparse (void);
 #endif
 
 #if __GNUC__ > 1		/* GNU C and GNU C++ define this.  */
-#define __yy_bcopy(FROM,TO,COUNT)	__builtin_memcpy(TO,FROM,COUNT)
+#define __yy_memcpy(FROM,TO,COUNT)	__builtin_memcpy(TO,FROM,COUNT)
 #else				/* not GNU C or C++ */
 #ifndef __cplusplus
 
 /* This is the most reliable way to avoid incompatibilities
    in available built-in functions on various systems.  */
 static void
-__yy_bcopy (from, to, count)
+__yy_memcpy (from, to, count)
      char *from;
      char *to;
      int count;
@@ -993,7 +993,7 @@ __yy_bcopy (from, to, count)
 /* This is the most reliable way to avoid incompatibilities
    in available built-in functions on various systems.  */
 static void
-__yy_bcopy (char *from, char *to, int count)
+__yy_memcpy (char *from, char *to, int count)
 {
   register char *f = from;
   register char *t = to;
@@ -1006,9 +1006,24 @@ __yy_bcopy (char *from, char *to, int count)
 #endif
 #endif
 
-#line 184 "/contrib/share/lib/bison.simple"
+#line 192 "/usr/lib/bison.simple"
+
+/* The user can define YYPARSE_PARAM as the name of an argument to be passed
+   into yyparse.  The argument should have type void *.
+   It should actually point to an object.
+   Grammar actions can access the variable by casting it
+   to the proper pointer type.  */
+
+#ifdef YYPARSE_PARAM
+#define YYPARSE_PARAM_DECL void *YYPARSE_PARAM;
+#else
+#define YYPARSE_PARAM
+#define YYPARSE_PARAM_DECL
+#endif
+
 int
-yyparse()
+yyparse(YYPARSE_PARAM)
+     YYPARSE_PARAM_DECL
 {
   register int yystate;
   register int yyn;
@@ -1124,12 +1139,12 @@ yynewstate:
       if (yystacksize > YYMAXDEPTH)
 	yystacksize = YYMAXDEPTH;
       yyss = (short *) alloca (yystacksize * sizeof (*yyssp));
-      __yy_bcopy ((char *)yyss1, (char *)yyss, size * sizeof (*yyssp));
+      __yy_memcpy ((char *)yyss1, (char *)yyss, size * sizeof (*yyssp));
       yyvs = (YYSTYPE *) alloca (yystacksize * sizeof (*yyvsp));
-      __yy_bcopy ((char *)yyvs1, (char *)yyvs, size * sizeof (*yyvsp));
+      __yy_memcpy ((char *)yyvs1, (char *)yyvs, size * sizeof (*yyvsp));
 #ifdef YYLSP_NEEDED
       yyls = (YYLTYPE *) alloca (yystacksize * sizeof (*yylsp));
-      __yy_bcopy ((char *)yyls1, (char *)yyls, size * sizeof (*yylsp));
+      __yy_memcpy ((char *)yyls1, (char *)yyls, size * sizeof (*yylsp));
 #endif
 #endif /* no yyoverflow */
 
@@ -1351,7 +1366,7 @@ case 72:
     break;}
 }
    /* the action file gets copied in in place of this dollarsign */
-#line 465 "/contrib/share/lib/bison.simple"
+#line 487 "/usr/lib/bison.simple"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -1571,6 +1586,7 @@ setinput(fp)
 
 char qualifier[200];
 recordQual(name)
+	char *name;
 {
 	strcpy(qualifier, name);
 }
