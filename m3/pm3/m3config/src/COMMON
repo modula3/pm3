@@ -12,8 +12,6 @@
 % redefine some variables and/or procedures, and call setDefault.
 %
 
-AT_SRC = ""
-
 %
 % Miscellaneous platform features and paths
 %
