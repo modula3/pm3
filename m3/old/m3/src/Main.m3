@@ -13,7 +13,7 @@ MODULE Main;
       processes
 *)
 
-IMPORT Text, Rd, Wr, Stdio, TextIntTbl AS TextSet, IntIntTbl AS IntSet;
+IMPORT Text, TextF, Rd, Wr, Stdio, TextIntTbl AS TextSet, IntIntTbl AS IntSet;
 IMPORT FileRd, OSError, Fmt, IntRefTbl;
 IMPORT Params, FS, Process, File, FileWr, Time, Fingerprint;
 IMPORT RTCollector, (*RTCollectorSRC,*) RTutils, Thread, ETimer;
@@ -569,6 +569,7 @@ PROCEDURE GetOSType (ch: CHAR): M3Path.OSKind =
     IF    (ch = '0')   THEN RETURN M3Path.OSKind.Unix;
     ELSIF (ch = '1')   THEN RETURN M3Path.OSKind.GrumpyUnix;
     ELSIF (ch = '2')   THEN RETURN M3Path.OSKind.Win32;
+    ELSIF (ch = '3')   THEN RETURN M3Path.OSKind.GnuWin32;
     END;
     Msg.FatalError (NIL, "unrecognized os type: ", Text.FromChar (ch));
     RETURN M3Path.OSKind.Unix;
@@ -629,7 +630,7 @@ PROCEDURE GetChunks (value: TEXT): Arg.List =
   END GetChunks;
 
 PROCEDURE PushPath (path: Arg.List;  new: TEXT) =
-  CONST Sep = ARRAY M3Path.OSKind OF CHAR { ':', ':', '+' };
+  CONST Sep = ARRAY M3Path.OSKind OF CHAR { ':', ':', '+' , ':' };
   VAR x := Text.Length (new)-1;  y: INTEGER;  sep := Sep [host_os];
   BEGIN
     WHILE (x >= 0) DO
@@ -1971,7 +1972,19 @@ PROCEDURE Pass1 (source, object, base: TEXT) =
     IF (do_debug)    THEN Arg.AppendL (args, cc_debug);    END;
     IF (do_optimize) THEN Arg.AppendL (args, cc_optimize); END;
     Arg.Append (args, "-c");
-    Arg.Append (args, source);
+
+    IF (target_os # M3Path.OSKind.GnuWin32) THEN
+      Arg.Append (args, source);
+    ELSE
+      (* On Win32, gcc puts the object file in the current directory only
+         if the filename uses '/' *)
+      WITH len = LAST (source^), res = TextF.New (len) DO
+        FOR i := 0 TO len-1 DO
+          IF source[i] = '\\' THEN res[i] := '/' ELSE res[i] := source[i] END;
+        END;
+        Arg.Append(args, res);
+      END;
+    END;
 
     stdout := StdoutName (pass_1, base);
     IF Utils.Execute (pass_1.cmd, args, stdout, fatal := FALSE) # 0 THEN

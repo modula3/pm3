@@ -14,14 +14,14 @@ import ("m3middle")
 import ("m3linker")
 import ("m3front")
 
-if equal (OS_TYPE, "POSIX")
-  interface ("M3Backend")
-  implementation ("M3BackPosix")
-else
+if equal (TARGET, "NT386")
   import ("m3objfile")
   import ("m3back")
   interface ("M3Backend")
   implementation ("M3BackWin32")
+else
+  interface ("M3Backend")
+  implementation ("M3BackPosix")
 end
 
 module ("Arg")

@@ -18,11 +18,11 @@ CONST
   BackSlash = '\\';
 
 CONST
-  DirSep = ARRAY OSKind OF CHAR { Slash,  Slash,  BackSlash };
-  VolSep = ARRAY OSKind OF CHAR { Null,   Null,   Colon  };
+  DirSep = ARRAY OSKind OF CHAR { Slash,  Slash,  BackSlash,  BackSlash };
+  VolSep = ARRAY OSKind OF CHAR { Null,   Null,   Colon,   Colon  };
 
 CONST
-  DirSepText = ARRAY OSKind OF TEXT { "/",  "/",  "\\" };
+  DirSepText = ARRAY OSKind OF TEXT { "/",  "/",  "\\",  "\\"};
 
 TYPE
   SMap = ARRAY Kind OF TEXT;
@@ -40,11 +40,15 @@ CONST
   (* Win32 *)      SMap { ".i3", ".ic", ".is", ".io",
                           ".m3", ".mc", ".ms", ".mo",
                           ".ig", ".mg", ".c", ".h", ".s",
-                          ".obj",".lib",".m3x", ".m3x", "" }
+                          ".obj",".lib",".m3x", ".m3x", "" },
+  (* GnuWin32 *)   SMap { ".i3", ".ic", ".is", ".io",
+                          ".m3", ".mc", ".ms", ".mo",
+                          ".ig", ".mg", ".c", ".h", ".s",
+                          ".o", ".a", ".m3x", ".m3x", "" }
   };
 
 CONST
-  Default_pgm = ARRAY OSKind OF TEXT { "a.out", "a.out", "NONAME.EXE" };
+  Default_pgm = ARRAY OSKind OF TEXT{ "a.out", "a.out", "NONAME.EXE", "a.out"};
 
 VAR
   os_map := ARRAY BOOLEAN OF OSKind { OSKind.Unix, OSKind.Unix };

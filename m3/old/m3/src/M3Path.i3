@@ -18,7 +18,7 @@ TYPE
            IG, MG, C, H, S, O, A, AX, PX, Unknown };
 
 TYPE
-  OSKind = { Unix, GrumpyUnix, Win32 };
+  OSKind = { Unix, GrumpyUnix, Win32, GnuWin32 };
 
 PROCEDURE SetOS (os: OSKind;  host: BOOLEAN);
 (* Set the conventions for the specifed platform *)
