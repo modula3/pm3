@@ -43,4 +43,4 @@ else
   error (format ("time/POSIX: unsupported platform: \"%s\"%s", TARGET, CR))
 end
 
-Module(TimePosix)
+Module("TimePosix")
