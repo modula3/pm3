@@ -11,7 +11,7 @@
 %  directory and run the standard make.
 %
 
-h_source ("lex.yy.h") % it's really a .c file that matters
+h_source ("lex.yy") % it's really a .c file that matters
 c_source ("y.tab")
 import_lib ("l", "/usr/lib")
 

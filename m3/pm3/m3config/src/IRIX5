@@ -5,6 +5,8 @@
 
 readonly TARGET = "IRIX5"
 
+include("COMMON")
+
 %INSTALL_ROOT = "/usr/local"
 
 PLATFORM_SUPPORTS_MOTIF  = "TRUE"

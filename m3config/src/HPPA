@@ -4,6 +4,8 @@
 
 readonly TARGET = "HPPA"
 
+include("COMMON")
+
 %INSTALL_ROOT = "/usr/local"
 X11ROOT = "/usr/lib/X11"
 

@@ -152,6 +152,20 @@ readonly proc CompileCrossCompiler(target,host) is
       "m3cc" & SL & "src", "."], [], m3ccdir)
   ret = exec(["ln", "-s", ".." & SL & ".." & SL & ".." & SL & ".." & SL &
       "m3cc" & SL & "gcc", "."], [], m3ccdir)
+
+  %
+  % C compilation is slow, as compared to M3, cache the cross-compiler
+  %
+
+  if CACHE_CROSS_COMPILERS and not(stale(CACHE_CROSS_COMPILERS & SL & 
+      "m3cgc1-" & target,m3ccdir & SL & "gcc" & SL & "m3.c"))
+    ret = exec(["ln","-s",CACHE_CROSS_COMPILERS & SL & "m3cgc1-" & target,
+        "pm3-" & target])
+    ret = exec(["rm", "src", "gcc"], [], m3ccdir)
+    ret = exec(["rmdir", m3ccdir])
+    return
+  end
+
   ret = exec(["m3build",  "-b", host, 
       "-T", ".." & SL & ".." & SL & 
       ".." & SL & ".." & SL & ".." & SL & 
@@ -163,16 +177,24 @@ readonly proc CompileCrossCompiler(target,host) is
   % Keep the cross compiler under target-m3cgc1 and remove everything else.
 
   if equal(host,target)
-    ret = exec(["mv", target & SL & "m3cgc1", ".." & SL & "m3cgc1-" & target], 
+    ret = exec(["mv", host & SL & "m3cgc1", ".." & SL & "m3cgc1-" & target], 
         [], m3ccdir)
-    ret = exec(["rm", "-r", target], [], m3ccdir)
   else
     ret = exec(["mv", host & "-" & target & SL & "m3cgc1", ".." & SL & 
         "m3cgc1-" & target], [], m3ccdir)
     ret = exec(["rm", "-r", host & "-" & target], [], m3ccdir)
   end
+  ret = exec(["rm", "-r", host], [], m3ccdir)
   ret = exec(["rm", "src", "gcc"], [], m3ccdir)
   ret = exec(["rmdir", m3ccdir])
+
+  if CACHE_CROSS_COMPILERS
+    ret = exec(["mv","pm3-" & target & SL & "m3cgc1-" & target,
+        CACHE_CROSS_COMPILERS])
+    ret = exec(["ln","-s",CACHE_CROSS_COMPILERS & SL & "m3cgc1-" & target,
+        "pm3-" & target])
+  end
+
   write("---------- Finished cross compiler ----------")
 end
 
@@ -248,6 +270,8 @@ end
 
 % Create a bootstrap for each of these "target" in boot-target
 %
+
+CACHE_CROSS_COMPILERS = lookup("CACHE_CROSS_COMPILERS","")
 
 foreach platform in Platforms
   if Platforms{platform}[3] BootstrapTarget(platform) end

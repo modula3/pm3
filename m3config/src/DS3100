@@ -4,6 +4,8 @@
 
 readonly TARGET = "DS3100"
 
+include("COMMON")
+
 %INSTALL_ROOT = "/usr/local"
 X11ROOT = "/usr/local/lib"
 

@@ -4,6 +4,8 @@
 
 readonly TARGET = "ALPHA_OSF"
 
+include("COMMON")
+
 %INSTALL_ROOT = "/usr/local"
 
 readonly PLATFORM_SUPPORTS_MOTIF  = "TRUE"

@@ -77,6 +77,7 @@ readonly proc BuildDirectories() is
   ret = Exec(["mkdir","-p",EXPORT_TMP_SRC],[],"")
   ret = Exec(["mkdir","-p",EXPORT_TMP_BOOTSTRAP],[],"")
   ret = Exec(["mkdir","-p",EXPORT_TMP_BINARIES],[],"")
+  ret = Exec(["mkdir","-p",EXPORT_TMP_CROSS_COMPILERS],[],"")
   ret = Exec(["mkdir","-p",EXPORT_SRC],[],"")
   ret = Exec(["mkdir","-p",EXPORT_BOOTSTRAP],[],"")
   ret = Exec(["mkdir","-p",EXPORT_BINARIES],[],"")
@@ -96,21 +97,23 @@ end
 %
 
 readonly proc ReadVersionInfo() is
-  if not stale("../src/PREVIOUSVERSION","../src/PREVIOUSVERSION")
+  local vdir = EXPORT_VERSION & SL
+
+  if not stale(vdir & "PREVIOUSVERSION",vdir & "PREVIOUSVERSION")
     previousVersionExists = "T"
-    include("../src/PREVIOUSVERSION")
+    include(vdir & "PREVIOUSVERSION")
     previousVersion = VERSION
   end
 
-  if not stale("../src/CURRENTVERSION","../src/CURRENTVERSION")
+  if not stale(vdir & "CURRENTVERSION",vdir & "CURRENTVERSION")
     currentVersionExists = "T"
-    include("../src/CURRENTVERSION")
+    include(vdir & "CURRENTVERSION")
     currentVersion = VERSION
   end
 
-  if not stale("../src/NEXTVERSION","../src/NEXTVERSION")
+  if not stale(vdir & "NEXTVERSION",vdir & "NEXTVERSION")
     nextVersionExists = "T"
-    include("../src/NEXTVERSION")
+    include(vdir & "NEXTVERSION")
     version = VERSION
     versionName = VersionName(version)
   end
@@ -208,8 +211,10 @@ end
 %
 
 readonly proc UpdateVersionNumbers() is
+  local vdir = EXPORT_VERSION & SL
+
   if previousVersionExists
-    >> "../src/OLDVERSIONS" in
+    >> vdir & "OLDVERSIONS" in
       write("Version(\"",previousVersion[0],"\",\"",previousVersion[1],"\",\"",
           previousVersion[2],"\",\"",previousVersion[3],"\",\"",
           previousVersion[4],"\")",CR)
@@ -217,19 +222,19 @@ readonly proc UpdateVersionNumbers() is
   end
 
   if currentVersionExists
-    > "../src/PREVIOUSVERSION" in
+    > vdir & "PREVIOUSVERSION" in
       write("Version(\"",currentVersion[0],"\",\"",currentVersion[1],"\",\"",
           currentVersion[2],"\",\"",currentVersion[3],"\",\"",
           currentVersion[4],"\")",CR)
     end
   end
 
-  > "../src/CURRENTVERSION" in
+  > vdir & "CURRENTVERSION" in
     write("Version(\"",NOW,"\",\"",version[1],"\",\"",
         version[2],"\",\"",version[3],"\",\"",version[4],"\")",CR)
   end
 
-  > "../src/NEXTVERSION" in
+  > vdir & "NEXTVERSION" in
     write("Version(\"","0","\",\"",version[1],"\",\"",
         version[2],"\",\"",inc(version[3],1),"\",\"\")",CR)
   end
@@ -295,8 +300,8 @@ CheckExec(["cp","-a",EXPORT_TMP_SRC & "/" & versionName,EXPORT_TMP_TMP],
 % Build the bootstraps
 %
 
-CheckExec(["m3build"],["",
-    EXPORT_TMP_TMP & "/" & versionName & "/" & "boot.stdout",
+CheckExec(["m3build","-DCACHE_CROSS_COMPILERS=" & EXPORT_TMP_CROSS_COMPILERS],
+    ["", EXPORT_TMP_TMP & "/" & versionName & "/" & "boot.stdout",
     EXPORT_TMP_TMP & "/" & versionName & "/" & "boot.stderr"],
     EXPORT_TMP_TMP & "/" & versionName & 
     "/language/modula3/m3compiler/m3bootstrap","bootstrap build failed")

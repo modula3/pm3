@@ -4,6 +4,8 @@
 
 readonly TARGET = "FreeBSD2"
 
+include("COMMON")
+
 %INSTALL_ROOT = "/usr/local"
 X11ROOT = "/usr/X386/lib"
 
