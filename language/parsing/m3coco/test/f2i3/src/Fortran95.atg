@@ -169,7 +169,7 @@ PRODUCTIONS
             xForallConstruct /
             xIfConstruct /
             xWhereConstruct /
-            xEndDoStmt .          /* see the note on R818 */
+            xEndDoStmt .          (* see the note on R818 *)
 
           (* R216 *)
           xActionStmt:
@@ -592,7 +592,7 @@ PRODUCTIONS
           xArrayAllocation:
             xArrayName / xArrayName '(' xDeferredShapeSpecList ')' .
 
-          (* R528 /* xObjectName renamed to xPointerName to simplify Sem. Anal. */ *)
+          (* R528 (* xObjectName renamed to xPointerName to simplify Sem. Anal. *) *)
           xPointerStmt:
             xLblDef 'pointer' [ ':' ':' ] xPointerStmtObjectList xEOS .
           xPointerStmtObjectList:
@@ -601,7 +601,7 @@ PRODUCTIONS
             xPointerName / xPointerName '(' xDeferredShapeSpecList ')' .
           xPointerName: xIdent .
 
-          (* R529 /* xObjectName renamed to xTargetName to simplify Sem. Anal. */ *)
+          (* R529 (* xObjectName renamed to xTargetName to simplify Sem. Anal. *) *)
           xTargetStmt:
             xLblDef 'target' [ ':' ':' ] xTargetObjectList xEOS .
           xTargetObjectList:
@@ -784,10 +784,10 @@ PRODUCTIONS
           xAllocationList: xAllocation / xAllocationList ',' xAllocation .
           xAllocation: xAllocateObject / xAllocateObject xAllocatedShape .
           xAllocatedShape: '(' xSectionSubscriptList ')' .
-          /* Need to use xSectionSubscriptList here to solve an LALR(1) conflict with the
+          (* Need to use xSectionSubscriptList here to solve an LALR(1) conflict with the
            * xFieldSelector in R625.  (Can't tell which we have until the character
            * following the right paren, but we must reduce WITHIN the parens.)
-           */
+           *)
 
           (* R625 *)
           xAllocateObjectList:
@@ -796,10 +796,10 @@ PRODUCTIONS
             xVariableName / xAllocateObject xFieldSelector .
 
           (* R626 *)
-          /* Omitted to solve LALR(1) conflict.  see R624
+          (* Omitted to solve LALR(1) conflict.  see R624
            *
            * xAllocateShapeSpec: xExpr / xExpr ':' xExpr .
-           */
+           *)
 
           (* R627 chain rule deleted *)
 
@@ -824,9 +824,9 @@ PRODUCTIONS
             xLblDef 'deallocate' '(' xAllocateObjectList',' 'stat=' xVariable ')' xEOS /
             xLblDef 'deallocate' '(' xAllocateObjectList ')' xEOS .
 
-          /* It is not clear to me whether some of the subcategories of Primary
+          (* It is not clear to me whether some of the subcategories of Primary
           *  are complete
-          */
+          *)
 
      This macro is invoked in definition 28.
 
@@ -1151,13 +1151,13 @@ PRODUCTIONS
           xDoConstruct: xBlockDoConstruct .
 
           (* R817 *)
-          /* Block DO constructs cannot be recognized syntactically because there is
+          (* Block DO constructs cannot be recognized syntactically because there is
            * no requirement that there be an end do statement.
            *
            * xBlockDoConstruct:
            *   xDoStmt xBlock xEndDoStmt /
            *   xDoStmt xBlock .
-           */
+           *)
           xBlockDoConstruct: xLabelDoStmt .
 
           (* R818 *)
@@ -1437,8 +1437,8 @@ PRODUCTIONS
 
      I/O editing[9]==
 
-          /* I have trouble verifying this section because of its reliance on
-          *  lexical analysis */
+          (* I have trouble verifying this section because of its reliance on
+          *  lexical analysis *)
           (* R1001 *)
           xFormatStmt:
             xLblDef 'format' '(' [ xFmtSpec ] ')' xEOS .
@@ -1609,7 +1609,7 @@ PRODUCTIONS
           xSubroutineArgList: / xSubroutineArg / xSubroutineArgList ',' xSubroutineArg .
 
           (* R1212 *)
-          /* Functions initially recognized as arrays resolved semantically */
+          (* Functions initially recognized as arrays resolved semantically *)
           xFunctionArgList:
             xFunctionArg /
             xFunctionArgList ',' xFunctionArg /
@@ -1689,10 +1689,10 @@ PRODUCTIONS
             xLblDef 'contains' xEOS.
 
           (* R1228 *)
-          /* This may turn out to be an assignment statement, but the form given here
+          (* This may turn out to be an assignment statement, but the form given here
            * allows for name analysis in the case that it actually IS a statement
            * function definition.
-           */
+           *)
           xStmtFunctionStmt: xLblDef xName xStmtFunctionRange .
           xStmtFunctionRange: '(' ')' '=' xExpr xEOS .
           xStmtFunctionRange: '(' xSFDummyArgNameList ')' '=' xExpr xEOS .
@@ -1705,8 +1705,8 @@ PRODUCTIONS
 
      Additional Nonterminals[12]==
 
-          /* Nonterminal symbols that are not defined in the standard
-           */
+          (* Nonterminal symbols that are not defined in the standard
+           *)
           xArrayName: xIdent .
           xBlockDataName: xIdent .
           xCommonBlockName: xIdent .
@@ -1738,22 +1738,22 @@ PRODUCTIONS
 
      Deleted Features[13]==
 
-          /* Real and double precision do variables */
+          (* Real and double precision do variables *)
 
           (* R821 *)
-          /* Punt on this as it involves introducing more complicated
+          (* Punt on this as it involves introducing more complicated
           * conditional compilation features in main standard
-          */
+          *)
 
           (* R822 *)
-          /* Punt on this as it involves introducing more complicated
+          (* Punt on this as it involves introducing more complicated
           * conditional compilation features in main standard
-          */
+          *)
 
           (* R921 *)
-          /* Punt on this as it involves introducing more complicated
+          (* Punt on this as it involves introducing more complicated
           * conditional compilation features in main standard
-          */
+          *)
 
           (* R216 *)
           xActionStmt:
@@ -1761,24 +1761,24 @@ PRODUCTIONS
             xAssignedGotoStmt /
             xPauseStmt .
 
-          /* Pause statement */
+          (* Pause statement *)
           xPauseStmt:
             xLblDef 'pause' xEOS /
             xLblDef 'pause' xIcon xEOS /
             xLblDef 'pause' xScon xEOS .
 
-          /* Assign Statement */
+          (* Assign Statement *)
           xAssignStmt:
             xLblDef 'assign' xLblRef 'to' xVariableName xEOS .
 
-          /* Assigned GOTO Statement */
+          (* Assigned GOTO Statement *)
           xAssignedGotoStmt:
             xLblDef GoToKw xVariableName xEOS /
             xLblDef GoToKw xVariableName '(' xLblRefList ')' xEOS /
             xLblDef GoToKw xVariableComma '(' xLblRefList ')' xEOS .
           xVariableComma: xVariableName ',' .
 
-          /* H edit descriptor */
+          (* H edit descriptor *)
 
           (* R305 *)
           xConstant:
@@ -2003,7 +2003,7 @@ that a the derived type body constructs satisfy their ordering requirement.
                  xPrintStmt xReadStmt xReturnStmt xRewindStmt xStmtFunctionStmt
                  xStopStmt xWriteStmt xLabelDoStmt
                  xUseStmt
-                 /* xDerivedTypeStmt */
+                 (* xDerivedTypeStmt *)
                  xContainsStmt
                  xAccessStmt xAllocatableStmt
                  xIntentStmt xNamelistStmt xOptionalStmt xPointerStmt xTargetStmt
@@ -2037,7 +2037,7 @@ that a the derived type body constructs satisfy their ordering requirement.
 
           xArraySpec ::=
                  xExplicitShapeSpecList xAssumedSizeSpec
-                 /* xComponentArraySpec */
+                 (* xComponentArraySpec *)
                  xExplicitShapeSpecList xDeferredShapeSpecList
                  xAssumedShapeSpecList xAssumedSizeSpec.
 
