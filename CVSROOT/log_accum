@@ -34,10 +34,13 @@
 # set this to something that takes a whole message on stdin
 $MAILER	       = "/usr/sbin/sendmail -t";
 
+# Send mail when directories are created in the repository.
+# 0 = off, 1 = on.
+$MAIL_ON_DIR_CREATION = 0;
+
 #
 #	End user configurable options.
 #
-
 
 # Constants (don't change these!)
 #
@@ -378,7 +381,7 @@ if ($files[2] =~ /New/ && $files[3] =~ /directory/) {
 	push(@text, $_);
     }
     
-    &mail_notification($mailto, @text);
+    &mail_notification($mailto, @text) if $MAIL_ON_DIR_CREATION;
 
     exit 0;
 }
