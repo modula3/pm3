@@ -53,7 +53,7 @@ FROM Ctypes IMPORT double, int, int_star, char_star, char_star_star;
                 to hold the suppressed trailing zeros.
         *)
 
-<* EXTERNAL m3_strtod *>
+<* EXTERNAL strtod *>
 PROCEDURE strtod (nptr: ADDRESS; VAR eptr: ADDRESS): LONGREAL;
 
 END CConvert.
