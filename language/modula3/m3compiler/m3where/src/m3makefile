@@ -1,0 +1,15 @@
+% Copyright (C) 1995, Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description. 
+%
+% Last modified on Sat Feb 25 09:39:05 PST 1995 by kalsow  
+
+import ("libm3")
+import ("m3middle")
+import ("m3quake")
+import ("tempfiles")
+
+implementation ("Main")
+Program ("m3where")
+
+
