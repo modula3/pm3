@@ -598,6 +598,7 @@ readonly Platforms = {
   "NEXT"      : [ "POSIX", "32BITS", "next-bsd", ""          ],
   "NT386"     : [ "WIN32", "32BITS", "i486--nt", ""           ],
   "NT386GNU"  : [ "WIN32", "32BITS", "i486--cygwin32", "T"    ],
+  "NetBSDi386": [ "POSIX", "32BITS", "i386--netbsdelf", "T"   ],
   "OKI"       : [ "POSIX", "32BITS", "i860--sysv4.0", ""      ],
   "SEQUENT"   : [ "POSIX", "32BITS", "i386-sequent-bsd", ""   ],
   "SOLgnu"    : [ "POSIX", "32BITS", "sparc-sun-solaris2", "T"],

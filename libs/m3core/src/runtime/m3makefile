@@ -28,6 +28,7 @@ readonly EXCEPTION_IMPL = {
   "NEXT"       : "ex_frame",
   "NT386"      : "ex_frame",
   "NT386GNU"   : "ex_frame",
+  "NetBSDi386" : "ex_frame",
   "OKI"        : "ex_frame",
   "SEQUENT"    : "ex_frame",
   "SOLgnu"     : "ex_stack",  % has a working stack walker

@@ -31,6 +31,7 @@ readonly _DateImpls = {
   "NEXT"       : "DateBsd",
   "NT386"      : "DateBsd",
   "NT386GNU"   : "DateBsd",
+  "NetBSDi386" : "DateBsd",
   "OKI"        : "DateBsd",
   "SEQUENT"    : "DateBsd",
   "SOLgnu"     : "DatePosix",

@@ -34,6 +34,7 @@ readonly _RandomPieces = {
   "NEXT"       : [ _BigEndian ],
   "NT386"      : [ _LittleEndian ],
   "NT386GNU"   : [ _LittleEndian ],
+  "NetBSDi386" : [ _LittleEndian ],
   "OKI"        : [ _LittleEndian ],
   "SEQUENT"    : [ _LittleEndian ],
   "SOLgnu"     : [ _BigEndian ],

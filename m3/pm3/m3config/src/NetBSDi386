@@ -1,0 +1,60 @@
+%
+% NetBSD/i386 1.5 configuration (with shared library support in comments)
+%
+
+readonly TARGET = "NetBSDi386"
+
+include("COMMON")
+
+INSTALL_ROOT = "/usr/local/pm3"
+X11ROOT = "/usr/X11R6/lib"
+
+% PLATFORM_SUPPORTS_MOTIF  = "T"
+PLATFORM_SUPPORTS_SHARED_LIB = "T"
+INSTALL_IMPLS = ""
+SKIP_M3GDB = "T"
+SKIP_GNUEMACS = "T"
+NO_ST_SPARE = "T"
+
+BOPT_FLAG = [ "-O" ]
+GNU_CC = [ "cc" ]
+GNU_CFLAGS = [ "-O2" ]
+CC = [ GNU_CC, GNU_CFLAGS, "-Wall", "-c" ]
+LINK = [ "cc" ]
+LINK_suffix = [ "-R" & X11ROOT, "-lm" ]
+MAKELIB = [ "ar", "cru" ]
+MAKESHLIB = [ "cc", "-shared" ]
+M3CC_MAKE = [ "gmake", "BISON=yacc" ]
+OPT_FLAG = [ "-O" ]
+RANLIB = [ "ranlib" ]
+RPATH_LIB_USE_ONLY = "T"
+
+% NetBSD requires a version number on each shared library.  Don't try
+% to derive these from the PM3 version number.  That approach does not
+% work out well in practice.
+SHLIB_VERSION = "1"
+
+proc m3_make_shared_lib (lib, objects, imported_libs) is
+  local lib_so = format ("lib%s.so", lib)
+  local lib_sox = format ("%s.%s", lib_so, SHLIB_VERSION)
+  local cmd = [MAKESHLIB_CMD, "-o", lib_so, "-Wl,-soname," & lib_sox, objects]
+  
+  if VERBOSE write(cmd, CR) end  
+  return exec(cmd)
+end
+
+proc m3_note_shlib(lib) is
+  if Options{"shared_lib"}[0] and PLATFORM_SUPPORTS_SHARED_LIB
+    local lib_so = format ("lib%s.so", lib)
+    local lib_sox = format ("%s.%s", lib_so, SHLIB_VERSION)
+
+    if defined ("_all")
+      install_derived(lib_so)
+      install_alias_link(lib_so,
+	LIB_TO_PKG_USE & SL & PACKAGE & SL & BUILD_DIR, lib_sox, LIB_INSTALL)
+    end
+    deriveds (lib_so, [""])
+  end
+end 
+
+setDefault("","")
