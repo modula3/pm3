@@ -1,7 +1,6 @@
 MODULE BldWin32;
 
-IMPORT BldQuake, BldQRep, QMachRep, FS, OSError, Arg, Utils, Wr, Quake;
-IMPORT M3ID, QValue;
+IMPORT BldQuake, FS, OSError;
 
 PROCEDURE DelFile(<* UNUSED *> t: BldQuake.T; x: TEXT)=
   BEGIN

@@ -1,7 +1,6 @@
 MODULE BldPosix;
 
-IMPORT BldQuake, BldQRep, QMachRep, FS, OSError, Arg, Utils, Wr, Quake;
-IMPORT M3ID, QValue;
+IMPORT BldQuake, BldQRep, FS, OSError, Arg, Utils;
 
 PROCEDURE DelFile(<* UNUSED *> t: BldQuake.T; x: TEXT)=
   BEGIN
