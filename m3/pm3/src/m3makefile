@@ -939,4 +939,34 @@ BuildChunk("network/www","http")
 % requires: http
 BuildChunk("network/www","webcat")
 
+%------------------------------------------------------------
+%
+% Intermediate "documentation" nodes in the hierarchy
+%
+BuildChunk("database","stableobjects")
+BuildChunk(".","database")
+BuildChunk("graphics","animation")
+BuildChunk("graphics","displayps")
+BuildChunk("graphics","forms")
+BuildChunk("graphics","games")
+BuildChunk("graphics","gr-libs")
+BuildChunk("graphics","lecternpkg")
+BuildChunk("graphics","sharedboard")
+BuildChunk(".","graphics")
+BuildChunk("language","m3obliq")
+BuildChunk("language/modula3","m3compiler")
+BuildChunk("language/modula3","m3tools")
+BuildChunk("language","modula3")
+BuildChunk("language/parsing","metasyntax")
+BuildChunk("language","parsing")
+BuildChunk(".","language")
+BuildChunk(".","libs")
+BuildChunk("network","mail")
+BuildChunk("network","netobjects")
+BuildChunk("network","pkgserver")
+BuildChunk("network","tcplibs")
+BuildChunk("network","www")
+BuildChunk(".","network")
+BuildChunk(".","text")
+
 end
