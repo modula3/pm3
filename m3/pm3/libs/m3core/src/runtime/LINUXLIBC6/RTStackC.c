@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <signal.h>
 #include <setjmp.h>
-#include <jmp_buf.h>
 
 /* This is a partial stack walker for LINUXELF (dagenais@vlsi.polymtl.ca) */
 

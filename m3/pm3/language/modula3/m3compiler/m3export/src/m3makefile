@@ -876,16 +876,22 @@ if DoStep("done")
   end
 end
 
+%
+% Ideally RemovePreviousVersion should be done just before InstallNextVersion.
+% However all these sources/binaries/bootstraps in multiple versions for
+% multiple platforms overflow my 3GB drive during the rpm build :-(.
+%
+
+if DoStep("RemovePreviousVersion")
+  RemovePreviousVersion()
+end
+
 if DoStep("BuildRPM")
   BuildRPM()
 end
 
 if DoStep("InstallRPM")
   InstallRPM()
-end
-
-if DoStep("RemovePreviousVersion")
-  RemovePreviousVersion()
 end
 
 if DoStep("InstallNextVersion")

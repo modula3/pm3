@@ -330,7 +330,7 @@ readonly proc emacs_compile (el) is
   local ret = 0
   local cmd = ["emacs", "-batch", "-f", "batch-byte-compile", el]
   if VERBOSE write(cmd, CR) end
-  ret = exec (cmd)
+  ret = exec (cmd,["/dev/null"])
   if not equal(ret, 0) error("emacs failed with error code: ", ret) end
 end
 

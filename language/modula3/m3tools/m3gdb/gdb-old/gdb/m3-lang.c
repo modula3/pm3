@@ -1153,7 +1153,8 @@ m3_demangle (mangled)
   }
 
   /* procedure: *__* */
-  if ((u = strchr (mangled, '_')) && (u != mangled) && (u[1] == '_')) {
+  u = strchr (mangled, '_');
+  if ((u != NULL) && (u != mangled) && (u[1] == '_')) {
     strncpy (demangled, mangled, (size_t)(u - mangled));
     demangled [u - mangled] = '.';
     strcpy (demangled + (u - mangled) + 1, u + 2);
