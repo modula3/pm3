@@ -22,7 +22,6 @@ readonly M3Config_body = [
   "  WORD_SIZE = \"" & escape(WORD_SIZE) & "\";",
   "  BUILD_DIR = \"" & escape(DEFAULT_BUILD_DIR) & "\";",
   "  PATH_SEP  = \"" & escape(SL) & "\";",
-  "  M3        = \"" & escape(M3) & "\"; (* the compiler *)",
   "",
   "CONST (* installation directories *)",
   "  BIN_INSTALL   = \"" & escape(BIN_INSTALL) & "\";",
