@@ -6,7 +6,7 @@
 
 MODULE RealRect;
 
-IMPORT Word, RealPoint, Axis, RealInterval, Real;
+IMPORT Word, RealPoint, Axis, RealInterval, Real, RealFloat, FloatMode;
 
 TYPE
   RefT = REF T;
@@ -47,8 +47,10 @@ PROCEDURE FromAbsEdges (w, e, n, s: REAL): T RAISES {} =
   END FromAbsEdges;
 
 PROCEDURE FromPoint (READONLY p: RealPoint.T): T RAISES {} =
+  <*FATAL FloatMode.Trap*>
   BEGIN
-    RETURN FromEdges (p[0], p[0] + Real.MinPos, p[1], p[1] + Real.MinPos);
+    RETURN FromEdges (p[0], RealFloat.NextAfter(p[0],Real.MaxFinite),
+        p[1], RealFloat.NextAfter(p[1],Real.MaxFinite));
   END FromPoint;
 
 PROCEDURE FromCorners (READONLY p, q: RealPoint.T): T RAISES {} =
