@@ -106,7 +106,18 @@ PROCEDURE Eval (t: T; end_on_return: BOOLEAN := FALSE)
 
       | Op.BuildArray =>
           arr := NEW (QVSeq.T).init (arg);
-          FOR i := 0 TO arg-1 DO  Pop (t, val);  arr.addlo (val);  END;
+          FOR i := 0 TO arg-1 DO
+            Pop (t, val);  
+            IF val.kind = QValue.Kind.Array THEN
+              WITH seq = QVal.ToArray(t, val) DO
+                FOR i := 0 TO seq.size() - 1 DO
+                  arr.addhi(seq.get(i));
+                END;
+              END;
+            ELSE
+              arr.addlo (val);
+            END;
+          END;
           val.kind := QK.Array;
           val.int  := 0;
           val.ref  := arr;
@@ -288,7 +299,15 @@ PROCEDURE Eval (t: T; end_on_return: BOOLEAN := FALSE)
       | Op.Append =>
           Pop (t, val);
           Pop (t, val2);  arr := QVal.ToArray (t, val2);
-          arr.addhi (val);
+          IF val.kind = QValue.Kind.Array THEN
+            WITH seq = QVal.ToArray(t, val) DO
+              FOR i := 0 TO seq.size() - 1 DO
+                arr.addhi(seq.get(i));
+              END;
+            END;
+          ELSE
+            arr.addhi (val);
+          END;
           arr := NIL;
           val.ref := NIL;
           val2.ref := NIL;
@@ -865,7 +884,7 @@ PROCEDURE InitBuiltins () =
     Builtins [ 4] := NewBuiltin ("equal",       DoEqual,     2, TRUE);
     Builtins [ 5] := NewBuiltin ("error",       DoError,     1, FALSE);
     Builtins [ 6] := NewBuiltin ("escape",      DoEscape,    1, TRUE);
-    Builtins [ 7] := NewBuiltin ("exec",        DoExec,     -1, FALSE);
+    Builtins [ 7] := NewBuiltin ("exec",        DoExec,     -1, TRUE);
     Builtins [ 8] := NewBuiltin ("file",        DoFile,      0, TRUE);
     Builtins [ 9] := NewBuiltin ("format",      DoFormat,   -1, TRUE);
     Builtins [10] := NewBuiltin ("include",     DoInclude,   1, FALSE);
