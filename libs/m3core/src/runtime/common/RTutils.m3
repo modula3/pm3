@@ -73,9 +73,9 @@ PROCEDURE Delta (v1, v2: Visitor): Visitor =
     v.countSum := v1.countSum - v2.countSum;
     v.sizeSum := v1.sizeSum - v2.sizeSum;
     FOR i := 0 TO LAST (v.r^) DO
-      WITH a = v.r[i], b = v2.r[i] DO
-        DEC (a.total.count, b.total.count);
-        DEC (a.total.size,  b.total.size);
+      WITH x = v.r[i].total, a = v1.r[i].total, b = v2.r[i].total DO
+        x.count := a.count - b.count;
+        x.size  := a.size  - b.size;
       END;
     END;
     RETURN v
