@@ -183,7 +183,9 @@ static int IsWhite(c)
    yytext, and we're responsible for taking care of the rest. */
 HandleNPS ()
 {
-    register char c, c2;
+    /* use 'int' instead of 'char' for distinguishing between end of file
+       and characters above 127 */
+    register int c, c2;
     char target;
     int tok;
     char *p;

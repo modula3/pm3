@@ -1518,7 +1518,10 @@ initParser (infile, outfile, emacs, caps, fontInfo,
 }
 
 yyerror(s) char *s; {
-  char temp; char temp2;
+  int temp, temp2; /* must be 'int' instead of 'char'
+                      otherwise the test (temp>0)
+                      will fail for characters above code 127 
+                      and we need negative numbers for detecting end of file */
   Reset();
   Flush();
   if (calledFromEmacs == 0) {
