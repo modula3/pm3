@@ -32,4 +32,4 @@ TYPE
   InitProc = PROCEDURE(t: TextRefTbl.T; error: TEXT): BOOLEAN;
   RequestProc = PROCEDURE(command, path, query: TEXT);
 
-END IdeHTTP;
+END IdeHTTP.

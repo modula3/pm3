@@ -410,6 +410,7 @@ PROCEDURE Redisplay3(v: T; VAR a: ARRAY OF ChildRec; inReshape, translation:
                   Region.FromRect(el.ch.domain), el.ur.clip.rgn)
 	      ELSE
 	        br := Region.Difference(el.ch.reg, el.ur.clip.rgn)
+              END;
             ELSE
               br := Region.Difference(el.clip.rgn, el.ur.clip.rgn)
             END;
