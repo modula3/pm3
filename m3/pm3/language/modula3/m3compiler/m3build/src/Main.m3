@@ -8,7 +8,7 @@
 MODULE Main;
 
 IMPORT Text, TextList, M3Config, Stdio, Wr, FS, OSError;
-IMPORT Process, ASCII, Thread, Params, Pathname;
+IMPORT Process, ASCII, Thread, Params, Pathname, Env;
 IMPORT Quake, M3File;
 
 CONST
@@ -23,7 +23,12 @@ TYPE
   END;
 
 VAR
-  template_dir    : TEXT := M3Config.PKG_USE &SL& "m3build" &SL& "templates";
+  default_template_dir := M3Config.PKG_USE &SL& "m3build" &SL& "templates";
+  other_template_dir_1 := ".." & SL & "lib" & SL & "m3" & SL & "pkg" & SL &
+      "m3build" & SL & "templates";
+  other_template_dir_2 := ".." & SL & other_template_dir_1;
+
+  template_dir    : TEXT := Env.Get("M3TEMPLATES");
   template        : TEXT := M3Config.BUILD_DIR;
   build_dir       : TEXT := M3Config.BUILD_DIR;
   start_dir       : TEXT := ".";
@@ -69,7 +74,7 @@ PROCEDURE PrintUsage () =
     Out ("  -d <dir>   start in directory <dir> (default='", start_dir,"')\n");
     Out ("  -F <file>  prepend the quake code in <file>\n");
     Out ("  -T <dir>   use templates in directory <dir>\n");
-    Out ("               (default='", template_dir, "')\n");
+    Out ("               (default='", default_template_dir, "')\n");
     Out ("  -S         build in 'src' directory\n");
     Out ("  -q         quiet\n");
     Out ("  -v         verbose\n");
@@ -166,6 +171,28 @@ PROCEDURE MkDir (dir: TEXT) =
       Err ("unable to create directory: ", dir);
     END;
   END MkDir;
+
+PROCEDURE CheckTemplateDir() =
+  BEGIN
+    IF template_dir = NIL THEN
+      WITH trial1 = default_template_dir,
+           trial2 = Pathname.Join(Pathname.Prefix(Params.Get(0)),
+               other_template_dir_1);
+           trial3 = Pathname.Join(Pathname.Prefix(Params.Get(0)),
+               other_template_dir_2) DO
+        IF M3File.IsDirectory(trial1) THEN
+          template_dir := trial1;
+        ELSIF M3File.IsDirectory(trial2) THEN
+          template_dir := trial2;
+        ELSIF M3File.IsDirectory(trial3) THEN
+          template_dir := trial3;
+        ELSE
+          Err ("unable to find template directory in " & trial1 & " or " &
+              trial2 & " or " & trial3);
+        END;
+      END;
+    END;
+  END CheckTemplateDir;
 
 PROCEDURE GotoInitialDirectory () =
   BEGIN
@@ -332,6 +359,7 @@ PROCEDURE EvaluateMakefile () =
 
 BEGIN
   ParseCommandLine ();
+  CheckTemplateDir();
   GotoInitialDirectory ();
   GotoDerivedDirectory ();
   CheckForMakefile ();
