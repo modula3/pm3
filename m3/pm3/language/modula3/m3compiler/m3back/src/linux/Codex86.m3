@@ -1443,7 +1443,7 @@ PROCEDURE reserve_labels (t: T; n: INTEGER; short := FALSE): Label =
   VAR lab := t.next_label_id;
   BEGIN
     IF t.next_label_id+n >= t.lablimit THEN
-      expand_labels(t);
+      expand_labels(t,t.next_label_id+n);
     END;
     FOR i := lab TO lab + n - 1 DO
       t.labarr[i].no_address := TRUE;
@@ -1454,14 +1454,15 @@ PROCEDURE reserve_labels (t: T; n: INTEGER; short := FALSE): Label =
     RETURN lab;
   END reserve_labels;
 
-PROCEDURE expand_labels(t: T) =
-  VAR newarr := NEW(REF ARRAY OF x86Label, t.lablimit * 2);
+PROCEDURE expand_labels(t: T;n:INTEGER) =
+  VAR newsize := MAX ( n + 5 , t.lablimit * 2 ); 
+    newarr := NEW(REF ARRAY OF x86Label, newsize);
   BEGIN
     FOR i := 0 TO t.lablimit - 1 DO
       newarr[i] := t.labarr[i];
     END;
     t.labarr := newarr;
-    t.lablimit := t.lablimit * 2;
+    t.lablimit := newsize;
   END expand_labels;
 
 PROCEDURE log_unknown_label (t: T; l: Label; loc: ByteOffset; abs: BOOLEAN) =
