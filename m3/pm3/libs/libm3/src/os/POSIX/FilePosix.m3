@@ -170,7 +170,10 @@ PROCEDURE RegularFileLock(h: RegularFile.T): BOOLEAN RAISES {OSError.E} =
   BEGIN
     IF Unix.fcntl(h.fd, Unix.F_SETLK, LOOPHOLE(ADR(flock), Ctypes.long)) < 0
     THEN
-      IF Uerror.errno = Uerror.EACCES THEN RETURN FALSE END;
+      IF Uerror.errno = Uerror.EACCES OR
+         Uerror.errno = Uerror.EAGAIN THEN 
+        RETURN FALSE 
+      END;
       OSErrorPosix.Raise()
     END;
     RETURN TRUE
