@@ -108,6 +108,8 @@
 #include <sys/ipc.h>
 #include <dirent.h>
 #include <sys/times.h>
+#include <sys/resource.h>
+#include <sys/wait.h>
 
 #if __GLIBC__ >= 2 && __GLIBC_MINOR__ >= 1
 #include <asm/ipc.h>
@@ -608,9 +610,7 @@ int getpeername(int sockfd, struct sockaddr *addr, socklen_t *paddrlen)
   return result;
 }
 
-int getrlimit(resource, rlp)
-int resource;
-struct rlimit *rlp;
+int getrlimit(enum __rlimit_resource resource, struct rlimit *rlp)
 { int result;
 
   ENTER_CRITICAL;
@@ -1299,9 +1299,7 @@ char *file;
 }
 */
 
-int setrlimit(resource, rlp)
-int resource;
-struct rlimit *rlp;
+int setrlimit(enum __rlimit_resource resource, const struct rlimit *rlp)
 { int result;
 
   ENTER_CRITICAL;
@@ -1578,9 +1576,7 @@ pid_t __wrap_wait3(union wait *status, int options, struct rusage *rusage)
   return result;
 }
 
-pid_t waitpid(pid, status, options)
-union wait *status;
-int options;
+pid_t waitpid(pid_t pid, int *status, int options)
 { int result;
 
   ENTER_CRITICAL;
