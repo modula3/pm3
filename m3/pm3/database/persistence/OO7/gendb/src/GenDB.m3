@@ -153,6 +153,7 @@ PROCEDURE gendb () =
             ComputeUserTime(startUsage, endUsage) +
             ComputeSystemTime(startUsage, endUsage)));
     Put(" seconds.)\n");
+    Database.Checkpoint();
   END gendb;
 
 <*FATAL Database.NotFound*>

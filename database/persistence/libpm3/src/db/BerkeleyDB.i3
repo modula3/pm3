@@ -64,14 +64,14 @@ TYPE
     (*
      * data/size must be fields 1 and 2 for DB 1.85 compatibility.
      *)
-    data: Ctypes.void_star;		 (* Key/data *)
-    size: u_int32_t;			 (* key/data length *)
+    data: Ctypes.void_star := NIL;	 (* Key/data *)
+    size: u_int32_t := 0;		 (* key/data length *)
 
-    ulen: u_int32_t;			 (* RO: length of user buffer. *)
-    dlen: u_int32_t;			 (* RO: get/put record length. *)
-    doff: u_int32_t;			 (* RO: get/put record offset. *)
+    ulen: u_int32_t := 0;		 (* RO: length of user buffer. *)
+    dlen: u_int32_t := 0;		 (* RO: get/put record length. *)
+    doff: u_int32_t := 0;		 (* RO: get/put record offset. *)
 
-    flags: u_int32_t;
+    flags: u_int32_t := 0;
   END;
 
 
@@ -1037,7 +1037,7 @@ CONST
 (* Database Environment *)
 
 <*EXTERNAL*>
-PROCEDURE db_env_create (VAR dbenv: DB_ENV; flags: u_int32_t): int;
+PROCEDURE db_env_create (dbenv: UNTRACED REF DB_ENV; flags: u_int32_t): int;
 
 <*EXTERNAL*>
 PROCEDURE db_env_close (dbenv: DB_ENV; flags: u_int32_t): int;
@@ -1582,6 +1582,10 @@ PROCEDURE db_txn_set_timeout
   (tid: DB_TXN; timeout: db_timeout_t; flags: u_int32_t): u_int32_t;
 
 <*EXTERNAL*>
+PROCEDURE db_txn_last_lsn
+  (tid: DB_TXN; VAR lsn: DB_LSN);
+
+<*EXTERNAL*>
 PROCEDURE db_env_set_rep_transport
   (dbenv: DB_ENV; envid: int; send: db_env_send): int;
 TYPE db_env_send = PROCEDURE
@@ -1608,5 +1612,10 @@ PROCEDURE db_env_rep_start
 <*EXTERNAL*>
 PROCEDURE db_env_rep_stat
   (dbenv: DB_ENV; VAR statp: UNTRACED REF DB_REP_STAT; flags: u_int32_t): int;
+
+TYPE yieldProc = PROCEDURE(): INTEGER;
+<*EXTERNAL*>
+PROCEDURE db_env_set_func_yield
+  (proc: yieldProc): INTEGER;
 
 END BerkeleyDB.

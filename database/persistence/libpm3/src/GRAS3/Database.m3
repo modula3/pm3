@@ -1,4 +1,4 @@
-UNSAFE MODULE Database EXPORTS Database, InternalDatabase;
+MODULE Database EXPORTS Database, InternalDatabase;
 
 IMPORT RTIO, Pathname, Access, PageFile,
        BaseDatabase, InternalTransaction, BaseTransaction,
@@ -7,7 +7,7 @@ IMPORT RTIO, Pathname, Access, PageFile,
        TextRefTransientTbl AS TextRefTbl,
        Atom, AtomList, RTProcess, RTParams, Lex, Scan, Env, Config, FloatMode,
        DB, Transaction, RTCollector,
-       RTHeapDB, Thread, ThreadF;
+       RTHeapDB, Thread;
 
 FROM Text IMPORT Length;
 FROM DB IMPORT resource;
@@ -20,7 +20,7 @@ REVEAL
 
 PROCEDURE Init(self: T): BaseDatabase.T =
   BEGIN
-    EVAL BaseDatabase.T.init(self);
+    EVAL Internal.init(self);
     RETURN self;
   END Init;
 
@@ -64,7 +64,7 @@ PROCEDURE Create(name: Pathname.T)
                                            Access.Kind.Data,
                                            new := TRUE);
         resource.beginTransaction();
-        ThreadF.TxnBegin(tr);
+        RTHeapDB.Begin(tr);
         TRY
           RTHeapDB.Flush(db)
         EXCEPT
@@ -75,7 +75,7 @@ PROCEDURE Create(name: Pathname.T)
         db.file.close();
         db.file := NIL;
         resource.commitTransaction(); <*NOWARN*> (* NotInTransaction *)
-        ThreadF.TxnCommit();
+        RTHeapDB.Commit();
         IF dbs.put(name, db) THEN
           <* ASSERT FALSE *>
         END;

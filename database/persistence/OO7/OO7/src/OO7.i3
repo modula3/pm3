@@ -1,6 +1,6 @@
 INTERFACE OO7;
 
-IMPORT PartIdSet, RefList, RefSeq, Ctypes, Transaction, Text8;
+IMPORT PartIdSet, RefList, RefSeq, Ctypes, Transaction;
 
 (*--------------------------------------------------------------------------
    Start with some necessary preliminaries
@@ -98,7 +98,7 @@ TYPE
     part: CompositePart;
   METHODS
     searchText(c: CHAR): INTEGER;
-    replaceText(oldString, newString: Text8.T): INTEGER;
+    replaceText(READONLY oldString, newString: ARRAY OF CHAR): INTEGER;
     init(cpId: INTEGER; cp: CompositePart): Document;
     delete();
   END;
@@ -116,7 +116,7 @@ TYPE
     mod: Module;
   METHODS
     searchText(c: CHAR): INTEGER;
-    replaceText(oldString, newString: Text8.T): INTEGER;
+    replaceText(READONLY oldString, newString: ARRAY OF CHAR): INTEGER;
     firstLast(): INTEGER;
     init(modId: INTEGER; myMod: Module): Manual;
     delete();

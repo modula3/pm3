@@ -1,10 +1,11 @@
-UNSAFE MODULE BaseDatabase;
+MODULE BaseDatabase;
 
-IMPORT Database, Fingerprint, RTDB, RTHeapDB, DBPage, BaseDBPage,
-       Transaction, BaseTransaction, ThreadF;
-IMPORT SortedTransientFPRefTbl AS FPRefTbl;
-IMPORT SortedTransientFPAdrTbl AS FPAdrTbl;
+IMPORT Database, Fingerprint, RTHeapDB, DBPage, BaseDBPage,
+       Transaction, BaseTransaction, RTType;
+IMPORT TransientFPRefTbl AS FPRefTbl;
+IMPORT TransientFPAdrTbl AS FPAdrTbl;
 IMPORT IntRefTransientTbl AS PageTbl;
+FROM RTHeapDep IMPORT Page;
 
 REVEAL
   T = Database.Public BRANDED "BaseDatabase.T" OBJECT
@@ -14,12 +15,13 @@ REVEAL
   OVERRIDES
     init       := Init;
 
-    createRoot := CreateRoot;
     mapFP      := MapFP;
     newPage    := NewPage;
+    rootTC     := RootTC;
     newId      := NewId;
-    mapPage    := MapPage;
-    unmapPage  := UnmapPage;
+    pageMapGet := PageMapGet;
+    pageMapPut := PageMapPut;
+    pageMapDel := PageMapDel;
 
     setRoot    := SetRoot;
     getRoot    := GetRoot;
@@ -33,124 +35,110 @@ PROCEDURE Init(self: T): T =
     RETURN self;
   END Init;
 
-TYPE Root = BRANDED "Database.Root" REF RECORD
-  pages: RTDB.Id := 0;
-  ref: REFANY := NIL;
-END;
-
-PROCEDURE CreateRoot(self: T) =
-  BEGIN
-    self.root := NEW(Root);
-  END CreateRoot;
-
 PROCEDURE MapFP(self: T;
                 READONLY fp: Fingerprint.T;
                 VAR fpRef: REF Fingerprint.T;
                 VAR fpAdr: ADDRESS) =
-  VAR
-    ref: REFANY;
-    adr: ADDRESS;
+  VAR ref: REFANY;
   BEGIN
-    IF self.fpAdr.get(fp, adr) THEN
-      fpAdr := adr;
-      fpRef := NIL;
-      RETURN;
-    END;
     IF fpAdr # NIL THEN
       EVAL self.fpRef.delete(fp, ref);
-      fpRef := LOOPHOLE(ref, REF Fingerprint.T);
       EVAL self.fpAdr.put(fp, fpAdr);
       RETURN;
     END;
-    IF self.fpRef.get(fp, ref) THEN
-      fpRef := LOOPHOLE(ref, REF Fingerprint.T);
-      fpAdr := NIL;
+    IF fpRef # NIL THEN
+      EVAL self.fpRef.put(fp, fpRef);
       RETURN;
     END;
-    IF fpRef = NIL THEN
-      fpRef := NEW(REF Fingerprint.T);
-      fpRef^ := fp;
+    EVAL self.fpAdr.get(fp, fpAdr);
+    IF self.fpRef.get(fp, ref) THEN
+      fpRef := NARROW(ref, REF Fingerprint.T);
     END;
-    ref := fpRef;
-    EVAL self.fpRef.put(fp, ref);
+    <* ASSERT fpRef = NIL OR fpAdr = NIL *>
   END MapFP;
 
-PROCEDURE NewPage(self: T): RTDB.Page =
+PROCEDURE NewPage(self: T; p: Page; id: Page):
+  RTHeapDB.DBPage =
   BEGIN
-    RETURN NEW(DBPage.T, db := self).init();
+    RETURN NEW(DBPage.T, p := p, db := self, id := id).init();
   END NewPage;
 
-PROCEDURE NewId(self: T; page: RTDB.Page) =
-  VAR root: Root;
+TYPE
+  Root = RTHeapDB.DBRoot OBJECT
+    pages := 0;
+  END;
+
+PROCEDURE RootTC(<*UNUSED*> self: T): RTType.Typecode =
+  BEGIN
+    RETURN TYPECODE(Root);
+  END RootTC;
+
+PROCEDURE NewId(self: T; n: CARDINAL): Page =
+  VAR
+    id: Page;
+    root: Root;
   BEGIN
     LOCK self DO
-      root := self.root;
-      IF root = NIL THEN
-        root := RTHeapDB.SwizzleRoot(self);
-        self.root := root;
+      IF self.root = NIL THEN
+        self.root := RTHeapDB.SwizzleRoot(self);
       END;
-      INC(root.pages);
-      VAR id := root.pages;
-      BEGIN
-        page.id := id;
-        IF self.pageMap.put(id, page) THEN
-          <* ASSERT FALSE *>
-        END
-      END
+      root := self.root;
+      id := root.pages + 1;
+      INC(root.pages, n);
+      RETURN id;
     END
   END NewId;
 
-PROCEDURE MapPage(self: T; p: RTDB.Id): RTDB.Page =
+PROCEDURE PageMapGet(self: T; id: Page): RTHeapDB.DBPage =
   VAR ref: <*TRANSIENT*> REFANY;
   BEGIN
-    IF NOT self.pageMap.get(p, ref) THEN
-      ref := NEW(DBPage.T, id := p, db := self).init();
-      IF self.pageMap.put(p, ref) THEN
-        <* ASSERT FALSE *>
-      END
+    IF self.pageMap.get(id, ref) THEN
+      RETURN ref;
     END;
-    RETURN ref;
-  END MapPage;
+    RETURN NIL;
+  END PageMapGet;
 
-PROCEDURE UnmapPage(self: T; p: RTDB.Id) =
-  VAR
-    ref: <*TRANSIENT*> REFANY;
+PROCEDURE PageMapPut(self: T; page: RTHeapDB.DBPage) =
+  VAR ref: <*TRANSIENT*> REFANY := page;
   BEGIN
-    IF NOT self.pageMap.delete(p, ref) THEN
-      <* ASSERT FALSE *>
+    IF NOT self.pageMap.put(page.id, ref) THEN
+      RETURN;
     END;
-  END UnmapPage;
+    <* ASSERT FALSE *>
+  END PageMapPut;
+
+PROCEDURE PageMapDel(self: T; page: RTHeapDB.DBPage) =
+  VAR ref: <*TRANSIENT*> REFANY;
+  BEGIN
+    IF self.pageMap.delete(page.id, ref) THEN
+      <* ASSERT page = ref *>
+      RETURN;
+    END;
+    <* ASSERT FALSE *>
+  END PageMapDel;
 
 PROCEDURE SetRoot(self: T; object: REFANY) RAISES {Transaction.NotInProgress} =
-  VAR
-    root: Root;
-    tr: Transaction.T := ThreadF.myTxn;
+  VAR tr: Transaction.T := RTHeapDB.myTxn;
   BEGIN
     LOCK self DO
       IF tr = NIL OR NOT tr.isOpen() THEN RAISE Transaction.NotInProgress END;
-      root := self.root;
-      IF root = NIL THEN
-        root := RTHeapDB.SwizzleRoot(self);
-        self.root := root;
+      IF self.root = NIL THEN
+        self.root := RTHeapDB.SwizzleRoot(self);
       END;
-      root.ref := object;
+      self.root.ref := object;
     END;
   END SetRoot;
 
 PROCEDURE GetRoot(self: T): REFANY RAISES {Transaction.NotInProgress} =
-  VAR
-    root: Root;
-    tr: Transaction.T := ThreadF.myTxn;
+  VAR tr: Transaction.T := RTHeapDB.myTxn;
   BEGIN
     LOCK self DO
       IF tr = NIL OR NOT tr.isOpen() THEN RAISE Transaction.NotInProgress END;
-      root := self.root;
-      IF root = NIL THEN
-        root := RTHeapDB.SwizzleRoot(self);
-        self.root := root;
+      IF self.root = NIL THEN
+        self.root := RTHeapDB.SwizzleRoot(self);
       END;
+      RETURN self.root.ref;
     END;
-    RETURN root.ref;
   END GetRoot;
 
 BEGIN

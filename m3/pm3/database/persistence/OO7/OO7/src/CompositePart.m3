@@ -231,6 +231,9 @@ PROCEDURE Delete (self: T) =
     
 PROCEDURE Traverse (self: T; op: OO7.BenchmarkOp;
                     writer: Transaction.T): INTEGER =
+  CONST
+    oldString = ARRAY OF CHAR { 'I', ' ', 'a', 'm' };
+    newString = ARRAY OF CHAR { 'T', 'h', 'i', 's', ' ', 'i', 's' };
   VAR result := 0;
   BEGIN
     IF Globals.debugMode THEN
@@ -261,10 +264,10 @@ PROCEDURE Traverse (self: T; op: OO7.BenchmarkOp;
       result := self.documentation.searchText('I');
     ELSIF op = OO7.BenchmarkOp.Trav5do THEN
       (* conditionally change initial part of document text *)
-      result := self.documentation.replaceText("I am", "This is");
+      result := self.documentation.replaceText(oldString, newString);
     ELSIF op = OO7.BenchmarkOp.Trav5undo THEN
       (* conditionally change back initial part of document text *)
-      result := self.documentation.replaceText("This is", "I am");
+      result := self.documentation.replaceText(newString, oldString);
     ELSIF op = OO7.BenchmarkOp.Trav6 THEN
       (* visit the root part only (it knows how to handle this) *)
       IF writer # NIL THEN

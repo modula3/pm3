@@ -1,7 +1,7 @@
-UNSAFE MODULE Transaction EXPORTS Transaction, InternalTransaction;
+MODULE Transaction EXPORTS Transaction, InternalTransaction;
 
-IMPORT RTIO, RTHeapDB, RTDB, VirtualResource, Atom, AtomList, Txn,
-       DB, BaseTransaction, Thread, ThreadF;
+IMPORT RTIO, RTHeapDB, VirtualResource, Atom, AtomList, Txn,
+       DB, BaseTransaction, Thread;
 FROM DB IMPORT resource;
 
 REVEAL
@@ -21,7 +21,7 @@ REVEAL
 
 PROCEDURE Init(self: T): BaseTransaction.T =
   BEGIN
-    EVAL BaseTransaction.T.init(self);
+    EVAL Internal.init(self);
     RETURN self;
   END Init;
 
@@ -39,10 +39,7 @@ PROCEDURE fatalAtoms (t: AtomList.T) =
 PROCEDURE Begin(self: T)
   RAISES { InProgress, Thread.Aborted } =
   BEGIN
-    IF resource.getTransactionLevel() # Txn.EnvelopeLevel THEN
-      IF ThreadF.myTxn = NIL THEN RAISE InProgress END;
-      RTHeapDB.Flush(release:= FALSE);
-    END;
+    RTHeapDB.Flush();
     LOCK self DO
       EVAL self.init();
       IF self.open THEN RAISE InProgress END;
@@ -51,9 +48,9 @@ PROCEDURE Begin(self: T)
       EXCEPT
       | VirtualResource.FatalError(t) => fatalAtoms(t);
       END;
-      ThreadF.TxnBegin(self);
       self.open := TRUE;
-    END
+    END;
+    RTHeapDB.Begin(self);
   END Begin;
 
 PROCEDURE Commit(self: T)
@@ -70,15 +67,15 @@ PROCEDURE Commit(self: T)
       | VirtualResource.NotInTransaction => RAISE NotInProgress;
       | VirtualResource.FatalError(t) => fatalAtoms(t);
       END;
-      ThreadF.TxnCommit();
       self.open := FALSE;
     END;
+    RTHeapDB.Commit();
   END Commit;
 
 PROCEDURE Chain(self: T)
   RAISES { NotInProgress, Thread.Aborted } =
   BEGIN
-    RTHeapDB.Flush(release := FALSE);
+    RTHeapDB.Flush();
     LOCK self DO
       IF NOT self.open THEN RAISE NotInProgress; END;
       TRY
@@ -95,7 +92,6 @@ PROCEDURE Abort(self: T) RAISES { NotInProgress } =
   BEGIN
     LOCK self DO
       IF NOT self.open THEN RAISE NotInProgress; END;
-      RTHeapDB.Abort();
       TRY
         resource.abortTransaction();
         outer := resource.getTransactionLevel();
@@ -103,15 +99,15 @@ PROCEDURE Abort(self: T) RAISES { NotInProgress } =
       | VirtualResource.NotInTransaction => RAISE NotInProgress;
       | VirtualResource.FatalError(t) => fatalAtoms(t);
       END;
-      ThreadF.TxnAbort();
       self.open := FALSE;
     END;
+    RTHeapDB.Abort();
   END Abort;
 
 PROCEDURE Checkpoint(self: T)
   RAISES { NotInProgress, Thread.Aborted } =
   BEGIN
-    RTHeapDB.Flush(release := FALSE);
+    RTHeapDB.Flush();
     LOCK self DO
       IF NOT self.open THEN RAISE NotInProgress; END;
     END;
@@ -126,7 +122,7 @@ PROCEDURE IsOpen(self: T): BOOLEAN =
 
 PROCEDURE Lock(<*UNUSED*> self: T; object: REFANY; mode: LockMode)
   RAISES { Thread.Aborted } =
-  VAR p: RTDB.Page;
+  VAR p: RTHeapDB.DBPage;
   BEGIN
     p := RTHeapDB.RefPageMap(object);
     IF p # NIL THEN

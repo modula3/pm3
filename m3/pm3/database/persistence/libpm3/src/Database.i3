@@ -19,6 +19,8 @@ PROCEDURE Open(name: Pathname.T): T
      Opened is raised if database is already open;
      Transaction.InProgress is raised if a transaction is already open *)
 
+PROCEDURE Checkpoint();
+
 TYPE
   T <: Public;
   Private <: <*TRANSIENT*> ROOT;

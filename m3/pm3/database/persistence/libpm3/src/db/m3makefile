@@ -1,5 +1,6 @@
 import_sys_lib("DB")
 
+c_includes += "-I" & DB_ROOT & "include"
 c_source("BerkeleyDB")
 interface("BerkeleyDB")
 

@@ -1,5 +1,6 @@
 import("libpm3")
 import("OO7")
 
-implementation("Multi")
+c_source("ipc")
+Module("Multi")
 Program("multi")

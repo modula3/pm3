@@ -166,11 +166,21 @@ PROCEDURE ParseCommandLine (VAR opIndex, repeatCount: INTEGER;
 <*FATAL Transaction.InProgress*>
 <*FATAL Transaction.NotInProgress*>
 
+TYPE ResultText = <*TRANSIENT*> REF ARRAY OF CHAR;
+PROCEDURE Result(fmt: TEXT; t1, t2, t3, t4, t5: TEXT := NIL): ResultText =
+  VAR
+    t := Fmt.F(fmt, t1, t2, t3, t4, t5);
+    r := NEW(ResultText, Text.Length(t));
+  BEGIN
+    Text.SetChars(r^, t);
+    RETURN r;
+  END Result;
+
 VAR
   db := ODMG.Open("OO7");
   tr := NEW(Transaction.T);
   moduleH: Module.T;
-  resultText: TEXT;                      (* buffer to hold result of        *)
+  resultText: ResultText;		 (* buffer to hold result of        *)
 					 (* operation for printing outside  *)
 					 (* of timing region.               *)
   moduleName: TEXT;
@@ -277,77 +287,77 @@ BEGIN
         | OO7.BenchmarkOp.Trav1 =>
           count := moduleH.traverse(whichOp);
           resultText :=
-              Fmt.F("Traversal 1 DFS visited %s atomic parts.\n",
-                    Fmt.Int(count));
+              Result("Traversal 1 DFS visited %s atomic parts.\n",
+                     Fmt.Int(count));
         | OO7.BenchmarkOp.Trav1WW =>
           AtomicPart.RealWork := TRUE;
           whichOp := OO7.BenchmarkOp.Trav1; (* so traverse methods don't complain *)
           count := moduleH.traverse(whichOp);
           whichOp := OO7.BenchmarkOp.Trav1WW;  (* for next (hot) traversal *)
           resultText :=
-              Fmt.F("Traversal 1WW DFS visited %s atomic parts.\n",
-                    Fmt.Int(count));
+              Result("Traversal 1WW DFS visited %s atomic parts.\n",
+                     Fmt.Int(count));
         | OO7.BenchmarkOp.Trav2a =>
           count := moduleH.traverse(whichOp);
           resultText :=
-              Fmt.F("Traversal 2A swapped %s pairs of (X,Y) coordinates.\n",
-                    Fmt.Int(count));
+              Result("Traversal 2A swapped %s pairs of (X,Y) coordinates.\n",
+                     Fmt.Int(count));
         | OO7.BenchmarkOp.Trav2b =>
           count := moduleH.traverse(whichOp);
           resultText :=
-              Fmt.F("Traversal 2B swapped %s pairs of (X,Y) coordinates.\n",
-                    Fmt.Int(count));
+              Result("Traversal 2B swapped %s pairs of (X,Y) coordinates.\n",
+                     Fmt.Int(count));
         | OO7.BenchmarkOp.Trav2c =>
           count := moduleH.traverse(whichOp);
           resultText :=
-              Fmt.F("Traversal 2C swapped %s pairs of (X,Y) coordinates.\n",
-                    Fmt.Int(count));
+              Result("Traversal 2C swapped %s pairs of (X,Y) coordinates.\n",
+                     Fmt.Int(count));
         | OO7.BenchmarkOp.Trav3a =>
           count := moduleH.traverse(whichOp);
           resultText :=
-              Fmt.F("Traversal 3A toggled %s dates.\n", Fmt.Int(count));
+              Result("Traversal 3A toggled %s dates.\n", Fmt.Int(count));
         | OO7.BenchmarkOp.Trav3b =>
           count := moduleH.traverse(whichOp);
           resultText :=
-              Fmt.F("Traversal 3B toggled %s dates.\n", Fmt.Int(count));
+              Result("Traversal 3B toggled %s dates.\n", Fmt.Int(count));
         | OO7.BenchmarkOp.Trav3c =>
           count := moduleH.traverse(whichOp);
           resultText :=
-              Fmt.F("Traversal 3C toggled %s dates.\n", Fmt.Int(count));
+              Result("Traversal 3C toggled %s dates.\n", Fmt.Int(count));
         | OO7.BenchmarkOp.Trav4 =>
           count := moduleH.traverse(whichOp);
           resultText :=
-              Fmt.F("Traversal 4: %s instances of the character found\n",
+              Result("Traversal 4: %s instances of the character found\n",
                     Fmt.Int(count));
         | OO7.BenchmarkOp.Trav5do =>
           count := moduleH.traverse(whichOp);
           resultText :=
-              Fmt.F("Traversal 5(DO): %s string replacements performed\n",
+              Result("Traversal 5(DO): %s string replacements performed\n",
                     Fmt.Int(count));
         | OO7.BenchmarkOp.Trav5undo=>
           count := moduleH.traverse(whichOp);
           resultText :=
-              Fmt.F("Traversal 5(UNDO): %s string replacements performed\n",
+              Result("Traversal 5(UNDO): %s string replacements performed\n",
                     Fmt.Int(count));
         | OO7.BenchmarkOp.Trav6 =>
           count := moduleH.traverse(whichOp);
           resultText :=
-              Fmt.F("Traversal 6: visited %s atomic part roots.\n",
+              Result("Traversal 6: visited %s atomic part roots.\n",
                     Fmt.Int(count));
         | OO7.BenchmarkOp.Trav7 =>
           count := traverse7();
           resultText :=
-              Fmt.F("Traversal 7: found %s assemblies using random atomic part.\n",
+              Result("Traversal 7: found %s assemblies using random atomic part.\n",
                     Fmt.Int(count));
         | OO7.BenchmarkOp.Trav8 =>
           count := moduleH.scanManual();
           resultText :=
-              Fmt.F("Traversal 8: found %s occurrences of character in manual.\n",
+              Result("Traversal 8: found %s occurrences of character in manual.\n",
                     Fmt.Int(count));
         | OO7.BenchmarkOp.Trav9 =>
           count := moduleH.firstLast();
           resultText :=
-              Fmt.F("Traversal 9: match was %s.\n", Fmt.Int(count));
+              Result("Traversal 9: match was %s.\n", Fmt.Int(count));
         | OO7.BenchmarkOp.Trav10 =>
           (* run traversal #1 on every module. *)
           count := 0;
@@ -368,72 +378,72 @@ BEGIN
             INC(count, moduleH.traverse(whichOp));
           END;
           resultText :=
-              Fmt.F("Traversal 10 visited %s atomic parts in %s modules.\n",
-                    Fmt.Int(count),
-                    Fmt.Int(VarParams.TotalModules));
+              Result("Traversal 10 visited %s atomic parts in %s modules.\n",
+                     Fmt.Int(count),
+                     Fmt.Int(VarParams.TotalModules));
           whichOp := OO7.BenchmarkOp.Trav10;  (* for next time around *)
 
         | OO7.BenchmarkOp.Query1 =>
           count := query1();
           resultText :=
-              Fmt.F("Query one retrieved %s atomic parts.\n",
-                    Fmt.Int(count));
+              Result("Query one retrieved %s atomic parts.\n",
+                     Fmt.Int(count));
 
         | OO7.BenchmarkOp.Query2 =>
           count := query2();
           resultText :=
-              Fmt.F("Query two retrieved %s qualifying atomic parts.\n",
-                    Fmt.Int(count));
+              Result("Query two retrieved %s qualifying atomic parts.\n",
+                     Fmt.Int(count));
 
         | OO7.BenchmarkOp.Query3 =>
           count := query3();
           resultText :=
-              Fmt.F("Query three retrieved %s qualifying atomic parts.\n",
-                    Fmt.Int(count));
+              Result("Query three retrieved %s qualifying atomic parts.\n",
+                     Fmt.Int(count));
 
         | OO7.BenchmarkOp.Query4 =>
           count := query4();
           resultText :=
-              Fmt.F("Query four retrieved %s (document, base assembly) pairs.\n",
-                    Fmt.Int(count));
+              Result("Query four retrieved %s (document, base assembly) pairs.\n",
+                     Fmt.Int(count));
 
         | OO7.BenchmarkOp.Query5 =>
           count := query5();
           resultText :=
-              Fmt.F("Query five retrieved %s out-of-date base assemblies.\n",
-                    Fmt.Int(count));
+              Result("Query five retrieved %s out-of-date base assemblies.\n",
+                     Fmt.Int(count));
 
         | OO7.BenchmarkOp.Query6 =>
           count := query6();
           resultText :=
-              Fmt.F("Query six retrieved %s out-of-date assemblies.\n",
-                    Fmt.Int(count));
+              Result("Query six retrieved %s out-of-date assemblies.\n",
+                     Fmt.Int(count));
 
         | OO7.BenchmarkOp.Query7 =>
           count := query7();
           resultText :=
-              Fmt.F("Query seven iterated through %s atomic parts.\n",
-                    Fmt.Int(count));
+              Result("Query seven iterated through %s atomic parts.\n",
+                     Fmt.Int(count));
 
         | OO7.BenchmarkOp.Query8 =>
           count := query8();
           resultText :=
-              Fmt.F("Query eight found %s atomic part/document matches.\n",
-                    Fmt.Int(count));
+              Result("Query eight found %s atomic part/document matches.\n",
+                     Fmt.Int(count));
 
         | OO7.BenchmarkOp.Insert =>
           insert1();
           resultText :=
-              Fmt.F("Inserted %s composite parts (a total of %s atomic parts.)\n",
-                    Fmt.Int(BenchParams.NumNewCompParts),
-                    Fmt.Int(BenchParams.NumNewCompParts * VarParams.NumAtomicPerComp));
+              Result("Inserted %s composite parts (a total of %s atomic parts.)\n",
+                     Fmt.Int(BenchParams.NumNewCompParts),
+                     Fmt.Int(BenchParams.NumNewCompParts * VarParams.NumAtomicPerComp));
 
         | OO7.BenchmarkOp.Delete =>
           delete1();
           resultText :=
-              Fmt.F("Deleted %s composite parts (a total of %s atomic parts.)\n",
-                    Fmt.Int(BenchParams.NumNewCompParts),
-                    Fmt.Int(BenchParams.NumNewCompParts * VarParams.NumAtomicPerComp));
+              Result("Deleted %s composite parts (a total of %s atomic parts.)\n",
+                     Fmt.Int(BenchParams.NumNewCompParts),
+                     Fmt.Int(BenchParams.NumNewCompParts * VarParams.NumAtomicPerComp));
 
         | OO7.BenchmarkOp.WarmUpdate =>
           (* first do the t1 traversal to warm the cache *)
@@ -441,8 +451,8 @@ BEGIN
           (* then call T2 to do the update *)
           count := moduleH.traverse(OO7.BenchmarkOp.Trav2a);
           resultText :=
-              Fmt.F("Warm update swapped %s pairs of (X,Y) coordinates.\n",
-                    Fmt.Int(count));
+              Result("Warm update swapped %s pairs of (X,Y) coordinates.\n",
+                     Fmt.Int(count));
         ELSE
           Put("Sorry, that operation isn't available yet.\n", Stdio.stderr);
           tr.abort();
@@ -480,7 +490,7 @@ BEGIN
 
     (* Compute and report CPU time. *)
     EVAL Uresource.getrusage(Uresource.RUSAGE_SELF, endUsage);
-    Put(resultText);
+    Put(Text.FromChars(resultText^));
     Put("CPU time: ");
     Put(Fmt.LongReal(
             ComputeUserTime(startUsage, endUsage) +

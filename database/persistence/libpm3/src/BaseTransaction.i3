@@ -1,9 +1,9 @@
 INTERFACE BaseTransaction;
 
-IMPORT Transaction, RTTxn;
+IMPORT Transaction, RTHeapDB;
 
 REVEAL
-  Transaction.Private = RTTxn.T BRANDED "Transaction.Private" OBJECT
+  Transaction.Private = RTHeapDB.Txn BRANDED "Transaction.Private" OBJECT
   METHODS
     init(): T;
   END;

@@ -1,6 +1,6 @@
 MODULE Manual;
 
-IMPORT Fmt, Text, VarParams, Text8, OO7, Wr, GenParams, Stdio, Globals, Thread;
+IMPORT Fmt, Text, VarParams, OO7, Wr, GenParams, Stdio, Globals, Thread;
 FROM IO IMPORT Put, PutInt;
 
 <* FATAL Wr.Failure, Thread.Alerted *>
@@ -45,7 +45,8 @@ PROCEDURE Init (self: T; modId: INTEGER; myModule: OO7.Module): OO7.Manual =
     VAR curChar := 0;
     BEGIN
       WHILE curChar < VarParams.ManualSize-1 DO
-        Text.SetChars(SUBARRAY(p^, curChar, stringLen), myText);
+        Text.SetChars(SUBARRAY(p^, curChar, VarParams.ManualSize - curChar),
+                      myText);
         INC(curChar, stringLen);
       END;
     END;
@@ -98,15 +99,16 @@ PROCEDURE SearchText (self: T; c: CHAR): INTEGER =
     END
   END SearchText;
 
-PROCEDURE ReplaceText (self: T; oldString, newString: Text8.T): INTEGER =
+PROCEDURE ReplaceText (self: T;
+                       READONLY oldString, newString: ARRAY OF CHAR): INTEGER =
   VAR
     oldText := self.text;
     oldTextLength := self.textLen;
-    oldStrLength := Text.Length(oldString);
+    oldStrLength := NUMBER(oldString);
     (* check to see if the text starts with the old string *)
     foundMatch :=
         SUBARRAY(oldText^, 0, oldStrLength) =
-        SUBARRAY(oldString.contents^, 0, oldStrLength);
+        SUBARRAY(oldString, 0, oldStrLength);
   BEGIN
     IF Globals.debugMode THEN
       Put("                    Manual::changeText(title = ");
@@ -116,14 +118,14 @@ PROCEDURE ReplaceText (self: T; oldString, newString: Text8.T): INTEGER =
     (* if so, change it to start with the new string instead *)
     IF foundMatch THEN
       VAR
-        newStrLength := Text.Length(newString);
+        newStrLength := NUMBER(newString);
         lengthDiff := newStrLength - oldStrLength;
         newTextLength := oldTextLength + lengthDiff;
         newText := oldText;
       BEGIN
         IF lengthDiff = 0 THEN
           SUBARRAY(oldText^, 0, newStrLength)
-          := SUBARRAY(newString.contents^, 0, newStrLength);
+          := SUBARRAY(newString, 0, newStrLength);
         ELSE
           IF newTextLength+1 > NUMBER(oldText^) THEN
             newText := NEW(REF ARRAY OF CHAR, newTextLength+1);
@@ -131,7 +133,8 @@ PROCEDURE ReplaceText (self: T; oldString, newString: Text8.T): INTEGER =
           END;
           SUBARRAY(newText^, newStrLength, oldTextLength - oldStrLength)
           := SUBARRAY(oldText^, oldStrLength, oldTextLength - oldStrLength);
-          Text.SetChars(newText^, newString);
+          SUBARRAY(newText^, 0, newStrLength)
+          := SUBARRAY(newString, 0, newStrLength);
           newText[newTextLength] := '\000';
           self.textLen := newTextLength;
         END
@@ -141,7 +144,10 @@ PROCEDURE ReplaceText (self: T; oldString, newString: Text8.T): INTEGER =
     IF Globals.debugMode THEN
       IF foundMatch THEN
         Put("                    [changed \"");
-        Put(oldString); Put("\" to \""); Put(newString); Put("\"]\n");
+        Put(Text.FromChars(oldString));
+        Put("\" to \"");
+        Put(Text.FromChars(newString));
+        Put("\"]\n");
       ELSE
         Put("                    [no match, so no change was made]\n");
       END

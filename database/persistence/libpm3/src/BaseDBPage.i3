@@ -1,9 +1,9 @@
 INTERFACE BaseDBPage;
 
-IMPORT RTDB, DBPage;
+IMPORT RTHeapDB, DBPage;
 
 REVEAL
-  DBPage.Private = RTDB.Page BRANDED "DBPage.Private" OBJECT
+  DBPage.Private = RTHeapDB.DBPage BRANDED "DBPage.Private" OBJECT
   METHODS
     init(): T;
   END;

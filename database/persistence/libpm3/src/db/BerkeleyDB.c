@@ -38,7 +38,11 @@ void db_env_errx (DB_ENV *env, const char *format)
 
 int db_env_open (DB_ENV *env, const char *db_home, u_int32_t flags, int mode)
 {
-  return env->open(env, db_home, flags, mode);
+  int result = env->open(env, db_home, flags, mode);
+  if (result ==0) {
+    env->set_errfile(env, stderr);
+  }
+  return result;
 }
 
 int db_env_remove (DB_ENV *env, const char *db_home, u_int32_t flags)
@@ -765,6 +769,11 @@ int db_txn_prepare (DB_TXN *tid, u_int8_t gid[DB_XIDDATASIZE])
 u_int32_t db_txn_set_timeout (DB_TXN *tid, db_timeout_t timeout, u_int32_t flags)
 {
   return tid->set_timeout(tid, timeout, flags);
+}
+
+void db_txn_last_lsn (DB_TXN *tid, DB_LSN *lsn)
+{
+  *lsn = tid->last_lsn;
 }
 
 int db_env_set_rep_transport (DB_ENV *env, int envid,

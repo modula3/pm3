@@ -1,9 +1,9 @@
 MODULE DBPage EXPORTS InternalDBPage, DBPage;
 
-IMPORT RTDB, InternalVirtualPage, BaseDBPage, Database, BaseDatabase,
+IMPORT InternalVirtualPage, BaseDBPage, Database, BaseDatabase,
        InternalDatabase, InternalTransaction;
-IMPORT PageCache, PageData;
-IMPORT Thread, ThreadF, Transaction, BaseTransaction;
+IMPORT PageCache, PageData, RTHeapDB;
+IMPORT Thread, Transaction, BaseTransaction;
 IMPORT Access, VirtualPage, Atom, AtomList, RTIO;
 
 REVEAL
@@ -21,7 +21,7 @@ REVEAL
 
 PROCEDURE Init(self: T): BaseDBPage.T =
   BEGIN
-    EVAL BaseDBPage.T.init(self);
+    EVAL Internal.init(self);
     RETURN self;
   END Init;
 
@@ -36,7 +36,7 @@ PROCEDURE fatalAtoms (t: AtomList.T) RAISES {FatalError} =
     RAISE FatalError;
   END fatalAtoms;
  
-PROCEDURE ReadAccess(self: T; p: RTDB.Releaser) RAISES {Thread.Aborted} =
+PROCEDURE ReadAccess(self: T; p: RTHeapDB.Releaser) =
   VAR
     page := NARROW(self.db, Database.T).file.getPage(self.id - 1);
     newPageAge: CARDINAL;
@@ -57,8 +57,7 @@ PROCEDURE ReadAccess(self: T; p: RTDB.Releaser) RAISES {Thread.Aborted} =
     PageCache.EndAccess();
   END ReadAccess;
 
-PROCEDURE WriteAccess(self: T; <*UNUSED*>p: RTDB.Releaser)
-  RAISES {Thread.Aborted} =
+PROCEDURE WriteAccess(self: T; <*UNUSED*>p: RTHeapDB.Releaser) =
   VAR
     page := NARROW(self.db, Database.T).file.getPage(self.id - 1);
     newPageAge: CARDINAL;
@@ -75,7 +74,7 @@ PROCEDURE WriteAccess(self: T; <*UNUSED*>p: RTDB.Releaser)
     PageCache.EndAccess();
   END WriteAccess;
 
-PROCEDURE Peek(self: T; p: RTDB.Swizzler) RAISES {Thread.Aborted} =
+PROCEDURE Peek(self: T; p: RTHeapDB.PageIn) =
   VAR page := NARROW(self.db, Database.T).file.getPage(self.id - 1);
   PROCEDURE P(READONLY data: PageData.T) = BEGIN p(self, data) END P;
   BEGIN
@@ -89,34 +88,38 @@ PROCEDURE Peek(self: T; p: RTDB.Swizzler) RAISES {Thread.Aborted} =
     END
   END Peek;
 
-PROCEDURE Read(self: T; p: RTDB.Swizzler) RAISES {Thread.Aborted} =
-  VAR page := NARROW(self.db, Database.T).file.getPage(self.id - 1);
-  PROCEDURE P(READONLY data: PageData.T) = BEGIN p(self, data) END P;
+PROCEDURE Read(self: T; p: RTHeapDB.PageIn) =
   BEGIN
-    TRY
-      page.getAll(P);
-    EXCEPT
-    | Access.Locked => Abort();
-    | VirtualPage.FatalError(t) => fatalAtoms(t);
+    VAR page := NARROW(self.db, Database.T).file.getPage(self.id - 1);
+    PROCEDURE P(READONLY data: PageData.T) = BEGIN p(self, data) END P;
+    BEGIN
+      TRY
+        page.getAll(P);
+      EXCEPT
+      | Access.Locked => Abort();
+      | VirtualPage.FatalError(t) => fatalAtoms(t);
+      END
     END
   END Read;
 
-PROCEDURE Write(self: T; p: RTDB.Unswizzler) RAISES {Thread.Aborted} =
-  VAR page := NARROW(self.db, Database.T).file.getPage(self.id - 1);
-  PROCEDURE P(VAR data: PageData.T) = BEGIN p(self, data) END P;
+PROCEDURE Write(self: T; p: RTHeapDB.PageOut) =
   BEGIN
-    TRY
-      page.putAll(P);
-    EXCEPT
-    | Access.Locked => Abort();
-    | VirtualPage.FatalError(t) => fatalAtoms(t);
+    VAR page := NARROW(self.db, Database.T).file.getPage(self.id - 1);
+    PROCEDURE P(VAR data: PageData.T) = BEGIN p(self, data) END P;
+    BEGIN
+      TRY
+        page.putAll(P);
+      EXCEPT
+      | Access.Locked => Abort();
+      | VirtualPage.FatalError(t) => fatalAtoms(t);
+      END
     END
   END Write;
 
 PROCEDURE Abort() RAISES {Thread.Aborted} =
   <*FATAL Transaction.NotInProgress*>
   BEGIN
-    NARROW(ThreadF.myTxn, Transaction.T).abort();
+    NARROW(RTHeapDB.myTxn, Transaction.T).abort();
     RAISE Thread.Aborted;
   END Abort;
 

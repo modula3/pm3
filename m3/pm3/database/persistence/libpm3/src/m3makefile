@@ -2,7 +2,7 @@ import ("libm3")
 import ("set")
 
 if SYSTEM_LIBS contains "DB"
-    include_dir ("Berkeley")
+    include_dir ("db")
 else
     include_dir ("GRAS3")
 end

@@ -1,9 +1,9 @@
 INTERFACE BaseDatabase;
 
-IMPORT Database, RTDB;
+IMPORT Database, RTHeapDB;
 
 REVEAL
-  Database.Private = RTDB.T BRANDED "Database.Private" OBJECT
+  Database.Private = RTHeapDB.DB BRANDED "Database.Private" OBJECT
   METHODS
     init(): T;
   END;

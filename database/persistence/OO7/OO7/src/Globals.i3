@@ -23,8 +23,9 @@ VAR
   (* these are used to sync inter-process for multiuser benchmark *)
   ClientsReady: REF INTEGER;
   ClientsDone: REF INTEGER;
-  TotalAborts: REF INTEGER;
-  StartUser, EndUser, StartSystem, EndSystem, StartWallTime, EndWallTime: REF Utime.struct_timeval;
+  Aborts: REF INTEGER;
+  StartWallTime, EndWallTime: REF Utime.struct_timeval;
+  UserTime, SystemTime: REF LONGREAL;
   chain_tx := TRUE;
   nextAtomicId: INTEGER;
   nextCompositeId: INTEGER;

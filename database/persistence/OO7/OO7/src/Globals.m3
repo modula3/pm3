@@ -90,31 +90,6 @@ PROCEDURE InitGlobals (db: ODMG.T) RAISES { Error } =
         db.bind(ClientsDone, "ClientsDone");
       END;
 
-
-      TRY
-        TotalAborts    := db.lookup("TotalAborts");
-      EXCEPT
-      | ODMG.ObjectNameNotFound =>
-        TotalAborts    := NEW(REF INTEGER);
-        db.bind(TotalAborts, "TotalAborts");
-      END;
-
-      TRY
-        StartUser     := db.lookup("StartUser");
-      EXCEPT
-      | ODMG.ObjectNameNotFound =>
-        StartUser     := NEW(REF Utime.struct_timeval);
-        db.bind(StartUser, "StartUser");
-      END;
-
-      TRY
-        StartSystem   := db.lookup("StartSystem");
-      EXCEPT
-      | ODMG.ObjectNameNotFound =>
-        StartSystem   := NEW(REF Utime.struct_timeval);
-        db.bind(StartSystem, "StartSystem");
-      END;
-
       TRY
         StartWallTime     := db.lookup("StartWallTime");
       EXCEPT
@@ -124,27 +99,37 @@ PROCEDURE InitGlobals (db: ODMG.T) RAISES { Error } =
       END;
 
       TRY
-        EndUser       := db.lookup("EndUser");
-      EXCEPT
-      | ODMG.ObjectNameNotFound =>
-        EndUser       := NEW(REF Utime.struct_timeval);
-        db.bind(EndUser, "EndUser");
-      END;
-
-      TRY
-        EndSystem     := db.lookup("EndSystem");
-      EXCEPT
-      | ODMG.ObjectNameNotFound =>
-        EndSystem     := NEW(REF Utime.struct_timeval);
-        db.bind(EndSystem, "EndSystem");
-      END;
-
-      TRY
         EndWallTime     := db.lookup("EndWallTime");
       EXCEPT
       | ODMG.ObjectNameNotFound =>
         EndWallTime     := NEW(REF Utime.struct_timeval);
         db.bind(EndWallTime, "EndWallTime");
+      END;
+
+      TRY
+        UserTime    := db.lookup("UserTime");
+      EXCEPT
+      | ODMG.ObjectNameNotFound =>
+        UserTime    := NEW(REF LONGREAL);
+        UserTime^   := 0.0D0;
+        db.bind(UserTime, "UserTime");
+      END;
+
+      TRY
+        SystemTime    := db.lookup("SystemTime");
+      EXCEPT
+      | ODMG.ObjectNameNotFound =>
+        SystemTime    := NEW(REF LONGREAL);
+        SystemTime^   := 0.0D0;
+        db.bind(SystemTime, "SystemTime");
+      END;
+
+      TRY
+        Aborts    := db.lookup("Aborts");
+      EXCEPT
+      | ODMG.ObjectNameNotFound =>
+        Aborts    := NEW(REF INTEGER);
+        db.bind(Aborts, "Aborts");
       END;
 
     EXCEPT
@@ -160,13 +145,11 @@ PROCEDURE InitGlobals (db: ODMG.T) RAISES { Error } =
 
 PROCEDURE ResetTimes()=
   BEGIN
-    TotalAborts^          := 0;
-    StartUser^            := Utime.struct_timeval{tv_sec := 0, tv_usec := 0};
-    StartSystem^          := Utime.struct_timeval{tv_sec := 0, tv_usec := 0};
     StartWallTime^        := Utime.struct_timeval{tv_sec := 0, tv_usec := 0};
-    EndUser^              := Utime.struct_timeval{tv_sec := 0, tv_usec := 0};
-    EndSystem^            := Utime.struct_timeval{tv_sec := 0, tv_usec := 0};
     EndWallTime^          := Utime.struct_timeval{tv_sec := 0, tv_usec := 0};
+    UserTime^             := 0.0D0;
+    SystemTime^           := 0.0D0;
+    Aborts^               := 0;
   END ResetTimes;
 
 BEGIN
