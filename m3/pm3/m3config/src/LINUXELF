@@ -154,7 +154,7 @@ proc m3_compile_c (source, object, includes, optimize, debug, shared) is
   if optimize  cmd += "-O2" end
   if debug     cmd += "-g"  end
   if shared    cmd += "-fPIC" end
-  if VERBOSE write(cmd) end
+  if VERBOSE write(cmd, CR) end
   return exec (cmd)
 end
 
@@ -189,7 +189,7 @@ proc m3_link (prog, objects, imported_libs, debug, shared) is
 
   if debug cmd += "-g" end
 
-  if VERBOSE write(cmd) end
+  if VERBOSE write(cmd, CR) end
   return exec (cmd)
 end
 
@@ -223,11 +223,11 @@ proc m3_make_lib (lib, objects, imported_libs, static, shared) is
   if static
     local lib_a    = format ("lib%s.a", lib)
     local cmd = [ MAKELIB, lib_a, objects, imported_libs ]
-    if VERBOSE write(cmd) end
+    if VERBOSE write(cmd, CR) end
     ret = exec (cmd)
     if not equal(ret, 0) return ret end
     cmd = [ RANLIB, lib_a ]
-    if VERBOSE write(cmd) end
+    if VERBOSE write(cmd, CR) end
     ret = exec (cmd)
   end
 
@@ -243,7 +243,7 @@ proc m3_make_lib (lib, objects, imported_libs, static, shared) is
     if defined ("_all")
       local cmd = [ MAKESHLIB ]
       cmd += args
-      if VERBOSE write(cmd) end
+      if VERBOSE write(cmd, CR) end
       ret = exec (cmd)
       if not equal(ret, 0) return ret end
       %exec ("gcc -shared -Wl,-soname", "-Wl," & lib_so,
@@ -282,7 +282,7 @@ ASM = lookup ("ASM", [ "as" ])
 proc m3_assemble (source, object, optimize, debug, shared) is
   local cmd = [ ASM, "-o", object, source ]
 
-  if VERBOSE write(cmd) end
+  if VERBOSE write(cmd, CR) end
   return exec (cmd)
 end
 
@@ -307,7 +307,7 @@ proc m3_backend (source, object, optimize, debug, shared) is
   if debug cmd += "-g" end
   if shared cmd += "-fPIC" end
 
-  if VERBOSE write(cmd) end
+  if VERBOSE write(cmd, CR) end
   return exec(cmd)
 end
 
