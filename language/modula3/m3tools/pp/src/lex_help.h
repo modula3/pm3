@@ -18,6 +18,7 @@
 /* processing. */
 
 int currentCol = 0;	/* current column of input */
+int currentRow = 1;	/* current row of input, only losers start counting with 1 ! */
 
 AddLexLength ()
 {
@@ -36,6 +37,7 @@ AddChar(c)
   switch(c) {
     case '\n':
       currentCol = 0;
+      currentRow++;
       break;
     case '\t':
       /* Round up to next tab stop. */

@@ -99,6 +99,9 @@ int lexptr = 0;
 int lexposition = 0;
   /* See BufferLexeme and AddLexLength in Parse.lex */
 
+char *infileName = NULL;
+  /* initialized by initParser, needed for error message */
+
 int comdepth = 0;
   /* depth of comments, used only by lexer. */
 
@@ -1504,6 +1507,10 @@ initParser (infile, outfile, emacs, caps, fontInfo,
 	    fprintf(stderr, "m3pp: unable to open \"%s\".\n", infile);
 	    exit(1);
 	};
+        /* make a copy of the file name for output in case of an error */
+        /* Where can I free the allocated memory ? */
+        infileName = (char *) malloc (strlen(infile)+1);
+        strcpy (infileName, infile);
     };
     Formatter__Flush = flush;
     Formatter__SetFont = setFont;
@@ -1545,8 +1552,9 @@ yyerror(s) char *s; {
   Flush();
   if (calledFromEmacs == 0) {
         fprintf (stderr,
-            "%s while pretty-printing; original position %d\n",
-             s, lexposition);
+            "%s:%d: (column %d, byte %d) %s while pretty-printing\n",
+            (infileName != NULL) ? infileName : "",
+            currentRow, currentCol, lexposition, s);
         fprintf(stderr, "Error flagged in output\n");
   }
   PR ("(* SYNTAX ERROR *) ");
