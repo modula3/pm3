@@ -14,9 +14,10 @@ It defaults to <I>all</I> (<TT>_all</TT>), and <I>clean</I> is the other
 typical value.
 <P>
 The second step is to find and interpret the platform dependent template,
-specified in <TT>BUILD_DIR</TT>.
+specified as <TT>BUILD_DIR</TT>, or found in the <TT>M3_TEMPLATE</TT>
+environment variable.
 The template directory may be specified on the command line,
-in the <TT>M3TEMPLATES</TT> environment variable, and defaults to
+in the <TT>M3_TEMPLATE_DIR</TT> environment variable, and defaults to
 <TT>m3config/src</TT> within the directory specified in <TT>PKG_USE</TT>
 when <TT>m3build</TT> was compiled. As a last resort, directory
 <TT>../lib/m3/pkg/m3config/src</TT> is searched relative to the directory

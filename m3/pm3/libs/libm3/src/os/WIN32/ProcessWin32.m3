@@ -175,7 +175,7 @@ PROCEDURE GetID(p: T): ID =
   BEGIN RETURN LOOPHOLE(p.info.hProcess, ID) END GetID;
 
 PROCEDURE GetMyID(): ID =
-  BEGIN RETURN LOOPHOLE(WinBase.GetCurrentProcess(), ID) END GetMyID;
+  BEGIN RETURN LOOPHOLE(WinBase.GetCurrentProcessId(), ID) END GetMyID;
 
 VAR
   stdin_g  := GetFileHandle(WinBase.STD_INPUT_HANDLE,  FileWin32.Read);

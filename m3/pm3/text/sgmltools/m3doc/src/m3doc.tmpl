@@ -117,9 +117,14 @@ readonly proc HtmlRoot (nm) is
         local tmp6 = nm & ".idx"
         local tmp7 = nm & ".ind"
         local tmp8 = nm & ".ilg"
-        checkExec([BIN_USE & SL & "sgmllinear", "-html", "-f", ".i3", 
+        local linearCmd = [BIN_USE & SL & "sgmllinear", "-html", "-f", ".i3", 
             m3Sgml, "-f", ".ig", m3Sgml, "-f", ".m3", m3Sgml, 
-            "-f", ".mg", m3Sgml, "-dtd", dtdDir, src_file, tmp1],[],"")
+            "-f", ".mg", m3Sgml, "-dtd", dtdDir, src_file, tmp1]
+
+        if defined("M3DOC_PREFIX") linearCmd += ["-prefix",M3DOC_PREFIX] end
+
+        checkExec(linearCmd,[],"")
+
         if PLATFORM_SUPPORTS_LATEX
           checkExec([BIN_USE & SL & "sgmlconv", "-report", "-htmltex", 
               "-dtd", dtdDir, tmp1,tmp2], [],"")

@@ -29,3 +29,5 @@ HtmlFile("vtalarm")
 HtmlFile("whatism3")
 HtmlFile("whereused")
 HtmlFile("xnotfound")
+
+if defined("BUILD_FAQ") HtmlRoot("questions") end

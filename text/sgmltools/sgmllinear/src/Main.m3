@@ -381,11 +381,15 @@ PROCEDURE ComposeHref(base, link: TEXT): TEXT RAISES {Pathname.Invalid} =
     pos := Text.FindChar(link,':');
   BEGIN
     (* We have a full url like http://xxxxx. We assume that it is canonical
-       and no processing is required. *)
+       and no processing is required. Should we use a more complex
+       condition like the following... that would tolerate a ':' in a file
+       name but would miss things like mailto:joe@m3.org
 
-    IF (pos > 0) AND (Text.Length(link) > pos + 2) AND 
-        (Text.GetChar(link,pos + 1) = '/') AND
-        (Text.GetChar(link,pos + 2) = '/') THEN
+       (Text.Length(link) > pos + 2) AND 
+       (Text.GetChar(link,pos + 1) = '/') AND
+       (Text.GetChar(link,pos + 2) = '/') *)
+
+    IF (pos > 0) THEN
       RETURN link;
     END;
 

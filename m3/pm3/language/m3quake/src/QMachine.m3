@@ -1172,6 +1172,7 @@ PROCEDURE Exec (t: T;  cmd: TEXT; args: REF ARRAY OF TEXT;
                 env: REF ARRAY OF TEXT := NIL): INTEGER RAISES {Error} =
   VAR
     stdin_file, stdout_file, stderr_file: File.T := NIL;
+    new_stdin, new_stdout, new_stderr: BOOLEAN := FALSE;
     n            : INTEGER := -1;
     handle       : Process.T;
     buffer       : ARRAY [0 .. 4095] OF CHAR;
@@ -1185,7 +1186,9 @@ PROCEDURE Exec (t: T;  cmd: TEXT; args: REF ARRAY OF TEXT;
         stdin_file := FS.OpenFile(stdin, 
                                   create := FS.CreateOption.Never,
                                   access := FS.AccessOption.ReadOnly);
+        new_stdin := TRUE;
       END;
+
       IF stdout # NIL THEN
         IF (Text.Length(stdout) >= 2 AND Text.GetChar(stdout, 0) = '>') 
           AND (Text.GetChar(stdout, 1) = '>') THEN
@@ -1195,7 +1198,9 @@ PROCEDURE Exec (t: T;  cmd: TEXT; args: REF ARRAY OF TEXT;
         ELSE
           stdout_file := FS.OpenFile(stdout);
         END;
+        new_stdout := TRUE;
       END;
+
       IF stderr # NIL THEN
         IF (Text.Length(stderr) >= 2 AND Text.GetChar(stderr, 0) = '>') 
           AND (Text.GetChar(stderr, 1) = '>') THEN
@@ -1205,7 +1210,13 @@ PROCEDURE Exec (t: T;  cmd: TEXT; args: REF ARRAY OF TEXT;
         ELSE
           stderr_file := FS.OpenFile(stderr);
         END;
+        new_stderr := TRUE;
       END;
+
+      (* One of the output files is unspecified. Redirect to stdout if this
+         is where the current output is going. Otherwise create a pipe
+         to connect it to the current output writer. *)
+
       IF stdout_file = NIL OR stderr_file = NIL THEN
         IF t.writer = Stdio.stdout THEN
           VAR dumb: File.T; 
@@ -1221,21 +1232,25 @@ PROCEDURE Exec (t: T;  cmd: TEXT; args: REF ARRAY OF TEXT;
           Pipe.Open (hr := hrSelf,  hw := hwChildOut);
           IF stdout_file = NIL THEN
             stdout_file := hwChildOut;
+            new_stdout := TRUE;
           END;
           IF stderr_file = NIL THEN
             stderr_file := hwChildOut;
+            new_stderr := TRUE;
           END;
         END;
       END;
 
       handle := Process.Create(cmd, args^, env, wd, stdin_file, stdout_file,
                                stderr_file);
-      IF stdin_file  # NIL THEN stdin_file.close()  END;
-      IF t.writer # Stdio.stdout THEN
-        IF stdout_file # NIL THEN stdout_file.close() END;
-        IF stderr_file # NIL AND stderr_file # stdout_file THEN 
-          stderr_file.close() END;
-      END;
+
+      (* Close the file handles created *)
+
+      IF new_stdin THEN stdin_file.close()  END;
+      IF new_stdout THEN stdout_file.close() END;
+      IF new_stderr AND stderr_file # stdout_file THEN stderr_file.close() END;
+
+      (* If a pipe was created, pump its content to the output writer *)
 
       IF hrSelf # NIL THEN
         rd := NEW(FileRd.T).init(hrSelf);

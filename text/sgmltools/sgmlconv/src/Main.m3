@@ -863,7 +863,7 @@ PROCEDURE EncodeForTeX(self: HTMLtoTeX; t: TEXT): TEXT =
           ELSE Wr.PutText(wr," ");
           END;
       | 191..255 => 
-          Wr.PutText(wr,IsoLatinTbl[ORD(c) - 161]);
+          Wr.PutText(wr,IsoLatinTbl[car - 191]);
 
       | 161 => Wr.PutText(wr,"!`");
       | 162 => Wr.PutText(wr,"c\\llap/");

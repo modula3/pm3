@@ -103,12 +103,12 @@ fi
 #
 
 if test ${SKIP_UPLOAD} = "F"
-  then if test COMPLETED = "T"
+  then if test ${COMPLETED} = "T"
     then ftp -n <<EOF
 open m3.polymtl.ca
 user ftp ${TARGET}@m3.polymtl.ca
-site group binaries
-site gpass ${ZZP}
+quote site group binaries
+quote site gpass ${ZZP}
 binary
 cd /tmp/pm3/binaries/${TARGET}
 put ${VERSION}.tgz
@@ -118,8 +118,8 @@ EOF
     ftp -n <<EOF
 open m3.polymtl.ca
 user ftp ${TARGET}@m3.polymtl.ca
-site group binaries
-site gpass ${ZZP}
+quote site group binaries
+quote site gpass ${ZZP}
 binary
 cd /tmp/pm3/binaries/${TARGET}
 put errs.tmp NOTDONE.errs

@@ -1,4 +1,4 @@
-EXPORT_TMP_ROOT = lookup("EXPORT_TMP_ROOT","/home/ftp/tmp/pm3")
+EXPORT_TMP_ROOT = lookup("EXPORT_TMP_ROOT","/mnt/oppede/3/ftp/tmp/pm3")
 EXPORT_TMP_TMP = lookup("EXPORT_TMP_TMP",EXPORT_TMP_ROOT & "/tmp")
 EXPORT_TMP_SRC = lookup("EXPORT_TMP_SRC", EXPORT_TMP_ROOT & "/pkg")
 EXPORT_TMP_BOOTSTRAP = lookup("EXPORT_TMP_BOOTSTRAP", EXPORT_TMP_ROOT & 
@@ -13,6 +13,11 @@ EXPORT_VERSION = lookup("EXPORT_VERSION", EXPORT_ROOT & "/pkg")
 EXPORT_SRC = lookup("EXPORT_SRC", EXPORT_ROOT & "/pkg")
 EXPORT_BOOTSTRAP = lookup("EXPORT_BOOTSTRAP", EXPORT_ROOT & "/bootstrap")
 EXPORT_BINARIES = lookup("EXPORT_BINARIES", EXPORT_ROOT & "/binaries")
+EXPORT_DOWNLOAD = lookup("EXPORT_DOWNLOAD", EXPORT_ROOT & "/download")
 
 STORE_ROOT = lookup("STORE_ROOT","/home/m3/pm3")
 STORE_VERSION = lookup("STORE_VERSION",STORE_ROOT & "/version")
+
+Binaries = {"LINUXELF","SOLgnu"}
+DOWNLOAD_SCRIPT = lookup("DOWNLOAD_SCRIPT","/m3htbin/pm3download")
+PM3_WEB = lookup("PM3_WEB","http://m3.polymtl.ca/m3/pkg/pm3")
