@@ -943,6 +943,7 @@ BuildChunk("network/www","webcat")
 %
 % Intermediate "documentation" nodes in the hierarchy
 %
+BuildChunk(".","intro")
 BuildChunk("database","stableobjects")
 BuildChunk(".","database")
 BuildChunk("graphics","animation")

@@ -1,0 +1,16 @@
+
+HtmlFile("ack")
+HtmlFile("bib")
+HtmlFile("concise-bib")
+HtmlFile("contacts")
+HtmlFile("content")
+HtmlFile("copyright")
+HtmlFile("history")
+HtmlFile("index")
+HtmlFile("install")
+HtmlFile("platforms")
+HtmlFile("todo")
+
+include_dir("questions")
+
+OtherPackage("intro")
