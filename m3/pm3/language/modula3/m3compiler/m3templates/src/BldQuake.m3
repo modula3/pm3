@@ -2062,7 +2062,7 @@ PROCEDURE DoBundle(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
 PROCEDURE Template(t: T; x: TEXT) RAISES {Error}=
   VAR
     fn      := x & ".tmpl";
-    full_fn := M3ID.ToText(t.includes[t.reg.ip-1].file.source_file) & t.SL & fn;
+    full_fn := Pathname.Prefix(M3ID.ToText(t.includes[t.reg.ip-1].file.source_file)) & t.SL & fn;
   BEGIN
     EVAL t.templates.put(M3ID.Add(fn), NEW(M3Libs.T, hidden := VISIBLE));
 
@@ -3165,6 +3165,12 @@ PROCEDURE Setup(t: T) RAISES {Error}=
     t.put(M3ID.Add("SLship"), val);
     val.int := M3ID.Add(t.QRPCR);
     t.put(M3ID.Add("QRPCR"), val);
+
+    (* define VISIBLE and HIDDEN *)
+    val.int := M3ID.Add("");
+    t.put(M3ID.Add("VISIBLE"), val);
+    val.int := M3ID.Add("HIDDEN");
+    t.put(M3ID.Add("HIDDEN"), val);
 
     IF t.get(all, val) THEN
       t.all := TRUE;
