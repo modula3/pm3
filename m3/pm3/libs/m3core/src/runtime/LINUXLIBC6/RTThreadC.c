@@ -11,9 +11,7 @@
 RTThread__Transfer (from, to)
 jmp_buf *from, *to;
 {
-  /* We can't stop gcc complaining here, so we'll just have to put up
-     with it .. */
-  if (__setjmp(*from) == 0) __longjmp (*((__jmp_buf *)to), 1);
+  if (_setjmp(*from) == 0) _longjmp (*to, 1);
 }
 
 

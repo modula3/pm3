@@ -239,6 +239,8 @@ compare (valaddr, bitpos1, bitpos2, bitsize)
 
 extern unsigned int repeat_count_threshold;
 
+extern void m3_printchar(int, FILE *);
+
 int
 m3_val_print2 (type, valaddr, bitpos, bitsize, stream, format, deref_ref, toplevel)
      struct type *type;

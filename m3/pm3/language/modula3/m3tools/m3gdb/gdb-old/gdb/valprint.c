@@ -293,6 +293,9 @@ print_longest (stream, format, use_local, val_long)
 #ifdef PRINTF_HAS_LONG_LONG
   switch (format)
     {
+    case 'c':
+      fprintf_filtered (stream, "%c", (char)val_long);
+      break;
     case 'd':
       fprintf_filtered (stream,
 			use_local ? local_decimal_format_custom ("ll")
