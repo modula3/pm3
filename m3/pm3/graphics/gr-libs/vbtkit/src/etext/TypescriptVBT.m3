@@ -2,7 +2,8 @@
 (* All rights reserved.                                                      *)
 (* See the file COPYRIGHT for a full description.                            *)
 (*                                                                           *)
-(* Last modified on Mon Jan 30 15:15:24 PST 1995 by kalsow     *)
+(* Last modified on Mon Nov  4 13:10:08 PST 1996 by najork     *)
+(*      modified on Mon Jan 30 15:15:24 PST 1995 by kalsow     *)
 (*      modified on Sun Aug 28 10:13:28 PDT 1994 by mhb        *)
 (*      modified on Fri Jul  9 11:01:44 PDT 1993 by wobber     *)
 (*      modified on Fri Jun 11 21:09:52 PDT 1993 by meehan     *)
@@ -179,7 +180,7 @@ PROCEDURE ReturnAction (tp: Port; READONLY event: VBT.KeyRec) =
   BEGIN
     IF event.modifiers = VBT.Modifiers {} AND NOT tp.getReadOnly () THEN
       TextPort.Seek (tp, TextPort.Length (tp));
-      TextPort.Insert (tp, "\n");
+      TextPort.Insert (tp, Wr.EOL);
       tp.typeinStart := TextPort.Length (tp);
       (* activate the reading client *)
       Thread.Signal (tp.v.inputReady);

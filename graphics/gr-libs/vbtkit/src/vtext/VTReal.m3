@@ -2,7 +2,7 @@
 (* All rights reserved.                                                      *)
 (* See the file COPYRIGHT for a full description.                            *)
 (*                                                                           *)
-(* Last modified on Tue Aug 27 11:35:27 PDT 1996 by najork  *)
+(* Last modified on Mon Nov  4 13:15:59 PST 1996 by najork  *)
 (*      modified on Mon Jan 30 14:42:59 PST 1995 by kalsow  *)
 (*      modified on Sun Mar 21 16:56:58 PST 1993 by meehan  *)
 (*      modified on Tue Jun 16 13:12:37 PDT 1992 by muller  *)
@@ -1096,7 +1096,7 @@ PROCEDURE PaintSegmentOpaque (                view  : View;
               atStyleStart := FALSE;
               IF ci0 = length THEN atStyleStop := atStyleStop0; END;
               h0 := h;
-              IF c = '\n' THEN
+              IF c = '\n' OR c = '\r' THEN
                 h := z_78.rect.text.east;
                 PaintWhite ();
               ELSIF (c = '\t') AND ('\t' IN z_80.vFont.printable) THEN
@@ -1325,7 +1325,7 @@ PROCEDURE PaintBackgroundTransparent (                view: View;
               END;
               ci0 := ci + 1;
               h0 := h;
-              IF c = '\n' THEN
+              IF c = '\n' OR c = '\r' THEN
                 h := z_82.rect.text.east;
                 PaintWhite ();
               ELSIF (c = '\t') AND ('\t' IN z_84.vFont.printable) THEN
@@ -1481,7 +1481,7 @@ PROCEDURE PaintSegmentTransparent (                view  : View;
               IF ci > ci0 THEN PaintSub (chars, ci0, ci - ci0); END;
               ci0 := ci + 1;
               h0 := h;
-              IF c = '\n' THEN
+              IF c = '\n' OR c = '\r' THEN
                 h := z_88.rect.text.east;
               ELSIF (c = '\t') AND ('\t' IN z_90.vFont.printable) THEN
                 xx := h - z_88.rect.text.west;
@@ -1712,7 +1712,7 @@ PROCEDURE PaintOverlayTransparent (                view  : View;
                                                           length - i))) DO
         FOR j := 0 TO count - 1 DO
           c := buff [j];
-          IF c = '\n' THEN
+          IF c = '\n' OR c = '\r' THEN
             h := view.rect.text.east;
           ELSIF c = '\t' AND '\t' IN 
                     view.vScreenFont.vScreenFont.vFont.vFont.printable THEN

@@ -2,9 +2,9 @@
 (* All rights reserved.                                                      *)
 (* See the file COPYRIGHT for a full description.                            *)
 (*                                                                           *)
-(* Last modified on Thu Jun 20 16:29:45 PDT 1996 by heydon                   *)
+(* Last modified on Mon Nov  4 13:20:03 PST 1996 by najork                   *)
+(*      modified on Thu Jun 20 16:29:45 PDT 1996 by heydon                   *)
 (*      modified on Fri May 17 22:07:11 PDT 1996 by mhb                      *)
-(*      modified on Fri Jan 12 00:11:07 PST 1996 by najork                   *)
 (*      modified on Mon Jan 30 14:32:07 PST 1995 by kalsow                   *)
 (*      modified on Fri Jun 11 20:02:04 PDT 1993 by meehan                   *)
 (*      modified on Thu Oct  2 12:48:00 1992 by nichols@parc.xerox.com       *)
@@ -711,7 +711,7 @@ PROCEDURE ShapeInfo (v: T; VAR lineCount, lineLength: INTEGER) =
         END;
         (* adjust for last line: if ends with \n, increment lineCount;
            otherwise, len of last line is right-left, not right-left-1. *)
-        IF MText.GetChar (v.vtext.mtext, length - 1) = '\n' THEN
+        IF MText.GetChar (v.vtext.mtext, length - 1) = Return THEN
           INC (lineCount);
           lineLength := MAX (lineLength, e.right - e.left - 1)
         ELSE
@@ -753,7 +753,7 @@ PROCEDURE Filter (v: T; cd: VBT.KeyRec) =
 
       IF ch = Return THEN
         IF VBT.Modifier.Shift IN cd.modifiers THEN
-          v.insert ("\n")
+          v.insert (Wr.EOL)
         ELSIF VBT.Modifier.Option IN cd.modifiers THEN
           TextPortClass.InsertNewline (v)
         ELSE
@@ -793,7 +793,7 @@ PROCEDURE Filter (v: T; cd: VBT.KeyRec) =
 <* EXPORTED *>
 PROCEDURE Newline (v: T) =
   BEGIN
-    LOCK v.mu DO IF NOT v.readOnly THEN v.insert ("\n") END END
+    LOCK v.mu DO IF NOT v.readOnly THEN v.insert (Wr.EOL) END END
   END Newline;
 
 <* EXPORTED *>
@@ -812,13 +812,13 @@ PROCEDURE LockedNewlineAndIndent (v: T) =
       IF a.leftMargin = a.rightEnd AND index = a.rightEnd
            AND NOT v.isReplaceMode () THEN
         (* We're at the end of an all-blank line. *)
-        EVAL v.replace (a.left, a.left, "\n")
+        EVAL v.replace (a.left, a.left, Wr.EOL)
       ELSIF a.leftMargin = a.rightMargin THEN (* line is all blanks *)
-        v.insert ("\n")
+        v.insert (Wr.EOL)
       ELSE
         (* Copy all the leading blanks onto the new line. *)
         v.insert (
-          "\n" & MText.GetText (v.vtext.mtext, a.left, a.leftMargin))
+          Wr.EOL & MText.GetText (v.vtext.mtext, a.left, a.leftMargin))
       END
     END
   END LockedNewlineAndIndent;

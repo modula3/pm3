@@ -2,7 +2,8 @@
 (* All rights reserved.                                                  *)
 (* See the file COPYRIGHT for a full description.                        *)
 (*                                                                       *)
-(* Last modified on Mon Jan 30 14:34:33 PST 1995 by kalsow               *)
+(* Last modified on Mon Nov  4 13:11:02 PST 1996 by najork               *)
+(*      modified on Mon Jan 30 14:34:33 PST 1995 by kalsow               *)
 (*      modified on Wed Sep 15 09:51:02 PDT 1993 by mhb                  *)
 (*      modified on Sun May 30 10:12:41 PDT 1993 by meehan               *)
 <* PRAGMA LL *>
@@ -319,7 +320,7 @@ PROCEDURE InsertNewline (v: T) =
   (* Insert a newline without moving the cursor. *)
   VAR here := v.index ();
   BEGIN
-    v.m.seek (v.replace (here, here, "\n").l)
+    v.m.seek (v.replace (here, here, Wr.EOL).l)
   END InsertNewline;
 
 (*
