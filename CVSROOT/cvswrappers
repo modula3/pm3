@@ -1,12 +1,12 @@
-# This file describes wrappers and other binary files to CVS.
+# This file affects handling of files based on their names.
 #
-# Wrappers are the concept where directories of files are to be
-# treated as a single file.  The intended use is to wrap up a wrapper
-# into a single tar such that the tar archive can be treated as a
-# single binary file in CVS.
+# The -t/-f options allow one to treat directories of files
+# as a single file, or to transform a file in other ways on
+# its way in and out of CVS.
 #
-# To solve the problem effectively, it was also necessary to be able to
-# prevent rcsmerge from merging these files.
+# The -m option specifies whether CVS attempts to merge files.
+#
+# The -k option specifies keyword expansion (e.g. -kb for binary).
 #
 # Format of wrapper file ($CVSROOT/CVSROOT/cvswrappers or .cvswrappers)
 #
@@ -16,7 +16,59 @@
 #  -f		from cvs filter		value: path to filter
 #  -t		to cvs filter		value: path to filter
 #  -m		update methodology	value: MERGE or COPY
+#  -k		expansion mode		value: b, o, kkv, &c
 #
 #  and value is a single-quote delimited value.
-#
 # For example:
+#*.gif -k 'b'
+# File types added by Borland JBuilder 
+*.aiff -k 'b'
+*.midi -k 'b'
+*.png -k 'b'
+*.jds -k 'b'
+*.jar -k 'b'
+*.wav -k 'b'
+*.war -k 'b'
+*.ear -k 'b'
+*.obj -k 'b'
+*.dcu -k 'b'
+*.class -k 'b'
+*.au -k 'b'
+*.gif -k 'b'
+*.exe -k 'b'
+*.jpg -k 'b'
+*.jpe -k 'b'
+*.o -k 'b'
+*.ejbgrp -k 'b'
+*.zip -k 'b'
+*.mid -k 'b'
+*.jpeg -k 'b'
+*.rmf -k 'b'
+
+# more binary file types
+*.pbm -k 'b'
+*.tbm -k 'b'
+*.pnm -k 'b'
+*.ppm -k 'b'
+*.xbm -k 'b'
+*.tiff -k 'b'
+*.gz -k 'b'
+*.Z -k 'b'
+*.bz2 -k 'b'
+*.pdf -k 'b'
+*.dvi -k 'b'
+
+# text mode files with keyword expansion
+*.h -k 'kv'
+*.c -k 'kv'
+*.s -k 'kv'
+*.i3 -k 'kv'
+*.m3 -k 'kv'
+*.ig -k 'kv'
+*.mg -k 'kv'
+*.txt -k 'kv'
+m3makefile -k 'kv'
+*.fv -k 'kv'
+*.sx -k 'kv'
+*.ss -k 'kv'
+*.obl -k 'kv'
