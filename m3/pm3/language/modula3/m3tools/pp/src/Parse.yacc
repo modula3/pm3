@@ -188,8 +188,8 @@ typedef enum {NonOptimal, OptimalBreak, OptimalNoBreak} Formatter_BreakType;
 %token PR_LL PR_LLsup PR_EXPORTED PR_SPEC
 
 /* reserved words for ESC specifications in SPEC pragmas */
-%token ALL ALLOCATED AXIOM CONCAT DELETE DEPENDS
-%token ENSURES EXISTS FUNC IFF IMPLIES INSERT INV
+%token ALL AXIOM CONCAT DELETE DEPENDS
+%token ENSURES EXISTS FUNC IFF IMPLIES INSERT INV IS
 %token LET MAP MEMBER MODIFIES MUT_GE MUT_GT
 %token MUT_LE MUT_LT ON PRED PROTECT
 %token REP REQUIRES SHARED SUBSET
@@ -892,6 +892,7 @@ anypragma:
     | nowarn_pragma
     | line_pragma
     | ll_pragma
+    | spec_pragma
     ;
 
 /* these pragmas can appear anywhere,
@@ -922,92 +923,184 @@ spec_pragma:       Pr_Spec       SP esc_spec       SP Rpragma1 ;
 /*------ specifications for ESC (extended static checker) ------*/
 
 esc_spec:
-      SpecProc
-    | SpecVar
-    | Abstract
-    | Depend
-    | PredDef
-    | FuncDef
-    | Axiom
-    | Protect
+      spec_proc
+    | spec_var
+    | spec_abstract
+    | spec_depend
+    | spec_pred_def
+    | spec_func_def
+    | spec_axiom
+    | spec_protect
+    | spec_inv
+    | spec_let
     ;
 
-SpecProc: 
-      Signature [Modifies] [Requires] [Ensures]
+spec_proc:
+      spec_proc_signature
+        spec_proc_opt_modifies
+        spec_proc_opt_requires
+        spec_proc_opt_ensures
+      ;
 
-Signature: QualId [ Lparen IdList Rparen ] [ Colon Type ]
+spec_proc_opt_modifies:
+      /* empty */
+    | spec_proc_modifies
+    ;
 
-SpecVar: VAR TypedIdList
+spec_proc_opt_requires:
+      /* empty */
+    | spec_proc_requires
+    ;
 
-Depend: DEPENDS QualId [ Lbracket TypedId Rbracket ] On TermList
+spec_proc_opt_ensures:
+      /* empty */
+    | spec_proc_ensures
+    ;
 
-Abstract: REP QualId [ Lbracket TypedId Rbracket ] IFF Pred
-               | SPEC REP QualId [ Lbracket TypedId Rbracket ] = Expr
+spec_proc_signature:
+      qqid
+    | qqid Lparen id_list Rparen
+    | qqid                       Colon spec_type
+    | qqid Lparen id_list Rparen Colon spec_type
+    ;
 
-PredDef: PRED Id Lparen TypedIdList Rparen IS Pred
+spec_var: Var spec_typed_id_list ;
 
-FuncDef: FUNC Id [ Lparen TypedIdlist Rparen ] Colon Type
+spec_depend:
+      Depends qqid                                 On spec_term_list
+    | Depends qqid Lbracket spec_typed_id Rbracket On spec_term_list
+    ;
 
-Axiom: AXIOM Pred
+spec_abstract:
+      Rep qqid spec_opt_typed_id Iff   spec_pred
+    | Rep qqid spec_opt_typed_id Equal expr
+    ;
 
-Protect: PROTECT QualIdList BY TermList
+spec_opt_typed_id:
+      /* empty */
+    | Lbracket spec_typed_id Rbracket
+    ;
 
+spec_pred_def: Pred Ident Lparen spec_typed_id_list Rparen Is spec_pred ;
 
-Term: PrimTerm |
-             Term BinOp Term | 
-             Lparen Term Rparen | 
-             QualId Lparen [TermList] Rparen |
-             Term Lbracket TermList Rbracket |
-             Term Uparrow
+spec_func_def:  /* was TypedIdlist instead of TypedIdList */
+      Func Ident                                  Colon spec_type
+    | Func Ident Lparen spec_typed_id_list Rparen Colon spec_type
+    ;
 
-BinOp: Plus | Minus | Asterisk | DIV | MOD
+spec_axiom: Axiom spec_pred ;
 
-TermList: Term { Comma Term }
+spec_protect: Protect qqid_list By spec_term_list ;
 
-PrimTerm: Number | QualId [ "'" ]
+spec_inv: Inv spec_pred ;
 
-QualId: Id | QualId Dot Id
-
-Pred: Disj { WeakPredOp Disj }
-
-WeakPredOp: IMPLIES | IFF
-
-Disj: Conj { OR Conj }
-
-Conj: Literal { AND Literal }
-
-Literal: { NOT } Atm
-
-Atm: Lparen Pred Rparen |
-            Lparen ALL Lbracket TypedIdList Rbracket Pred Rparen |
-            Lparen EXISTS Lbracket TypedIdList Rbracket Pred Rparen |
-            Term BinRel Term |
-            Term
-
-TypedIdList: TypedId { Comma TypedId }
-
-TypedId: Id Colon Type
-
-Type: QualId | MAP Type TO Type
-
-BinRel: Less | Greater | Lsequal | Grequal | Equal | Notequal
-
-Modifies: MODIFIES SubIdList
-
-SubIdList: SubId { Comma SubId }
-
-SubId: QualId { Lbracket Term Rbracket }
-
-Requires: REQUIRES Pred
-
-Ensures: ENSURES Pred [ EXCEPT ExceptSpecList ]
-
-ExceptSpecList: ExceptSpec { Bar ExceptSpec }
-
-ExceptSpec: QualId [ Lparen Id Rparen ] Rarrow Pred 
+spec_let: Let Ident Assign spec_term ;
 
 
-QualIdList: QualId { Comma QualId }
+spec_term:
+      spec_prim_term
+    | spec_term spec_bin_op spec_term
+    | Lparen spec_term Rparen
+    | qqid Lparen Rparen
+    | qqid Lparen spec_term_list Rparen
+    | spec_term Lbracket spec_term_list Rbracket
+    | spec_term Uparrow
+    ;
+
+spec_bin_op: Plus | Minus | Asterisk | Div | Mod ;
+
+spec_term_list:
+      spec_term
+    | spec_term_list Comma spec_term
+    ;
+
+spec_prim_term:
+      Card_const
+    | qqid /* [ "'" ] */
+    ;
+
+
+spec_pred:
+      spec_disj
+    | spec_pred spec_weak_pred_op spec_disj
+    ;
+
+spec_weak_pred_op: Implies | Iff ;
+
+spec_disj:
+      spec_conj
+    | spec_disj Or spec_conj
+    ;
+
+spec_conj:
+      spec_literal
+    | spec_conj And spec_literal
+    ;
+
+spec_literal:  /* was { NOT } Atm -- a bug? */
+      spec_atom
+    | Not spec_atom
+    ;
+
+spec_atom:
+      Lparen spec_pred Rparen
+    | Lparen All Lbracket spec_typed_id_list Rbracket spec_pred Rparen
+    | Lparen Exists Lbracket spec_typed_id_list Rbracket spec_pred Rparen
+    | spec_term spec_bin_rel spec_term
+    | spec_term
+    ;
+
+spec_typed_id_list:
+      spec_typed_id
+    | spec_typed_id_list Comma spec_typed_id
+    ;
+
+spec_typed_id: Ident Colon spec_type ;
+
+spec_type: qqid | Map spec_type To spec_type ;
+
+spec_bin_rel: Less | Greater | Lsequal | Grequal | Equal | Notequal ;
+
+spec_proc_modifies: Modifies spec_sub_id_list ;
+
+spec_sub_id_list:
+      spec_sub_id
+    | spec_sub_id_list Comma spec_sub_id
+    ;
+
+spec_sub_id: qqid spec_term_list ;
+
+spec_term_list:
+      /* empty */
+    | spec_term_list Lbracket spec_term Rbracket
+    ;
+
+spec_proc_requires: Requires spec_pred ;
+
+spec_proc_ensures:
+      Ensures spec_pred
+    | Ensures spec_pred Except spec_except_spec_list
+    ;
+
+spec_except_spec:
+      qqid                     Rarrow spec_pred
+    | qqid Lparen Ident Rparen Rarrow spec_pred
+    ;
+
+spec_except_spec_list:
+      spec_except_spec
+    | spec_except_spec_list Bar spec_except_spec
+    ;
+
+qqid:
+      Ident
+    | qqid Dot Ident
+    ;
+
+qqid_list:
+      qqid
+    | qqid_list Comma qqid
+    ;
 
 
 
@@ -1306,33 +1399,37 @@ With:          WITH { PK ("WITH");} NPS ;
 
 /* ESC keywords */
 All:           ALL { PK ("ALL");} NPS ;
-Allocated:     ALLOCATED { PK ("ALLOCATED");} NPS ;
 Axiom:         AXIOM { PK ("AXIOM");} NPS ;
-Concat:        CONCAT { PK ("CONCAT");} NPS ;
-Delete:        DELETE { PK ("DELETE");} NPS ;
+/*Concat:        CONCAT { PK ("CONCAT");} NPS ;*/
+/*Delete:        DELETE { PK ("DELETE");} NPS ;*/
 Depends:       DEPENDS { PK ("DEPENDS");} NPS ;
 Ensures:       ENSURES { PK ("ENSURES");} NPS ;
 Exists:        EXISTS { PK ("EXISTS");} NPS ;
 Func:          FUNC { PK ("FUNC");} NPS ;
 Iff:           IFF { PK ("IFF");} NPS ;
 Implies:       IMPLIES { PK ("IMPLIES");} NPS ;
-Insert:        INSERT { PK ("INSERT");} NPS ;
+/*Insert:        INSERT { PK ("INSERT");} NPS ;*/
 Inv:           INV { PK ("INV");} NPS ;
+Is:            IS { PK ("IS");} NPS ;
 Let:           LET { PK ("LET");} NPS ;
 Map:           MAP { PK ("MAP");} NPS ;
-Member:        MEMBER { PK ("MEMBER");} NPS ;
+/*Member:        MEMBER { PK ("MEMBER");} NPS ;*/
 Modifies:      MODIFIES { PK ("MODIFIES");} NPS ;
+/*
 Mut_ge:        MUT_GE { PK ("MUT_GE");} NPS ;
 Mut_gt:        MUT_GT { PK ("MUT_GT");} NPS ;
 Mut_le:        MUT_LE { PK ("MUT_LE");} NPS ;
 Mut_lt:        MUT_LT { PK ("MUT_LT");} NPS ;
+*/
 On:            ON { PK ("ON");} NPS ;
 Pred:          PRED { PK ("PRED");} NPS ;
 Protect:       PROTECT { PK ("PROTECT");} NPS ;
 Rep:           REP { PK ("REP");} NPS ;
 Requires:      REQUIRES { PK ("REQUIRES");} NPS ;
+/*
 Shared:        SHARED { PK ("SHARED");} NPS ;
 Subset:        SUBSET { PK ("SUBSET");} NPS ;
+*/
 
 
 /*--------------------- comments ------------------------*/
