@@ -99,20 +99,22 @@ PROCEDURE Base(pn: T): T;
 (* Return a pathname equal to "pn" except with "Last(pn)" replaced by
    its base. *)
 
-PROCEDURE Join(pn, base: T; ext: TEXT): T;
+PROCEDURE Join(pn, base: T; ext: TEXT := NIL): T;
 (* Return a pathname formed by prepending "pn" to "base" (if "pn" is
    not "NIL") and appending "ext" to "base" (if "ext" is not "NIL").
-   More precisely, this is equivalent to the following, in which "a"
-   is a local variable of type "Arcs": *)
+   More precisely, if "pn", "base", and "ext" conform to the syntax 
+   of the particular operating system (as described at the end 
+   of this section), this is equivalent to: *)
+
 (*
-| IF pn = NIL THEN a := NIL
+| IF ext # NIL THEN base := base & "." & ext END;
+| IF pn = NIL THEN RETURN base
 | ELSE
 |   IF Absolute(base) THEN `Cause checked runtime error` END;
-|   a := Decompose(pn)
+|   RETURN Compose(TextSeq.Cat(
+|                    Decompose(pn),
+|                    TextSeq.Sub(Decompose(base), 1)))
 | END;
-| IF ext # NIL THEN base := base & "." & ext END;
-| RETURN Compose(
-|   TextSeq.Cat(a, TextSeq.Sub(Decompose(base), 1)))
 *)
 
 (* The value returned by "Join" will be a valid pathname only if the
