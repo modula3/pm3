@@ -1,0 +1,98 @@
+@c This documents the GNU compiler passes, CPP, GCC, GAS, and LD,
+@c as @included in tools.texi
+
+@node Passes, , , Compiling
+@subsection The GNU compiler passes
+
+@menu
+* cpp::            The preprocessor pass
+* gcc::            The compiler pass
+* gas::            The assembler pass
+* ld::             The linker pass
+@end menu
+
+@node cpp, , , GCC
+@subsubsection The preprocessor pass
+
+@code{cpp} merges in the @code{#include} files, expands all macros 
+definitions, and processes the @code{#ifdef} sections. 
+To see the output of @code{cpp}, invoke @value{GCCN} with the
+@code{-E} option, and the preprocessed file will be printed on 
+stdout.
+
+@node gcc, , , GCC
+@subsubsection The compiler pass
+
+@code{gcc} is actually only a driver program for the
+compiler passes. It formats command line options for the other passes.
+
+@node gas, , , GCC
+@subsubsection The assembler pass
+
+@code{gas} can be used as either a compiler pass or a source-level assembler. 
+When used as a source-level assembler, it has a companion assembly language 
+preprocessor called @code{gasp}. @code{gasp} has a syntax similar to most 
+other assembly language macro packages. 
+
+@code{gas} emits a relocatable object file from the assembly language 
+source code. The object file contains the binary code and the debug symbols.
+
+@node ld, , , GCC
+@subsubsection The linker pass
+
+@code{ld} resolves the code addresses and debug symbols, links the startup 
+code and additional libraries to the binary code, and produces an executable 
+binary image.
+
+When resolving code addresses and symbols, 
+some @code{RTOS}'s use a relocatable object file format like @code{a.out}.  
+However, more commonly the final binary image only uses absolute addresses 
+for symbols, which enable code to be burned into @code{PROM}'s as well. 
+
+@ignore
+@node Options, , , GCC
+@subsection Compile-time options
+@c FIXME: Need stuff here about -fpic, -Ttext, etc...
+
+Compile-time options for the various development tools are covered in more 
+detail in the @ref{Invoking GCC,,,,Using and Porting GNU GCC}. Still, the 
+amount of options can be overwhelming, so the options most suited to embedded 
+systems are summarized here. If you use @value{GCCN} as the main driver for 
+all of the passes, most linker options can be passed directly to the compiler. 
+There are also @value{GCCN} options that control how @value{GCCN} formats the 
+command line arguments for the linker.
+
+@menu
+* GCC Options::         Options for the compiler
+* GAS Options::         Options for the assembler
+* LD Options::          Options for the linker
+@end menu
+
+@node GCC Options, , , Options
+@subsubsection Options for the compiler
+Most of the @value{GCCN} options that we're interested control how 
+@value{GCCN} formats the options for the linker pass.  These are:
+
+@c FIXME: this section is still under work.
+@table @code
+@item -nostartfiles
+@item -nostdlib
+@item -Xlinker
+
+Pass the next option directly to the linker.
+
+@item -v
+@item -fpic
+@end table
+
+@node GAS Options, LD Options, GCC Options, Options
+@subsubsection Options for the assembler
+@c FIXME: Needs stuff here
+
+@node LD Options, , GAS Options, Options
+@subsubsection Options for the linker
+
+@c
+@c FIXME: 
+@strong{Needs stuff here.}
+@end ignores

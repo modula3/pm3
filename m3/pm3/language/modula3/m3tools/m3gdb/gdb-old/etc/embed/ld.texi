@@ -1,0 +1,16 @@
+@c This documents using LD on embedded systems, as 
+@c @included in tools.texi
+
+@node LD
+@subsection LD, the GNU linker
+
+@code{ld} resolves the code addresses and debug symbols, links the startup 
+code and additional libraries to the binary code, and produces an executable 
+binary image.
+
+@ignore
+When resolving code addresses and symbols, 
+some @code{RTOS}'s use a relocatable object file format like @code{a.out}.  
+However, more commonly the final binary image only uses absolute addresses 
+for symbols, which enable code to be burned into @code{PROM}'s as well. 
+@end ignore

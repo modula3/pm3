@@ -1,0 +1,12 @@
+#
+# Last modified on Mon Jan  9 09:00:16 PST 1995 by kalsow
+#
+
+This package contains a version of gdb, m3gdb, that's been modified
+to handle Modula-3 symbol table entries.
+
+To build the package, run  "m3build".  To install the
+result, run "m3ship".
+
+
+

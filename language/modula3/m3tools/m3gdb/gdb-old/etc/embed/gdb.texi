@@ -1,0 +1,436 @@
+@c This file documents the GDB backend and the best way for
+@c the user to write their own, as @included in tools.texi
+
+@node Backend
+@subsection The GDB backend
+
+@node Protocol
+@subsection The GDB remote protocol
+
+@ignore
+@node Exception handler
+@subsection Using a GDB stub as the GDB backend
+
+The @value{GDBN} stub must communicate with @value{GDBN} on the host whenever 
+there is a breakpoint exception in the application that's running on the 
+target.
+
+@value{GDBN} polls the serial port for any remote protocol command packets 
+the entire time it runs your application. 
+Any time @value{GDBN} receives a packet that is not a debug command packet,
+@value{GDBN} displays it in the command window so the user can respond.
+ 
+When the user types @code{run} or @code{continue}, @value{GDBN} issues a 
+@code{continue} command to the @value{GDBN} stub on the target and control 
+returns to the application.
+
+@menu
+* Stub::                 The elements of a GDB stub
+* Linking in::           Linking a GDB stub to the application
+@end menu
+
+@node Stub
+@subsubsection The elements of a GDB stub
+
+The @value{GDBN} stub consists of two elements: 
+
+@enumerate
+@item The exception handler
+ 
+When a breakpoint occurs, the exception handler must save state and send a 
+@value{GDBN} remote protocol packet to @value{GDBN} on the host. 
+
+@item
+Support for the exception handler
+
+Support for the exception handler varies between processors, but the
+@value{GDBN} stub needs the same minimum functions as @value{GDBN}. 
+These are functions that support:
+
+@itemize 
+@item
+@code{reading} and @code{writing} registers
+
+@item
+@code{reading} and @code{writing} memory
+
+@item
+@code{start execution} at an address
+
+@item
+@code{single step}
+
+@item
+@code{last signal}
+@end itemize
+
+Sometimes the exception handler also implements functions for adjusting 
+the baud rate or resetting the hardware. 
+@end enumerate
+
+@node Linking in
+@subsubsection Linking a GDB stub to the application
+
+The @value{GDBN} stub requires the two additional lines of initialization code 
+in your @code{main()} routine:
+
+@smallexample
+set_debug_traps()
+breakpoint
+@end smallexample
+@c
+@c FIXME -- any particular place you're supposed to put them?
+@c
+
+@node ROM monitors
+@subsection Using a ROM monitor as the GDB backend
+
+@value{GDBN} can also mimic a human user and use a @code{ROM} monitor's 
+normal debug commands as a backend. This consists mostly of sending and parsing
+ASCII strings. 
+
+All @code{ROM} monitor interfaces share a common set
+of routines in @file{gdb/monitor.c}. The routines support adding new @code{ROM}
+monitor interfaces by allowing the user to fill in a structure with the 
+common commands that @value{GDBN} needs: @code{run()}, @code{break()}, 
+@code{print()}, @code{step()}, @code{next()}, and @code{continue()}. 
+
+@value{GDBN} already supports several command @code{ROM} 
+monitors, including Motorola's @code{bug} monitor for their VME boards 
+and the @code{rom68k} monitor by Integrated Systems, Inc. for 
+@code{m68k}-based boards. @value{GDBN} also supports the custom @code{ROM} 
+monitors on the WinBond and Oki PA based targets. There is built-in support 
+for loading files to @code{ROM} monitors specifically. 
+
+@value{GDBN} can convert an executable binary image into an @code{Srecord} 
+and load it either as a printable ASCII file or using @code{xmodem}.
+
+@c FIXME: do I need trademark somethings here ? Is Integrated the right
+@c company? 
+@c
+@c FIXME -- the right company for what?
+@c
+@node GDB remote protocol
+@subsection The GDB standard remote protocol
+
+The @value{GDBN} @dfn{standard remote protocol} is a simple packet-based 
+scheme.  
+@value{GDBN} encapsulates a debug packet whose contents are @code{<data>}, 
+in the form:
+
+@smallexample
+$<data>#<CSUM1><CSUM2>
+@end smallexample
+
+@code{data} is typically a user command.  @code{data} must be ASCII 
+alphanumeric and cannot include characters @code{$} or @code{#}.  
+If @code{data} starts with two characters followed by @code{:}, 
+the existing stubs interpret this as a sequence number. 
+ 
+@code{CSUM1} and @code{CSUM2} are @value{GDBN}'s ASCII representations in 
+hex of an 8-bit checksum of @code{data}. 
+@c
+@c FIXME -- I'm not sure all this is necessary, considering GDB
+@c          does the representation, not the user.  Can we weed some out? -->
+@c
+Because the checksum must be two bytes, a byte with the value @samp{7} 
+becomes @samp{07}.
+On a 32-bit machine this works out to 8 characters per word. 
+All of the bytes in a word are stored in the target byte order.
+@value{GDBN} uses hex digits 0-9, a-f, and sends the most significant nibble 
+first.
+ 
+For example, the command @code{read registers g}:
+
+@smallexample
+read registers g
+@end smallexample
+
+instructs @value{GDBN} to send the packet:
+
+@smallexample
+$g67#
+@end smallexample
+
+When writing the host side of the @value{GDBN} protocol, be careful of 
+byte order and make sure that the code will run on both big and little 
+endian hosts and produce the same answers. 
+@c
+@c FIXME -- do we have both big & little endian?  
+@c
+
+@menu
+* Functions::                   Standard GDB backend standard functions
+* Additional::                  Additional GDB backend functions
+* Response::                    How GDB responds to packets from the backend
+@end menu
+
+@node Functions
+@subsubsection Standard GDB backend functions
+
+These functions are the minimum required to make a @value{GDBN} 
+backend work. Other commands are optional, and may not be supported by all 
+@value{GDBN} backends:
+@c
+@c FIXME -- What's the story with the checksum for all of these
+@c          examples?
+@c
+
+@table @code
+@item read registers g
+
+Reads the registers.
+For example, the command:
+
+@smallexample
+read registers g
+@end smallexample
+
+sends the packet:
+
+@smallexample
+$g67#
+@end smallexample
+
+@code{read registers} returns the values that the registers are set to.
+Registers are in the internal order for @value{GDBN}, and the bytes in a 
+register are in the same order that the machine uses. 
+All values are in sequence starting with register 0. 
+All register values are listed in the same packet. 
+
+@item write registers G<@var{value}>
+Writes to the registers.
+@code{@var{value}} is the value to set the registers to. 
+For example, the command:
+
+@smallexample
+write registers G000000001111111122222222...
+@end smallexample
+
+sends the packet:
+
+@smallexample
+$G000000001111111122222222...#
+@end smallexample
+
+Registers are in the internal order for @value{GDBN}, and the bytes in a 
+register are in the same order that the machine uses. All values are in 
+sequence starting with register 0. All registers values are listed in the 
+same packet. 
+
+@code{write registers} returns @code{ACK} or @code{NAK}.
+@xref{Response,,How GDB responds to its backend}.
+
+@item read memory m<@var{addr,len}>
+Reads memory. 
+@code{@var{addr}} is the address at which to begin reading memory and  
+@code{@var{len}} is the length of memory to read.
+For example, the command:
+
+@smallexample
+read memory00005556,0024
+@end smallexample
+
+sends the packet: 
+
+@smallexample
+$m00005556,0024#
+@end smallexample 
+
+This requests 24 bytes starting at address @code{00005556}.
+
+@code{read memory} returns the memory contents. 
+The target returns fewer bytes than requested if only part of the data can 
+be read.  Determine this by adding the raw numeric value of every byte in 
+the command and data, and comparing that number with the total number of bytes 
+requested.
+
+@item write memory M<@var{addr,len:value}>
+Writes to memory. 
+@code{@var{addr}} is the address at which to begin writing, 
+@code{@var{len}} is the number of bytes to write, and 
+@code{@var{value}} is the value to write. 
+For example, the command:
+
+@smallexample
+write memory M00005556,0024:101010101111111100000000...
+@end smallexample
+
+sends the packet:
+
+@smallexample
+$M00005556,0024:101010101111111100000000...#
+@end smallexample
+
+@code{write memory} returns @code{ACK} if the target writes the value 
+successfully.
+It returns @code{NAK} if there is an error or if the target only writes 
+part of the data.  @xref{Response,,How GDB responds to its backend}.
+
+@need 1000
+@item last signal ?
+
+Returns one of the following:
+
+@itemize
+@item @code{S<@var{number}>#}
+
+@code{@var{number}} is the number of the last signal.
+Exceptions on the target are converted to the most similar Unix-style
+signal number, such as @code{SIGSEGV}. A sample response of this type would
+look like:
+
+@smallexample
+$S05#
+@end smallexample
+@end ignore
+
+@ignore
+@item @code{T<@var{sig_num} @var{reg_num}:@var{value};@var{reg_num}:
+@var{value};@var{reg_num}:@var{value};>}
+@c
+@c FIXME -- what is this supposed to look like?  Shouldn't there
+@c          be a space or some punctuation between the sig_num
+@c          and the reg_num?
+@c          Do there have to be three sets sof reg_num's & values?
+@c
+
+@code{@var{sign-num}} is the signal number.
+@code{@var{reg_num}} is the register number.
+@code{@var{value}} is the value in the register.
+@end ignore
+
+@ignore
+@item @code{W<@var{status}>#}
+
+The process has exited, and @code{@var{status}} is the exit status.  
+This is only applicable to certain sorts of targets.
+@c
+@c FIXME -- which are?
+@c
+@end itemize
+@end table
+
+@table @code
+@item continue c<@var{addr}>
+Continues execution at the address @code{@var{addr}}. 
+If @code{@var{addr}} is omitted, your application resumes execution at 
+the current address of the @code{pc} register.
+
+@code{continue} returns the same replies as @code{last signal}. 
+There is no reply to @code{continue} until your application 
+reaches the next breakpoint and stops executing again.
+
+@item step s<@var{addr..addr}> 
+@c
+@c FIXME -- is this true about the addr..addr? -->
+@c
+Continues execution at each address in @code{@var{addr}}.
+Separate the addresses with @code{..} (two dots). 
+@c
+@c FIXME -- Is this true, the dots business?
+@c
+If @code{@var{addr}} is omitted, your application resumes execution at 
+the current address of the @code{pc} register.
+
+@code{step} returns the same replies as @code{last signal}. 
+There is no reply to @code{step} until your application reaches 
+the next step and stops executing again.
+@end table
+
+@node Additional
+@subsubsection Additional GDB backend functions
+
+These functions are used by some @value{GDBN} backends, but not all: 
+@c
+@c FIXME -- let's use examples of commands, if not packets too.
+@c
+
+@table @code
+@item write reg P<@var{reg}=@var{value}>
+Writes register @code{@var{reg}} with value @code{@var{value}}.
+
+@code{write reg} returns @code{ACK} or @code{NAK}.  @xref{Response,,How GDB 
+responds to its backend}.
+
+@item kill request k
+Simply exits.
+
+@item toggle debug d
+Toggles debug flag (see 386 & 68k stubs).
+@c
+@c FIXME -- see 386 and 68k stubs where?
+@c
+
+@item reset r
+Resets -- see sparc stub.
+@c
+@c FIXME -- see sparc stub where?
+@c
+
+@item reserved other
+The @value{GDBN} stub sends @code{$#<checXsyksum>}, an empty response, 
+to any request it doesn't recognize.  This way the stub can handle 
+new user commands, even if those commands are meant for only one 
+particular target and are not part of the @value{GDBN} standard remote
+protocol.
+
+@item search t<@var{addr}:@var{pattern},@var{mask}>
+Searches backwards starting at address @code{@var{addr}} for a match with 
+the pattern @code{@var{pattern}} and the mask @code{@var{mask}}. 
+@code{@var{pattern}} and @code{@var{mask}} are each 4 bytes long.
+
+@item general query q<@var{arg}>
+Requests info about @code{@var{arg}}.
+
+@item general set Q<@var{arg}=@var{value}>
+Sets value of @code{@var{arg}} to @code{@var{value}}.
+
+@item query sect offs qOffsets
+Gets section offsets.  
+
+@code{query sect offs} replies: @code{Text=@var{.text section};Data=@var{.data section};
+Bss=@var{.bss section}}.
+
+@item console output Otext
+Sends text to stdout from the target side of the serial connection.
+@c
+@c FIXME -- is this definition of console output correct?
+@c
+
+@end table
+
+@node Response
+@subsubsection How GDB responds to its backend
+ 
+Most commands return data and a @code{+} (@code{ACK}), and 
+commands that don't return data respond with just an @code{ACK}.  
+However, if the checksum doesn't match the calculated 
+checksum for that data record, there is a transmission error and 
+the target responds with a @code{-} (@code{NAK}).  
+@value{GDBN} waits for @code{ACK} before transmitting the next packet. 
+
+Data responses might be @dfn{run-length encoded} to save space.  
+Run-length encoding tells the user that a single character repeats
+a certain number of times. An @code{*} after the first character of a response 
+indicates run-length encoding.  The character before the @code{*} repeats, 
+and the character following the @code{*} tells how many times the first 
+character repeats.
+
+For example:
+
+@smallexample
+1*03 = 111
+0*04 = 0000
+5*0a = 5555555555
+@end smallexample
+
+The encoding is @var{n}+29, which yields an ASCII printable character. 
+@var{n} is always <126 because it's only a two-byte value. 
+
+@node Other remote protocols
+@subsection Adding support for new protocols
+
+@c FIXME:
+write something here 
+@end ignore

@@ -1,0 +1,966 @@
+@c                                                  -*-Texinfo-*-
+@c Contents of IDT/MIPS datasheet or chapter.  For use as a chapter,
+@c surround inclusion of this file with `@lowersections' and `@raisesections'.
+
+@c UPDATE!!! With any luck, releases after 94q1 should not need the
+@c "Stubs" node ("Bootstrapping" chapter).  If it remains, though, note
+@c that you must update the pathname in the "ar" step, which refers to
+@c /usr/cygnus/94q1...
+
+@c FIXME!!! missing:
+@c          preprocessor asserts?
+@c          build/load/debug narrative
+
+@c FIXME!!! On next release, check if more MIPS architectures supported
+@c on IDT boards
+
+@menu
+* MIPSNames::       What the tools are called for IDT/MIPS.
+* MIPSStubs::       Bootstrapping the Cygnus tools for IDT/MIPS.
+* MIPSGCC::         Compiler options for MIPS.
+* MIPSCPP::         Preprocessor defines for the MIPS R3000.
+* MIPSGAS::         Assembling MIPS R3000 code.
+* MIPSGDB::         Remote IDT/MIPS debugging with GDB.
+* MIPSConfig::      Configuring GNU source for IDT/MIPS.
+* MIPSRefs::        IDT/MIPS documentation.
+* MIPSHints::       Some useful general information.
+@end menu
+
+@node MIPSNames
+@chapter What to Call the Tools
+
+Cross-development tools in the Cygnus Developer's Kit are normally
+installed with names that reflect the target machine, so that you can
+install more than one set of tools in the same binary directory.
+
+The names are constructed by using, as a prefix, the name of the
+configured target (i.e., the string specified with @samp{--target} to
+@code{configure}).  For example, the compiler (called simply @code{gcc}
+in native configurations) is called by one of these names:
+
+@table @code
+@item mips-idt-ecoff-gcc
+@i{If configured for big-endian byte ordering.}
+
+@item mipsel-idt-ecoff-gcc
+@i{If configured for little endian byte ordering.}
+@end table
+
+@node MIPSStubs
+@chapter Bootstrapping the Tools for IDT/MIPS Development
+
+Before you can use the Cygnus Developer's Kit to build your programs for
+@sc{idt} boards, you need a C library and C run-time initialization
+code.  Unless you already have suitable libraries of your own, you must
+integrate the Cygnus C libraries with low-level code supplied by
+@sc{idt}.  This low-level code initializes the C run-time environment,
+and describes the hardware interface to the Cygnus C libraries.
+
+To begin with, make sure you have the following C and assembly source
+files from @sc{idt}:
+
+@example
+@group
+@exdent @emph{C source files:}
+drv_8254.c         sys.c           
+idt_int_hand.c     syscalls.c      
+idtfpip.c          timer_int_hand.c
+sbrk.c
+@end group
+
+@group
+@exdent @emph{C header files:}
+dpac.h             idtio.h         
+excepthdr.h        idtmon.h        
+fpip.h             iregdef.h       
+i8254.h            saunder.h       
+idt_entrypt.h      setjmp.h        
+idtcpu.h        
+@end group
+
+@group
+@exdent @emph{Assembler files:}
+idt_csu.S          lnkexit.S   
+idt_except.S       lnkhelp.S   
+idtfpreg.S         lnkinstal.S 
+idtmem.S           lnkio.S     
+idttlb.S           lnkioctl.S  
+idtwbf.S           lnkjmp.S    
+lnkatb.S           lnkmem.S    
+lnkcach.S          lnknimp.S   
+lnkchar.S          lnkprint.S  
+lnkcio.S           lnksbrk.S   
+lnkcli.S           lnkstr.S    
+@end group
+@end example
+
+Then follow these steps to integrate the low-level @sc{idt} code with
+your Cygnus Developer's Kit:
+
+@enumerate
+@item
+@sc{idt} supplies the C run-time initialization code in the file
+@file{idt_csu.S}.  Since @sc{gnu cc} expects to find the initialization
+module under the name @code{crt0.o}, rename the source file to match:
+
+@cartouche
+@example
+$ mv idt_csu.S crt0.S
+@end example
+@end cartouche
+
+@item
+Edit the contents of @file{crt0.S}.  A few more instructions are needed
+to ensure correct initialization, and to ensure that your programs exit
+cleanly.  At the end of the file (after a comment including the text
+@samp{END I/O initialization}), look for these lines:
+
+@cartouche
+@example
+        jal     main
+
+ENDFRAME(start)
+@end example
+@end cartouche
+
+Insert @samp{move ra,zero} before @samp{jal main} to mark the top of the
+stack for the debugger, and add two lines after the call to @code{main}
+to call the @code{exit} routine (before the @samp{ENDFRAME(start)}), so
+that the end of the file looks like this:
+
+@cartouche
+@example
+        move    ra,zero
+        jal     main
+
+        move    a0,v0
+        jal     exit
+
+ENDFRAME(start)
+@end example
+@end cartouche
+
+@item
+Edit @file{syscalls.c}, the interface to the low-level routines required
+by the C library, to remove the leading underbar from two identifiers:
+
+@enumerate a
+@item
+Rename @code{_kill} to @code{kill};
+
+@item
+Rename @code{_getpid} to @code{getpid}.
+@end enumerate
+
+@item
+Edit @file{lnksbrk.S} to remove the definition of @code{_init_sbrk};
+this definition is not needed, since it is available in @file{sbrk.c}.
+Delete the lines marked with @samp{-} at the left margin below:
+
+@cartouche
+@example
+        .text
+ 
+-FRAME(_init_sbrk,sp,0,ra)
+-       j       ra
+-ENDFRAME(_init_sbrk)
+-
+-
+-
+ FRAME(_init_file,sp,0,ra)
+        j       ra
+ ENDFRAME(_init_file)
+@end example
+@end cartouche
+
+@item
+Use your Cygnus Developer's Kit to assemble the @samp{.S} files, like
+this (use the compiler driver @code{gcc} to permit C preprocessing).
+
+@emph{For concreteness, these example commands assume the @code{mips}
+(big-endian) variant of the configuration; if you ordered tools
+configured for little-endian object code, type @samp{mipsel} wherever the
+examples show @samp{mips}.}
+
+@c NOTE: -fno-builtin in our Makefile, but I assume irrelevant for
+@c       low-level code, hence omit.
+@c
+@c NOTE: MISSING_SYSCALL_NAMES in our Makefile, but not in any
+@c       of the .S, .c, or .h files, so I omit it.
+@c
+@c NOTE: -g irrelevant for assembler today, but it may be useful someday
+@cartouche
+@example
+$ mips-idt-ecoff-gcc -g -c *.S
+@end example
+@end cartouche
+
+@c FIXME! Our Makefile uses -g, so I show it below. Aren't we compiling
+@c         with -O (and not -g) for final archives, though?
+@item
+Compile the @samp{.c} files.
+
+One particular C source file, @file{drv_8254.c} requires two special
+preprocessor symbol definitions: @samp{-DCLANGUAGE -DTADD=0xBF800000}.
+@emph{Be careful to type the constant value for @samp{TADD} accurately;}
+the correct value is essential to allow the @sc{idt} board to
+communicate over its serial port.
+
+The two special preprocessor definitions make no difference to the other
+C source files, so you can compile them all with one call to the
+compiler, like this:
+
+@cartouche
+@example
+$ mips-idt-ecoff-gcc -g -O \
+   -DCLANGUAGE -DTADD=0xBF800000 -c *.c
+@end example
+@end cartouche
+
+(The example is split across two lines simply due to formatting
+constraints; you can type it on a single line instead of two lines
+linked by a @samp{\}, of course.)
+
+@item
+Add the new object files to the C library archive, @file{libc.a}, from
+your Cygnus Developer's Kit.  Assuming you installed the Kit in
+@file{/usr/cygnus/} as we recommend:
+
+@cartouche
+@example
+$ mips-idt-ecoff-ar rvs /usr/cygnus/progressive-94q1/\
+H-@var{host}/mips-idt-ecoff/lib/libc.a *.o 
+@end example
+@end cartouche
+
+As before, you can omit the @samp{\} and type a single line.
+@samp{H-@var{host}} stands for the string that identifies your host
+configuration; for example, on a @sc{sparc} computer running SunOS
+4.1.3, you'd actually type @samp{H-sparc-sun-sunos4.1.3}.
+@end enumerate
+
+@node MIPSGCC
+@chapter Compiler options for MIPS
+
+When you run @sc{gcc}, you can use command-line options to choose
+machine-specific details.  For information on all the @sc{gcc} command-line
+options, see @ref{Invoking GCC,,GNU CC Command Options,gcc.info,Using
+GNU CC}.
+
+@menu
+* MIPSArchitecture::        Options for architecture and code generation.
+* MIPSFloats-GCC::          Options for floating point.
+* MIPSFloat-Calls::         Floating point subroutines.
+* MIPSGOFAST Link::         Linking with the GOFAST library.
+* MIPSGOFAST Compat::       Full compatibility with GOFAST.
+* MIPSAvoid::               Options for unfinished features.
+@end menu
+
+@node MIPSArchitecture
+@section GCC options for code generation
+
+@table @code
+@item -mcpu=r3000
+@itemx -mcpu=@var{cputype}
+Since the @sc{idt} boards are based on the @sc{mips} @sc{r3000}, the
+default for this particular configuration is @samp{-mcpu=r3000}.
+
+In the general case, use this option on any @sc{mips} platform to assume
+the defaults for the machine type @var{cputype} when scheduling
+instructions.  The default @var{cputype} on other @sc{mips}
+configurations is @samp{default}, which picks the longest cycle times
+for any of the machines, in order that the code run at reasonable rates
+on any @sc{mips} @sc{cpu}.  Other choices for @var{cputype} are
+@samp{r2000}, @samp{r3000}, @samp{r4000}, and @samp{r6000}.  While
+picking a specific @var{cputype} will schedule things appropriately for
+that particular chip, the compiler will not generate any code that does
+not meet level 1 of the @sc{mips} ISA (instruction set architecture)
+unless you use the @samp{-mips2} or @samp{-mips3} switch.
+
+@item -mgpopt
+@itemx -mno-gpopt
+With @samp{-mgpopt}, write all of the data declarations
+before the instructions in the text section.  This allows the @sc{mips}
+assembler to generate one word memory references instead of using two
+words for short global or static data items.  This is on by default when
+you compile with optimization.
+
+@item -mstats
+@itemx -mno-stats
+With @samp{-mstats}, for each non-inline function processed, emit one
+line to the standard error file to print statistics about the program
+(number of registers saved, stack size, etc.).
+
+@item -mmemcpy
+@itemx -mno-memcpy
+With @samp{-mmemcpy}, make all block moves call @code{memcpy} (a C
+library string function) instead of possibly generating inline code.
+
+@item -mlong-calls
+@itemx -mno-long-calls
+Do all calls with the @code{JALR} instruction, which requires loading up
+a function's address into a register before the call.  You need this
+switch if you call functions outside of the current 512 megabyte segment
+(unless you use function pointers for the call).
+
+@item -mhalf-pic
+@itemx -mno-half-pic
+Put pointers to extern references into the data section and load them
+up, rather than putting the references in the text section.
+
+@item -G @var{num}
+Put global and static items less than or equal to @var{num} bytes into
+the small data or bss sections instead of the normal data or bss
+section.  This allows the assembler to emit one word memory reference
+instructions based on the global pointer (@var{gp} or @var{$28}),
+instead of the normal two words used.  By default, @var{num} is 8.  When
+you specify another value, @code{gcc} also passes the @samp{-G
+@var{num}} switch to the assembler and linker.
+@end table
+
+@node MIPSFloats-GCC
+@section GCC options for floating point
+
+These options select software or hardware floating point.
+
+@table @code
+@item -msoft-float
+Generate output containing library calls for floating point.  The
+@samp{mips-idt-ecoff} configuration of @file{libgcc} (an auxiliary
+library distributed with the compiler) include a
+collection of subroutines to implement these library calls.
+
+In particular, this @sc{gcc} configuration generates subroutine calls
+compatible with the US Software ``@sc{gofast r3000}'' floating point library,
+giving you the opportunity to use either the @file{libgcc}
+implementation or the US Software version.  @sc{idt} includes the @sc{gofast}
+library in their @sc{idt c} 5.0 package; you can also order libraries
+separately from @sc{idt} as the ``@sc{idt kit}''.  @xref{MIPSGOFAST Link,,Linking
+with the @sc{gofast} library}, for examples of how to use @sc{gcc} to link with
+the @sc{gofast} library.
+
+To use the @file{libgcc} version, you need nothing special; @sc{gcc} links
+with @file{libgcc} automatically after all other object files and
+libraries.
+
+Because the calling convention on @sc{mips} architectures depends on
+whether or not hardware floating-point is installed, @samp{-msoft-float}
+has one further effect: @sc{gcc} looks for subroutine libraries in a
+subdirectory @samp{soft-float}, for any library directory in your search
+path.  (@emph{Note}: This does not apply to directories specified using
+the @samp{-l} option.)  With the Cygnus Developer's Kit, you can select
+the standard libraries as usual with @samp{-lc} or @samp{-lm}, because
+the @samp{soft-float} versions are installed in the default library
+search paths.
+
+@quotation
+@emph{Warning:} Treat @samp{-msoft-float} as an ``all or nothing''
+proposition.  If you compile any module of a program with
+@samp{-msoft-float}, it's safest to compile all modules of the program
+that way---and it's essential to use this option when you link.
+@end quotation
+
+@item -mhard-float
+Generate output containing floating point instructions, and use the
+corresponding @sc{mips} calling convention.  This is the default.
+@end table
+
+@node MIPSFloat-Calls
+@section Floating point subroutines
+
+Two kinds of floating point subroutines are useful with @sc{gcc}:
+
+@enumerate
+@item
+Software implementations of the basic functions (floating-point
+multiply, divide, add, subtract), for use when there is no hardware
+floating-point support.
+
+When you indicate that no hardware floating point is available (with the
+@sc{gcc} option @samp{-msoft-float}, @sc{gcc} generates calls compatible
+with the @sc{gofast} library, proprietary licensed software available from US
+Software.  If you do not have this library, you can still use software
+floating point; @file{libgcc}, the auxiliary library distributed with
+@sc{gcc}, includes compatible---though slower---subroutines.
+
+@item
+General-purpose mathematical subroutines.
+
+The Developer's Kit from Cygnus Support includes an implementation of
+the standard C mathematical subroutine library.  @xref{Top,,
+Mathematical Functions,libm.info, The Cygnus C Math Library}.
+@end enumerate
+
+@node MIPSGOFAST Link
+@section Linking with the GOFAST library
+
+The @sc{gofast} library is available with two interfaces; @sc{gcc}
+@samp{-msoft-float} output places all arguments in registers, which (for
+subroutines using @code{double} arguments) is compatible with the
+interface identified as ``Interface 1: all arguments in registers'' in
+the @sc{gofast} documentation.  For full compatibility with all
+@sc{gofast} subroutines, you need to make a slight modification to
+some of the subroutines in the @sc{gofast} library.  @xref{MIPSGOFAST
+Compat,, Full compatibility with the GOFAST library}, for details.
+
+If you purchase and install the @sc{gofast} library, you can link your
+code to that library in a number of different ways, depending on where
+and how you install the library.
+
+To focus on the issue of linking, the following examples assume you've
+already built object modules with appropriate options (including
+@samp{-msoft-float}).
+
+This is the simplest case; it assumes that you've installed the @sc{gofast}
+library as the file @file{fp.a} in the same directory where you do
+development, as shown in the @sc{gofast} documentation:
+
+@cartouche
+@smallexample
+$ mips-idt-ecoff-gcc -o @var{prog} @var{prog}.o @dots{} -lc fp.a
+@end smallexample
+@end cartouche
+
+In a shared development environment, this example may be more realistic;
+it assumes you've installed the @sc{gofast} library as
+@file{@var{ussdir}/libgofast.a}, where @var{ussdir} is any convenient
+directory on your development system.
+
+@cartouche
+@smallexample
+$ mips-idt-ecoff-gcc -o program program.o @dots{} -lc -L@var{ussdir} -lgofast
+@end smallexample
+@end cartouche
+
+Finally, you can eliminate the need for a @samp{-L} option with a little
+more setup, using an environment variable like this (the example assumes
+you use a command shell compatible with the Bourne shell):
+
+@cartouche
+@smallexample
+$ LIBRARY_PATH=@var{ussdir}; export LIBRARY_PATH
+
+$ mips-idt-ecoff-gcc -o program program.o @dots{} -lc -lgofast
+@end smallexample
+@end cartouche
+
+As for the previous example, the @sc{gofast} library here is installed in
+@file{@var{ussdir}/libgofast.a}.  The environment variable
+@code{LIBRARY_PATH} instructs @sc{gcc} to look for the library in
+@var{ussdir}.  (The syntax shown here for setting the environment
+variable is the Unix Bourne Shell syntax; adjust as needed for your
+system.)
+
+Notice that all the variations on linking with the @sc{gofast} library
+explicitly include @samp{-lc} @emph{before} the @sc{gofast} library.
+@samp{-lc} is the standard C subroutine library; normally, you don't
+have to specify this, since linking with that library is automatic.
+
+When you link with an alternate software floating-point library,
+however, the order of linking is important.  In this situation, specify
+@samp{-lc} @emph{to the left} of the @sc{gofast} library, to ensure that
+standard library subroutines also use the @sc{gofast} floating-point code.
+
+@node MIPSGOFAST Compat
+@section Full compatibility with the GOFAST library
+
+The @sc{gcc} calling convention for functions whose first and second
+arguments have type @code{float} is not completely compatible with the
+definitions of those functions in the @sc{gofast} library, as shipped.
+
+@noindent
+These functions are affected:
+
+@example
+fpcmp   fpadd   fpsub   fpmul   fpdiv   fpfmod
+fpacos  fpasin  fpatan  fpatan2 fppow
+@end example
+
+Since the @sc{gofast} library is normally shipped with source, you can
+make these functions compatible with the @sc{gcc} convention by adding
+this instruction to the beginning of each affected function, then
+rebuilding the library:
+
+@example
+        move    $5,$6
+@end example
+
+
+@node MIPSAvoid
+@section GCC options to avoid for IDT R3000 boards
+
+These options are meant for other forms of the @sc{mips} architecture:
+
+@table @code
+@item -mabicalls
+@itemx -mno-abicalls
+Emit (or do not emit) the assembler directives @samp{.abicalls},
+@samp{.cpload}, and @samp{.cprestore} that some System V.4 ports use for
+position independent code.
+
+@item -mips2
+Issue instructions from level 2 of the @sc{mips} ISA (branch likely, square
+root instructions).
+
+@item -mmips-as
+Generate code for the @sc{mips} assembler.  This is the default for many
+other @sc{mips} platforms, but it requires an auxiliary program
+@code{mips-tfile} to encapsulate debugging information.
+
+@code{mips-tfile} @emph{is not included} in your Cygnus Developer's Kit,
+since it is not required for the @sc{gnu} assembler.
+
+@need 1200
+@item -mrnames
+@itemx -mno-rnames
+Generate code using the @sc{mips} software names for the registers,
+instead of the hardware names (for example, @var{a0} instead of
+@var{$4}).  The converse @samp{-mno-rnames} switch is the default.
+
+@quotation
+@emph{Warning:} The @sc{gnu} assembler will not build code generated with the
+@samp{-mrnames} switch.
+@end quotation
+@end table
+
+These options are harmless---but unnecessary---on the @sc{r3000}:
+
+@table @code
+@item -mfp32
+Assume that there are 32 32-bit floating point registers.  This is the
+default.
+
+@item -mgas
+Generate code for the @sc{gnu} assembler.  This is the default when @sc{gcc} is
+correctly configured for this platform, using the @samp{-with-gnu-as}
+configuration parameter.
+
+@item -mno-mips-tfile
+The @samp{-mno-mips-tfile} option prevents postprocessing the object
+file with the @code{mips-tfile} program, after the @sc{mips} assembler has
+generated it to add debug support.  The @sc{gnu} assembler does not require
+@code{mips-tfile} in any case.
+
+@code{mips-tfile} @emph{is not included} in your Cygnus Developer's Kit.
+
+@item -nocpp
+Tell the @sc{mips} assembler to avoid running the C preprocessor over user
+assembler files (with a @samp{.s} suffix) when assembling them.
+The @sc{gnu} assembler never runs the C preprocessor in any case.
+
+@xref{MIPSAs-cpp,,Assembly with C preprocessing}, for information about how
+to use assembly code that requires C-style preprocessing.
+@end table
+
+Avoid these options---although they appear in the configuration
+files, their implementation is not yet complete.
+
+@example
+-mfp64
+-mint64
+-mips3
+-mlong64
+-mlonglong128
+@end example
+
+@node MIPSCPP
+@chapter Predefined preprocessor macros
+
+@sc{gcc} defines the following preprocessor macros for the
+IDT/MIPS configurations:
+
+@table @emph
+@item Any @sc{mips} architecture:
+@w{@code{mips}}, @w{@code{_mips}}, @w{@code{__mips__}}, @w{@code{___mips__}},
+@w{@code{__mips}}, @w{@code{___mips}}.
+
+@item @sc{mips} architecture with big-endian numeric representation:
+@w{@code{MIPSEB}}, @w{@code{_MIPSEB}}, @w{@code{__MIPSEB__}}, @w{@code{___MIPSEB__}},
+@w{@code{__MIPSEB}}, @w{@code{___MIPSEB}}.
+
+@item @sc{mips} architecture with little-endian numeric representation:
+@w{@code{MIPSEL}}, @w{@code{_MIPSEL}}, @w{@code{__MIPSEL__}}, @w{@code{___MIPSEL__}},
+@w{@code{__MIPSEL}}, @w{@code{___MIPSEL}}.
+
+@item r3000 @sc{mips} processor:
+@w{@code{R3000}}, @w{@code{_R3000}}, @w{@code{__R3000__}}, @w{@code{___R3000__}},
+@w{@code{__R3000}}, @w{@code{___R3000}}.
+@end table
+
+@node MIPSGAS
+@chapter Assembling MIPS R3000 code
+
+You should use @sc{gnu} @code{as} to assemble @sc{gcc} output.  To ensure
+this, @sc{gcc} should be configured using the @samp{--with-gnu-as} switch (as
+it is in Cygnus distributions; @pxref{MIPSConfig,,Configuring GNU source for
+IDT/MIPS}).  Alternatively, you can invoke @sc{gcc} with the @code{-mgas}
+option.
+
+@sc{gnu} @code{as} for @sc{mips} architectures supports the @sc{mips} @sc{r2000} and @sc{r3000}
+processors.
+
+@menu
+* MIPSGAS-opts::    Assembler options
+* MIPSObject::      ECOFF object code
+* MIPSStabs::       Directives for debugging information
+@end menu
+
+@node MIPSGAS-opts
+@section Assembler options
+
+The @sc{mips} configurations of @sc{gnu} @code{as} support three special
+options, and accept one other for command-line compatibility.
+@xref{Invoking,,Command-Line Options,as.info,Using @code{as}, the GNU
+Assembler}, for information on the command-line options available with
+all configurations of the @sc{gnu} assembler.
+
+@table @code
+@item -G @var{num}
+This option sets the largest size of an object that will be referenced
+implicitly with the @code{gp} register.  It is only accepted for targets
+that use @sc{ecoff} format.  The default value is 8.
+
+@item -EB
+@itemx -EL
+Any @sc{mips} configuration of @code{as} can select big-endian or
+little-endian output at run time (unlike the other @sc{gnu} development
+tools, which must be configured for one or the other).  Use @samp{-EB}
+to select big-endian output, and @samp{-EL} for little-endian.
+
+@item -nocpp
+This option is ignored.  It is accepted for command-line compatibility
+with other assemblers, which use it to turn off C style preprocessing.
+With @sc{gnu} @code{as}, there is no need for @samp{-nocpp}, because the
+@sc{gnu} assembler itself never runs the C preprocessor.  (If you have
+assembly code that requires C-style preprocessing,
+@pxref{MIPSAs-cpp,,Assembly with C preprocessing}.)
+@end table
+
+@node MIPSObject
+@section ECOFF object code
+
+Assembling for a @sc{mips} @sc{ecoff} target supports some additional sections
+besides the usual @code{.text}, @code{.data} and @code{.bss}.  The
+additional sections are @code{.rdata}, used for readonly data,
+@code{.sdata}, used for small data, and @code{.sbss}, used for small
+common objects.
+
+When assembling for @sc{ecoff}, the assembler uses the @code{$gp}
+(@code{$28}) register to form the address of a ``small object''.  Any
+object in the @code{.sdata} or @code{.sbss} sections is considered
+``small'' in this sense.  For external objects, or for objects in the
+@code{.bss} section, you can use the @sc{gcc} @samp{-G} option to control the
+size of objects addressed via @code{$gp}; the default value is 8,
+meaning that a reference to any object eight bytes or smaller will use
+@code{$gp}.  Passing @w{@samp{-G 0}} to @code{as} prevents it from using the
+@code{$gp} register on the basis of object size (but the assembler uses
+@code{$gp} for objects in @code{.sdata} or @code{sbss} in any case).
+The size of an object in the @code{.bss} section is set by the
+@code{.comm} or @code{.lcomm} directive that defines it.  The size of an
+external object may be set with the @code{.extern} directive.  For
+example, @samp{.extern sym,4} declares that the object at @code{sym} is
+4 bytes in length, whie leaving @code{sym} otherwise undefined.
+
+Using small @sc{ecoff} objects requires linker support, and assumes that the
+@code{$gp} register has been correctly initialized (normally done
+automatically by the startup code).  @sc{mips} @sc{ecoff} assembly code must not
+modify the @code{$gp} register.
+
+@node MIPSStabs
+@section Directives for debugging information
+
+@sc{mips} @sc{ecoff} @code{as} supports several directives used for generating
+debugging information which are not support by traditional @sc{mips}
+assemblers.  These are @code{.def}, @code{.endef}, @code{.dim},
+@code{.file}, @code{.scl}, @code{.size}, @code{.tag}, @code{.type},
+@code{.val}, @code{.stabd}, @code{.stabn}, and @code{.stabs}.  The
+debugging information generated by the three @code{.stab} directives can
+only be read by @sc{gdb}, not by traditional @sc{mips} debuggers (this enhancement
+is required to fully support C++ debugging).  These directives are
+primarily used by compilers, not assembly language programmers!
+@xref{Pseudo Ops,,Assembler Directives,as.info,Using @code{as}}, for
+full information on all @sc{gnu} @code{as} directives.
+
+@node MIPSGDB
+@chapter Remote IDT/MIPS Debugging
+
+@code{mips-idt-ecoff-gdb} uses the @sc{mips} remote serial protocol to
+connect your development host machine to the target board.  On the
+target board itself, the @sc{idt} program @code{IDT/sim} implements the
+same protocol.  (@code{IDT/sim} runs automatically whenever the board is
+powered up.)
+
+@noindent
+Use these @sc{gdb} commands to specify the connection to your target board:
+
+@table @code
+@item target mips @var{port}
+To run a program on the board, start up @sc{gdb} with the name of your
+program as the argument.  To connect to the board, use the command
+@samp{target mips @var{port}}, where @var{port} is the name of the
+serial port connected to the board.  If the program has not already been
+downloaded to the board, you may use the @code{load} command to download
+it.  You can then use all the usual @sc{gdb} commands.
+
+For example, this sequence connects to the target board through a serial
+port, and loads and runs a program called @var{prog} through the
+debugger:
+
+@cartouche
+@example
+host$ mips-idt-ecoff-gdb @var{prog}
+GDB is free software and @dots{}
+(gdb) target mips /dev/ttyb
+(gdb) load
+(gdb) run
+@end example
+@end cartouche
+
+@item target mips @var{hostname}:@var{portnumber}
+If your @sc{gdb} is configured to run from a SunOS or SGI host, you can
+specify a TCP connection instead of a serial port, using the syntax
+@code{@var{hostname}:@var{portnumber}} (assuming your IDT board is
+connected so that this makes sense; for instance, to a serial line
+managed by a terminal concentrator).
+@end table
+
+@noindent
+@sc{gdb} also supports these special commands for @sc{idt}/@sc{mips}
+targets:
+
+@table @code
+@item set mipsfpu off
+If your target board does not support the @sc{mips} floating point
+coprocessor, you should use the command @samp{set mipsfpu off} (you may
+wish to put this in your @file{.gdbinit} file).  This tells @sc{gdb}
+how to find the return value of functions which return floating point
+values.  It also allows @sc{gdb} to avoid saving the floating point
+registers when calling functions on the board.
+
+@item set remotedebug @var{n}
+@c FIXME! For this to be useful, you must know something about the MIPS
+@c FIXME...protocol.  Where is it described?
+You can see some debugging information about communications with the board
+by setting the @code{remotedebug} variable.  If you set it to 1 using
+@samp{set remotedebug 1} every packet will be displayed.  If you set it
+to 2 every character will be displayed.  You can check the current value
+at any time with the command @samp{show remotedebug}.
+
+@ignore
+@c deleted per IDT request (jeffrey)
+@item set timeout @var{seconds}
+@itemx set retransmit-timeout @var{seconds}
+@itemx show timeout
+@itemx show retransmit-timeout
+You can control the timeout used while waiting for a packet, in the
+@sc{mips} remote protocol, with the @code{set timeout @var{seconds}}
+command.  The default is 5 seconds.  Similarly, you can control the
+timeout used while waiting for an acknowledgement of a packet with the
+@code{set retransmit-timeout @var{seconds}} command.  The default is 3
+seconds.  You can inspect both values with @code{show timeout} and
+@code{show retransmit-timeout}.  (These commands are @emph{only}
+available when @sc{gdb} is configured for @samp{--target=mips-idt-ecoff}
+or @samp{--target=mipsel-idt-ecoff}.)
+@end ignore
+@end table
+
+@node MIPSConfig
+@chapter Configuring GNU source for IDT/MIPS
+
+Your Cygnus Developer's Kit includes precompiled, ready-to-run binaries,
+with all defaults configured for @sc{idt} @sc{mips} boards.
+
+However, you may have occasion to reconfigure or rebuild the source;
+after all, improving your tools is one of your privileges as a free
+software user!
+
+The script @code{configure} is used to specify many prearranged kinds of
+variations in the source.  @xref{What configure does,,What
+@code{configure} does, configure.info, Cygnus configure}, for an
+overview of the source configuration process.
+
+In particular, to configure for the @sc{mips} environment, you should use
+these @code{configure} options:
+
+@itemize @bullet
+@item
+Specify @samp{--target=mips-idt-ecoff} to generate or manage code for
+@sc{idt}/@sc{mips} boards, with big-endian numeric representation.
+
+@item
+Specify @samp{--target=mipsel-idt-ecoff} to generate or manage code for
+@sc{idt}/@sc{mips} boards, with little-endian numeric representation.
+
+@item
+Be sure to specify @samp{--with-gnu-as}.  This avoids an incompatibility
+between the @sc{gnu} compiler and the @sc{mips} assembler.  The
+@sc{mips} assembler does not understand debugging directives.  If you
+configure @sc{gcc} without this option, the compiler requires a special
+program, @code{mips-tfile}, to generate these debugging directives.
+@sc{gnu} @code{as} parses the debugging directives directly, and does
+not require @code{mips-tfile}.
+
+@item
+You may also wish to use @samp{--with-gnu-ld}, which will improve
+efficiency, or @samp{--with-stabs}, which will generate better debugging
+information.  Note that only @code{gdb} can read this form of debugging
+information.
+@end itemize
+
+@node MIPSRefs
+@chapter IDT/MIPS documentation
+
+For information about the @sc{mips} instruction set, see @cite{MIPS RISC
+Architecture}, by Kane and Heindrich (Prentice-Hall).
+
+For information about @sc{idt}'s @code{IDT/sim} board monitor program, see
+@cite{IDT/sim 4.0 Reference Manual} (IDT#703-00146-001/A).
+
+For information about US Software's floating point library, see 
+@cite{U S Software GOFAST R3000 Floating Point Library} (United States
+Software Corporation).
+
+@node MIPSHints
+@chapter Some General Information
+
+The following sections give pointers to additional information of
+interest to @sc{idt}/@sc{mips} board users.
+
+@menu
+* MIPSAs-cpp::      Assembly with C preprocessing
+* MIPSListings::    Useful listings from the GNU assembler.
+* MIPS__main::      The GNU C entry point.
+@c * MIPS-g::               What is all that debug information?
+@end menu
+
+@node MIPSAs-cpp
+@section Assembly with C preprocessing
+
+There are two convenient options to assemble hand-written files that
+require C-style preprocessing.  Both options depend on using the
+compiler driver program, @code{gcc}, instead of calling the assembler
+directly.
+
+@enumerate
+@item
+Name the source file using the extension @samp{.S} (capitalized) rather
+than @samp{.s}.  @code{gcc} recognizes files with this extension as
+assembly language requiring C-style preprocessing.
+
+@item
+Specify the ``source language'' explicitly for this situation, using the
+@code{gcc} option @samp{-xassembler-with-cpp}.
+@end enumerate
+
+@node MIPSListings
+@section Useful listings from GNU @code{as} or GCC
+
+If you invoke @code{as} via the @sc{gnu} C compiler (version 2), you can use
+the @samp{-Wa} option to pass arguments through to the assembler.  One
+common use of this option is to exploit the assembler's listing
+features.  Assembler arguments you specify with @code{gcc -Wa} must be
+separated from each other (and the @samp{-Wa}) by commas.  For example,
+the @samp{-alh} assembler option in the following commandline:
+
+@cartouche
+@smallexample
+$ mips-idt-ecoff-gcc -c -g -O -Wa,-alh,-L file.c
+@end smallexample
+@end cartouche
+
+@noindent
+requests a listing with high-level language and assembly language
+interspersed.
+
+The example also illustrates two other convenient options to specify
+for assembler listings:
+
+@enumerate
+@item
+The compiler debugging option @samp{-g} is essential to see interspersed
+high-level source statements, since without debugging information the
+assembler cannot tie most of the generated code to lines of the original
+source file.
+
+@item
+The additional assembler option @samp{-L} preserves
+local labels, which may make the listing output more intelligible to
+humans.
+@end enumerate
+
+These are the options to enable listing output from the assembler.  By
+itself, @samp{-a} requests listings of high-level language source,
+assembly language, and symbols.
+
+You can use other letters to select specific options for the list:
+@samp{-ah} requests a high-level language listing, @samp{-al} requests
+an output-program assembly listing, and @samp{-as} requests a symbol
+table listing.  High-level listings require that a compiler debugging
+option like @samp{-g} be used, and that assembly listings (@samp{-al})
+be requested also.
+
+You can use the @samp{-ad} option to @emph{omit} debugging directives
+from the listing.
+
+When you specify one of these options, you can further control listing
+output and its appearance using these @dfn{listing-control} assembler
+directives:
+
+@table @code
+@item .nolist
+Turn off listings from this point on.
+
+@item .list
+Turn listings back on from here.
+
+@item .psize @var{linecount} , @var{columnwidth}
+Describe the page size for your output.  (Default 60, 200.)
+The assembler generates form feeds after printing each group of
+@var{linecount} lines.  To avoid these automatic form feeds, specify 0
+as the @var{linecount}.
+
+@item .eject
+Skip to a new page (issue a form feed).
+
+@item .title
+Use @var{heading} as the title (second line, immediately after the
+source file name and pagenumber).
+
+@item .sbttl
+Use @var{subheading} as the subtitle (third line, immediately after the
+title line) when generating assembly listings.
+@end table
+
+If you do not request listing output with one of the @samp{-a} options,
+these listing-control directives have no effect.  You can also use the
+@samp{-an} option to turn off all forms processing.
+
+The letters after @samp{-a} may be combined into one option,
+@emph{e.g.}, @samp{-aln}.
+
+@node MIPS__main
+@section An extra initialization function
+
+When you compile C or C++ programs with @sc{gnu} C, the compiler quietly
+inserts a call at the beginning of @code{main} to a @sc{gcc} support
+subroutine called @code{__main}.  Normally this is invisible---but you
+may run into it if you want to avoid linking to the standard libraries,
+by specifying the compiler option @samp{-nostdlib}.  Include
+@samp{-lgcc} at the end of your compiler command line to resolve this
+reference.  This links with the compiler support library
+@file{libgcc.a}, but putting it at the end of your command line ensures
+that you have a chance to link first with any special libraries of your
+own.
+
+@code{__main} is the initialization routine for C++ constructors.
+Because @sc{gnu} C is designed to interoperate with @sc{gnu} C++, even C
+programs must have this call: otherwise C++ object files linked with a C
+@code{main} might fail.
+
+@ignore
+@node MIPS-g
+@section What is all that debug information?
+
+@* FIXME!! Beats me.  Investigate this---IDT wants to know why -g's are
+so much bigger, I think.
+@end ignore

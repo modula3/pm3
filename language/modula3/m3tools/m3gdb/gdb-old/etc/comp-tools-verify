@@ -1,0 +1,257 @@
+verify()
+{
+    if [ "${INSTALLHOST}" != "${HOST}" ] ; then
+	cat << EOF
+***	This machine appears to be for \"${INSTALLHOST}\", while the
+***	software on this tape is meant for \"${HOST}\"  
+***
+***	You may still run \"$0 --extract ...\" on this machine and then
+***	run the other steps on the machine on which you wish to install.
+***	You will need to do these steps separately.
+***	For more information, please refer to
+***     ${ANOTHER_TAPE} in ${NOTES}.
+EOF
+    else
+	popdir=`pwd`
+	cd ${LOGDIR}
+
+	verify_c_hello_world
+	verify_c_check_fixincludes
+	verify_cxx_hello_world
+	verify_cxx_initializers
+
+	rm -f hello* test-ioctl* static-init* Hello*
+	cd $popdir
+    fi
+}
+
+
+#### C hello world
+
+verify_c_hello_world()
+{
+if [ -f ${RELEASE_ROOT}/${EXECDIR}/bin/gcc ] ; then
+    cat > ${LOGDIR}/hello.c <<'EOF'
+#include <stdio.h>
+
+extern int printf();
+
+int main(int argc, char **argv) {
+        (void) printf("hello: gcc appears to be installed correctly for %s.\n",
+                MACHINE);
+        return(0);
+} /* main() */
+EOF
+
+    if ${RELEASE_ROOT}/${EXECDIR}/bin/gcc -Wall -O -g \
+	-DMACHINE=\"${INSTALLHOST}\" ${LOGDIR}/hello.c -o ${LOGDIR}/hello ; then
+	if ${LOGDIR}/hello ; then
+	    echo This is good.
+	else
+	    echo '***' Hello.c fails to run.  This is a problem.
+	    echo '***   ' Please call ${HOTLINE}
+	    exit 1
+	fi  # ./hello
+    else
+	echo '***' Hello.c fails to compile.  This is a problem.
+	echo '***   ' Please call ${HOTLINE}
+	exit 1
+    fi  # run gcc
+
+fi # gcc exists
+}
+
+### C++ static constructors/destructors
+
+verify_cxx_initializers()
+{
+if [ -f ${RELEASE_ROOT}/${EXECDIR}/bin/c++ ] ; then
+    cat > ${LOGDIR}/static-init.C << 'EOF'
+#include <iostream.h>
+int Three;
+
+struct Foo {
+    Foo(int i) { Three = i; }
+};
+
+Foo foo(3);
+
+int main()
+{
+  if (Three != 3) {
+        cout << "static-init: static initialization fails.\n";
+        return(1);
+  }
+
+  cout << "static-init: static initialization appears to work.\n";
+  return(0);
+}
+EOF
+
+    if ${RELEASE_ROOT}/${EXECDIR}/bin/c++ -static ${GPLUSOPTIONS} -Wall -O -g \
+            -DMACHINE=\"${INSTALLHOST}\" ${LOGDIR}/static-init.C -o ${LOGDIR}/static-init ; then
+        if ${LOGDIR}/static-init ; then
+            echo This is good.
+        else
+            echo '***' Static initialization is not working.  This is a problem.
+            echo '***   ' Please call ${HOTLINE}
+            exit 1
+        fi  # run static-init
+    else
+        echo '***' static-init.c fails to compile.  This is a problem.
+        echo '***   ' Please call ${HOTLINE}
+        exit 1
+    fi  # run g++
+fi  #  no g++
+}
+
+#### C++ hello world
+
+verify_cxx_hello_world()
+{
+if [ -f ${RELEASE_ROOT}/${EXECDIR}/bin/c++ ] ; then
+    cat > ${LOGDIR}/hello.C << 'EOF'
+#include <iostream.h>
+
+int main()
+{
+  char *machine = MACHINE;
+  cout << "hello: g++ appears to be installed correctly for "
+        << machine << ".\n";
+  return(0);
+}
+EOF
+
+    if ${RELEASE_ROOT}/${EXECDIR}/bin/c++ -static ${GPLUSOPTIONS} -Wall -O -g \
+            -DMACHINE=\"${INSTALLHOST}\" ${LOGDIR}/hello.C -o ${LOGDIR}/Hello ; then
+        if ${LOGDIR}/Hello ; then
+            echo This is good.
+        else
+            echo '***' hello.C fails to run.  This is a problem.
+            echo '***   ' Please call ${HOTLINE}
+            exit 1
+        fi  # ./Hello
+    else
+        ### this presupposes that hello.c DID compile.
+        echo '***' hello.C fails to compile.  This is a problem.
+        echo '***   ' Please call ${HOTLINE}
+        exit 1
+    fi  # run g++
+fi
+}
+
+
+#### does the given include file exist under the GCC include file subdir?
+
+check_fixed_file()
+{
+    if [ ! -f ${RELEASE_ROOT}/${EXECDIR}/lib/gcc-lib/${HOST}/||GCCvn||/include/$1 ] ; then
+        echo '***' You seem to be missing ${RELEASE_ROOT}/${EXECDIR}/lib/gcc-lib/${HOST}/||GCCvn||/include/$1.
+        echo '***   ' Most likely you need to run \"Install fixincludes\".
+        echo '***   ' Please run \"Install fixincludes\" and
+        echo '***   ' then try this test again.  For an explanation see
+        echo '***   ' ${WHY_FIXINCLUDES} in ${NOTES}.
+        exit 1
+    fi  # test fixincluded file
+}
+  
+
+#### did fixincludes get run correctly?
+
+verify_c_check_fixincludes()
+{
+if [ -f ${RELEASE_ROOT}/${EXECDIR}/bin/gcc ] ; then
+    cat > ${LOGDIR}/test-ioctl.c <<'EOF'
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <math.h>
+
+double atof(const char *);
+
+#ifdef __sun__
+#include <sys/filio.h>
+
+extern int ioctl();
+extern int perror();
+#endif /* __sun__ */
+
+extern int printf();
+
+int main(int argc, char **argv) {
+#ifdef __sun__
+        long l;
+        int fd;
+        int retval;
+
+        if ((fd = open("/dev/tty", O_RDONLY)) == -1) {
+                (void) perror("test-ioctl: can't open /dev/null");
+                return(1);
+        } else if ((retval = ioctl(fd, FIONREAD, &l)) != 0) {
+                (void) perror("test-ioctl: ioctl failed");
+                (void) printf("test-ioctl: Most likely, you have not run \"Install fixincludes\" on this machine.\n");
+                return(2);
+        }
+#endif /* __sun__ */
+
+        printf("test-ioctl: ANSI versions of the system header files, (the fixed includes),\n");
+        printf("test-ioctl: appear to be installed correctly.\n");
+
+/* that's right.  If closing /dev/tty fails, I don't want to know about it. */
+
+        return(0);
+}
+EOF
+
+    case "${HOST}" in
+	*-sun-sunos4* | mips-dec-ultrix*)
+            if ${RELEASE_ROOT}/${EXECDIR}/bin/gcc -Wall -O -g \
+                -DMACHINE=\"${INSTALLHOST}\" ${LOGDIR}/test-ioctl.c -o ${LOGDIR}/test-ioctl ; then
+                if ${LOGDIR}/test-ioctl ; then
+                    echo This is good.
+                else
+                    case "$?" in
+                        1)
+                            echo '***' test-ioctl.c fails to read /dev/tty.  If you were running Install
+                            echo '***   ' in batch or from a daemon, please try running it again interactively.
+                            echo '***   ' If not, please call ${HOTLINE}
+                            exit 1
+                            ;;
+                        2)
+                            echo '***' test-ioctl.c fails to ioctl.
+                            echo '***   ' Most likely you need to run \"Install fixincludes\".
+                            echo '***   ' Please run \"Install fixincludes\" and
+                            echo '***   ' then try this test again.  For an explanation see
+                            echo '***   ' ${WHY_FIXINCLUDES} in ${NOTES}.
+                            exit 1
+                            ;;
+                        *)
+                            echo '***' test-ioctl.c fails to run.  This is a problem.
+                            echo '***   ' Please call ${HOTLINE}
+                            exit 1
+                            ;;
+                    esac  # $?
+                    exit 1
+                fi  # test-ioctl
+            else
+                ### this presupposes that hello.c DID compile.
+                echo '***' test-ioctl.c fails to compile.  This is a problem.
+                echo '***   ' Please call ${HOTLINE}
+                exit 1
+            fi  # run gcc
+            ;;
+        mips-sgi-irix4*)
+	    check_fixed_file sys/cfeiroute.h
+            ;;
+        sparc-sun-solaris2*)
+            check_fixed_file ieeefp.h
+            ;;
+        rs6000-ibm-aix*)
+            check_fixed_file piostruct.h
+            ;;
+        i386-*-sco3.2v4*)
+            check_fixed_file tinfo.h
+            ;;
+    esac
+fi
+}

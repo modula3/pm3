@@ -1,0 +1,185 @@
+@c INSTRUCTIONS on converting the generic-target document 
+@c into a specific target document:
+@c
+@c 1) COPY generic-target.texi to a new .texi file named for the target family.
+@c
+@c 2) Include the new .texi file in targets.texi.
+@c    Use the actual target family name for the menu entry.
+@c
+@c 3) In the new .texi file:
+@c
+@c Do a global replace-string of XXXTARGET for the actual target family name.
+@c
+@c Do a global replace-string of XXX for an abbreviated prefix (preferably 
+@c between one and three characters long) of the target family name.
+@c
+@c Edit the sections under "I/O for specific target architectures" and 
+@c "Loading on specific target architectures" that refer to "arch #1" 
+@c and "arch #2" so that they reflect one or more specific boards or chips.
+@c 
+@c Fill in the appropriate information under each heading, particularly 
+@c anything marked XXXXX, which is a stub.  If a particular 
+@c heading does not apply to this target, COMMENT or IGNORE it out.
+@c DO NOT delete it, as it may apply to this target at some later time.
+@c
+@c DELETE the INSTRUCTIONS.
+
+
+@c This documents the XXXTARGET target family,
+@c as @included in targets.texi.
+
+@node XXXTARGET, , , Supported Targets
+@section XXXTARGET targets
+ 
+
+@menu
+* XXXtools::                     What to call the tools
+* XXXcompile::                   Compiling on the XXXTARGET target family   
+* XXXdebug::                     Debugging on the XXXTARGET target family
+* XXXI/O::                       I/O for specific target architectures
+* XXXload::                      Loading on specific target architectures
+* XXXdoc::                       Further documentation
+@end menu
+
+@node XXXtools, , , Supported Targets
+@subsection What to call the tools
+
+Cross-development tools in the Cygnus Developer's Kit are normally
+installed with names that reflect the target machine, so that you can
+install more than one set of tools in the same binary directory.
+
+The names are constructed by using, as a prefix, the name of the
+configured target (i.e., the string specified with @samp{--target} to
+@code{configure}).  For example, the compiler (called simply @code{gcc}
+in native configurations) is called by one of these names:
+
+@table @code
+@item XXXXX-gcc
+
+@item XXXXX-gcc
+@end table
+
+Likewise, the XXXXX-configured @sc{gdb} is called by the name:
+
+@w{@code{XXXXX-gdb}}
+
+@xref{}.
+
+@node XXXcompile, , , Supported Targets
+@subsection Compiling on XXXTARGET targets
+
+
+@menu
+* XXXcall::                       Calling conventions
+* XXXcopts::                      Compiler options
+* XXXpopts::                      Preprocessor macros
+* XXXaopts::                      Assembler options
+* XXXlopts::                      Linker options
+@end menu    
+
+@node XXXcall, , , Supported Targets
+@subsubsection Calling conventions
+
+@node XXXcopts, , , Supported Targets
+@subsubsection Compiler options
+
+When you run @code{@value{GCC}}, you can use command-line options to choose
+machine-specific details.  For information on all the @code{@value{GCC}} command-line
+options, see @ref{Invoking GCC,,GNU CC Command Options,gcc.info,Using
+GNU CC}.
+
+@subheading GCC options for architecture and code generation
+
+@subheading GCC options for floating point
+
+@subheading Floating point subroutines 
+
+Two kinds of floating point subroutines are useful with @code{@value{GCC}}:
+
+@enumerate
+@item
+Software implementations of the basic functions (floating-point
+multiply, divide, add, subtract), for use when there is no hardware
+floating-point support.
+
+@item
+General-purpose mathematical subroutines.
+
+The Developer's Kit from Cygnus Support includes an implementation of
+the standard C mathematical subroutine library.  @xref{Top,,
+Mathematical Functions,libm.info, The Cygnus C Math Library}.
+@end enumerate
+
+@node XXXpopts, , , Supported Targets
+@subsubsection Predefined preprocessor macros
+
+@node XXXacopts, , , Supported Targets
+@subsubsection Assembler options
+
+@node XXXlopts, , , Supported Targets
+@subsubsection Linker options
+
+@node XXXdebug,,,Supported Targets
+@subsection Debugging on XXXTARGET targets
+
+@sc{gdb} needs to know these things to talk to your XXXTARGET:
+
+@enumerate
+@item
+that you want to use 
+
+@itemize
+@item 
+@samp{target XXXXX}, .
+@item 
+@samp{target XXXXX}, . 
+@item 
+@samp{target XXXXX}, .
+@end itemize
+
+@item
+what serial device connects your host to your XXXTARGET board (the first
+serial device available on your host is the default).
+
+@item
+what speed to use over the serial device.
+@end enumerate
+
+@node XXXI/O, , , Supported Targets
+@subsection I/O for specific target architectures
+
+
+@menu
+* XXXI/O1::                 I/O for XXXTARGET arch #1
+* XXXI/O2::                 I/O for XXXTARGET arch #2
+@end menu
+
+@node XXXI/O1, , , Supported Targets
+@subsubsection I/O for arch #1
+
+@node XXXI/O2, , , Supported Targets
+@subsubsection I/O for arch #2
+
+@node XXXload,,,Supported Targets
+@subsection Loading on specific target architectures
+
+
+@menu
+* XXXload1::                 Loading on XXXTARGET arch #1
+* XXXload2::                 Loading on XXXTARGET arch #2
+@end menu
+
+@node XXXload1, , , Supported Targets
+@subsubsection Loading on arch #1
+
+@node XXXload2, , , Supported Targets
+@subsubsection Loading on arch #2
+
+
+@node XXXdoc, , , Supported Targets
+@subsection Further documentation
+
+
+
+
+

@@ -1,0 +1,167 @@
+@c This documents configuring and building Libgloss,
+@c as @included in libgloss.texi
+
+@node Creating
+@subsubsection Configuring and building Libgloss
+
+Libgloss uses an @dfn{autoconf-based} configure input script to configure. 
+Autoconf-based scripts are portable shell scripts that are generated 
+from a @file{configure.in} file. 
+
+@menu
+* Configuring::                   Configuring Libgloss
+* Building::                      Building Libgloss
+* Naming::                        What to call the the cross-compiler
+@end menu
+
+@node Configuring
+@subsubsection Configuring Libgloss
+
+Configure Libgloss in the directory that you want to be your build directory:
+
+@smallexample
+../src/libgloss/configure @var{options} @var{hosttype}
+@end smallexample
+
+@var{options} are the configure options, and
+@var{hosttype} is optional.
+For Libgloss, there are currently two configure options of importance: 
+@code{--target} and @code{--srcdir}.
+
+@table @code
+@kindex --target=@var{machine}
+@item --target=@var{machine}
+@var{target} is a configuration string that identifies the target for the
+@sc{gnu} tools.  It's usually safest to use the full canonical name of the 
+target, as opposed to the target alias.  For example, to configure for a 
+cpu32 (@code{m68k}) target, use:
+
+@smallexample
+../src/libgloss/configure --target=m68k-coff 
+@end smallexample
+
+Most configure scripts run a series of tests to determine the 
+supported features of the target and, for features that can't be determined
+by a feature test, a makefile fragment is merged in.  @xref{Hosts and 
+targets,,,,Programming Embedded Systems}.
+
+@kindex --srcdir=@var{dir}
+@item --srcdir=@var{dir}
+@code{--srcdir} identifies the source directory.  Use @code{--srcdir} 
+when your build directory is different from your source directory.  
+For example, to configure in the build directory @file{../src/libgloss} 
+and to specify the source directory as @file{../src}, use:
+
+@smallexample
+../src/libgloss/configure --srcdir=../src 
+@end smallexample
+
+Pathnames can be either absolute or relative to the build directory.
+
+Typically Libgloss has a separate build directory for each target.  
+This allows you to use a single source tree for all of the object trees for  
+your targets. 
+
+If you only plan to configure for a single target, you can build Libgloss 
+in the source tree.  If the source directory is not specified, @code{configure}
+assumes that the source directory is your current directory.  If 
+@code{configure} finds no @file{configure.in} there, it searches in the same 
+directory that the @code{configure} script itself lies in.  @xref{Invoking 
+configure,,,,Cygnus configure}.
+@end table
+
+@node Building
+@subsubsection Building Libgloss
+
+@code{configure} creates a @file{Makefile} for building Libgloss in the 
+directory in which you run @code{configure}.  This directory then becomes the 
+@dfn{build directory}, the top-level directory of the object tree for your 
+target.  Unless you specify otherwise, @code{configure} assumes that the build
+directory is also the @dfn{source directory}, the top-level directory of 
+your source tree.  @xref{Configuring, ,Libgloss}.
+
+Once Libgloss is configured, @code{make} is sufficient to build it:
+
+@smallexample
+cd ..src/libgloss
+make
+@end smallexample
+
+The default values for @file{Makefile} are typically correct for all
+supported systems. These values are set in the makefile fragment
+that is merged in during configuration.  @xref{Using configure,,,,Cygnus 
+configure}.
+
+The test cases in the testsuite also build automatically. 
+
+@node Naming
+@subsubsection What to call the cross-compiler
+
+@c
+@c FIXME -- How does naming the cross-compiler relate to building libgloss?
+@c          Can we elaborate on this a little?
+@c
+If you don't link with an installed cross-compiler, the freshly-built 
+cross-compiler must be properly named.
+@c
+@c FIXME -- Do we need this info below?
+@c  
+@c This allows Libgloss to build 
+@c automatically with a fresh and uninstalled object tree.  It also makes it 
+@c easier to debug the other tools using Libgloss's test suites.
+The Libgloss makefile fragment sets the @code{MULTILIB} variable, and once it 
+is set, the search path for the cross-compiler is modifed. 
+
+@emph{Note:} The search path for the other @sc{gnu} development tools is set 
+similarly, however this technique gets messier when you use build options 
+like @code{-msoft-float} support. 
+
+In the following code from the Libgloss makefile fragment:
+
+@smallexample
+CC_FOR_TARGET = `if [ -f $$@{OBJROOT@}/gcc/xgcc ] ; \
+	then echo $@{OBJROOT@}/gcc/xgcc -B$@{OBJROOT@}/gcc/ ; \
+	else t='$@{program_transform_name@}'; \
+                   echo gcc | sed -e '' $$t ; fi`
+@end smallexample
+
+a runtime test is used to determine whether to put the freshly-built
+cross-compiler in the object tree or in the user's path. 
+If there are freshly-built executables for the other main passes of the 
+@sc{gnu} tools in the object tree, then the cross-compiler is put in 
+the object tree with the other tools.  Otherwise, the name of the 
+cross-compiler is @dfn{transformed} and the cross-compiler is put in 
+the user's path.
+
+When the name of the cross-compiler is transformed, the generic tool name, 
+@code{xgcc}, is transformed to the name typically used in @sc{gnu} 
+cross-compiling, based on the target's canonical name. 
+For example, if the generic tool name is @code{xgcc} and you've configured 
+for the target @code{m68k-coff}, then the transformed name for the 
+cross-compiler is @code{m68k-coff-gcc}. 
+
+However if you install with aliases or rename the tools, this 
+transformation won't work, as the cross-compiler won't be able to find the 
+tools.
+
+You can transform the name yourself with the
+@code{--program-transform-name} option to @code{configure}.
+For example:
+
+@smallexample
+../src/libgloss/configure --program-transform-name=m68k-coff-gcc
+@end smallexample
+ 
+@code{--program-transform-name} takes a sed script, @code{-e s,^,m68k-coff-}, 
+which sets the cross-compiler name for the whole tree.  
+It produces tools using the standard @sc{gnu} names.
+@c
+@c FIXME -- the whole source tree or the whole object tree?
+@c
+
+
+
+
+
+
+

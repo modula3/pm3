@@ -1,0 +1,114 @@
+\input texinfo        @c                    -*- Texinfo -*-
+@setfilename targets.info
+@settitle Programming Embedded Systems
+
+@finalout
+@setchapternewpage odd
+@iftex
+@raggedbottom
+@global@parindent=0pt
+@end iftex
+
+@titlepage
+@title Programming Embedded Systems
+@subtitle With the Cygnus Developer's Kit
+@sp 4
+@author Cygnus Support
+@page
+
+@vskip 0pt plus 1filll
+Copyright @copyright{} 1993, 1994, 1995 Cygnus Support
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided also that
+the entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions.
+@end titlepage
+
+@ifinfo
+@format
+START-INFO-DIR-ENTRY
+* Embedded Systems: (target).          Programming Embedded Systems
+END-INFO-DIR-ENTRY
+@end format
+
+Copyright (c) 1993, 1994, 1995 Cygnus Support
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided also that
+the entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions.
+
+@node Top
+@top Programming Embedded Systems With the CDK
+
+This document describes programming practices and options for several of
+the embedded targets supported by the Cygnus Developer's Kit.  This
+document is currently draft status, as the tools themselves are evolving
+to meet the needs of our customers.  It is also incomplete, as new
+targets are added to our matrix every quarter
+(@pxref{Introduction,,Overview,release,Release Notes}).
+
+@menu
+* Hitachi SH::
+* IDT MIPS::
+* LynxOS::
+* NLM::
+* SPARClite::
+@end menu
+@end ifinfo
+
+@node Hitachi SH
+@chapter Hitachi SH Development
+
+@lowersections
+@include hitsh-chap.texi
+@raisesections
+
+@node IDT MIPS
+@chapter IDT MIPS Development
+
+@lowersections
+@include imips-chap.texi
+@raisesections
+
+@node LynxOS
+@chapter LynxOS Development
+
+@lowersections
+@include lynx-chap.texi
+@raisesections
+
+@node NLM
+@chapter NLM Development
+
+@lowersections
+@include pin-chap.texi
+@raisesections
+
+@node SPARClite
+@chapter Fujitsu SPARClite Development
+
+@lowersections
+@include splite-chap.texi
+@raisesections
+
+@contents
+@bye
+
+
+

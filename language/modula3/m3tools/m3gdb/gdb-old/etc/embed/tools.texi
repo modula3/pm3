@@ -1,0 +1,200 @@
+@c This file documents the GNU tools GCC, AS, LD, Binutils, GDB, 
+@c Libgloss, and Newlib 
+@c and how to use them on embeded systems, as @included in embed.texi.
+
+@set #ofTOOLS 9
+
+@node Using
+@chapter Using the GNU tools on embedded systems
+
+@c
+@c  FIXME:
+@strong{Describe how the GNU tools work on an embedded system.}
+
+There are @value{#ofTOOLS} @sc{gnu} tools that can be run on an 
+embedded target:
+
+@enumerate
+@item @value{GCCN}, the @sc{gnu} compiler.  
+@item AS, the @sc{gnu} assembler.
+@item LD, the @sc{gnu} linker.
+@item Binutils, the @sc{gnu} directory of utilities.
+@item @value{GDBN}, the @sc{gnu} debugger.  
+@item Libgloss, the support library for embedded targets.  
+@item Newlib, the C library developed by Cygnus Support.  
+@end enumerate
+
+@c In order to port @value{GCCN} and functions from Newlib 
+@c and binutils to an embedded target, you must create and link stuff.  
+@c In order to port @value{GDBN} to an embedded target, you must run
+@c @value{GDBN}, from the host, on an application on the target.
+
+@strong{Let's shoot the breeze a bit about how these all fit together.}
+
+@menu 
+* Compiling::           Generating binary code from source code on an embedded target
+* GDB::                 Debugging on an embedded target with GDB 
+* Libraries::           Using Libgloss and Newlib on an embedded target
+@end menu
+
+@node Compiling
+@section Compiling 
+
+@ignore
+As long as @value{GCCN} supports a processor type, then porting
+@value{GCCN} is simply a linker issue. 
+@value{GCCN} formats the command line for the linker pass. 
+Porting @value{GCCN} requires two things for linking: 
+
+@enumerate
+@item
+crt0, the main startup file
+
+@item 
+a memory map
+@end enumerate
+
+The command line for @value{GCCN} is set in the various config subdirectories 
+of @value{GCCN}.  The compile-time options involved in porting are 
+@code{CPP_SPEC} and @code{STARTFILE_SPEC}. 
+
+@table @code
+@item CPP_SPEC 
+Sets the built-in @code{#defines} for your
+environment. If you support multiple environments with the same
+processor, then OS-specific @code{#defines} need to be elsewhere. 
+@c
+@c FIXME -- elsewhere, as in . . . ?
+
+@item STARTFILE_SPEC
+@c
+@c FIXME -- what the heck does STARTFILE_SPEC do?
+@c
+If @code{STARTFILE_SPEC} is set to @code{null}, when @value{GCCN} 
+formats its command line it doesn't add @code{crt0.o}. 
+@end table
+
+Once you have linker support, @value{GCCN} can produce a fully-linked 
+executable binary image.  However, if you plan to run applications that do 
+I/O of any kind, you also need to write support for the C library.  
+@xref{Libraries,,Porting Newlib}. 
+@end ignore
+
+@value{GCCN} invokes all of the required @sc{gnu} passes for you:
+
+@enumerate
+@item @code{cpp} 
+
+The preprocessor, which processes all header files and macros.
+
+@item @code{gcc} 
+
+The compiler, which produces assembly language code from the processed 
+C files. 
+
+@item @code{gas} 
+
+The assembler, which produces binary code from the assembly language code 
+and puts it in an object file.
+
+@item @code{ld}
+
+The linker, which binds the code to addresses, links the startup file and 
+libraries to the object file, and produces the executable binary image. 
+@end enumerate
+
+@strong{Discuss:}
+
+1)      machine-independent compiler switches 
+
+2)      implicit file extensions, e.i. .c, .C, .as, etc.
+
+@menu
+* GCC::                 Running GCC, the GNU compiler, on an embedded target
+* C++::                 Using G++, the GNU C++ compiler, on an embedded target
+* CPP::                 Running CPP, the GNU preprocessor, on an embedded target
+* AS::                  Running AS, the GNU assember, on an embedded target
+* LD::                  Running LD, the GNU linker, on an embedded target
+* Ecoff::               Object file formats
+* Binutils::            Using Binutils, the GNU binary utilities, on an embedded target
+@end menu
+@c * Passes::              The GNU compiler passes
+
+@c @include passes.texi
+@include gcc.texi
+@include gxx.texi
+@include cpp.texi
+@include as.texi
+@include ld.texi
+@include ecoff.texi
+@include binutils.texi
+
+@node GDB
+@section Debugging 
+
+@ignore
+It is easier to use @value{GDBN} to debug applications than either 
+low-level I/O routines or LED's.  @xref{Summary,,,,Debugging with 
+GDB}.
+@c
+@c FIXME -- example of low-level I/O routines?
+@c
+@c FIXME -- a simple explanation of LED's as debug tool?
+@c
+@end ignore
+  
+To run @value{GDBN} on an embedded execution target, use a @value{GDBN}
+backend with the @value{GDBN} standard remote protocol or a similar
+protocol.
+
+The two most common types of @value{GDBN} backend are:
+
+@enumerate
+@item A @dfn{@value{GDBN} stub}. This is an exception handler for 
+breakpoints, and it must be linked to your application.
+@c
+@c FIXME -- is that true?  what DOES it get linked to?
+@c
+@value{GDBN} stubs use the @value{GDBN} standard remote protocol. 
+
+@item An existing @code{ROM} monitor that is used as a @value{GDBN} backend. 
+The most common ways to do this are:
+
+@enumerate a
+@item With a similar protocol to the @value{GDBN} standard remote protocol.
+@c
+@c FIXME -- this way does not get addressed in the section on using the ROM
+@c          monitor as a backend
+@c
+
+@item With an interface that uses the @code{ROM} monitor directly. With such 
+an interface, @value{GDBN} only formats and parses commands. 
+@end enumerate
+@end enumerate
+
+@menu
+* Backend::             The GDB backend
+* Protocol::            The GDB remote protocol
+@end menu
+@c *  Exception handler::               Using a GDB stub as the GDB backend
+@c *  Rom monitors::                    Using a ROM monitor as the GDB backend
+@c * GDB remote protocol::                 The GDB standard remote protocol
+@c * Other remote protocols::              Adding support for new protocols
+
+@include gdb.texi
+
+@node Libraries
+@section The Libraries
+
+@menu
+* Libgloss::            Libgloss, the support library
+* Newlib::              Newlib, the C library developed by Cygnus Support
+* Libg::                C++ libraries
+@end menu
+
+@include libgloss.texi
+@include newlib.texi
+@include libg.texi
+
+
+

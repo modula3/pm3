@@ -1,0 +1,24 @@
+@c This file documents using Newlib on an embedded target, 
+@c as @included in tools.texi.
+
+@node Newlib
+@subsection Newlib, the Cygnus Support C library 
+
+@ignore
+@dfn{Newlib} is the ANSI-conforming C library developed by Cygnus Support, 
+and is only available for cross-compiling.
+Newlib's hardware-dependent routines reside in Libgloss along with the 
+systems files.  
+@end ignore
+
+@strong{Let's talk about libc and libm.}
+
+@menu
+* Libc::                   The standard C library
+* Libm::                   The library of math functions  
+@end menu
+
+@include libc.texi
+@include libm.texi
+
+

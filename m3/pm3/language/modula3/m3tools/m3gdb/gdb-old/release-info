@@ -1,0 +1,76 @@
+# this file contain variable assignments for values that affect a software
+# release at Cygnus
+# 
+# it is included in a makefile, as well as being sourced by a shell script,
+# so please make sure that all variable assignments are suitable for BOTH
+# environments.
+
+### from which cvs tree are we working? (this also needs to be set in test-build.mk)
+TREE=devo
+
+### which product bundle is this?
+BUNDLE=latest
+
+### the advertised release date for this package
+RELEASE_DATE=940103
+
+### When working from a tagged set of source, this should be the tag.  If not,
+### then set the macro to be empty.
+CVS_TAG=${BUNDLE}-${RELEASE_DATE}
+
+### The name of the cvs module for this release.  The intersection of
+### CVS_MODULE and CVS_TAG defines the source files in this release.
+CVS_MODULE=ulatest
+
+# this might be related to "bundle" sometimes, but for a progressive
+# release from cygnus, this will be 'progressive'
+RELEASE_DIR=latest
+
+### Historically, this was identical to CVS_TAG.  This is changing.
+### example: progresssive-930519
+RELEASE_TAG=${RELEASE_DIR}-${RELEASE_DATE}
+
+### binaries should be installed into?
+### example: /usr/cygnus
+ROOTING=/usr/cygnus
+
+### Historically, binaries were installed here.  This is changing.
+release_root=${ROOTING}/${RELEASE_TAG}
+
+### which release vault do we want this to be a part of?
+RELEASE_VAULT=/usr/cygnus/release-vault
+
+###
+###  New section for RelEng bldme script
+###
+
+### Top-level install directory
+INSTALL_ROOT=/usr/cygnus
+
+### Top-level vault directory
+VAULT_ROOT=/usr/cygnus/release-vault
+
+### Variables for each release, might change this later
+CDK_DATE=96q2
+CDK_RELEASE=progressive-96q2
+CDK_PREFIX=${INSTALL_ROOT}/${CDK_RELEASE}
+CDK_VAULT=${VAULT_ROOT}/${CDK_RELEASE}
+CDK_BUNDLE=comp-tools
+CDK_MODULE=progressive-comp-tools
+CDK_TAG=${CDK_BUNDLE}-${CDK_DATE}
+
+INET_DATE=96q2
+INET_RELEASE=inet-96q2
+INET_PREFIX=${INSTALL_ROOT}/${INET_RELEASE}
+INET_VAULT=${VAULT_ROOT}/${INET_RELEASE}
+INET_BUNDLE=inet
+INET_MODULE=inet
+INET_TAG=${INET_BUNDLE}-${INET_DATE}
+
+EMACS_DATE=96q2
+EMACS_RELEASE=progressive-96q2
+EMACS_PREFIX=${INSTALL_ROOT}/${EMACS_RELEASE}
+EMACS_VAULT=${VAULT_ROOT}/${EMACS_RELEASE}
+EMACS_BUNDLE=emacs19
+EMACS_MODULE=emacs19
+EMACS_TAG=${EMACS_BUNDLE}-${EMACS_DATE}

@@ -1,0 +1,507 @@
+@c                                                  -*-Texinfo-*-
+@c Contents of HP-PRO datasheet or chapter.  For use as a chapter,
+@c surround inclusion of this file with `@lowersections' and
+@c `@raisesections'.
+@c This doc currently covers the WinBond "Cougar" board, (w89k) and the
+@c Oki op50n board.
+
+@c FIXME!!! missing:
+@c          preprocessor asserts?
+@c          build/load/debug narrative
+
+@menu
+* PRONames::       What the tools are called for HP-PRO.
+* PROGCC::         Compiler options for HPPA.
+* PROGAS::         Assembling HPPA code.
+* PROGDB::         Remote HPPA debugging with GDB.
+* PROCompiling::   Compiling for one of the targets.
+* PROSrecords::    How to produce an srecord.
+* PROConfig::      Configuring GNU source for HPPA.
+* PROHints::       Some useful general information.
+@c * Refs::        HP-PRO documentation.
+@end menu
+
+@node PRONames
+@chapter What to Call the Tools
+
+Cross-development tools in the Cygnus Developer's Kit are normally
+installed with names that reflect the target machine, so that you can
+install more than one set of tools in the same binary directory.
+
+The names are constructed by using, as a prefix, the name of the
+configured target (i.e., the string specified with @samp{--target} to
+@code{configure}).  For example, the compiler (called simply @code{gcc}
+in native configurations) is called by one of these names:
+
+@table @code
+@item hppa1.1-hp-proelf-gcc
+@item hppa1.1-oki-proelf-gcc
+@item hppa1.1-wec-proelf-gcc
+@end table
+
+Currently these are identical tools.  For @sc{ms-dos} systems, the
+compiler is called @code{GCC} due to file size restrictions.
+
+@node PROGCC
+@chapter Compiler options for HP-PRO
+
+When you run @sc{gcc}, you can use command-line options to choose
+machine-specific details.  For information on all the @sc{gcc} command-line
+options, see @ref{Invoking GCC,,GNU CC Command Options,gcc.info,Using
+GNU CC}.
+
+@menu
+* PROArchitecture::        Options for architecture and code generation
+* PROFloats-GCC::          Options for floating point
+* PROFloat-Calls::         Floating point subroutines
+* PROCPP::                 Predefined preprocessor macros
+@end menu
+
+@node PROArchitecture
+@section GCC options for code generation
+
+Options are shown with their logical negations.  Unless otherwise
+specified, the negation is the default behavior.
+
+@table @code
+@item -mdisable-fpregs
+@itemx -mno-disable-fpregs
+Prevent floating point registers from being used in any manner.
+This is necessary for compiling kernels which perform lazy context
+switching of floating point registers.  If you use this option and
+attempt to perform floating point operations, the compiler aborts.
+
+@item -mdisable-indexing
+@itemx -mno-disable-indexing
+Prevent the compiler from using indexing address modes.  This avoids
+some rather obscure problems when compiling @sc{mig}-generated code
+under @sc{mach}.
+
+@item -mjump-in-delay
+@itemx -mno-jump-in-delay
+Fill delay slots of function calls with unconditional jump
+instructions by modifying the return pointer for the function call
+to be the target of the conditional jump.
+
+@item -mgas
+@itemx -mno-gas
+Disable the use of assembler directives which only @sc{gnu} @code{as}
+understands.
+
+@item -mlong-calls
+@itemx -mno-long-calls
+Generate code which allows calls to functions greater than 256k away
+from the caller when the caller and callee are in the same source file.
+Do not use this option unless the linker fails with @samp{branch out of
+range} errors.
+
+@item -mportable-runtime
+@itemx -mno-portable-runtime
+Use the portable calling conventions proposed by @sc{hp} for @sc{elf}
+systems.  Note this option also enables @samp{-mlong-calls}.
+
+@item -mpa-risc-1-0
+Generate code for a @sc{pa} 1.0 processor.
+
+@item -mpa-risc-1-1
+Generate code for a @sc{pa} 1.1 processor.
+@end table
+
+@node PROFloats-GCC
+@section @sc{gcc} options for floating point
+
+These options select software or hardware floating point.
+
+@table @code
+@item -msoft-float
+Generate output containing library calls for floating point.  The
+@samp{hppa1.1-hp-proelf} configuration of @file{libgcc.a} (an auxiliary
+library distributed with the compiler) includes a collection of
+subroutines to implement these library calls.
+
+To use the @file{libgcc.a} version, you need nothing special; @sc{gcc}
+links with @file{libgcc.a} automatically after all other object files
+and libraries.
+
+@quotation
+@emph{Warning:} Treat @samp{-msoft-float} as an ``all or nothing''
+proposition.  If you compile any module of a program with
+@samp{-msoft-float}, it is safest to compile all modules of the program
+that way---and it is essential to use this option when you link.
+@end quotation
+
+@item -mhard-float
+Generate output containing floating point instructions, and use the
+corresponding @sc{hppa} calling convention.  This is the default.
+@end table
+
+@node PROFloat-Calls
+@section Floating point subroutines
+
+Two kinds of floating point subroutines are useful with @sc{gcc}:
+
+@enumerate
+@item
+Software implementations of the basic functions (floating-point
+multiplication, division, addition, subtraction), for use when there is
+no hardware floating-point support.
+
+@item
+General-purpose mathematical subroutines.
+
+The Developer's Kit from Cygnus Support includes an implementation of
+the standard C mathematical subroutine library.  @xref{Top,,
+Mathematical Functions,libm.info, The Cygnus C Math Library}.
+@end enumerate
+
+@node PROCPP
+@section Predefined preprocessor macros
+
+@sc{gcc} defines the preprocessor macro @samp{hppa} for all @sc{hp-pro}
+configurations.
+
+@node PROGAS
+@chapter Assembling @sc{pa} code
+
+You should use @sc{gnu} @code{as} to assemble @sc{gcc} output.  To
+ensure this, @sc{gcc} should be configured using the
+@samp{--with-gnu-as} switch (as it is in Cygnus distributions;
+@pxref{PROConfig,,Configuring @sc{gnu} source for @sc{hp-pro}}).
+Alternatively, you can invoke @sc{gcc} with the @samp{-mgas} option.
+
+@menu
+* PROGAS-opts::    Assembler options
+* PROObject::      ELF object code
+@end menu
+
+@node PROGAS-opts
+@section Assembler options
+
+@table @code
+@item -nocpp
+This option is ignored.  It is accepted for command-line compatibility
+with other assemblers, which use it to turn off C style preprocessing.
+With @sc{gnu} @code{as}, there is no need for @samp{-nocpp}, because the
+@sc{gnu} assembler itself never runs the C preprocessor.  (If you have
+assembly code that requires C-style preprocessing,
+@pxref{PROAs-cpp,,Assembly with C preprocessing}.)
+@end table
+
+@node PROObject
+@section ELF object code
+
+For the @sc{hp-pro} targets, the only supported object file formats are
+@sc{elf} and @code{srec}.  The tools produce @sc{elf} code by default;
+see @ref{PROSrecords,,Producing srecords}, for details on converting to the
+srecord format for loading.
+
+@node PROCompiling
+@chapter Compiling for one of the targets
+
+All the @sc{hppa} targets use the same tools to compile. The only real
+difference between targets is the memory map and the I/O
+code.
+
+Currently, the @sc{gnu} tools use a linker script to differentiate
+between the targets. The linker script possesses most of the knowledge
+used to produce an executable binary.  The command line options
+required to link for the targets are shown below.
+
+The compiler option @samp{-Ttext} instructs @code{gcc} to use the linker
+script and sets the address for the starting point of the code. If the
+linking step is invoked using @code{gcc}, then all the internal paths
+for the linker script and ibraries are known. If you invoke @code{ld}
+from the command line, you must use the @samp{-L} option to tell
+@code{ld} where to find the linker script and the libraries.
+
+@table @asis
+@item Linking for the WinBond "Cougar"
+@smallexample
+-Tw89k.ld -Ttext 100000 @dots{}
+@end smallexample
+
+@item Linking for the @sc{Oki}
+@smallexample
+-Top50n.ld -Ttext 40000 @dots{}
+@end smallexample
+@end table
+
+For example, to compile for the WinBond target, we could use:
+
+@smallexample
+hppa1.1-hp-proelf-gcc -o hi hello.c -Tw89k.ld -Ttext 100000
+@end smallexample
+
+For the Oki op50n target:
+
+@smallexample
+hppa1.1-hp-proelf-gcc -o hi hello.c -Top50n.ld -Ttext 40000
+@end smallexample
+
+@node PROSrecords
+@chapter Producing srecords
+
+The default object file format produced by the @sc{hp-pro} tools is
+@sc{elf}.  To convert this file to an srecord for loading, we recommend
+you use @code{objcopy} (@pxref{objcopy,,objcopy,binutils,The GNU Binary
+Utilities}). (Conversion can also be accomplished at the linking stage,
+but support for this is currently quite slow.)  
+
+To convert, use:
+
+@smallexample
+hppa1.1-hp-proelf-objcopy -O srec @var{infile} @var{outfile}
+@end smallexample
+
+@sc{gdb} can convert the @sc{elf} file to an srecord as the file is
+loading; use the @sc{gdb} command @samp{set remoteloadtype srec}.
+
+@samp{set remoteloadtype none} can be used to read a file and load it
+unconverted (e.g., if the file has already been converted to an
+srecord).  For more details on loading files using @sc{gdb}, see
+@ref{Files,,Commands to specify files,gdb,Debugging With GDB}.
+
+@node PROGDB
+@chapter Remote @sc{hp-pro} Debugging
+
+@code{hppa1.1-hp-proelf-gdb} uses a remote serial protocol to connect
+your development host machine to the target board.  The protocol used
+depends on the whether you're connecting to the Oki or the WinBond
+@sc{pa} target board. The target can be specified at debug time, and
+it is possible to switch back and forth as well.
+
+Use these @sc{gdb} commands to specify the connection to your target
+board. Once you're connected, all the @sc{hp-pro} targets function the
+same way; only the connection is different.
+
+To run a program on the board, start @sc{gdb} with the name of your
+program as the argument.  To connect to the board, use the command
+@samp{target @var{board} @var{port}}, where @var{board} is one of
+@samp{w89k} or @samp{op50n} and @var{port} is the name of the serial
+port connected to the board.  If the program has not already been
+downloaded to the board, use the @code{load} command to download it
+(@pxref{Files,,Commands to specify files,gdb,Debugging With GDB}). You
+can then use all the usual @sc{gdb} commands.
+
+For example, this sequence connects to the target board through a serial
+port, and then loads and runs a program called @var{prog} through the
+debugger:
+
+@smallexample
+host$ hppa1.1-hp-proelf-gdb @var{prog}
+GDB is free software and @dots{}
+(gdb) target op50n /dev/ttyb
+(gdb) load @var{prog}
+(gdb) run
+@end smallexample
+
+@table @code
+@item target w89k @var{port}
+This is for the WinBond "Cougar" w89k based eval board.
+
+@item target op50n @var{port}
+This is for the Oki OP50N eval board.
+
+@item target w89k @var{hostname}:@var{portnumber}
+@itemx target op50n @var{hostname}:@var{portnumber}
+If your @sc{gdb} is configured to run from a SunOS or SGI host, you can
+specify a @sc{tcp} connection instead of a serial port using the syntax
+@samp{@var{hostname}:@var{portnumber}} (assuming your board is connected
+so that this makes sense; for instance, to a serial line managed by a
+terminal concentrator).
+
+@item set remotedebug @var{n}
+You can see some debugging information about communications with the
+board by setting the @code{remotedebug} variable, where @var{n} is
+between 1 and 5.  The amount of debug information increases as the
+number gets higher. At 1, the minimal amount of interesting information
+is displayed; at 5, it dumps everything, including all bytes read and
+written and extra debugging data on the load conversion and
+protocols. You can check the current value at any time with the command
+@samp{show remotedebug}.
+
+@item set remoteloadprotocol @var{none, xmodem, xon/xoff}
+This sets the protocol used when downloading. When set to @var{none},
+there is no protocol used; this is the default. @var{xmodem} uses the
+@code{xmodem} protocol to download, while @var{xon/xoff} uses simple
+handshaking to load a file.
+
+@item set remoteloadtype @var{none, srec}
+This command instructs @sc{gdb} whether to convert the file as it
+downloads.  @samp{set remoteloadtype srec} is most commonly used to read
+a file and convert it to an srecord on the fly.  @var{none} can be used
+to read a file and load it unconverted (e.g., if the file has already
+been converted to an srecord; @pxref{PROSrecords,,Producing srecords}).
+
+@end table
+
+@node PROConfig
+@chapter Configuring @sc{gnu} source for @sc{hp-pro}
+
+Your Cygnus Developer's Kit includes precompiled, ready-to-run binaries,
+with all defaults configured for @sc{hp-pro} boards.
+
+However, you may have occasion to reconfigure or rebuild the source;
+after all, improving your tools is one of your privileges as a free
+software user!
+
+Use the configuration script @code{configure} to specify many
+prearranged kinds of variations in the source.  @xref{What configure
+does,,What @code{configure} does, configure.info, Cygnus configure}, for
+an overview of the source configuration process.  @xref{Top,,Rebuilding
+From Source,,Rebuilding From Source}, for more information on rebuilding
+the tools.
+
+In particular, to configure for the @sc{hppa} environment, you should use
+these @code{configure} options:
+
+@itemize @bullet
+@item
+Specify @samp{--target=hppa1.1-hp-proelf} to generate or manage code for
+@sc{hp-pro} targets. The only currently supported endianness is big
+endian. You can also use @samp{--target=hppa1.1-wec-proelf} or
+@samp{--target=hppa1.1-oki-proelf}; these are currently identical
+configurations.
+
+@item
+Be sure to specify @samp{--with-gnu-as}.  This avoids an incompatibility
+between the @sc{gnu} compiler and the @sc{hp} assembler.
+
+@item
+You may also wish to use @samp{--with-gnu-ld}, which improves
+efficiency.
+@end itemize
+
+@node PROHints
+@chapter Some General Information
+
+The following sections give pointers to additional information of
+interest to @sc{hp-pro} board users.
+
+@menu
+* PROAs-cpp::      Assembly with C preprocessing
+* PROListings::    Useful listings from the GNU assembler.
+* PROmain::        The GNU C entry point.
+@end menu
+
+@node PROAs-cpp
+@section Assembly with C preprocessing
+
+There are two convenient options to assemble hand-written files that
+require C-style preprocessing.  Both options depend on using the
+compiler driver program, @code{gcc}, instead of calling the assembler
+directly.
+
+@enumerate
+@item
+Name the source file using the extension @samp{.S} (capitalized) rather
+than @samp{.s}.  @code{gcc} recognizes files with this extension as
+assembly language requiring C-style preprocessing.
+
+@item
+Specify the ``source language'' explicitly for this situation, using the
+@code{gcc} option @samp{-xassembler-with-cpp}.
+@end enumerate
+
+@node PROListings
+@section Useful listings from GNU @code{as} or GCC
+
+If you invoke @code{as} via the @sc{gnu} C compiler (version 2), you can
+use the @samp{-Wa} option to pass arguments through to the assembler.
+One common use of this option is to exploit the assembler's listing
+features.  Assembler arguments you specify with @code{gcc -Wa} must be
+separated from each other (and the @samp{-Wa}) by commas.  For example,
+the @samp{-alh} assembler option in the following commandline requests a
+listing with high-level language and assembly language interspersed:
+
+@smallexample
+$ hppa1.1-hp-proelf-gcc -c -g -O -Wa,-alh,-L file.c
+@end smallexample
+
+@noindent
+
+The example also illustrates two other convenient options to specify
+for assembler listings:
+
+@itemize @bullet
+@item
+The compiler debugging option @samp{-g} is essential to see interspersed
+high-level source statements, since without debugging information the
+assembler cannot tie most of the generated code to lines of the original
+source file.
+
+@item
+The additional assembler option @samp{-L} preserves local labels, which
+may make the listing output more intelligible to humans.
+@end itemize
+
+Below are the options to enable listing output from the assembler.  By
+itself, @samp{-a} requests listings of high-level language source,
+assembly language, and symbols.
+
+You can use other letters to select specific options for the list:
+@samp{-ah} requests a high-level language listing, @samp{-al} requests
+an output-program assembly listing, and @samp{-as} requests a symbol
+table listing.  High-level listings require that a compiler debugging
+option like @samp{-g} be used, and that assembly listings (@samp{-al})
+be requested also.
+
+You can use the @samp{-ad} option to @emph{omit} debugging directives
+from the listing.
+
+When you specify one of these options, you can further control listing
+output and its appearance using these @dfn{listing-control} assembler
+directives:
+
+@table @code
+@item .nolist
+Turn off listings from this point on.
+
+@item .list
+Turn listings back on from here.
+
+@item .psize @var{linecount} , @var{columnwidth}
+Describe the page size for your output.  (The default is @w{@samp{60,
+200}}.) The assembler generates form feeds after printing each group of
+@var{linecount} lines.  To avoid these automatic form feeds, specify 0
+as the @var{linecount}.
+
+@item .eject
+Skip to a new page (issue a form feed).
+
+@item .title
+Use @var{heading} as the title (second line, immediately after the
+source file name and pagenumber).
+
+@item .sbttl
+Use @var{subheading} as the subtitle (third line, immediately after the
+title line) when generating assembly listings.
+@end table
+
+If you do not request listing output with one of the @samp{-a} options,
+these listing-control directives have no effect.  You can also use the
+@samp{-an} option to turn off all forms processing.
+
+The letters after @samp{-a} may be combined into one option, e.g.,
+@samp{-aln}.
+
+@node PROmain
+@section An extra initialization function
+
+When you compile C or C++ programs with @sc{gnu} C, the compiler quietly
+inserts a call at the beginning of @samp{main} to a @sc{gcc} support
+subroutine called @samp{__main}.  Normally this is invisible, but you
+may run into it if you want to avoid linking to the standard libraries
+(by specifying the compiler option @samp{-nostdlib}).  Include
+@samp{-lgcc} at the end of your compiler command line to resolve this
+reference.  This links with the compiler support library
+@file{libgcc.a}, but putting it at the end of your command line ensures
+that you have a chance to link first with any special libraries of your
+own.
+
+@samp{__main} is the initialization routine for C++ constructors.
+Because @sc{gnu} C is designed to interoperate with @sc{gnu} C++, even C
+programs must have this call.  Otherwise C++ object files linked with a
+C @code{main} might fail.
+
+@c FIXME - add a section on "What is all that debug information?"

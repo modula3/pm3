@@ -1,0 +1,7 @@
+@c This file documents porting GCC to an embedded target,
+@c as @included in tools.texi.
+
+@node GCC
+@subsection GCC, the GNU compiler
+
+

@@ -1,0 +1,521 @@
+@c This documents the Hitachi H8/300 target family,
+@c as @included in targets.texi.
+@c
+@c FIXME: Find all XXXXX's and replace with target names!
+
+@node Hitachi H8300
+@section Hitachi H8/300 targets
+@cindex Hitachi H8/300 targets
+ 
+@c Cygnus currently supports 
+
+@menu
+* HH8tools::                     What to call the tools
+* HH8compile::                   Compiling on the Hitachi H8/300 target family   
+* HH8debug::                     Debugging on the Hitachi H8/300 target family
+* HH8load::                      Loading on specific target architectures
+* HH8doc::                       Further documentation
+@end menu
+@c * HH8I/O::                       I/O for specific target architectures
+
+@node HH8tools
+@subsection What to call the tools 
+@cindex naming Hitachi H8/300 tools
+@cindex tools, naming, Hitachi H8/300
+
+Cross-development tools in the Cygnus Developer's Kit are normally
+installed with names that reflect the target machine, so that you can
+install more than one set of tools in the same binary directory.
+
+The target name, constructed with the @code{--target} option to 
+@code{configure}, is used as a prefix to the program name.  
+ For example, the compiler (called simply @code{gcc}
+in native configurations) is called:
+
+@table @code
+@kindex h8300-hms-gcc
+@item h8300-hms-gcc
+@end table
+
+Likewise, the Hitachi @sc{h8/300}-configured @sc{gdb} is called:
+
+@kindex h8300-hms-gdb
+@w{@code{h8300-hms-gdb}}
+
+For @sc{dos}-hosted toolchains, the tools are simply called by their
+standard names, e.g., @code{gcc}, @code{gdb}, etc.
+
+@ignore
+@xref{}.
+@end ignore
+
+@node HH8compile
+@subsection Compiling on Hitachi H8/300 targets
+@cindex compiling, Hitachi H8/300 targets
+
+The Hitachi @sc{h8/300} target family toolchain controls variances in code 
+generation directly from the command line.
+
+When you run @code{@value{GCC}}, you can use command-line options to 
+choose whether to take advantage of the extra Hitachi @sc{h8/300} machine 
+instructions, and whether to generate code for hardware or software floating 
+point.
+
+@subheading Using C++ for the Hitachi H8/300
+
+This special release includes support for the C++ language.  This
+support may in certain circumstances add up to 5K to the size of your
+executables.
+
+The new C++ support involves new startup code that runs C++
+initializers before @samp{main()} is invoked.  If you have a replacement for
+the file @file{crt0.o} (or if you call @samp{main()} yourself) you must call
+@samp{_main()} before calling @samp{main()}.  
+
+You may need to run these C++ initializers even if you do not write in
+C++ yourself.  This could happen, for instance, if you are linking
+against a third-party library which itself was written in C++.  You
+may not be able to tell that it was written in C++ because you are
+calling it with C entry points prototyped in a C header file.  Without
+these initializers, functions written in C++ may malfunction.
+
+@need 1000
+If you are not using any third-party libraries, or are otherwise
+certain that you will not require any C++ constructors you may
+suppress them by adding the following definition to your program:
+
+@smallexample
+  int __main() @{@}
+@end smallexample
+
+@menu
+* HH8copts::                      Compiler options
+* HH8aopts::                      Assembler options
+* HH8call::                       Calling conventions
+@end menu    
+@c * HH8popts::                      Preprocessor macros
+@c * HH8lopts::                      Linker options
+
+@node HH8copts
+@subsubsection Compiler options
+@cindex compiler options, Hitachi H8/300
+@cindex options, compiler, Hitachi H8/300
+
+When you run @code{@value{GCC}}, you can use command-line options to choose
+machine-specific details.  For information on all the @code{@value{GCC}} 
+command-line options, see @ref{Invoking GCC,,GNU CC Command 
+Options,gcc.info,Using GNU CC}.
+
+@subheading General Options
+
+@c examples would be totally keen
+@table @code
+@kindex -mh
+@item -mh
+Generate code for the @sc{h8/300h} chip.
+@kindex -mint32
+@item -mint32
+Use 32 bit integers when compiling for the @sc{h8/300h}.
+@end table
+
+@ignore
+@subheading GCC options for architecture and code generation
+@cindex architecture and code generation options, Hitachi H8/300
+@cindex options, architecture and code generation, Hitachi H8/300
+
+@subheading GCC options for floating point
+@cindex floating point options, Hitachi H8/300
+@cindex options, floating point, Hitachi H8/300
+@end ignore
+
+@subheading Floating point subroutines 
+@cindex floating point subroutines, Hitachi H8/300
+@cindex subroutines, floating point, Hitachi H8/300
+
+Two kinds of floating point subroutines are useful with @code{@value{GCC}}:
+
+@enumerate
+@item
+Software implementations of the basic functions (floating-point
+multiply, divide, add, subtract), for use when there is no hardware
+floating-point support.
+
+@item
+General-purpose mathematical subroutines.
+
+The Developer's Kit from Cygnus Support includes an implementation of
+the standard C mathematical subroutine library.  @xref{Top,,
+Mathematical Functions,libm.info, The Cygnus C Math Library}.
+@end enumerate
+
+@ignore
+@node HH8popts
+@subsubsection Predefined preprocessor macros
+@cindex preprocessor macros, Hitachi H8/300
+@cindex macros, preprocessor, Hitachi H8/300
+@end ignore
+
+@node HH8aopts
+@subsubsection Assembler options
+@cindex assembler options, Hitachi H8/300
+@cindex options, assembler, Hitachi H8/300
+
+You should use @sc{gnu} @code{as} to assemble @code{@value{GCC}} output.  To 
+ensure this, @code{@value{GCC}} should be configured using the 
+@samp{--with-gnu-as} switch (as it is in Cygnus distributions
+@c @ ; pxref{MIPSConfig,,Configuring @sc{gnu} source for IDT/MIPS}
+).  Alternatively, you can invoke @code{@value{GCC}} with the @code{-mgas}
+option.
+
+If you invoke @code{as} via the @sc{gnu} C compiler (version 2), you can use
+the @samp{-Wa} option to pass arguments through to the assembler.  One
+common use of this option is to exploit the assembler's listing
+features.  Assembler arguments you specify with @code{gcc -Wa} must be
+separated from each other (and the @samp{-Wa}) by commas.  For example,
+the @samp{-alh} assembler option in the following commandline:
+
+@smallexample
+$ hms-gcc -c -g -O -Wa,-alh,-L file.c
+@end smallexample
+
+@noindent
+requests a listing with high-level language and assembly language
+interspersed.
+
+The example also illustrates two other convenient options to specify
+for assembler listings:
+
+@enumerate
+@kindex -g, Hitachi H8/300
+@item
+The compiler debugging option @samp{-g} is essential to see interspersed
+high-level source statements, since without debugging information the
+assembler cannot tie most of the generated code to lines of the original
+source file.
+
+@kindex -L, Hitachi H8/300
+@item
+The additional assembler option @samp{-L} preserves
+local labels, which may make the listing output more intelligible to
+humans.
+@end enumerate
+
+These are the options to enable listing output from the assembler.  By
+itself, @samp{-a} requests listings of high-level language source,
+assembly language, and symbols.
+
+You can use other letters to select specific options for the list:
+@samp{-ah} requests a high-level language listing, @samp{-al} requests
+an output-program assembly listing, and @samp{-as} requests a symbol
+table listing.  High-level listings require that a compiler debugging
+option like @samp{-g} be used, and that assembly listings (@samp{-al})
+be requested also.
+
+You can use the @samp{-ad} option to @emph{omit} debugging directives
+from the listing.
+
+When you specify one of these options, you can further control listing
+output and its appearance using these @dfn{listing-control} assembler
+directives:
+
+@table @code
+@kindex .nolist, Hitachi H8/300
+@item .nolist
+Turn off listings from this point on.
+
+@kindex .list, Hitachi H8/300
+@item .list
+Turn listings back on from here.
+
+@kindex .psize @var{linecount} , @var{columnwidth}, Hitachi H8/300
+@item .psize @var{linecount} , @var{columnwidth}
+Describe the page size for your output.  (Default 60, 200.)
+The assembler generates form feeds after printing each group of
+@var{linecount} lines.  To avoid these automatic form feeds, specify 0
+as the @var{linecount}.
+
+@kindex .eject, Hitachi H8/300
+@item .eject
+Skip to a new page (issue a form feed).
+
+@kindex .title, Hitachi H8/300
+@item .title
+Use @var{heading} as the title (second line, immediately after the
+source file name and pagenumber).
+
+@kindex .sbttl, Hitachi H8/300
+@item .sbttl
+Use @var{subheading} as the subtitle (third line, immediately after the
+title line) when generating assembly listings.
+@end table
+
+If you do not request listing output with one of the @samp{-a} options,
+these listing-control directives have no effect.  You can also use the
+@samp{-an} option to turn off all forms processing.
+
+The letters after @samp{-a} may be combined into one option,
+@emph{e.g.}, @samp{-aln}.
+
+@ignore
+@node HH8lopts
+@subsubsection Linker options
+@cindex linker options, Hitachi H8/300
+@cindex options, linker, Hitachi H8/300
+@end ignore
+
+@node HH8call
+@subsubsection Calling conventions
+@cindex calling conventions, Hitachi H8/300
+@cindex conventions, calling, Hitachi H8/300
+@cindex register handling, Hitachi H8/300
+
+The first three words of arguments are passed in registers @samp{R0}
+through @samp{R2}.  All remaining arguments are pushed onto the stack,
+last to first, so that the lowest numbered argument not passed in a
+register is at the lowest address in the stack.  The registers are
+always filled, so a double word argument starting in @samp{R2} would
+have the most significant word in @samp{R2} and the least significant
+word on the stack.
+
+Function return values are stored in @samp{R0} and @samp{R1}.  
+Registers @samp{R0} through @samp{R2} can be used for temporary values.
+
+When a function is compiled with the default options, it must return
+with registers @samp{R3} through @samp{R6} unchanged.
+
+Note that functions compiled with different calling conventions cannot
+be run together without some care.
+
+@node HH8debug
+@subsection Debugging on Hitachi H8/300 targets
+@cindex debugging, Hitachi H8/300 targets
+@cindex @sc{gdb}, using on Hitachi H8/300 targets
+
+@sc{gdb} needs to know these things to talk to your Hitachi @sc{h8/300}:
+
+@enumerate
+@item
+that you want to use one of the following:
+
+@itemize
+@item 
+@samp{target remote}, the remote debugging interface for the Hitachi 
+@sc{h8/300} microprocessor.  Use this for the Hitachi low-cost evaluation
+board (LCEVB) running @sc{cmon}.
+@item 
+@samp{target hms}, the interface to @sc{h8/300} eval boards running the HMS
+monitor.
+@item
+@samp{target e7000}, the in-circuit emulator for the Hitachi @sc{h8/300}.
+@item 
+@samp{target sim}, the simulator, which allows you to run @sc{gdb} remotely 
+without an external device.
+@end itemize
+
+@item
+what serial device connects your host to your Hitachi board (the first
+serial device available on your host is the default).
+
+@item
+if you are using a Unix host, what speed to use over the serial device.
+@end enumerate
+
+@noindent
+Use one of these @sc{gdb} commands to specify the connection to your target 
+board:
+
+@table @code
+@kindex target hms @var{port}
+@item target hms @var{port}
+To run a program on the board, start up @sc{gdb} with the name of your
+program as the argument.  To connect to the board, use the command
+@samp{target hms @var{port}}, where @var{port} is the name of the
+serial port connected to the board.  If the program has not already been
+downloaded to the board, you may use the @code{load} command to download
+it.  You can then use all the usual @sc{gdb} commands.
+
+For example, this sequence connects to the target board through a serial
+port, and loads and runs a program called @var{prog} through the
+debugger:
+
+@smallexample
+host$ h8300-hms-gdb @var{prog}
+GDB is free software and @dots{}
+(gdb) target hms /dev/ttyb
+@dots{}
+(gdb) load
+@dots{}
+(gdb) run
+@end smallexample
+
+@kindex target hms @var{hostname}:@var{portnumber}
+@item target hms @var{hostname}:@var{portnumber}
+@c If your @sc{gdb} is configured to run from a SunOS or SGI host, y
+You can specify a TCP/IP connection instead of a serial port, using the syntax
+@code{@var{hostname}:@var{portnumber}} (assuming your board is
+connected so that this makes sense; for instance, to a serial line
+managed by a terminal concentrator).
+@end table
+
+@noindent @sc{gdb} also supports:
+
+@table @code
+@kindex set remotedebug @var{n}, Hitachi H8/300
+@item set remotedebug @var{n}
+You can see some debugging information about communications with the board
+by setting the @code{remotedebug} variable. 
+@end table
+
+@ignore
+@node HH8I/O
+@subsection I/O for specific target architectures
+@cindex I/O on Hitachi H8/300 targets
+
+@menu
+* HH8I/O1::                 I/O for Hitachi H8/300H boards 
+@end menu
+@c * HH8I/O2::                 I/O for E7000 in-circuit emulators
+
+@node HH8I/O1
+@subsubsection Hitachi H8/300H boards
+
+@node HH8I/O2
+@subsubsection E7000 in-circuit emulators
+@end ignore
+
+@node HH8load
+@subsection Loading on specific target architectures
+@cindex loading on Hitachi H8/300 targets
+
+Cygnus supports downloading to @sc{h8/300} boards and @sc{e7000} in-circuit 
+emulators.
+
+@menu
+* HH8load1::                 Loading on Hitachi H8/300H boards
+* HH8load2::                 Loading on E7000 in-circuit emulators
+@end menu
+
+@node HH8load1
+@subsubsection Hitachi H8/300H boards
+@cindex loading on Hitachi H8/300H boards
+
+You can use the @sc{gdb} remote serial protocol to communicate with a
+Hitachi @sc{h8/300} board.  You must first link your programs with the
+``stub'' module @file{src/gdb/config/H8/stub.c}.  This module manages
+the communication with @sc{gdb}.  @xref{Remote Serial,, The @sc{gdb} remote
+serial protocol, gdb.info, Debugging with GDB}, for more details.  Note
+that the Hitachi LCEVB running @sc{cmon} has the stub already built-in.
+
+Use the special @code{gdb} command @samp{device @var{port}} if you need
+to explicitly set the serial device.  The default @var{port} is the
+first available port on your host.  This is only necessary on Unix
+hosts, where it is typically something like @file{/dev/ttya}.
+
+@sc{gdb} has another special command to set the communications speed:
+@samp{speed @var{bps}}.
+
+The following sample session illustrates the steps needed to start a
+program under @sc{gdb} control on an @sc{h8/300}, using a @sc{dos} host.
+The example uses a sample @sc{h8} program called @file{t.x}.  The
+procedure is the same for other Hitachi chips in the series.
+
+First hook up your development board.  In this example, we use a board
+attached to serial port @code{COM2}.  Call @sc{gdb} with the name of
+your program as the argument.  @sc{gdb} prompts you, as usual, with
+the prompt @samp{(gdb)}.  Use two special commands to begin your
+debugging session: @samp{target hms} to specify cross-debugging to the
+Hitachi board, and the @code{load} command to download your program to
+the board.  @code{load} displays the names of the program's sections,
+and a @samp{*} for each 2K of data downloaded.  (If you want to refresh
+@sc{gdb} data on symbols or on the executable file without downloading,
+use the @sc{gdb} commands @code{file} or @code{symbol-file}.  These
+commands, and @code{load} itself, are described in @ref{Files,,Commands
+to specify files,gdb,Debugging with GDB}.)
+
+@smallexample
+C:\H8\TEST> gdb t.x
+GDB is free software and you are welcome to distribute copies
+ of it under certain conditions; type "show copying" to see 
+ the conditions.
+There is absolutely no warranty for GDB; type "show warranty" 
+for details.
+GDB 4.13-94q4, Copyright 1994 Free Software Foundation, Inc...
+(gdb) target hms com1
+Connected to remote H8/300 HMS system.
+(gdb) load t.x
+.text   : 0x8000 .. 0xabde ***********
+.data   : 0xabde .. 0xad30 *
+.stack  : 0xf000 .. 0xf014 *
+@end smallexample
+
+At this point, you're ready to run or debug your program.  From here on,
+you can use all the usual @sc{gdb} commands.  The @code{break} command
+sets breakpoints; the @code{run} command starts your program;
+@code{print} or @code{x} display data; the @code{continue} command
+resumes execution after stopping at a breakpoint.  You can use the
+@code{help} command at any time to find out more about @sc{gdb} commands.
+
+Remember, however, that @emph{operating system} facilities aren't
+available on your development board; for example, if your program hangs,
+you can't send an interrupt---but you can press the @sc{reset} switch.
+
+Use the @sc{reset} button on the development board:
+@cindex reset button
+
+@itemize @bullet
+@item
+to interrupt your program (don't use @kbd{Ctrl-C} on the @sc{dos}
+host---it has no way to pass an interrupt signal to the development
+board).
+
+@item
+to return to the @sc{gdb} command prompt after your program finishes
+normally.  The communications protocol provides no other way for
+@sc{gdb} to detect program completion.
+@end itemize
+
+In either case, @sc{gdb} sees the effect of a @sc{reset} on the
+development board as a ``normal exit'' of your program.
+
+@node HH8load2
+@subsubsection E7000 in-circuit emulators
+@cindex loading on E7000 in-curcuit emulators
+
+You can use the @sc{e7000} in-circuit emulator to develop code for either the
+Hitachi @sc{h8/300} or the @sc{h8/300h}.  Use one of these forms of the
+@samp{target e7000} command to connect @sc{gdb} to your @sc{e7000}:
+
+@table @code
+@kindex target e7000 @var{port} @var{speed}
+@item target e7000 @var{port} @var{speed}
+Use this form if your @sc{e7000} is connected to a serial port.  The
+@var{port} argument identifies what serial port to use (for example,
+@samp{com2}).  The third argument is the line speed in bits per second
+(for example, @samp{9600}).
+
+@kindex target e7000 @var{hostname}
+@item target e7000 @var{hostname}
+If your @sc{e7000} is installed as a host on a @sc{TCP/IP} network, you can
+just specify its hostname; @sc{gdb} uses @code{telnet} to connect.
+@end table
+
+The monitor command set makes it difficult to load large ammounts of
+data over the network without using @sc{ftp}.  We recommend you try not
+to issue @code{load} commands when communicating over Ethernet; use the
+@code{ftpload} command instead.
+
+@node HH8doc
+@subsection Further documentation
+@cindex documentation on Hitachi H8/300 targets
+
+The following manuals provide extensive documentation on the Hitachi 
+@sc{h8}.  They are produced by and available from Hitachi Microsystems; contact
+your friendly Field Application Engineer for details.
+
+@table @cite
+@item H8/300 Microcomputer User's Manual
+Semiconductor Design & Development Center, 1992
+@end table
+
+
+

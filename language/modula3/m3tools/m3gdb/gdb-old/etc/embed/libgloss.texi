@@ -1,0 +1,42 @@
+@c This file documents Libgloss, as @included in tools.texi.
+
+@node Libgloss
+@subsection Libgloss, the support library 
+
+@dfn{Libgloss} (Library for Gnu Low-level OS Support) contains the 
+startup code, the I/O support for @value{GCCN} and Newlib (the C library), and 
+the target board support packages that you need to port the @sc{gnu} tools 
+to an embedded execution target.  
+
+The C library used throughout this manual is Newlib,
+however Libgloss could easily be made to support other C libraries. 
+Because Libgloss resides in its own tree, it's able to run standalone, 
+which allows it to support GDB's remote debugging and to be included in 
+other @sc{gnu} tools.
+
+@c @menu
+@c * Creating::                      Configuring and building Libgloss
+@c * Essential Functions::           Essential functions in Libgloss      
+@c @end menu
+
+@c @node Essential Functions
+@c @subsubsection Essential GNU functions in Libgloss
+
+Several functions that are essential to @value{GCCN} reside in Libgloss.  
+These functions are:
+
+@enumerate
+@item crt0, the main startup script
+@item the linker script 
+@item I/O support code
+@end enumerate
+
+@menu
+* Crt0::                Crt0, the main startup script
+* Linker Scripts::      Linker scripts for memory management
+* I/O::                 I/O support code
+@end menu
+
+@c @include creating.texi
+@include essential.texi
+

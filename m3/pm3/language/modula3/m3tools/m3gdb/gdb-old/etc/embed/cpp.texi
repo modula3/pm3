@@ -1,0 +1,29 @@
+@c This file documents using CPP to an embedded target,
+@c as @included in tools.texi.
+
+@node CPP
+@subsection CPP, the GNU preprocessor
+
+@strong{JT:} This paragraph is from Rob's Embed:
+
+@code{cpp} merges in the @code{#include} files, expands all macros 
+definitions, and processes the @code{#ifdef} sections. 
+To see the output of @code{cpp}, invoke @value{GCCN} with the
+@code{-E} option, and the preprocessed file will be printed on 
+stdout.
+
+There are two convenient options to assemble hand-written files that
+require C-style preprocessing.  Both options depend on using the
+compiler driver program, @code{gcc}, instead of calling the assembler
+directly.
+
+@enumerate
+@item
+Name the source file using the extension @samp{.S} (capitalized) rather
+than @samp{.s}.  @code{gcc} recognizes files with this extension as
+assembly language requiring C-style preprocessing.
+
+@item
+Specify the ``source language'' explicitly for this situation, using the
+@code{gcc} option @samp{-xassembler-with-cpp}.
+@end enumerate

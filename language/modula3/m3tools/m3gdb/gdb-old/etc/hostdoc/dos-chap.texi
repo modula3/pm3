@@ -1,0 +1,521 @@
+@c This is the text for the dos-specific host note. 
+@c
+@c
+@ifinfo
+@menu
+* Running::                     Running the Programs
+* Warnings::                    Warnings for DOS
+* Hints::                       Hints and Common Problems
+* Techinfo ::                   Technical info about the release
+@end menu
+@end ifinfo
+
+@node Running
+@chapter Running the Programs
+
+@menu
+* Environment Variables::
+* SHARE.EXE::
+* Init Files::
+* Go32::
+* asynctsr::
+* Bug Report Form::
+@end menu
+
+Before you run the cross compiler, you must set some environment
+variables and you must run the @sc{ms-dos} program @file{SHARE.EXE}.
+
+@node Environment Variables
+@section Environment variables
+
+To run the compiler you first have to set some environment variables so
+that the tools can find each other. The environment variables need to
+refer to the directory where you installed your Developer's Kit.
+
+A script which does this job, called @file{SETENV.BAT}, is automatically
+created when the install program is run.  @file{SETENV.BAT} is placed at
+the top level of the install directory.
+
+These variables need to be reset each time your current session ends.
+You may wish to edit your @file{AUTOEXEC.BAT} file to include the
+contents of @file{SETENV.BAT}, or you may want to run the script from
+the @file{AUTOEXEC.BAT} file.
+
+To set up the enviroment variables automatically when your 
+session begins, add the following line to your 
+@file{AUTOEXEC.BAT} file (assuming the tools were installed 
+into @file{C:\CYGNUS})
+
+@cartouche
+@smallexample
+CALL C:\CYGNUS\SETENV.BAT
+@end smallexample
+@end cartouche
+
+Or you can put this into your @file{AUTOEXEC.BAT}:
+
+@cartouche
+@smallexample
+set LIBRARY_PATH=C:\CYGNUS\LIB
+set C_INCLUDE_PATH=C:\CYGNUS\INCLUDE
+set INFOPATH=C:\CYGNUS\INFO
+set GO32=EMU C:\CYGNUS\BIN\EMU387
+@end smallexample
+@end cartouche
+
+@node SHARE.EXE
+@section The @code{SHARE} program
+
+To use the cross-development tools in your Developer's Kit, you must
+first load the @sc{ms-dos} system program @code{SHARE.EXE}.  Doing this
+in @file{AUTOEXEC.BAT} is generally a good idea.  Consult the
+@sc{ms-dos} manual for more information on @code{SHARE.EXE}, or type
+@samp{HELP SHARE} at the command prompt (@sc{ms-dos} 5.0 or later only).
+
+On an @sc{ms-dos} system with many programs loaded, you may find that
+adding @code{SHARE} consumes more lower memory area than is convenient.
+Consider running @samp{LOADHIGH SHARE} (on @sc{ms-dos} 5.0 or later
+only). Consult the @sc{ms-dos} manual for more information about
+@code{LOADHIGH}, or type @samp{HELP LOADHIGH} at the command prompt.  On
+@sc{ms-dos} 6.2 or later, the @code{MEMMAKER} command can help you
+maximize real-mode memory usage.  Run @code{MEMMAKER} after adding
+@code{SHARE.EXE} to @file{AUTOEXEC.BAT} to help sort out what programs
+to load where.  Consult the @sc{ms-dos} manual for more information on
+@code{MEMMAKER}, or type @samp{MEMMAKER /?} at the command prompt.
+
+@quotation
+@emph{Warning:} If your system runs a third-party @sc{dos} extender
+(such as @sc{qemm} or @sc{386max}), please use the commands and memory 
+load
+configuration tools provided by your memory manager, in place of
+@code{LOADHIGH} or @code{MEMMAKER}.  Consult the manuals that come with
+your @sc{dos} extender for further information.
+@end quotation
+
+@need 3000
+@node Init Files
+@section Typical initialization files
+
+These are typical initialization files for use with the Cygnus
+Developer's Kit:
+
+@noindent
+@code{CONFIG.SYS}:
+
+@cartouche
+@smallexample
+REM @emph{486/DX50 VL-bus}
+DEVICE=C:\DOS\SMARTDRV.EXE /double_buffer
+DEVICE=C:\DOS\HIMEM.SYS
+DEVICE=C:\DOS\EMM386.EXE RAM X=CC00-CFFF
+REM @emph{EMM386 line excludes RAM area used by this specific network card.}
+BUFFERS=15,0
+REM @emph{MEMmaker chose this setting for BUFFERS.}
+FILES=100
+DOS=UMB
+REM @emph{MEMMAKER under DOS 6.2 splits the HIGH, UMB commands.}
+LASTDRIVE=E
+REM @emph{or whatever is your last drive.}
+FCBS=16,8
+DEVICEHIGH /L:2,12048 =C:\DOS\SETVER.EXE
+DOS=HIGH
+REM @emph{MEMMAKER under DOS 6.2 splits the HIGH, UMB commands.}
+SHELL=C:\DOS\COMMAND.COM C:\DOS\ /E:1024 /p
+REM @emph{The /E option leaves enough env space for Cygnus SETENV actions.}
+DEVICEHIGH /L:1,9072 =C:\DOS\ANSI.SYS
+@end smallexample
+@end cartouche
+
+@sp 2
+@noindent
+@code{AUTOEXEC.BAT}:
+
+@cartouche
+@smallexample
+@@ECHO OFF
+LH /L:0;2,45488 /S C:\DOS\SMARTDRV.EXE
+PATH C:\DOS;C:\WINDOWS;C:\BAT;C:\NET;C:\bin;C:\gnu;c:\utils
+C:\DOS\MOUSE.COM
+LH /L:2,13984 SHARE
+PROMPT $p$g
+SET TMP=C:\TEMP
+REM @emph{Cygnus tools and other programs use TMP}
+SET TEMP=C:\TEMP
+REM @emph{DOS and other programs use TEMP}
+SET LOGNAME=jax
+REM @emph{RCS uses LOGNAME}
+LH /L:1,6384 C:\DOS\DOSKEY /INSERT
+REM @emph{I love command line recall!}
+REM @emph{This might be a place to run C:\CYGNUS\SETENV.BAT}
+@end smallexample
+@end cartouche
+
+@node Go32
+@section @code{GO32}, the 32-bit launcher
+
+@code{GO32} is the protected-mode 32-bit application launcher used by
+the tools in the Cygnus Developer's Kit.  It works best on many
+@sc{ms-dos} machines if you use @code{HIMEM.SYS} and @code{EMM386.EXE}.
+If you use @code{MEMMAKER}, be sure to tell it you have programs which
+need expanded memory (@code{GO32} uses expanded memory).
+
+@code{GO32} can also run Cygnus programs under versions of Windows,
+Windows for Workgroups, Windows NT, OS/2 and Desqview.  Special versions
+of @code{GO32} may be necessary for all but @sc{ms-dos}; if you need one
+of these special versions, please send a problem report with a
+problem category of
+
+@example
+>Category: dos
+@end example
+
+@noindent
+and a synopsis of
+
+@example
+>Synopsis: Need go32 support
+@end example
+
+@node asynctsr
+@section Remote debugging using @code{asynctsr}
+
+If you use a @sc{dos} host, @sc{gdb} depends on an auxiliary
+terminate-and-stay-resident program called @code{asynctsr} to
+communicate with the development board through a PC serial port.  You
+must also use the @sc{dos} @code{mode} command to set up the serial port
+on the @sc{dos} side.
+
+The following sample session illustrates the steps needed to start a
+program under @sc{gdb} control on a Hitachi @sc{sh} chip, using a
+@sc{dos} host.  The example uses a sample @sc{sh} program called
+@file{t.x}.  The procedure is similar for other chips.  In general, you
+must run @code{asynctsr} and then @code{mode} before @sc{gdb}.
+
+First hook up your development board.  In this example, we use a board
+attached to serial port @code{COM2}; if you use a different serial port,
+substitute its name in the argument of the @code{mode} command.  When
+you call @code{asynctsr}, the auxiliary communications program used by
+the degugger, you give it just the numeric part of the serial port's
+name; for example, @w{@samp{asyncstr 2}} below runs @code{asyncstr} on
+@code{COM2}.
+
+@example
+C:\SH\TEST> asynctsr 2
+
+C:\SH\TEST> mode com2:9600,n,8,1,p
+
+Resident portion of MODE loaded
+
+COM2: 9600, n, 8, 1, p
+
+@end example
+
+@quotation
+@emph{Warning:} We have noticed a bug in @sc{pc-nfs} that conflicts with
+@code{asynctsr}.  If you also run @sc{pc-nfs} on your @sc{dos} host, you
+may need to disable it, or even boot without it, to use @code{asynctsr}
+to control your development board.
+@end quotation
+
+For more information on remote debugging, see @ref{Remote Serial,,The
+GDB remote serial protocol,gdb,Debugging with GDB}.
+
+@node Bug Report Form
+@section Bug report form
+
+The Cygnus bug-report template accompanies this release in the file
+@file{C:\@var{instdir}\SEND_PR.TXT}.  Customize the Cygnus
+bug-report form by filling in your customer ID:
+
+@enumerate
+@item
+Find your customer ID in the cover letter that came with this release;
+or call the Cygnus hotline @w{+1 415 903 1401} to ask what it is.
+
+@item
+Run your favorite editor on @file{C:\@var{instdir}\LIB\SEND_PR.TXT}
+
+@item
+Search for the text @samp{>Customer-Id: unknown}
+
+@item
+Replace the string @samp{unknown} with your customer ID.
+@end enumerate
+
+Copy this file into an email message and send it to @code{bugs@@cygnus.com} or
+print it out and fax it to Cygnus Support.
+
+@node Warnings
+@chapter Warnings for @sc{dos} Developer's Kits
+
+@xref{Limits,, Limitations and Warnings, release.info, Release Notes},
+for special considerations that apply to the Developer's Kit on any
+host.  There are also a few special considerations for @sc{ms-dos} hosts
+only, which we describe here.
+
+@menu
+* Memory Requirements::
+* C++ Compiler::
+* Disk Cache::
+* Expanding Environment Space::
+* AMD29K Debug::
+* Info::
+* Includes with Conflicting Filenames::
+@end menu
+
+@node Memory Requirements
+@section Memory requirements for @sc{ms-dos}
+
+The toolkit uses up to 128Mb of extended memory if present, and
+up to 128Mb of disk space can be used for swapping.  Disk
+caching programs speed compilation greatly.
+
+We do not recommend using the cross-development kit with less than four
+(4) megabytes of @sc{ram}.
+
+We provide a @sc{ms-dos} extender with the cross-development kit for
+@sc{ms-dos} which does swapping to disk when @sc{ms-dos} runs out of
+memory.  To avoid excessive swapping you must have at least two (2)
+megabytes of @sc{ram} to run @sc{g++} on a @sc{pc} with @sc{ms-dos}.
+
+If you've got more than two megabytes, the extra memory can be used as a
+disk cache to significantly improve performance.  
+
+@node C++ Compiler
+@section C++ compiler
+
+There is no specific script which runs the C++ compiler.  To use
+@sc{g++}, simply run @sc{gcc} with the @samp{-lgxx} option.
+@samp{xx} is used because the character @key{+} is not a valid character
+for @sc{ms-dos} filenames.
+
+@node Disk Cache
+@section Disk cache
+
+While not strictly necessary to run the cross-compiler, using a good
+disk cache speeds up the compiler noticeably.  @code{SMARTdrive}, for
+example, is a cache program that comes with @sc{ms-dos} from version 5
+onwards; refer to your @sc{ms-dos} manual for details on how to use it.
+
+@node Expanding Environment Space
+@section Expanding environment space
+
+If your environment is short on space for setting environment variables,
+you can expand it by editing the file @file{CONFIG.SYS}.  Edit the line
+
+@example
+SHELL=C:\COMMAND.COM /P /E:@var{envsiz}
+@end example
+
+@noindent
+to reflect the new environment space size.  @var{envsiz} stands for the
+environment size, in bytes.
+
+@node AMD29K Debug
+@section Debugging AMD 29K programs
+
+To develop software for the @sc{amd} 29k, you can use either the
+@code{montip} program to communicate with a board over a serial line, or
+the program @code{isstip} as a simulator.  @code{isstip} and
+@code{montip} are both available from @sc{amd} at no charge.  They are 
+not
+included with this release.
+
+To use the simulator, simply set the environment variable @code{UDICONF}
+to the full path of the file @file{udiconfs.txt}, as in the example
+
+@smallexample 
+set UDICONF @var{drive}:@var{instdir}\AMD\BIN\UDICONFS.TXT
+@end smallexample
+
+For instance, if you installed the Developer's Kit in @file{C:\CYGNUS},
+indicate the full path as:
+
+@smallexample
+@file{C:\CYGNUS\AMD\BIN\UDICONFS.TXT}
+@end smallexample
+
+Then place the simulator in resident memory with the command:
+
+@smallexample
+isstip isstip.exe
+@end smallexample
+
+@noindent
+@code{isstip} takes information from the configuration file
+@file{udiconfs.txt}, which contains the following entries:
+
+@smallexample
+# name  command + options
+iss     isstip.exe -r osboot
+@end smallexample
+
+@noindent
+@file{osboot} is a file that is loaded into the @code{isstip} program.
+@file{osboot}, in this case, simulates @sc{roms}, provides an interface
+for input and output, etc.
+
+@quotation
+@emph{Warning:} once the @code{isstip} program is started, running the
+compiler hangs the machine.  This is because @code{isstip} uses a
+different and incompatible @sc{dos} extender from the compiler, and thus
+the programs cannot coexist.
+@end quotation
+
+If you wish to use @sc{gdb} with the target board, first change your
+working directory to the directory containing @file{MONTIP.EXE} and type
+
+@smallexample
+montip montip.exe
+@end smallexample
+
+@noindent
+before invoking @code{gdb}. @xref{Invocation,,Getting In and Out of
+@sc{gdb},gdb.info,Debugging with @sc{gdb}}, arguments to @code{gdb}.
+
+Again, @code{isstip} and @code{montip} are both available from @sc{amd} 
+at no
+charge.  They are not included with this release.
+
+@node Info
+@section DEL does not work in Info
+
+@sc{gnu} Info, the online documentation browser, is available with this
+release on our @sc{ms-dos} hosts.
+
+Unfortunately, the @sc{dos} version of Info, @code{INFO.EXE}, does not
+recognize the @key{del} key.  This key is normally used for paging
+backwards within a node in Info.  As a workaround, you can page
+backwards in Info by typing @w{@kbd{@key{esc} v}.}
+
+@node Includes with Conflicting Filenames
+@section Includes with conflicting filenames
+
+@quotation
+@emph{Note:} the following information only matters when you want to
+read the Developer's Kit source code.  You do not need to alter your
+programming style in any way.  The C preprocessor handles this mapping
+automatically, based on the specifications in the file
+@file{header.gcc}.
+@end quotation
+
+In the @code{include} directories of a standard @sc{gnu} compiler system
+there are sometimes files whose names are too long to represent under
+@sc{ms-dos} and its related operating environments. There are also
+pairs of files where the only difference between the names is whether
+some characters are upper-case.  For example, one of the standard C
+header files is called @file{string.h}, and one of the @sc{libg++}
+header files is called @file{String.h}.
+
+We handled this in your Cygnus toolkit by moving uppercase-distinct and
+too-long filenames to legal @sc{ms-dos} filenames in a subdirectory
+called @file{upcase}.  Here are three examples of how we rename files to
+avoid conflicts in the @sc{ms-dos} file system.  These files are all
+from the @file{include.cxx} subdirectory:
+
+@smallexample
+@emph{filename}           @emph{conflict}            @emph{file renamed}
+---------        --------        ------------
+./iostreamP.h   ./iostream.h    ./upcase/iostream.h
+./Complex.h     ./complex.h     ./upcase/Complex.h
+./Regex.h       ./regex.h       ./upcase/Regex.h
+@end smallexample
+
+Any include directory may contain an @file{upcase} subdirectory.  The
+header files in it would be in the parent directory on a Unix system.
+Again, you do not need to alter your programming style in any way; the
+compiler remaps the locations of these files, so that @w{@samp{#include
+<iostream.h>}} works correctly even though it resides physically in a
+subdirectory of @file{include.cxx}.
+
+@node Hints
+@chapter Hints and Common Problems
+
+This section is part of a @sc{faq} (frequently asked questions) list
+which was developed by Steve Chamberlain (@code{sac@@cygnus.com}) to
+help with common @sc{dos} tool-chain problems. Please send comments or
+suggestions for further FAQ's to him.
+
+@emph{@strong{Q:} How do I pass a command line of greater than 127
+characters to any of the tools?}
+
+@strong{A:} DOS doesn't allow long command lines.  But you can put your
+command line into a file (called a @dfn{response file}) and reference
+the file on the command line with a @key{@@} sign.  Then the tool will
+read the file as if you typed it onto the command line. For example:
+
+@code{gcc @@foo}
+
+@noindent
+reads the contents of the file @file{foo} as if they were on the command
+line.
+
+@emph{@strong{Q:} Can I use the tools on a 286?}
+
+@strong{A:} No.
+
+@emph{@strong{Q:} Can I run it under Microsoft Windows?}
+
+@strong{A:} Yes. In fact, it works a bit faster under MS-Windows.
+
+@emph{@strong{Q:} Why do some birds fly south for the winter?}
+
+@strong{A:} It's too far to walk.
+
+@emph{@strong{Q:} Why does a tool say ``Error: not enough memory to run 
+go32!''.}
+
+@strong{A:} This often happens when trying to run @sc{make}, but it can 
+happen  to any of the tools if you don't have enough memory. @sc{make}  
+calls @code{gcc}, @code{gcc} calls @code{cc1} or the assembler, and so on. 
+Each invocation uses more memory.  You can avoid this problem by not 
+using @sc{make}, or stripping out unused TSRs from your 
+@file{AUTOEXEC.BAT} or @file{CONFIG.SYS} file so that there is more 
+spare memory in the bottom 640K.  Try running @file{MEMMAKER}.
+
+Use @file{MEM} to see how much conventional memory you have free.
+You'll need around 500K to allow @sc{make} to run properly.
+
+@emph{@strong{Q:}  How do I get the online help?}
+
+@strong{A:}  If your @code{INFOPATH} is set correctly then all you need 
+do is type:
+    
+@smallexample
+@code{info}
+@end smallexample
+
+
+If you don't have @code{INFOPATH} set, you'll get an error like this:
+
+@smallexample
+info.exe: dir: file not found
+@end smallexample
+
+You'll then need to specify the path on the command line like this:
+
+@smallexample
+info -d c:/cygnus/info
+@end smallexample
+
+@node Techinfo
+@chapter Technical info about the release
+
+The binaries in this release were compiled on a Unix workstation with
+@sc{gcc} generating 32-bit 386 code.  The code is run with a DOS extender
+@file{go32.exe} which uses the flat memory model available in the 386.
+Source for this extender is available on the net. Contact 
+@code{info@@cygnus.com} if you have problems obtaining it.
+
+The files are stored on the floppies using Microsoft's  @file{COMPRESS} 
+program. You can install files without using the install program by just 
+copying them into the right place on your hard drive and running 
+@file{EXPAND}.  Since the files are stored on the floppy using their 
+full name (and not the marked as compressed by using Microsoft's @file{.XX_ }
+naming convention) you'll have to use a temporary file.
+
+@smallexample
+  copy b:\bin\cc1.exe c:\foo\bin
+  expand c:\foo\bin\cc1.exe c:\foo\bin\tmp
+  rename c:\foo\bin\tmp c:\foo\bin\cc1.exe
+@end smallexample

@@ -1,0 +1,6 @@
+@c This file documents using Libc on an embedded target, 
+@c as @included in newlib.texi.
+
+@node Libc
+@subsubsection Libc, the standard C library
+

@@ -1,0 +1,925 @@
+@c This file documents the Essential Functions for embedded targets 
+@c that reside in Newlib, as @included in newlib.texi
+
+@node Crt0
+@subsubsection Crt0, the main startup file
+
+The @dfn{crt0} (C RunTime 0) file contains the initial startup
+code.  Cygnus Support provides a crt0 file, but you may have to write
+your own, as you need a crt0 file for each target.
+The crt0 file is usually written in assembler as @file{crt0.S}, and its 
+object gets linked in first and bootstraps the rest of your application. 
+
+The crt0 file defines a special symbol like @code{_start}
+that is both the default base address for the application and the first
+symbol in the executable binary image. If you plan to use any routines from the
+standard C library, you'll also need to implement the functions that
+this library is dependant on. See @ref{Libc,,I/O routines for porting Newlib}. 
+
+The crt0 file does the following things:
+
+@enumerate
+@item Initializes everything that needs it. 
+
+This initialization section varies. 
+If you are developing an application that gets downloaded to a @code{ROM} 
+monitor, there is usually no need for special initialization because the 
+@code{ROM} monitor handles it for you.
+
+If you plan to burn your code in a @code{ROM}, the crt0 file typically 
+does all of the hardware initialization required to run an application. 
+This can include things like initializing serial ports and running a 
+memory check, but it depends on your hardware. 
+    
+@item Zeros the @file{.bss} section. 
+
+This is for uninitialized data. 
+All of the addresses in the @file{.bss} section need to be initialized 
+to zero so programs that forget to check new variables' default 
+values will get predictable results.
+
+@item Calls @code{main()}.
+
+If your @code{ROM} monitor supports it, set up @var{argc} and @var{argv} for 
+command line arguments and an environment pointer before the call to 
+@code{main()}. 
+
+For @value{GN}, the code generator inserts a branch to @code{__main} at the 
+top of your @code{main()} routine.  @value{GN} uses @code{__main} to 
+initialize its internal tables and then returns control to your 
+@code{main()} routine.
+
+@item Calls @code{(exit)}.
+
+After @code{main()} has run, the crt0 file cleans things up and returns control
+of the hardware from the application. 
+@c
+@c FIXME -- Clean up things like what?  Examples (like above, the examples
+@c          of initializing serial ports and running a memory check)?
+@c
+On some hardware there is nothing to return to---especially if your 
+program is in @code{ROM}---and if that's case, you need to do a hardware 
+reset or branch back to the original start address.
+@c
+@c FIXME -- can we have an example of this?  Is doesn't appear in the code
+@c
+
+If you're using a @code{ROM} monitor, you can usually call a user trap to make
+the @code{ROM} take over.  Pick a safe vector with no sides effects.  
+Some @code{ROM}'s have a built-in trap handler just for this case.
+@end enumerate
+@c
+@c FIXME -- What is this?  It was just floating in here  -->
+@c portable between all the m68k based boards we have here.
+@c @ref{crt0.S,,Example Crt0.S}. 
+@c 
+
+@ignore
+@menu
+* Example Crt0::                Example crt0 file
+@end menu
+
+@node Example Crt0
+@subsubsection Example crt0 file
+@end ignore
+
+@subheading Example crt0 file
+
+The following code is typical of a @file{crt0.S}.  See the manual appendices, 
+@c @ref{crt0.S,,Crt0.S - the startup file}.
+
+@enumerate
+@item Initializing everything that needs it.
+
+@enumerate a
+@item Set up concatenation macros:  
+
+@smallexample
+/* ANSI concatenation macros.  */
+
+#define CONCAT1(a, b) CONCAT2(a, b)
+#define CONCAT2(a, b) a ## b
+@end smallexample
+
+We'll use these macros later.
+@c
+@c FIXME -- when will we use the concatenation macros?
+@c
+
+@item Set up label macros:
+
+@smallexample
+/* These are predefined by new versions of GNU cpp.  */
+
+#ifndef __USER_LABEL_PREFIX__
+#define __USER_LABEL_PREFIX__ _
+#endif
+
+/* Use the right prefix for global labels.  */
+#define SYM(x) CONCAT1 (__USER_LABEL_PREFIX__, x)
+
+@end smallexample
+
+These macros make the code portable between @file{coff} and
+@file{a.out}.
+@file{coff} always has an @code{__} (underline) prepended to
+the front of its global symbol names.  @file{a.out} has none.
+
+@need 750
+@item Set up register names:
+
+@smallexample
+#ifndef __REGISTER_PREFIX__
+#define __REGISTER_PREFIX__
+#endif
+
+/* Use the right prefix for registers.  */
+#define REG(x) CONCAT1 (__REGISTER_PREFIX__, x)
+
+#define d0 REG (d0)
+#define d1 REG (d1)
+#define d2 REG (d2)
+#define d3 REG (d3)
+#define d4 REG (d4)
+#define d5 REG (d5)
+#define d6 REG (d6)
+#define d7 REG (d7)
+#define a0 REG (a0)
+#define a1 REG (a1)
+#define a2 REG (a2)
+#define a3 REG (a3)
+#define a4 REG (a4)
+#define a5 REG (a5)
+#define a6 REG (a6)
+#define fp REG (fp)
+#define sp REG (sp)
+@end smallexample
+
+This is for portability between assemblers.
+Some register names have a @code{%} or @code{$} prepended to them.
+
+@item Set up space for the stack: 
+
+@smallexample
+/*
+ * Set up room for a stack. We just grab a chunk of memory.
+ */
+	.set	stack_size, 0x2000
+	.comm	SYM (stack), stack_size
+@end smallexample
+
+This can also be done in the linker script, but it typically gets done here.
+
+@item Set up an empty space for the environment:  
+
+@smallexample
+/*
+ * Define an empty environment.
+ */
+        .data
+        .align 2
+SYM (environ):
+        .long 0
+@end smallexample
+
+This is bogus on almost any @code{ROM} monitor, but we set up a valid address 
+for it and pass the address to @code{main()}.  This way, if an application 
+checks for an empty enviroment, it finds one.
+
+@item Set up a few global symbols that get used elsewhere:
+@c 
+@c FIXME -- where do these global symbols get used?
+@c
+
+@smallexample
+ 	.align	2
+	.text
+	.global SYM (stack)
+
+	.global SYM (main)
+	.global SYM (exit)
+/* 
+ * This really should be __bss_start, not SYM (__bss_start).
+ */
+	.global __bss_start
+@end smallexample
+
+@code{__bss_start}
+needs to be declared this way because its value is set in the linker script.
+
+@item Set up the global symbol @code{start} for the linker to use as the 
+default address for the @file{.text} section:
+
+@smallexample
+/*
+ * start -- set things up so the application will run.
+ */
+SYM (start):
+	link	a6, #-8
+	moveal	#SYM (stack) + stack_size, sp
+@end smallexample
+@end enumerate
+
+@item Zeroing the @file{.bss} section.
+
+Make sure the @file{bss.} section is cleared for uninitialized data:
+
+@smallexample
+/*
+ * zerobss -- zero out the bss section
+ */
+	moveal	#__bss_start, a0
+	moveal	#SYM (end), a1
+1:
+	movel	#0, (a0)
+	leal	4(a0), a0
+	cmpal	a0, a1
+	bne	1b
+@end smallexample
+
+Applications can get wild side effects from the @file{.bss} section being left
+uncleared, and it can cause particular problems with some implementations of
+@code{malloc()}.
+
+@item
+Calling @code{main()}.
+
+Set up the environment pointer and jump to @code{main()}:
+
+@smallexample
+/*
+ * Call the main routine from the application to get it going.
+ * main (argc, argv, environ)
+ * We pass argv as a pointer to NULL.
+ */
+        pea     0
+        pea     SYM (environ)
+        pea     sp@@(4)
+        pea     0
+	jsr	SYM (main)
+	movel	d0, sp@@-
+@end smallexample
+
+@item
+Calling @code{(exit)}.
+
+Implementing @code{(exit)} here is easy: 
+
+@smallexample
+/*
+ * _exit -- Exit from the application. Normally we cause a 
+ *          user trap to return to the ROM monitor 
+ *          for another run.
+ */
+SYM (exit):
+	trap	#0
+@end smallexample
+@end enumerate
+
+Both the @code{rom68k} and @code{bug} can handle a user-caused exception of 
+@code{0} with no side effects.
+Although the @code{bug} monitor has a user-caused trap that returns
+control to the @code{ROM} monitor, the @code{bug} monitor is more portable.
+
+@node Linker Scripts
+@subsubsection The linker script
+
+The linker script does the following things:
+
+@enumerate
+@item Sets up the @dfn{memory map} for an application. 
+
+When your application is loaded into memory, it allocates some RAM, some
+disk space for I/O, and some registers.  The linker script makes a memory
+map of this memory allocation.  This is important to embedded systems
+because, having no OS, you manage the behavior of the chip yourself.
+
+@item For @value{GN}, sets up the constructor and destructor tables.
+
+The actual section names vary depending on your object file format.  
+For @file{a.out} and @file{coff}, the three main sections are @file{.text},
+@file{.data}, and @file{.bss}.
+
+@item Sets the default values for variables used elsewhere.
+
+These default variables are used by @code{sbrk()} and the crt0 file, and are 
+typically called @code{_bss_start} and @code{_end}.
+@end enumerate
+
+There are two ways to make sure that the memory map is correct:
+
+@enumerate
+@item 
+Have the linker create the memory map by using the @code{-Map} option
+
+@item 
+After linking, use @code{nm} to check critical addresses like @code{start}, 
+@code{bss_end}, and @code{_etext}.
+@c
+@c FIXME -- are there other critical addresses the user should know about?
+@c          Can we have an example here?
+@c
+@end enumerate
+
+@ignore
+@menu
+* Example Linker::              Example linker script
+@end menu
+
+@node Example Linker
+@subsubsection Example linker script
+@end ignore
+
+@subheading Example linker script
+
+Here's a breakdown of a linker script for an @code{m68k}-based target board.
+See the file @file{libgloss/m68k/idp.ld} or the manual appendices, 
+@c @ref{idp.ld,,Linker script for the IDP board}.
+
+@enumerate
+@item Setting up the memory map.
+
+@enumerate a
+@item The @code{STARTUP} command loads the file specified so that it executes
+first: 
+
+@smallexample
+STARTUP(crt0.o)
+@end smallexample
+
+The @code{m68k-coff} configuration default does not link in @file{crt0.o}, 
+as it assumes that the developer has their own @file{crt0.o}.
+This behavior is controlled in the @file{config} file for each architecture, 
+in a macro called @code{STARTFILE_SPEC}.
+If @code{STARTFILE_SPEC} is set to @code{null}, when @value{GCCN} 
+formats its command line it doesn't add @file{crt0.o}. 
+Any file name can be specified with @code{STARTUP}, but the default is 
+always @file{crt0.o}.
+
+If you use @code{ld} only to link, you control whether or not to link in 
+@file{crt0.o} on the command line. If you have multiple crt0 files, you can 
+leave @code{STARTUP} out, and link in @file{crt0.o} in the makefile or 
+using different linker scripts.  Sometimes this is done to optionally 
+initialize floating point values or to add device support.
+@c
+@c FIXME -- is this correct: "floating point values"?  It originally
+@c          just said "floating points".
+@c
+@item @code{OUTPUT_ARCH} sets the architecture for the output file:
+
+@smallexample
+OUTPUT_ARCH(m68k)
+@end smallexample
+
+@item @code{INPUT} loads the file specified:
+
+@smallexample
+INPUT(idp.o)
+@end smallexample
+
+In this case, the file is a relocated library that contains the definitions 
+for the low-level functions needed by @file{libc.a}. 
+The file to load could have also been specified on the command line, but
+as it's always needed, it might as well be here as a default.
+
+@item @code{SEARCH_DIR} specifies the path in which to look for files:
+
+@smallexample
+SEARCH_DIR(.)
+@end smallexample
+
+@item @code{_DYNAMIC} specifies whether or not there are shared dynamic 
+libraries:
+
+@smallexample
+__DYNAMIC  =  0;
+@end smallexample
+
+In this case, there are no shared libraries.
+@c
+@c FIXME -- and if you wanted to specify shared libraries?
+@c
+@c FIXME: Check the linker manual to make sure this is accurate.
+@c
+
+@need 750
+@item Specify a name for a section that can be referred to later in the 
+script: 
+
+@smallexample
+/*
+ * Setup the memory map of the MC68ec0x0 Board (IDP)
+ * stack grows up towards high memory. This works for
+ * both the rom68k and the mon68k monitors.
+ */
+MEMORY
+@{
+  ram     : ORIGIN = 0x10000, LENGTH = 2M
+@}
+@end smallexample
+
+In this case, it's only a pointer to the beginning of free RAM 
+space, with an upper limit at 2M. 
+If the output file exceeds the upper limit, @code{MEMORY} produces an error 
+message.
+@c
+@c FIXME -- Is this true?  does MEMORY produce the error message?
+@c
+@end enumerate
+
+@item Setting up constructor and destructor tables for @value{GN}.
+
+@enumerate a
+@item Set up the @file{.text} section: 
+
+@smallexample
+/*
+ * stick everything in ram (of course)
+ */
+SECTIONS
+@{
+  .text :
+  @{
+    CREATE_OBJECT_SYMBOLS
+    *(.text)
+     etext  =  .;
+     __CTOR_LIST__ = .;
+     LONG((__CTOR_END__ - __CTOR_LIST__) / 4 - 2)
+    *(.ctors)
+     LONG(0)
+     __CTOR_END__ = .;
+     __DTOR_LIST__ = .;
+     LONG((__DTOR_END__ - __DTOR_LIST__) / 4 - 2)
+    *(.dtors)
+     LONG(0)
+     __DTOR_END__ = .;
+    *(.lit)
+    *(.shdata)
+  @}  > ram
+  .shbss SIZEOF(.text) + ADDR(.text) :	@{
+    *(.shbss)
+  @}
+@end smallexample
+
+In a @file{coff} file, 
+all the actual instructions reside in @file{.text}.
+@c
+@c FIXME -- Is coff a single file? isn't .text a file, too?
+@c
+This code also sets up the constructor 
+and destructor tables for @value{GN}. 
+Notice that the section description redirects itself to the RAM variable 
+that was set up earlier.
+
+@need 1000
+@item Set up the @file{.data} section:
+
+@smallexample
+@group
+  .talias :	 @{ @}  > ram
+  .data  : @{
+    *(.data)
+    CONSTRUCTORS
+    _edata  =  .;
+  @} > ram
+@end group
+@end smallexample
+
+In a @file{coff} file, this is where all of the initialized data goes.  
+@code{CONSTRUCTORS} is a special command used by @code{ld}.
+@end enumerate
+
+@item Setting default values for variables @code{_bss_start} and @code{_end}.
+
+Set up the @file{.bss} section: 
+
+@smallexample
+  .bss SIZEOF(.data) + ADDR(.data) :
+  @{
+   __bss_start = ALIGN(0x8);
+   *(.bss)
+   *(COMMON)
+      end = ALIGN(0x8);
+      _end = ALIGN(0x8);
+      __end = ALIGN(0x8);
+  @}
+  .mstack  : @{ @}  > ram
+  .rstack  : @{ @}  > ram
+  .stab  . (NOLOAD) : 
+  @{
+    [ .stab ]
+  @}
+  .stabstr  . (NOLOAD) :
+  @{
+    [ .stabstr ]
+  @}
+@}
+@end smallexample
+ 
+In a @file{coff} file, this is where
+uninitialized data goes. The default values for @code{_bss_start} and 
+@code{_end} are set here for use by the crt0 file when it zeros the 
+@code{.bss} section.
+@end enumerate
+
+@node I/O
+@subsubsection I/O support code
+
+@strong{Let's chat libraries i.e. making I/O work, routines for
+dynamic linking, misc support routines, and useful debugging tips.}
+
+Most applications use calls to the standard C library, 
+however when you initially link @file{libc.a}, several I/O functions 
+are undefined. If you don't plan on doing any I/O you're OK, but 
+otherwise you need to create these I/O functions. They are:
+@c
+@c FIXME -- Is this true?  Does the user need to create these functions?
+@c          Or are they already in Newlib?
+@c
+
+@itemize
+@item @code{open()} and @code{close()}
+
+These don't need to be fully supported unless you have a filesystem, so they 
+are normally stubbed out.
+
+@item @code{kill()}
+
+This is also a stub, since you can't do process control on an 
+embedded system.
+
+@item @code{sbrk()} 
+
+This is only needed by applications that do dynamic memory
+allocation. It uses the variable @code{_end}, which is set in the linker 
+script.
+@end itemize
+
+@ignore
+@menu
+* Memory Support::      Routines for dynamic memory allocation
+* Misc Support::        Miscellaneous support routines
+* Debugging::           Useful debugging routines
+* LED's::               Routines for using LED's for I/O debugging
+@end menu
+
+@node Memory Support
+@subsubsection Routines for dynamic memory allocation
+@end ignore
+
+@subheading Memory support
+
+You need the following routines for dynamic memory allocation:
+
+@itemize
+@item @code{sbrk()}
+
+The functions @code{malloc()}, @code{calloc()}, and @code{realloc()} all call
+@code{sbrk()} at their lowest levels.  @code{sbrk()} returns a pointer to the 
+last memory address your application used before more memory was allocated.
+@c
+@c FIXME -- Is this correct, about the last memory address your application 
+@c          used?
+@c
+
+@item @code{caddr_t} 
+
+Is defined elsewhere as @code{char *}.  
+@c
+@c FIXME -- where?
+@c
+
+@item @code{RAMSIZE}
+
+Is presently a compile-time option that moves a pointer to heap memory and 
+checks for the upper limit. See the manual appendices, 
+@c @ref{glue.c,,C-based "glue" code}. 
+@end itemize
+
+@ignore
+@menu
+* Example memory::           Example dynamic memory allocation routines
+@end menu
+
+@node Example memory
+@subsubsection Example memory allocation routines
+@end ignore
+
+@subheading Example memory allocation routines
+
+This code creates @code{RAMSIZE} and @code{sbrk()}:
+
+@smallexample
+/* _end is set in the linker command file *
+extern caddr_t _end;/
+
+/* just in case, most boards have at least some memory */
+#ifndef RAMSIZE
+#  define RAMSIZE             (caddr_t)0x100000
+#endif
+
+/*
+ * sbrk -- changes heap size size. Get nbytes more
+ *         RAM. We just increment a pointer in what's
+ *         left of memory on the board.
+ */
+caddr_t
+sbrk(nbytes)
+     int nbytes;
+@{
+  static caddr_t heap_ptr = NULL;
+  caddr_t        base;
+
+  if (heap_ptr == NULL) @{
+    heap_ptr = (caddr_t)&_end;
+  @}
+
+  if ((RAMSIZE - heap_ptr) >= 0) @{
+    base = heap_ptr;
+    heap_ptr += nbytes;
+    return (base);
+  @} else @{
+    errno = ENOMEM;
+    return ((caddr_t)-1);
+  @}
+@}
+@end smallexample
+
+@ignore
+@node Misc Support
+@subsubsection Miscellaneous support routines
+@end ignore
+
+@subheading Miscellaneous support routines
+
+These support routines are called by Newlib, but don't apply to the 
+embedded environment: 
+
+@itemize
+@item @code{isatty()} 
+
+Checks for a terminal device.
+
+@item @code{kill()} 
+
+Simply exits.
+
+@item @code{getpd()} 
+
+Can safely return any value greater than 1, although the value doesn't effect 
+anything in Newlib.
+@end itemize
+
+@ignore
+@menu
+* Example misc::          Example support routines
+@end menu
+
+@node Example misc
+@subsubsection Example support routines
+@end ignore
+
+@subheading Example support routines
+
+This code creates stubs for @code{isatty()}, @code{kill()}, and 
+@code{getpid()}:
+ 
+@smallexample
+ /*
+  * isatty -- returns 1 if connected to a terminal device,
+  *           returns 0 if not. Since we're hooked up to a
+  *           serial port, we'll say yes and return a 1.
+  */
+ int
+ isatty(fd)
+      int fd;
+ @{
+   return (1);
+ @}
+
+ /*
+  * getpid -- only one process, so just return 1.
+  */
+ #define __MYPID 1
+ int
+ getpid()
+ @{
+   return __MYPID;
+ @}
+
+ /*
+  * kill -- go out via exit...
+  */
+ int
+ kill(pid, sig)
+      int pid;
+      int sig;
+ @{
+   if(pid == __MYPID)
+     _exit(sig);
+   return 0;
+ @}
+@end smallexample
+
+@ignore
+@node Debugging
+@subsubsection Useful debugging routines
+@end ignore
+
+@subheading Useful debugging routines 
+
+There are always a few useful routines for debugging your project in
+progress: 
+
+@itemize
+@item @code{print()}
+
+Runs standalone in Libgloss with no Newlib support. 
+Many times @code{print()} works when there are problems that make 
+@code{printf()} cause an exception. 
+
+@item @code{outbyte()}
+
+Can also be used for low-level debugging. 
+
+@item @code{putnum()}
+
+Prints out values in hex so they are easier to read.
+ @end itemize
+
+@ignore
+@menu
+* Example debugging::      Example debugging routines
+@end menu
+
+@node Example debugging
+@subsubsection Example debugging routines
+@end ignore
+
+@subheading Example debugging routines
+
+This code creates @code{print()} and @code{putnum()}:
+
+@smallexample
+ /*
+  * print -- do a raw print of a string
+  */ 
+ int
+ print(ptr)
+ char *ptr;
+ @{
+   while (*ptr) @{
+     outbyte (*ptr++);
+   @}
+ @}
+
+ /*
+  * putnum -- print a 32 bit number in hex
+  */
+ int
+ putnum (num)
+ unsigned int num;
+ @{
+   char  buffer[9];
+   int   count;
+   char  *bufptr = buffer;
+   int   digit;
+
+   for (count = 7 ; count >= 0 ; count--) @{
+     digit = (num >> (count * 4)) & 0xf;
+
+     if (digit <= 9)
+       *bufptr++ = (char) ('0' + digit);
+     else
+       *bufptr++ = (char) ('a' - 10 + digit);
+   @}
+
+   *bufptr = (char) 0;
+   print (buffer);
+   return;
+ @}
+@end smallexample
+
+@ignore
+@node LEDs
+@subsubsection Routines for using LED's for I/O debugging
+
+@c @subheading Routines for using LED's for I/O debugging 
+
+If there are LED's on the board, they can also be put to use for
+debugging when you are writing the serial I/O code:
+
+@itemize
+@item @code{zylons()}
+
+Strobes the LED's (if there are more than one) in sequence, creating a 
+rotating effect. This is convenient because it shows whether or not 
+the target is still alive when you're not doing I/O.
+
+@item @code{led_putnum()}
+
+Displays a particular digit as a bit pattern or number. 
+@code{led_putnum} usually has to be written in assembly language for each 
+target board. 
+
+This LED 
+@c
+@c FIXME -- Which LED?
+@c
+is set by setting a bit mask to an address, where
+1 turns the segment off and 0 turns it on. There is also a little
+decimal point on the LED display, so it gets the leftmost bit. The other
+bits specify the segment location. The bits look like:
+
+@smallexample
+[d.p | g | f | e | d | c | b | a ] is the byte.
+@end smallexample
+
+The locations are set up as:
+
+@smallexample 
+             a
+           -----
+        f |     | b
+          |  g  |
+           -----
+          |     |
+        e |     | c
+           -----
+             d
+@end smallexample
+
+@end itemize
+
+@menu
+* Example LEDs::       Example routines for using LED's for I/O debugging
+@end menu
+
+@node Example LEDs
+@subsubsection Example routines for using LED's
+
+@c @subheading Example routines for using LED's
+
+This code takes a number that's already been converted to a string, and
+prints it with the LED's:
+@c
+@c FIXME -- Is this true, what the code does?
+@c
+
+@itemize
+@item @code{led_putnum()} 
+
+@smallexample
+#define LED_ADDR	0xd00003
+
+void
+led_putnum ( num )
+char num;
+@{
+  static unsigned char *leds = (unsigned char *)LED_ADDR;
+  static unsigned char num_bits [18] = @{
+    0xff, 
+                                /* clear all */
+    0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x98, 
+                                /* numbers 0-9 */
+    0x98,0x20,0x3,0x27,0x21,0x4,0xe 
+                                /* letters a-f */
+ @};
+
+  if (num >= '0' && num <= '9')
+    num = (num - '0') + 1;
+
+  if (num >= 'a' && num <= 'f')
+    num = (num - 'a') + 12;
+
+  if (num == ' ')
+    num = 0;
+
+  *leds = num_bits[num];
+@}
+
+/*
+ * zylons -- draw a rotating pattern. 
+ * NOTE: this function never returns.
+ */
+void
+zylons()
+@{
+  unsigned char *leds 	= (unsigned char *)LED_ADDR;
+  unsigned char curled = 0xfe;
+
+  while (1)
+    @{
+      *leds = curled;
+      curled = (curled >> 1) | (curled << 7);
+      delay ( 200 );
+    @}
+@}
+@end smallexample
+
+@end itemize
+@end ignore
+
+
+
+

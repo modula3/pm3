@@ -1,0 +1,78 @@
+\input texinfo        @c                    -*- Texinfo -*-
+@setfilename sparclite.info
+@settitle Programming the Fujitsu SPARClite
+
+@finalout
+@setchapternewpage off
+@iftex
+@raggedbottom
+@global@parindent=0pt
+@end iftex
+
+@titlepage
+@title Fujitsu SPARClite
+@subtitle Development with the Cygnus Developer's Kit
+@sp 4
+@subtitle March 1994
+@author Cygnus Support
+
+@page
+
+@vskip 0pt plus 1filll
+Copyright @copyright{} 1993, 1994 Cygnus Support
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided also that
+the entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions.
+@end titlepage
+
+@ifinfo
+@format
+START-INFO-DIR-ENTRY
+* SPARClite: (sparclite.info).         Programming the Fujitsu SPARClite
+END-INFO-DIR-ENTRY
+@end format
+
+Copyright (c) 1993, 1994 Cygnus Support
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided also that
+the entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions.
+
+@node Top
+@top Programming the Fujitsu SPARClite with the Cygnus Developer's Kit
+
+@display
+@strong{Cygnus Support}
+March 1994
+@end display
+
+This note is a summary of the Cygnus Developer's Kit special features
+for the Fujitsu SPARClite.
+@end ifinfo
+
+@include splite-chap.texi
+
+@page
+@contents
+@c second page break makes sure right-left page alignment works right
+@c with a one-page toc, even though we don't have setchapternewpage odd.
+@page
+@w{ }
+@bye

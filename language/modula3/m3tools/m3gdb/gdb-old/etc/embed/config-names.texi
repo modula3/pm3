@@ -1,0 +1,201 @@
+@c this text is included into install.texi, relnotes.texi, and rebuilding.texi
+
+Your tape is labeled to indicate the host (and target, if applicable)
+for which the binaries in the distribution are configured.  The
+specifications used for hosts and targets in the @code{configure} script
+are based on a three-part naming scheme, though the scheme is slightly
+different between hosts and targets.
+
+@ifset cdk
+@menu
+* Host names::
+* Target names::
+* config.guess::
+@end menu
+@end ifset
+
+@ifclear cdk
+@menu
+* Host names::
+* config.guess::
+@end menu
+@end ifclear
+
+@node Host names
+@unnumberedsubsec Host names
+
+The full naming scheme for hosts encodes three pieces of information in
+the following pattern:
+
+@smallexample
+@var{architecture}-@var{vendor}-@var{os}
+@end smallexample
+
+For example, the full name for a Sun @sc{sparc}station running SunOS
+4.1.3 is
+
+@smallexample
+sparc-sun-sunos4.1.3
+@end smallexample
+
+@ifclear INSTALL
+Remember that you can type @code{configure} without specifying a
+@var{hosttype} and your host will be divined by @code{configure}
+(@pxref{config.guess,,@code{config.guess}}).  In fact, we recommend this
+procedure on most systems.
+@end ifclear
+
+@quotation
+@emph{Warning:} @code{configure} can represent a very large number of
+combinations of architecture, vendor, and operating system.  There is by
+no means support for all possible combinations!
+@end quotation
+
+The following combinations refer to hosts supported by Cygnus Support.
+Some common short aliases are included, but these may be obsolete in the
+future.
+@ifset cdk
+(For a matrix which shows all supported host/target
+combinations, see @ref{Introduction,,Overview,relnotes,Release Notes}.)
+@end ifset
+
+@iftex
+@let@nonarrowing=@comment
+@end iftex
+@smallexample
+  @emph{canonical name}             @emph{alias}            @emph{platform}
+sparc-sun-solaris2       sun4sol2        @r{Sun 4 running Solaris 2}
+sparc-sun-sunos4.1.3     sun4            @r{Sun-4 running SunOS 4}
+mips-dec-ultrix          decstation      @r{DECstation}
+rs6000-ibm-aix           rs6000          @r{IBM RS6000}
+mips-sgi-irix4           iris            @r{SGI Iris running Irix 4}
+m68k-hp-hpux             hp300hpux       @r{HP 9000/300}
+hppa1.1-hp-hpux          hp700           @r{HP 9000/700}
+i386-unknown-sysv4                       @r{UnixWare}
+i386-lynx-lynxos         i386-lynx       @r{Intel @var{x}86 Lynx@sc{os} 2.2}
+m68k-lynx-lynxos         m68k-lynx       @r{Motorola 68k Lynx@sc{os} 2.2}
+sparc-lynx-lynxos        sparc-lynx      @r{SPARC Lynx@sc{os} 2.2}
+rs6000-lynx-lynxos       rs6000-lynx     @r{IBM RS6000 Lynx@sc{os} 2.2}
+alpha-dec-osf1.3                         @r{DEC Alpha running OSF/1 v1.3}
+@end smallexample
+@iftex
+@let@nonarrowing=@relax
+@end iftex
+
+@ifset cdk
+@node Target names
+@unnumberedsubsec Target names
+
+If you have a cross-development tape, the label also indicates the
+target for that configuration.  The pattern for target names is
+
+@smallexample
+@var{architecture}[-@var{vendor}]-@var{objfmt}
+@end smallexample
+
+Target names differ slightly from host names in that the last variable
+indicates the object format rather than the operating system, and the
+second variable is often left out (this practice is becoming obsolete;
+in the future, all configuration names will be made up of three parts).
+
+In cross-development configurations, each tool in the Developer's Kit is
+installed with the configured name of the target as a prefix.  For
+example, if the C compiler is configured to generate @sc{coff} format
+code for the Motorola 680x0 family, the compiler is installed as
+@file{m68k-coff-gcc}.
+
+@quotation
+@emph{Warning:} @code{configure} can represent a very large number of
+target name combinations of architecture, vendor, and object format.
+There is by no means support for all possible combinations!
+@end quotation
+
+This is a list of some of the more common targets supported by Cygnus
+Support.  (Not all targets are supported on every host!)  The list is
+not exhaustive; see @ref{Introduction,,Overview,relnotes,Release Notes},
+for an up-to-date matrix which shows the host/target combinations
+supported by Cygnus.
+
+@noindent
+@table @asis
+@item Motorola 68000 family
+@smallexample
+m68k-aout                @r{@code{a.out} object code format}
+m68k-coff                @r{COFF object code format}
+m68k-vxworks             @r{VxWorks environment}
+m68k-lynx                @r{Lynx@sc{os} 2.2 environment}
+@end smallexample
+
+@item Motorola 88000 family
+@smallexample
+m88k-coff                @r{COFF object code format}
+@end smallexample
+
+@item Intel 960 family
+@smallexample
+i960-vxworks5.0          @r{VxWorks environment (@code{b.out} format)}
+i960-vxworks5.1          @r{VxWorks environment (COFF format}
+i960-intel-nindy         @r{Nindy monitor}
+@end smallexample
+
+@item @sc{amd} 29000 family
+@smallexample
+a29k-amd-udi             @r{UDI monitor interface}
+ @emph{To use the @sc{minimon} interface, use this configuration
+ with the auxiliary program @code{MONTIP}, available from AMD.}
+@end smallexample
+
+@item @sc{sparc} family
+@smallexample
+sparc-vxworks            @r{VxWorks environment}
+sparc-aout               @r{@code{a.out} object code format}
+sparclite-aout           @r{@code{a.out} object code format}
+sparclite-coff           @r{COFF object code format}
+@end smallexample
+
+@item Intel @sc{80x86} family
+@smallexample
+i386-aout                @r{@code{a.out} object code format}
+i386-netware             @r{NetWare NLM}
+i386-lynx                @r{LynxOS 2.2 environment}
+@end smallexample
+
+@item @sc{idt/mips} @sc{r3000}
+@smallexample
+mips-idt-ecoff           @r{IDT R3000, big endian ECOFF}
+mipsel-idt-ecoff         @r{IDT R3000, little endian ECOFF}
+mips64-idt-ecoff         @r{IDT R4000 ECOFF}
+@end smallexample
+
+@need 600
+@item Hitachi @sc{h8300}
+@smallexample
+h8300-hms-coff           @r{COFF object code format}
+@end smallexample
+
+@item Hitachi @sc{sh}
+@smallexample
+sh-hms-coff              @r{COFF object code format}
+@end smallexample
+
+@item @sc{z8000}
+@smallexample
+z8k-coff                 @r{COFF object code format}
+@end smallexample
+@end table
+@end ifset
+@c end cdk
+
+@node config.guess
+@unnumberedsubsec @code{config.guess}
+
+@code{config.guess} is a shell script which attempts to deduce the host
+type from which it is called, using system commands like @code{uname} if
+they are available.  @code{config.guess} is remarkably adept at
+deciphering the proper configuration for your host; if you are building
+a tree to run on the same host on which you're building it, we recommend
+@emph{not} specifying the @var{hosttype} argument.
+
+@code{config.guess} is called by @code{configure}; you need never run it
+by hand, unless you're curious about the output.
+

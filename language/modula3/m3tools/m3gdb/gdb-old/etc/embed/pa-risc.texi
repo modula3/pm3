@@ -1,0 +1,20 @@
+@node PA-RISC, , , Supported Targets
+@section PA-RISC targets 
+Of the various boards manufactured by the HP-PRO consortium,
+all of which are variations on the PA-RISC processor, ports 
+are currently supported to the WinBond Cougar board based around 
+the w89k version of the PA. The Oki op50n processor is also supported.
+
+@menu
+* PAload::            Loading on the PA-RISC target
+@end menu
+
+@node PAload,,,Supported Targets
+@subsection Loading on PA-RISC targets
+
+Both the WinBond board and the Oki board download @code{Srecords}. The WinBond
+board also has support for loading the SOM files as produced by the
+native compiler on HP-UX.  WinBond supplies a set of DOS programs that
+will allow the loading of files via a bidirectional parallel port, however 
+this has never been tested with the output of @sc{gnu} SOM.
+

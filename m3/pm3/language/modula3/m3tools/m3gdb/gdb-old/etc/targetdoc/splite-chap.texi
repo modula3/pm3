@@ -1,0 +1,268 @@
+@c                                                  -*-Texinfo-*-
+@c Contents of SPARClite datasheet or chapter.  For use as a chapter,
+@c surround inclusion of this file with `@lowersections' and `@raisesections'.
+
+The Cygnus Developer's Kit supports the @w{SPARClite} family as a
+variant of the support for SPARC.  For the compiler in particular,
+special configuration options allow you to use special software
+floating-point code (for the Fujitsu MB86930 chip), as well as
+defaulting command-line options to use special SPARClite features.
+
+@menu
+* SPLITENames::	What the tools are called for SPARClite.
+* SPLITEGCC::		Compiling for the SPARClite.
+* SPLITEGAS::		Assembling SPARClite code.
+* SPLITEGDB::		Remote SPARClite debugging with GDB.
+* SPLITERefs::	SPARClite documentation
+@end menu
+
+@node SPLITENames
+@chapter What to Call the Tools
+
+Cross-development tools in the Cygnus Developer's Kit are normally
+installed with names that reflect the target machine, so that you can
+install more than one set of tools in the same binary directory.
+
+The names are constructed by using as a prefix the @samp{--target}
+argument to @code{configure}.  For example, the compiler (called
+simply @code{gcc} in native configurations) is called by one of these
+names for @w{SPARClite} cross-development, depending on which
+configuration you have installed:
+
+@example
+@exdent @emph{Available as preconfigured binaries from Cygnus:}
+sparclite-aout-gcc
+sparclite-coff-gcc
+@end example
+
+@xref{SPLITEGCC Configuration,,Setting up GCC for the @w{SPARClite}}, for
+explanations of the alternative @w{SPARClite} configurations.
+
+@node SPLITEGCC
+@chapter Compiling for the SPARClite
+
+When you @emph{run} GCC, you can use command-line options to choose
+whether to take advantage of the extra SPARClite machine instructions,
+whether to generate code for hardware or software floating point, and
+whether to use the normal register window model or a flat window model.
+
+@menu
+* SPLITEGCC Configuration::	Setting up GCC for the SPARClite.
+* SPLITEArchitecture::	        SPARC options for architecture/code generation.
+* SPLITEFloats and GCC::	SPARC options for floating point.
+* SPLITEFloat Calls::		Floating point subroutines.
+@end menu
+
+@node SPLITEGCC Configuration
+@section Setting up GCC for the @w{SPARClite}
+
+There are two variants of Fujitsu @w{@code{SPARClite}} support in
+@code{@value{GCC}} configurations.  These variants reflect the different
+file formats supported.
+
+@table @code
+@item --target=sparclite-aout
+Generate @w{@code{SPARClite}} code (including use of additional
+instructions), for the @code{a.out} file format.
+
+@item --target=sparclite-coff
+Generate @w{@code{SPARClite}} code (including use of additional
+instructions), for the @code{coff} file format.
+@end table
+
+There are two configurations for @sc{sparc} chips
+without the addititional @w{@code{SPARClite}} instructions:
+@samp{--target=sparc-aout} and @samp{--target=sparc-coff}.
+
+@node SPLITEArchitecture
+@section SPARC options for architecture and code generation
+
+Some special compiler command-line options are available for
+@w{SPARClite}; in addition, the machine-dependent options already
+present for SPARC in general continue to be available.  Both kinds of
+options are described in @ref{SPARC Options,, SPARC Options, gcc.info,
+Using GNU CC}.
+
+@table @code
+@item -msparclite
+The SPARC configurations of GCC generate code for the common subset of
+the instruction set: the v7 variant of the SPARC architecture.
+
+@samp{-msparclite} (which is on automatically for any of the
+@w{SPARClite} configurations) gives you @w{SPARClite} code.  This adds
+the integer multiply (@code{smul} and @code{umul}, just as in SPARC v8),
+integer divide-step (@code{divscc}), and scan (@code{scan}) instructions
+which exist in @w{SPARClite} but not in SPARC v7.
+
+Using @samp{-msparclite} when you run the compiler does @emph{not},
+however, give you floating point code that uses the entry points for US
+Software's @file{goFast} library.  The software floating-point entry
+points depend on how you @emph{configure} the compiler; with the normal
+SPARC configuration, GCC generates code that uses the conventional GCC
+soft-floating-point library entry points.  To get the US Software entry
+points, you must configure the compiler for @w{SPARClite} as described
+above.
+
+@item -mv8
+@samp{-mv8} gives you SPARC v8 code.  The only difference from v7 code
+is that the compiler emits the integer multiply (@code{smul} and
+@code{umul}) and integer divide (@code{sdiv} and @code{udiv})
+instructions which exist in SPARC v8 but not in SPARC v7.
+
+@item -mf930
+Generate code specifically intended for the Fujitsu MB86930, a @w{SPARClite}
+chip without an FPU.  This option is equivalent to the combination
+@samp{-msparclite -mno-fpu}.
+
+@samp{-mf930} is the default when the compiler is configured
+specifically for @w{SPARClite}.
+
+@item -mf934
+Generate code specifically for the Fujitsu MB86934, a @w{SPARClite} chip
+@emph{with} an FPU.  This option is equivalent to @samp{-msparclite}.
+@end table
+
+The following command line options are available for both @w{SPARClite} and
+other SPARC configurations of the compiler.  @xref{SPARC Options,, SPARC
+Options, gcc.info, Using GNU CC}.
+
+@table @code
+@item -mflat
+Does not use register windows in function calls.
+This option replaces the previous @code{frw} support for the
+@code{sparclitefrw-*} and @code{sparcfrw-*} configurations.
+Code generated with @samp{-mflat} is compatible with the normal
+register window calling convention.
+
+@item -mno-epilogue
+@itemx -mepilogue
+With @samp{-mepilogue} (the default), the compiler always emits code for
+function exit at the end of each function.  Any function exit in
+the middle of the function (such as a return statement in C) will
+generate a jump to the exit code at the end of the function.
+
+With @samp{-mno-epilogue}, the compiler tries to emit exit code inline
+at every function exit.
+
+The Cygnus Support compiler specialists recommend avoiding
+@samp{-mno-epilogue}.
+@end table
+
+@node SPLITEFloats and GCC
+@section Compiler command-line options for floating point
+
+When you run the compiler, you can specify whether to compile for
+hardware or software floating point configurations with these GCC
+command-line options:
+
+@table @code
+@item -mfpu
+@itemx -mhard-float
+Generate output containing floating point instructions.  This is the
+default.
+
+@item -msoft-float
+@itemx -mno-fpu
+Generate output containing library calls for floating point.
+The SPARC configurations of @file{libgcc} include a collection of
+subroutines to implement these library calls.
+
+In particular, the @w{SPARClite} GCC configurations generate subroutine
+calls compatible with the US Software @file{goFast.a} floating point
+library, giving you the opportunity to use either the @file{libgcc}
+implementation or the US Software version.
+
+To use the US Software library, simply include @samp{-lgoFast} on the
+GCC command line.
+
+To use the @file{libgcc} version, you need nothing special; GCC links
+with @file{libgcc} automatically after all other object files and
+libraries.
+@end table
+
+@node SPLITEFloat Calls
+@section Floating point subroutines
+
+Two kinds of floating point subroutines are useful with GCC:
+
+@enumerate
+@item
+Software implementations of the basic functions (floating-point
+multiply, divide, add, subtract), for use when there is no hardware
+floating-point support.
+
+When you indicate that no hardware floating point is available (with
+either of the GCC options @samp{-msoft-float} or @samp{-mno-fpu}), the
+@w{SPARClite} configurations of GCC generate calls compatible with the
+@file{goFast} library, proprietary licensed software available from U.S.
+Software.  If you do not have this library, you can still use software
+floating point; @file{libgcc}, the auxiliary library distributed with
+GCC, includes compatible---though slower---subroutines.
+
+@item
+General-purpose mathematical subroutines.
+
+The Developer's Kit from Cygnus Support includes an implementation of
+the standard C mathematical subroutine library.  @xref{Top,,
+Mathematical Functions,libm.info, The Cygnus C Math Library}.
+@end enumerate
+
+@node SPLITEGAS
+@chapter Assembling SPARClite code
+
+The GNU assembler, configured for SPARC, recognizes the additional
+SPARClite machine instructions that GCC can generate.
+
+You can specify the flag @samp{-Asparclite} to the GNU assembler
+(configured for SPARC) to explicitly select this particular SPARC
+architecture.  In any case, however, the SPARC assembler automatically
+selects the SPARClite architecture whenever it encounters one of the
+@w{SPARClite}-only instructions (@code{divscc} or @code{scan}).
+
+@node SPLITEGDB
+@chapter Remote SPARClite Debugging with GDB
+
+You can use the GDB remote serial protocol to communicate with a
+@w{SPARClite} board.  You must first link your programs with the
+``stub'' module @file{sparc-stub.c}; this module manages the
+communication with GDB.  @xref{Remote Serial,, The GDB remote
+serial protocol, gdb.info, Debugging with GDB}, for more details.
+
+To do a download a program to your board from inside GDB,
+do something like the following:
+
+@enumerate 1
+@item @code{target sparclite @var{port@dots{}}}
+@item @code{load}
+@item @code{target remote @var{port@dots{}}}
+@end enumerate
+@noindent
+where @var{port} is the port to which your board is connected:
+@code{com1}, @code{com2}, etc.  For example:
+
+@smallexample
+(gdb) target sparclite com1
+[SPARClite appears to be alive]
+(gdb) load
+[Loading section .text at 0x40000000 (9160 bytes)]
+[Loading section .data at 0x400023c8 (96 bytes)]
+[Starting hello at 0x40000020]
+(gdb) target remote com1
+Remote debugging using com1
+breakinst () ../sparcl-stub.c:975
+975     @}
+(gdb) s
+main () hello.c:50
+50        writez(1, "Got to here\n");
+(gdb) 
+@end smallexample
+
+@c FIXME!! Add at least an example, maybe more discussion, of starting
+@c up w/ a SPARClite
+
+@node SPLITERefs
+@chapter SPARClite documentation
+
+See @cite{SPARClite User's Manual} (Fujitsu Microelectronics, Inc.
+Semiconductor Division, 1993) for full documentation of the
+@w{SPARClite} family, architecture, and instruction set.

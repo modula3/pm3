@@ -1,0 +1,2846 @@
+\input texinfo
+@setfilename install.info
+
+@c This document describes how to install a Cygnus Progressive Release,
+@c or nearly any Cygnus release that includes our standard Install script.
+@c Contact the progressive team for details (progressive@cygnus.com).
+
+@c A "progressive" release is one that is built and released on a
+@c periodic basis; as of August, 1994, this includes the Developer's Kit
+@c and Emacs version 19.  Custom releases often use the Install script;
+@c this document is only valid for those that do.
+@c January 1995:  now including DejaGnu
+
+@c Copyright (C) 1994, 1995 Cygnus Support
+@c This text may be freely distributed under the terms of the GNU
+@c General Public License.
+
+@c WARNING: the procedures described here ONLY apply to releases 
+@c packaged at Cygnus Support.  If you do not have a Cygnus release, 
+@c all bets are off.
+
+@c NOTE: this document supercedes install-texi.in; use this for future
+@c progressive releases.
+
+@c If you have any problems formatting this document, please contact
+@c the Cygnus Support documentation team (doc@cygnus.com).
+
+@ifinfo
+@format
+START-INFO-DIR-ENTRY
+* INSTALL: (install.info).         Installing this Cygnus Support Distribution
+END-INFO-DIR-ENTRY
+@end format
+@end ifinfo
+
+
+@c ------------------------- configuration --------------------------------
+
+@c Use the following guidelines to set VERSION, RELEASE and the release type.
+@c Don't reset RELEASETAG by hand; it's derived from VERSION.
+
+@c Set VERSION to 9XqY for a standard progressive release, such as "94q4"
+
+@set VERSION 95q4
+
+@c Set the type of release; use one of the following:
+
+@set cdk
+@c @set emacs
+@c @set dejagnu
+
+@c For DOS only, set the following; watch this space for Unix-only soon
+@clear dosonly
+
+@c --------------------------- end of configuration stuff
+
+@ifset cdk
+@set RELEASE Developer's Kit
+@end ifset
+@ifset emacs
+@set RELEASE Emacs
+@end ifset
+@ifset dejagnu
+@set RELEASE DejaGnu
+@end ifset
+
+@set RELEASETAG progressive-@value{VERSION}
+
+@setchapternewpage odd
+@finalout
+@settitle Progressive @value{RELEASE} Installation
+
+@c --------------------------- title page ---------------------------------
+@titlepage
+@title Installation Notes
+@subtitle Cygnus Support @value{RELEASE}
+@subtitle Release @code{@value{RELEASETAG}}
+
+@sp 3
+
+@c Toggle xref display to avoid square brackets or quotes:
+@c    NOTE:  This is a Cygnus "texiplus.tex" hack.  If you want standard 
+@c           texinfo, remove or comment out instances of "@altref".
+@altref
+
+@table @strong
+@item Contents:
+@end table
+
+@format
+
+@emph{Brief installation instructions:}
+@ifclear dosonly
+@ref{UnixBrief,,Installing in brief for Unix systems}.
+@end ifclear
+@ifset cdk
+@ref{MSDOSBrief,,Installing in brief for @sc{ms-dos} systems}.
+@end ifset
+
+@emph{Detailed installation information:}
+@ifclear dosonly
+@ref{UnixDetail,,@value{RELEASE} installation on Unix}.
+@end ifclear
+@ifset cdk
+@ref{MSDOSDetail,,@value{RELEASE} installation on @sc{ms-dos}}.
+@end ifset
+
+@ifclear dosonly
+@emph{Appendices:}
+@ref{Names,,Platform names}.
+@end ifclear
+@ifset dosonly
+@emph{Appendix:}
+@end ifset
+@ifset cdk
+@ref{Xdev,,Cross-development environment}.
+@end ifset
+
+@end format
+
+@c Toggle xref display back, to restore markers around section names:
+@altref
+
+@author Cygnus Support @hfill hotline: +1 415 903 1401
+
+@page
+
+@c ------------------------- copyright page ------------------------------
+
+@vskip 0pt plus 1filll
+Copyright @copyright{} 1994, 1995 Cygnus Support
+
+Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided also that the
+entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions.
+
+@end titlepage
+
+@c ---------------------------- top node ------------------------------
+
+@ifinfo
+@node Top
+@top Install Notes
+
+Cygnus Support @value{RELEASE}, @code{@value{RELEASETAG}}@*
+
+@ifclear dosonly
+This document describes how to install a Cygnus Support Progressive
+Release, or any other Cygnus release that includes our standard
+@code{Install} script.  (A @dfn{progressive} release is one that is
+built and released on a periodic basis.)  Contact the progressive team
+for details (@w{@code{progressive@@cygnus.com}}).
+
+Custom releases also often use the @code{Install} script; this document
+is only valid for those that do.
+@end ifclear
+
+This document is Copyright @copyright{} 1995 Cygnus Support.  This text
+may be freely distributed under the terms of the @sc{gnu} General Public
+License.
+
+@format
+@emph{WARNING:} the procedures described here apply @emph{only} to
+releases packaged at Cygnus Support.  If you do not have a Cygnus
+release, all bets are off.
+@end format
+
+If you have any problems formatting this document, please contact the
+Cygnus Support documentation team (@code{doc@@cygnus.com}).
+
+@c Support this one someday...
+@c * LynxBrief::           Installing in Brief for Lynx Systems
+@c * LynxDetail::Install
+
+@menu
+@ifclear dosonly
+* UnixBrief::       Installing in brief for Unix
+@end ifclear
+@ifset cdk
+* MSDOSBrief::      Installing in brief for MS-DOS
+@end ifset
+
+@ifclear dosonly
+* UnixDetail::      @value{RELEASE} installation on Unix
+@end ifclear
+@ifset cdk
+* MSDOSDetail::     @value{RELEASE} installation on @sc{ms-dos}
+@end ifset
+
+@ifclear dosonly
+Appendices:
+* Names::           Platform names
+@end ifclear
+@ifset dosonly
+Appendix:
+@end ifset
+@ifset cdk
+* Xdev::            Cross-development environment
+@end ifset
+@c * Checklists::      Installation examples step by step
+@end menu
+
+@end ifinfo
+
+@c ---------------------- Installing in Brief ----------------------------
+
+@ifclear dosonly
+@node UnixBrief
+@unnumbered Installing in brief for Unix systems
+
+@noindent
+@strong{You can run the brief installation procedure if:}
+@itemize @bullet
+@item
+You are installing on a standard Unix platform (@pxref{Names,,Platform
+Names})
+
+@item 
+Your Unix machine has its own device which corresponds to your
+distribution media (e.g., a @sc{qic}-24 tape drive)
+
+@item
+You're willing to use the installation directory @file{/usr/cygnus}
+
+@item
+You have enough disk space in @file{/usr/cygnus} (your tape label lists
+the required disk space for binary, source, and both)
+@c FIXME - make sure this is so!
+@end itemize
+
+@noindent
+Otherwise, see @ref{U-Installing,,@value{RELEASE} installation on Unix}.
+
+@noindent
+@strong{Steps for Brief Install:}
+
+(In examples, we show the system prompt as @samp{eg$}.)
+
+@enumerate
+@item 
+Make sure you can write in @file{/usr/cygnus} by typing:
+
+@smallexample
+eg$ su root                @emph{(enter root password)}
+# mkdir /usr/cygnus        @emph{(ignore ``File exists'' error if any)}
+# chmod 777 /usr/cygnus
+# exit                     @emph{(root access not needed beyond this)}
+@end smallexample
+
+@item
+Load the distribution into the drive and extract the @code{Install}
+script.  @strong{WARNING:} you must use a @emph{non--rewinding} tape
+device; see @ref{U-Device names,,Device names}.
+
+@smallexample
+eg$ cd /tmp
+eg$ tar xfv @var{device} Install
+@end smallexample
+
+@item
+Run the @code{Install} script:
+
+@smallexample
+eg$ ./Install -tape=@var{device}
+@end smallexample
+
+@code{Install} displays messages about its activity, ending with
+
+@smallexample
+Done.
+@end smallexample
+
+@item
+Build symbolic links to make execution paths easy (you may need root
+access to put the link in @file{/usr}):
+
+@smallexample
+eg$ cd /usr/cygnus
+eg$ ln -s @value{RELEASETAG} progressive
+eg$ su root         
+# ln -s /usr/cygnus/progressive/H-@var{host} /usr/progressive
+# exit              @emph{(give up root access as soon as possible)}
+@end smallexample
+
+@item
+Use your Cygnus Support customer ID (see cover letter) to tag your copy
+of our problem-report form:
+
+@smallexample
+eg$ /usr/progressive/bin/install-sid @var{customer-ID}
+@end smallexample
+
+@item
+Remove public write access from @file{/usr/cygnus}.  See your system
+administrator for the correct permissions at your site.
+@end enumerate
+
+You're done!  Anyone who puts @file{/usr/progressive/bin} in their
+@code{PATH} can use this @value{RELEASE} distribution.
+
+@page
+@c FIXME - relocate this so it shows up in dosonly configs
+We have attempted to make the installation of the Cygnus Support
+@value{RELEASE} distribution as trouble-free as possible.  If you
+encounter any problems, please contact us:
+
+@ifinfo
+@smallexample
+Cygnus Support
+toll free: +1 800 CYGNUS-1
+main line: +1 415 903 1400
+hotline:   +1 415 903 1401
+email:   support@@cygnus.com
+
+HEADQUARTERS                                    EAST COAST
+1937 Landings Drive                 48 Grove St., Ste. 105
+Mountain View, CA 94043 USA       Somerville, MA 02144 USA
++1 415 903 1400                            +1 617 629 3000
++1 415 903 0122 fax                    fax +1 617 629 3010
+@end smallexample
+@end ifinfo
+
+@sp 2
+
+@tex
+\halign{\rm #\hfill&\rm\qquad\qquad\hfill #\cr
+\bf Cygnus Support\cr
+toll free: $+$1 800 CYGNUS-1\cr
+main line: $+$1 415 903 1400\cr
+hotline: $+$1 415 903 1401\cr
+email: @code{support@@cygnus.com}\cr
+\cr
+\it Headquarters              &\it East Coast\cr
+1937 Landings Drive           &        48 Grove St., Ste. 105\cr
+Mountain View, CA 94043 USA   &        Somerville, MA 02144 USA\cr
+\cr
+$+$1 415 903 1400               &            $+$1 617 629 3000\cr
+$+$1 415 903 0122 fax           &        fax $+$1 617 629 3010\cr}
+@end tex
+ 
+Faxes are answered 8 am--5pm, Monday through Friday.
+@end ifclear
+@ifset cdk
+@node MSDOSBrief
+@unnumbered Installing in brief for @sc{ms-dos} systems
+
+All @sc{ms-dos} releases of the @value{RELEASE} can use this brief
+installation procedure.  For more detail on the installation procedure,
+see @ref{MSDOSDetail,,@value{RELEASE} installation on @sc{ms-dos}}.
+
+We ship your Developer's Kit on a set of floppy disks.  The
+@code{INSTALL} program is included on Disk 1.
+
+@strong{Steps for Brief Install:}
+
+@enumerate 1
+@item
+Insert Disk 1 into the floppy drive (the example shows @file{A:}) and
+type:
+
+@smallexample
+A:\INSTALL
+@end smallexample
+
+@item
+@code{INSTALL} prompts for an installation directory; the default is
+@file{C:\CYGNUS}.  The tools may be installed anywhere.  (If you are
+installing more than one @value{RELEASE}, see
+@ref{D-Directories,,@sc{ms-dos} Installation Directories}.)
+
+Make sure the installation directory is correct and press @key{RETURN}.
+
+@item
+@code{INSTALL} first checks the installation location to make sure it
+has enough space before unpacking the tools.  Installed @value{RELEASE}
+disk usage varies from about 10 to about 16 megabytes, depending on the
+target.  The disk labels list the required disk space for each
+distribution.
+@c FIXME - make sure this is so!
+
+@item
+@code{INSTALL} reads the first disk and then requests the next.
+
+@item
+After the last disk, press @key{RETURN} to exit the @code{INSTALL}
+program.  
+
+@item
+To run the programs, type @samp{@var{installdir}\SETENV} to set up your
+working environment.  (@var{installdir} is the installation directory
+you specified, @file{C:\CYGNUS} by default.)
+
+@smallexample
+C:\> cd c:\cygnus
+C:\CYGNUS\> setenv
+@dots{}
+@end smallexample
+
+@item
+To test the installation, change your working directory to the
+@file{@var{installdir}\DEMO} subdirectory and type @samp{MAKE}:
+
+@smallexample
+C:\CYGNUS\> cd c:\cygnus\demo
+C:\CYGNUS\DEMO> make
+@dots{}
+@end smallexample
+
+@item
+It is often easiest to set your working environment in the
+initialization file @file{AUTOEXEC.BAT}.  If you installed in the
+default @w{@file{C:\CYGNUS}}, you can simply add the following line to
+your @file{AUTOEXEC.BAT}:
+
+@smallexample
+CALL C:\CYGNUS\SETENV.BAT
+@end smallexample
+@end enumerate
+
+@end ifset
+@c end cdk
+@c ------------------- host-specific information -------------------------
+
+@ifclear dosonly
+@node UnixDetail
+@unnumbered @value{RELEASE} installation on Unix
+
+This section describes host-specific information and installation
+instructions for Unix systems.
+
+@menu
+* U-Device names::        Device names
+* U-Disk space::          Disk space requirements
+* U-OS req::              Operating System requirements
+* U-Installing::          Installing your @value{RELEASE} distribution
+* U-Running::             Running the programs
+* U-Troubleshooting::     Troubleshooting
+@end menu
+
+@node U-Device names
+@unnumberedsec Device names
+
+@c FIXME: Expand this section when other forms of media are available
+@c FIXME: Expand this introductory paragraph when we get separate bin
+@c               and src working
+For Unix distributions, your distribution tape includes two files:
+
+@table @asis
+@item @code{Install}
+The @code{Install} shell script is a portable installation procedure
+which automatically installs the software on your system
+(@pxref{Invoking Install,,Invoking the @code{Install} script}).
+
+@item @emph{distribution @code{tar} file}
+The binaries and source for the @value{RELEASE} distribution are located
+in a single compressed @code{tar} file.
+@end table
+
+@quotation
+In order for @code{Install} to read and install your distribution, you
+@emph{must} use a @emph{non--rewinding} tape device, so that the tape
+drive maintains the tape location at the beginning of the compressed
+@code{tar} file after you extract @code{Install}.
+@end quotation
+
+@noindent
+These are examples of non--rewinding tape devices for each system; see
+your system administrator for the name of the non--rewinding tape device
+on your particular host.  Also shown are @sc{man} pages to which you can
+refer for more information about tape devices.
+
+@sp 1
+Standard @sc{qic}-24 tape drives:
+@smallexample
+@ifinfo
+   PLATFORM                 DEVICE             man PAGE
+@end ifinfo
+@iftex
+    @emph{platform}                 @emph{device}               @emph{man page}
+@end iftex
+sparc-sun-solaris2        /dev/rmt/0n          @emph{use} man st
+sparc-sun-sunos4.1.3      /dev/nrst8           @emph{use} man st
+mips-dec-ultrix           /dev/nrtm0           @emph{use} man mtio
+mips-sgi-irix4            /dev/mt/tps0d0nrns   @emph{use} man tps
+  @emph{(Note: You must also use a non-byte-swapping device for the SGI Iris)}
+rs6000-ibm-aix            /dev/rmt0.1          @emph{use} man rmt
+i386-sysv4.2              /dev/rmt/c0s0n       @emph{use} man tape
+@end smallexample
+
+@sp 1
+Standard @sc{dat} tape drives:
+@smallexample
+@ifinfo
+   PLATFORM                 DEVICE             man PAGE
+@end ifinfo
+@iftex
+    @emph{platform}                 @emph{device}               @emph{man page}
+@end iftex
+m68k-hp-hpux              /dev/rmt/0mn         @emph{use} man 7 mt
+hppa1.1-hp-hpux           /dev/rmt/0mn         @emph{use} man 7 mt
+mips-sgi-irix5            /dev/mt/tps1d5nrns   @emph{use} man tps
+  @emph{(Note: You must also use a non-byte-swapping device for the SGI Iris)}
+@end smallexample
+
+@node U-Disk space
+@unnumberedsec Disk space requirements
+
+@ifset cdk
+This section lists the minimum disk space requirements (in megabytes)
+for installations of binaries only, source code only, or the sum total
+of both.  For more information on binary- or source-only installations,
+see @ref{U-Installing,,@value{RELEASE} installation on Unix}.  Sizes
+shown are for @dfn{native} distributions; see your tape label for the
+actual disk size.
+
+@smallexample
+@ifinfo
+   PLATFORM            BINARIES    SOURCE       TOTAL
+@end ifinfo
+@iftex
+    @emph{platform}              @emph{binaries}      @emph{source}       @emph{total}
+@end iftex
+sparc-sun-solaris2         44         71         115
+sparc-sun-sunos4.1.3       31         71         102
+mips-dec-ultrix            39         71         110
+rs6000-ibm-aix             44         71         115
+mips-sgi-irix4             39         71         110
+m68k-hp-hpux               32         71         103
+hppa1.1-hp-hpux            46         71         117
+i386-sysv4.2               48         71         119
+alpha-dec-osf1.3           56         71         127
+@end smallexample
+@end ifset
+@c end cdk
+
+@ifclear cdk
+Your tape indicates the minimum disk space required for your
+@value{RELEASE} release.  Sizes are shown in megabytes for binary-only,
+source-only, or both binary and source installations.
+@end ifclear
+
+@node U-OS req
+@unnumberedsec Operating System requirements
+
+@noindent
+This section lists the minimal operating system requirements for each
+Unix system.
+
+@smallexample
+@ifinfo
+   PLATFORM                 OS LEVEL
+@end ifinfo
+@iftex
+    @emph{platform}                @emph{OS level}
+@end iftex
+sparc-sun-solaris2        @r{Solaris 2.@var{x}}
+sparc-sun-sunos4.1.3      @r{SunOS 4.1.@var{x}}
+mips-dec-ultrix           @r{Ultrix 4.2}
+rs6000-ibm-aix            @r{AIX 3.2}
+mips-sgi-irix4            @r{Irix 4.@var{x}}
+m68k-hp-hpux              @r{HP/UX 8.@var{x}}
+hppa1.1-hp-hpux           @r{HP/UX 8.@var{x}}
+i386-sysv4.2              @r{UnixWare SysVr4.2, version 1.1.1}
+alpha-dec-osf1.3          @r{OSF/1 1.3}
+@end smallexample
+
+@ifset emacs
+The @value{RELEASE} binaries in this distribution were compiled using
+the libraries for X11r5.  If you have upgraded to X11r6, please contact
+Cygnus Support at @code{support@@cygnus.com}, or call the hotline at
+@w{+1 415 903 1401}.
+@end ifset
+@c end emacs
+
+@page
+@c --------------- Main Unix Installation Docs  ---------------
+@node U-Installing
+@unnumberedsec Installing your @value{RELEASE} distribution
+
+There are a few steps to follow in installing the software in the
+@value{RELEASE} distribution onto your system.
+
+@emph{Note:} For Unix distributions, your distribution tape includes two
+files:
+
+@table @asis
+@item @code{Install}
+The @code{Install} shell script is a portable installation procedure
+which automatically installs the software on your system
+(@pxref{Invoking Install,,Invoking the @code{Install} script}).
+
+@item @emph{distribution @code{tar} file}
+The binaries and source for the @value{RELEASE} distribution are located
+in a single compressed @code{tar} file.
+@c FIXME - in the future these will be two files
+@end table
+
+@noindent
+In order for @code{Install} to read and install your distribution, you
+@emph{must} use a @emph{non--rewinding} tape device, so that the tape
+drive maintains the tape location at the beginning of the compressed
+@code{tar} file after you extract @code{Install}.  @xref{U-Device
+names,,Device names}, for a list of default device names for each host
+type.
+
+@enumerate 1
+@item
+First, decide where to install the software.  The default installation
+location is @w{@file{/usr/cygnus/@value{RELEASETAG}}}.
+@ifclear emacs
+(To use the software conveniently from elsewhere, you may want to
+reconfigure and recompile from source; see @ref{U-Running,,Running the
+programs}.)
+@end ifclear
+@ifset emacs
+(@emph{Note: This @value{RELEASE} distribution cannot be installed in a
+non-standard location.}
+@end ifset
+
+If you don't wish to install in @w{@file{/usr/cygnus}} but can create a
+symbolic link to it from another location,
+@ifset cdk
+or if you don't wish to install into @file{/usr} at all,
+@end ifset
+see @ref{Installing in a nonstandard location,,Installing in a
+nonstandard location}.
+
+@item
+Create the installation directory, if it doesn't already exist, and make
+sure it's publicly accessible so @code{Install} can write there.  For
+example, if you use the default installation directory of
+@w{@file{/usr/cygnus}}:
+
+@smallexample
+eg$ su root             @emph{(enter root password to write in @file{/usr})}
+# mkdir /usr/cygnus     @emph{(ignore ``File exists'' error if any)}
+# chmod 777 /usr/cygnus
+# exit                  @emph{(root access not needed beyond this)}
+@end smallexample
+
+@item
+Make sure you have enough space for the tools in your chosen
+installation location.  The required disk usage for the @value{RELEASE}
+is printed on the tape label; values for binaries only, sources only, or
+both are shown.
+
+@item
+Load the @value{RELEASE} distribution tape into your tape drive.  If
+your machine doesn't have its own tape drive, you need to first extract
+the software into a location accessible by both your host and the
+machine that has a tape drive, and then install on your host.  If there
+is no shared disk, you can extract the software on the machine with the
+tape drive and then transfer it over to your host.  @ref{Installing with
+a remote tape drive,,Installing with a remote tape drive}, for details.
+
+@item
+Extract the @code{Install} script off the tape using
+
+@smallexample
+tar xvf @var{non-rewinding-tapedev} Install
+@end smallexample
+
+@noindent
+Remember to use a @emph{non--rewinding} tape drive!
+
+@item
+Run @code{Install}, using command-line options and arguments to specify
+the details about your installation.
+
+Default behavior installs both binaries and source under
+@w{@file{/usr/cygnus/@value{RELEASETAG}}} using the default
+non--rewinding tape drive for your system (@pxref{U-Device names,,Device
+names}).
+@ifset cdk
+For @dfn{native} toolchains only, a process called @dfn{fixincludes}
+automatically makes copies of your system header files and alters them
+to work with @sc{gcc} (your system's header files are @emph{not
+changed}; @pxref{Why fixincludes,,Why convert system header files?}).
+Finally, @code{Install} runs a simple test to make sure your
+distribution was installed correctly.
+@end ifset
+
+@item
+Make sure the program @code{send-pr} knows your Cygnus customer
+identification code.  You can install your customer ID by using the
+program @w{@code{install-sid}} as follows:
+
+@smallexample
+eg$ cd /usr/cygnus/@value{RELEASETAG}/H-@var{hosttype}/bin
+eg$ install-sid @var{customer-ID}
+@end smallexample
+
+Contact Cygnus Support at @w{+1 415 903 1401} if you do not know your
+customer ID.
+
+@item
+Create symbolic links so that your newly installed @value{RELEASE} is
+easily accessible to developers, able to exist with other
+@value{RELEASE} installations in a heterogeneous environment, and easily
+updated when you install a new @value{RELEASE}.
+
+@ifclear emacs
+The nature of the links depends on where you installed the
+@value{RELEASE} release, but they follow the example below.  If you
+installed into @w{@file{/usr/cygnus/@value{RELEASETAG}}}, the links are
+@end ifclear
+
+@iftex
+@let@nonarrowing=@comment
+@end iftex
+@smallexample
+ln -s /usr/cygnus/@value{RELEASETAG} /usr/cygnus/progressive
+ln -s /usr/cygnus/progressive/H-@var{hosttype} /usr/progressive 
+@end smallexample
+@iftex
+@let@nonarrowing=@relax
+@end iftex
+
+@noindent
+@xref{Links,,Links for easy access and updating}, for more information
+on these links.
+
+You're done!  The installation is now online; anyone who puts
+
+@smallexample
+/usr/progressive/bin
+@end smallexample
+
+in their path has access to the toolkit.
+
+@item
+If you had to change the permission status on the directory
+@w{@file{/usr/cygnus}}, be sure to revert the change.  See your system
+administrator for the proper permissions at your site.
+@end enumerate
+
+@c @xref{Checklists,,Installation examples step by step}, for installation
+@c examples.  Contact Cygnus Support if you have any problems with the
+@c installation procedure.
+
+@menu
+* Invoking Install::    Invoking the Install script
+* Install options::     Install options
+* Links::               Links for easy access and updating
+* Variances::           Installation variances
+@ifset cdk
+* Why fixincludes::     Why convert system header files?
+@end ifset
+@end menu
+
+@c -------------------- Running the Install Script -----------------------
+@node Invoking Install
+@unnumberedsubsec Invoking the @code{Install} script
+
+There are two kinds of command-line arguments to @code{Install}, which
+you can use to direct its operation:
+@itemize @bullet
+@item
+@emph{What form of the programs} to install.  You can choose between
+binaries (argument @code{bin}) and source code (@code{source}).  If you
+don't specify either of these, @code{Install} assumes you want
+@emph{both source and binaries}.
+
+@item
+@emph{What installation actions} to carry out. A full installation
+involves up to
+@ifset cdk
+three
+@end ifset
+@ifclear cdk
+two
+@end ifclear
+steps; @code{Install} has options to let you choose them explicitly.
+The steps are
+
+@enumerate
+@item
+extracting source from the tape (option @code{extract})
+
+@ifset cdk
+@item
+writing copies of your system @samp{include} files, adjusted for portability
+(needed for the compilation tools; option @code{fixincludes})
+@end ifset
+
+@item
+running a simple test of the installed programs
+(option @code{test})
+@end enumerate
+
+@ifset cdk
+The last two of these actions (@code{fixincludes} and @code{test}) are
+@emph{not needed for cross-development} configurations.  (A
+cross-development configuration runs on a @dfn{host}, but is meant to
+develop code for another platform, the @dfn{target}.  Cross development
+tapes have @w{@samp{target = @var{target}}} on the tape label.)
+@end ifset
+
+These two actions can only run on your host.  If you read the
+tape on another machine, you must specify the @code{extract} option
+explicitly, to indicate that you don't expect the 
+@ifset cdk
+other two actions
+@end ifset
+@ifclear cdk
+@code{test} action
+@end ifclear
+to run (and are aware of the need to run further installation steps on
+your host).
+@end itemize
+
+@code{Install} also has two command line options: @samp{-tape} and
+@w{@samp{-installdir}}.  You can use these to adapt the installation to
+your system.
+
+@node Install options
+@unnumberedsubsec @code{Install} options
+
+@ifset cdk
+@smallexample
+Install [ bin ] [ source ]
+        [ extract ] [ fixincludes ] [ test ]
+        [ -tape=@var{device} ]
+        [ -installdir=@var{directory} ]
+@end smallexample
+@end ifset
+@ifclear cdk
+@smallexample
+Install [ bin ] [ source ]
+        [ extract ] [ test ]
+        [ -tape=@var{device} ]
+        [ -installdir=@var{directory} ]
+@end smallexample
+@end ifclear
+
+@table @code
+@item bin
+@itemx source
+By default, @code{Install} extracts both source and binaries.  Instead
+of relying on the default, you can use these options to specify exactly
+what you want.  You need to do this if you want @emph{only} binaries or
+@emph{only} source.
+
+@noindent
+@code{Install} is designed to share files, wherever possible, between
+installations for different hosts (of the same release).  If you get
+Cygnus release tapes configured for different hosts, there is no need to
+do a binary-only install of some of the tapes to save space on a shared
+file system; @code{Install} arranges the files so that all hosts 
+share the same source files.  Documentation files are shared as well.
+Note that it is faster to extract the source code only once if you are
+installing the @value{RELEASE} distribution for more than one host.
+
+See @ref{Links,,Links for easy access and updating}, for a discussion of
+how to manage the directory structure used for this purpose.
+
+@item extract
+@ifset cdk
+@itemx fixincludes
+@end ifset
+@itemx test
+
+@ifset cdk
+In a cross-development configuration, only the @samp{extract} step
+is used.
+
+In a native configuration---meant for developing software on the same
+host where the @value{RELEASE} runs---a full installation includes up to
+three things: (1) extracting software from the tape; (2) creating
+@sc{ansi}-C conforming copies of your system's standard header files;
+and (3) testing the installation.  You can execute these steps
+separately by specifying @samp{extract}, @samp{fixincludes}, or
+@samp{test} on the @code{Install} command line.
+
+In the native configuration, after you run @samp{extract},
+@samp{fixincludes} is essential to the compiler.  @samp{fixincludes}
+@emph{does not change your system's original header files;}
+@code{Install} writes the converted copies in a separate,
+@code{gcc}-specific directory.  @xref{Why fixincludes,,Why convert
+system header files?}, for more discussion of the @samp{fixincludes}
+step.  @code{Install} only attempts these last two steps if you run
+it on the host for which the binaries were compiled.
+@end ifset
+
+When you run @samp{extract}, @code{Install} creates a log file in
+@w{@file{/usr/cygnus/@value{RELEASETAG}/extraction.log}}.
+@ifset cdk
+When you run @samp{fixincludes}, @code{Install} creates a log file
+in @w{@file{/usr/cygnus/@value{RELEASETAG}/fixincludes.log}}.
+@end ifset
+
+@samp{test} (used only for the native configuration) is a
+confidence-building step, and doesn't actually change the state of the
+installed software.  The @samp{test} step may not make sense, depending
+on what other options you've specified---if you install only source,
+there's nothing to test.
+
+@item -tape=@var{device}
+@itemx -tape=@var{tarfile}
+Specify the @emph{non--rewinding} device name for your tape drive as
+@var{tape}.
+
+If you extract the installation script and @var{tarfile} on some other
+system, and transfer them to your host for installation, use the name of
+the @code{tar} file instead of a device name with @samp{-tape}.
+@xref{Installing with a remote tape drive,,Installing with a remote tape
+drive}, for more discussion.
+
+@item -installdir=@var{directory}
+If you cannot or do not wish to install into @samp{/usr/cygnus}, use
+this option to specify an alternate @var{directory} for placing your
+software---but beware: the software is configured to go in
+@samp{/usr/cygnus}, and you'll have to override or change that too.
+@xref{U-Running,,Running the programs}.
+@end table
+
+If you specify a step that doesn't make sense, @code{Install} notices
+the error, and exits (before doing anything at all) with an error
+message, so you can try again.
+
+@ifset cdk
+@node Why fixincludes
+@unnumberedsubsec Why convert system header files?
+
+@quotation
+The @samp{fixincludes} installation step described here @emph{applies
+only to the native configuration} of the @value{RELEASE}---that is, only
+if your tape is configured to develop software for the same @dfn{host}
+on which it runs.  If you have a cross-development tape, configured to
+develop software for another machine (the @dfn{target}), the system
+header files from your @dfn{host} are not needed for the @sc{gnu}
+compilers.  Cross-development tapes have @samp{target = @var{target}} on
+the tape label.
+@end quotation
+
+For the native configuration, it is very important to run @samp{Install
+fixincludes} (on @emph{each host} where you install the compiler
+binaries).
+
+When the @sc{ansi x3j11} committee finished developing a standard for
+the C language, a few things that had worked one way in many traditional
+C compilers ended up working differently in @sc{ansi} C.  Most of these
+changes are improvements.  But some Unix header files still rely on the
+old C meanings, in cases where the Unix vendor has not yet converted to
+using an @sc{ansi} C compiler for the operating system itself.
+@samp{Install fixincludes} does a mechanical translation that writes
+@sc{ansi} C versions of some system header files into a new,
+@sc{gcc}-specific include directory---@emph{your system's original
+header files are not affected.}
+
+The C header files supplied with SVr4 versions of Unix depend on a
+questionable interpretation of the @sc{ansi} C standard: they test for a
+non-@sc{ansi} environment by checking whether @w{@code{__STDC__}} is
+defined as zero.  The @sc{ansi} standard actually only specifies that
+@code{__STDC__} be defined to 1; if it is defined to any other value,
+the environment is not @sc{ansi} C compatible, and @sc{ansi} C says
+nothing about what that value might be.
+
+@sc{gcc} defines @code{__STDC__} to 1 when running with @samp{-ansi},
+when it functions as an ``@sc{ansi} C superset'' compiler.  (It also
+sets @code{__STRICT_ANSI__} when it runs with the @samp{-pedantic}
+option.)  However, @sc{gcc} leaves @code{__STDC__} undefined when it is
+not running as an @sc{ansi} C compiler.
+
+Unfortunately for Solaris users, Solaris header files follow the SVr4
+choice.  Since @sc{gcc} never defines @code{__STDC__} as 0, the
+distributed header files can leave out some declarations.  (Look in
+@file{/usr/include/time.h}, for example.)
+
+Part of the installation process of the native compiler release is to
+``fix'' the header files, such as @file{stdio.h}, on the host system to
+remove @sc{ansi} incompatibilities.  @samp{Install fixincludes} makes
+copies of the system @file{include} files which have these nonstandard
+features removed, so that @sc{gcc} can process them.  These copies are
+placed in a new, @sc{gcc}-specific @file{include} directory---@emph{your
+system's original header files are not affected.} Once these fixed
+header files are created, @sc{gcc} finds and uses them automatically.
+
+Likewise, C++ programmers require C++-ready, @sc{ansi}-compatible
+versions of the standard C header files.  These used to be provided with
+@code{libg++}, but were difficult to maintain due to the design
+compromises (and outright ``kludges'') that were necessary to make these
+work on all the systems we support.
+
+We have recently introduced what we believe to be a better solution in
+the form of a new shell script, @code{fixproto}.  @code{fixproto}
+analyzes all the header files in @file{/usr/include}, and adds any
+missing standard @sc{ansi} and Posix.2 prototypes.  The @w{@samp{extern
+"C"}} braces needed to specify that these are C (not C++) functions are
+also added as needed.  It is run as part of the installation and/or
+build of a native compiler.  The resulting header files are also used
+for C, with the result that the @samp{-Wimplicit} option for @code{gcc}
+is much more useful.
+
+The most obvious drawback to this solution is that the process of
+``fixing'' the @file{include} files takes longer to run, so any
+installation of a native compiler is noticeably slower than in previous
+releases.  Performance improvements will be made as part of a future
+release.
+
+If you don't run @code{fixincludes}, the @sc{gnu} C compiler can only
+use the original system header files when you compile new C programs.
+@emph{In some cases, the resulting programs will fail at run-time.}
+
+@end ifset
+@c end cdk
+
+@c -------------------- Setting Up Symbolic Links  -----------------------
+@node Links
+@unnumberedsubsec Links for easy access and updating
+
+Once you've extracted the tools from the tape, they are installed into a
+directory named @file{@var{installdir}/@value{RELEASETAG}}.  We put the
+release number in the directory name so that you can keep several
+releases installed at the same time, if you wish.  In order to simplify
+administrative procedures (such as upgrades to future Cygnus Support
+Progressive releases), we recommend that you establish a symbolic link
+@w{@file{/usr/cygnus/progressive}} to this directory.
+
+@smallexample
+ln -s @var{installdir}/@value{RELEASETAG} @var{installdir}/progressive
+@end smallexample
+
+@noindent
+For example, if you've installed in the default location under
+@w{@file{/usr/cygnus}}:
+
+@smallexample
+ln -s /usr/cygnus/@value{RELEASETAG} /usr/cygnus/progressive
+@end smallexample
+
+Directories of @dfn{machine-independent} files (source code and
+documentation) are installed directly under @file{@value{RELEASETAG}}.
+However, to accomodate binaries for multiple hosts in a single directory
+structure, the binary files for your particular host type are in a
+subdirectory @file{H-@var{hosttype}}.  (@var{hosttype} indicates a
+particular architecture, vendor and operating system.
+@xref{Names,,Platform names}.)
+
+This means that one more level of symbolic links is helpful, to allow
+your users to keep the same execution path defined even if they
+sometimes use binaries for one machine and sometimes for another.  Even
+if this doesn't apply now, you might want it in the future; establishing
+these links now can save your users the trouble of changing all their
+paths later.  The idea is to build @w{@samp{/usr/progressive/bin}} on
+each machine so that it points to the appropriate binary subdirectory
+for each machine---for instance,
+@w{@samp{/usr/cygnus/progressive/H-@var{hosttype}}.}
+
+You may need super-user access again briefly to establish this link:
+
+@smallexample
+ln -s /usr/cygnus/progressive/H-@var{hosttype} /usr/progressive
+@end smallexample
+
+We recommend building these links as the last step in the installation
+process.  That way, users at your site only see software in
+@file{/usr/progressive} when you're satisfied that the installation is
+complete and successful.
+
+@node Variances
+@unnumberedsubsec Installation variances
+
+Once you've extracted @code{Install} from your tape, you can tell
+@code{Install} what software to install, what form of the programs you
+need, and what installation steps to do.  Here are some examples
+covering common situations.  For a full explanation of each possible
+@code{Install} argument, see @ref{Invoking Install,,Invoking the
+@code{Install} script}.
+
+@code{Install}'s default tape drive is the non-rewinding tape drive for
+your system (@pxref{U-Device names,,Device names}), which is right for
+the most common cases.  If your tape drive is different, you need to use
+the @samp{-tape=/dev/@var{tape}} option; the examples show this option
+for completeness.  Remember to specify a @emph{non--rewinding} tape
+device.
+
+@menu
+* Installing only binaries or source::
+* Installing in a nonstandard location::
+* Installing with a remote tape drive::
+@end menu
+
+@node Installing only binaries or source
+@unnumberedsubsubsec Installing only binaries or source
+
+If you don't want the source---for instance, to save space---you can use
+the argument @samp{bin}.
+
+@smallexample
+eg$ tar xvf @var{device} Install
+Install
+eg$ ./Install -tape=@var{device} bin @dots{}
+@end smallexample
+
+By the same token, if you don't wish to install the binaries---for
+instance, if you plan to rebuild them from source anyway---you can use
+the argument @samp{source}.
+
+@smallexample
+eg$ tar xvf @var{device} Install
+Install
+eg$ ./Install -tape=@var{device} source @dots{}
+@end smallexample
+
+@node Installing in a nonstandard location
+@unnumberedsubsubsec Installing in a nonstandard location
+
+@ifclear emacs
+If you wish to install this @value{RELEASE} distribution in a directory
+other than the default, @file{/usr/cygnus}, use the @samp{-installdir}
+option to @code{Install}.  Remember, though, you must set some
+environment variables in order for the tools to function at all.
+@xref{U-Running,,Running the programs}.
+
+@smallexample
+eg$ cd /tmp
+eg$ tar xvf @var{device} Install
+Install
+eg$ ./Install -tape=@var{device} -installdir=@var{somewhere} bin
+@dots{}
+@end smallexample
+@end ifclear
+
+@ifset emacs
+@strong{Warning:}  This release cannot be installed in an alternate
+location.  Contact Cygnus Support if this is a problem for you.
+@end ifset
+
+@node Installing with a remote tape drive
+@unnumberedsubsubsec Installing with a remote tape drive
+
+If your host doesn't have an appropriate tape drive, you may still be
+able to install your software.  Check with your system administrator to
+see if another machine at your site has a tape drive you can use.  If
+so:
+
+@table @emph
+@item If a shared filesystem is available
+between the two machines, and it has enough space, create
+@samp{/usr/cygnus} on your host (the one where you want to install this
+Progressive Release) as a symbolic link to a directory where the other
+machine (the one with a tape drive) can write:
+
+@smallexample
+ln -s @var{shared} /usr/cygnus
+@end smallexample
+
+Run @code{Install} from the machine with a tape drive, using the
+@samp{extract} argument and the @samp{-installdir} option:
+
+@smallexample
+Install extract -installdir=@var{shared}
+@end smallexample
+
+You still have to finish the installation, but the last
+@ifset cdk
+two steps (@code{fixincludes} and @code{test})
+@end ifset
+@ifclear cdk
+step (@code{test})
+@end ifclear
+must be run on your host.  (If you forget, there's no great harm done:
+@code{Install} notices that it can't carry out a full installation on
+the wrong machine, and stops with an error message---then you can go
+back and try again.  When @code{Install} notices a problem like this, it
+doesn't carry out @emph{any} action other than giving a helpful error
+message).
+
+@ifset cdk
+Unless you are installing a cross-development tape (the tape label says
+@samp{target = @var{target}} for cross configurations), the
+@samp{fixincludes} part of the installation is essential.  Please see
+the full explanation (@pxref{Why fixincludes,,Why convert system header
+files?}), if you're curious.
+@end ifset
+
+@smallexample
+@emph{On a machine on your network with a tape drive:}
+./Install extract -installdir=@var{shared}/cygnus @dots{}
+
+@emph{On your host}
+ln -s @var{shared}/cygnus /usr/cygnus
+cd /usr/cygnus/@value{RELEASETAG}
+@end smallexample
+
+@ifset cdk
+If your copy of the @value{RELEASE} is configured @dfn{native} (to
+develop software for the same type of machine where the @value{RELEASE}
+itself runs), you'll have to run @samp{Install fixincludes} and
+@samp{Install test} from your host afterwards.
+
+@smallexample
+@i{Native configurations only:}
+./Install fixincludes test
+@end smallexample
+@end ifset
+
+@ifclear cdk
+Once the software is extracted, you can (optionally) perform a simple
+sanity check with @w{@samp{Install test}} from your host.
+@end ifclear
+
+@item If some form of filetransfer is available 
+(such as @code{uucp}), read the second file on the tape using a system
+utility (for instance, @code{dd} on Unix systems; see the system
+documentation for the machine with a tape drive).  There are two files
+on the distribution tape; the first contains just the @code{Install}
+script in uncompressed @code{tar} format, and the second is a compressed
+@code{tar} format file containing the rest of the release.
+
+Read both of these files separately, using something like the following:
+
+@smallexample
+eg$ tar xvf @var{non-rewinding-tape-device} Install
+Install
+eg$ dd if=@var{non-rewinding-tape-device} of=tarfile1 bs=62k
+@emph{messages from dd@dots{}}
+eg$ ls
+Install
+tarfile1
+@end smallexample
+
+@noindent
+and then transfer them to your own machine using @code{uucp},
+@code{ftp}, or another appropriate file transfer tool.  (The blocksize
+is set to 62k in this example simply to speed up the process; the tape
+is written with a blocksize of 62k, but @code{dd} should be able to cope
+with the task using its default blocksize.)
+
+Then run @code{Install}, but use @samp{-tape=@var{tarfile}} to specify
+the name of the installation file, instead of
+@w{@samp{-tape=@var{device}}} as shown in the examples.  In the simplest
+case, for example (starting after you've transferred @code{Install} and
+the tar file to your system):
+
+@smallexample
+eg$ ./Install -tape=tarfile1
+@end smallexample
+@end table
+
+@node U-Running
+@unnumberedsec Running the programs
+
+In order to run the tools in the @value{RELEASE} release after you
+install them, you must first set a few environment variables so your
+shell can find them.
+
+@itemize @bullet
+@item
+At the very least, you must set your @code{PATH} variable.
+@xref{Setting PATH,,Setting @code{PATH}}.
+
+@ifset emacs
+@strong{Warning:}  This release cannot be installed in an alternate
+location.  Contact Cygnus Support if this is a problem for you.
+@end ifset
+
+@ifset cdk
+@item
+If you installed the tools in a location other than the default and
+choose not to set the standard symbolic links in place
+(@pxref{Links,,Links for easy access and updating}), you must also set
+the environment variable @code{GCC_EXEC_PREFIX}.  Otherwise, the
+compiler cannot find its resources.  @xref{GCC paths,,@sc{gcc} paths}.
+@end ifset
+
+@ifclear emacs
+@item
+If you install the @value{RELEASE} tools in an alternate location, you
+need to set the variable @code{INFOPATH} so that @code{info} can find
+the online documentation.  @xref{Online documentation paths,,Online
+documentation paths}.
+@end ifclear
+
+@item
+Some @code{man} programs recognize the environment variable
+@code{MANPATH} as a search path for online manual pages.  You must
+either add your installation directory to your @code{MANPATH}
+environment variable, or copy the online manual pages in your
+distribution into a location where your @code{man} program can find
+them.  @xref{Online documentation paths,,Online documentation paths}.
+@end itemize
+
+@menu
+* Setting PATH::
+* Online documentation paths::
+@ifset cdk
+* GCC paths::
+@end ifset
+@end menu
+
+@node Setting PATH
+@unnumberedsubsec Setting @code{PATH}
+
+Any user who wishes to run the tools in this distribution needs to make
+sure her @code{PATH} environment variable can find the tools.  Whether
+you install in the default location:
+
+@smallexample
+/usr/cygnus/@value{RELEASETAG}
+@end smallexample
+
+@noindent
+or in an alternate location, you need to alter your @code{PATH}
+environment variable to point toward the newly installed tools.
+
+If you create the symbolic links we recommend (@pxref{Links,,Links for
+easy access and updating}), users who want to run the
+@value{RELEASE}---regardless of whether they need binaries for your
+particular host, or for some other platform---can use settings like one
+of the following in their initialization files.
+
+This example shows @w{@file{/usr/progressive/bin}} as the final linked
+installation directory.  If you installed into a directory other than
+this, substitute the actual directory for
+@w{@file{/usr/progressive/bin}}.
+
+@emph{For Bourne-compatible shells (@code{/bin/sh}, @code{bash}, or Korn
+shell):}
+
+@smallexample
+PATH=/usr/progressive/bin:$PATH
+export PATH
+@end smallexample
+
+@emph{For C shell:}
+
+@smallexample
+set path=(/usr/progressive/bin $path)
+@end smallexample
+
+@ifset cdk
+@node GCC paths
+@unnumberedsubsec @sc{gcc} paths
+
+You can run the compiler @sc{gcc} without recompiling, even if you
+install the distribution in an alternate location, by first setting the
+environment variable @code{GCC_EXEC_PREFIX}.  This variable specifies
+where to find the executables, libraries, and data files used by the
+compiler.  Its value will be different depending on which set of
+binaries you need to run.  For example, if you install the tape
+distribution under @file{/local} (instead of the default
+@file{/usr/cygnus}), and you wish to run @sc{gcc} as a native compiler,
+you could set @code{GCC_EXEC_PREFIX} as follows.
+
+(@emph{Note:}  The sample shows a @code{GCC_EXEC_PREFIX} which is split
+across two lines only to fit on the printed page; it is meant to be
+typed on one line.)
+
+@emph{For shells compatible with Bourne shell (@code{/bin/sh},
+@code{bash}, or Korn shell):}
+
+@smallexample
+eg$ GCC_EXEC_PREFIX=/local/@value{RELEASETAG}/\
+       H-@var{hosttype}/lib/gcc-lib/
+eg$ export GCC_EXEC_PREFIX
+@end smallexample
+
+@emph{For C shell:}
+
+@smallexample
+eg% setenv GCC_EXEC_PREFIX /local/@value{RELEASETAG}/\
+       H-@var{hosttype}/lib/gcc-lib/
+@end smallexample
+
+@noindent
+@emph{Note: The trailing slash @samp{/} is important}.  The @code{gcc}
+program uses @code{GCC_EXEC_PREFIX} simply as a prefix.  If you omit the
+slash (or make any other mistakes in specifying the prefix), @code{gcc}
+fails with a message beginning @samp{installation problem, cannot
+exec@dots{}}.
+@end ifset
+@c end cdk
+
+@node Online documentation paths
+@unnumberedsubsec Online documentation paths
+
+The standalone documentation browser @code{info} needs to know the
+location of the documentation files in the distribution.  The default
+location, @file{/usr/cygnus/@value{RELEASETAG}/info}, is compiled into
+@code{info}.  If you install elsewhere, set the environment variable
+@code{INFOPATH} to indicate the alternate location.
+
+@ifset emacs
+@strong{Warning:}  This release cannot be installed in an alternate
+location.  Contact Cygnus Support if this is a problem for you.
+@end ifset
+
+For example, assuming you installed under @file{/local}:
+
+@emph{For shells compatible with Bourne shell (@code{/bin/sh},
+@code{bash}, or Korn shell):}
+
+@smallexample
+eg$ INFOPATH=/local/@value{RELEASETAG}/info
+eg$ export INFOPATH
+@end smallexample
+
+@emph{For C shell:}
+
+@smallexample
+eg% setenv INFOPATH /local/@value{RELEASETAG}/info
+@end smallexample
+
+@noindent
+If you built @file{progressive} as a symbolic link to
+@file{@value{RELEASETAG}}, as recommended in @ref{Links,,Links for easy
+access and updating}, then you could simply use
+@file{/local/progressive/info} as the value of @code{INFOPATH} in the
+examples above.
+
+You should also ensure that your @code{man} command can pick up the
+manual pages for these tools.  Some @code{man} programs recognize a
+@code{MANPATH} environment variable.  If your @code{man} program is one
+of these, users at your site can also include in their initialization
+file lines like
+
+@emph{For Bourne-compatible shells:}
+
+@smallexample
+eg$ MANPATH=/usr/cygnus/progressive/man:$MANPATH:/usr/man
+eg$ export MANPATH
+@end smallexample
+
+@emph{For C shell:}
+
+@smallexample
+eg% setenv MANPATH /usr/cygnus/progressive/man:$MANPATH:/usr/man
+@end smallexample
+
+If your @code{man} program doesn't recognize @code{MANPATH}, you may
+want to copy or link the files from
+@file{@var{installdir}/progressive/man/man1} into your system's
+@file{man/man1} directory.
+
+
+@c -------------------- Troubleshooting ---------------------
+@node U-Troubleshooting
+@unnumberedsec Some Things that Might go Wrong
+
+We've tried to make the installation of the @value{RELEASE} distribution
+as painless as possible.  Still, some complications may arise.  Here are
+suggestions for dealing with some of them.
+
+@menu
+* No customer ID for send-pr::  No customer ID for send-pr
+* Limited space::               Not enough space
+* No access::                   No access to @file{/usr/cygnus}
+* Install errors::              Error messages from @code{Install}
+@end menu
+
+@node No customer ID for send-pr
+@unnumberedsubsec No customer ID for @code{send-pr}
+
+Make sure the program @code{send-pr} knows your Cygnus customer
+identification code.  You can install your customer ID by using the
+program @w{@code{install-sid}} as follows:
+
+@smallexample
+install-sid @var{customer-ID}
+@end smallexample
+
+@ifclear emacs
+If you installed the @value{RELEASE} into a location other than the
+default, and you chose not to set up symbolic links pointing to the real
+installation location, you need to use the @w{@samp{--install-dir}}
+option to @code{install-sid} as follows:
+
+@smallexample
+install-sid --install-dir=@var{install-dir-prefix} @var{customer-ID}
+@end smallexample
+
+@noindent
+where @var{install-dir-prefix} points to the top level of the
+installation.
+@end ifclear
+Contact Cygnus Support at @w{+1 415 903 1401} if you do
+not know your customer ID.
+
+@node Limited space
+@unnumberedsubsec Not enough space
+
+If you don't have enough space to install all of the tape distribution,
+you can instead extract only the compiled code, or only the source.
+
+You can easily extract these components independently of one another by
+using the @samp{source} or @samp{bin} arguments to @code{Install}.
+@xref{Invoking Install,,Invoking the @code{Install} script}.
+
+@node No access
+@unnumberedsubsec No access to @file{/usr/cygnus}
+
+@ifclear emacs
+If you can't sign on to an account with access to write in @file{/usr}
+or @file{/usr/cygnus}, use the @samp{-installdir=@var{directory}} option
+to @code{Install} to specify a different installation directory to which
+you @emph{can} write.  For example, if all the other installation
+defaults are right, you can execute something like @samp{./Install
+-tape=/dev/@var{tape} -installdir=@var{mydir}}.  You'll need to either
+override default paths for the pre-compiled tools, or else recompile the
+software.  @xref{U-Running,,Running the programs}, and @ref{Links,,Links
+for easy access and updating}, for details.
+
+@quotation
+@emph{WARNING:} If you can't install in @file{/usr/cygnus} (or link your
+installation directory to that name), some of the defaults configured
+into the @code{@value{RELEASETAG}} distribution won't work.
+@xref{U-Running,,Running the programs}, for information on overriding or
+reconfiguring these defaults.
+@end quotation
+@end ifclear
+
+@ifset emacs
+@quotation
+@strong{Warning:}  This release cannot be installed in an alternate
+location.  Contact Cygnus Support if this is a problem for you.
+@end quotation
+@end ifset
+
+@node Install errors
+@unnumberedsubsec Error messages from @code{Install}
+
+The @code{Install} script checks for many errors and inconsistencies in
+the way its arguments are used.  The messages are meant to be
+self-explanatory.  Here is a list of a few messages where further
+information might be useful:
+
+@table @code
+@item Can not read from TAPE device, @var{tape}
+The error message ends with the tape device @code{Install} was trying to
+use.  Please check that it is the device you intended; possible causes
+of trouble might include leaving off the @samp{/dev/} prefix at the
+front of the device name.  A typographical error in the device name
+might also cause this problem.
+
+If the problem is neither of these, perhaps your tape device can't read
+our tape; @pxref{Installing with a remote tape drive,,Installing with a
+remote tape drive}, for a discussion of how to use another machine's
+tape drive, or contact Cygnus Support.
+
+@item stdin: not in compressed format
+You are probably not using the non--rewinding tape device.  There are
+two files on each tape.  The first is a @code{tar} file containing the
+@code{Install} script.  The second is a compressed @code{tar} file
+containing everything else.  Without using the non--rewinding device,
+there is no way to skip over the first file to begin reading the second.
+
+@ifclear emacs
+@item gcc: cannot exec cpp
+If you've installed the binary distribution of the @value{RELEASE}
+software in a non-standard location, remember to set your environment
+variable @code{GCC_EXEC_PREFIX} accordingly.  @xref{U-Running,,Running
+the programs}.
+@end ifclear
+
+@item @dots{} This is a problem.
+@itemx Cannot cd to @var{installdir}
+@itemx I do not know why I cannot create @var{installdir}
+@itemx hello.c fails to run
+@itemx test-ioctl.c fails to run
+
+These errors (the first covers anything that ends in @samp{This is a
+problem}) are from paranoia checks; they are issued for situations that
+other checks should have covered, or for unlikely situations that
+require further diagnosis.
+
+If you get one of these messages, please call the Cygnus hotline, @w{+1
+415 903 1401}, or send electronic mail to @samp{help@@cygnus.com}.
+@end table
+@end ifclear
+@c end ifclear dosonly
+
+@ifset cdk
+@c --------------------------- MS-DOS details ---------------------------
+
+@node MSDOSDetail
+@unnumbered @value{RELEASE} installation on @sc{ms-dos}
+
+This section describes the installation procedure for the Cygnus Support
+@value{RELEASE} distribution running on @sc{ms-dos}.  For specific
+information about using this release with @sc{ms-dos}, see
+the @sc{ms-dos} specific developer's note, @cite{Developing with DOS}.
+
+@menu
+* D-Directories::     MS-DOS installation directories
+* D-Disk space::      Disk space requirements
+* D-Memory req::      MS-DOS memory requirements 
+* D-Installing::      Installing your @value{RELEASE}
+* D-Contents::        Release contents
+* D-Bugs::            How to report bugs
+* D-Source::          Source code for your @value{RELEASE}
+@end menu
+
+@node D-Directories
+@unnumberedsec @sc{ms-dos} installation directories
+
+You may install the software in any directory. The @code{INSTALL}
+program assumes that you are installing in @code{C:\CYGNUS}; if you want
+to change this, you may do so at the beginning of the installation
+process.
+
+If you are installing cross-development tools for more than one target,
+you @emph{must} install them into different directories; otherwise, the
+second installation overwrites the first.  We recommend you use a
+directory structure that has the target name built-in, such as:
+
+@smallexample
+C:\CYGNUS\A29KUDI\@dots{}   @emph{AMD 29k cross-development toolkit}
+C:\CYGNUS\M68KCOFF\@dots{}  @emph{Motorola 68k cross-development toolkit}
+@dots{}
+@end smallexample
+
+@noindent
+If you use this paradigm, remember to type
+
+@smallexample
+@var{disk}:\CYGNUS\@var{target}\SETENV
+@end smallexample
+
+@noindent
+to reset your environment every time you switch targets.
+
+@node D-Disk space
+@unnumberedsec Disk space
+
+The total space required to extract and install binaries for all
+programs in the Developer's Kit is from 10 to 16 megabytes, depending on
+the target.  The actual disk space required by the @value{RELEASE} is
+printed on the disk label.  The @code{INSTALL} program dynamically
+compares the space available on your designated drive with the size of
+the installation before starting the installation. If you do not have
+enough space to install the binaries, the @code{INSTALL} program exits
+with an error message before writing anything.
+
+Note that if you're using a disk compression utility like @code{STACKER}
+then the actual amount of disk space that you have available may be less
+than reported.  This is because the compression utilities usually report
+the amount of free space available assuming that the data which would go
+into it would be compressed at least as well as the data already on the
+disk.  This is important information if you're trying to install the
+tools onto a compressed disk with only just enough room for the
+installation.  It could be that you run out of real disk space before
+the installation is complete because the compression utility couldn't do
+as good a job as it expected.
+
+@node D-Memory req
+@unnumberedsec @sc{ms-dos} memory requirements
+
+We do not recommend using the cross-development kit with less than four
+(4) megabytes of @sc{ram}.
+
+We provide a @sc{ms-dos} extender with the cross-development kit for
+@sc{ms-dos} which swaps programs to disk when @sc{ms-dos} runs out of
+memory.  To avoid excessive swapping you must have at least 2
+megabytes of @sc{ram} to run @sc{g++} on a @sc{pc} with @sc{ms-dos}.
+
+If you've got more than 2 megabytes, the extra memory can be used as a
+disk cache to significantly improve performance.  
+
+@node D-Installing
+@unnumberedsec Installation your @value{RELEASE}
+
+We ship your Developer's Kit on a set of floppy disks.  The
+@code{INSTALL} program is included on Disk 1.
+
+The files are stored on the floppies using Microsoft's @code{COMPRESS}
+program. If you prefer, you can install files without using the
+@code{INSTALL} program by just copying them into the right place on your
+hard drive and running @code{EXPAND} on each file.  Since the files are
+stored on the floppy using their full name (not those marked as
+compressed by using Microsoft's @file{.XX_} naming convention) you
+@emph{must} use a temporary file.
+
+@quotation
+@emph{Warning!} If you have a program in your path called @code{EXPAND}
+and it's not the one provided by Microsoft, then you should either
+change your path to use only the Microsoft @code{EXPAND} program, or be
+certain that your @code{EXPAND} program can decompress files which have
+been compressed using Microsoft @code{COMPRESS}.
+@end quotation
+
+We show the system prompt as @samp{C:\>} for the local hard disk drive,
+and @samp{A:\>} for the local 3.5'' floppy disk drive.
+
+For these examples we assume that you install into a directory called
+@file{C:\CYGNUS} and that you use drive @file{A:} to read the
+installation floppies.  Substitute other hard drives,
+installation directories, and floppy drives to match your environment.
+
+The @code{INSTALL} program first prompts you for an installation
+directory:
+
+@iftex
+@tex
+\input epsf
+\epsffile{screen1.eps}
+@end tex
+@end iftex
+
+@ifinfo
+@smallexample
+
+                          CYGNUS
+                            *--
+
+
+                       h8300-coff-hms
+                          q2-1994
+
+
+   This installation will require around 9 Mb of disk space
+   Please enter the name of the directory into which you want to
+   tinstall the tools. Press [ENTER] to accept, [ESC] to quit.
+
+                        C:\CYGNUS
+
+@end smallexample
+@end ifinfo
+
+At this prompt, enter the name of the directory where you want the tools
+to be installed and press @key{ENTER}.  @code{INSTALL} prompts you
+(assuming that you accept @samp{C:\CYGNUS}):
+
+@smallexample
+   The installation will write into C:\CYGNUS.
+   Are you sure you want to continue [Y] or [N] 
+@end smallexample
+
+If you type @code{N}, @code{INSTALL} asks for another path name.  If you
+type @code{Y}, @code{INSTALL} begins the installation.
+
+The program draws a status bar, which fills up as @code{INSTALL} works.
+When the box is full, the installation is complete.  @code{INSTALL}
+shows the name of the file being processed at the bottom of the screen.
+
+@iftex
+@tex
+\input epsf
+\epsffile{screen2.eps}
+@end tex
+@end iftex
+@ifinfo
+@smallexample
+
+                          CYGNUS
+                            *--
+
+
+                       h8300-coff-hms
+                          q2-1994
+
+
+
+                 [****====================]
+
+
+                      Need next disk
+         Please insert disk number 2 and press [ENTER].
+@end smallexample
+@end ifinfo
+
+@code{INSTALL} prompts you for each disk in order.
+
+To use another installation directory, specify the path to your desired
+directory wherever the examples show @file{C:\CYGNUS}
+
+You must execute the batch file @file{SETENV.BAT} before running the
+Developer's Kit.  You can set the environment automatically whenever you
+boot the machine by putting the following line in your
+@file{AUTOEXEC.BAT}:
+
+@smallexample
+CALL C:\CYGNUS\SETENV.BAT
+@end smallexample
+
+@noindent
+(If you install in a location other than @file{C:\CYGNUS}, be sure to
+specify the correct directory.)
+
+@node D-Contents
+@unnumberedsec Release contents
+
+The programs in this Developer's Kit are shipped as binaries,
+preconfigured to run on Intel @var{x}86 @sc{pc}s running standard
+@sc{ms-dos}.
+
+The individual programs in the Developer's Kit are:
+
+@iftex
+@let@nonarrowing=@comment
+@end iftex
+@smallexample
+REL               @r{Name of the release}
+MANIFEST          @r{Disk contents manifest}
+README\COPYING    @r{Information about copying this release}
+README\README     @r{Last minute information}
+BIN\AR.EXE        @r{Archive utility}
+BIN\AS.EXE        @r{Assembler}
+BIN\ASYNCTSR.COM  @r{Serial line driver TSR}
+BIN\CC1.EXE       @r{C compiler}
+BIN\CC1PLUS.EXE   @r{C++ compiler}
+BIN\CPP.EXE       @r{C preprocessor}
+BIN\CXX.EXE       @r{C++ compiler driver}
+BIN\CXXFILT.EXE   @r{C++ symbol name filter}
+BIN\EMU387        @r{387 emulator}
+BIN\GASP.EXE      @r{Assembler preprocessor}
+BIN\GCC.EXE       @r{C compiler driver}
+BIN\GDB.EXE       @r{Debugger}
+BIN\GO32.EXE      @r{@sc{dos} extender}
+BIN\GXX.EXE       @r{C++ compiler driver}
+BIN\INFO.EXE      @r{Documentation browser}
+BIN\LD.EXE        @r{Linker}
+BIN\MAKE.EXE      @r{Recompilation director}
+BIN\NM.EXE        @r{Symbol name utility}
+BIN\OBJCOPY.EXE   @r{Object file copier and converter}
+BIN\OBJDUMP.EXE   @r{Object file dumper}
+BIN\RANLIB.EXE    @r{Archive indexer}
+BIN\SIZE.EXE      @r{Object file size utility}
+BIN\STRINGS.EXE   @r{Object file strings utility}
+BIN\STRIP.EXE     @r{Object file symbol stripper}
+DEMO\HELLO.C      @r{Demonstration program}
+DEMO\INIT.BAT     @r{Demonstration initialzation batch file}
+DEMO\MAKEFILE     @r{Makefile for demonstration}
+INSTALL.EXE       @r{The install program}
+LIB\LIBC.A        @r{@sc{ansi} C library}
+LIB\LIBGCC.A      @r{Compiler support library}
+LIB\LIBM.A        @r{Maths library}
+INCLUDE\_ANSI.H   @r{Include files for C library}
+INFO\*.INF       @r{Online documentation, read with @code{info.exe}}
+LIB\LDSCRIPT\ELF32MIP.@var{x}  @r{Linker information scripts}
+@end smallexample
+@iftex
+@let@nonarrowing=@relax
+@end iftex
+
+The included libraries and some utilities are different depending on
+which target this release is intended for. The file @file{MANIFEST} in
+the root directory of the first installation disk contains a
+complete list of everything included in this release.
+
+@node D-Bugs
+@unnumberedsec How to report bugs
+
+If you find a bug in this release, please report it to Cygnus Support.
+
+Use a copy of the Cygnus bug-report form to ensure that we can respond
+to your bug as quickly as possible.  The file @file{SENDPR.TXT} in the
+installation directory contains a blank copy of this form.  To save
+time, customize this form ahead of time with your Cygnus customer ID, as
+described in the previous section.
+
+The easiest way to report a bug is to fill in a copy of this form on
+your computer and send it via Internet electronic mail to
+@w{@samp{bugs@@cygnus.com}}.  Otherwise, you can print the file
+@file{SENDPR.TXT}, fill it in, and @sc{fax} the problem report to
+Cygnus at @w{+1 415 903 0122} (Mountain View, California) or @w{+1 617
+629 3010} (Somerville, Massachusetts).  Contact Cygnus if you have any
+trouble.
+
+@sp 1
+@ifinfo
+@smallexample
+                      Cygnus Support
+                      1937 Landings Drive
+                      Mountain View, CA  94043
+@end smallexample
+@end ifinfo
+
+@tex
+\halign{\rm #\hfill&\rm\qquad\qquad\hfill #\cr
+\bf Cygnus Support\cr
+hotline: $+$1 415 903 1401\cr
+email: @code{info@@cygnus.com}\cr
+\cr
+\it Headquarters       &\it East Coast\cr
+1937 Landings Drive           &        48 Grove St., Ste. 105\cr
+Mountain View, CA 94043 USA        &       Somerville, MA 02144 USA\cr
+\cr
+$+$1 415 903 1400               &            $+$1 617 629 3000\cr
+$+$1 415 903 0122 fax           &        fax $+$1 617 629 3010\cr}
+@end tex
+
+@node D-Source
+@unnumberedsec Source code for your @value{RELEASE}
+
+@ifclear dosonly
+The @sc{qic-24} tape included with your Developer's Kit contains source
+code for all the programs.
+@end ifclear
+@ifset dosonly
+The source code for all the programs in this distribution is available
+on tape from Cygnus Support.
+@end ifset
+Most @sc{dos} systems cannot read this tape; you probably need to find a
+Unix system to read it.
+
+You need about 71 megabytes of free disk space to hold the source code.
+To extract the source code into the current working directory on most
+Unix machines, execute a command like this:
+
+@smallexample
+dd if=@var{tapedev} | compress -d | tar xvf -
+@end smallexample
+
+@var{tapedev} stands for the device name for the tape drive.  For
+example, on most Sun workstations, the device name for the @sc{qic-24}
+tape drive is @file{/dev/rst8}.  Contact your system administrator for
+the correct tape device for your system.
+
+Please contact Cygnus Support at @w{+1 415 903 1401} if you would like
+the source code in another form.
+
+@end ifset
+@c end cdk
+
+@c ------------------------------ Appendices ------------------------------
+
+@ifclear dosonly
+@node Names
+@appendix Platform names
+
+@set INSTALL
+@raisesections
+@include config-names.texi
+@lowersections
+@end ifclear
+
+@ifset cdk
+@node Xdev
+@appendix Cross-development environment
+
+Using the Developer's Kit in one of the cross-development configurations
+usually requires some attention to setting up the target environment.
+(A cross-development configuration is used for developing software to
+run on a different machine (the @dfn{target}) from the development tools
+themselves (which run on the @dfn{host})---for example, you might use a
+@sc{sparc}station to generate and debug code for an @sc{amd} 29K-based
+board.)
+
+To allow our tools to work with your target environment (except for
+real-time operating systems, which provide full operating system
+support), you need to set up:
+
+@itemize @bullet
+@item
+the C run-time environment (described below).
+
+@item
+@dfn{stubs}, or minimal versions of operating system subroutines for the
+C subroutine library.  @xref{syscalls,,System Calls,libc.info, The
+Cygnus C Support Library}.
+
+@item
+a connection to the debugger.  @xref{Remote,,Remote Debugging,gdb.info,
+Debugging with GDB}.
+@end itemize
+
+@subheading The C Run-Time Environment (@code{crt0})
+
+To link and run C or C++ programs, you need to define a small module
+(usually written in assembler as @file{crt0.s}) that makes sure the
+hardware is initialized for C conventions before calling @code{main}.
+
+There are some examples of @file{crt0.s} code (along with examples of
+system call stub code) available in the source code for your Developer's
+Kit.  Look in the directories under:
+
+@smallexample
+@var{installdir}/@value{RELEASETAG}/src/newlib/libc/sys
+@end smallexample
+
+@noindent
+(@var{installdir} refers to your installation directory, by default
+@file{/usr/cygnus}.)  For example, look in @file{@dots{}/sys/h8300hms}
+for Hitachi @sc{h8/300} bare boards, or in @file{@dots{}/sys/sparclite}
+for the Fujitsu @w{SPARClite} board.  More examples are available under
+the directory:
+
+@smallexample
+@var{installdir}/@value{RELEASETAG}/src/newlib/stub
+@end smallexample
+
+To write your own @file{crt0.s}, you need this information about
+your target:
+
+@itemize @bullet
+@item
+A memory map.  What memory is available, and where?
+
+@item
+Which way does the stack grow?
+
+@item
+What output format do you use?
+@end itemize
+
+At a minimum, your @file{crt0.s} must do these things:
+
+@enumerate 1
+@item
+Define the symbol @code{start} (@samp{_start} in assembler code).
+Execution begins at this symbol.
+
+@item
+Set up the stack pointer @samp{sp}.  It is largely up to you to choose
+where to store your stack within the constraints of your target's memory
+map.  Perhaps the simplest choice is to choose a fixed-size area
+somewhere in the uninitialized-data section (often called @samp{bss}).
+Remember that whether you choose the low address or the high address in
+this area depends on the direction your stack grows.
+
+@item
+Initialize all memory in the uninitialized-data (@samp{bss}) section to
+zero.  The easiest way to do this is with the help of a linker script
+(@pxref{Commands,,Command Language,ld.info, Using LD; the GNU linker}).
+Use a linker script to define symbols such as @samp{bss_start} and
+@samp{bss_end} to record the boundaries of this section; then you can
+use a @samp{for} loop to initialize all memory between them in
+@file{crt0.s}.
+
+@item
+Call @code{main}.  Nothing else will!
+@end enumerate
+
+@noindent
+A more complete @file{crt0.s} might also do the following:
+
+@enumerate 5
+@item
+Define an @samp{_exit} subroutine (this is the C name; in your assembler
+code, use the label @w{@samp{__exit}}, with two leading underbars).  Its
+precise behavior depends on the details of your system, and on your
+choice.  Possibilities include trapping back to the boot monitor, if
+there is one; or to the loader, if there is no monitor; or even back to
+the symbol @code{start}.
+
+@item
+If your target has no monitor to mediate communications with the
+debugger, you must set up the hardware exception handler in
+@file{crt0.s}.  @xref{Remote Serial,,The @sc{gdb} remote serial
+protocol,gdb.info, Debugging with GDB}, for details on how to use the
+@sc{gdb} generic remote-target facilities for this purpose.
+
+@item
+Perform other hardware-dependent initialization; for example,
+initializing an @sc{mmu} or an auxiliary floating-point chip.
+
+@ignore
+@item
+On some systems, copy microcode from ROM to RAM; see your target
+manufacturer's hardware manual if you're not certain whether this is
+needed.
+@end ignore
+
+@item
+Define low-level input and output subroutines.  For example, @file{crt0.s}
+is a convenient place to define the minimal assembly-level routines
+described in @ref{syscalls,,System Calls,libc.info, The Cygnus C Support
+Library}.
+@end enumerate
+
+@end ifset
+@c end cdk
+
+@ignore
+@c fix or remove this someday
+@node Checklists
+@appendix Installation step by step
+
+This section contains step-by-step examples of the most common
+Unix installation scenarios.  For more information on each step, see
+@ref{U-Installing,,Installing your @value{RELEASE}}.  Please contact
+Cygnus Support if you have any problems with the installation.
+
+The most basic installation:
+
+@itemize @bullet
+@item
+You are installing on a standard Unix platform (@pxref{Names,,Platform
+Names})
+
+@item 
+Your Unix machine has its own device which corresponds to your
+distribution media (e.g., a @sc{qic}-24 tape drive)
+
+@item
+You're willing to use the installation directory @file{/usr/cygnus}
+
+@item
+You have enough disk space in @file{/usr/cygnus} (@pxref{U-Disk
+space,,Required Disk Space})
+@end itemize
+
+@noindent
+is described in @ref{UnixBrief,,Installing in brief for Unix systems}.
+
+Other alternatives are listed below.  For these examples, there exists a
+local-area network consisting of:
+
+@table @code
+@item soleil
+Sun @sc{sparc}station running SunOS 4.1.3, @emph{no} local tape drive;
+has local partitions @file{/house} and @file{/home}, as well as
+@file{/usr}, etc.
+
+@item monde
+Sun @sc{sparc}station running SunOS 4.1.3, with a local tape drive;
+mounts @file{/house} and @file{/home} from @code{soleil}, has local
+partitions @file{/usr} et al.
+
+@item bloodshot
+@sc{sgi} Iris running Irix 4, no local tape drive; mounts @file{/house}
+and @file{/home} has local partitions @file{/usr} et al.
+@end table
+
+@menu
+* Installing with tape drive on local network::
+* Installing with completely remote tape drive::
+* Alternate installdir linked to /usr/cygnus::
+* Alternate installdir not linked to /usr/cygnus::
+* Installing more than one toolkit::
+* Hooking up the whole network::
+@end menu
+
+@node Installing with tape drive on local network
+@unnumberedsec Installing with tape drive on local network
+
+@enumerate 1
+@item
+First, decide where to install the software.  This example shows a
+default installation in @w{@file{/usr/cygnus}}.
+
+@item
+Create the installation directory, if it doesn't already exist, and make
+sure it's publicly accessible so @code{Install} can write there.
+
+@smallexample
+eg$ su root
+# mkdir /usr/cygnus
+# chmod 777 /usr/cygnus
+# exit
+@end smallexample
+
+@item
+Make sure you have enough space for the tools in your chosen
+installation location.  
+
+@smallexample
+eg$ df /usr/cygnus
+@dots{hi}
+@end smallexample
+
+@item
+Load the @value{RELEASE} distribution tape into the drive.  For this
+example, our machine @code{soleil} doesn't have its own tape drive.  We
+load the tape into the drive on @code{monde} (also a Sun4).  We need to
+first extract the software into a location accessible by both our host
+(@code{soleil}) and the machine that has a tape drive (@code{monde}),
+and then install on @code{soleil}.
+
+@item
+Extract the @code{Install} script off the tape using a non--rewinding
+tape device:
+
+@smallexample
+cd /tmp
+tar xvf /dev/ Install
+@end smallexample
+
+@noindent
+Remember to use a @emph{non--rewinding} tape drive!
+
+@item
+Run @code{Install}, using command-line options and arguments to specify
+the details about your installation.
+
+Default behavior installs both binaries and source under
+@w{@file{/usr/cygnus/@value{RELEASETAG}}} using the default
+non--rewinding tape drive for your system (@pxref{U-Device names,,Device
+names}).  For @dfn{native} toolchains only, a process called
+@dfn{fixincludes} automatically makes copies of your system header files
+and alters them to work with @sc{gcc} (your system's header files are
+@emph{not changed}; @pxref{Why fixincludes,,Why convert system header
+files?}).  Finally, @code{Install} runs a simple test to make sure your
+distribution was installed correctly.
+
+@item
+Make sure the program @code{send-pr} knows your Cygnus customer
+identification code.  You can install your customer ID by using the
+program @w{@code{install-sid}} as follows:
+
+@smallexample
+eg$ cd /usr/cygnus/@value{RELEASETAG}/H-@var{hosttype}/bin
+eg$ install-sid @var{customer-ID}
+@end smallexample
+
+Contact Cygnus Support at @w{+1 415 903 1401} if you do not know your
+customer ID.
+
+@item
+Create symbolic links so that your newly installed @value{RELEASE} is
+easily accessible to developers, able to exist with other
+@value{RELEASE} installations in a heterogeneous environment, and easily
+updated when you install a new @value{RELEASE}.
+
+The nature of the links depends on where you installed the
+@value{RELEASE}, but they follow the example below.  If you installed
+into @w{@file{/usr/cygnus/@value{RELEASETAG}}}, the links are
+
+@iftex
+@let@nonarrowing=@comment
+@end iftex
+@smallexample
+ln -s /usr/cygnus/@value{RELEASETAG} /usr/cygnus/progressive
+ln -s /usr/cygnus/progressive/H-@var{hosttype} /usr/progressive 
+@end smallexample
+@iftex
+@let@nonarrowing=@relax
+@end iftex
+
+@noindent
+@xref{Links,,Links for easy access and updating}, for more information
+on these links.
+
+You're done!  The installation is now online; anyone who puts
+
+@smallexample
+/usr/progressive/bin
+@end smallexample
+
+in their path has access to the toolkit.
+
+@item
+If you had to change the permission status on the directory
+@w{@file{/usr/cygnus}}, be sure to revert the change.  See your system
+administrator for the proper permissions at your site.
+@end enumerate
+
+@node Installing with completely remote tape drive
+@unnumberedsec Installing with completely remote tape drive
+
+@enumerate 1
+@item
+First, decide where to install the software.  The default installation
+location is @w{@file{/usr/cygnus/@value{RELEASETAG}}}.  (To use the
+software conveniently from elsewhere, you may want to reconfigure and
+recompile from source; see @ref{U-Running,,Running the programs}.)
+
+If you don't wish to install in @w{@file{/usr/cygnus}} but can create a
+symbolic link to it from another location, or if you don't wish to
+install into @file{/usr} at all, see @ref{Installing in a nonstandard
+location,,Installing in a nonstandard location}.
+
+@item
+Create the installation directory, if it doesn't already exist, and make
+sure it's publicly accessible so @code{Install} can write there.  For
+example, if you use the default installation directory of
+@w{@file{/usr/cygnus}}:
+
+@smallexample
+eg$ su root             @emph{(enter root password to write in @file{/usr})}
+# mkdir /usr/cygnus     @emph{(ignore ``File exists'' error if any)}
+# chmod 777 /usr/cygnus
+# exit                  @emph{(root access not needed beyond this)}
+@end smallexample
+
+@item
+Make sure you have enough space for the tools in your chosen
+installation location.  The required disk usage for the @value{RELEASE}
+is printed on the tape label; values for binaries only, sources only, or
+both are shown.
+
+@item
+Load the @value{RELEASE} distribution tape into your tape drive.  If
+your machine doesn't have its own tape drive, you need to first extract
+the software into a location accessible by both your host and the
+machine that has a tape drive, and then install on your host.  If there
+is no shared disk, you can extract the software on the machine with the
+tape drive and then transfer it over to your host.  @ref{Installing with
+a remote tape drive,,Installing with a remote tape drive}, for details.
+
+@item
+Extract the @code{Install} script off the tape using
+
+@smallexample
+tar xvf @var{non-rewinding-tapedev} Install
+@end smallexample
+
+@noindent
+Remember to use a @emph{non--rewinding} tape drive!
+
+@item
+Run @code{Install}, using command-line options and arguments to specify
+the details about your installation.
+
+Default behavior installs both binaries and source under
+@w{@file{/usr/cygnus/@value{RELEASETAG}}} using the default
+non--rewinding tape drive for your system (@pxref{U-Device names,,Device
+names}).  For @dfn{native} toolchains only, a process called
+@dfn{fixincludes} automatically makes copies of your system header files
+and alters them to work with @sc{gcc} (your system's header files are
+@emph{not changed}; @pxref{Why fixincludes,,Why convert system header
+files?}).  Finally, @code{Install} runs a simple test to make sure your
+distribution was installed correctly.
+
+@item
+Make sure the program @code{send-pr} knows your Cygnus customer
+identification code.  You can install your customer ID by using the
+program @w{@code{install-sid}} as follows:
+
+@smallexample
+eg$ cd /usr/cygnus/@value{RELEASETAG}/H-@var{hosttype}/bin
+eg$ install-sid @var{customer-ID}
+@end smallexample
+
+Contact Cygnus Support at @w{+1 415 903 1401} if you do not know your
+customer ID.
+
+@item
+Create symbolic links so that your newly installed @value{RELEASE} is
+easily accessible to developers, able to exist with other
+@value{RELEASE} installations in a heterogeneous environment, and easily
+updated when you install a new @value{RELEASE}.
+
+The nature of the links depends on where you installed the
+@value{RELEASE}, but they follow the example below.  If you installed
+into @w{@file{/usr/cygnus/@value{RELEASETAG}}}, the links are
+
+@iftex
+@let@nonarrowing=@comment
+@end iftex
+@smallexample
+ln -s /usr/cygnus/@value{RELEASETAG} /usr/cygnus/progressive
+ln -s /usr/cygnus/progressive/H-@var{hosttype} /usr/progressive 
+@end smallexample
+@iftex
+@let@nonarrowing=@relax
+@end iftex
+
+@noindent
+@xref{Links,,Links for easy access and updating}, for more information
+on these links.
+
+You're done!  The installation is now online; anyone who puts
+
+@smallexample
+/usr/progressive/bin
+@end smallexample
+
+in their path has access to the toolkit.
+
+@item
+If you had to change the permission status on the directory
+@w{@file{/usr/cygnus}}, be sure to revert the change.  See your system
+administrator for the proper permissions at your site.
+@end enumerate
+
+@node Alternate installdir linked to /usr/cygnus
+@unnumberedsec Alternate @var{installdir} linked to @code{/usr/cygnus}
+
+@enumerate 1
+@item
+First, decide where to install the software.  The default installation
+location is @w{@file{/usr/cygnus/@value{RELEASETAG}}}.  (To use the
+software conveniently from elsewhere, you may want to reconfigure and
+recompile from source; see @ref{U-Running,,Running the programs}.)
+
+If you don't wish to install in @w{@file{/usr/cygnus}} but can create a
+symbolic link to it from another location, or if you don't wish to
+install into @file{/usr} at all, see @ref{Installing in a nonstandard
+location,,Installing in a nonstandard location}.
+
+@item
+Create the installation directory, if it doesn't already exist, and make
+sure it's publicly accessible so @code{Install} can write there.  For
+example, if you use the default installation directory of
+@w{@file{/usr/cygnus}}:
+
+@smallexample
+eg$ su root             @emph{(enter root password to write in @file{/usr})}
+# mkdir /usr/cygnus     @emph{(ignore ``File exists'' error if any)}
+# chmod 777 /usr/cygnus
+# exit                  @emph{(root access not needed beyond this)}
+@end smallexample
+
+@item
+Make sure you have enough space for the tools in your chosen
+installation location.  The required disk usage for the @value{RELEASE}
+is printed on the tape label; values for binaries only, sources only, or
+both are shown.
+
+@item
+Load the @value{RELEASE} distribution tape into your tape drive.  If
+your machine doesn't have its own tape drive, you need to first extract
+the software into a location accessible by both your host and the
+machine that has a tape drive, and then install on your host.  If there
+is no shared disk, you can extract the software on the machine with the
+tape drive and then transfer it over to your host.  @ref{Installing with
+a remote tape drive,,Installing with a remote tape drive}, for details.
+
+@item
+Extract the @code{Install} script off the tape using
+
+@smallexample
+tar xvf @var{non-rewinding-tapedev} Install
+@end smallexample
+
+@noindent
+Remember to use a @emph{non--rewinding} tape drive!
+
+@item
+Run @code{Install}, using command-line options and arguments to specify
+the details about your installation.
+
+Default behavior installs both binaries and source under
+@w{@file{/usr/cygnus/@value{RELEASETAG}}} using the default
+non--rewinding tape drive for your system (@pxref{U-Device names,,Device
+names}).  For @dfn{native} toolchains only, a process called
+@dfn{fixincludes} automatically makes copies of your system header files
+and alters them to work with @sc{gcc} (your system's header files are
+@emph{not changed}; @pxref{Why fixincludes,,Why convert system header
+files?}).  Finally, @code{Install} runs a simple test to make sure your
+distribution was installed correctly.
+
+@item
+Make sure the program @code{send-pr} knows your Cygnus customer
+identification code.  You can install your customer ID by using the
+program @w{@code{install-sid}} as follows:
+
+@smallexample
+eg$ cd /usr/cygnus/@value{RELEASETAG}/H-@var{hosttype}/bin
+eg$ install-sid @var{customer-ID}
+@end smallexample
+
+Contact Cygnus Support at @w{+1 415 903 1401} if you do not know your
+customer ID.
+
+@item
+Create symbolic links so that your newly installed @value{RELEASE} is
+easily accessible to developers, able to exist with other
+@value{RELEASE} installations in a heterogeneous environment, and easily
+updated when you install a new @value{RELEASE}.
+
+The nature of the links depends on where you installed the
+@value{RELEASE}, but they follow the example below.  If you installed
+into @w{@file{/usr/cygnus/@value{RELEASETAG}}}, the links are
+
+@iftex
+@let@nonarrowing=@comment
+@end iftex
+@smallexample
+ln -s /usr/cygnus/@value{RELEASETAG} /usr/cygnus/progressive
+ln -s /usr/cygnus/progressive/H-@var{hosttype} /usr/progressive 
+@end smallexample
+@iftex
+@let@nonarrowing=@relax
+@end iftex
+
+@noindent
+@xref{Links,,Links for easy access and updating}, for more information
+on these links.
+
+You're done!  The installation is now online; anyone who puts
+
+@smallexample
+/usr/progressive/bin
+@end smallexample
+
+in their path has access to the toolkit.
+
+@item
+If you had to change the permission status on the directory
+@w{@file{/usr/cygnus}}, be sure to revert the change.  See your system
+administrator for the proper permissions at your site.
+@end enumerate
+
+@node Alternate installdir not linked to /usr/cygnus
+@unnumberedsec Alternate @var{installdir} not linked to @code{/usr/cygnus}
+
+@enumerate 1
+@item
+First, decide where to install the software.  The default installation
+location is @w{@file{/usr/cygnus/@value{RELEASETAG}}}.  (To use the
+software conveniently from elsewhere, you may want to reconfigure and
+recompile from source; see @ref{U-Running,,Running the programs}.)
+
+If you don't wish to install in @w{@file{/usr/cygnus}} but can create a
+symbolic link to it from another location, or if you don't wish to
+install into @file{/usr} at all, see @ref{Installing in a nonstandard
+location,,Installing in a nonstandard location}.
+
+@item
+Create the installation directory, if it doesn't already exist, and make
+sure it's publicly accessible so @code{Install} can write there.  For
+example, if you use the default installation directory of
+@w{@file{/usr/cygnus}}:
+
+@smallexample
+eg$ su root             @emph{(enter root password to write in @file{/usr})}
+# mkdir /usr/cygnus     @emph{(ignore ``File exists'' error if any)}
+# chmod 777 /usr/cygnus
+# exit                  @emph{(root access not needed beyond this)}
+@end smallexample
+
+@item
+Make sure you have enough space for the tools in your chosen
+installation location.  The required disk usage for the @value{RELEASE}
+is printed on the tape label; values for binaries only, sources only, or
+both are shown.
+
+@item
+Load the @value{RELEASE} distribution tape into your tape drive.  If
+your machine doesn't have its own tape drive, you need to first extract
+the software into a location accessible by both your host and the
+machine that has a tape drive, and then install on your host.  If there
+is no shared disk, you can extract the software on the machine with the
+tape drive and then transfer it over to your host.  @ref{Installing with
+a remote tape drive,,Installing with a remote tape drive}, for details.
+
+@item
+Extract the @code{Install} script off the tape using
+
+@smallexample
+tar xvf @var{non-rewinding-tapedev} Install
+@end smallexample
+
+@noindent
+Remember to use a @emph{non--rewinding} tape drive!
+
+@item
+Run @code{Install}, using command-line options and arguments to specify
+the details about your installation.
+
+Default behavior installs both binaries and source under
+@w{@file{/usr/cygnus/@value{RELEASETAG}}} using the default
+non--rewinding tape drive for your system (@pxref{U-Device names,,Device
+names}).  For @dfn{native} toolchains only, a process called
+@dfn{fixincludes} automatically makes copies of your system header files
+and alters them to work with @sc{gcc} (your system's header files are
+@emph{not changed}; @pxref{Why fixincludes,,Why convert system header
+files?}).  Finally, @code{Install} runs a simple test to make sure your
+distribution was installed correctly.
+
+@item
+Make sure the program @code{send-pr} knows your Cygnus customer
+identification code.  You can install your customer ID by using the
+program @w{@code{install-sid}} as follows:
+
+@smallexample
+eg$ cd /usr/cygnus/@value{RELEASETAG}/H-@var{hosttype}/bin
+eg$ install-sid @var{customer-ID}
+@end smallexample
+
+Contact Cygnus Support at @w{+1 415 903 1401} if you do not know your
+customer ID.
+
+@item
+Create symbolic links so that your newly installed @value{RELEASE} is
+easily accessible to developers, able to exist with other
+@value{RELEASE} installations in a heterogeneous environment, and easily
+updated when you install a new @value{RELEASE}.
+
+The nature of the links depends on where you installed the
+@value{RELEASE}, but they follow the example below.  If you installed
+into @w{@file{/usr/cygnus/@value{RELEASETAG}}}, the links are
+
+@iftex
+@let@nonarrowing=@comment
+@end iftex
+@smallexample
+ln -s /usr/cygnus/@value{RELEASETAG} /usr/cygnus/progressive
+ln -s /usr/cygnus/progressive/H-@var{hosttype} /usr/progressive 
+@end smallexample
+@iftex
+@let@nonarrowing=@relax
+@end iftex
+
+@noindent
+@xref{Links,,Links for easy access and updating}, for more information
+on these links.
+
+You're done!  The installation is now online; anyone who puts
+
+@smallexample
+/usr/progressive/bin
+@end smallexample
+
+in their path has access to the toolkit.
+
+@item
+If you had to change the permission status on the directory
+@w{@file{/usr/cygnus}}, be sure to revert the change.  See your system
+administrator for the proper permissions at your site.
+@end enumerate
+
+@node Installing more than one toolkit
+@unnumberedsec Installing more than one toolkit
+
+@enumerate 1
+@item
+First, decide where to install the software.  The default installation
+location is @w{@file{/usr/cygnus/@value{RELEASETAG}}}.  (To use the
+software conveniently from elsewhere, you may want to reconfigure and
+recompile from source; see @ref{U-Running,,Running the programs}.)
+
+If you don't wish to install in @w{@file{/usr/cygnus}} but can create a
+symbolic link to it from another location, or if you don't wish to
+install into @file{/usr} at all, see @ref{Installing in a nonstandard
+location,,Installing in a nonstandard location}.
+
+@item
+Create the installation directory, if it doesn't already exist, and make
+sure it's publicly accessible so @code{Install} can write there.  For
+example, if you use the default installation directory of
+@w{@file{/usr/cygnus}}:
+
+@smallexample
+eg$ su root             @emph{(enter root password to write in @file{/usr})}
+# mkdir /usr/cygnus     @emph{(ignore ``File exists'' error if any)}
+# chmod 777 /usr/cygnus
+# exit                  @emph{(root access not needed beyond this)}
+@end smallexample
+
+@item
+Make sure you have enough space for the tools in your chosen
+installation location.  The required disk usage for the @value{RELEASE}
+is printed on the tape label; values for binaries only, sources only, or
+both are shown.
+
+@item
+Load the @value{RELEASE} distribution tape into your tape drive.  If
+your machine doesn't have its own tape drive, you need to first extract
+the software into a location accessible by both your host and the
+machine that has a tape drive, and then install on your host.  If there
+is no shared disk, you can extract the software on the machine with the
+tape drive and then transfer it over to your host.  @ref{Installing with
+a remote tape drive,,Installing with a remote tape drive}, for details.
+
+@item
+Extract the @code{Install} script off the tape using
+
+@smallexample
+tar xvf @var{non-rewinding-tapedev} Install
+@end smallexample
+
+@noindent
+Remember to use a @emph{non--rewinding} tape drive!
+
+@item
+Run @code{Install}, using command-line options and arguments to specify
+the details about your installation.
+
+Default behavior installs both binaries and source under
+@w{@file{/usr/cygnus/@value{RELEASETAG}}} using the default
+non--rewinding tape drive for your system (@pxref{U-Device names,,Device
+names}).  For @dfn{native} toolchains only, a process called
+@dfn{fixincludes} automatically makes copies of your system header files
+and alters them to work with @sc{gcc} (your system's header files are
+@emph{not changed}; @pxref{Why fixincludes,,Why convert system header
+files?}).  Finally, @code{Install} runs a simple test to make sure your
+distribution was installed correctly.
+
+@item
+Make sure the program @code{send-pr} knows your Cygnus customer
+identification code.  You can install your customer ID by using the
+program @w{@code{install-sid}} as follows:
+
+@smallexample
+eg$ cd /usr/cygnus/@value{RELEASETAG}/H-@var{hosttype}/bin
+eg$ install-sid @var{customer-ID}
+@end smallexample
+
+Contact Cygnus Support at @w{+1 415 903 1401} if you do not know your
+customer ID.
+
+@item
+Create symbolic links so that your newly installed @value{RELEASE} is
+easily accessible to developers, able to exist with other
+@value{RELEASE} installations in a heterogeneous environment, and easily
+updated when you install a new @value{RELEASE}.
+
+The nature of the links depends on where you installed the
+@value{RELEASE}, but they follow the example below.  If you installed
+into @w{@file{/usr/cygnus/@value{RELEASETAG}}}, the links are
+
+@iftex
+@let@nonarrowing=@comment
+@end iftex
+@smallexample
+ln -s /usr/cygnus/@value{RELEASETAG} /usr/cygnus/progressive
+ln -s /usr/cygnus/progressive/H-@var{hosttype} /usr/progressive 
+@end smallexample
+@iftex
+@let@nonarrowing=@relax
+@end iftex
+
+@noindent
+@xref{Links,,Links for easy access and updating}, for more information
+on these links.
+
+You're done!  The installation is now online; anyone who puts
+
+@smallexample
+/usr/progressive/bin
+@end smallexample
+
+in their path has access to the toolkit.
+
+@item
+If you had to change the permission status on the directory
+@w{@file{/usr/cygnus}}, be sure to revert the change.  See your system
+administrator for the proper permissions at your site.
+@end enumerate
+
+@node Hooking up the whole network
+@unnumberedsec Hooking up the whole network
+
+@enumerate 1
+@item
+First, decide where to install the software.  The default installation
+location is @w{@file{/usr/cygnus/@value{RELEASETAG}}}.  (To use the
+software conveniently from elsewhere, you may want to reconfigure and
+recompile from source; see @ref{U-Running,,Running the programs}.)
+
+If you don't wish to install in @w{@file{/usr/cygnus}} but can create a
+symbolic link to it from another location, or if you don't wish to
+install into @file{/usr} at all, see @ref{Installing in a nonstandard
+location,,Installing in a nonstandard location}.
+
+@item
+Create the installation directory, if it doesn't already exist, and make
+sure it's publicly accessible so @code{Install} can write there.  For
+example, if you use the default installation directory of
+@w{@file{/usr/cygnus}}:
+
+@smallexample
+eg$ su root             @emph{(enter root password to write in @file{/usr})}
+# mkdir /usr/cygnus     @emph{(ignore ``File exists'' error if any)}
+# chmod 777 /usr/cygnus
+# exit                  @emph{(root access not needed beyond this)}
+@end smallexample
+
+@item
+Make sure you have enough space for the tools in your chosen
+installation location.  The required disk usage for the @value{RELEASE}
+is printed on the tape label; values for binaries only, sources only, or
+both are shown.
+
+@item
+Load the @value{RELEASE} distribution tape into your tape drive.  If
+your machine doesn't have its own tape drive, you need to first extract
+the software into a location accessible by both your host and the
+machine that has a tape drive, and then install on your host.  If there
+is no shared disk, you can extract the software on the machine with the
+tape drive and then transfer it over to your host.  @ref{Installing with
+a remote tape drive,,Installing with a remote tape drive}, for details.
+
+@item
+Extract the @code{Install} script off the tape using
+
+@smallexample
+tar xvf @var{non-rewinding-tapedev} Install
+@end smallexample
+
+@noindent
+Remember to use a @emph{non--rewinding} tape drive!
+
+@item
+Run @code{Install}, using command-line options and arguments to specify
+the details about your installation.
+
+Default behavior installs both binaries and source under
+@w{@file{/usr/cygnus/@value{RELEASETAG}}} using the default
+non--rewinding tape drive for your system (@pxref{U-Device names,,Device
+names}).  For @dfn{native} toolchains only, a process called
+@dfn{fixincludes} automatically makes copies of your system header files
+and alters them to work with @sc{gcc} (your system's header files are
+@emph{not changed}; @pxref{Why fixincludes,,Why convert system header
+files?}).  Finally, @code{Install} runs a simple test to make sure your
+distribution was installed correctly.
+
+@item
+Make sure the program @code{send-pr} knows your Cygnus customer
+identification code.  You can install your customer ID by using the
+program @w{@code{install-sid}} as follows:
+
+@smallexample
+eg$ cd /usr/cygnus/@value{RELEASETAG}/H-@var{hosttype}/bin
+eg$ install-sid @var{customer-ID}
+@end smallexample
+
+Contact Cygnus Support at @w{+1 415 903 1401} if you do not know your
+customer ID.
+
+@item
+Create symbolic links so that your newly installed @value{RELEASE} is
+easily accessible to developers, able to exist with other
+@value{RELEASE} installations in a heterogeneous environment, and easily
+updated when you install a new @value{RELEASE}.
+
+The nature of the links depends on where you installed the
+@value{RELEASE}, but they follow the example below.  If you installed
+into @w{@file{/usr/cygnus/@value{RELEASETAG}}}, the links are
+
+@iftex
+@let@nonarrowing=@comment
+@end iftex
+@smallexample
+ln -s /usr/cygnus/@value{RELEASETAG} /usr/cygnus/progressive
+ln -s /usr/cygnus/progressive/H-@var{hosttype} /usr/progressive 
+@end smallexample
+@iftex
+@let@nonarrowing=@relax
+@end iftex
+
+@noindent
+@xref{Links,,Links for easy access and updating}, for more information
+on these links.
+
+You're done!  The installation is now online; anyone who puts
+
+@smallexample
+/usr/progressive/bin
+@end smallexample
+
+in their path has access to the toolkit.
+
+@item
+If you had to change the permission status on the directory
+@w{@file{/usr/cygnus}}, be sure to revert the change.  See your system
+administrator for the proper permissions at your site.
+@end enumerate
+@end ignore
+
+@c @contents
+@bye
+

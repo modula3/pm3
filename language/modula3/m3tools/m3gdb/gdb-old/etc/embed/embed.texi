@@ -1,0 +1,109 @@
+\input texinfo        @c                    -*- Texinfo -*-
+@setfilename embed.info
+@settitle Embed with GNU
+
+@set GCCN GCC
+@set GCC GCC
+@set GDBN GDB
+@set GN G++
+@c @set #ofTOOLS four
+
+@c
+@c This file documents the process of porting the GNU tools to an
+@c embedded environment.
+@c
+
+@finalout
+@setchapternewpage odd
+@iftex
+@raggedbottom
+@global@parindent=0pt
+@end iftex
+
+@titlepage
+@title Embed With GNU
+@subtitle Using the GNU Tools on Embedded Systems
+@sp 4
+@subtitle Fall 1995
+@subtitle Draft
+@author Cygnus Support
+@page
+
+@vskip 0pt plus 1filll
+Copyright @copyright{} 1993, 1994, 1995 Cygnus Support
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided also that
+the entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions.
+@end titlepage
+
+@ifinfo
+@format
+START-INFO-DIR-ENTRY
+* Embed with GNU: (embed-).         Embed with GNU
+END-INFO-DIR-ENTRY
+@end format
+Copyright (c) 1993, 1994, 1995 Cygnus Support
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided also that
+the entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions.
+
+@node Top
+@top Embed with GNU
+
+@end ifinfo
+
+@menu
+* Supported Targets::           Targets supported as embedded systems
+* Using::                       Using the GNU tools on embedded systems
+* Index::                       Index
+@end menu
+@c * Introduction::                Introduction
+@c * Code Listings::               Appendix A: Code Listings
+
+
+@ignore
+@node Introduction
+@chapter Introduction
+@cindex introduction
+
+@c
+@c  FIXME:
+@strong{The general idea of programming/running a complete GNU solution 
+on an embedded system.}
+@end ignore
+
+@include tools.texi
+@include targets.texi
+@c @include appdxa.texi
+
+@c @ignore
+@page
+@node Index
+@unnumbered Index
+@c @end ignore
+
+@printindex cp
+
+@page
+@contents
+@bye
+
+

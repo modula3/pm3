@@ -1,0 +1,165 @@
+fix()
+{
+    # Determine if target needs it's header files fixed.  This case
+    # statement is extracted from the gcc configure script with the
+    # following perl script:
+    #
+    #	while(<>) {
+    #	        if (/^\t([a-z].*)\)/) {
+    #	                $machine=$1
+    #	        }
+    #	
+    #	        if (/fixincludes=([^ \t\n]*)/ && $1 eq "Makefile.in") {
+    #	                print "$machine)\n";
+    #	                print "\treturn\n";
+    #	                print "\t;;\n";
+    #	        }
+    #	}
+
+    case "${TARGET}" in
+    c1-convex-*)
+	return
+	;;
+    c2-convex-*)
+	return
+	;;
+    c32-convex-*)
+	return
+	;;
+    c34-convex-*)
+	return
+	;;
+    c38-convex-*)
+	return
+	;;
+    i[345]86-*-freebsd*)
+	return
+	;;
+    i[345]86-*-netbsd*)
+	return
+	;;
+    i[345]86-*-linuxelf)
+	return
+	;;
+    i[345]86-*-linux*)
+	return
+	;;
+    i[345]86-*-netware)
+	return
+	;;
+    m68k-*-netbsd*)
+	return
+	;;
+    mips-sgi-irix6*)
+	return
+	;;
+    mips-sgi-irix5cross64)
+	return
+	;;
+    mips-sgi-irix5*)
+	return
+	;;
+    ns32k-pc532-netbsd*)
+	return
+	;;
+    powerpc-*-netware*)
+	return
+	;;
+    powerpc-*-eabi*)
+	return
+	;;
+    sparc-*-netbsd)
+	return
+	;;
+    esac
+
+    if [ "${INSTALLHOST}" != "${HOST}" ] ; then
+	cat << EOF
+***	This machine appears to be for \"${INSTALLHOST}\", while the
+***	software on this tape is meant for \"${HOST}\"  
+***
+***	You may still run \"$0 --extract ...\" on this machine and then
+***	run the other steps on the machine on which you wish to install.
+***	You will need to do these steps separately.
+***	For more information, please refer to
+***     ${ANOTHER_TAPE} in ${NOTES}.
+EOF
+    else
+        fixincludes
+    fi
+}
+
+
+fixincludes()
+{
+    LOGFILE=${LOGDIR}/fixincludes.log
+
+    echo Running fixincludes for ${INSTALLHOST}.
+    echo Verbose output will be stored in ${LOGFILE}.
+    echo This will take some time.
+
+    # this used to be exported -- does it still need to be? 
+    LIB=${RELEASE_ROOT}/${EXECDIR}/lib/gcc-lib/${HOST}/||GCCvn||/include 
+
+    CPP="${RELEASE_ROOT}/${EXECDIR}/bin/gcc -E"
+    export CPP		# needed by fixincludes and fixproto
+    GCC_EXEC_PREFIX=${RELEASE_ROOT}/${EXECDIR}/lib/gcc-lib/
+    export GCC_EXEC_PREFIX
+
+    if [ -f ${RELEASE_ROOT}/${EXECDIR}/lib/install-tools/fix-header ]
+    then
+        FIX_HEADER=${RELEASE_ROOT}/${EXECDIR}/lib/install-tools/fix-header
+        export FIX_HEADER   # fixproto needs this
+    fi
+
+    if [ -f ${RELEASE_ROOT}/${EXECDIR}/lib/install-tools/fixproto-defines ]
+    then
+        FIXPROTO_DEFINES="`${RELEASE_ROOT}/${EXECDIR}/lib/install-tools/fixproto-defines`"
+        export FIXPROTO_DEFINES   # fixproto needs this
+    fi
+
+    if mkdir ${LIB}/../tmpdir && cp ${LIB}/*.h ${LIB}/../tmpdir ; then
+	true
+    else
+	cat << EOF
+*** Unable to create temporary directory ${LIB}/../tmpdir
+***     Please ensure that write permissions for
+***     ${LIB} are allowed.
+***     Or call ${HOTLINE} for more information.
+EOF
+        exit 1
+    fi
+
+    ${RELEASE_ROOT}/${EXECDIR}/lib/install-tools/fixincludes ${LIB} /usr/include ${RELEASE_ROOT}/src/gcc > ${LOGFILE} 2>&1
+    if [ $? -ne 0 ]; then
+	cat << EOF
+*** There seems to have been a problem with fixincludes.
+***	The verbose output from the fixincludes script has been logged in
+***     ${LOGFILE}.
+***     I do not know how to continue until this problem has been
+***     corrected.  If you do not know how to fix it either, please
+***     call ${HOTLINE}.
+EOF
+	mv ${LIB}/../tmpdir/* ${LIB} && rmdir ${LIB}/../tmpdir
+	exit 1
+    fi  # 
+    echo '   ' system header files now ANSI compatible 
+
+    ${RELEASE_ROOT}/${EXECDIR}/lib/install-tools/fixproto ${LIB} ${LIB} /usr/include >> ${LOGFILE} 2>&1
+    if [ $? -ne 0 ]; then
+	cat << EOF
+*** There seems to have been a problem with fixproto.
+***     The verbose output from the fixproto script has been logged in
+***     ${LOGFILE}.
+***     I do not know how to continue until this problem has been
+***     corrected.  If you do not know how to fix it either, please
+***     call ${HOTLINE}.
+EOF
+	mv ${LIB}/../tmpdir/* ${LIB} && rmdir ${LIB}/../tmpdir
+	exit 1
+    fi	
+    echo '   ' ansi/posix prototypes added to include files
+
+    mv ${LIB}/../tmpdir/* ${LIB} && rmdir ${LIB}/../tmpdir 
+    echo Fixed include files installed!
+}

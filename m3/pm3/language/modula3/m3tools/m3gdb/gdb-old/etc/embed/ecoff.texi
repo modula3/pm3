@@ -1,0 +1,27 @@
+@c This file documents object file format issues on an embedded target,
+@c as @included in tools.texi.
+
+@node Ecoff
+@subsection Object file formats
+
+
+@menu
+* a.out::                       a.out
+* coff::                       .coff
+* ecoff::                      .ecoff
+* elf::                        .elf
+@end menu
+
+@node a.out
+@subsubsection @file{a.out}
+
+@node coff
+@subsubsection @file{.coff}
+
+@node ecoff
+@subsubsection @file{.ecoff}
+
+@node elf
+@subsubsection @file{.elf}
+
+

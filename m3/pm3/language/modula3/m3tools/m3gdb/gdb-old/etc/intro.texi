@@ -1,0 +1,919 @@
+\input texinfo
+
+@setfilename intro.info
+@settitle Introduction
+
+@ifinfo
+@format
+START-INFO-DIR-ENTRY
+* intro: (intro.info).         An Introduction to Cygnus Releases
+END-INFO-DIR-ENTRY
+@end format
+@end ifinfo
+
+@finalout
+@setchapternewpage on
+
+@c uncomment one of the following:
+
+@set cdk
+@c @set emacs
+@c @set dejagnu
+@clear debug
+
+@ifset cdk
+@set RELEASE Developer's Kit
+@end ifset
+@ifset emacs
+@set RELEASE Emacs
+@end ifset
+@ifset dejagnu
+@set RELEASE DejaGnu
+@end ifset
+
+@ifset debug
+@set RELEASE DEBUGMODE
+@set cdk
+@set emacs
+@set dejagnu
+@end ifset
+
+@titlepage
+@title Introduction
+@subtitle Cygnus Support @value{RELEASE}
+
+@sp 5
+
+@c altref is a Cygnus Support texiplus.tex hack -- comment out instances
+@c of @altref for standard Texinfo
+
+@altref
+
+@format
+@ref{Release,,Cygnus Support @value{RELEASE}}.
+@ref{Manuals,,Manuals}.
+@ref{Info,,Using Online Documentation}.
+@ref{Support,,Your Support Contract}.
+@ref{Bugs,,Reporting Trouble}.
+@ref{Copying,,Free Software}.
+@ref{AboutCygnus,,About Cygnus Support}.
+@ref{Cygnus-FSF,,Cygnus Support and the FSF}.
+@end format
+
+@c toggle back references
+@altref
+
+@author Cygnus Support
+@page
+
+@vskip 0pt plus 1filll
+Copyright @copyright{} 1991, 1992, 1993, 1994, 1995 Cygnus Support
+
+Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided also that the
+entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions.
+
+@end titlepage
+
+@ifinfo
+@node Top
+@top Introduction
+
+This manual introduces the Cygnus Support Progressive @value{RELEASE}
+distribution.  For details, see the nodes below.
+
+@menu
+* Release::         Cygnus Support @value{RELEASE}
+* Manuals::         Manuals
+* Copying::         Free Software
+* AboutCygnus::     About Cygnus Support
+* Cygnus-FSF::      Cygnus Support and the FSF
+* Support::         Your Support Contract
+* Info::            Using Online Documentation
+* Bugs::            Reporting Trouble
+@end menu
+@end ifinfo
+
+@node Release
+@unnumbered Cygnus Support @value{RELEASE}
+
+This @value{RELEASE} release puts at your disposal, in a single
+coordinated and tested release, some of the best software development
+tools available.
+@ifset cdk
+These tools are available for @dfn{native development} (where the same
+kind of system can run both the tools and the code you develop with
+them) and for @dfn{cross-development} (where one system, the @dfn{host},
+runs the tools to develop software for another system, the
+@dfn{target}).
+@end ifset
+
+Cygnus Support has ported @sc{gnu} tools to over sixty different
+platforms.  As part of our service, we integrate all our tools to ensure
+that they all work together.  Our developers use a regression testing
+method that checks not only for problems with a single tool, but across
+all the tools.  We check for problems that a change in one program may
+cause in another.  We don't ship your @value{RELEASE} release until we
+know it works.
+
+@ifset cdk
+The @value{RELEASE} contains these development tools and utilities:@*
+@emph{(Not all tools are available for all platforms and operating
+systems.  @xref{Introduction,,Overview,relnotes,Release Notes}, for
+specific information on your system.)}
+
+@subheading Compilers and Development Tools
+@table @code
+@item gcc
+C compiler
+
+@item g++
+C++ compiler
+
+@item gdb
+Debugger
+
+@item as
+Assembler
+
+@item gasp
+Assembler Preprocessor
+
+@item ld
+Linker
+@end table
+
+@c ---
+@subheading Libraries
+@table @code
+@item libg++
+C++ class library
+
+@item libio
+C++ @code{iostreams} library
+
+@item libc
+@sc{ansi} C runtime library (@emph{only available for cross-development
+toolkits})
+
+@item libm
+C mathematical subroutine library (@emph{only available for
+cross-development toolkits})
+@end table
+
+@c ---
+@subheading General Utilities
+@table @code
+@item byacc
+Parser generator
+
+@item flex
+Fast lexical analyzer generator
+
+@item make
+Compilation control program
+
+@item diff
+@itemx diff3
+@itemx sdiff
+Compare text files
+
+@item patch
+Installs source fixes
+
+@item cmp
+Compares files byte-by-byte
+
+@item send-pr
+Sends structured problem reports to Cygnus
+
+@item install-sid
+Customizes @code{send-pr} for your site
+
+@item gprof
+Performance analyzer (@emph{only available for Sun 4 systems running
+SunOS 4 or Solaris 2})
+
+@item gcov
+Coverage analyzer
+@end table
+
+@c ---
+@subheading Binary Utilities
+@table @code
+@item c++filt
+C++ symbol name deciphering utility
+
+@item nm
+Lists object file symbol tables
+
+@item objdump
+Displays object file information
+
+@item size
+Lists section and total sizes
+
+@item ar
+Manages object code archives
+
+@item ranlib
+Generates archive index
+
+@item strip
+Discards symbols
+
+@item objcopy
+Copies and translates object files
+@end table
+
+@c ---
+@subheading Text Utilities
+@table @asis
+@item Texinfo (requires @TeX{})
+@itemx @code{texindex}
+@itemx @code{texi2dvi}
+Documentation formatting tools
+
+@item @code{makeinfo}
+@itemx @code{info}
+Online documentation tools
+@end table
+@end ifset
+@c end cdk
+
+@ifset emacs
+Your @value{RELEASE} distribution contains these tools and utilities:
+
+@subheading Emacs 19
+Includes @sc{lisp} extensions for @code{mh}, @code{gnus},
+@w{@code{ange-ftp}}, and text-editing modes for C, Texinfo, and
+@code{nroff}, as well as many other packages and modes.
+
+@subheading General Utilities
+@table @code
+@item ispell
+Multi-language spelling checker.
+
+@item diff
+@itemx diff3
+@itemx sdiff
+Compare text files
+
+@item patch
+Installs source fixes
+
+@item cmp
+Compares files byte-by-byte
+
+@item send-pr
+Sends structured problem reports to Cygnus
+
+@item install-sid
+Customizes @code{send-pr} for your site
+@end table
+
+@subheading Text Utilities
+@table @asis
+@item Texinfo (requires @TeX{})
+@itemx @code{texindex}
+@itemx @code{texi2dvi}
+Documentation formatting tools
+
+@item @code{makeinfo}
+@itemx @code{info}
+Online documentation tools
+@end table
+@end ifset
+@c end emacs
+
+@ifset dejagnu
+Your @value{RELEASE} distribution contains these tools and utilities:
+
+@subheading Testing Tools and Framework
+@table @asis
+@item DejaGnu
+Testing tools and framework for DejaGnu, based on Tcl and @code{expect}
+
+@item Tcl
+Tool Command Language, by John Ousterhout
+
+@item @code{expect}
+Interactive scripting language by Don Libes
+@end table
+
+@subheading General Utilities
+@table @code
+@item diff
+@itemx diff3
+@itemx sdiff
+Compare text files
+
+@item patch
+Installs source fixes
+
+@item cmp
+Compares files byte-by-byte
+
+@item send-pr
+Sends structured problem reports to Cygnus
+
+@item install-sid
+Customizes @code{send-pr} for your site
+@end table
+
+@subheading Text Utilities
+@table @asis
+@item Texinfo (requires @TeX{})
+@itemx @code{texindex}
+@itemx @code{texi2dvi}
+Documentation formatting tools
+
+@item @code{makeinfo}
+@itemx @code{info}
+Online documentation tools
+@end table
+@end ifset
+@c end dejagnu
+
+@node Manuals
+@unnumbered Manuals
+
+These manuals may be included in a hardcopy format in this Cygnus
+Support Progressive Release, depending on the nature of your support
+contract.  @emph{Note:} hardcopy versions of the documentation are
+available as a separate product from Cygnus Support if your contract
+does not include printed manuals.  All documentation is included online
+with every release; see @ref{Info,,Using Online Documentation}.
+
+@ifset cdk
+For convenience we have bound them in eight wire-bound volumes.
+
+@table @emph
+@item Cygnus Developer's Kit
+@itemize @bullet
+@item Introduction
+@item Release Notes
+@item Install Notes
+@item @sc{gnu} General Public License
+@end itemize
+
+@item Embedded Systems
+@itemize @bullet
+@item Embedded Systems Programming
+@end itemize
+
+@item Using GNU CC
+@itemize @bullet
+@item Using @sc{gnu} CC
+@end itemize
+
+@item Debugging With GDB
+@itemize @bullet
+@item Debugging With @sc{gdb}
+@end itemize
+
+@item Support Libraries
+@itemize @bullet
+@item The @sc{gnu} C++ Iostream Library
+@item The Cygnus C Support Library
+@item The Cygnus C Math Library
+@end itemize
+
+@item Binary Utilities
+@itemize @bullet
+@item The @sc{gnu} C Preprocessor
+@item Using @sc{as}, the @sc{gnu} Assembler
+@item @sc{gasp}, the @sc{gnu} Assembler Preprocessor
+@item Using @sc{ld}, the @sc{gnu} Linker
+@item The @sc{gnu} Binary Utilities
+@end itemize
+
+@item GNU Make
+@itemize @bullet
+@item @sc{gnu} Make
+@end itemize
+
+@item Developer's Kit Support
+@itemize @bullet
+@item Reporting Problems Using @code{send-pr}
+@item Online Documentation
+@item Rebuilding From Source
+@item Comparing and Merging Files (@code{diff} and @code{patch})
+@end itemize
+
+@end table
+
+@ignore
+@tex
+\vskip \baselineskip \halign{\it #\hfil&\quad\it #\hfil\cr \bf Volume I
+& \bf Volume II \strut\cr \noalign{\hrule} \cr 
+Introduction               & The GNU C++ Iostream Library \cr
+Installation Notes         & The Cygnus C Support Library \cr
+Release Notes              & The Cygnus C Math Library \cr
+Rebuilding From Source     & Using as \cr
+Reporting Problems         & The C Preprocessor \cr
+GNU Online Documentation   & Using ld \cr
+Using GNU CC               & The GNU Binary Utilities \cr
+Debugging with GDB         & Comparing and Merging Files: diff, \cr
+GNU General Public License & \ \ \ \ diff3, sdiff, cmp, and patch \cr
+                           & GNU Make: A Program for Directing \cr
+                           & \ \ \ \ Recompilation\cr \cr }
+@end tex
+@end ignore
+
+@c end cdk
+
+@ifset emacs
+@table @cite
+@item Introduction
+@itemx Release Notes   
+@itemx Installation Notes
+@itemx Online Manuals
+@itemx Reporting Problems
+@itemx Diff/Patch
+@itemx Ispell
+@itemx GNU Emacs Manual
+@itemx License
+@end table
+@end ifset
+@c end emacs
+
+@ifset dejagnu
+@table @cite
+@item Introduction
+@itemx Installation Notes
+@itemx Online Manuals
+@itemx Reporting Problems
+@itemx Diff/Patch
+@itemx The DejaGnu Testing Framwork
+@itemx License
+@end table
+@end ifset
+@c end dejagnu
+
+@noindent
+Source for all documentation is also included.
+
+The manuals are designed for easy online browsing (@pxref{Info,, Online
+Documentation}).  For online use, the accompanying software distribution
+includes all the printed manuals, and also the following documents:
+
+@table @cite
+@ifset cdk
+@item FLEX: A Fast Lexical Analyzer Generator
+Generates lexical analyzers suitable for @sc{gnu} @sc{gcc} and other
+compilers.
+
+@item Using and Porting GNU CC
+Detailed information about what's needed to put @code{gcc} on different
+platforms, or to modify @code{gcc}.  Also includes all the information
+from the printed manual @cite{Using GNU CC}.
+
+@item BYacc
+A discussion of the Berkeley Yacc parser generator.
+
+@item User's Guide to the GNU C++ Library
+Details about the general-purpose @sc{gnu} C++ library, covered under
+the @sc{gnu} Library General Public License.
+@end ifset
+
+@item Texinfo: The GNU Documentation Format
+How you can use @TeX{} to print these manuals, and how to write your own
+manuals in this style.
+
+@item Cygnus configure
+Details on the configuration program used in Cygnus releases.
+
+@item GNU Coding Standards
+A complete discussion of the coding standards used by the @sc{gnu} project.
+@end table
+
+@ifset cdk
+@noindent
+On the Sun-3 and Sun-4 (SunOS 4.1 or Solaris 2) platforms, the following
+manual is also provided online:
+
+@table @cite
+@item GNU gprof
+Details on the @sc{gnu} performance analyzer.
+@end table
+@end ifset
+
+@noindent
+Finally, @code{man} pages are included for all the programs in the
+release.
+
+You have the freedom to copy the manuals, like the software they cover;
+each manual's copyright statement includes the necessary permissions.
+The manuals themselves are also free software, and the source code for
+them is also available on the tape.
+
+@subheading Conventions
+
+Our manuals use these conventions to help you distinguish commands,
+filenames, and other program-specific objects from the descriptive text.
+ 
+@table @asis
+@item @code{Typewriter-text}
+Indicates text that is a literal example of a piece of a program, such
+as environmental variable names like @code{EDITOR}. It will also
+indicate keyboard characters you should type, or other literal bits of
+text from a program, such as filenames or examples.
+
+@item @key{key-name}
+Indicates the conventional name for a special key on a keyboard, such as
+@key{RET} or @key{DEL}.
+
+@item @var{generic-name}
+Stands for another piece of text. For example, in the command
+description ``To delete the file named @var{filename}, type @code{rm
+@var{filename}}.''  @var{filename} stands for the file you want to
+delete, no matter what you've named it.
+@end table 
+ 
+@node Info
+@unnumbered Using Online Documentation
+
+You can browse through the online documentation using either @sc{gnu}
+Emacs or the documentation browser program @code{info} included in the
+@value{RELEASE} distribution.  Online, the manuals are organized into
+@dfn{nodes}, which correspond to the chapters and sections of a printed
+book.  You can follow them in sequence, if you wish, just like in the
+printed book---but there are also other choices.  The documents have
+menus that let you go quickly to the node that has the information you
+need.  @code{info} has ``@dfn{hot}'' references; if one section refers
+to another, you can tell @code{info} to take you immediately to that
+other section---and you can get back again easily to take up your
+reading where you left off.  Naturally, you can also search for
+particular words or phrases.
+
+The best way to get started with the online documentation system is to
+run the browser @code{info}.  After this @value{RELEASE} release is
+installed on your system, you can get into @code{info} by just typing
+its name---no options or arguments are necessary---at your shell's
+prompt (shown as @samp{eg%} here):
+
+@example
+eg% info
+@end example
+ 
+(You may need to check that @code{info} is in your shell path after you
+install the @value{RELEASE} release. If you have problems running
+@code{info}, please contact your systems administrator.)
+
+To learn how to use @code{info}, type the command @samp{h} for a
+programmed instruction sequence, or @kbd{@key{CTL}-h} for a short
+summary of commands.  If at any time you are ready to stop using
+@code{info}, type @samp{q}.
+
+@xref{Top,,The Info Program, info, GNU Online Documentation}, for
+detailed discussion of the @code{info} program.
+
+@ifset cdk
+@subheading Cygnus Support Online Library
+
+All of the manuals in our printed documentation set
+(@pxref{Manuals,,Manuals}) are also available via the Cygnus Support
+Information Gallery, our World-Wide Web server, available at
+
+@smallexample
+http://www.cygnus.com/
+@end smallexample
+
+Contact Cygnus Support for information on connecting via the World-Wide
+Web.
+
+As with all @sc{gnu} software, the @sc{html} source for our documents is
+available (or you can convert them yourself using publicly available
+utilities) if you wish to put them into an internal Web server for use
+at your facility.  Contact Cygnus Support for details, and please report
+any problems to the Cygnus documentation department at
+@code{doc@@cygnus.com}.
+
+@table @emph
+@item Free Software Report
+The Free Software Report is a Cygnus publication dedicated to the
+business of supporting free software.
+
+@table @asis
+@item Volume 1, Number 1: @emph{``Free Software? Yes, Free Software''} 
+@item Volume 2, Number 1: @emph{``Free Software And The Law''}
+@item Volume 2, Number 2: @emph{``Free Software Business Models''}
+@item Volume 2, Number 3: @emph{``Free Software: An Agent For Open Systems''}
+@item Volume 3, Number 1: @emph{``Testing, Testing, 1-2-3''}
+@end table
+
+@item Inside Cygnus Engineering
+@emph{Inside Cygnus Engineering} is a newsletter describing recent and
+upcoming activities in the Cygnus Support engineering division. We now
+have a complete archive of previous issues of @emph{Inside Cygnus
+Engineering}.
+
+@item Technical Reports
+Cygnus Support technical reports, written by Cygnus engineers.
+
+@table @emph
+@item Security Issues in Embedded Networking
+@item Simple Garbage Collection in G++
+@item The GNU Instruction Scheduler
+@item Runtime Type Support in C and C++
+@end table
+@end table
+@end ifset
+@c end cdk
+
+@node Support
+@unnumbered Your Support Contract
+
+@sc{gnu} development tools provide a powerful, integrated applications
+development environment. Cygnus Support is one of the primary develpment
+centers for @sc{gnu} tools; your support contract links you directly
+with the developers.  With this release, Cygnus Support has provided the
+latest fully-tested release of the @sc{gnu} tools, preconfigured for
+your supported system.
+
+@subheading Updates to your progressive release
+ 
+@ifset cdk
+Every quarter
+@end ifset
+@ifclear cdk
+Periodically
+@end ifclear
+during the period of your support contract, Cygnus Support
+provides an updated toolchain, complete with the latest enhancements and
+improvements.  The updates also include bug fixes and updated
+documentation. Most customers receive these updates automatically; if
+you wish to get automatic updating, please call our support hotline at
+@w{+1 415 903 1401}.
+
+You also receive a monthly newsletter, @cite{Inside Cygnus Engineering,}
+which keeps you informed about release dates, improvements, new
+supported platforms, and new products.  We often request information
+about your needs via surveys in this newsletter.
+ 
+@subheading Contacting Cygnus Support
+ 
+You can reach Cygnus Support by email, phone, or fax.  To submit problem
+reports, 
+ 
+@ifinfo
+@smallexample
+Cygnus Support
+toll free: +1 800 CYGNUS-1
+main line: +1 415 903 1400
+hotline:   +1 415 903 1401
+email:   support@@cygnus.com
+
+HEADQUARTERS                                    EAST COAST
+1937 Landings Drive                 48 Grove St., Ste. 105
+Mountain View, CA 94043 USA       Somerville, MA 02144 USA
++1 415 903 1400                            +1 617 629 3000
++1 415 903 0122 fax                    fax +1 617 629 3010
+@end smallexample
+@end ifinfo
+
+@sp 1
+
+@tex
+\halign{\rm #\hfill&\rm\qquad\qquad\hfill #\cr
+\bf Cygnus Support\cr
+toll free: $+$1 800 CYGNUS-1\cr
+main line: $+$1 415 903 1400\cr
+hotline: $+$1 415 903 1401\cr
+email: @code{support@@cygnus.com}\cr
+\cr
+\it Headquarters              &\it East Coast\cr
+1937 Landings Drive           &        48 Grove St., Ste. 105\cr
+Mountain View, CA 94043 USA   &        Somerville, MA 02144 USA\cr
+\cr
+$+$1 415 903 1400               &            $+$1 617 629 3000\cr
+$+$1 415 903 0122 fax           &        fax $+$1 617 629 3010\cr}
+@end tex
+ 
+Faxes are answered 8 am--5pm, Monday through Friday.
+ 
+@subheading Future Needs
+ 
+The availability of source code enables anyone to enhance the @sc{gnu}
+tools.  While Cygnus is doing the greatest amount of ongoing
+development, many other users around the world are also contributing
+enhancements and improvments.  Cygnus integration and regression testing
+ensures that enhancements made elsewhere can work with Cygnus'
+developments.  As your needs evolve, so do the capabilities of the
+@sc{gnu} tools and the support services available from Cygnus Support.
+
+@node Bugs
+@unnumbered Reporting Trouble
+
+We've tried to make the programs in this release of the Cygnus Support
+@value{RELEASE} as trouble-free as possible.  If you do encounter
+problems, however, we'd like to diagnose and fix the problem as quickly
+as possible.  You can help us do that by using the script @code{send-pr}
+to send us your problem reports (@sc{pr}s). @code{send-pr} comes with
+this release, and is easily configured to send reports back to Cygnus.
+
+@code{send-pr} invokes an editor on a problem report form (after trying
+to fill in some fields with reasonable default values).  After you exit
+the editor, @code{send-pr} sends the filled out form to the Problem
+Report Management System (@sc{prms}) at Cygnus Support.  You can use the
+environment variable @code{EDITOR} to specify which editor to use (the
+default is @code{vi}). Emacs users will find @sc{prms} especially easy
+to use.
+
+For more information on @code{send-pr}, see @ref{Top, , Overview,
+send-pr, Reporting Problems}.
+
+@subheading Filling out a problem report
+
+Problem reports are structured so that a database program can manage
+them. When you fill out the form, please remember the following
+guidelines:
+
+@itemize @bullet
+@item
+Each @sc{pr} needs a valid @dfn{customer-id} and @dfn{category}.
+
+@item
+Describe only one problem per @sc{pr}.
+
+@item
+For follow-up mail, use the same subject line as the one in the
+automatic acknowledgment. It shows the category, the @sc{pr} number and
+the original synopsis line.  This causes your mail to automatically be
+filed with the original bug report. Your followup comments will be sent
+to all the people who are working on the bug.
+
+@item 
+Please try to make the subject or synopsis line as informative as
+possible.  For misbehaving software, you might use a sentence of the
+form @samp{Encrypted rlogin hangs if you send interrupt} or @samp{g++:
+calling wrong overloaded function.}
+
+@item
+You don't need to delete the comment lines while editing the @sc{pr}
+form; this is done by @code{send-pr}.  Put your information before or
+after the comments.
+@end itemize
+
+Consult the @ref{Helpful Hints,,Examples and guidelines for effective
+PRs,send-pr,Reporting Problems}, for more discussion on this topic.
+
+@node Copying
+@unnumbered Free Software
+
+If you find our @value{RELEASE} distribution useful, please feel free to
+give or sell copies of the software and documentation to anyone you
+like.
+
+In this release, we've assembled the most current editions of these
+software development tools, tested them, made sure they work well
+together, and made them easy to install. The installation tape comes
+with binaries already compiled for your system, and we've made them easy
+to reconfigure and recompile from source.
+
+These tools are free software; they are part of the @sc{gnu} project,
+produced by the Free Software Foundation (@sc{fsf}).  ``@sc{gnu}'' is
+the name of the @sc{fsf}'s evolving operating system (in speech, the
+`@sc{g}' is sounded).  Cygnus Support collaborates with the @sc{fsf} in
+developing these tools. (For more information on the relationship
+between Cygnus Support and the @sc{fsf}, please see
+@ref{Cygnus-FSF,,Cygnus Support and the FSF}.)
+
+Cygnus Support exists to help our clients exploit their freedom in
+using, adapting, or enhancing this software.  Cygnus products are
+@dfn{free software}, protected by the @sc{gnu} General Public License
+(@dfn{@sc{gpl}}).  The @sc{gpl} gives you the freedom to copy or adapt
+any program it licenses---but every person getting a copy also gets with
+it the freedom to modify that copy (which means that they must have
+access to the source code), and the freedom to distribute further
+copies.  Traditional software companies use copyrights to limit your
+freedoms; the @sc{gpl} is designed to preserve your freedoms.
+
+Fundamentally, the General Public License is a license which grants you
+these freedoms, and only imposes restrictions to ensure that no one can
+take these freedoms away from anyone else.
+
+For full details, see the @strong{LICENSE} section in this manual set,
+or the file @file{COPYING} in the top level of the source code
+distribution.
+
+@node AboutCygnus
+@unnumbered About Cygnus Support
+
+Cygnus Support, founded in 1989, provides commercial support for free
+software.  @emph{Why free software?} Free software is fast, powerful,
+and more portable than its proprietary counterparts.  It evolves faster
+because users who want to make improvements are free to do so.
+
+Cygnus Support has become the leading development organization of the
+@sc{gnu} tools, contributing more than 50% of ongoing development. In
+addition to in-house development, Cygnus leverages the increasing
+cumulative pool of functionality available as public domain software on
+the Internet, creating a virtual community of developers. Building upon
+and contributing to this effort, Cygnus raises the level of
+functionality available to the entire industry.
+
+The problem with free software has always been that your company's
+programmers and engineers must spend time maintaining the tools as
+well as using them, which ties up company resources. Cygnus frees up
+those resources by supplying products and services, which allows you to
+use state-of-the-art tools without the problems of maintenance. You can
+now choose to use free software and get the advantages of powerful and
+prompt support, combining the best of both.
+
+Our team of experienced engineers include the leading architects for
+@sc{g++, gdb, gas,} and @sc{bfd.} We use one of the most comprehensive
+bug-reporting and tracking software in the business, @sc{prms}.
+
+Because all our improvements are also free software, you can distribute
+them widely within your organization, or to your customers, without
+extra cost. No unwieldy licenses to manage, and no worries about buying
+extra copies.
+
+Cygnus makes sure that our customers' problems get solved the right way.
+No grungy little programs, no klugey fixes that don't generalize, no
+work-arounds that end up being features instead of temporary situations.
+
+@ifinfo
+@smallexample
+Cygnus Support
+toll free: +1 800 CYGNUS-1
+main line: +1 415 903 1400
+hotline:   +1 415 903 1401
+email:   support@@cygnus.com
+
+HEADQUARTERS                                    EAST COAST
+1937 Landings Drive                 48 Grove St., Ste. 105
+Mountain View, CA 94043 USA       Somerville, MA 02144 USA
++1 415 903 1400                            +1 617 629 3000
++1 415 903 0122 fax                    fax +1 617 629 3010
+@end smallexample
+@end ifinfo
+
+@tex
+\halign{\rm #\hfill&\rm\qquad\qquad\hfill #\cr
+\bf Cygnus Support\cr
+toll free: $+$1 800 CYGNUS-1\cr
+main line: $+$1 415 903 1400\cr
+hotline: $+$1 415 903 1401\cr
+email: @code{support@@cygnus.com}\cr
+\cr
+\it Headquarters              &\it East Coast\cr
+1937 Landings Drive           &        48 Grove St., Ste. 105\cr
+Mountain View, CA 94043 USA   &        Somerville, MA 02144 USA\cr
+\cr
+$+$1 415 903 1400               &            $+$1 617 629 3000\cr
+$+$1 415 903 0122 fax           &        fax $+$1 617 629 3010\cr}
+@end tex
+
+@node Cygnus-FSF
+@unnumbered Cygnus Support and the FSF
+
+Cygnus Support and the Free Software Foundation cooperate on major
+projects, such as the port of the @sc{gnu} development tools to Solaris
+2.  We look forward to continuing such cooperation in the future.
+
+Cygnus maintains many programs and libraries @emph{for} the @sc{fsf}:
+@sc{g++}, @sc{gdb}, @sc{gas}, the linker, @sc{gprof}, the binary
+utilities, @sc{libg++}, and the Binary File Descriptor libraries.  In
+addition, Cygnus and the @sc{fsf} share sources for other programs on a
+regular basis.
+
+Both Cygnus and the @sc{fsf} agree that free software is the best way to
+meet the industry's technical needs.  However, Cygnus and the @sc{fsf}
+have different missions.  Cygnus, as a for-profit company, concentrates
+on meeting its customers' needs.  The @sc{fsf} concentrates on meeting
+the internal needs of the @sc{gnu} project.
+
+Therefore, Cygnus may not accept into our source tree certain @sc{fsf}
+changes until they are reworked into a form acceptable for our
+customers' needs---for example, changes that reduce performance or
+reliability on the software platforms we support.  Conversely, the
+@sc{fsf} may not accept changes from Cygnus that improve support for
+only a limited group of users (Cygnus customers).
+
+Also, Cygnus sometimes supports non-@sc{fsf} code.  Our C subroutine
+library is an example.  The @sc{fsf}'s version carries licensing
+restrictions which are impractical for customers who write code for
+embedded systems; as a result, we developed our own subroutine library,
+@sc{libc}.  The Cygnus C subroutine library, although also freely
+redistributable, does not carry the licensing restrictions that would
+inconvenience these customers.
+
+Finally, although the @sc{fsf} makes every effort to provide
+high-quality releases, its development requirements take priority.  The
+@sc{fsf} regards software testing as the user community's contribution
+to the @sc{gnu} project.  Cygnus releases go through a quality assurance
+cycle which is in large part driven by our knowledge of customer
+requirements.
+
+@bye

@@ -1,0 +1,1382 @@
+\input texinfo
+@setfilename rebuild.info
+
+@c This file may require a nonstandard texinfo.tex to format; if you
+@c need it, please contact Cygnus Support (email doc@cygnus.com)
+
+@c This file describes how to rebuild a Cygnus Progressive Release.
+
+@c Copyright (C) 1994, 1995 Cygnus Support
+@c This text may be freely distributed under the terms of the GNU
+@c General Public License.  You should have received a copy of the GPL
+@c with this release; if you did not, request one from the site from
+@c which you received this distribution.  See the file COPYING in the
+@c top-level directory of this distribution.
+
+@set cdk
+
+@iftex
+
+@finalout
+@settitle Rebuilding From Source
+@setchapternewpage odd
+@end iftex
+
+@ifinfo
+@format
+START-INFO-DIR-ENTRY
+* Rebuilding: (rebuild.info).     Rebuilding From Source
+END-INFO-DIR-ENTRY
+@end format
+@end ifinfo
+
+@titlepage
+@title Rebuilding From Source
+@subtitle Cygnus Support Developer's Kit
+
+@author Cygnus Support
+@page
+
+@vskip 0pt plus 1filll
+Copyright @copyright{} 1994, 1995 Cygnus Support
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided also that
+the entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions.
+
+@end titlepage
+
+@node Top
+@top Rebuilding From Source
+
+All Cygnus products are free software; your Developer's Kit includes
+complete source code for all programs.  Because of this, you have the
+freedom to rebuild the tools for any of a variety of reasons, such as
+redefining compiled-in pathnames, or installing a source code patch from
+Cygnus.
+
+Whatever the reason, we have designed and implemented an automatic
+configuration scheme to adapt the programs to different environments.
+
+Rebuilding the programs from source requires these steps:
+
+@enumerate
+@item Configuration (@pxref{Configuration,,Configuration})
+@item Compilation (@pxref{Compilation,,Compilation})
+@item Installation (@pxref{Installation,,Installation})
+@end enumerate
+
+The first three chapters of this manual discuss the background behind
+each of the three steps involved in completely building and installing
+the Cygnus Support Developer's Kit.  @xref{Examples and
+suggestions,,Examples and suggestions}, for variations on this theme.
+Follow the examples in @ref{default native/cross,,Building with the
+defaults}, to recreate the distribution as it exists by default.
+
+@quotation
+@emph{Note:} The procedures described in this note are for Unix systems.
+For @sc{dos} or LynxOS toolkits, contact Cygnus Support for instructions
+on rebuilding your Developer's Kit.  In particular, since we do not
+provide a native @sc{dos} compiler, you must either rebuild on a Unix
+system or allow Cygnus to rebuild the toolkit for you.
+@end quotation
+
+We strongly recommend that you contact Cygnus Support if you wish to
+rebuild the Developer's Kit for cross-platform development.  Contact
+your Cygnus technical representative, or get in touch with us at:
+
+@ifinfo
+@smallexample
+Cygnus Support
+hotline: +1 415 903 1401
+email:   support@@cygnus.com
+
+HEADQUARTERS                                    EAST COAST
+1937 Landings Drive                 48 Grove St., Ste. 105
+Mountain View, CA 94043 USA       Somerville, MA 02144 USA
++1 415 903 1400                            +1 617 629 3000
++1 415 903 0122 fax                    fax +1 617 629 3010
+@end smallexample
+@end ifinfo
+
+@sp 3
+
+@tex
+\halign{\rm #\hfill&\rm\qquad\qquad\hfill #\cr
+\bf Cygnus Support\cr
+hotline: $+$1 415 903 1401\cr
+email: @code{support@@cygnus.com}\cr
+\cr
+\it Headquarters       &\it East Coast\cr
+1937 Landings Drive           &        48 Grove St., Ste. 105\cr
+Mountain View, CA 94043 USA        &       Somerville, MA 02144 USA\cr
+\cr
+$+$1 415 903 1400               &            $+$1 617 629 3000\cr
+$+$1 415 903 0122 fax           &        fax $+$1 617 629 3010\cr}
+@end tex
+
+@menu
+* Configuration::
+* Compilation::
+* Installation::
+* Examples and suggestions::
+@end menu
+
+@node Configuration
+@chapter Configuration
+
+The first and most important step in preparing source code to run on
+your system is to @dfn{configure} it so that, when built, the program
+exhibits the behavior you expect.  The configuration process involves
+preparing a @dfn{Makefile} which contains default and/or customized
+information for your site and for your hardware/software system.  If you
+are building the distribution for more than one platform, you must
+configure, compile, and install on each platform.
+
+You can configure the software in this release by using the shell script
+@code{configure}.  The shell script accepts one argument, the @dfn{host
+type}, although if you do not supply it @code{configure} is able to
+determine it under most circumstances
+(@pxref{config.guess,,@code{config.guess}}).  In fact, in most cases we
+recommend you @dfn{not} specify the type of host.
+
+There are also several possible options, including a @samp{--target=}
+option to configure for cross-system development.  For various examples
+of these options, see @ref{Examples and suggestions,,Examples and
+suggestions}.
+
+Your Developer's Kit contains full online documentation for Cygnus
+@code{configure}.  @xref{Using Configure,,Using
+@code{configure},configure.info,Cygnus @code{configure}}, to read about
+@code{configure} in more detail, including information on how the
+@code{configure} options are related to @file{Makefile} variables.
+
+@menu
+* configure options::           Options to @code{configure} 
+* Config names::                Specifying Names for Hosts and Targets
+* srcdir and objdir::           Source and Build Directories
+* Rebuilding using gcc::        Rebuilding using GCC
+@end menu
+
+@node configure options
+@section Options to @code{configure}
+
+This section summarizes the @code{configure} options and arguments used
+most often:
+
+@smallexample
+configure [ @var{hosttype} ]
+          [ --prefix=@var{dest} ]
+          [ --exec-prefix=@var{bindest} ]
+          [ --srcdir=@var{path} ]
+          [ --target=@var{target} ]
+@end smallexample
+
+The @samp{--prefix} and @samp{--exec-prefix} options are particularly
+important.  If you don't specify a @var{dest} or @var{bindest}
+directory, the @file{Makefile} installs binaries in subdirectories of
+@file{/usr/cygnus/progressive-@var{release}} (@pxref{The default,,How
+your Developer's Kit was built}).  These options are important because
+the @var{dest} and @var{bindest} directories are used for several
+purposes, most notably:
+
+@itemize @bullet
+@item
+@var{bindest} is the directory where binaries are installed.
+
+@item
+@var{bindest} is built into the compiler itself for the locations of
+@sc{gcc}-specific include files, the locations of @sc{gcc} subprograms,
+and the location of the @sc{gcc}-specific library @file{libgcc.a}.
+
+@item
+@var{dest} is compiled into @code{info} as the default directory
+for the documentation.
+@end itemize
+
+@xref{The HUT,,The Heterogeneous Updateable Toolkit}, for hints on setting
+up your installation to be accessible and easily updated.
+
+@table @code
+@item @var{hosttype}
+Configure the development tools to run on the specified @var{hosttype}.
+@xref{Host names,,Host names}.  This argument is not usually required,
+since @code{configure} can automatically determine what kind of machine
+it runs on.
+
+@item --prefix=@var{dest}
+@var{dest} is an installation directory @emph{path prefix}, the root for
+the directories where @code{make install} installs programs, libraries,
+and other relevant files.  After you configure with this option,
+@samp{make install install-info} installs @code{info} files in
+@file{@var{dest}/info}, @sc{man} pages in @file{@var{dest}/man}, and
+(unless you also use @samp{--exec-prefix}) binary programs in
+@file{@var{dest}/bin}, and libraries in @file{@var{dest}/lib}.  If you
+specify @samp{--prefix=/usr/local}, for example, @code{make install} puts
+the development tools in @file{/usr/local/bin}.  (@xref{The HUT,,The
+Heterogeneous Updateable Toolkit}, for more detail.)
+
+Cygnus uses a @var{dest} of
+@w{@samp{/usr/cygnus/progressive-@var{date}}}; see @ref{The default,,How
+your Developer's Kit was built}.  This is also the default @var{dest}
+for your source code.  We recommend you always use the @samp{--prefix}
+option to explicitly set the destination prefix.
+
+@item --exec-prefix=@var{bindest}
+@samp{--exec-prefix} serves the same purpose as @samp{--prefix}, but
+affects only machine-dependent binaries (programs and precompiled
+libraries).  Specifying both @samp{--prefix} and @samp{--exec-prefix}
+allows you to segregate machine-dependent files, so that
+machine-independent files can be shared (@pxref{The HUT,,The
+Heterogeneous Updateable Toolkit}).
+
+The default @var{bindest} is normally the value for @code{dest},
+specified with @samp{--prefix}.  Cygnus specifies a @var{bindest} value
+of @w{@samp{/usr/cygnus/progressive-@var{date}/H-@var{hosttype}}}; see
+@ref{Examples and suggestions,,Examples and suggestions}.  This is also
+the default for your source distribution, unless you set @var{dest} with
+@samp{--prefix}.  We recommend you always use the @samp{--exec-prefix}
+option to explicitly set the machine-dependent destination prefix.
+
+@item --srcdir=@var{path}
+Use this option to configure in directories separate from the source
+directories. @code{configure} writes configuration-specific files in the
+current directory, but arranges for them to use the source in the
+directory @var{path}.  @code{configure} creates directories under the
+working directory in parallel with the source directories below
+@var{path}.  The default @var{path} is the directory in which
+@code{configure} resides; setting this option is redundant, but explicit.
+
+Among other things, you can use this to build (or maintain) several
+configurations simultaneously, in separate @dfn{build directories}.
+@xref{srcdir and objdir,,Source and Build Directories}.
+
+@quotation
+@emph{Warning:} This option is only supported if you use @sc{gnu} Make.
+@end quotation
+
+@item --target=@var{target}
+Configure the development tools for @dfn{cross-development} (compiling,
+debugging, or other processing) of programs running on the specified
+@var{target} (@pxref{Target names,,Target names}).  Without this option,
+the toolkit is configured as @dfn{native}, i.e., to manage programs
+that run on the same system as the development tools themselves.
+
+Cross-development tools are named with a prefix of @var{target} in order
+to avoid confusion with the native tools.  Thus, if the toolkit is built
+for a @code{mips-idt-ecoff} target, the compiler is named
+@w{@code{mips-idt-ecoff-gcc}}, the debugger is named
+@w{@code{mips-idt-ecoff-gdb}}, etc.
+@end table
+
+@node Config names
+@section Specifying names for hosts and targets
+
+@include config-names.texi
+
+@node srcdir and objdir
+@section Source and Build Directories
+
+Builds are most often done in the same directory where the source lies.
+However, if you don't have enough disk space there, or if you wish to
+compile the Developer's Kit for more than one configuration, you may
+find it easiest to configure and build in a different directory from the
+source. 
+
+To build in a location different from the source directory, first create
+the build directory, which we'll call @file{@var{objdir}}:
+
+@smallexample
+$ mkdir @var{objdir}
+$ cd @var{objdir}
+@end smallexample
+
+Then run @code{configure} from the top level of the source directory,
+which we'll call @file{@var{srcdir}}.  You don't need to specify the
+@w{@samp{--srcdir=@var{path}}} option to @code{configure}
+(@pxref{configure options,,@code{configure} options}), but we show it
+here for the purposes of the example:
+
+@smallexample
+$ @var{srcdir}/configure --srcdir=@var{srcdir} @dots{}
+@end smallexample
+
+The default for @var{srcdir} is the directory in which @code{configure}
+resides.  
+
+@code{configure} creates a @file{Makefile} in the current directory,
+@file{@var{objdir}}.  When you run @code{make} here, object files are
+created in @file{@var{objdir}} from the source code in
+@file{@var{srcdir}}.  For example (assume source code is in
+@w{@file{/usr/local/src}}, and binaries are to be installed under
+@w{@file{/usr/local}}):
+
+@smallexample
+$ mkdir /usr/local/obj/sun4
+$ cd /usr/local/obj/sun4
+$ /usr/local/src/configure --srcdir=/usr/local/src
+Configuring for a sparc-sun-sunos4.1.3_U1 host.
+@dots{}@emph{time passes}@dots{}
+Created "Makefile" in /usr/local/obj/sun4@dots{}
+@end smallexample
+
+This is extremely useful if you need to create more than one
+installation of the Developer's Kit.  For example, if you wish to
+rebuild and install the toolkit for a given host as well as a
+cross-development system for the same host, you can use a different
+build directory for each toolkit, with different options to
+@code{configure} for each build.  In this way, the object files for each
+configuration exist simultaneously but independently, even if they are
+meant to install finally into the same repository.
+
+@xref{Variations,,Possible build variations}, for examples of the build
+process using separate directories for source and object files.
+
+Again, please contact Cygnus Support if you have any trouble.
+
+@node Rebuilding using gcc
+@section Rebuilding using @code{gcc}
+
+If you've built and installed the compiler in a @dfn{native}
+configuration, you may wish to use it to rebuild itself.  To do this,
+set the environment variable @code{CC} to the installed version of
+@code{gcc}, and reconfigure and rebuild the toolkit.
+
+@smallexample
+$ CC=@var{installed-dir}/gcc configure @dots{}
+$ make CC=@var{installed-dir}/gcc @dots{}
+@end smallexample
+
+For example, if you installed the Developer's Kit in
+@w{@file{/usr/local}}, use the following commands to rebuild with the
+installed @sc{gcc}:
+
+@smallexample
+$ CC=/usr/local/bin/gcc configure @dots{}
+$ make CC=/usr/local/bin/gcc @dots{}
+@end smallexample
+
+@noindent
+Make sure you specify the same compiler for @code{CC} for both the
+@code{configure} and @code{make} steps.
+
+@emph{(Note: these examples assumes you are using a Bourne-compatible
+shell (@code{sh}, @code{bash}, @code{ksh}); contact Cygnus Support if
+you encounter any problems.)}
+
+@node Compilation
+@chapter Compilation
+
+After you've run @code{configure}, compilation is straightforward.  To
+compile all the programs in the Developer's Kit, run:
+
+@smallexample
+make all info > make.log
+@end smallexample
+
+The examples suggest capturing the @code{make} output in a
+@file{make.log} file, because the output is lengthy.
+
+@code{make} creates a set of binaries which run on your @var{hosttype}
+and which compile code for the specified @var{target} (or for the
+@var{hosttype} in a native configuration).  Programs which require
+compiled-in pathnames are built with the values you specified on the
+command line to @code{configure} with the options @samp{--prefix} and
+@samp{--exec-prefix}.  In cross-development configurations, programs are
+named with @var{target} as a prefix; for example, the cross-compiler is
+named @w{@code{@var{target}-gcc}}.
+
+The overall @file{Makefile} propagates the value of the @code{CC}
+variable explicitly, so that you can easily control the compiler used in
+this step.  @code{CFLAGS} is treated the same way.  For instance, to
+build the compiler a second time, using @code{gcc} to compile itself
+(after building and installing it in the alternate directory
+@file{/usr/local}; @pxref{Rebuilding using gcc,,Rebuilding using
+@code{gcc}}), you might follow this example:
+
+@smallexample
+$ CC=/usr/local/bin/gcc configure @dots{}
+$ make CC=/usr/local/bin/gcc CFLAGS=-O2 all info > make.log
+@end smallexample
+
+Make sure you specify the same compiler for @code{CC} for both the
+@code{configure} and @code{make} steps.
+
+The conventional targets @code{all}, @code{install}, and @code{clean}
+are supported at all levels of @file{Makefile}.  (Other targets are
+supported as well, as appropriate in each directory.)  Each
+@file{Makefile} in the source directories includes ample comments to
+help you read it.  If you are not familiar with @code{make}, refer to
+@ref{Overview,,Overview of @code{make}, make.info, GNU Make: A Program
+for Directing Recompilation}.
+
+@node Installation
+@chapter Installation
+
+Once the software is compiled, installation is elementary.  Simply
+type: 
+
+@smallexample
+make install install-info >> make.log
+@end smallexample
+
+@code{make} installs the Developer's Kit into the locations you
+specified on the @code{configure} command line with @samp{--prefix} and
+@samp{--exec-prefix}.
+
+The Cygnus installation process calls for a few links to be created
+after installation, though if you've specified values of
+@w{@samp{--prefix}} and/or @w{@samp{--exec-prefix}} different from the
+defaults, your links may be different or even unnecessary.  @xref{The
+default,,How your Developer's Kit was built}, for more information on
+these links. 
+
+@xref{The default,,How your Developer's Kit was built}, and the
+@cite{Installation Notes}, for more discussion on installing your
+Developer's Kit.
+
+@node Examples and suggestions
+@chapter Examples and suggestions
+
+Following are several examples of the build process, and a few
+suggestions on rebuilding and installing your Cygnus Support Developer's
+Toolkit.
+
+The most useful suggestion we can offer is a process by which you can
+make your Developer's Kit both easily updateable and easily accessible
+to your developers, even in a heterogeneous network environment.  We use
+this process to build the binary distribution of the Developer's Kit.
+
+@menu
+* The HUT::         The Heterogenous Updateable Toolkit
+* The default::     How your Developer's Kit was built
+* Variations::      Possible build variations
+@end menu
+
+@node The HUT
+@section The Heterogeneous Updateable Toolkit
+
+The process described here combines the use of the @samp{--prefix} and
+@w{@samp{--exec-prefix}} options to @code{configure} (@pxref{configure
+options,,@code{configure} options}) with the creation of strategic
+symbolic links in the installation directory.  @xref{The default,,How
+your Developer's Kit was built}, for an example of this process.
+
+In the following examples, the variable @var{release} refers to a given
+Cygnus Support release number, such as @samp{progressive-94q4} (many of
+the examples simply use @samp{94q4}).  The variable @var{hosttype}
+refers to the configure name for the given host type, such as
+@w{@samp{sparc-sun-sunos4.1.3}} (@pxref{Config names,,Specifying names
+for hosts and targets}).  These values are on the distribution tape
+label.
+
+In order for the Developer's Kit to be accessible in a heterogeneous
+network environment, it must be configured, compiled, and installed on
+each @dfn{host type} (one installation for the Sun4s on the network, one
+for the DECstations, etc.), using the configuration paradigm discussed
+below (for a more general discussion, @pxref{Building and installing the
+HUT,,Building and installing the HUT}).  The symbolic links must also be
+set up on each host.
+
+@menu
+* How the HUT works::
+* Building and installing the HUT::
+@end menu
+
+@node How the HUT works
+@unnumberedsubsec How the HUT works
+
+The Heterogeneous Updateable Toolkit depends on the use of the
+@samp{--prefix} and @samp{--exec-prefix} options to @code{configure}, as
+well as to two strategic symbolic links in the installation directory.
+
+@xref{Building and installing the HUT,,Building and installing the HUT},
+and @ref{Variations,,Possible build variations}, for more general
+examples and suggestions.
+
+@menu
+* Configuring for the HUT::
+* Setting links after installation::
+* The Heterogeneous part::
+* The Updateable part::
+@end menu
+
+@node Configuring for the HUT
+@unnumberedsubsubsec Configuring for the HUT
+
+The binary distribution on your tape is configured with the following
+command:
+
+@smallexample
+configure --prefix=/usr/cygnus/progressive-@var{release} \
+   --exec-prefix=/usr/cygnus/progressive-@var{release}/H-@var{hosttype} \
+  [ --target=@var{target} ]
+@end smallexample
+
+This configuration is used for each @var{hosttype} for a given
+@var{release}.  The @w{@samp{--target=@var{target}}} option is only
+needed for cross-development configurations.  If you are building
+installations for more than one platform, each platform should follow
+this standard.  This configuration places machine-independent files
+(like documentation and library sources) in
+
+@smallexample
+/usr/cygnus/progressive-@var{release}
+@end smallexample
+
+@noindent
+and machine-dependent files (like binary programs and precompiled
+library archives) in
+
+@smallexample
+/usr/cygnus/progressive-@var{release}/H-@var{hosttype}
+@end smallexample
+
+Using these installation locations allows us to create multiple
+Heterogeneous Updateable Toolkits from a single source tree by simply
+putting two strategic symbolic links in place.
+
+@node Setting links after installation
+@unnumberedsubsubsec Setting links after installation
+
+We recommend setting two links after building the Heterogeneous
+Updateable Toolkit.  One makes the toolkit easily updateable; the other
+makes the tools available in a heterogeneous network environment.
+@emph{Note:} If you choose not to set the links in place, you must set
+your @code{PATH} according to the value you choose for
+@var{exec-prefix}.
+
+@node The Heterogeneous part
+@unnumberedsubsubsec The Heterogeneous part
+
+The installed distribution is useful in a heterogeneous environment due
+to the properties of local public installation directories like
+@file{/usr}.  @file{/usr} is local to each machine, even machines of the
+same architecture.  However, subdirectories of @file{/usr} can be
+symbolic links to other locations on disks shared throughout the
+network.
+
+The HUT creation process (and the Cygnus progressive installation
+process) suggests the symbolic link
+
+@smallexample
+ln -s /usr/cygnus/progressive/H-@var{hosttype} /usr/progressive
+@end smallexample
+
+@noindent
+on each host for which the toolkit is installed.  This way, users on
+each system have access to the Developer's Kit through
+@w{@samp{/usr/progressive/bin}}, since @w{@samp{/usr/progressive}} on
+each @var{hosttype} points to the binaries for that @var{hosttype}.
+
+@node The Updateable part
+@unnumberedsubsubsec The Updateable part
+
+The installed distribution is easily updated via the symbolic link
+
+@smallexample
+ln -s /usr/cygnus/progressive-@var{release} /usr/cygnus/progressive
+@end smallexample
+
+Each time you install a new @var{release} with a similar configuration,
+you only need to change this symbolic link to give your users access to
+the new version of the toolkit.  You can also revert the change by
+switching the symbolic link back to the previous @var{release} if
+needed, as the previous @var{release} is also still available.  Once you
+decide to keep the new @var{release}, you can remove the old one to
+conserve disk space.
+
+@node Building and installing the HUT
+@unnumberedsubsec Building and installing the HUT
+
+If you wish to rebuild your Developer's Kit with the same precompiled
+pathnames as the default (under @w{@file{/usr/cygnus}}), simply follow
+the example in @ref{default native/cross,,Building with the defaults}.
+
+Otherwise, decide on an installation directory; for the purposes of
+these examples, we'll call it @w{@file{@var{instdir}}}.  Run
+@code{configure}, specifying options so that the host-dependent files
+described by @w{@samp{--exec-prefix}} reside in a level underneath the
+host-independent files designated by @w{@samp{--prefix}}, and so that
+both host-dependent and host-independent files are designated with the
+release number @var{release}.
+
+This division allows the distribution to be both easily updated and
+easily accessed after installation (@pxref{How the HUT works,,How the
+HUT works}).
+
+@smallexample
+$ configure --prefix=@var{instdir}/@var{release} \
+ --exec-prefix=@var{instdir}/@var{release}/H-@var{hosttype}
+@end smallexample
+
+You can also build in an @dfn{object directory}, different from that
+which holds the sources, allowing more than one compiled tree to be
+available simultaneously.
+
+@smallexample
+$ mkdir @var{objdir1}   @emph{(this one is native)}
+$ cd @var{objdir1}
+$ @var{srcdir}/configure --prefix=@var{instdir}/@var{release} \
+    --exec-prefix=@var{instdir}/@var{release}/H-@var{hosttype}
+
+S$ mkdir @var{objdir2}   @emph{(this one is for cross-development)}
+$ cd @var{objdir2}
+$ @var{srcdir}/configure --prefix=@var{instdir}/@var{release} \
+    --exec-prefix=@var{instdir}/@var{release}/H-@var{hosttype} \
+    --target=@var{target}
+@end smallexample
+
+Once the configuration is set, compilation is straightforward:
+
+@smallexample
+$ make all info >> make.log
+@end smallexample
+
+Installation is straightforward as well (the example shows access to
+root; this is usually, though certainly not always, needed to install
+into publicly accessible places like @file{/usr}):
+
+@smallexample
+$ su
+# make install install-info >> make.log
+@end smallexample
+
+The final process is to set links in place, so the toolkit is easily
+accessible and updateable, and available in a heterogeneous environment.
+@var{pub}, shown below, indicates a top-level publicly accessible
+directory, such as @file{/usr}.  @var{rel} is a truncated version of
+@var{release}, meant to be more general; if @var{release} is
+@w{@samp{progressive-94q4}}, @var{rel} might be @samp{progressive}.
+
+@smallexample
+# ln -s @var{instdir}/@var{release} @var{instdir}/@var{rel}
+# ln -s @var{instdir}/@var{rel}/H-@var{hosttype} @var{pub}/@var{rel}
+# exit   @emph{(root access not needed beyond this)}
+@end smallexample
+
+Now, anyone who puts @w{@file{@var{pub}/@var{rel}}} in her or his path
+has full access to the installed tools.  You can also build and install
+the tools for other host types; these other toolkits are available from
+the ``same'' location, @w{@file{@var{pub}/@var{rel}}}, because @var{pub}
+is local to each machine.  (For more discussion of these links, see
+@ref{How the HUT works,,How the HUT works}.)
+
+For concrete examples of this process, see @ref{Variations,,Possible
+build variations}.
+
+@node The default
+@section How your Developer's Kit was built
+
+The files in your Developer's Kit distribution are compiled with the
+following options to @code{configure} (the line is only split so that it
+fits on the printed page; it is intended as a single command line):
+
+@smallexample
+configure --prefix=/usr/cygnus/progressive-@var{release} \
+ --exec-prefix=/usr/cygnus/progressive-@var{release}/H-@var{hosttype}
+@end smallexample
+
+@noindent
+where @var{release} indicates the Cygnus release number for this
+distribution, e.g., @samp{94q4}, and @var{hosttype} indicates the
+architecture and operating system configuration on which this software
+is to run, e.g., @w{@samp{sparc-sun-sunos4.1.3}} (@pxref{Host
+names,,Host names}).  Cross-development distributions are configured
+with
+
+@smallexample
+configure --prefix=/usr/cygnus/progressive-@var{release} \
+ --exec-prefix=/usr/cygnus/progressive-@var{release}/H-@var{hosttype} \
+ --target=@var{target}
+@end smallexample
+
+@noindent
+where @var{target} indicates the architecture and object file format for
+which the Developer's Kit is to generate code 
+(@pxref{Target names,,Target names}).
+
+In other words, in both native and cross-development configurations,
+host-independent files (text files, library source code, etc.) reside by
+default in
+
+@smallexample
+/usr/cygnus/progressive-@var{release}
+@end smallexample
+
+@noindent
+while host-dependent files, like precompiled libraries and the tools
+themselves, reside by default in
+
+@smallexample
+/usr/cygnus/progressive-@var{release}/H-@var{hosttype}
+@end smallexample
+
+For example, the Sun 4 cross @samp{m68k-aout} cross-compiler for the
+Progressive 94q4 release was configured with
+
+@smallexample
+configure --prefix=/usr/cygnus/progressive-94q4 \
+ --exec-prefix=/usr/cygnus/progressive-94q4/H-sparc-sun-sunos4.1.3 \
+ --target=m68k-aout
+@end smallexample
+
+@subheading Installation
+
+The installation procedure directs you to run the @code{Install} script
+and then set some links in place so that the distribution may be easily
+accessed and updated (@pxref{U-Installing,,Installing your Developer's
+Kit,install,Installation Notes}) as follows:
+
+@smallexample
+ln -s /usr/cygnus/progressive-@var{release} /usr/cygnus/progressive
+ln -s /usr/cygnus/progressive/H-@var{hosttype} /usr/progressive
+@end smallexample
+
+This combination of a separate links provide the following benefits:
+
+@itemize @bullet
+@item
+Access is granted to anyone who puts @w{@file{/usr/progressive/bin}} in
+her or his path
+
+@item
+Updating is simplified; when you install a new Developer's Kit (with a
+different value for @var{release}), you only need to change the link
+@w{@file{/usr/cygnus/progressive}} to bring the new toolkit online
+
+@item
+Installed toolkits for multiple platforms can coexist in the same
+location and share host-independent files, conserving disk space and
+easing maintenance; if you install the toolkit for more than one
+platform, @file{/usr/progressive} on each platform points to the
+host-dependent files for that platform, yet the host-independent files
+are shared (@pxref{The HUT,,The Heterogeneous Updateable Toolkit})
+@end itemize
+
+For more details on installing the default binary distribution from
+Cygnus Support, see @ref{Installing,,Installing your Developer's
+Kit,install,Installation Notes}.
+
+@node Variations
+@section Possible build variations
+
+There are several permutations of variations in building the Cygnus
+Support Developer's Kit.  In this section we try to discuss the majority
+of the possibilities.  Feel free to contact Cygnus Support with any
+questions or problems.
+
+In these examples, we assume the source code has been extracted from the
+tape into @w{@file{/usr/local/src}} on a Sun 4 running SunOS 4.1.3.
+Examples are shown using a Bourne-compatible shell (@code{sh},
+@code{bash}, @code{ksh}).  Sample command lines which are too long to
+fit on the printed page are wrapped as follows:
+
+@smallexample
+$ ./configure --prefix=/usr/local/94q4 \
+    --exec-prefix=/usr/local/94q4/H-sun4 \
+    --srcdir=/usr/local/src
+@end smallexample
+
+@noindent
+Such lines are intended to be typed on one single command line.
+
+Examples show a @var{release} number of @samp{94q4}, and (often) a
+@var{hosttype} of @code{sun4}.  In practice, we recommend the values
+@samp{progressive-94q4} and @samp{sparc-sun-sunos4.1.3}, respectively;
+see @ref{The default,,How your Developer's Kit was built}.  The values
+are shortened here to make the examples fit on the printed page.
+
+The examples also show the creation of two links.  The links aren't
+necessary, but they do provide an easy way to make your Developer's Kit
+easily updateable and accessible in a heterogeneous environment.
+
+The first is a link to make updating easier, so that when you upgrade
+the Developer's Kit you only need to switch that link to bring it
+online.  The second link allows the creation of several toolkits in a
+heterogeneous network; each different host can have a link to the
+toolkit configured for the host's architecture and operating system.
+@xref{The HUT,,The Heterogeneous Updateable Toolkit}.
+
+@menu
+* default native/cross::
+* prefix/exec-prefix::
+* srcdir/objdir::
+* setting prefix/exec-prefix and srcdir::
+* Multiple simultaneous builds::
+@end menu
+
+@node default native/cross
+@unnumberedsubsec Building with the defaults
+
+A default build is one in which the @code{configure} defaults are used
+exclusively.  The software is built in the same directory as the source
+code.
+
+The defaults are as follows (the @var{release} is shown as @samp{94q4}):
+
+@smallexample
+prefix       /usr/cygnus/progressive-94q4
+exec-prefix  /usr/cygnus/progressive-94q4/H-@var{hosttype}
+                 @emph{(we show the @var{hosttype} as @samp{sparc-sun-sunos4.1.3})}
+target       @emph{nonexistent by default; cross example shows @file{m68k-coff}}
+srcdir       @emph{current directory; example shows @w{@file{/usr/local/src}}}
+objdir       @emph{same as @var{srcdir}}
+release      @emph{shown on distribution tape (example shows @samp{94q4})}
+@end smallexample
+
+The native and cross examples show a complete walk-through for each type
+of build.  (The only difference is the use of the @w{@samp{--target}}
+option to @code{configure} for a cross-development toolkit.  We'll use
+@w{@samp{m68k-coff}} as an example for building a cross-development
+toolkit.)  The programs are to be accessible after installation via the
+symbolic link @w{@file{/usr/progressive}} (@pxref{The HUT,,The
+Heterogeneous Updateable Toolkit}).  Builds are shown independently; for
+an example of a simultaneous build, see @ref{Multiple simultaneous
+builds,,Multiple simultaneous builds}.
+
+@emph{Native:}
+@iftex
+@let@nonarrowing=@comment
+@end iftex
+@smallexample
+$ cd /usr/local/src
+$ ./configure
+Configuring for a sparc-sun-sunos4.1.3_U1 host.
+@dots{}@emph{time passes}@dots{}
+$ make all info > ./make.log
+@dots{}@emph{time passes}@dots{}
+$ su        @emph{(may need root priviledge to install in @file{/usr})}
+# mkdir /usr/cygnus/progressive-94q4
+# make install install-info >> ./make.log
+# ln -s /usr/cygnus/progressive-94q4 /usr/cygnus/progressive
+# ln -s /usr/cygnus/progressive/H-sparc-sun-sunos4.1.3 /usr/progressive
+# exit
+$ ls /usr/progressive/bin
+ar              gcov            objdump
+as              gdb             patch
+byacc           genclass        ranlib
+c++             gperf           sdiff
+c++filt         gprof           send-pr
+cmp             info            size
+diff            install-sid     sparc-sun-sunos4.1.3-gcc
+diff3           ld              strings
+flex            make            strip
+g++             makeinfo        texi2dvi
+gasp            nm              texindex
+gcc             objcopy         
+@end smallexample
+
+@emph{Cross:}
+@smallexample
+$ cd /usr/local/src
+$ ./configure --target=m68k-coff
+Configuring for a sparc-sun-sunos4.1.3_U1 host.
+@dots{}@emph{time passes}@dots{}
+$ make all info > ./make.log
+@dots{}@emph{time passes}@dots{}
+$ su        @emph{(may need root priviledge to install in @file{/usr})}
+# mkdir /usr/cygnus/progressive-94q4
+# make install install-info >> ./make.log
+# ln -s /usr/cygnus/progressive-94q4 /usr/cygnus/progressive
+# ln -s /usr/cygnus/progressive/H-sparc-sun-sunos4.1.3 /usr/progressive
+# exit
+$ ls /usr/progressive/bin
+byacc     install-sid        m68k-coff-gdb      m68k-coff-strip
+cmp       m68k-coff-ar       m68k-coff-ld       make
+diff      m68k-coff-as       m68k-coff-nm       makeinfo
+diff3     m68k-coff-c++      m68k-coff-objcopy  patch
+flex      m68k-coff-c++filt  m68k-coff-objdump  sdiff
+gcov      m68k-coff-g++      m68k-coff-ranlib   send-pr
+genclass  m68k-coff-gasp     m68k-coff-size     texi2dvi
+info      m68k-coff-gcc      m68k-coff-strings  texindex
+@end smallexample
+@iftex
+@let@nonarrowing=@relax
+@end iftex
+
+In either of the above examples, you must set your @code{PATH} to
+include @w{@file{/usr/progressive/bin}} in order to access the tools
+easily. 
+
+@node prefix/exec-prefix 
+@unnumberedsubsec Example: setting @var{prefix} and @var{exec-prefix}
+
+Use @samp{--prefix} and @samp{--exec-prefix} to explicitly set
+installation directories.  These variables are set to subdirectories of
+@w{@file{/usr/cygnus/progressive-@var{date}}} by default (@pxref{default
+native/cross,,Building with the defaults}).  For more involved
+discussion on the nuances of these options, see @ref{The HUT,,The
+Heterogeneous Updateable Toolkit}.  For discussion on the options
+themselves, see @ref{configure options,,Options to @code{configure}}.
+
+This example shows different installation directories from the default.
+The defaults for this example are as follows (the @var{release} is shown
+as @samp{94q4}):
+
+@smallexample
+prefix       @emph{set on command line}
+exec-prefix  @emph{set on command line}
+target       @emph{nonexistent by default; cross example shows @file{m68k-coff}}
+srcdir       @emph{current directory; example shows @w{@file{/usr/local/src}}}
+objdir       @emph{same as @var{srcdir}}
+release      @emph{shown on distribution tape (example uses @samp{94q4})}
+@end smallexample
+
+The native and cross examples show a complete walk-through for each type
+of build.  (The only difference is the use of the @w{@samp{--target}}
+option to @code{configure} for a cross-development toolkit.  We'll use
+@w{@samp{m68k-coff}} as an example for building a cross-development
+toolkit.)
+
+For this example, we'll set the configuration to install
+host-independent files (documentation, library source code) in
+@w{@file{/usr/local}}, and host-dependent files (binary programs,
+precompiled libraries) in @w{@file{/usr/local/H-sun4}}.  The programs
+are to be accessible after installation via the symbolic link
+@w{@file{/usr/progressive}} (@pxref{The HUT,,The Heterogeneous
+Updateable Toolkit}).  Builds are shown independently; for
+an example of a simultaneous build, see @ref{Multiple simultaneous
+builds,,Multiple simultaneous builds}.
+
+@emph{Native:}
+@iftex
+@let@nonarrowing=@comment
+@end iftex
+@smallexample
+$ cd /usr/local/src
+$ ./configure --prefix=/usr/local/94q4 \
+    --exec-prefix=/usr/local/94q4/H-sun4
+Configuring for a sparc-sun-sunos4.1.3_U1 host.
+@dots{}@emph{time passes}@dots{}
+$ make all info > ./make.log
+@dots{}@emph{time passes}@dots{}
+$ su        @emph{(may need root priviledge to install in @file{/usr})}
+# mkdir /usr/local/94q4
+# make install install-info >> ./make.log
+# ln -s /usr/local/94q4 /usr/local/progressive
+# ln -s /usr/local/progressive/H-sun4 /usr/progressive
+# exit
+$ ls /usr/progressive/bin
+ar              gcov            objdump
+as              gdb             patch
+byacc           genclass        ranlib
+c++             gperf           sdiff
+c++filt         gprof           send-pr
+cmp             info            size
+diff            install-sid     sparc-sun-sunos4.1.3-gcc
+diff3           ld              strings
+flex            make            strip
+g++             makeinfo        texi2dvi
+gasp            nm              texindex
+gcc             objcopy         
+@end smallexample
+
+@emph{Cross:}
+@smallexample
+$ cd /usr/local/src
+$ ./configure --target=m68k-coff --prefix=/usr/local/94q4 \
+    --exec-prefix=/usr/local/94q4/H-sun4
+Configuring for a sparc-sun-sunos4.1.3_U1 host.
+@dots{}@emph{time passes}@dots{}
+$ make all info > ./make.log
+@dots{}@emph{time passes}@dots{}
+$ su        @emph{(may need root priviledge to install in @file{/usr})}
+# mkdir /usr/local/94q4
+# make install install-info >> ./make.log
+# ln -s /usr/local/94q4 /usr/local/progressive
+# ln -s /usr/local/progressive/H-sun4 /usr/progressive
+# exit
+$ ls /usr/progressive/bin
+byacc     install-sid        m68k-coff-gdb      m68k-coff-strip
+cmp       m68k-coff-ar       m68k-coff-ld       make
+diff      m68k-coff-as       m68k-coff-nm       makeinfo
+diff3     m68k-coff-c++      m68k-coff-objcopy  patch
+flex      m68k-coff-c++filt  m68k-coff-objdump  sdiff
+gcov      m68k-coff-g++      m68k-coff-ranlib   send-pr
+genclass  m68k-coff-gasp     m68k-coff-size     texi2dvi
+info      m68k-coff-gcc      m68k-coff-strings  texindex
+@end smallexample
+@iftex
+@let@nonarrowing=@relax
+@end iftex
+
+In either of the above examples, you must set your @code{PATH} to
+include @w{@file{/usr/progressive/bin}} in order to access the tools
+easily. 
+
+@node srcdir/objdir
+@unnumberedsubsec Example: different @var{srcdir} and @var{objdir}
+
+The concept of different source and build directories comes from the
+practice of building the same toolkit for several different platforms,
+in a heterogeneous environment.  It is often convenient to keep object
+files separate from the sources from which they were derived.  For more
+discussion, see @ref{srcdir and objdir,,Source and Build Directories}.
+
+This example shows different source and object directories only.  The
+defaults for this example are as follows (the @var{release} is shown as
+@samp{94q4}):
+
+@smallexample
+prefix       /usr/cygnus/progressive-94q4
+exec-prefix  /usr/cygnus/progressive-94q4/H-@var{hosttype}
+                 @emph{(we show the @var{hosttype} as @samp{sparc-sun-sunos4.1.3})}
+target       @emph{nonexistent by default; cross example uses @file{m68k-coff}}
+srcdir       @emph{example shows @w{@file{/usr/local/src}}}
+objdir       @emph{example shows @w{@file{/usr/local/obj/native}} and
+                                 @w{@file{/usr/local/obj/m68k-coff}}}
+release      @emph{shown on distribution tape (example uses @samp{94q4})}
+@end smallexample
+
+The native and cross examples show a complete walk-through for each type
+of build.  (The only difference is the use of the @w{@samp{--target}}
+option to @code{configure} for a cross-development toolkit.  We'll use
+@w{@samp{m68k-coff}} as an example for building a cross-development
+toolkit.)
+
+@emph{Note:} The use of @samp{--srcdir} is redundant, as the default
+source directory is the one in which @code{configure} itself resides.
+We show it here for the purposes of the example.  Builds are shown
+independently; for an example of a simultaneous build, see @ref{Multiple
+simultaneous builds,,Multiple simultaneous builds}.  @emph{This option
+is only supported when you use @sc{gnu} @code{make}.}
+
+@emph{Native:}
+@iftex
+@let@nonarrowing=@comment
+@end iftex
+@smallexample
+$ cd /usr/local/obj/native
+$ /usr/local/src/configure --srcdir=/usr/local/src
+Configuring for a sparc-sun-sunos4.1.3_U1 host.
+@dots{}@emph{time passes}@dots{}
+$ make all info > ./make.log
+@dots{}@emph{time passes}@dots{}
+$ su        @emph{(may need root priviledge to install in @file{/usr})}
+# mkdir /usr/cygnus/progressive-94q4
+# make install install-info >> ./make.log
+# ln -s /usr/cygnus/progressive-94q4 /usr/cygnus/progressive
+# ln -s /usr/cygnus/progressive/H-sparc-sun-sunos4.1.3 /usr/progressive
+# exit
+$ ls /usr/progressive/bin
+ar              gcov            objdump
+as              gdb             patch
+byacc           genclass        ranlib
+c++             gperf           sdiff
+c++filt         gprof           send-pr
+cmp             info            size
+diff            install-sid     sparc-sun-sunos4.1.3-gcc
+diff3           ld              strings
+flex            make            strip
+g++             makeinfo        texi2dvi
+gasp            nm              texindex
+gcc             objcopy         
+@end smallexample
+
+@emph{Cross:}
+@smallexample
+$ cd /usr/local/obj/m68k-coff
+$ /usr/local/src/configure --target=m68k-coff \
+    --srcdir=/usr/local/src
+Configuring for a sparc-sun-sunos4.1.3_U1 host.
+@dots{}@emph{time passes}@dots{}
+$ make all info > ./make.log
+@dots{}@emph{time passes}@dots{}
+$ su        @emph{(may need root priviledge to install in @file{/usr})}
+# mkdir /usr/cygnus/progressive-94q4
+# make install install-info >> ./make.log
+# ln -s /usr/cygnus/progressive-94q4 /usr/cygnus/progressive
+# ln -s /usr/cygnus/progressive/H-sparc-sun-sunos4.1.3 /usr/progressive
+# exit
+$ ls /usr/progressive/bin
+byacc     install-sid        m68k-coff-gdb      m68k-coff-strip
+cmp       m68k-coff-ar       m68k-coff-ld       make
+diff      m68k-coff-as       m68k-coff-nm       makeinfo
+diff3     m68k-coff-c++      m68k-coff-objcopy  patch
+flex      m68k-coff-c++filt  m68k-coff-objdump  sdiff
+gcov      m68k-coff-g++      m68k-coff-ranlib   send-pr
+genclass  m68k-coff-gasp     m68k-coff-size     texi2dvi
+info      m68k-coff-gcc      m68k-coff-strings  texindex
+@end smallexample
+@iftex
+@let@nonarrowing=@relax
+@end iftex
+
+In either of the above examples, you must set your @code{PATH} to
+include @w{@file{/usr/progressive/bin}} in order to access the tools
+easily. 
+
+@node setting prefix/exec-prefix and srcdir
+@unnumberedsubsec Example: setting @var{prefix}/@var{exec-prefix} and @var{srcdir}
+
+This example shows different source and object directories, as well as
+different installation directories from the default.  The defaults for
+this example are as follows (the @var{release} is shown as @samp{94q4}):
+
+@smallexample
+prefix       @emph{set on command line}
+exec-prefix  @emph{set on command line}
+                 @emph{(we show the @var{hosttype} as @samp{sparc-sun-sunos4.1.3})}
+target       @emph{nonexistent by default; cross example uses @file{m68k-coff}}
+srcdir       @emph{example shows @w{@file{/usr/local/src}}}
+objdir       @emph{example shows @w{@file{/usr/local/obj/native}} and
+                                 @w{@file{/usr/local/obj/m68k-coff}}}
+release      @emph{shown on distribution tape (example uses @samp{94q4})}
+@end smallexample
+
+The native and cross examples show a complete walk-through for each type
+of build.  (The only difference is the use of the @w{@samp{--target}}
+option to @code{configure} for a cross-development toolkit.  We'll use
+@w{@samp{m68k-coff}} as an example for building a cross-development
+toolkit.)
+
+@emph{Note:} The use of @samp{--srcdir} is redundant, as the default
+source directory is the one in which @code{configure} itself resides.
+We show it here for the purposes of the example.  Builds are shown
+independently; for an example of a simultaneous build, see @ref{Multiple
+simultaneous builds,,Multiple simultaneous builds}.   @emph{This option
+is only supported when you use @sc{gnu} @code{make}.}
+
+@emph{Native:}
+@iftex
+@let@nonarrowing=@comment
+@end iftex
+@smallexample
+$ cd /usr/local/obj/native
+$ /usr/local/src/configure --srcdir=/usr/local/src \
+    --prefix=/usr/local/94q4 --exec-prefix=/usr/local/94q4/H-sun4
+Configuring for a sparc-sun-sunos4.1.3_U1 host.
+@dots{}@emph{time passes}@dots{}
+$ make all info > ./make.log
+@dots{}@emph{time passes}@dots{}
+$ su        @emph{(may need root priviledge to install in @file{/usr})}
+# mkdir /usr/local/94q4
+# make install install-info >> ./make.log
+# ln -s /usr/local/94q4 /usr/local/progressive
+# ln -s /usr/local/94q4/H-sun4 /usr/progressive
+# exit
+$ ls /usr/progressive/bin
+ar              gcov            objdump
+as              gdb             patch
+byacc           genclass        ranlib
+c++             gperf           sdiff
+c++filt         gprof           send-pr
+cmp             info            size
+diff            install-sid     sparc-sun-sunos4.1.3-gcc
+diff3           ld              strings
+flex            make            strip
+g++             makeinfo        texi2dvi
+gasp            nm              texindex
+gcc             objcopy         
+@end smallexample
+
+@emph{Cross:}
+@smallexample
+$ cd /usr/local/obj/m68k-coff
+$ /usr/local/src/configure --target=m68k-coff --srcdir=/usr/local/src \
+    --prefix=/usr/local/94q4 --exec-prefix=/usr/local/94q4/H-sun4
+Configuring for a sparc-sun-sunos4.1.3_U1 host.
+@dots{}@emph{time passes}@dots{}
+$ make all info > ./make.log
+@dots{}@emph{time passes}@dots{}
+$ su        @emph{(may need root priviledge to install in @file{/usr})}
+# mkdir /usr/local/94q4
+# make install install-info >> ./make.log
+# ln -s /usr/local/94q4 /usr/local/progressive
+# ln -s /usr/local/progressive/H-sun4 /usr/progressive
+# exit
+$ ls /usr/progressive/bin
+byacc     install-sid        m68k-coff-gdb      m68k-coff-strip
+cmp       m68k-coff-ar       m68k-coff-ld       make
+diff      m68k-coff-as       m68k-coff-nm       makeinfo
+diff3     m68k-coff-c++      m68k-coff-objcopy  patch
+flex      m68k-coff-c++filt  m68k-coff-objdump  sdiff
+gcov      m68k-coff-g++      m68k-coff-ranlib   send-pr
+genclass  m68k-coff-gasp     m68k-coff-size     texi2dvi
+info      m68k-coff-gcc      m68k-coff-strings  texindex
+@end smallexample
+@iftex
+@let@nonarrowing=@relax
+@end iftex
+
+In either of the above examples, you must set your @code{PATH}
+environment variable to include @w{@file{/usr/progressive/bin}} in order
+to access the tools easily.
+
+@node Multiple simultaneous builds
+@unnumberedsubsec Multiple simultaneous builds
+
+If the source code for your distribution resides on a disk shared by
+other machines in the network, you can build for all host types
+simultaneously by using different @dfn{build directories}.  @xref{srcdir
+and objdir,,Source and Build Directories}, for details on building with
+different source and build directories; also see
+@ref{srcdir/objdir,,Example: different @var{srcdir} and @var{objdir}},
+for an example.
+
+Multiple simultaneous builds can be conducted on the same source code
+simply by using different build directories.  For example, assume we
+have source code in @w{@file{/usr/local/src}}, and wish to build a
+native toolkit for our Sun @sc{sparc}station running SunOS 4.1.3
+(@code{sparky}) and our DECstation running Ultrix (@code{deckard}), and
+that we also wish to build a cross-development toolkit for each host for
+a @w{@samp{m68k-aout}} target.
+
+@quotation
+@emph{Note:} this example shows a complete build for all four
+configurations, one native development system and one cross-development
+system for each of two hosts, including installation and links.
+@xref{The HUT,,The Heterogeneous Updateable Toolkit}, for more general
+discussions and examples.
+@end quotation
+
+All of these toolkits are to be installed into
+
+@smallexample
+/usr/local/progressive-94q4
+@end smallexample
+
+@noindent
+(The cross-development tools are installed with the native tools;
+however, the cross tools have a prefix of @var{target}, e.g.,
+@w{@file{m68k-aout-gcc}}.)  They are to be linked so that
+@w{@file{/usr/progressive/bin}} on each host points toward the correct
+binaries for that host:
+
+@smallexample
+/usr/local/progressive-94q4/H-@var{hosttype}/bin
+@end smallexample
+
+@noindent
+but the machine-independent files in
+
+@smallexample
+/usr/local/progressive-94q4
+@end smallexample
+
+@noindent
+are shared across platforms.  We accomplish this by actually installing
+into a shared disk called @file{shared}, and creating links from
+@w{@file{/usr/local}}.
+
+@smallexample
+
+     @emph{first, set up the shared space in @file{/shared}}
+
+$ mkdir /shared/local
+$ su     @emph{(may need root priviledge to put link in @file{/usr})}
+# ln -s /shared/local /usr/local
+# mkdir /usr/local/progressive-94q4
+# exit
+
+     @emph{now we build the native toolset for the Sun}
+
+$ uname -a
+SunOS sparky 4.1.3_U1 1 sun4m
+$ mkdir /usr/local/obj/sun4native 
+$ cd /usr/local/obj/sun4native
+$ /usr/local/src/configure --prefix=/usr/local/progressive-94q4 \
+    --exec-prefix=/usr/local/progressive-94q4/H-sun4 \
+    --srcdir=/usr/local/src
+Configuring for a sparc-sun-sunos4.1.3_U1 host.
+@dots{}@emph{time passes}@dots{}
+$ make all info > ./make.log
+@dots{}@emph{time passes}@dots{}
+$ su        @emph{(may need root priviledge to install in @file{/usr})}
+# make install install-info >> ./make.log
+# exit
+
+     @emph{(now the cross toolkit)}
+
+$ mkdir /usr/local/obj/sun4-x-m68k
+$ cd /usr/local/obj/sun4-x-m68k
+$ /usr/local/src/configure --prefix=/usr/local/progressive-94q4 \
+    --exec-prefix=/usr/local/progressive-94q4/H-sun4 \
+    --srcdir=/usr/local/src --target=m68k-aout
+Configuring for a sparc-sun-sunos4.1.3_U1 host.
+@dots{}@emph{time passes}@dots{}
+$ make all info > ./make.log
+@dots{}@emph{time passes}@dots{}
+$ su        @emph{(may need root priviledge to install in @file{/usr})}
+# make install install-info >> ./make.log
+
+     @emph{now create the links which bring the toolkit online}
+
+# ln -s /usr/local/progressive-94q4 /usr/local/progressive
+# ln -s /usr/local/progressive/H-sun4 /usr/progressive
+# exit
+
+@emph{@file{/usr/progressive} on @code{sparky} now points to the Sun4-specific installation}
+
+@emph{(continued on next page@dots{})}
+@end smallexample
+
+@page
+@smallexample
+     @emph{@file{/shared} already exists; now we build}
+     @emph{the native toolset for the DECstation}
+
+$ rlogin deckard
+$ uname -a
+ULTRIX deckard 4.2 0 RISC
+$ mkdir /usr/local/obj/decnative
+$ cd /usr/local/obj/decnative
+$ /usr/local/src/configure --prefix=/usr/local/progressive-94q4 \
+    --exec-prefix=/usr/local/progressive-94q4/H-decstn \
+    --srcdir=/usr/local/src
+Configuring for a mips-dec-ultrix4.2 host.
+@dots{}@emph{time passes}@dots{}
+$ make all info > ./make.log
+@dots{}@emph{time passes}@dots{}
+$ su        @emph{(may need root priviledge to install in @file{/usr})}
+     @emph{remember, @file{/usr/local/progressive-94q4} already exists}
+# make install install-info >> ./make.log
+# exit
+
+     @emph{(now the cross toolkit)}
+
+$ mkdir /usr/local/obj/sun4cross
+$ cd /usr/local/obj/sun4native
+$ /usr/local/src/configure --prefix=/usr/local/progressive-94q4 \
+    --exec-prefix=/usr/local/progressive-94q4/H-decstn \
+    --srcdir=/usr/local/src --target=m68k-aout
+Configuring for a mips-dec-ultrix4.2 host.
+@dots{}@emph{time passes}@dots{}
+$ make all info > ./make.log
+@dots{}@emph{time passes}@dots{}
+$ su        @emph{(may need root priviledge to install in @file{/usr})}
+# make install install-info >> ./make.log
+
+     @emph{now create the link which brings the toolkit online; remember, the other link}
+         /usr/local/progressive -> /usr/local/progressive-94q4
+     @emph{already exists from the Sun build}
+
+# ln -s /usr/local/progressive/H-decstn /usr/progressive
+# exit
+
+@emph{@file{/usr/progressive} on @code{deckard} now points to the DEC-specific installation}
+@end smallexample
+
+(This example shows a Bourne-compatible shell (@code{sh}, @code{bash},
+@code{ksh}); contact Cygnus if you have any trouble.)
+
+@file{/usr/progressive/bin} on each host now points toward the binaries
+built for that @var{hosttype}, while the machine-independent files in
+@w{@file{/usr/local/progressive}} are shared between the two builds.  In
+addition, each installation contains both a native development toolkit
+and a cross-development toolkit for the @w{@samp{m68k-aout}} target.
+
+Please contact Cygnus Support if any of this is unclear, or if you have
+any questions.
+
+@contents
+@bye

@@ -1,0 +1,591 @@
+@c                                                  -*-Texinfo-*-
+@c Contents of PIN guide or chapter.  For use as a chapter,
+@c surround inclusion of this file with `@lowersections' and `@raisesections'.
+
+@menu
+* PINNames::	What the tools are called
+* PINNLMs::	Compiling for NetWare
+* PINGcc::	Compiler and linker options for NetWare.
+* PINNlmconv::	Making an NLM
+* PINGdb::	NetWare debugging with GDB.
+* PINLibs::	Subroutine libraries
+* PINCpp::	Predefined preprocessor macros.
+* PINConfig::	Configuring GNU source for NetWare
+* PINRefs::	NetWare development documentation.
+@end menu
+
+@node PINNames
+@chapter What to Call the Tools
+
+Cross-development tools in the Cygnus Developer's Kit are normally
+installed with names that reflect the target configuration, so that you
+can install more than one set of tools in the same binary directory.
+These names are constructed by using, as a prefix, the name of the
+configured target.  For example:
+
+@table @code
+@item i386-netware-gcc
+The C compiler, @sc{gnu} @sc{CC}.
+
+@item i386-netware-ld
+The @sc{gnu} linker.
+
+@item i386-netware-nlmconv
+Object format converter; used for the last step in building an NLM.
+@end table
+
+@node PINNLMs
+@chapter Compiling for NetWare
+
+@noindent
+Follow these steps to build an NLM:
+
+@enumerate
+@item
+Compile your source files with the @samp{-c} option, to build
+individual object files.
+
+@item
+Link all your object files with @file{prelude.o} (a Novell run-time
+initialization file), using the @samp{-r} linker option to produce a
+single relocatable object file.
+
+@item
+Convert the object file to NLM format, as specified by your header
+definition file.
+@end enumerate
+
+
+@noindent
+For example, these three steps build an NLM called @file{hi.nlm} from a
+C source file @file{hi.c}, the Novell-supplied @file{prelude.o}, and an
+NLM header file @file{hi.def}.
+
+@cartouche
+@example
+$ i386-netware-gcc -c hi.c
+                @i{The @samp{-c} option specifies @samp{.o} output files.}
+
+$ i386-netware-gcc -r -o hi.O prelude.o hi.o
+                @i{Use @samp{-r} for relocatable output, @samp{-o} to name the}
+                @i{output file.}
+
+$ i386-netware-nlmconv -T hi.def hi.O hi.nlm
+                @i{Use @samp{-T} to indicate Novell header definition file;}
+                @i{remaining arguments are input file, NLM output file.}
+@end example
+@end cartouche
+
+@node PINGcc
+@chapter Compiler and Linker Options for NetWare
+
+The @sc{gnu} compiler has a variety of options to cover many needs.  The
+NetWare development environment is based on the Unix System V release 4
+environment, and the same command-line options are available as for SVr4.
+For information on all the @sc{gcc} command-line options, see @ref{Invoking
+GCC,,GNU CC Command Options,gcc.info,Using GNU CC}.
+
+@sc{gnu} @sc{cc} also has specific options for each hardware
+architecture.  @xref{i386 Options,,Intel 386 Options,gcc.info,Using GNU
+CC}, for example.
+
+The essential @sc{gnu} linker options for NLM development are those
+shown in the example:  @samp{-r} to make a single relocatable output
+file, and @samp{-o @var{outfile}} to name the output file.
+
+You can use the @sc{gnu} @sc{cc} command-line option @samp{-Wl} to
+combine the compilation and link into a single call to
+@code{i386-netware-gcc}:
+
+@table @code
+@item -Wl,@var{option}
+Pass @var{option} as an option to the linker.  If @var{option} contains
+commas, it is split into multiple options at the commas.
+@end table
+
+For example, you can build the @file{hi.O} intermediate file of
+the previous example with a single call to @sc{gnu} @sc{cc} like this.
+You still need to call @code{i386-netware-nlmconv}:
+
+@cartouche
+@example
+$ i386-netware-gcc -Wl,-r,-o,hi.O prelude.o hi.c
+$ i386-netware-nlmconv -T hi.def hi.O hi.nlm
+@end example
+@end cartouche
+
+@node PINNlmconv
+@chapter Making an NLM
+
+Once you've linked a relocatable object file, use the utility
+@code{i386-netware-nlmconv} to turn it into an NLM.  This utility is
+very similar to Novell's @code{NLMLINK} program (which is used for
+building NLMs from a DOS development environment).  Similarly, the
+header file @samp{@var{filename}.def} that you must supply uses the same
+syntax as the header file for @code{NLMLINK}, and it recognizes most of
+the same directives.
+
+@noindent
+Here are the main options and arguments for @code{nlmconv}.
+
+@smallexample
+nlmconv [ -T @var{headerfile} | --header-file=@var{headerfile} ]
+        [ @var{infile} ]  [ @var{outfile} ]
+@end smallexample
+
+@xref{nlmconv,, nlmconv, binutils.info, The GNU Binary Utilities}, for
+information on a few additional, rarely used, options.
+@c FIXME!! Make sure new -d, -l options shown there.
+
+@table @code
+@item -T @var{headerfile}
+@itemx --header-file=@var{headerfile}
+Reads @var{headerfile} for NLM header information. 
+
+@item @var{infile}
+Name of the single, relocatable, object file to be converted to an NLM.
+
+@item @var{outfile}
+Name for the Netware Loadable Module produced by @code{nlmconv}.
+@end table
+
+@menu
+* PINIncompatibilities::	Differences from DOS development tools.
+* PINDirectives::		What goes in the file.def header.
+@end menu
+
+@node PINIncompatibilities
+@section Differences from DOS development tools
+
+If you have been using @code{NLMLINK} to develop NLM code, bear these
+differences in mind when you use @code{nlmconv}:
+
+@table @emph
+@item Input and output files on command-line
+You can name one input file, and the output file (in that order), on the
+@code{nlmconv} command line instead of in the @file{@var{filename}.def}
+file.  (You can also use the @code{OUTPUT} and @code{INPUT} directives
+in the definitions file, just as with @code{NLMLINK}.  The @code{INPUT}
+directive allows you to list more than one input file, and lets
+@code{nlmconv} call the linker for you.)
+
+@item Option for header file.
+Specify the header file on the command line with the option @w{@samp{-T
+@var{filename}.def}}, @emph{not} as @samp{@@@var{filename}.def}.
+
+@item Linker a separate program.
+@code{nlmconv} calls the linker if necessary, but it is not itself a
+linker.  This has no direct impact, but it does mean that @code{nlmconv}
+ignores some definition-file directives that would be meaningful only to
+a linker.
+
+@item Some directives not supported.
+Because of the foregoing differences, @code{nlmconv} ignores
+these directives (which are accepted by @code{NLMLINK}) in the
+@file{@var{filename}.def} file.  To make it easier for you to use the
+same header file, @code{nlmconv} generates an NLM even if it prints a
+warning for one of these directives:
+
+@example
+MAP          CODESTART
+FULLMAP      VERBOSE  
+@end example
+
+These unsupported directives are all concerned with displaying a link
+map.  If you use the @sc{gnu} linker explicitly to make a single
+@code{nlmconv} input file, you can use the @samp{-M} linker option to
+display the link map on standard output, or the @samp{-Map
+@var{mapfile}} linker option to write the link map in a file of your
+choice.  @xref{Options,,Command Line Options,ld.info,Using ld: the GNU linker},
+for more details.
+
+For example, you can use the @sc{gnu} linker like this to build a single
+relocatable object file, and display a link map on standard output:
+@c end table early to get more room for example
+@end table
+
+@cartouche
+@smallexample
+$ i386-netware-ld -M -r -o single.o prelude.o @var{objfiles@dots{}}
+@end smallexample
+@end cartouche
+
+@node PINDirectives
+@section What goes in the @code{@var{file}.def} header
+
+You can place comments anywhere in your NLM header file: comments start
+with the character @samp{#} and end at the next new line.  An @samp{@@}
+introduces an include file (its contents are used as if they were in the
+current file).
+
+Otherwise, each line of a @code{@var{file}.def} header file begins with
+one of the directives summarized below; the rest of the line contains
+optional arguments, separated by spaces, tabs, or commas (spaces, tabs
+and commas are interchangeable).  You may type these directives in
+either upper or lower case.  See the ``Linkers'' chapter of
+@cite{NetWare NLM Development and Tools Overview}, for more details on
+these directives.
+
+If you need more than one line for an argument list, type one or more
+blanks or tabs at the beginning of the continuation lines.
+
+@table @code
+@item CHECK @var{ckproc}
+Run the check procedure @var{ckproc} on attempts to unload your NLM; return
+@code{0} to indicate unloading is safe, any nonzero value otherwise.
+There is only one check procedure per NLM; if you specify @code{CHECK}
+more than once, only the last specification takes effect.
+
+@code{nlmconv} issues a warning if the check procedure you specify is
+not in the object code.
+
+@item COPYRIGHT "@var{msg}"
+Display the copyright notice @var{msg} on the console screen when your
+NLM loads.
+
+@item CUSTOM @var{filename}
+Copy arbitrary data from file @var{filename} into your output NLM.  Your
+code can reach this data through the @code{customDataOffset} and
+@code{customDataSize} fields of the NLM header.
+
+You may use @code{CUSTOM} at most once in the NLM header definition file.
+
+@item DATE @var{mth} @var{dy} @var{year}
+Force a particular date into the version header of your NLM (otherwise
+@code{nlmconv} uses the current date).  Note the argument order:
+@var{mth} is the month, @var{dy} the day, @var{year} the year.  Specify
+all fields as numbers, and specify the year as an absolute date---for
+example @samp{1993}, not @samp{93}.
+
+@item DEBUG
+Generate debugging information in the format used by the NetWare
+internal debugger.
+
+@item DESCRIPTION "@var{txt}"
+A name for your NLM, displayed on the console whenever it is loaded, and
+in response to some other console commands.
+
+@item EXIT @var{exproc}
+Run the exit procedure @var{exproc} to clean up any resources your NLM
+allocated before unloading.  This procedure runs @emph{after} everything
+else in your NLM; in particular, it runs after any C++ destructors, and
+after any procedures you register with the @code{atexit} library
+routine.  There is only one exit procedure per NLM; if you specify
+@code{EXIT} more than once, only the last specification takes effect.
+
+The default exit procedure is @code{_Stop}, defined in Novell's
+@file{prelude.o} file.
+
+@item EXPORT @var{sym1} @var{sym2} @dots{}
+@itemx EXPORT @dots{} (@var{prefix}) @var{sym1} @var{sym2} @dots{}
+Export a list of symbols (separated by spaces, tabs, or commas) for use
+by other NLMs.  Recall that you can continue the argument list on
+successive lines if you need to, by starting the continuation lines with
+blanks or tabs.
+
+You can insert @samp{(@var{prefix})} (a string in parentheses) anywhere
+in the list; any symbols listed after a @samp{(prefix)} will be exported
+with the @var{prefix} string (followed by the character @samp{@@}) at
+the beginning of the symbol name.  Use a @samp{(@var{prefix})} string
+unique to your NLM to distinguish your symbols from those of other NLMs.
+
+An empty prefix string @samp{()} is valid and useful: use it to cancel
+the effect of an earlier prefix specification.  No @samp{@@} is inserted
+when the prefix is an empty string.
+
+You can use @code{EXPORT} repeatedly in your header file.  Each instance
+adds more symbols to the export list.  Prefixes only apply to the
+@code{EXPORT} statement where they appear, however; you must repeat the
+@samp{(@var{prefix})} declaration in each @code{EXPORT} directive where
+you want to use the same symbol prefix.
+
+@item FLAG_ON @var{bits}
+Turn on the NLM header flags corresponding to the base-two
+representation of the number @var{bits}.  You can construct a value for
+@var{bits} by adding any combination of the following:
+
+@table @code
+@item 1
+Same effect as @code{REENTRANT} directive.
+
+@item 2
+Same effect as @code{MULTIPLE}.
+
+@item 4
+Same effect as @code{SYNCHRONIZE}.
+
+@item 8
+Same effect as @code{PSEUDOPREEMPTION}.
+
+@item 16
+Same effect as @code{OS_DOMAIN}.
+@end table
+
+@item FLAG_OFF @var{bits}
+Turn off the NLM header flags corresponding to the base-two
+representation of the number @var{bits}.  See @code{FLAG_ON} to
+construct a value for @var{bits}.
+
+@item HELP @var{fname}
+Use file @var{fname} for any help text supplied by this NLM.  You can use
+this indirection to support multiple languages; you should take care to
+switch the help file in parallel with the message file.
+
+@item IMPORT @var{sym1} @var{sym2} @dots{}
+@itemx IMPORT @dots{} (@var{prefix}) @var{sym1} @var{sym2} @dots{}
+The converse of @code{EXPORT}; symbols your NLM needs that are exported
+by other NLMs.  The rules for the list of symbols, and for use of
+@samp{(@var{prefix})}, are the same as for @code{EXPORT}.
+
+@item INPUT @var{objfile} @dots{}
+You can specify one or more input files using this directive from your
+header definitions file.  @code{nlmconv} calls the @sc{gnu} linker to
+make a single relocatable file for conversion, if you specify more than
+one @var{objfile}.
+
+@emph{Warning:} it is an error to specify an input file on the command
+line if your header file also contains the @code{INPUT} directive.
+
+@item MESSAGES @var{fname}
+Use file @var{fname} for any messages issued by this NLM.  You can use
+this indirection to support multiple languages; take care to switch the
+message file in parallel with the help file.  Novell provides tools to
+generate message files.
+@c FIXME!  It'd be nice to have a specific reference to these tools or
+@c         to their doc.
+
+@item MODULE @var{nlm1} @var{nlm2} @dots{}
+Specify NLMs that must load before yours.  You can separate the
+arguments with spaces, tabs, or commas.  Recall that you can continue
+the argument list on successive lines if you need to, by starting the
+continuation lines with blanks or tabs.
+
+@item MULTIPLE
+Include this directive to indicate your NLM may be loaded more than once.
+
+@item OUTPUT @var{filename}
+You can specify a default name for the output NLM using this directive.
+If you also specify an output filename on the @code{nlmconv} command
+line, this directive is ignored.
+
+@item OS_DOMAIN
+Include this directive to indicate your NLM is to run in the OS
+domain---that is, with direct access to all NetWare operating system
+facilities, and without memory protection.
+
+@item PSEUDOPREEMPTION
+Include this directive to make NetWare force your NLM to relinquish
+control periodically, even if your NLM makes no other arrangement to
+relinquish control.
+
+@item REENTRANT
+If you include this directive, when someone reloads your NLM after it is
+already loaded, the new thread of control uses the NLM that is already
+in memory.
+
+@item SCREENNAME "@var{nm}"
+The string @var{nm} is a title for your NLM's console display.
+
+@item SHARELIB @var{libname}
+Load @var{libname} as a shared NLM.
+
+@item STACK @var{sz}
+@itemx STACKSIZE @var{sz}
+Two equivalent directives to set the stack size to @var{sz}, for
+processes in your NLM.
+
+@item START @var{stproc}
+Run the start procedure @var{stproc} to initialize your NLM.  The
+default start procedure is @code{_Prelude}, defined in Novell's
+@file{prelude.o}.  There is only one start procedure per NLM; if you
+specify @code{START} more than once, only the last specification takes
+effect.
+
+The start procedure runs @emph{before} any C++ constructors.
+
+@item SYNCHRONIZE
+Include this directive to indicate that the NetWare OS may not load any
+further NLMs until your NLM calls the system routine @code{SynchronizeStart}.
+
+@item THREADNAME "@var{txt}"
+Use @var{txt} as a prefix to identify threads that belong to this NLM.
+
+@item TYPE @var{num}
+A number, describing the NLM ``module type''.  Any value for @var{num}
+is accepted, but these are the predefined meanings:
+
+@enumerate 0
+@item
+Any NLM (this is the default if you do not use @code{TYPE})
+
+@item
+LAN driver
+
+@item
+Disk driver
+
+@item
+Name-space support module
+
+@item
+Utility NLM
+
+@item
+Mirrored Server Link
+
+@item
+OS NLM
+@c FIXME!! Any relation to OS_DOMAIN directive?
+
+@item
+Paged high OS NLM
+
+@item
+Host Adapter Module
+
+@item
+Custom Device Module
+@end enumerate
+
+@item VERSION @var{maj} @var{min}
+@item VERSION @var{maj} @var{min} @var{rev}
+Specify a version number (displayed at the NetWare console on load) for
+this NLM.  @var{maj} @var{min} and @var{rev} are, respectively, the
+major version number, minor version number, and revision level; you can
+specify a revision level or not, as you choose.  There are no
+constraints on major version number, but the minor revision number must
+be betwen @code{0} and @code{99}, and the revision (if you specify it at
+all) must be between @code{1} and @code{26}.
+@c FIXME! That "between 1 and 26" is awfully suggestive of the alphabet.
+@c ...    someday, check to make sure this isn't actually chars 'a'-'z'.
+
+@item XDCDATA @var{fname}
+Copy the contents of file @var{fname} into your NLM, for use with remote
+procedure call (RPC) extensions to NetWare.
+@c FIXME!  When Novell finishes these extensions, insert ref.
+@end table
+
+@node PINGdb
+@chapter NetWare Debugging with GDB
+
+To debug an NLM under @sc{gdb}, run the NLM under the control of the
+utility NLM @code{GDBSERVE.NLM}, and use the @sc{gdb} @code{target
+remote} command.@footnote{@code{target remote} is otherwise used to
+debug bare-board systems, in which case it requires linking in special
+@dfn{stub} subroutines; with @code{GDBSERVE}, no such special stubs are
+needed.} Bear in mind that---as for all other NLM development
+activity---you should not use a production NetWare system for this
+purpose.  In particular, since NetWare uses cooperative multitasking,
+@emph{everything} on your NetWare server will come to a halt whenever
+you stop inside the NLM you are debugging.
+
+@sc{gdb} and @code{GDBSERVE} communicate via a serial line.
+(@code{GDBSERVE} is an NLM version of the @code{gdbserver} program;
+@pxref{Server,,Using the @code{gdbserver} program, gdb.info, Debugging
+with GDB}, for general information.)
+
+@table @emph
+@item On the NetWare server (the debugging target),
+you need to have a copy of the program you want to debug, in NLM format
+(the output of @code{nlmconv}).
+
+To use @code{GDBSERVE}, you must tell it how to communicate with
+@sc{gdb}; the name of your program; and the arguments for your program.
+The syntax is:
+
+@smallexample
+server: LOAD GDBSERVE [ NODE=@var{node} ] [ PORT=@var{port} ]
+     [ BAUD=@var{baud} ] @var{program} [ @var{args} @dots{} ]
+@end smallexample
+
+@c FIXME!! How do these board/port numbers relate to things DOSish
+@c         folks are used to, like @code{COM4}?
+@var{node} and @var{port} are both numbers: the board and port number
+respectively, for the serial line attached to the machine where you want
+to run @sc{gdb}.  For example, to debug an NLM called @code{HI.NLM} with
+the argument @samp{foo.txt} and communicate with @sc{gdb} over serial
+port number 2 on board 1:
+
+@cartouche
+@example
+server: LOAD GDBSERVE NODE=1 PORT=2 HI foo.txt
+@end example
+@end cartouche
+
+@noindent
+@code{GDBSERVE} waits passively for the host @sc{gdb} to communicate
+with it.
+
+@item On the host,
+you need the relocatable, unstripped copy of your program that you used
+as the argument to @code{nlmconv}; that is, the original linker output
+file, not the NLM format object file.  @sc{gdb} reads symbols and
+debugging information from this file.  Start up @sc{gdb} as usual, using
+the name of the local copy of your program as the first argument.  (You
+may also need the @w{@samp{--baud}} option if the serial line is running
+at anything other than 9600 bps.)  After that, use @code{target remote}
+to establish communications with @code{GDBSERVE}.  Its argument is
+a serial device name (usually something like @file{/dev/ttyb}).
+For example:
+
+@cartouche
+@example
+$ i386-netware-gdb hi.O
+GDB is free software@dots{}
+(gdb) target remote /dev/ttyb
+@end example
+@end cartouche
+
+@noindent
+communicates with the server via serial line @file{/dev/ttyb}.
+@end table
+
+@node PINLibs
+@chapter Subroutine Libraries
+
+You must load Novell's C library @file{CLIB.NLM} to provide the standard
+C subroutine libraries for your programs.  In future releases, the
+Cygnus C subroutine libraries may be available as an alternative,
+pending discussions between Cygnus and Novell on low-level interfaces.
+
+@node PINCpp
+@chapter Predefined Preprocessor Macros
+
+@sc{gcc} defines these preprocessor macros for NetWare:
+
+@example
+__netware__
+i386
+@end example
+
+@node PINConfig
+@chapter Configuring GNU source for NetWare
+
+Your Cygnus Developer's Kit includes precompiled, ready-to-run binaries,
+with all defaults configured for your development system.
+
+However, you may have occasion to reconfigure or rebuild the source.
+For example, you may want to rebuild after receiving a bugfix in
+source-patch form.
+
+You can use the script @code{configure} to specify many prearranged
+kinds of variations in the source.  @xref{Rebuilding,, Rebuilding From
+Source, release.info, Release Notes}, for a discussion of the source
+configuration process.
+
+To get the configuration supported by Cygnus for NetWare development,
+use this @code{configure} option:
+
+@table @code
+@item --target=i386-netware
+@end table
+
+@node PINRefs
+@chapter NetWare Development Documentation
+
+For general information about programming for NetWare, see @cite{NetWare
+NLM Development and Tools Overview} (Novell Part # 100--001872--001).
+
+This document is available from Novell, Inc.; 122 East 1700 South;
+Provo, Utah; 84606 U.S.A.  You can also telephone Novell at @w{+1 800
+@sc{netware}}.

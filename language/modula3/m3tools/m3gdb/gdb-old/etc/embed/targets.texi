@@ -1,0 +1,97 @@
+@c This file documents the embedded systems on which the GNU tools will run, 
+@c as @included in embed.texi.
+
+@node Supported Targets
+@chapter Supported targets
+@cindex supported targets
+@cindex targets, supported
+
+This document describes programming practices and options for several of
+the embedded targets supported by the Cygnus Developer's Kit.  This
+document is currently draft status, as the tools themselves are evolving
+to meet the needs of our customers.  It is also incomplete, as new
+targets are added to our matrix frequently
+(@pxref{Introduction,,Overview,release,Release Notes}).
+
+@ignore
+Currently GNU supports the following targets:
+
+@itemize
+@item
+AMD 29k
+@item
+Sparc
+@item
+Hitachi H8/300
+@item
+Hitachi SH
+@item
+Intel 386
+@item 
+Intel 960
+@item
+MIPS
+@item
+Motorola 68k
+@item
+Motorola Power PC
+@c @item
+@c Sun
+@end itemize
+@end ignore
+
+@ignore        
+A @dfn{tool chain} is the series of compiler passes required to produce an
+executable binary image that will run on an embedded system.  
+@xref{GCC,,Porting GCC}.
+
+Generally, a tool chain only needs to support one target execution environment.
+For example, all of the execution environments for the
+AMD 29k processor have the same interface, the same memory map, and the same
+I/O code, so all of the support code for the AMD 29k processor tool chain
+can be kept in one file, @file{newlib/sys/FIXME}.
+
+However some systems, like the cpu32 processor family, have many
+target execution environments that require a variety of hardware-dependent
+routines. 
+@end ignore
+
+
+@menu
+* AMD::                         AMD 29k targets
+* Sparc::                       Sparc targets
+* Hitachi H8300::               Hitachi H8/300
+* Hitachi SH::                  Hitachi SH targets
+* Intel 386::                   Intel 386 targets
+* Intel 960::                   Intel 960 targets
+* MIPS::                        Mips targets
+* Motorola m68k::               Motorola 68k targets
+* MotorPC::                     Motorola/PowerPC targets
+@end menu
+@c * Sun::                         Sun Sparc targets
+
+@page
+@include amd.texi
+@page
+@include sparc.texi
+@page
+@include hitachi-h8.texi
+@page
+@include hitachi-sh.texi
+@page
+@include intel-386.texi
+@page
+@include intel-960.texi
+@page
+@include mips.texi
+@page
+@include motorola.texi
+@page
+@include motorpc.texi
+@c @page
+@c @include sun.texi
+
+
+
+
+

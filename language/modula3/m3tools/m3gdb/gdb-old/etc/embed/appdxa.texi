@@ -1,0 +1,767 @@
+@c This file documents Appendix A, Code Listings,
+@c as @included in tools.texi
+
+@node Code Listings, idp.ld, Binutils, Top
+@appendix Code Listings
+
+@menu
+* crt0.S::              Crt0.S for an m68k
+* idp.ld::              A m68k linker script
+* glue.c::              C-based support for for Stdio functions
+* mvme.S::              Rom monitor based I/O support in assembler
+* io.c::                C based for memory mapped I/O
+* leds.c::              C-based LED routines
+@end menu
+
+@node crt0.S, glue.c, idp.ld, Code Listings
+@section crt0.S - the startup file
+
+@smallexample
+/*
+ * crt0.S -- startup file for m68k-coff
+ * 
+ */
+
+	.title "crt0.S for m68k-coff"
+
+/* These are predefined by new versions of GNU cpp. */
+
+#ifndef __USER_LABEL_PREFIX__
+#define __USER_LABEL_PREFIX__ _
+#endif
+
+#ifndef __REGISTER_PREFIX__
+#define __REGISTER_PREFIX__
+#endif
+
+/* ANSI concatenation macros.  */
+
+#define CONCAT1(a, b) CONCAT2(a, b)
+#define CONCAT2(a, b) a ## b
+
+/* Use the right prefix for global labels.  */
+
+#define SYM(x) CONCAT1 (__USER_LABEL_PREFIX__, x)
+
+/* Use the right prefix for registers.  */
+
+#define REG(x) CONCAT1 (__REGISTER_PREFIX__, x)
+
+#define d0 REG (d0)
+#define d1 REG (d1)
+#define d2 REG (d2)
+#define d3 REG (d3)
+#define d4 REG (d4)
+#define d5 REG (d5)
+#define d6 REG (d6)
+#define d7 REG (d7)
+#define a0 REG (a0)
+#define a1 REG (a1)
+#define a2 REG (a2)
+#define a3 REG (a3)
+#define a4 REG (a4)
+#define a5 REG (a5)
+#define a6 REG (a6)
+#define fp REG (fp)
+#define sp REG (sp)
+
+/*
+ * Set up room for a stack. Just grab a chunk of memory.
+ */
+	.set	stack_size, 0x2000
+	.comm	SYM (stack), stack_size
+
+/*
+ * Define an empty environment.
+ */
+        .data
+        .align 2
+SYM (environ):
+        .long 0
+
+ 	.align	2
+	.text
+	.global SYM (stack)
+
+	.global SYM (main)
+	.global SYM (exit)
+/* 
+ * This really should be __bss_start, not 
+ * SYM (__bss_start). 
+*/
+	.global __bss_start
+
+/*
+ * start -- set things up so the application will run.
+ */
+SYM (start):
+	link	a6, #-8
+	moveal	#SYM (stack) + stack_size, sp
+
+/*
+ * zerobss -- zero out the bss section
+ */
+	moveal	#__bss_start, a0
+	moveal	#SYM (end), a1
+1:
+	movel	#0, (a0)
+	leal	4(a0), a0
+	cmpal	a0, a1
+	bne	1b
+
+/*
+ * Call the main routine from the application.
+ * main (argc, argv, environ)
+ * We pass argv as a pointer to NULL.
+ */
+        pea     0
+        pea     SYM (environ)
+        pea     sp@@(4)
+        pea     0
+	jsr	SYM (main)
+	movel	d0, sp@@-
+
+/*
+ * _exit -- Exit from the application. Normally we cause 
+ *          a user trap to return to the ROM monitor for 
+ *          another run.
+ */
+SYM (exit):
+	trap	#0
+@end smallexample
+
+@node idp.ld, crt0.S, Code Listings, Code Listings
+@section Linker script for the IDP board
+
+This is the linker script script that is used on the Motorola IDP board:
+
+@smallexample
+STARTUP(crt0.o)
+OUTPUT_ARCH(m68k)
+INPUT(idp.o)
+SEARCH_DIR(.)
+__DYNAMIC  =  0;
+/*
+ * Setup the memory map of the MC68ec0x0 Board (IDP)
+ * stack grows up towards high memory. This works for
+ * both the rom68k and the mon68k monitors.
+ */
+MEMORY
+@{
+  ram     : ORIGIN = 0x10000, LENGTH = 2M
+@}
+/*
+ * stick everything in ram (of course)
+ */
+SECTIONS
+@{
+  .text :
+  @{
+    CREATE_OBJECT_SYMBOLS
+    *(.text)
+     etext  =  .;
+     __CTOR_LIST__ = .;
+     LONG((__CTOR_END__ - __CTOR_LIST__) / 4 - 2)
+    *(.ctors)
+     LONG(0)
+     __CTOR_END__ = .;
+     __DTOR_LIST__ = .;
+     LONG((__DTOR_END__ - __DTOR_LIST__) / 4 - 2)
+    *(.dtors)
+     LONG(0)
+     __DTOR_END__ = .;
+    *(.lit)
+    *(.shdata)
+  @}  > ram
+  .shbss SIZEOF(.text) + ADDR(.text) :	@{
+    *(.shbss)
+  @} 
+  .talias :	 @{ @}  > ram
+  .data  : @{
+    *(.data)
+    CONSTRUCTORS
+    _edata  =  .;
+  @} > ram
+
+  .bss SIZEOF(.data) + ADDR(.data) :
+  @{
+   __bss_start = ALIGN(0x8);
+   *(.bss)
+   *(COMMON)
+      end = ALIGN(0x8);
+      _end = ALIGN(0x8);
+      __end = ALIGN(0x8);
+  @}
+  .mstack  : @{ @}  > ram
+  .rstack  : @{ @}  > ram
+  .stab  . (NOLOAD) : 
+  @{
+    [ .stab ]
+  @}
+  .stabstr  . (NOLOAD) :
+  @{
+    [ .stabstr ]
+  @}
+@}
+@end smallexample
+
+@node glue.c, mvme.S, crt0.S, Code Listings
+@section C-based "glue" code
+
+@smallexample
+
+/*
+ * glue.c -- all the code to make GCC and the libraries run 
+ *           on a bare target board. These should work with 
+ *           any target if inbyte() and outbyte() exist.
+ */
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <errno.h>
+#ifndef NULL
+#define NULL 0
+#endif
+
+/* FIXME: this is a hack till libc builds */
+__main()
+@{
+  return;
+@}
+
+#undef errno
+int errno;
+
+extern caddr_t _end; 
+
+/* _end is set in the linker command file */
+
+extern int outbyte();
+extern unsigned char inbyte();
+extern int havebyte();
+
+/* just in case, most boards have at least some memory */
+#ifndef RAMSIZE
+#  define RAMSIZE             (caddr_t)0x100000
+#endif
+
+/*
+ * read  -- read bytes from the serial port. Ignore fd, since
+ *          we only have stdin.
+ */
+int
+read(fd, buf, nbytes)
+     int fd;
+     char *buf;
+     int nbytes;
+@{
+  int i = 0;
+
+  for (i = 0; i < nbytes; i++) @{
+    *(buf + i) = inbyte();
+    if ((*(buf + i) == '\n') || (*(buf + i) == '\r')) @{
+      (*(buf + i)) = 0;
+      break;
+    @}
+  @}
+  return (i);
+@}
+
+/*
+ * write -- write bytes to the serial port. Ignore fd, since
+ *          stdout and stderr are the same. Since we have 
+ *          no filesystem, open will only return an error.
+ */
+int
+write(fd, buf, nbytes)
+     int fd;
+     char *buf;
+     int nbytes;
+@{
+  int i;
+
+  for (i = 0; i < nbytes; i++) @{
+    if (*(buf + i) == '\n') @{
+      outbyte ('\r');
+    @}
+    outbyte (*(buf + i));
+  @}
+  return (nbytes);
+@}
+
+/*
+ * open -- open a file descriptor. We don't have a 
+ *         filesystem, so we return an error.
+ */
+int
+open(buf, flags, mode)
+     char *buf;
+     int flags;
+     int mode;
+@{
+  errno = EIO;
+  return (-1);
+@}
+
+/*
+ * close -- close a file descriptor. We don't need
+ *          to do anything, but pretend we did.
+ */
+int
+close(fd)
+     int fd;
+@{
+  return (0);
+@}
+
+/*
+ * sbrk -- changes heap size size. Get nbytes more
+ *         RAM. We just increment a pointer in what's
+ *         left of memory on the board.
+ */
+caddr_t
+sbrk(nbytes)
+     int nbytes;
+@{
+  static caddr_t heap_ptr = NULL;
+  caddr_t        base;
+
+  if (heap_ptr == NULL) @{
+    heap_ptr = (caddr_t)&_end;
+  @}
+
+  if ((RAMSIZE - heap_ptr) >= 0) @{
+    base = heap_ptr;
+    heap_ptr += nbytes;
+    return (base);
+  @} else @{
+    errno = ENOMEM;
+    return ((caddr_t)-1);
+  @}
+@}
+
+/*
+ * isatty -- returns 1 if connected to a terminal device,
+ *           returns 0 if not. Since we're hooked up to a
+ *           serial port, we'll say yes and return a 1.
+ */
+int
+isatty(fd)
+     int fd;
+@{
+  return (1);
+@}
+
+/*
+ * lseek -- move read/write pointer. Since a serial port
+ *          is non-seekable, we return an error.
+ */
+off_t
+lseek(fd,  offset, whence)
+     int fd;
+     off_t offset;
+     int whence;
+@{
+  errno = ESPIPE;
+  return ((off_t)-1);
+@}
+
+/*
+ * fstat -- get status of a file. Since we have no file
+ *          system, we just return an error.
+ */
+int
+fstat(fd, buf)
+     int fd;
+     struct stat *buf;
+@{
+  errno = EIO;
+  return (-1);
+@}
+
+/*
+ * getpid -- only one process, so just return 1.
+ */
+#define __MYPID 1
+int
+getpid()
+@{
+  return __MYPID;
+@}
+
+/*
+ * kill -- go out via exit...
+ */
+int
+kill(pid, sig)
+     int pid;
+     int sig;
+@{
+  if(pid == __MYPID)
+    _exit(sig);
+  return 0;
+@}
+
+/*
+ * print -- do a raw print of a string
+ */ 
+int
+print(ptr)
+char *ptr;
+@{
+  while (*ptr) @{
+    outbyte (*ptr++);
+  @}
+@}
+
+/*
+ * putnum -- print a 32 bit number in hex
+ */
+int
+putnum (num)
+unsigned int num;
+@{
+  char  buffer[9];
+  int   count;
+  char  *bufptr = buffer;
+  int   digit;
+  
+  for (count = 7 ; count >= 0 ; count--) @{
+    digit = (num >> (count * 4)) & 0xf;
+    
+    if (digit <= 9)
+      *bufptr++ = (char) ('0' + digit);
+    else
+      *bufptr++ = (char) ('a' - 10 + digit);
+  @}
+
+  *bufptr = (char) 0;
+  print (buffer);
+  return;
+@}
+@end smallexample
+
+@node mvme.S, io.c, glue.c, Code Listings
+@section I/O assembly language code sample
+
+@smallexample
+/*
+ * mvme.S -- board support for m68k
+ */
+
+	.title "mvme.S for m68k-coff"
+
+/* These are predefined by new versions of GNU cpp.  */
+
+#ifndef __USER_LABEL_PREFIX__
+#define __USER_LABEL_PREFIX__ _
+#endif
+
+#ifndef __REGISTER_PREFIX__
+#define __REGISTER_PREFIX__
+#endif
+
+/* ANSI concatenation macros.  */
+
+#define CONCAT1(a, b) CONCAT2(a, b)
+#define CONCAT2(a, b) a ## b
+
+/* Use the right prefix for global labels.  */
+
+#define SYM(x) CONCAT1 (__USER_LABEL_PREFIX__, x)
+
+/* Use the right prefix for registers.  */
+
+#define REG(x) CONCAT1 (__REGISTER_PREFIX__, x)
+
+#define d0 REG (d0)
+#define d1 REG (d1)
+#define d2 REG (d2)
+#define d3 REG (d3)
+#define d4 REG (d4)
+#define d5 REG (d5)
+#define d6 REG (d6)
+#define d7 REG (d7)
+#define a0 REG (a0)
+#define a1 REG (a1)
+#define a2 REG (a2)
+#define a3 REG (a3)
+#define a4 REG (a4)
+#define a5 REG (a5)
+#define a6 REG (a6)
+#define fp REG (fp)
+#define sp REG (sp)
+#define vbr REG (vbr)
+
+	.align	2
+	.text
+	.global SYM (_exit)
+	.global SYM (outln)
+	.global SYM (outbyte)
+	.global SYM (putDebugChar)
+	.global SYM (inbyte)
+	.global SYM (getDebugChar)
+	.global SYM (havebyte)
+	.global SYM (exceptionHandler)
+
+	.set	vbr_size, 0x400
+	.comm	SYM (vbr_table), vbr_size
+
+/*
+ * inbyte -- get a byte from the serial port
+ *	d0 - contains the byte read in
+ */
+	.align	2
+SYM (getDebugChar):		/* symbol name used by m68k-stub */
+SYM (inbyte):
+	link	a6, #-8
+	trap 	#15
+	.word	inchr
+	moveb 	sp@@, d0
+	extbl	d0
+	unlk	a6
+	rts
+
+/*
+ * outbyte -- sends a byte out the serial port
+ *	d0 - contains the byte to be sent
+ */
+	.align	2
+SYM (putDebugChar):		/* symbol name used by m68k-stub */
+SYM (outbyte):
+	link	fp, #-4
+ 	moveb	fp@@(11), sp@@
+	trap 	#15
+	.word	outchr
+	unlk	fp
+	rts
+
+/*
+ * outln -- sends a string of bytes out the serial port 
+ *          with a CR/LF 
+ *      a0 - contains the address of the string's first byte
+ *      a1 - contains the address of the string's last byte
+ */
+	.align	2
+SYM (outln):
+	link	a6, #-8
+	moveml	a0/a1, sp@@
+	trap 	#15
+	.word 	outln
+	unlk	a6
+	rts
+
+/*
+ * outstr -- sends a string of bytes out the serial port 
+ *           without a CR/LF
+ *	a0 - contains the address of the string's first byte
+ *	a1 - contains the address of the string's last byte
+ */
+	.align	2
+SYM (outstr):
+	link	a6, #-8
+	moveml	a0/a1, sp@@
+	trap 	#15
+	.word 	outstr
+	unlk	a6
+	rts
+
+/*
+ * havebyte -- checks to see if there is a byte in the 
+ *             serial port;
+ *             returns 1 if there is a byte, 0 otherwise.
+ */
+SYM (havebyte):
+	trap 	#15
+	.word	instat
+	beqs	empty
+	movel 	#1, d0
+	rts
+empty:
+	movel	#0, d0
+	rts
+
+/*
+ * These constants are for the MVME-135 board's boot 
+ * monitor. They're used with a TRAP #15 call to access 
+ * the monitor's I/O routines. They must be in the word 
+ * following the trap call.
+ */
+	.set inchr, 0x0
+	.set instat, 0x1
+	.set inln, 0x2
+	.set readstr, 0x3
+	.set readln, 0x4
+	.set chkbrk, 0x5
+
+	.set outchr, 0x20
+	.set outstr, 0x21
+	.set outln, 0x22
+	.set write, 0x23
+	.set writeln, 0x24
+	.set writdln, 0x25
+	.set pcrlf, 0x26
+	.set eraseln, 0x27
+	.set writd, 0x28
+	.set sndbrk, 0x29
+
+	.set tm_ini, 0x40
+	.set dt_ini, 0x42
+	.set tm_disp, 0x43
+	.set tm_rd, 0x44
+
+	.set redir, 0x60
+	.set redir_i, 0x61
+	.set redir_o, 0x62
+	.set return, 0x63
+	.set bindec, 0x64
+
+	.set changev, 0x67
+	.set strcmp, 0x68
+	.set mulu32, 0x69
+	.set divu32, 0x6A
+	.set chk_sum, 0x6B
+
+@end smallexample
+
+@node io.c, leds.c, mvme.S, Code Listings
+@section I/O code sample
+
+@smallexample
+#include "w89k.h"
+
+/*
+ * outbyte -- shove a byte out the serial port. 
+ *            We wait till the byte 
+@c
+@c FIXME -- is there something missing in this comment? -- doc
+@c
+ */
+
+
+int
+outbyte(byte)
+     unsigned char byte;
+@{
+  while ((inp(RS232REG) & TRANSMIT) == 0x0) @{  @} ;
+  return (outp(RS232PORT, byte));
+@}
+
+/*
+ * inbyte -- get a byte from the serial port
+ */
+unsigned char
+inbyte()
+@{
+  while ((inp(RS232REG) & RECEIVE) == 0x0) @{ @};
+  return (inp(RS232PORT));
+@}
+@end smallexample
+
+@node leds.c, ,io.c, Code Listings
+@section LED control sample
+
+@smallexample
+/*
+ * leds.h -- control the led's on a Motorola mc68ec0x0 board.
+ */
+
+#ifndef __LEDS_H__
+#define __LEDS_H__
+
+#define LED_ADDR	0xd00003
+#define LED_0           ~0x1
+#define LED_1           ~0x2
+#define LED_2           ~0x4
+#define LED_3           ~0x8
+#define LED_4           ~0x10
+#define LED_5           ~0x20
+#define LED_6           ~0x40
+#define LED_7           ~0x80
+#define LEDS_OFF	0xff
+#define LEDS_ON		0x0
+
+#define FUDGE(x) ((x >= 0xa && x <= 0xf) ? (x + 'a') & 0x7f : 
+                  (x + '0') & 0x7f)
+
+extern void led_putnum( char );
+
+#endif		/* __LEDS_H__ */
+
+/*
+ * leds.c -- control the led's on a Motorola mc68ec0x0 
+ *           (IDP) board.
+ */
+#include "leds.h"
+
+void zylons();
+void led_putnum();
+
+/*
+ * led_putnum -- print a hex number on the LED. the value of 
+ *               num must be a char with the ascii value. 
+ *               ie... number 0 is '0', a is 'a', ' ' 
+ *               (null) clears the led display.
+ *		 Setting the bit to 0 turns it on, 1 turns it off.
+ * 		 The LED's are controlled by setting the right bit mask 
+ *               in the base address. 
+ *	         The bits are:
+ *			[d.p | g | f | e | d | c | b | a ] is the byte.
+ *
+ *		The locations are:
+ *		
+ *			 a
+ *		       -----
+ *		    f |     | b
+ *		      |  g  |
+ *		       -----
+ *                    |     |
+ *                  e |     | c
+ *                     -----
+ *                       d     . d.p (decimal point)
+ */
+void
+led_putnum ( num )
+char num;
+@{
+    static unsigned char *leds = (unsigned char *)LED_ADDR;
+    static unsigned char num_bits [18] = @{
+     0xff,						
+/* clear all */
+     0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x98, 
+/* numbers 0-9 */
+     0x98,0x20,0x3,0x27,0x21,0x4,0xe 		
+/* letters a-f */
+    @};
+
+    if (num >= '0' && num <= '9')
+      num = (num - '0') + 1;
+
+    if (num >= 'a' && num <= 'f')
+      num = (num - 'a') + 12;
+
+    if (num == ' ')
+      num = 0;
+
+    *leds = num_bits[num];
+@}
+
+/*
+ * zylons -- draw a rotating pattern. NOTE: this function 
+ *           never returns.
+ */
+void
+zylons()
+@{
+  unsigned char *leds 	= (unsigned char *)LED_ADDR;
+  unsigned char curled = 0xfe;
+
+  while (1)
+    @{
+      *leds = curled;
+      curled = (curled >> 1) | (curled << 7);
+      delay ( 200 );
+    @}
+@}
+@end smallexample
+

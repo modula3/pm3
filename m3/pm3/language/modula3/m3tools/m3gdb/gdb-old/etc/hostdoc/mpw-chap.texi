@@ -1,0 +1,40 @@
+@c                                                  -*-Texinfo-*-
+@c Contents of MPW guide or chapter.  For use as a chapter,
+@c surround inclusion of this file with `@lowersections' and `@raisesections'.
+@ifinfo
+@menu
+* Using::	Using the Tools
+* Known Problems::	Known Problems
+@end menu
+@end ifinfo
+
+@node Using
+@chapter Using the Tools
+
+To use these tools, you will need a Mac with a 68020 or better, System
+7.1 or later, and MPW 3.3.  You will not need MPW C unless you want
+to rebuild from sources, nor even any include files, unless you are
+building actual Mac applications.
+
+If the tools have been installed into a directory listed in your
+@samp{Commands} variable, then you can just use them.
+
+If you get complaints about @samp{cpp} or @samp{cc1} not being found,
+then you may need to set your @samp{GCC_EXEC_PREFIX} to point at the library
+where they may be found.  For instance, if you want to use the compiler
+@file{MyDisk:Stuff:lib:gcc-lib:sh-hitachi-hms:cygnus-2.6.4-950305:cc1},
+then do these commands:
+
+@smallexample
+	set GCC_EXEC_PREFIX MyDisk:Stuff:lib:gcc-lib:
+	export GCC_EXEC_PREFIX
+@end smallexample
+
+@node Known Problems
+@chapter Known Problems
+
+Since the tools are faithful ports of their Unix counterparts,
+you are likely to run into many little consequences.
+
+For instance, blanks, slashes, and other ``weird'' characters
+in disk, directory, or file names can cause all kinds of trouble.

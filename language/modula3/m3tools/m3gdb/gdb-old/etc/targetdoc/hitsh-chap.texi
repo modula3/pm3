@@ -1,0 +1,292 @@
+@c                                                  -*-Texinfo-*-
+@c Contents of Hitachi SH datasheet or chapter.  For use as a chapter,
+@c surround inclusion of this file with `@lowersections' and `@raisesections'.
+
+
+@menu
+* SHNames::	What the tools are called for the Hitachi SH
+* SHGCC::		Compiling for the Hitachi SH
+* SHGplus::       Using C++ for the Hitachi SH
+* SHRegisters::   Register handling
+* SHGDB::         Debugging code for the Hitachi SH
+* SHRefs::	Hitachi SH documentation
+@end menu
+
+@node SHNames
+@chapter What to Call the Tools
+
+Cross-development tools in the Cygnus Developer's Kit are normally
+installed with names that reflect the target machine, so that you can
+install more than one set of tools in the same binary directory.
+
+The names are constructed by using as a prefix the @samp{--target}
+argument to @code{configure}.  For example, the compiler (called simply
+@code{gcc} in native configurations) is called by the name for Hitachi
+@sc{sh} cross-development, @w{@code{sh-hms-gcc}}.  Likewise, the
+@sc{sh}-configured @code{gdb} is called by the name
+@w{@code{sh-hms-gdb}}.
+
+For @sc{dos}-hosted toolchains, the tools are simply called by their
+standard names, e.g., @code{gcc}, @code{gdb}, etc.
+
+@node SHGCC
+@chapter Compiling for the Hitachi @sc{sh}
+
+Once the toolchain is configured to generate code for the @sc{sh}, you
+can control variances in code generation directly from the command line.
+
+@emph{Note:} Much of the @sc{sh} code is experimental, and may change in
+the future.
+
+@subheading General Options
+
+@c examples would be totally keen
+@table @code
+@item -msh1
+Generate code for the @sc{sh}-1 chip.  This is the default behavior for
+the @sc{sh} configuration.
+
+@item -msh2
+Generate code for the @sc{sh}-2 chip.
+@end table
+
+There is also an option @samp{-msh3} which will generate code for the
+@sc{sh}-3 chip when the details are made available.  This option
+currently yields the same results as @samp{-msh2}.
+
+@subheading Experimental Features
+
+@table @code
+@item -mfastcode
+Generate fast code, rather than small code.
+
+@item -msmallcode
+Generate small code, rather than fast code.
+
+@item -mnosave
+Use a different calling convention.  The registers @samp{R8}, @samp{R9},
+@samp{R10}, and @samp{R11} are all call-used with this setting
+(@pxref{SHRegisters,,Register handling}).
+
+@item -mhitachi
+Use Hitachi's calling convention rather than that for @sc{gcc}.  The
+registers @samp{MACH} and @samp{MACL} are saved with this setting
+(@pxref{SHRegisters,,Register handling}).
+
+@item -mbsr
+Use @code{bsr} calls to code backward-referenced within the function.
+@emph{Note:} This may fail if the target is too far away.
+
+@item -mshortaddr
+Assume that all static data fits into 16 bits, and keep pointers to them
+in word-length rather than long-length pointers.
+
+@item -mbigtable
+Generate jump tables for switch statements using four-byte offsets
+rather than the standard two-byte offset.  This option is necessary when
+the code within a switch statement is larger that 32k.  If the option is
+needed and not supplied, the assembler will generate errors.
+@end table
+
+@node SHGplus
+@chapter Using C++ for the Hitachi SH
+
+This special release includes support for the C++ language.  This
+support may in certain circumstances add up to 5K to the size of your
+executables
+
+The new C++ support involves new startup code that runs C++
+initializers before @samp{main()} is invoked.  If you have a replacement for
+the file @file{crt0.o} (or if you call @samp{main()} yourself) you must call
+@samp{_main()} before calling @samp{main()}.  
+
+You may need to run these C++ initializers even if you do not write in
+C++ yourself.  This could happen, for instance, if you are linking
+against a third-party library which itself was written in C++.  You
+may not be able to tell that it was written in C++ because you are
+calling it with C entry points prototyped in a C header file.  Without
+these initializers, functions written in C++ may malfunction.
+
+If you are not using any third-party libraries, or are otherwise
+certain that you will not require any C++ constructors you may
+suppress them by adding the following definition to your program:
+
+@smallexample
+  int __main() @{@}
+@end smallexample
+
+@node SHRegisters
+@chapter Register handling
+
+The first four words of arguments are passed in registers @samp{R4}
+through @samp{R7}.  All remaining arguments are pushed onto the stack,
+last to first, so that the lowest numbered argument not passed in a
+register is at the lowest address in the stack.  The registers are
+always filled, so a double word argument starting in @samp{R7} would
+have the most significant word in @samp{R7} and the least significant
+word on the stack.
+
+When a function is compiled with the default options, it must return
+with registers @samp{R8} through @samp{R15} unchanged.  Registers
+@samp{R0} through @samp{R7}, @samp{T}, @samp{MACH} and @samp{MACL} are
+volatile.
+
+The @samp{-mhitachi} switch makes the @samp{MACH} and @samp{MACL}
+registers caller-saved, which is compatible with the Hitachi tool chain
+at the expense of performance.
+
+The @samp{-mnosave} switch makes registers @samp{R0} through @samp{R11}
+volatile, which can often improve performance.
+
+Note that functions compiled with different calling conventions cannot
+be run together without some care.
+
+
+@node SHGDB
+@chapter Debugging code for the Hitachi @sc{sh}
+
+@sc{gdb} needs to know these things to talk to your Hitachi @sc{sh}:
+
+@enumerate
+@item
+that you want to use @samp{target remote}, the remote debugging interface
+for the Hitachi @sc{sh} microprocessors, or @samp{target e7000}, the in-circuit
+emulator for the Hitachi @sc{sh} and the Hitachi @w{300@sc{H}}.
+
+@item
+what serial device connects your host to your Hitachi board (the first
+serial device available on your host is the default).
+
+@item
+if you are using a Unix host, what speed to use over the serial device.
+@end enumerate
+
+@menu
+* SHHitachi Boards::      Connecting to Hitachi boards
+* SHHitachi ICE::         Using the E7000 In-Circuit Emulator
+@end menu
+
+@node SHHitachi Boards
+@section Connecting to Hitachi boards
+
+You can use the @sc{gdb} remote serial protocol to communicate with a
+Hitachi @sc{sh} board.  You must first link your programs with the
+``stub'' module @file{src/gdb/config/sh/stub.c}.  This module manages
+the communication with @sc{gdb}.  @xref{Remote Serial,, The GDB remote
+serial protocol, gdb.info, Debugging with GDB}, for more details.
+
+Use the special @code{gdb} command @samp{device @var{port}} if you need
+to explicitly set the serial device.  The default @var{port} is the
+first available port on your host.  This is only necessary on Unix
+hosts, where it is typically something like @file{/dev/ttya}.
+
+@code{gdb} has another special command to set the communications speed:
+@samp{speed @var{bps}}.  This command also is only used from Unix hosts;
+on @sc{dos} hosts, set the line speed as usual from outside @sc{gdb}
+with the @sc{dos} @kbd{mode} command (for instance, @w{@samp{mode
+com2:9600,n,8,1,p}} for a 9600 bps connection).
+
+The @samp{device} and @samp{speed} commands are available only when you
+use a Unix host to debug your Hitachi microprocessor programs.
+
+The following sample session illustrates the steps needed to start a
+program under @sc{gdb} control on an @sc{sh}, using a @sc{dos} host.
+The example uses a sample @sc{sh} program called @file{t.x}.  The
+procedure is the same for other Hitachi chips in the series.
+
+First hook up your development board.  In this example, we use a board
+attached to serial port @code{COM2}.  Call @code{gdb} with the name of
+your program as the argument.  @code{gdb} prompts you, as usual, with
+the prompt @samp{(gdb)}.  Use two special commands to begin your
+debugging session: @samp{target hms} to specify cross-debugging to the
+Hitachi board, and the @code{load} command to download your program to
+the board.  @code{load} displays the names of the program's sections,
+and a @samp{*} for each 2K of data downloaded.  (If you want to refresh
+@sc{gdb} data on symbols or on the executable file without downloading,
+use the @sc{gdb} commands @code{file} or @code{symbol-file}.  These
+commands, and @code{load} itself, are described in @ref{Files,,Commands
+to specify files,gdb,Debugging with GDB}.)
+
+@smallexample
+C:\SH\TEST> gdb t.x
+GDB is free software and you are welcome to distribute copies
+ of it under certain conditions; type "show copying" to see 
+ the conditions.
+There is absolutely no warranty for GDB; type "show warranty" 
+for details.
+GDB 4.13-94q4, Copyright 1994 Free Software Foundation, Inc...
+(gdb) target remote
+Connected to remote SH HMS system.
+(gdb) load t.x
+.text   : 0x8000 .. 0xabde ***********
+.data   : 0xabde .. 0xad30 *
+.stack  : 0xf000 .. 0xf014 *
+@end smallexample
+
+At this point, you're ready to run or debug your program.  From here on,
+you can use all the usual @sc{gdb} commands.  The @code{break} command
+sets breakpoints; the @code{run} command starts your program;
+@code{print} or @code{x} display data; the @code{continue} command
+resumes execution after stopping at a breakpoint.  You can use the
+@code{help} command at any time to find out more about @sc{gdb} commands.
+
+Remember, however, that @emph{operating system} facilities aren't
+available on your development board; for example, if your program hangs,
+you can't send an interrupt---but you can press the @sc{reset} switch!
+
+Use the @sc{reset} button on the development board:
+
+@itemize @bullet
+@item
+to interrupt your program (don't use @kbd{Ctrl-C} on the @sc{dos}
+host---it has no way to pass an interrupt signal to the development
+board); and
+
+@item
+to return to the @sc{gdb} command prompt after your program finishes
+normally.  The communications protocol provides no other way for
+@sc{gdb} to detect program completion.
+@end itemize
+
+In either case, @sc{gdb} sees the effect of a @sc{reset} on the
+development board as a ``normal exit'' of your program.
+
+@node SHHitachi ICE
+@section Using the E7000 in-circuit emulator
+
+You can use the E7000 in-circuit emulator to develop code for either the
+Hitachi @sc{sh} or the H8/300@sc{H}.  Use one of these forms of the
+@samp{target e7000} command to connect @sc{gdb} to your E7000:
+
+@table @code
+@item target e7000 @var{port} @var{speed}
+Use this form if your E7000 is connected to a serial port.  The
+@var{port} argument identifies what serial port to use (for example,
+@samp{com2}).  The third argument is the line speed in bits per second
+(for example, @samp{9600}).
+
+@item target e7000 @var{hostname}
+If your E7000 is installed as a host on a @sc{tcp/ip} network, you can
+just specify its hostname; @sc{gdb} uses @code{telnet} to connect.
+@end table
+
+The monitor command set makes it difficult to load large ammounts of
+data over the network without using @sc{ftp}.  We recommend you try not
+to issue @code{load} commands when communicating over Ethernet; use the
+@code{ftpload} command instead.
+
+@node SHRefs
+@chapter Hitachi @sc{sh} documentation
+
+The following manuals provide extensive documentation on the @sc{sh}.
+They are produced by and available from Hitachi Microsystems; contact
+your friendly Field Application Engineer for details.
+
+@table @cite
+@item SH Microcomputer User's Manual
+Semiconductor Design & Development Center, 1992
+
+@item Hitachi SH2 Programming Manual
+Semiconductor and Integrated Circuit Division, 1994
+@end table
+

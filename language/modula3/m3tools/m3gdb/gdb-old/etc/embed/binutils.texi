@@ -1,0 +1,124 @@
+@c This file documents porting binutils to an embedded target,
+@c as @included in tools.texi
+
+@node Binutils
+@subsection Binutils, the GNU binary utilities
+
+@strong{JT:} I picked this list up out of Jason Molenda's note of 9/18:
+
+binutils:		
+@table @asis
+@item 
+binutils not included on all hosts:
+@itemize
+@item
+ar
+@item
+nm	
+@item
+objcopy
+@item
+objdump
+@item
+ranlib
+@item
+size
+@item
+strings
+@item
+strip
+@end itemize
+@item
+as
+
+the assembler, not included on all hosts
+@item
+gasp
+
+a part of the assembler
+@item
+ld
+
+the linker, not included on all hosts
+@item
+c++filt
+@item
+g++
+
+if customer has G++ sppt contract
+@item
+gcc
+@item
+gcov
+
+On only certain hosts and on no targets
+@item
+gperf
+
+On only certain hosts, maybe works on targets
+@item
+gdb
+@item
+send-pr
+@item
+simulator
+
+*** SH is the only simulator that we officially
+support and will take PRs about (this from Stan).
+We supply simulators for several other
+architectures.
+@end table
+
+@menu
+* Objcopy::             @code{objcopy}
+* Objdump::             @code{objdump}
+* Size::                @code{size}
+* Ar::                  @code{ar}
+* Ranlib::              @code{ranlib}
+@end menu
+
+@node Objcopy
+@subsubsection @code{objcopy}
+
+A few @code{ROM} monitors, such as @file{a.out}, load executable binary 
+images, but most load an @dfn{Srecord}. An @code{Srecord} is a printable ASCII 
+representation of an executable binary image.  @code{Srecords} are 
+suitable both for building @code{ROM} images for stand-alone boards and for 
+down-loading images to embedded sytems.  @xref{Srecords,,,,Using LD the GNU 
+Linker}.  
+
+To make an @code{Srecord} from an executable binary image, use the @sc{gnu} 
+@code{objcopy} program: 
+
+@smallexample
+objcopy -O srec @var{infile} @var{outfile}
+@end smallexample
+
+@var{infile} is the executable binary filename, and @var{outfile} is the 
+filename for the @code{Srecord}.
+@c
+@c FIXME -- is this true about infile and outfile?
+@c
+
+Most @code{PROM} burners also read @code{Srecords} or some similar format. 
+Use:
+
+@smallexample
+@code{objdump -i} 
+@end smallexample
+
+to get a list of support object file types for  your architecture. 
+@xref{BFD,,,,Using LD the GNU Linker}.  
+@xref{objdump,,,,GNU Binary Utilities}, also.
+
+@node Objdump
+@subsubsection @code{objdump}
+
+@node Size
+@subsubsection @code{size}
+
+@node Ar
+@subsubsection @code{ar}
+
+@node Ranlib
+@subsubsection @code{ranlib}

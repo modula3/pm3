@@ -1,0 +1,35 @@
+@c This documents using G++ on embedded systems, as 
+@c @included in tools.texi
+
+@node C++
+@subsection G++, the GNU C++ compiler
+
+When you compile C or C++ programs with @sc{gnu} C, the compiler quietly
+inserts a call at the beginning of @code{main} to a @code{@value{GCC}} support
+subroutine called @code{__main}.  Normally this is invisible---but you
+may run into it if you want to avoid linking to the standard libraries,
+by specifying the compiler option @samp{-nostdlib}.  Include
+@samp{-lgcc} at the end of your compiler command line to resolve this
+reference.  This links with the compiler support library
+@file{libgcc.a}, but putting it at the end of your command line ensures
+that you have a chance to link first with any special libraries of your
+own.
+
+@code{__main} is the initialization routine for C++ constructors.
+Because @sc{gnu} C is designed to interoperate with @sc{gnu} C++, even C
+programs must have this call: otherwise C++ object files linked with a C
+@code{main} might fail.
+
+@ignore
+@node MIPS-g
+@subsubsection What is all that debug information?
+
+@* FIXME!! Beats me.  Investigate this---IDT wants to know why -g's are
+so much bigger, I think.
+@end ignore
+
+
+@c
+@c  FIXME:
+@strong{Let's chat G++.}
+

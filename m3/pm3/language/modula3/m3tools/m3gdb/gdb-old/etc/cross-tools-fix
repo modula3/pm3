@@ -1,0 +1,17 @@
+fix()
+{
+    if [ "${INSTALLHOST}" != "${HOST}" ] ; then
+	cat << EOF
+***	This machine appears to be for \"${INSTALLHOST}\", while the
+***	software on this tape is meant for \"${HOST}\"  
+***
+***	You may still run \"$0 --extract ...\" on this machine and then
+***	run the other steps on the machine on which you wish to install.
+***	You will need to do these steps separately.
+***	For more information, please refer to
+***     ${ANOTHER_TAPE} in ${NOTES}.
+EOF
+    else
+        echo "Fixincludes not run for cross-targets."
+    fi
+}

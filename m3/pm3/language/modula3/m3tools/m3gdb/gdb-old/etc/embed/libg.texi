@@ -1,0 +1,33 @@
+]@c This file documents using Libg++, Libstdc++, and Iostream on an 
+@c embedded target, as @included in newlib.texi.
+
+@node Libg
+@subsection The G++ libraries
+
+@strong{JT:} I picked this up out of Jason Molenda's note on 9/18 about 
+what is and is not supported:
+
+libstdc++	        This is the ANSI C++ standard library we're working
+			on, including the Standard Template Library.
+			libstdc++ includes libiostreams.
+
+libg++  		This is the C++ library we've supported for a long
+			time.  It is under the LGPL, so many of our embedded
+			customers cannot use it commercially.  It will be
+			gradually phased out as libstdc++ becomes more
+			mature.
+
+@menu
+* Libstdc++::           Libstdc++, the G++ library for standard C++
+* Iostreams::           Iostreams, the G++ I/O library
+* Libg++::              Libg++, the G++ library                    
+@end menu
+
+@node Libstdc++
+@subsubsection Libstdc++, the standard C++ library
+@node Iostreams
+@subsubsection Iostreams, the standard I/O library 
+
+@node Libg++
+@subsubsection Libg++, convenience classes
+

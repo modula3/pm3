@@ -1,0 +1,777 @@
+#!/bin/sh
+### Copyright 1991, 1992, 1993, 1994, 1995 Cygnus Support
+### All Rights Reserved.
+
+##############
+###
+### This really needs to nestle up snuggly to the Installation notes.  If
+### you change this script, please be sure the installation notes get
+### coordinated too.
+###
+##############
+
+### If we're on a DECstation (which has /bin/sh5), we can't use the normal
+### /bin/sh, since it doesn't support some nice features (like functions).
+### So pass this script on to /bin/sh5 if it exists, setting the flag
+### variable RUNNING_UNDER_BIN_SH5.  If we see that this is already set,
+### then we just keep going with the current invocation.
+
+if [ -f /bin/sh5 ] ; then 
+   if [ ! -n "${RUNNING_UNDER_BIN_SH5}" ] ; then
+       RUNNING_UNDER_BIN_SH5=yes
+       export RUNNING_UNDER_BIN_SH5
+       exec /bin/sh5 $0 $*
+   fi
+fi
+
+### this is our release version, usually the basename of the installation
+### directory, eg is 'progressive-XXXXXX' for /usr/cygnus/progressive-XXXXXX
+RELEASE_TAG=||RELEASE_TAG||
+
+### What bundle is this?  Usually something like 'Emacs' or 'comp-tools'
+BUNDLE=||BUNDLE||
+
+### this is the default installation repository. We use this to test whether or
+### not GCC_EXEC_PREFIX should be set when doing "Install test comp-tools".
+ROOTING_REAL=||ROOTING||
+ROOTING_DEFAULT=${ROOTING_REAL}
+
+### this is where we install into.  (useful for testing).
+INSTALLDIR=${ROOTING_DEFAULT}
+
+### where to write the log files
+RELEASE_ROOT=${INSTALLDIR}/${RELEASE_TAG}
+
+LOGDIR=${RELEASE_ROOT}
+
+### who to call in bad situations
+HOTLINE="the Cygnus Support Hotline at +1 415 903 1401"
+
+### what the release doc is called and a few sections thereof
+NOTES="the Installation Notes"
+CHANGING_PATHS="\"Changing the Paths\""
+NO_ACCESS="\"No Access to ${INSTALLDIR}\?\""
+MIGHT_WRONG="\"Some Things that Might go Wrong\""
+WHY_FIXINCLUDES="Why Convert System Header Files\?"
+ANOTHER_TAPE="\"Steps to install with another machine\'s tape drive\""
+
+### for debugging
+#PATH=/bin:/usr/bin ; export PATH
+
+PATH=$PATH:/bin:/usr/bin:/usr/ucb ; export PATH
+
+### each system has a different default tape device, and a different scheme
+### for the non-rewinding device name of that tape drive.  This value needs
+### to be a NON-rewinding tape drive.
+TAPE=${TAPE-||DEVdflt||}
+
+### clear and/or initialize some variables
+ACTIONS=
+
+HOST=||HOSTstr||
+TARGET=||TARGETstr||
+
+INSTALLHOST=default
+ERROR=
+
+install_src=false
+install_bin=false
+
+### some tool defaults
+DD=dd
+DDOPTS="ibs=124b"   # some systems can't handle this (eg AIX)
+
+TAR=tar
+TARFLAGS="xvf -"
+
+SED=sed
+
+#### end of all variable initializations -- NO substitutions should be used
+#### past this section
+
+### now start some function declarations
+
+guess_system()
+{
+    ### decide where we are: try arch first.
+    if (arch) > /dev/null 2>&1 ; then
+        MAYBE=`arch`
+    else
+        true
+    fi # (arch)
+
+    case "${MAYBE}" in
+        sun3) INSTALLHOST=m68k-sun-sunos4.1.1  ;;
+        *)
+            ### next try uname
+            if (uname > /dev/null) 2>&1 ; then
+                UNAME=`echo \`uname -s\`\`uname -m\`\`uname -r\``
+            else
+                UNAME="machine without a uname command (type of machine unknown)"
+            fi # (uname)
+
+            ### map into names we recognize
+            case "${UNAME}" in
+                *i3863.2)        INSTALLHOST=i386-sco3.2v4 ;;
+                *i3864.2)        INSTALLHOST=i386-sysv4.2 ;;
+                AIX*)            INSTALLHOST=rs6000-ibm-aix 
+                                 DDOPTS="";;
+                ULTRIXRISC*)     INSTALLHOST=mips-dec-ultrix ;;
+                SunOSsun4*5*)    INSTALLHOST=sparc-sun-solaris2 ;;
+                SunOSsun4*)      INSTALLHOST=sparc-sun-sunos4.1.3 ;;
+                SunOSsun3*)      INSTALLHOST=m68k-sun-sunos4.1.1 ;;
+                IRIX*)           INSTALLHOST=mips-sgi-irix4 ;;
+                HP-UX9000/[78]*) INSTALLHOST=hppa1.1-hp-hpux ;;
+                HP-UX9000/[34]*) INSTALLHOST=m68k-hp-hpux ;;
+                OSF1alphaV1.*)   INSTALLHOST=alpha-dec-osf1 ;;
+                OSF1alphaV[23].*) INSTALLHOST=alpha-dec-osf2.0 ;;
+                *m88k4.*)        INSTALLHOST=m88k-motorola-sysv4 ;;
+                *)               INSTALLHOST=unknown ;;
+              esac # ${UNAME}
+                ;;
+    esac # ${MAYBE}
+}
+
+
+print_help_message()
+{
+     cat <<EOF
+
+You may supply at least one format on the command line.  Recognized formats are:
+    "binaries"      for binaries only
+    "source"        for source code only
+The default is both source and binaries.
+
+You may also supply actions.  Recognized actions are:
+    "extract"       read the appropriate files from tape
+    "fixincludes"   build a directory of corrected header files for comp-tools 
+    "test"          run a very brief verification of your installation
+
+There are two other options:
+    --tape=DEVICE   asks Install to read the necessary files from DEVICE. The
+                    default DEVICE is ||DEVdflt||, the ||TAPdflt||, cartridge tape
+                    drive on most ||HOSTstr||s.
+    --installdir=DIRECTORY
+		    asks Install to install files into DIRECTORY.
+                    The default DIRECTORY is ||ROOTING||.
+EOF
+}
+
+
+print_version_message()
+{
+     echo "Install, version 2.00"
+}
+
+show_exec_prefix_msg()
+{
+    echo '***' If you want to use the compilation tools in an alternate
+    echo '***   ' directory, several environment variables will need
+    echo '***   ' to be set.  You probably
+    echo '***   ' want to set them with:
+    echo '***   '
+    echo GCC_EXEC_PREFIX=${RELEASE_ROOT}/${EXECDIR}/lib/gcc-lib/ ; export GCC_EXEC_PREFIX
+    echo TCL_LIBRARY=${RELEASE_ROOT}/lib/tcl ; export TCL_LIBRARY
+    echo TK_LIBRARY=${RELEASE_ROOT}/lib/tk ; export TK_LIBRARY
+    echo GDBTK_FILENAME=${RELEASE_ROOT}/${EXECDIR}/lib/gdbtk.tcl ; export GDBTK_FILENAME
+    GCC_EXEC_PREFIX=${RELEASE_ROOT}/${EXECDIR}/lib/gcc-lib/ ; export GCC_EXEC_PREFIX
+    echo '***   '
+    echo '***   ' This is what I will use for the installation tests.
+    echo '***   ' For further help, please refer to ${CHANGING_PATHS}
+    echo '***   ' in ${NOTES}.
+}
+
+show_emacs_alternate_msg()
+{
+    echo '***' Emacs cannot be installed in an alternate location.  Please
+    echo '***' contact Cygnus Support for instructions on how to rebuild
+    echo '***' emacs in a different prefix location.
+}
+
+show_gnu_root_msg()
+{
+    echo '***' If you want to use these tools in an alternate
+    echo '***   ' directory, GNU_ROOT and GNU_EXEC_ROOT must be set.  You probably
+    echo '***   ' want to set it with:
+    echo "GNU_ROOT=${RELEASE_ROOT} ; export GNU_ROOT"
+    echo "GNU_EXEC_ROOT=${RELEASE_ROOT}/${EXECDIR} ; export GNU_EXEC_ROOT"
+    GNU_ROOT=${RELEASE_ROOT} ; export GNU_ROOT
+    GNU_EXEC_ROOT=${RELEASE_ROOT}/${EXECDIR} ; export GNU_EXEC_ROOT
+    echo '***   ' This is what I will use for the installation tests.
+    echo '***   ' For further help, please refer to ${CHANGING_PATHS}
+    echo '***   ' in ${NOTES}.
+}
+
+
+#### The Install script is customized by inserting package dependant
+#### scripts containing various shell functions when it is generated.
+#### There are two functions defined at this time:
+####	fix
+####		The fix function is called after the package
+####		has been loaded.  For example, this function is used
+####		by the comp-tools package to run fixincludes and
+####		fixproto.
+####	verify
+####		The verify function is called after the package has
+####		been installed.  For example, this function may be
+####		used to check that the software is configured
+####		properly.
+####
+#### The control scripts from the POSIX.7.2 draft suggest functions that
+#### may be useful for use for future packages.  They are checkinstall,
+#### preinstall, postinstall, checkremove, preremove, and postremove
+####
+####
+#### Note that many other install facilities store their package
+#### dependant scripts with each distribution.  It would be difficult
+#### for us to do the same efficiently.  Their installers are usually
+#### programs with built in tar/cpio readers that have the ability to
+#### "stop" after control scripts have been extracted.  Since ours is a
+#### shell script that must run on many different systems, we would have
+#### to either extract the tape contents to a temporary directory and
+#### then move it to its final destination; or we would have to perform
+#### two passes for each compressed tar image.
+
+#### various functions used to perform post-install fixups (fixincludes, etc.)
+@fix@
+
+#### various functions used to verify release 
+@verify@
+
+
+###
+### do tape stuff, rewind, etc.
+###
+### problem is that Unixware uses ``tapdev rewind TAPE'' and mt
+### uses ``mt -f TAPE rewind''.  pre-defining TAPE_REWIND and
+### TAPE_FSF commands is tricky 'cause you need to make sure that
+### you get the user's ``-tape=foo'' command line arg set first.
+###
+### this was a lot easier.
+###
+### it takes three command line arguemnts, the canonical host type,
+### the mt command you want, and the tape device name.
+###
+
+do_mt()
+{
+    do_mtMTCMD="$1"
+
+    case "$INSTALLHOST" in
+        i386-sco3.2v4|*sysv4.2)                       # SVR4 peoples
+                         do_mtMTCMD="`echo $do_mtMTCMD | sed s/fsf/rfm/`"
+                         tape $do_mtMTCMD $TAPE ;;
+        hppa1.1-hp-hpux|m68k-hp-hpux|mips-sgi-irix4)  # SVR3 peoples
+                         mt -t $TAPE $do_mtMTCMD ;;
+        *)                                            # normal peoples
+                         mt -f $TAPE $do_mtMTCMD ;;
+    esac
+    return $?
+}
+
+do_mkdir()
+{
+    DIR="$1"	
+
+    echo Trying to create \"${DIR}\"...
+    mkdir ${DIR}
+    if [ $? -ne 0 ]; then
+	echo '***' I can not make directory, \"${DIR}\".
+
+	### attempt to diagnose...
+
+	DIR=`echo ${DIR} | ${SED} -e 's:/[^/]*$::'`
+	if [ ! -d "${DIR}" ] ; then
+	    echo '***   ' It looks as though \"${DIR}\" does not even exist.
+	    exit 1
+	fi
+
+	if [ ! -w "${DIR}" ] ; then
+	    echo '***   ' It looks as though you do not have write access to \"${DIR}\".
+	    echo '***   ' Please fix this and try running Install again.  For more information
+	    echo '***   ' please refer to ${NO_ACCESS} in ${NOTES}.
+	    exit 1
+	fi
+
+	echo '***   ' I do not know why I can not create \"${DIR}\".  This is a problem.
+	echo '***   ' Please call ${HOTLINE}
+	exit 1
+    fi
+
+    echo Created \"${DIR}\".
+}
+
+### trigger words on the command line are:
+###     --tape=/dev/device
+###     --installdir=/foo
+###     bin, src
+###     extract, fix, test-installation, remove
+
+while :
+do
+
+# Break out if there are no more args
+    case $# in
+    0)
+            break
+            ;;
+    esac
+
+# Get the first arg, and shuffle
+    option=$1
+    shift
+
+# Make all options have two hyphens
+    orig_option=$option # Save original for error messages
+    case $option in
+    --*)        ;;
+    -*) option=-$option ;;
+    esac
+
+# Split out the argument for options that take them
+    case $option in
+    --*=*)
+            optarg=`echo $option | sed -e 's/^[^=]*=//'`
+            ;;
+    esac
+
+# Now, process the options
+    case $option in
+
+    --tape*)
+	TAPE=$optarg;
+	### in case this is a tape-image file, make sure that 
+	### it's an absolute pathname
+	case ${TAPE} in
+	/*) ;;
+	*)  TAPE=`pwd`/${TAPE} ;;
+	esac
+	;;
+
+    --installdir*)
+        INSTALLDIR=$optarg
+        ;;
+
+    --with-*)
+	case "$option" in
+	*=*)    ;;
+	*)      optarg=yes ;;
+	esac
+
+	withopt=`echo ${option} | sed 's:^--::;s:=.*$::;s:-:_:g'`
+	eval $withopt="$optarg"
+	withoptions="$withoptions $option"
+	;;
+
+    --without-*)
+	withopt=`echo ${option} | sed 's:^--::;s:out::;s:-:_:g'`
+	eval $withopt=no
+	withoutoptions="$withoutoptions $option"
+	;;
+
+    ### actions
+    *remove* | rm)  ACTIONS="${ACTIONS} rm" ;;
+    *extract*)      ACTIONS="${ACTIONS} extract" ;;
+    *fix*)          ACTIONS="${ACTIONS} fix" ;;
+    *test*)         ACTIONS="${ACTIONS} test" ;;
+
+    ### subsets of the distribution
+    *src* | *sour*) 
+        install_src=true
+        ;;
+    *bin*)
+        install_bin=true
+        ;;
+
+    --version)
+        print_version_message
+        exit 0
+        ;;
+    --help)     
+        print_help_message
+	exit 1
+        ;;
+
+    --*)
+        echo "Install: Unrecognized option: \"$orig_option\"; use --help for usage." >&2
+        exit 1
+        ;;
+    esac
+done
+
+
+###
+###
+### check for a myriad of sins
+###
+###
+
+if [ ! -d "${INSTALLDIR}" ] ; then
+    echo '*** ' Can not cd to \"${INSTALLDIR}\" because it does not exist.
+    echo '*** ' Try creating it with \"mkdir ${INSTALLDIR}\" and then try running Install again.
+    exit 1
+fi
+
+cd "${INSTALLDIR}"
+if [ $? -ne 0 ]; then
+    echo '*** ' Can not cd to \"${INSTALLDIR}\" because I do not have execute permission.
+    ls -lad ${INSTALLDIR}
+    echo '*** ' Please fix this and then try running Install again.
+    exit 1
+fi   # ! -d ${INSTALLDIR}
+
+# Make INSTALLDIR absolute (parts below might need it that way).
+# FIXME, do they really?
+# FIXME, handle pwd failure from upper dir permission
+INSTALLDIR=`cd ${INSTALLDIR} ; pwd`
+RELEASE_ROOT=${INSTALLDIR}/${RELEASE_TAG}
+LOGDIR=${RELEASE_ROOT}
+
+eval guess_system
+
+### where the binaries are in the release
+EXECDIR=H-${HOST}
+#EXECDIR=
+
+### if neither binaries nor source were specified, assume 
+### user meant for both to be installed.
+if $install_bin || $install_src; then
+	:
+else
+	install_bin=true
+	install_src=true
+fi
+
+### If no actions are specified on the command line, then use the
+### default actions.
+if [ -z "${ACTIONS}" ] ; then
+    ACTIONS="extract fix test"
+fi # ${ACTIONS}
+
+
+### if binaries are intended for this machine
+if [ "${INSTALLHOST}" = "||HOSTstr||" ] ; then
+    for action in ${ACTIONS} ; do
+        case ${action} in
+        test)
+            OURWD=`(cd ${INSTALLDIR}; pwd) 2>/dev/null`
+            if [ -d ${ROOTING_REAL} ] ; then
+                DEFAULTWD=`(cd ${ROOTING_REAL}; pwd) 2>/dev/null`
+            else
+                DEFAULTWD=${ROOTING_REAL}
+            fi
+
+            case ${BUNDLE} in
+            comp-tools | cross-tools)
+                if [ "${OURWD}" != "${DEFAULTWD}" ] ; then
+                    eval show_exec_prefix_msg
+                fi
+                ;;
+            emacs)
+                if [ "${OURWD}" != "${DEFAULTWD}" ] ; then
+                    eval show_emacs_alternate_msg
+		    exit 1
+                fi
+                ;;
+            esac
+            ;;
+        esac
+    done
+fi
+
+
+### if we can't read the tape drive...
+popdir=`pwd`
+
+if [ ! -d "${RELEASE_ROOT}" ] ; then
+    if mkdir ${RELEASE_ROOT} ; then
+        true
+    else
+        echo '*** ' Cannot extract into \"${RELEASE_ROOT}\" because it does not exist.
+        echo '*** ' Try creating it with \"mkdir ${RELEASE_ROOT}\" and then try running Install again.
+        exit 1
+    fi
+else
+    if [ ! -w "${RELEASE_ROOT}" ] ; then
+        echo '*** ' Cannot write to \"${RELEASE_ROOT}\" because I do not have write permission.
+        ls -lad ${RELEASE_ROOT}
+        echo '*** ' Please fix this and then try running Install again.
+        exit 1
+    fi   # ! -r ${RELEASE_ROOT}
+fi   # ! -d ${RELEASE_ROOT}
+
+
+### There is a window here that I don't know how to handle gracefully from
+### shell.  If the directory DID exist and WAS executable but dissappeared
+### before we could cd into it, we're kinda hosed.  If you get a call about
+### this, make sure the directory exists, is readable, is executable, is the
+### either the default installation directory or the -installdir=directory
+### given on the command line.  Then ask them to just try again.  A few times.
+### If you get the same error every time, we've got a very strange bug.  I
+### can't help you.
+
+cd ${INSTALLDIR}
+if [ $? -ne 0 ] ; then
+    echo '***' Cannot cd to \"${INSTALLDIR}\".  This is a problem.
+    echo '***   ' For further help, please refer to
+    echo '***   ' ${NO_ACCESS} in ${NOTES} or call
+    echo '***   ' ${HOTLINE}
+    exit 1
+fi
+
+### Make sure that the tape device is readable.  This could also be
+### triggered when the "tape" is really a compressed tar file image
+### which is not readable.  In that case, calling it a "tape" is a
+### misnomer.
+
+if echo ${ACTIONS} | grep extract > /dev/null ; then
+    if [ ! -r "${TAPE}" ] ; then
+        echo '***' Can not read from TAPE device, \"${TAPE}\".
+        cd ${popdir} ; ls -lasd ${TAPE}
+        echo '***   ' Try using \"./Install -tape=/dev/something ...\" to name your tape
+        echo '***   ' drive or refer to ${MIGHT_WRONG} in
+        echo '***   ' ${NOTES}.
+        exit 1
+    fi  # ! -r ${popdir}/${TAPE}
+fi   # extract in ${ACTIONS}
+
+cd ${popdir}
+
+
+###
+###
+### removal
+###
+###
+
+if echo ${ACTIONS} | grep rm > /dev/null 2>&1 ; then
+    if [ ! -d "${INSTALLDIR}" ] ; then
+        echo '***' Cannot remove anything from \"${INSTALLDIR}\" because it does not exist.
+        echo '***   ' You probably do not need to remove anything.
+    else
+        popdir=`pwd`
+        if [ ! -d "${INSTALLDIR}" ] ; then
+            echo '***' Can not cd to \"${INSTALLDIR}\" because it does not exist.
+            echo '***   ' You probably do not need to remove anything.
+            exit 1
+        else
+            if [ ! -r "${INSTALLDIR}" ] ; then
+                echo '***' Can not cd to \"${INSTALLDIR}\" because I do not have execute permission.
+                ls -lad ${INSTALLDIR}
+                echo '***   ' Please fix this and then try running Install again.  For
+                echo '***   ' more information, please refer to ${NO_ACCESS}
+                echo '***   ' in ${NOTES}.
+                exit 1
+            fi
+        fi
+
+      ### see also the above note about the timing window.
+
+      cd ${INSTALLDIR}
+
+      if [ $? -ne 0 ] ; then
+	  echo '***' Cannot cd to \"${INSTALLDIR}\".  This is a problem.
+	  echo '***   ' For further help, please refer to
+	  echo '***   ' ${NO_ACCESS} in ${NOTES} or call
+	  echo '***   ' ${HOTLINE}
+	  exit 1
+      fi
+
+      if [ ! -d "${RELEASE_TAG}" ] ; then
+	  echo '***' Cannot remove anything from \"${RELEASE_ROOT}\" because it does not exist.
+	  echo '***   ' You probably do not need to remove anything.
+	  exit 1
+      fi
+
+      echo Removing from \"${INSTALLDIR}\"...
+
+      if rm -rf ${FILE_LIST} ; then
+	  # if neither binaries nor source are installed, remove installdir
+	  if [ -d ${RELEASE_ROOT} -o -d ${RELEASE_ROOT}/src ] ; then
+	      true
+	  else
+	      if rm -rf "${RELEASE_ROOT}" ; then
+		  true
+	      else
+		  if [ ! -w "${INSTALLDIR}" ] ; then
+		      echo '***' I can not remove ${RELEASE_ROOT}
+		      echo '***   ' because I do not have write access to \"${INSTALLDIR}\"
+		      echo '***   ' Please fix this and try running Install again.  For more information
+		      echo '***   ' please refer to ${NO_ACCESS} in ${NOTES}.
+		      exit 1
+		  else
+		      echo '***' I do not know why I can not remove ${RELEASE_ROOT}.   This is
+		      echo '***   ' probably not a problem.
+		  fi
+		  exit 1
+	      fi
+	  fi
+	  echo Removed.
+      else
+	  echo '***' There appears to have been a removal error.
+	  echo '***   ' Chances are that this is not a problem, but you might try removing
+	  echo '***   ' again.
+	  exit 1
+      fi
+    fi
+    echo Cygnus Support software distribution removed!
+fi # if removing
+
+###
+###
+### extraction
+###
+###
+
+if echo ${ACTIONS} | grep extract > /dev/null 2>&1 ; then
+    if [ ! -d "${INSTALLDIR}" ] ; then
+	do_mkdir "${INSTALLDIR}"
+    fi
+
+    if [ ! -d "${RELEASE_ROOT}" ] ; then
+	do_mkdir "${RELEASE_ROOT}"
+    fi
+
+    cd ${RELEASE_ROOT}
+    if [ $? -ne 0 ] 
+        echo '***' I can not cd to \"${RELEASE_ROOT}\".
+
+        ### attempt to diagnose...
+
+        if [ ! -r "${RELEASE_ROOT}" ] ; then
+            echo '***   ' It looks as though you do not have execute permission to \"${RELEASE_ROOT}\".
+        fi  # ! -r ${RELEASE_ROOT}
+
+        echo '***   ' For further help, please refer to
+        echo '***   ' ${NO_ACCESS} in ${NOTES}.
+        exit 1
+    fi  # cd status is zero
+
+    for trigger in ${TRIGGERS} ; do
+	if [ -r "${trigger}" ] ; then
+	    echo '***' \"${RELEASE_ROOT}/${trigger}\" exists and I will not overwrite it.
+	    echo '***   ' If you really want to install it again, please remove it first.
+	    exit 1
+        fi  # -r ${trigger}
+    done  # for trigger
+
+    TARLOG=${LOGDIR}/extract.log
+    echo It will take some time for me to read the tape.
+    echo Verbose output will be saved in ${TARLOG}.
+    echo Extracting into \"${LOGDIR}\"... 
+
+    ### make sure things come off the tape as they were written, but minus
+    ### what could be a security hole.
+    umask 0
+
+    if $install_bin; then
+	### ${TAPE} might be a disk image of the tape, so don't try to do tape
+	### operations on a file
+	if [ -b ${TAPE} -o -c ${TAPE} ]; then
+
+	    ### using the no rewind device, so rewind and fsf to be sure.
+	    eval do_mt rewind
+	    if [ $? -ne 0 ]; then
+		echo '***' Could not rewind tape device \"${TAPE}\".
+		exit 1
+	    fi
+
+	    eval do_mt fsf
+	    if [ $? -ne 0 ]; then
+		echo '***' Could not forward space tape device \"${TAPE}\".
+		exit 1
+	    fi  
+	fi
+
+	${DD} ${DDOPTS} if=${TAPE} | \
+		compress -d | ${TAR} ${TARFLAGS} 2>> ${TARLOG}
+
+	if [ $? -ne 0 ]; then
+	    cat << EOF
+*** There appears to have been an extraction error.
+***   The output from the tar command has been logged in ${TARLOG}
+***   I do not know how to continue until this problem has been
+***   corrected.  If you do not know how to fix it either, please
+***   call ${HOTLINE}.
+EOF
+	    exit 1
+	fi
+    fi
+
+    if $install_src; then
+	### ${TAPE} might be a disk image of the tape, so don't try to do tape
+	### operations on a file
+	if [ -b ${TAPE} -o -c ${TAPE} ]; then
+
+	    ### using the no rewind device, so rewind and fsf to be sure.
+	    eval do_mt rewind
+	    if [ $? -ne 0 ]; then
+		echo '***' Could not rewind tape device \"${TAPE}\".
+		exit 1
+	    fi
+
+	    eval do_mt fsf
+	    if [ $? -ne 0 ]; then
+		echo '***' Could not forward space tape device \"${TAPE}\".
+		exit 1
+	    fi  
+
+	    eval do_mt fsf
+	    if [ $? -ne 0 ]; then
+		echo '***' Could not forward space tape device \"${TAPE}\".
+		exit 1
+	    fi  
+	fi
+
+	${DD} ${DDOPTS} if=${TAPE} | \
+		compress -d | ${TAR} ${TARFLAGS} 2>> ${TARLOG}
+
+	if [ $? -ne 0 ]; then
+	    cat << EOF
+*** There appears to have been an extraction error.
+***   The output from the tar command has been logged in ${TARLOG}
+***   I do not know how to continue until this problem has been
+***   corrected.  If you do not know how to fix it either, please
+***   call ${HOTLINE}.
+EOF
+	    exit 1
+	fi
+    fi
+
+    echo Cygnus Support software distribution extracted!
+fi
+
+
+###
+###
+### fix (header files)
+###
+###
+
+if echo ${ACTIONS} | grep fix > /dev/null 2>&1 ; then
+    fix
+fi
+
+
+###
+###
+### verify the installation
+###
+###
+
+if echo ${ACTIONS} | grep test > /dev/null 2>&1 && $install_bin ; then
+    verify
+    echo Cygnus Support software distribution tested!
+fi
+
+echo Done.
+exit 0
+
+###
+### Local Variables:
+### comment-column: 0
+### fill-column: 131
+### End:
+###
+
+### End of Install

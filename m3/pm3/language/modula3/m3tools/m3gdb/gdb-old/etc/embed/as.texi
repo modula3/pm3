@@ -1,0 +1,13 @@
+@c This documents using AS on embedded systems, as 
+@c @included in tools.texi
+
+@node AS
+@subsection GAS, the GNU assembler
+
+@code{gas} can be used as either a compiler pass or a source-level assembler. 
+When used as a source-level assembler, it has a companion assembly language 
+preprocessor called @code{gasp}. @code{gasp} has a syntax similar to most 
+other assembly language macro packages. 
+
+@code{gas} emits a relocatable object file from the assembly language 
+source code. The object file contains the binary code and the debug symbols.

@@ -1,0 +1,53 @@
+% Copyright (C) 1994, Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+%
+% Last modified on Fri Feb 10 13:17:23 PST 1995 by kalsow
+%
+
+readonly m3gdb_config = {
+  % misc. gdb configuration options  (e.g.  "DS3100" : "--with-stabs")
+} % m3gdb_config
+
+readonly proc get_config (target) is
+  if m3gdb_config contains target
+    return m3gdb_config {target}
+  else
+    return ""
+  end
+end
+
+readonly proc get_overrides (nm, ov) is
+  if equal (ov, "*")
+    return ""
+  else
+    return format ("%s=\"%s\"", nm, ov)
+  end
+end
+
+% check for overrides, otherwise use the defaults from the configuration file
+if not defined ("M3GDB_HOST")    M3GDB_HOST   = TARGET     end
+if not defined ("M3GDB_CC")      M3GDB_CC     = GNU_CC     end
+if not defined ("M3GDB_CFLAGS")  M3GDB_CFLAGS = GNU_CFLAGS end
+if not defined ("M3GDB_MAKE")    M3GDB_MAKE   = GNU_MAKE   end
+if not defined ("M3GDB_CONFIG")  M3GDB_CONFIG = get_config (M3GDB_TARGET) end
+
+
+% check for non-default flags
+ARG0 = get_overrides ("CC", M3GDB_CC)
+ARG1 = get_overrides ("CFLAGS", M3GDB_CFLAGS)
+
+if defined ("quick")
+  % don't bother reconfiguring, just build gdb
+  exec ("cd gdb;", M3GDB_MAKE, ARG0, ARG1)
+else
+  % configure the sources & compile
+  exec ("../gdb/configure", M3GDB_CONFIG,
+           "--srcdir=../gdb", "--disable-gdbtk", gnu_platform (M3GDB_HOST))
+  exec (M3GDB_MAKE, ARG0, ARG1)
+end
+
+% finally, build the exportable link and man page and export them
+link_file ("gdb/gdb", "m3gdb")
+BindExport ("m3gdb")
+ManPage ("m3gdb","1")
