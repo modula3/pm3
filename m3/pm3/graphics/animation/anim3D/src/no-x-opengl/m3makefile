@@ -5,4 +5,4 @@
 /* Last modified on Tue Oct  3 16:34:05 PDT 1995 by najork                   */
 /*       Created on Thu Mar  3 19:12:25 PST 1994 by najork                   */
 
-implementation (X_OpenGL_Base)
+implementation ("X_OpenGL_Base")
