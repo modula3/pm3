@@ -366,12 +366,27 @@ PROCEDURE Status(p: Pathname.T): File.Status RAISES {OSError.E} =
   VAR
     ffd    : WinBase.WIN32_FIND_DATA;
     stat   : File.Status;
-    handle := WinBase.FindFirstFile(M3toC.TtoS(p), ADR(ffd));
+    fname  := M3toC.TtoS(p);
+    handle := WinBase.FindFirstFile(fname, ADR(ffd));
   BEGIN
     IF LOOPHOLE(handle, INTEGER) = WinBase.INVALID_HANDLE_VALUE THEN
-      OSErrorWin32.Raise()
+      (* if "FindFirstFile" didn't work, try getting its status only *)
+      VAR
+        err := WinBase.GetLastError(); (* first, remember previous error *)
+        attrs := WinBase.GetFileAttributes(fname);
+      BEGIN
+        IF attrs # 16_FFFFFFFF AND (* test for GetFileAttributes failure *)
+           Word.And(attrs, WinNT.FILE_ATTRIBUTE_DIRECTORY) # 0 THEN
+          (* "p" names a directory; we don't have to set the other fields *)
+          stat.type := DirectoryFileType
+        ELSE
+          OSErrorWin32.Raise0(err)
+        END
+      END
+    ELSE
+      BuildStatus (ffd, (*OUT*) stat);
+      EVAL WinBase.FindClose(handle);
     END;
-    BuildStatus (ffd, stat);
     RETURN stat;
   END Status;
 
