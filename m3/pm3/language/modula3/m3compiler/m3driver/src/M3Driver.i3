@@ -54,7 +54,8 @@ TYPE
     assemble(source, object: TEXT; optimize, debug, shared: BOOLEAN) RAISES {InterErr};
     link(prog: TEXT; objs: TextSeq.T; libs: LibSeq.T; 
          debug, shared: BOOLEAN) RAISES {InterErr};
-    makelib(name, libs, imp: TEXT; static, shared: BOOLEAN) RAISES {InterErr};
+    makelib(name: TEXT; libs, imp: TextSeq.T; 
+            static, shared: BOOLEAN) RAISES {InterErr};
   END;
 
 END M3Driver.

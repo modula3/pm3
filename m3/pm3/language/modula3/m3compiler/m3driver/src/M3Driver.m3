@@ -20,7 +20,7 @@ IMPORT RTCollector, (*RTCollectorSRC,*) RTutils, Thread, ETimer;
 IMPORT M3ID, M3CG, M3Timers, M3Compiler, Target, WebFile;
 IMPORT Mx, MxMerge, MxCheck, MxGen, MxIn, MxOut, MxVS;
 IMPORT Msg, Arg, Utils, M3Path, Unit, M3Backend;
-IMPORT M3Buf, MxGenC, MxGenCG, TextSeq, Lib, LibSeq;
+IMPORT MxGenC, MxGenCG, TextSeq, Lib, LibSeq;
 
 TYPE
   NK = M3Path.Kind;
@@ -2273,8 +2273,6 @@ PROCEDURE GenerateMain (base: Mx.LinkSet; name: TEXT; verbose: BOOLEAN;
     time_O   : INTEGER;
     time_C   : INTEGER;
     gen      : MxGen.T := NIL;
-    args     := Arg.NewList();
-    options  : REF ARRAY OF TEXT;
   BEGIN
     
     time_O := Utils.LocalModTime (Main_O);
@@ -2425,7 +2423,8 @@ PROCEDURE BuildProgram ()
       RETURN;
     END;
 
-    IF (target_os = M3Path.OSKind.Win32) THEN
+    IF (target_os = M3Path.OSKind.Win32 OR
+        target_os = M3Path.OSKind.GnuWin32) THEN
       pgm_file := pgm_name & ".exe";
     END;
     pgmTime := Utils.LocalModTime (pgm_file);
@@ -2525,6 +2524,9 @@ PROCEDURE WriteProgramDesc (desc_file, main_o: TEXT)
       ELSE
         Wr.PutText (wr, "-o ");
         Wr.PutText (wr, pgm_name);
+        IF target_os = M3Path.OSKind.GnuWin32 THEN
+          Wr.PutText(wr, ".exe");
+        END;
         Wr.PutText (wr, Target.EOL);
       END;
 
@@ -2734,7 +2736,7 @@ PROCEDURE BuildLibrary ()
     f        : FileInfo;
     lib_time : INTEGER;
     libValid := TRUE;
-    lib_obj  := M3Buf.New();
+    lib_obj  := NEW(TextSeq.T).init();
     name     := M3Path.Parse (lib_name, host := FALSE);
   BEGIN
     <*ASSERT NOT bootstrap_mode *>
@@ -2763,8 +2765,7 @@ PROCEDURE BuildLibrary ()
           Msg.Explain ("new \"", f.object, "\" -> archiving ", lib);
           libValid := FALSE;
         END;
-        M3Buf.PutText(lib_obj, f.object);
-        M3Buf.PutChar(lib_obj, ' ');
+        lib_obj.addhi(f.object);
       END;
       f := f.next;
     END;
@@ -2782,7 +2783,7 @@ PROCEDURE BuildLibrary ()
 
     ETimer.Push (M3Timers.pass_3);
     TRY
-      interface.makelib (name.base, M3Buf.ToText(lib_obj), "", 
+      interface.makelib (name.base, lib_obj, NEW(TextSeq.T).init(), 
                          gen_static, gen_shared);
     EXCEPT
       InterErr =>
