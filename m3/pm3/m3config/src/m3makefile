@@ -5,6 +5,17 @@
 % Last modified on Thu Dec  1 09:52:35 PST 1994 by kalsow
 %      modified on Mon Jan 18 11:50:18 PST 1993 by muller
 
+TARGET_BIN_INSTALL = lookup("TARGET_BIN_INSTALL", BIN_INSTALL)
+TARGET_LIB_INSTALL = lookup("TARGET_LIB_INSTALL", LIB_INSTALL)
+TARGET_DOC_INSTALL = lookup("TARGET_DOC_INSTALL", DOC_INSTALL)
+TARGET_PKG_INSTALL = lookup("TARGET_PKG_INSTALL", PKG_INSTALL)
+TARGET_MAN_INSTALL = lookup("TARGET_MAN_INSTALL", MAN_INSTALL)
+TARGET_EMACS_INSTALL = lookup("TARGET_EMACS_INSTALL", EMACS_INSTALL)
+TARGET_HTML_INSTALL = lookup("TARGET_HTML_INSTALL", HTML_INSTALL)
+TARGET_BIN_USE = lookup("TARGET_BIN_USE", BIN_USE)
+TARGET_LIB_USE = lookup("TARGET_LIB_USE", LIB_USE)
+TARGET_PKG_USE = lookup("TARGET_PKG_USE", PKG_USE)
+
 readonly M3Config_body = [
   "(* Copyright (C) 1994, Digital Equipment Corporation *)",
   "(* All rights reserved.                              *)",
@@ -24,26 +35,26 @@ readonly M3Config_body = [
   "  PATH_SEP  = \"" & escape(SL) & "\";",
   "",
   "CONST (* installation directories *)",
-  "  BIN_INSTALL   = \"" & escape(BIN_INSTALL) & "\";",
-  "  LIB_INSTALL   = \"" & escape(LIB_INSTALL) & "\";",
-  "  DOC_INSTALL   = \"" & escape(DOC_INSTALL) & "\";",
-  "  PKG_INSTALL   = \"" & escape(PKG_INSTALL) & "\";",
-  "  MAN_INSTALL   = \"" & escape(MAN_INSTALL) & "\";",
-  "  EMACS_INSTALL = \"" & escape(EMACS_INSTALL) & "\";",
-  "  HTML_INSTALL  = \"" & escape(HTML_INSTALL) & "\";",
+  "  BIN_INSTALL   = \"" & escape(TARGET_BIN_INSTALL) & "\";",
+  "  LIB_INSTALL   = \"" & escape(TARGET_LIB_INSTALL) & "\";",
+  "  DOC_INSTALL   = \"" & escape(TARGET_DOC_INSTALL) & "\";",
+  "  PKG_INSTALL   = \"" & escape(TARGET_PKG_INSTALL) & "\";",
+  "  MAN_INSTALL   = \"" & escape(TARGET_MAN_INSTALL) & "\";",
+  "  EMACS_INSTALL = \"" & escape(TARGET_EMACS_INSTALL) & "\";",
+  "  HTML_INSTALL  = \"" & escape(TARGET_HTML_INSTALL) & "\";",
   "",
   "(* On some systems (e.g. AFS) you must install public files",
   "   in a different place from where you use them.  The paths",
   "   below specify where to find the installed files. *)",
   "",
   "CONST",
-  "  BIN_USE   = \"" & escape(BIN_USE) & "\";",
-  "  LIB_USE   = \"" & escape(LIB_USE) & "\";",
-  "  DOC_USE   = \"" & escape(DOC_INSTALL) & "\";",
-  "  PKG_USE   = \"" & escape(PKG_USE) & "\";",
-  "  MAN_USE   = \"" & escape(MAN_INSTALL) & "\";",
-  "  EMACS_USE = \"" & escape(EMACS_INSTALL) & "\";",
-  "  HTML_USE  = \"" & escape(HTML_INSTALL) & "\";",
+  "  BIN_USE   = \"" & escape(TARGET_BIN_USE) & "\";",
+  "  LIB_USE   = \"" & escape(TARGET_LIB_USE) & "\";",
+  "  DOC_USE   = \"" & escape(TARGET_DOC_INSTALL) & "\";",
+  "  PKG_USE   = \"" & escape(TARGET_PKG_USE) & "\";",
+  "  MAN_USE   = \"" & escape(TARGET_MAN_INSTALL) & "\";",
+  "  EMACS_USE = \"" & escape(TARGET_EMACS_INSTALL) & "\";",
+  "  HTML_USE  = \"" & escape(TARGET_HTML_INSTALL) & "\";",
   "",
   "END M3Config."
 ]
@@ -57,7 +68,12 @@ if defined("_all")
   cp_if (".M3Config.i3", "M3Config.i3")
 end
 
-derived_interface ("M3Config", VISIBLE)
+import("libm3")
 
+derived_interface ("M3Config", VISIBLE)
+SrcExport("COMMON")
+SrcExport(TARGET)
+
+Library("m3config")
 
 

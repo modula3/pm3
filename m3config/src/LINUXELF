@@ -24,7 +24,7 @@ NAMING_CONVENTIONS = "0"
 % the installation will fail, but can be restarted after you have 
 % fixed the permissions.
 
-INSTALL_ROOT = "/usr/local/modula3-3.6/"
+INSTALL_ROOT = "/home/tmp2/pm3-test/"
 %-- handy for installations that keep all M3 stuff together
 
 BIN_INSTALL   = INSTALL_ROOT & "bin/" & TARGET      % executables
@@ -129,6 +129,12 @@ VERBOSE = ""
 
 %--------------------------------------------------------------- C compiler ---
 
+% Tools needed to compile m3cc
+
+GNU_CC     = lookup("GNU_CC","gcc")
+GNU_CFLAGS = lookup("GNU_CFLAGS","-O")
+GNU_MAKE   = lookup("GNU_MAKE","make")
+
 % C compiler with flags for compiling a single ".c" file.
 % You can override this definition in your m3makefile by defining CC there.
 CC = lookup ("CC", [ "gcc" ])
@@ -178,11 +184,18 @@ proc m3_link (prog, objects, imported_libs, debug, shared) is
     if not empty(i[0])
       cmd += "-L" & i[0]
       if shared % needed only if the final executable uses shared libs
-        cmd += ["-rpath", i[0]]
+        cmd += ["-Wl,-rpath", "-Wl," & i[0]]
       end
     end
     cmd += "-l" & i[1]
   end
+
+  % At run time, the path will be TARGET_XXX. Thus, shared libs will be in
+  % TARGET_LIB_USE
+  if shared and defined("TARGET_LIB_USE")
+    cmd += ["-Wl,-rpath", "-Wl," & TARGET_LIB_USE]
+  end
+
   cmd += "-lm"
 
   if debug cmd += "-g" end
@@ -317,17 +330,21 @@ proc m3_backend (source, object, optimize, debug, shared) is
   return exec(cmd)
 end
 
-M3_BACKEND_EXTERNAL = "TRUE"
-% "TRUE" => call m3_backend
-% ""     => use an internal backend (default)
-
-if M3_BACKEND_EXTERNAL
+readonly proc m3_backend_external() is
+  M3_BACKEND_EXTERNAL = "TRUE"
   M3_BACKEND_OUTPUT = "ASM"
-else
-  M3_BACKEND_OUTPUT = "OBJ"
+  remove_m3front_option("-unfold_nested_procs")
 end
-% "ASM" => the backend produces assembly code (default)
-% "OBJ" => it produces object code
+
+readonly proc m3_backend_internal() is
+  M3_BACKEND_EXTERNAL = ""
+  M3_BACKEND_OUTPUT = "OBJ"
+  m3front_option("-unfold_nested_procs")
+end
+
+% The default is to use Jerome's speedy backend
+%m3_backend_external()
+m3_backend_internal()
 
 %-------------------------------------------------------- Modula-3 compiler ---
 
@@ -335,10 +352,6 @@ end
 m3_option("-w1")
 m3_option("-why")
 m3_option("-g")
-
-if not M3_BACKEND_EXTERNAL
-  m3front_option("-unfold_nested_procs")
-end
 
 M3_COVERAGE_LIB = LIB_USE & "/report_coverage.o"
 % --- library linked in programs compiled with "-Z" coverage option
@@ -378,6 +391,8 @@ readonly proc install_file (src, dest, mode) is
   local ret = exec ([ "cp", "-p", "-d", "-f", src, dest ])
   % exec (["install", "-c", "-m", mode, src, dest])
 end
+
+include("COMMON")
 
 
 

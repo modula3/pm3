@@ -1,0 +1,55 @@
+
+%
+% properties of the supported platforms
+%
+
+readonly Platforms = {
+  "AIX386"    : [ "POSIX", "32BITS", "i486-ibm-aix"       ],
+  "ALPHA_OSF" : [ "POSIX", "64BITS", "alpha-dec-osf1"     ],
+  "AP3000"    : [ "POSIX", "32BITS", "apollo68-bsd"       ],
+  "ARM"       : [ "POSIX", "32BITS", "arm--riscos"        ],
+  "DS3100"    : [ "POSIX", "32BITS", "decstation"         ],
+  "FreeBSD"   : [ "POSIX", "32BITS", "i486-unknown-bsd"   ],
+  "FreeBSD2"  : [ "POSIX", "32BITS", "i486-unknown-bsd"   ],
+  "HP300"     : [ "POSIX", "32BITS", "m68k-hp-hpux"       ],
+  "HPPA"      : [ "POSIX", "32BITS", "hppa1.1-hp-hpux"    ],
+  "IBMR2"     : [ "POSIX", "32BITS", "rs6000-ibm-aix3.2"  ],
+  "IBMRT"     : [ "POSIX", "32BITS", "romp-ibm-aos"       ],
+  "IRIX5"     : [ "POSIX", "32BITS", "mips-sgi-irix5"     ],
+  "LINUX"     : [ "POSIX", "32BITS", "i486--linux"        ],
+  "LINUXELF"  : [ "POSIX", "32BITS", "i486--linuxelf"     ],
+  "NEXT"      : [ "POSIX", "32BITS", "next-bsd"           ],
+  "NT386"     : [ "WIN32", "32BITS", "i486--nt"           ],
+  "NT386GNU"  : [ "WIN32", "32BITS", "i486--cygwin32"     ],
+  "OKI"       : [ "POSIX", "32BITS", "i860--sysv4.0"      ],
+  "SEQUENT"   : [ "POSIX", "32BITS", "i386-sequent-bsd"   ],
+  "SOLgnu"    : [ "POSIX", "32BITS", "sparc-sun-solaris2" ],
+  "SOLsun"    : [ "POSIX", "32BITS", "sparc-sun-solaris2" ],
+  "SPARC"     : [ "POSIX", "32BITS", "sparc-sun-sunos4.1" ],
+  "SUN3"      : [ "POSIX", "32BITS", "m68k-sun-sunos4.1"  ],
+  "SUN386"    : [ "POSIX", "32BITS", "i386-sun-sunos4.1"  ],
+  "UMAX"      : [ "POSIX", "32BITS", "encore-bsd"         ],
+  "VAX"       : [ "POSIX", "32BITS", "vax-dec-ultrix"     ]
+}
+
+readonly proc gnu_platform (x) is
+  if Platforms contains x
+    return Platforms{x}[2]
+  else
+    error ("GNU platform is not known for \"" & x & "\"")
+    return "unknown-unknown-unknown"
+  end
+end
+
+readonly proc SrcExport (nm) is
+  local dest = PKG_INSTALL & SLship & PACKAGE & SLship & pkg_subdir()
+  local src_file = path_of(nm)
+  _install_file(src_file,dest,"0644","")
+end
+
+readonly proc SrcdExport (nm) is
+  local dest = PKG_INSTALL & SLship & PACKAGE & SLship & pkg_subdir()
+  deriveds(nm,no_extension)
+  _install_file(nm,dest,"0644","T")
+end
+

@@ -7,7 +7,7 @@
 %      modified on Mon Feb 10 16:54:50 PST 1992 by ayers
 
 import_lib ("dps", "/usr/lib")
-import ("X11R4")
+import ("X11")
 m3_option ("-X1@-I/usr/include/DPS@-I/usr/include/X11@-I.@")
 
 if defined ("_all")

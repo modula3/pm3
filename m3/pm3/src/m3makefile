@@ -12,605 +12,672 @@
 % later sections.
 %
 
-readonly new_m3build = format ("%s%s%s", BIN_USE, SL, "m3build")
-readonly new_m3ship  = format ("%s%s%s", BIN_USE, SL, "m3ship")
+> "config.tmpl" in
+  write("m3_option(\"-O\")", CR)
+end
 
-readonly proc BuildChunk (x) is
-  if not stale (x, x)
+BOOTSTRAP = lookup("BOOTSTRAP","")
+
+if BOOTSTRAP
+  m3build = [path() & SL & ".." & SL & "boot-" & TARGET & SL &"m3build" & SL &
+      TARGET & SL & "m3build","-T",path() & SL & ".." & SL & "m3config" & SL &
+      "src"]
+  m3ship = [path() & SL & ".." & SL & "boot-" & TARGET & SL & "m3ship" & SL &
+      TARGET & SL & "m3ship","-T",path() & SL & ".." & SL & "m3config" & SL &
+      "src"]
+  >> "config.tmpl" in
+    write("if defined(\"m3_backend_external\") m3_backend_external() end", CR)
+  end
+else
+  m3build = ["m3build"]
+  m3ship = ["m3ship"]
+end
+
+m3build += "-F"
+m3build += path() & SL & ".." & SL & TARGET & SL & "config.tmpl"
+
+EXPORTPATH = lookup("EXPORTPATH","")
+EXPORTRPATH = lookup("EXPORTRPATH","")
+
+if EXPORTRPATH
+  EXPORTPATH = path() & SL & ".." & SL & EXPORTRPATH
+end
+
+if EXPORTPATH
+  >> "config.tmpl" in
+    write("TARGET_BIN_INSTALL = BIN_INSTALL", CR)
+    write("TARGET_LIB_INSTALL = LIB_INSTALL", CR)
+    write("TARGET_DOC_INSTALL = DOC_INSTALL", CR)
+    write("TARGET_PKG_INSTALL = PKG_INSTALL", CR)
+    write("TARGET_EMACS_INSTALL = EMACS_INSTALL", CR)
+    write("TARGET_MAN_INSTALL = MAN_INSTALL", CR)
+    write("TARGET_HTML_INSTALL = HTML_INSTALL", CR)
+    write("TARGET_BIN_USE = BIN_USE", CR)
+    write("TARGET_LIB_USE = LIB_USE", CR)
+    write("TARGET_PKG_USE = PKG_USE", CR)
+
+    write("BIN_INSTALL = \"" & EXPORTPATH & "\" & BIN_INSTALL", CR)
+    write("LIB_INSTALL = \"" & EXPORTPATH & "\" & LIB_INSTALL", CR)
+    write("DOC_INSTALL = \"" & EXPORTPATH & "\" & DOC_INSTALL", CR)
+    write("PKG_INSTALL = \"" & EXPORTPATH & "\" & PKG_INSTALL", CR)
+    write("EMACS_INSTALL = \"" & EXPORTPATH & "\" & EMACS_INSTALL", CR)
+    write("MAN_INSTALL = \"" & EXPORTPATH & "\" & MAN_INSTALL", CR)
+    write("HTML_INSTALL = \"" & EXPORTPATH & "\" & HTML_INSTALL", CR)
+    write("BIN_USE = \"" & EXPORTPATH & "\" & BIN_USE", CR)
+    write("LIB_USE = \"" & EXPORTPATH & "\" & LIB_USE", CR)
+    write("PKG_USE = \"" & EXPORTPATH & "\" & PKG_USE", CR)
+  end
+end
+
+readonly proc BuildChunk (dir,pkg) is
+  local ret = 0
+
+  if equal(OS_TYPE,"WIN32") dir = P2W(dir) end
+
+  local wd = ".." & SL & dir & SL & pkg
+
+  if not stale (pkg, pkg)
     % we've already built this chunk
-    write ("-- ", x, " done --", CR)
+    write ("-- ", pkg, " done --", CR)
+    %ret = exec ([ "rm", "-rf", BUILD_DIR] , [], wd)
     return
   end
 
-  local wd = format ("..%s%s", SL, x)
-
   % let'm know what we're doing
-  write (CR, "---------------------- building ", x,
-            " ----------------------", CR,CR)
-  if equal (OS_TYPE, "WIN32")
+  write (CR, "---------- building ", pkg," in ",dir," ----------", CR,CR)
 
-    % Build and ship the chunk.  Since there is no command-separator
-    % (such as ";" in Unix and "&&" in NT) in Windows95, we write the 
-    % commands to a batch file, execute it, and then delete it again
-    BATCH_FILE = ".M3BATCH.bat"
+  % build and ship the chunk
+  write(m3build, CR)
+  ret = exec (m3build, [], wd)
+  if not equal(ret, 0) error ("m3build failed with error code: ", ret) end
+  write(m3ship, CR)
+  ret = exec (m3ship, [], wd)
+  if not equal(ret, 0) error ("m3ship failed with error code: ", ret) end
 
-    > BATCH_FILE in
-      write ("@echo off", CR)
-      write ("@", goto_chunk, "> nul:", CR)
-      write ("@", new_m3build, CR)
-      write ("@", new_m3ship, CR)
-
-      % If you don't want to delete derived objects as soon as they are
-      % installed, comment out the following line.
-      write ("@echo y | del ", BUILD_DIR, " > nul:", CR)
-    end
-
-    local ret = exec ([ BATCH_FILE ])
-    if not equal(ret, 0)
-      error ("execution of batch file failed with error code: ", ret) end
-    local sink = unlink_file (BATCH_FILE)
-
-  else % OS_TYPE is POSIX
-
-    % build and ship the chunk
-    local ret = exec ([ new_m3build ], [], wd)
-    if not equal(ret, 0) error ("m3build failed with error code: ", ret) end
-    ret = exec ([ new_m3ship ], [], wd)
-    if not equal(ret, 0) error ("m3ship failed with error code: ", ret) end
-  
-    % If you don't want to delete derived objects as soon as they are
-    % installed, comment out the following line.
-    ret = exec ([ "rm", "-rf", BUILD_DIR] , [], wd)
-
-  end
+  % If you don't want to delete derived objects as soon as they are
+  % installed, comment out the following line.
+  ret = exec ([ "rm", "-rf", BUILD_DIR] , [], wd)
 
   % remember that we've built this chunk
-  ret = exec (["touch", x])
+  ret = exec (["touch", pkg])
   if not equal(ret, 0) error ("touch failed with error code: ", ret) end
 end
 
 
+%--- m3cc --- utility -------------------------------------------------
+% m3cc is a code generation backend based on gcc, called by the compiler
+% requires:
+BuildChunk("language/modula3/m3compiler","m3cc")
 
 %--- mtex --- utility -------------------------------------------------
 % mtex is a quake function that is used to produce
 % both troff man pages and HTML pages from the same source
 % requires:
-BuildChunk ("mtex")
+BuildChunk("text","mtex")
 
 %--- m3core --- library -------------------------------------------------
 % m3core is the minimal base library.  It must be built before any others.
 % requires:
-BuildChunk ("m3core")
+BuildChunk("libs","m3core")
 
 %--- libm3 --- library -------------------------------------------------
 % libm3 is the library that most others need.
 % requires: m3core
-BuildChunk ("libm3")
+BuildChunk("libs","libm3")
 
 %--- sil --- demo -------------------------------------------------
 % Sil is a simple drawing program that runs on Windows/NT.  It's included
 % in the distribution as a sample of native Windows programming in Modula-3.
 % requires: libm3
 if equal (OS_TYPE, "WIN32")
- BuildChunk ("sil")
+ BuildChunk("graphics","sil")
 end
 
 %--- m3middle --- library -------------------------------------------------
 % the Modula-3 compiler's IL definition
 % requires: libm3
-%BuildChunk ("m3middle")  %-- built as part of the bootstrap process
-
-%--- m3linker --- library -------------------------------------------------
-% the Modula-3 prelinker
-% requires: m3middle
-%BuildChunk ("m3linker")  %-- built as part of the bootstrap process
-
-%--- m3objfile --- library -------------------------------------------------
-% the Modula-3 object file writers
-% requires: m3middle
-%BuildChunk ("m3objfile")  %-- built as part of the bootstrap process
+BuildChunk("language/modula3/m3compiler","m3middle")
+%-- built as part of the bootstrap process
 
 %--- m3front --- library -------------------------------------------------
 % the Modula-3 compiler front-end
 % requires: m3middle
-%BuildChunk ("m3front")  %-- built as part of the bootstrap process
+BuildChunk("language/modula3/m3compiler","m3front")
+%-- built as part of the bootstrap process
+
+%--- m3linker --- library -------------------------------------------------
+% the Modula-3 prelinker
+% requires: m3middle
+BuildChunk("language/modula3/m3compiler","m3linker")
+%-- built as part of the bootstrap process
+
+%--- m3objfile --- library -------------------------------------------------
+% the Modula-3 object file writers
+% requires: m3middle
+if equal(TARGET,"LINUXELF") or equal(TARGET,"NT386")
+  BuildChunk("language/modula3/m3compiler","m3objfile")
+end
 
 %--- m3back --- library -------------------------------------------------
 % the Windows/NT x86 back-end
 % requires: m3middle, m3objfile
-% BuildChunk ("m3back")  %-- built as part of the bootstrap process
+if equal(TARGET,"LINUXELF") or equal(TARGET,"NT386")
+  BuildChunk("language/modula3/m3compiler","m3back")
+end
+
+%--- m3driver --- utility -------------------------------------------------
+% the Modula-3 compiler driver
+% requires: m3linker, m3front, m3middle, libm3
+BuildChunk("language/modula3/m3compiler","m3driver")
+%-- built as part of the bootstrap process
 
 %--- m3staloneback --- utility -----------------------------------------------
 % an standalone back-end program like m3cc that uses m3back
 % requires: m3back
-% BuildChunk ("m3staloneback")  %-- built as part of the bootstrap process
-
-%--- m3 --- utility -------------------------------------------------
-% the Modula-3 compiler (main program)
-% requires: m3linker, m3front, m3middle, libm3
-%BuildChunk ("m3")  %-- built as part of the bootstrap process
+% BuildChunk("language/modula3/m3compiler","m3staloneback")
 
 %--- m3loader --- utility -------------------------------------------------
 % an experimental dynamic loader for Windows/NT
 % requires: libm3, m3middle
 % if equal (OS_TYPE, "WIN32")
-%   BuildChunk ("m3loader")
+%   BuildChunk("language/modula3/m3compiler","m3loader")
 % end
 
 %--- m3quake --- library --------------------------------------------------
-% an experimental callable version of quake
+% the quake interpreter used by m3build
 % requires: libm3, m3middle
-%BuildChunk ("m3quake")
+BuildChunk("language","m3quake")
+%-- built as part of the bootstrap process
 
-%--- m3build2 --- utility ------------------------------------------------
-% an experimental Modula-3 version of m3build
+%--- m3templates --- library --------------------------------------------------
+% quake builtin functions for m3build
+% requires: libm3, m3quake, m3middle, m3driver
+BuildChunk("language/modula3/m3compiler","m3templates")
+%-- built as part of the bootstrap process
+
+%--- m3config --- library --------------------------------------------------
+% quake templates and default bin, lib, pkg... locations for m3build
+% requires: libm3
+BuildChunk(".","m3config")
+%-- built as part of the bootstrap process
+
+%--- m3build --- utility ------------------------------------------------
+% the modula-3 compiler
 % requires: libm3, m3quake
-%BuildChunk ("m3build2")
+BuildChunk("language/modula3/m3compiler","m3build")
+%-- built as part of the bootstrap process
  
-%--- m3ship2 --- utility ------------------------------------------------
-% an experimental Modula-3 version of m3ship
+%--- m3ship --- utility ------------------------------------------------
+% installs modula-3 packages
 % requires: libm3, m3quake
-%BuildChunk ("m3ship2")
+BuildChunk("language/modula3/m3compiler","m3ship")
+%-- built as part of the bootstrap process
  
 %--- cg-burs --- utility -------------------------------------------------
 % an experimental Modula-3 back-end that uses BURS
 % requires: m3middle
-% BuildChunk ("cg-burs")  %-- experimental
+% BuildChunk("language/modula3/m3compiler","cg-burs")  %-- experimental
 
 %--- coverage --- utility program & library ----------------------------------
 % a line-based coverage analyzer/profiler
 % requires: libm3
 if equal (OS_TYPE, "POSIX")
-  BuildChunk ("coverage")
+  BuildChunk("language/modula3/m3tools","coverage")
 end
+
+%--- m3gdb --- utility -------------------------------------------------
+% m3gdb is a modula3 aware debugger based on gdb
+% requires:
+BuildChunk("language/modula3/m3tools","m3gdb")
 
 %--- pp --- utility -------------------------------------------------
 % a Modula-3 pretty-printer
 % requires: libm3
 if equal (OS_TYPE, "POSIX")
-  BuildChunk ("pp")
+  BuildChunk("language/modula3/m3tools","pp")
 end
 
 %--- m3bundle --- utility -------------------------------------------------
 % a program that captures binary data from files as Modula-3 source,
 %   needed to build the formsvbt library
 % requires: libm3
-BuildChunk ("m3bundle")
+BuildChunk("language/modula3/m3tools","m3bundle")
 
 %--- m3totex --- utility -------------------------------------------------
 % a program that wraps Modula-3 source in enough TeX to make it printable
 % requires: libm3, m3bundle
-BuildChunk ("m3totex")
+BuildChunk("language/modula3/m3tools","m3totex")
 
 %--- set --- library ------------------------------------------------------
 % a simple, generic Set interface.
 % requires: libm3
-BuildChunk ("set")
+BuildChunk("libs","set")
 
 %--- digraph --- library ------------------------------------------------------
 % a directed graph type, generic over the types labeling nodes and edges
 % requires: libm3
-BuildChunk ("digraph")
+BuildChunk("libs","digraph")
 
 %--- table-list --- library ---------------------------------------------------
 % an association-list-based, generic implementation of "Table.T"
 % requires: libm3
-BuildChunk ("table-list")
+BuildChunk("libs","table-list")
 
 %--- realgeometry --- library -----------------------------------------------
 % a version of the geometry package (Point, Rect, Path, ...)
 %   with REAL-valued coordinates
 % requires: libm3
-BuildChunk ("realgeometry")
+BuildChunk("libs","realgeometry")
 
 %--- parseparams --- library -----------------------------------------------
 % a library that helps parse command line arguments.
 % requires: libm3
-BuildChunk ("parseparams")
+BuildChunk("libs","parseparams")
 
 %--- slisp --- library -----------------------------------------------
 % a library containing a small Lisp interpreter
 % requires: libm3
-BuildChunk ("slisp")
+BuildChunk("language","slisp")
 
 %--- tempfiles --- library -----------------------------------------------
 % a library to build tempfiles
 % requires: libm3
-BuildChunk ("tempfiles")
+BuildChunk("libs","tempfiles")
 
-%--- m3where2 --- utility ------------------------------------------------
-% an experimental Modula-3 version of m3where
+%--- m3where --- utility ------------------------------------------------
+% search for modula-3 packages and files
 % requires: libm3, m3quake, tempfiles
-BuildChunk ("m3where2")
+BuildChunk ("language/modula3/m3compiler","m3where")
  
 %--- tcp --- library -------------------------------------------------
 % tcp implements a Modula-3 interface to TCP sockets.  It is used
 %   by the Trestle window system and network objects.
 % requires: libm3
-BuildChunk ("tcp")
+BuildChunk("network/tcplibs","tcp")
 
 %--- web --- library -------------------------------------------------
 % a library for retrieving documents from the World Wide Web using an
 %   http proxy server.
 % requires: tcp
-BuildChunk ("web")
+BuildChunk("network/www","web")
 
 %--- netobj --- library -------------------------------------------
 % the network objects runtime library, needed by most distributed applications
 % requires: tcp
-BuildChunk ("netobj")
+BuildChunk("network/netobjects","netobj")
 
 %--- netobjd --- utility -------------------------------------------
 % the network objects daemon, needed by all programs using network objects
 % requires: netobj
-BuildChunk ("netobjd")
+BuildChunk("network/netobjects","netobjd")
 
 %--- m3tk --- library -------------------------------------------
 % a (large) Modula-3 abstract syntax tree (AST) toolkit, needed by stubgen
 % requires: libm3
-BuildChunk ("m3tk")
+BuildChunk("language/modula3/m3tools","m3tk")
 
 %--- stubgen --- utility -------------------------------------------
 % the network objects stub generator, needed by programs using network objects
 % requires: m3tk
-BuildChunk ("stubgen")
+BuildChunk("network/netobjects","stubgen")
 
 %--- stable --- library ---------------------------------------------
 % A library providing log-based persistent objects
 % requires: libm3
-BuildChunk ("stable")
+BuildChunk("database/stableobjects","stable")
 
 %--- stablegen --- utility -------------------------------------------
 % a stub generator to make the use of the "stable" library much easier
 % requires: m3tk, stable
-BuildChunk ("stablegen")
+BuildChunk("database/stableobjects","stablegen")
 
 %--- sharedboard --- prototype -------------------------------------------
 % a prototype shared whiteboard
 % requires: stable, stablegen
-% BuildChunk ("sharedboard")
+% BuildChunk("graphics","sharedboard")
 
-%--- X11R4 --- library -------------------------------------------------
-% X11R4 implements a Modula-3 interface to the X library.  It is used
+%--- X11 --- library -------------------------------------------------
+% X11 implements a Modula-3 interface to the X library.  It is used
 %   by the Testle window system.
 % requires: libm3
 if PLATFORM_SUPPORTS_X
-  BuildChunk ("X11R4")
+  BuildChunk("graphics/gr-libs","X11")
 end
 
 %--- PEX --- library -------------------------------------------------
 % PEX implements a Modula-3 interface to the PEX 3D graphics library.
 %   It is used by all graphical 3D applications
-% requires: X11R4 and a host PEX implementation
+% requires: X11 and a host PEX implementation
 if PLATFORM_SUPPORTS_DECPEX
-  BuildChunk ("PEX")
+  BuildChunk("graphics/gr-libs","PEX")
 end
 
 %--- opengl --- library -------------------------------------------------
 % opengl implements a Modula-3 interface to the OpenGL 3D graphics library.
 %   It is used by all graphical 3D applications
-% requires: X11R4 and a host OpenGL implementation
+% requires: X11 and a host OpenGL implementation
 if PLATFORM_SUPPORTS_OPENGL
-  BuildChunk ("opengl")
+  BuildChunk("graphics/gr-libs","opengl")
 end
 
 %--- motif --- library -------------------------------------------------
 % motif implements a Modula-3 interface to the X/Motif library.
-% requires: X11R4
+% requires: X11
 if PLATFORM_SUPPORTS_MOTIF
-  BuildChunk ("motif")
+  BuildChunk("graphics/gr-libs","motif")
 end
 
 %--- tetris --- game -------------------------------------------------
 % a Modula-3 version of Tetris
-% requires: X11R4
+% requires: X11
 if PLATFORM_SUPPORTS_X
-  BuildChunk ("tetris")
+  BuildChunk("graphics/games","tetris")
 end
 
 %--- columns --- game -------------------------------------------------
 % a Modula-3 version of the PC game, columns
-% requires: X11R4
+% requires: X11
 if PLATFORM_SUPPORTS_X
-  BuildChunk ("columns")
+  BuildChunk("graphics/games","columns")
 end
 
 %--- ui --- library -------------------------------------------------
 % ui implements the Trestle window-system toolkit.  It is used
 %   by most graphical applications.
-% requires: X11R4 and tcp on POSIX; libm3 on WIN32
+% requires: X11 and tcp on POSIX; libm3 on WIN32
 % Note: The WIN32 version is still VERY buggy
-BuildChunk ("ui")
+BuildChunk("graphics/gr-libs","ui")
 
 %--- bicycle --- library -------------------------------------------------
 % bicycle is a library of playing card images.
 % requires: ui
-BuildChunk ("bicycle")
+BuildChunk("graphics/games","bicycle")
 
 %--- solitaire --- game -------------------------------------------------
 % a Modula-3 version of SeaHaven towers
 % requires: bicycle
-BuildChunk ("solitaire")
+BuildChunk("graphics/games","solitaire")
 
 %--- badbricks --- game -------------------------------------------------
 % a Modula-3 game similar to minesweeper, inspired by the crumbling
 %     facade of SRC's building.
 % requires: ui
-BuildChunk ("badbricks")
+BuildChunk("graphics/games","badbricks")
 
-%--- m3tools --- library -------------------------------------------------
+%--- m3scan --- library -------------------------------------------------
 % a simple Modula-3 scanner, needed by m3tohtml and m3browser
 % requires: libm3, tcp
-BuildChunk ("m3tools")
+BuildChunk("language/modula3/m3tools","m3scan")
 
 %--- m3tohtml --- utility -------------------------------------------------
 % a program to convert batches of Modula-3 source to interconnected HTML
-% requires: libm3, m3tools
-BuildChunk ("m3tohtml")
+% requires: libm3, m3scan
+BuildChunk("language/modula3/m3tools","m3tohtml")
 
 %--- m3markup --- library --------------------------------------------------
 % a library to parse Modula-3 source code and insert HTML markup
 % requires: libm3
-BuildChunk ("m3markup")
+BuildChunk("language/modula3/m3tools","m3markup")
 
 %--- m3tohtmlf --- utility -------------------------------------------------
 % a program to convert one Modula-3 source to an HTML file
-% requires: libm3, m3tools, m3markup
-BuildChunk ("m3tohtmlf")
+% requires: libm3, m3scan, m3markup
+BuildChunk("language/modula3/m3tools","m3tohtmlf")
 
 %--- m3browser --- utility -------------------------------------------------
 % an HTTP server that provides WWW browsing of the installed Modula-3 system
-% requires: libm3, m3tools, m3markup
+% requires: libm3, m3scan, m3markup
 if equal (OS_TYPE, "POSIX")
-  BuildChunk ("m3browser")
+  BuildChunk("language/modula3/m3tools","m3browser")
 end
 
 %--- tcl --- library -------------------------------------------------
 % a thin Modula-3 veneer on the TCL library (version 6.2).
 % requires: libm3  (TCL is required to build a shared library)
-% BuildChunk ("tcl")
+% BuildChunk("language","tcl")
 
 %--- dps --- library -------------------------------------------------
 % a thin Modula-3 veneer on the display Postscript extensions to X
-% requires: X11R4, display PostScript, pswrap
-% BuildChunk ("dps")  %-- many sites do not have the X extensions
+% requires: X11, display PostScript, pswrap
+% BuildChunk("graphics/displayps","dps")  
+%-- many sites do not have the X display postscript extensions
 
 %--- dpsslides --- utility -------------------------------------------------
 % a program to display postscript slides in X
 % requires: dps
-% BuildChunk ("dpsslides")
+% BuildChunk("graphics/displayps","dpsslides")
 
 %--- vbtkit --- library -------------------------------------------------
 % a large collection of useful window widgets, needed by many of the
 %   following libraries and programs.
 % requires: ui
-BuildChunk ("vbtkit")
+BuildChunk("graphics/gr-libs","vbtkit")
 
 %--- fours --- game -------------------------------------------------
 % a collection of Modula-3 variants of the PC game, tetris.
 % requires: vbtkit
-BuildChunk ("fours")
+BuildChunk("graphics/games","fours")
 
 %--- showheap --- utility -------------------------------------------------
 % a program to graphically display in real-time the state of each heap page.
 % requires: vbtkit
 if equal (OS_TYPE, "POSIX")
-  BuildChunk ("showheap")
+  BuildChunk("language/modula3/m3tools","showheap")
 end
 
 %--- recordheap --- utility -------------------------------------------------
 % a program to capture a "showheap" trace
 % requires: 
 if equal (OS_TYPE, "POSIX")
-  BuildChunk ("recordheap")
+  BuildChunk("language/modula3/m3tools","recordheap")
 end
 
 %--- replayheap --- utility -------------------------------------------------
 % a program to graphically display the log captured by "recordheap"
 % requires: vbtkit
 if equal (OS_TYPE, "POSIX")
-  BuildChunk ("replayheap")
+  BuildChunk("language/modula3/m3tools","replayheap")
 end
 
 %--- shownew --- utility -------------------------------------------------
 % a program to graphically display in real-time per-type allocations
 % requires: vbtkit
 if equal (OS_TYPE, "POSIX")
-  BuildChunk ("shownew")
+  BuildChunk("language/modula3/m3tools","shownew")
 end
 
 %--- showthread --- utility -------------------------------------------------
 % a program to graphically display in real-time the state of each thread.
 % requires: vbtkit
 if equal (OS_TYPE, "POSIX")
-  BuildChunk ("showthread")
+  BuildChunk("language/modula3/m3tools","showthread")
 end
 
 %--- images --- library -------------------------------------------------
 % support for displaying bitmap images
 % requires: ui
-BuildChunk ("images")
+BuildChunk("graphics/gr-libs","images")
 
 %--- jvideo --- library -------------------------------------------------
 % a low-level interface to the J-video hardware, needed by videovbt
 % requires: tcp
-BuildChunk ("jvideo")
+BuildChunk("graphics/gr-libs","jvideo")
 
 %--- videovbt --- library -------------------------------------------------
 % a window widget that displays live video images
 % requires: jvideo, ui
-BuildChunk ("videovbt")
+BuildChunk("graphics/gr-libs","videovbt")
 
 %--- formsvbtpixmaps --- library -------------------------------------------
 % misc. bitmaps, cursors and stuff used by formsvbt
 % requires: libm3, m3bundle
-BuildChunk ("formsvbtpixmaps")
+BuildChunk("graphics/forms","formsvbtpixmaps")
 
 %--- formsvbt --- library -------------------------------------------------
 % a high-level language based on S-expressions that makes it easy
 % to assemble VBTs (windows) using the TeX metaphors of boxes and
 % glue.
 % requires: vbtkit, videovbt, formsvbtpixmaps, web
-BuildChunk ("formsvbt")
+BuildChunk("graphics/forms","formsvbt")
 
 %--- formsedit --- utility -------------------------------------------------
 % a 1-1/2 view GUI editor for FormsVBT expressions
 % requires: formsvbt
-BuildChunk ("formsedit")
+BuildChunk("graphics/forms","formsedit")
 
 %--- fisheye --- demo -------------------------------------------------
 % a demo of "fisheye" views for graph browsing
 % requires: formsvbt
-BuildChunk ("fisheye")
+BuildChunk("graphics/gr-libs","fisheye")
 
 %--- calculator --- demo -------------------------------------------------
 % a 10-key calculator using FormsVBT
 % requires: formsvbt
-BuildChunk ("calculator")
+BuildChunk("graphics/games","calculator")
 
 %--- cube --- demo -------------------------------------------------
 % a rotating cube
 % requires: formsvbt
-BuildChunk ("cube")
+BuildChunk("graphics/games","cube")
 
 %--- codeview --- library -------------------------------------------
 % support for animated views of source code, needed by zeus
 % requires: formsvbt
-BuildChunk ("codeview")
+BuildChunk("graphics/animation","codeview")
 
 %--- rehearsecode --- utility -------------------------------------------
 % a program to manually test drive source code animations
 % requires: codeview
-BuildChunk ("rehearsecode")
+BuildChunk("graphics/animation","rehearsecode")
 
 %--- mg --- library -------------------------------------------
 % the low-level animation support
 % requires: formsvbt
-BuildChunk ("mg")
+BuildChunk("graphics/animation","mg")
 
 %--- mgkit --- library -------------------------------------------
 % a collection of easier-to-use animation widgets
 % requires: m3
-BuildChunk ("mgkit")
+BuildChunk("graphics/animation","mgkit")
 
 %--- anim3D --- library -------------------------------------------
 % a collection of 3D animation widgets
 % requires: parseparams, vbtkit, and one of the following:
-%    X11R4 and PEX
-%    X11R4 and OpenGL
+%    X11 and PEX
+%    X11 and OpenGL
 %    soon: OpenGL and Windows NT
-BuildChunk ("anim3D")
+BuildChunk("graphics/animation","anim3D")
 
 %--- synloc --- library -------------------------------------------
 % a low-level library used by the Obliq interpreter
 % requires: libm3
-BuildChunk ("synloc")
+BuildChunk("language/parsing/metasyntax","synloc")
 
 %--- synex --- library -------------------------------------------
 % a low-level "syntax extension" library used by the Obliq interpreter
 % requires: synloc
-BuildChunk ("synex")
+BuildChunk("language/parsing/metasyntax","synex")
 
 %--- metasyn --- library -------------------------------------------
 % a low-level library used by the Obliq interpreter
 % requires: synex
-BuildChunk ("metasyn")
+BuildChunk("language/parsing/metasyntax","metasyn")
 
 %--- obliqrt --- library -------------------------------------------
 % the Obliq interpreter's runtime library
 % requires: synloc, netobj
-BuildChunk ("obliqrt")
+BuildChunk("language/m3obliq","obliqrt")
 
 %--- obliqlibm3 --- library -------------------------------------------
 % the Obliq interpreter's hooks to the libm3 library
 % requires: obliqrt, libm3
-BuildChunk ("obliqlibm3")
+BuildChunk("language/m3obliq","obliqlibm3")
 
 %--- obliqlibui --- library -------------------------------------------
 % the Obliq interpreter's hooks to the ui library
 % requires: obliqrt, formsvbt
-BuildChunk ("obliqlibui")
+BuildChunk("language/m3obliq","obliqlibui")
 
 %--- obliqlibanim --- library -------------------------------------------
 % the Obliq interpreter's hooks to the animation libraries
 % requires: obliqrt, mgkit
-BuildChunk ("obliqlibanim")
+BuildChunk("language/m3obliq","obliqlibanim")
 
 %--- obliqparse --- library -------------------------------------------
 % the Obliq interpreter's parser
 % requires: obliqrt
-BuildChunk ("obliqparse")
+BuildChunk("language/m3obliq","obliqparse")
 
 %--- obliqprint --- library -------------------------------------------
 % the Obliq interpreter's value printer
 % requires: obliqrt
-BuildChunk ("obliqprint")
+BuildChunk("language/m3obliq","obliqprint")
 
 %--- obliq --- library -------------------------------------------
 % the Obliq interpreter
 % requires: obliqparse, obliqprint, metasyn
-BuildChunk ("obliq")
+BuildChunk("language/m3obliq","obliq")
 
 %--- obliqlib3D --- library -------------------------------------------
 % the Obliq interpreter's hooks to the 3D animation libraries
 % requires: anim3D, obliqlibanim, obliq
-BuildChunk ("obliqlib3D")
+BuildChunk("language/m3obliq","obliqlib3D")
 
 %--- obliqbinmin --- utility -------------------------------------------
 % the Obliq interpreter with minimal runtime hooks
 % requires: obliq
-BuildChunk ("obliqbinmin")
+BuildChunk("language/m3obliq","obliqbinmin")
 
 %--- obliqbinstd --- utility -------------------------------------------
 % the Obliq interpreter with the "standard" runtime hooks
 % requires: obliq, obliqlibm3
-BuildChunk ("obliqbinstd")
+BuildChunk("language/m3obliq","obliqbinstd")
 
 %--- obliqbinui --- utility -------------------------------------------
 % the Obliq interpreter with ui support
 % requires: obliq, obliqlibm3, obliqlibui
-BuildChunk ("obliqbinui")
+BuildChunk("language/m3obliq","obliqbinui")
 
 %--- obliqbinanim --- utility -------------------------------------------
 % the Obliq interpreter with full animation support
 % requires: obliq, obliqlibm3, obliqlibui, obliqlibanim
-BuildChunk ("obliqbinanim")
+BuildChunk("language/m3obliq","obliqbinanim")
 
 %--- obliqbin3D --- utility -------------------------------------------
 % the Obliq interpreter with full 3D animation support
 % requires: obliq, obliqlibm3, obliqlibui, obliqlibanim, obliqlib3D
-BuildChunk ("obliqbin3D")
+BuildChunk("language/m3obliq","obliqbin3D")
 
 %--- obliqsrvstd --- utility -------------------------------------------
 % an Obliq "server" with the standard runtime hooks
 % requires: obliq, obliqlibm3
-BuildChunk ("obliqsrvstd")
+BuildChunk("language/m3obliq","obliqsrvstd")
 
 %--- obliqsrvui --- utility -------------------------------------------
 % an Obliq "server" with ui support
 % requires: obliq, obliqlibm3, obliqlibui
-BuildChunk ("obliqsrvui")
+BuildChunk("language/m3obliq","obliqsrvui")
 
 %--- m3zume --- utility -------------------------------------------
 % the "interesting event" preprocessor needed by zeus
 % requires: formsvbt, stubgen
-BuildChunk ("m3zume")
+BuildChunk("graphics/animation","m3zume")
 
 %--- zeus --- library -------------------------------------------
 % the algorithm animation toolkit
 % requires: netobj, codeview, mgkit, m3zume, netobj, stubgen
-BuildChunk ("zeus")
+BuildChunk("graphics/animation","zeus")
 
 %--- mentor --- demo -------------------------------------------------
 % a collection of algoritm animations
 % requires: zeus, obliqbinanim
-BuildChunk ("mentor")
+BuildChunk("graphics/animation","mentor")
 
 %--- smalldb --- library -------------------------------------------
 % an in-memory database library, used by the package tools
 % requires: libm3
 if equal (OS_TYPE, "POSIX")
-  BuildChunk ("smalldb")
+  BuildChunk("database","smalldb")
 end
 
 %
@@ -628,27 +695,27 @@ end
 %--- pkgobj --- library -------------------------------------------
 % the low-level library support for the package tools
 % requires: smalldb, netobj
-% BuildChunk ("pkgobj")
+% BuildChunk("network/pkgserver","pkgobj")
 
 %--- pkgtool --- utility -------------------------------------------
 % the client program(s) to access the package tools
 % requires: pkgobj
-% BuildChunk ("pkgtool")
+% BuildChunk("network/pkgserver","pkgtool")
 
 %--- pkgsrv --- utility -------------------------------------------
 % the server daemon required to use the package tools
 % requires: pkgobj
-% BuildChunk ("pkgsrv")
+% BuildChunk("network/pkgserver","pkgsrv")
 
 %--- pkgq --- utility -------------------------------------------
 % the client program(s) needed to manage the package tools
 % requires: pkgobj
-% BuildChunk ("pkgq")
+% BuildChunk("network/pkgserver","pkgq")
 
 %--- pkgfprint --- utility -------------------------------------------
 % an internal utility program needed by the package tools
 % requires: pkgobj
-% BuildChunk ("pkgfprint")
+% BuildChunk("network/pkgserver","pkgfprint")
 
 %--- siphontools --- utility -------------------------------------------
 % the program(s) needed to manage distributed instances of the package tools
@@ -663,37 +730,37 @@ end
 %--- visualobliq --- demo -------------------------------------------
 % a prototype of an easy-to-use distributed programming environment
 % requires: formsvbt, obliq, obliqlibui, obliqlibm3
-BuildChunk ("visualobliq")
+BuildChunk("language/m3obliq","visualobliq")
 
 %--- voquery --- demo -------------------------------------------
 % a simple query program used by vorun
 % requires: formsvbt
-BuildChunk ("voquery")
+BuildChunk("language/m3obliq","voquery")
 
 %--- vorun --- demo -------------------------------------------
 % a safe visual obliq interpreter suitable for embedding in the WWW.
 % requires: obliqlibui, obliqlibm3, obliq, voquery, vorun
 if equal (OS_TYPE, "POSIX")
-  BuildChunk ("vorun")
+  BuildChunk("language/m3obliq","vorun")
 end
 
 %--- vocgi --- demo -------------------------------------------
 % an HTML/cgi gateway, required to embed Visual Obliq code in the WWW.
 % requires: obliqlibm3, obliq
-BuildChunk ("vocgi")
+BuildChunk("language/m3obliq","vocgi")
 
 %--- llscan --- utility -------------------------------------------
 % a little mh program used by Postcard
 % requires: 
 if equal (OS_TYPE, "POSIX")
-  BuildChunk ("llscan")
+  BuildChunk("network/mail","llscan")
 end
 
 %--- postcard --- utility -------------------------------------------
 % an integrated mail/news reader
 % requires: formsvbt llscan mtex
 if equal (OS_TYPE, "POSIX")
-  BuildChunk ("postcard")
+  BuildChunk("network/mail","postcard")
 end
 
 %--- gnuemacs --- library -------------------------------------------------
@@ -701,79 +768,79 @@ end
 %   also a program to build Modula-3 tags
 % requires: 
 if equal (OS_TYPE, "POSIX")
-  BuildChunk ("gnuemacs")
+  BuildChunk("language/modula3/m3tools","gnuemacs")
 end
 
 %--- webvbt --- library -------------------------------------------------
 % a library for displaying HTML pages inside a VBT
 % requires: formsvbt obliqparse obliqlibm3 obliqlibui obliqlibanim
-BuildChunk ("webvbt")
+BuildChunk("network/www","webvbt")
 
 %--- webscape --- utility -------------------------------------------------
 % a web browser with support for interactive content
 % requires: webvbt
-BuildChunk ("webscape")
+BuildChunk("network/www","webscape")
 
 %--- deckscape --- utility -------------------------------------------------
 % a web browser that uses a new metaphor: "decks" of web pages
 % requires: webvbt
-BuildChunk ("deckscape")
+BuildChunk("network/www","deckscape")
 
 %--- webcard --- utility -------------------------------------------------
 % an integrated mail/news/web client
 % requires: webvbt
 if equal (OS_TYPE, "POSIX")
-  BuildChunk ("webcard")
+  BuildChunk("network/www","webcard")
 end
 
 %--- ocr --- library -------------------------------------------------
 % interface to optical character recognition library (DECstation only)
 % requires: libm3
-BuildChunk ("ocr")
+BuildChunk("graphics/lecternpkg","ocr")
 
 %--- lecterndoc --- library -------------------------------------------------
 % "lectern" document format
 % requires: libm3
-BuildChunk ("lecterndoc")
+BuildChunk("graphics/lecternpkg","lecterndoc")
 
 %--- lecternclient --- library & utility --------------------------------------
 % tool for sending requests to Lectern server
 % requires: libm3, mtex
-BuildChunk ("lecternclient")
+BuildChunk("graphics/lecternpkg","lecternclient")
 
 %--- lecterntohtml --- utility ------------------------------------------------
 % tool for sending requests to Lectern server
 % requires: lecterndoc, mtex
 if equal (OS_TYPE, "POSIX")
-  BuildChunk ("lecterntohtml")
+  BuildChunk("graphics/lecternpkg","lecterntohtml")
 end
 
 %--- lectern --- utility -------------------------------------------------
 % the "virtual paper" document viewer
 % requires: formsvbt, images, tempfiles, lecternclient
-BuildChunk ("lectern")
+BuildChunk("graphics/lecternpkg","lectern")
 
 %--- buildlectern --- utility -------------------------------------------------
 % program for building lectern documents
 % requires: ocr, lecterndoc, tempfiles, images, mtex
-BuildChunk ("buildlectern")
+BuildChunk("graphics/lecternpkg","buildlectern")
 
 %--- editlectern --- utility -------------------------------------------------
 % program for editing lectern documents
 % requires: formsvbt, lecternclient, lecterndoc
-BuildChunk ("editlectern")
+BuildChunk("graphics/lecternpkg","editlectern")
 
 %--- tcpextras --- library -------------------------------------------------
 % Additions to the tcp library
 % requires: tcp
-BuildChunk ("tcpextras")
+BuildChunk("network/tcplibs","tcpextras")
 
 %--- http --- library -------------------------------------------------
 % library for hypertext transfer protocol (HTTP)
 % requires: tcpextras
-BuildChunk ("http")
+BuildChunk("network/www","http")
 
 %--- webcat --- utility -------------------------------------------------
 % program that takes a URL and prints out the web document
 % requires: http
-BuildChunk ("webcat")
+BuildChunk("network/www","webcat")
