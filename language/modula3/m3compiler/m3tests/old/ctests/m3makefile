@@ -18,6 +18,7 @@ M3LIBS   = { "-T" & LIBM3 & "/DS/.M3IMPTAB" }
 %
 if stale ("DO_TEST", "m3makefile")
   local m3_cmd = M3
+  local ret = 0
   foreach o in M3OPT
     m3_cmd = m3_cmd & " " & o
   end
@@ -36,7 +37,7 @@ if stale ("DO_TEST", "m3makefile")
     echo ("cat stdout stderr")
     % echo ("rm -f pgm core")
   end
-  exec (["-chmod", "+x", "DO_TEST"])
+  ret = exec (["chmod", "+x", "DO_TEST"])
 end
 
 %------------------------------------------------------------------------
@@ -44,9 +45,10 @@ end
 %
 proc testdir (dir, comment) is
   local ddir = "_" & dir
+  local ret = 0
   if defined (@ddir) or defined (_all)
     echo ("--- " & dir & " --- " & comment)
-    exec (["-DO_TEST", dir, dir & "_X"])
+    ret = exec (["DO_TEST", dir, dir & "_X"])
   end
 end
 
