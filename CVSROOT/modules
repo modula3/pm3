@@ -22,6 +22,14 @@
 # can be useful for creating a module that consists of many directories
 # spread out over the entire source repository.
 
+CVSROOT         -i mkmodules CVSROOT
+modules         -i mkmodules CVSROOT modules
+loginfo         -i mkmodules CVSROOT loginfo
+commitinfo      -i mkmodules CVSROOT commitinfo
+rcsinfo         -i mkmodules CVSROOT rcsinfo
+editinfo        -i mkmodules CVSROOT editinfo
+log-pm3.sh      -i mkmodules CVSROOT log-pm3.sh
+
 pm3		m3/pm3
 m3config	m3/pm3/m3config
 language	m3/pm3/language
