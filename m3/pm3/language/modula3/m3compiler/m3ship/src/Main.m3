@@ -23,7 +23,7 @@ TYPE
   END;
 
 VAR
-  default_template_dir := M3Config.PKG_USE &SL& "m3build" &SL& "templates";
+  default_template_dir := M3Config.PKG_USE &SL& "m3config" &SL& "src";
   template_dir    : TEXT := NIL;
   template        : TEXT := NIL;
   build_dir       : TEXT := NIL;
@@ -182,13 +182,11 @@ PROCEDURE GotoBuildDir (dir: TEXT) =
     IF M3File.IsDirectory (dir) THEN
       IF NOT quiet THEN Out ("--- shipping from ", dir, " ---\n"); END;
       ChDir (dir);
-    ELSIF M3File.IsReadable (template_dir & SL & template) THEN
+    ELSE
       IF NOT quiet THEN Out ("mkdir ", dir, "\n"); END;
       MkDir (dir);
       IF NOT quiet THEN Out ("--- shipping from ", dir, " ---\n"); END;
       ChDir (dir);
-    ELSE
-      Err ("cannot locate build directory ", template);
     END;
   END GotoBuildDir;
 
@@ -353,14 +351,22 @@ PROCEDURE FindTemplate()=
 
 BEGIN
   ParseCommandLine ();
+
   IF template = NIL THEN
     FindTemplate();
   END;
+
   IF template_dir = NIL THEN
     FindTemplateDir();
   END;
+
   GotoInitialDirectory ();
   GotoDerivedDirectory ();
+
+  IF NOT Pathname.Absolute(template_dir) THEN
+    template_dir := package_dir & SL & build_dir & SL & template_dir;
+  END;
+
   CheckForShipfile ();
   CheckForOverridesFile ();
   RunQuake("ship");

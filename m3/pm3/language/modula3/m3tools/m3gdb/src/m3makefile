@@ -27,6 +27,7 @@ end
 
 % check for overrides, otherwise use the defaults from the configuration file
 if not defined ("M3GDB_HOST")    M3GDB_HOST   = TARGET     end
+if not defined ("M3GDB_TARGET")  M3GDB_TARGET = TARGET     end
 if not defined ("M3GDB_CC")      M3GDB_CC     = GNU_CC     end
 if not defined ("M3GDB_CFLAGS")  M3GDB_CFLAGS = GNU_CFLAGS end
 if not defined ("M3GDB_MAKE")    M3GDB_MAKE   = GNU_MAKE   end
@@ -36,18 +37,23 @@ if not defined ("M3GDB_CONFIG")  M3GDB_CONFIG = get_config (M3GDB_TARGET) end
 % check for non-default flags
 ARG0 = get_overrides ("CC", M3GDB_CC)
 ARG1 = get_overrides ("CFLAGS", M3GDB_CFLAGS)
+local ret = 0
 
 if defined ("quick")
   % don't bother reconfiguring, just build gdb
-  exec ("cd gdb;", M3GDB_MAKE, ARG0, ARG1)
+  ret = exec ([M3GDB_MAKE, ARG0, ARG1],[],"../gdb")
+  if not equal(ret,0) error("Failed to build m3gdb") end
 else
   % configure the sources & compile
-  exec ("../gdb/configure", M3GDB_CONFIG,
-           "--srcdir=../gdb", "--disable-gdbtk", gnu_platform (M3GDB_HOST))
-  exec (M3GDB_MAKE, ARG0, ARG1)
+  ret = exec (["../gdb/configure", % M3GDB_CONFIG,
+           "--srcdir=../gdb", "--disable-gdbtk", gnu_platform (M3GDB_HOST)])
+  ret = exec ([M3GDB_MAKE, ARG0, ARG1])
+  if not equal(ret,0) error("Failed to build m3gdb") end
 end
 
 % finally, build the exportable link and man page and export them
-link_file ("gdb/gdb", "m3gdb")
+ret = exec(["mv","gdb/gdb", "m3gdb"])
+if not equal(ret,0) error("Failed to rename gdb to m3gdb") end
+
 BindExport ("m3gdb")
 ManPage ("m3gdb","1")

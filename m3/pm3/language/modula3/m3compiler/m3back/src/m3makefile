@@ -11,8 +11,10 @@ import ("m3objfile")
 
 if equal(TARGET,"LINUXELF")
   include_dir("linux")
-elsif equal(TARGET,"NT386")
-  include_dir("nt")
+else 
+  if equal(TARGET,"NT386")
+    include_dir("nt")
+  end
 end
 
 module    ("Wrx86")

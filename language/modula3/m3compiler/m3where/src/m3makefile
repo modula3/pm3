@@ -8,6 +8,7 @@ import ("libm3")
 import ("m3quake")
 import ("tempfiles")
 import ("m3templates")
+import ("m3config")
 
 implementation ("Main")
 Program ("m3where")

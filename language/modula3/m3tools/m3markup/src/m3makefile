@@ -5,7 +5,7 @@
 % Last modified on Mon May 22 15:46:25 PDT 1995 by kalsow
 
 import ("libm3")
-import ("m3tools")
+import ("m3scan")
 
 Module ("Buf")
 Module ("Wx")

@@ -23,7 +23,7 @@ TYPE
   END;
 
 VAR
-  default_template_dir := M3Config.PKG_USE &SL& "m3build" &SL& "templates";
+  default_template_dir := M3Config.PKG_USE &SL& "m3config" &SL& "src";
   template_dir    : TEXT := NIL;
   template        : TEXT := NIL;
   build_dir       : TEXT := NIL;
@@ -358,6 +358,11 @@ BEGIN
   END;
   GotoInitialDirectory ();
   GotoDerivedDirectory ();
+
+  IF NOT Pathname.Absolute(template_dir) THEN
+    template_dir := package_dir & SL & build_dir & SL & template_dir;
+  END;
+
   CheckForExportsfile ();
   BuildQuery ();
   RunQuake();

@@ -4,12 +4,11 @@
 %
 % Last modified on Mon May 22 15:46:25 PDT 1995 by kalsow
 
-m3_option ("-times")
-
 import ("libm3")
 import ("tcp")
-import ("m3tools")
+import ("m3scan")
 import ("m3markup")
+import ("m3config")
 
 module ("OS")
 module ("TCPServer")
