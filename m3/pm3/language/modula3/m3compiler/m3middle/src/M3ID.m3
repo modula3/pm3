@@ -11,7 +11,7 @@ UNSAFE MODULE M3ID;
 IMPORT M3Buf, TextF, Word, Cstring, Ctypes;
 
 CONST
-  MaxLength   = 8192 - BYTESIZE(ADDRESS) (* allocator goo *);
+  MaxLength   = 8192*2 - BYTESIZE(ADDRESS) (* allocator goo *);
   NullChar    = '\000';
 
 TYPE
