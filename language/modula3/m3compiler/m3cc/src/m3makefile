@@ -61,7 +61,7 @@ end
 
 if not defined ("no_config")
   % configure the sources
-  local cmd = ["../gcc/configure", M3CC_CONFIG, "--srcdir=../gcc",
+  local cmd = ["../gcc-old/configure", M3CC_CONFIG, "--srcdir=../gcc-old",
            "--host=" & gnu_platform (M3CC_HOST),
            "--build=" & gnu_platform (M3CC_BUILD),
            "--target=" & gnu_platform (M3CC_TARGET)]
