@@ -1588,11 +1588,6 @@ int utimes(path, times)
     return result;
 }
 
-pid_t vfork()
-{
-    return fork2(SYS_vfork);
-}
-
 pid_t wait4(process_id, status_location, options, resource_usage)
   pid_t process_id;
   union wait *status_location;
