@@ -16,6 +16,8 @@ import ("m3front")
 
 interface ("M3Backend")
 
+IBACK = lookup("IBACK", "")
+
 if equal(IBACK, "gpl")
   % For Linux
   import ("m3back")
