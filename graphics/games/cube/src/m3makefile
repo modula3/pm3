@@ -8,9 +8,6 @@
 
 import ("formsvbt")
 
-source ("cube-assignment.tex")
-source ("cube-solution.tex")
-
 module          ("R4")
 module          ("R4x4")
 module          ("Cube")
