@@ -10,7 +10,7 @@ import         ("ui")
 resource       ("sendImage.ps")
 bundle         ("ImagesBundle")
 
-if AT_SRC m3_option("-O") end
+if defined("AT_SRC") m3_option("-O") end
 Module         ("Images")
 Module         ("ImageVBT")
 Module         ("ImageRd")
