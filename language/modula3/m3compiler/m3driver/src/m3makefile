@@ -16,20 +16,19 @@ import ("m3front")
 
 interface ("M3Backend")
 
-% For LINUX with Jerome Collin's libraries:
-% override("m3back", "../../gpl")
-% override("m3objfile", "../../gpl")
-% import ("m3back")
-% import ("m3objfile")
-% implementation ("M3BackLinux")
-
-% For NT:
-% import ("m3back")
-% import ("m3objfile")
-% implementation ("M3BackWin32")
-
-% otherwise:
-implementation ("M3BackPosix")
+if equal(IBACK, "gpl")
+  % For Linux
+  import ("m3back")
+  import ("m3objfile")
+  implementation ("M3BackLinux")
+else if equal(IBACK, "dec")
+  % For NT:
+  import ("m3back")
+  import ("m3objfile")
+  implementation ("M3BackWin32")
+else
+  implementation ("M3BackPosix")
+end end
 
 Module ("Arg")
 Module ("Msg")
