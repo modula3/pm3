@@ -593,8 +593,7 @@ PROCEDURE ParseOption (arg: TEXT;  arg_len: INTEGER;  rest: Arg.List)
              END;
 
     | 'Z' => IF (arg_len = 2) THEN
-               Arg.Append (pass_0.args, arg);  ok := TRUE;
-               do_coverage := TRUE;
+               do_coverage := TRUE; ok := TRUE;
              END;
 
     | 'z' => IF (arg_len > 3) THEN
@@ -1764,6 +1763,15 @@ PROCEDURE Pass0 (f: FileInfo;  object: TEXT): BOOLEAN
     IF (ok) THEN
       ResetEnv (f.source, object);
       Pass0_Trace (f.source, options);
+
+      IF do_coverage THEN
+        VAR tmp := NEW(OptArr, NUMBER(options^) + 1);
+        BEGIN
+          SUBARRAY(tmp^, 0, NUMBER(options^)) := options^;
+          tmp[LAST(tmp^)] := "-Z";
+          options := tmp;
+        END;
+      END;
 
       TRY
         ok := M3Compiler.Compile (source, env, options^);
