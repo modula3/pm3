@@ -36,6 +36,6 @@ if defined ("_all")
     if not equal(ret, 0) 
       error ("chmod failed on vostart with error code: ", ret) end
   end
-  deriveds ("vostart", no_extension)
+  deriveds ("vostart", [NAMING_CONVENTIONS[17]])
 end
 % BindExport ("vostart")

@@ -7,20 +7,21 @@
 implementation("LecternClientWin32")
 implementation("LecternServerWin32")
 
-
 readonly proc simple_c_program(nm) is
-  local SRCFILE = path_of(nm & ".c")
-  local EXEFILE = nm & ".EXE"
+  local src = path_of (nm & ".c")
+  local obj = nm & NAMING_CONVENTIONS[13] % .o
+  local pgm = nm & NAMING_CONVENTIONS[20] % .exe
   local ret = 0
-  local cmd = [ DEV_BIN & "cl", "/Fe" & EXEFILE, SRCFILE ]
 
-  if stale(EXEFILE, SRCFILE)
-    write (cmd, "\n")
-    ret = exec (cmd)
+  if stale(pgm, src)
+    ret = m3_compile_c(src,obj,[])
+    if not equal(ret, 0) error("command failed with error code: ", ret) end
+    ret = m3_link(pgm,[obj],[])
     if not equal(ret, 0) error("command failed with error code: ", ret) end
   end
 
-  deriveds(EXEFILE, [nm & ".OBJ"])
+  deriveds(pgm, [NAMING_CONVENTIONS[17]])
 end
+
 %simple_c_program("LecternClient")
 %BindExport("LecternClient")

@@ -13,7 +13,7 @@
 %
 
 > "config.tmpl" in
-  write("m3_option(\"-O\")", CR)
+  write("option(\"optimization\",\"T\")", CR)
 end
 
 BOOTSTRAP = lookup("BOOTSTRAP","")
@@ -25,9 +25,6 @@ if BOOTSTRAP
   m3ship = [path() & SL & ".." & SL & "boot-" & TARGET & SL & "m3ship" & SL &
       TARGET & SL & "m3ship","-T",path() & SL & ".." & SL & "m3config" & SL &
       "src"]
-  >> "config.tmpl" in
-    write("if defined(\"m3_backend_external\") m3_backend_external() end", CR)
-  end
 else
   m3build = ["m3build"]
   m3ship = ["m3ship"]
@@ -72,7 +69,7 @@ end
 readonly proc BuildChunk (dir,pkg) is
   local ret = 0
 
-  if equal(OS_TYPE,"WIN32") dir = P2W(dir) end
+  if equal(OS_TYPE,"WIN32") dir = p2w(dir) end
 
   local wd = ".." & SL & dir & SL & pkg
 

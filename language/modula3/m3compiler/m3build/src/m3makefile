@@ -11,7 +11,8 @@ import ("m3config")
 
 implementation ("Main")
 
-build_standalone()
+option("standalone","T")
+
 Program ("m3build")
 
 

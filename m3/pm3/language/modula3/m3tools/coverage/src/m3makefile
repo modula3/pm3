@@ -4,30 +4,36 @@
 %
 % Last modified on Thu Feb 23 14:02:51 PST 1995 by kalsow
 
-if defined ("_all")
-  local src = path_of ("report_coverage.c")
-  local obj = "report_coverage" & OBJ_ext
-  local cmd = [ CC, "-c", "-g", src ]
-  local ret = 0
-  if stale (obj, src)
-    write (cmd)
-    ret = exec (cmd)
-    if not equal(ret, 0) error("command failed with error code: ", ret) end
-  end
-end
-LibdExport ("report_coverage.o")
+before_do_m3_hooks()
+
+local src = ""
+local obj = ""
+local pgm = ""
+local ret = 0
+
+src = path_of ("report_coverage.c")
+obj = "report_coverage" & NAMING_CONVENTIONS[13] % .o
 
 if defined ("_all")
-  local src = path_of ("analyze_coverage.c")
-  local pgm = program_name ("analyze_coverage")
-  local cmd = [ CC, "-I../src", "-g", "-o", pgm, src ]
-  local ret = 0
-  if stale (pgm, src)
-    write (cmd)
-    ret = exec (cmd)
+  if stale (obj, src)
+    ret = m3_compile_c(src,obj,[])
     if not equal(ret, 0) error("command failed with error code: ", ret) end
   end
 end
-BindExport ("analyze_coverage")
+LibdExport (obj)
+
+src = path_of ("analyze_coverage.c")
+obj = "analyze_coverage" & NAMING_CONVENTIONS[13] % .o
+pgm = "analyze_coverage" & NAMING_CONVENTIONS[20] % .exe
+
+if defined ("_all")
+  if stale (pgm, src)
+    ret = m3_compile_c(src,obj,["../src"])
+    if not equal(ret, 0) error("command failed with error code: ", ret) end
+    ret = m3_link(pgm,[obj],[])
+    if not equal(ret, 0) error("command failed with error code: ", ret) end
+  end
+end
+BindExport (pgm)
 
 ManPage ("analyze_coverage", 1)
