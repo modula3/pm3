@@ -2,18 +2,18 @@
 (* Digital Internal Use Only                                                 *)
 (* All rights reserved.                                                      *)
 (*                                                                           *)
-(* Last modified on Tue Aug  6 11:26:41 PDT 1996 by najork                   *)
+(* Last modified on Mon Nov  4 14:11:07 PST 1996 by najork                   *)
 (*       Created on Mon Jun 26 09:33:27 PDT 1995 by najork                   *)
 
 
 UNSAFE MODULE WinPaint;   (* unsafe because of M3toC *)
 
 
-IMPORT Batch, BatchRep, BatchUtil, Ctypes, M3toC, PaintExt, PaintPrivate, Path,
-       PathPrivate, Point, PolyRegion, Rect, Region, ScrnFont, Trapezoid, 
-       Trestle, TrestleImpl, VBT, VBTRep, WinBase, WinContext, WinDef, WinGDI,
-       WinScreenType, WinScreenTypePrivate, WinScrnFont, WinScrnPaintOp, 
-       WinScrnPixmap, Word;
+IMPORT Batch, BatchRep, BatchUtil, Ctypes, M3toC, OSWin32, PaintExt, 
+       PaintPrivate, Path, PathPrivate, Point, PolyRegion, Rect, Region, 
+       ScrnFont, Trapezoid, Trestle, TrestleImpl, VBT, VBTRep, WinContext, 
+       WinDef, WinGDI, WinScreenType, WinScreenTypePrivate, WinScrnFont, 
+       WinScrnPaintOp, WinScrnPixmap, Word;
 
 TYPE 
   PC = PaintPrivate.PaintCommand;
@@ -25,8 +25,7 @@ CONST
   ComSize = ADRSIZE (PaintPrivate.CommandRec);
 
 VAR
-  Chicago            := IsChicago ();
-  Bug95_SetDIBits    := FALSE; (* Chicago; *)
+  Chicago            := OSWin32.Win95();
   Bug95_PatternBrush := Chicago;
 
 PROCEDURE PaintBatch (self: Trestle.T; v: VBT.T; ba: Batch.T;  hdc: WinDef.HDC) =
@@ -93,85 +92,6 @@ PROCEDURE TintCom (cmdP, endP: PaintPrivate.CommandPtr;
   END TintCom;
 
 
-PROCEDURE FillRect (hdc: WinDef.HDC; READONLY r: Rect.T) =
-  VAR
-    rc    : WinDef.RECT;
-    pen   : WinDef.HPEN;
-    oldPen: WinDef.HPEN;
-    status: WinDef.BOOL;
-  BEGIN
-    IF r.west < r.east THEN
-      rc := FromRect(r);
-
-      (*
-       * One would assume that 
-       *     EVAL WinUser.FillRect (hdc, ADR(rc), hbr);
-       * should be sufficient here. However, "WinUser.FillRect" ignores the
-       * current raster operation mode for some reason.
-       *)
-
-      (* Load an invisible pen into the DC *)
-      oldPen := WinGDI.SelectObject (hdc, 
-                                     WinGDI.GetStockObject (WinGDI.NULL_PEN));
-      <* ASSERT oldPen # NIL *>
-
-      (* "WinGDI.Rectangle" uses both the current pen and the current brush *)
-      status := WinGDI.Rectangle (hdc, r.west, r.north, r.east+1, r.south+1);
-      <* ASSERT status = True *>
-
-      pen := WinGDI.SelectObject (hdc, oldPen);
-      <* ASSERT pen # NIL *>
-    END;
-  END FillRect;
-
-
-(********************
-(*
- * Debugging gear
- *)
-PROCEDURE StrokeRect (hdc: WinDef.HDC; READONLY r: Rect.T) =
-  VAR
-    rc    : WinDef.RECT;
-    oldBr : WinDef.HBRUSH;
-    oldPen: WinDef.HPEN;
-    status: WinDef.BOOL;
-  BEGIN
-    IF r.west < r.east THEN
-      rc := FromRect(r);
-
-      oldPen := WinGDI.SelectObject (hdc, 
-                                     WinGDI.GetStockObject (WinGDI.BLACK_PEN));
-      <* ASSERT oldPen # NIL *>
-      oldBr := WinGDI.SelectObject (hdc, 
-                                    WinGDI.GetStockObject (WinGDI.NULL_BRUSH));
-      <* ASSERT oldBr # NIL *>
-      (* "WinGDI.Rectangle" uses both the current pen and the current brush *)
-      status := WinGDI.Rectangle (hdc, r.west, r.north, r.east+1, r.south+1);
-      <* ASSERT status = True *>
-      oldBr := WinGDI.SelectObject (hdc, oldBr);
-      oldPen := WinGDI.SelectObject (hdc, oldPen);
-    END;
-  END StrokeRect;
-*************)
-
-
-(************
-(*
- * More debugging gear
- *)
-PROCEDURE MarkPoint (hdc: WinDef.HDC; READONLY a: Point.T) =
-  VAR
-    oldPen: WinDef.HGDIOBJ;
-  BEGIN
-    oldPen := WinGDI.SelectObject (hdc, 
-                                   WinGDI.GetStockObject (WinGDI.BLACK_PEN));
-    <* ASSERT oldPen # NIL *>
-    DrawLine(hdc, Point.T{a.h - 2, a.v}, Point.T{a.h + 2, a.v});
-    DrawLine(hdc, Point.T{a.h, a.v - 2}, Point.T{a.h, a.v + 2});
-    oldPen := WinGDI.SelectObject (hdc, oldPen);
-  END MarkPoint;
-***********)
-
 (*****************************************************************************)
 (* Painting textures                                                         *)
 (*****************************************************************************)
@@ -180,22 +100,141 @@ PROCEDURE MarkPoint (hdc: WinDef.HDC; READONLY a: Point.T) =
 PROCEDURE TextureCom (cmdP, endP: PaintPrivate.CommandPtr;
                       hdc       : WinDef.HDC;
                       st        : WinScreenType.T): PaintPrivate.CommandPtr =
+  
+  PROCEDURE TileWithBitmap (hdc  : WinDef.HDC;
+                            clip : Rect.T;
+                            hbmp : WinDef.HBITMAP;
+                            delta: Point.T;
+                            pat0 : INTEGER;
+                            pat1 : INTEGER;
+                            brop : INTEGER;
+                            frop : INTEGER) =
+    VAR
+      status   : WinDef.BOOL;
+      comdc    : WinDef.HDC;
+      bitmap   : WinDef.HBITMAP;
+      oldBitmap: WinDef.HBITMAP;
+      brush    : WinDef.HBRUSH := NIL;
+      oldBrush : WinDef.HBRUSH;
+      color    : WinDef.COLORREF;
+    BEGIN
+      (* First, check if there is indeed any work to do. *)
+      IF brop = 0 AND frop = 0 THEN
+        RETURN;
+      END;
+      
+      (* Create a compatible device context *)
+      comdc := WinGDI.CreateCompatibleDC (hdc);
+      (* Create a bitmap that can hold the rectangle covered by clip *)
+      bitmap := WinGDI.CreateCompatibleBitmap (hdc, 
+                                               clip.east - clip.west, 
+                                               clip.south - clip.north);
+      (* Select the bitmap into "comdc". *)
+      oldBitmap := WinGDI.SelectObject (comdc, bitmap);
+      
+      (* Map point ("clip.west","clip.north") of page space to point (0,0) of 
+         device space. Since the device is a bitmap of width 
+         "clip.east - clip.west" and height "clip.south - clip.north", the 
+         rectangle "clip" of page space is mapped onto the device. *)
+      status := WinGDI.SetWindowOrgEx (comdc, clip.west, clip.north, NIL);
+      <* ASSERT status = True *>
+      status := WinGDI.SetViewportOrgEx (comdc, 0, 0, NIL);
+      <* ASSERT status = True *>
+      
+      (* I dabbled a bit around with "SetWorldTransform", but could not get it 
+         to work. Anyways, "SetWordTransform" is supported under Windows NT, 
+         but not under Windows 95. *)
+      
+      (* Set the pattern brush origin. The Windows way to do this is confusing 
+         in two respects: (1) One has to set the origin BEFORE selecting the 
+         brush into the device context, and (2) the origin is specified in 
+         device space, not in world/page space. *)
+      
+      IF hbmp # NIL THEN
+        (* Select the pixmap into a pattern brush *)
+        brush := WinGDI.CreatePatternBrush (hbmp);
+        <* ASSERT brush # NIL *>
+        
+        status := WinGDI.SetBrushOrgEx (comdc, 
+                                        delta.h - clip.west, 
+                                        delta.v - clip.north, 
+                                        NIL); 
+        <* ASSERT status = True *>
+        
+        oldBrush := WinGDI.SelectObject (comdc, brush);
+        <* ASSERT oldBrush # NIL *>
+        
+        (* Draw the pixels which are 0 in the bitmap of the pattern brush as 
+           black (all 0s), and the pixels which are 1 as white (all 1s) into 
+           "comdc". *)
+        
+        (* Setting the colors of comdc seems to have no effect. *)
+        color := WinGDI.SetTextColor (comdc, WinGDI.RGB(0,0,0));
+        <* ASSERT color # WinGDI.CLR_INVALID *>
+        color := WinGDI.SetBkColor (comdc, WinGDI.RGB(255,255,255));
+        <* ASSERT color # WinGDI.CLR_INVALID *>
+        
+        (* Fill comdc, using the pattern brush *)
+        FillRect (comdc, clip);
+        
+        (* Remove "brush" from "comdc". *)
+        oldBrush := WinGDI.SelectObject (comdc, oldBrush);
+        <* ASSERT oldBrush = brush *>
+        
+        status := WinGDI.DeleteObject (brush);
+        <* ASSERT status = True *>
+      END;
+      
+      BitBltFill (hdc, pat0, brop, clip, comdc);
+      BitBltFill (hdc, pat1, frop, clip, comdc);
+      
+      status := WinGDI.DeleteDC (comdc);
+      <* ASSERT status = True *>
+      status := WinGDI.DeleteObject (bitmap);
+      <* ASSERT status = True *>
+    END TileWithBitmap;
+    
+    
+  PROCEDURE BitBltFill (hdc   : WinDef.HDC;
+                        col   : WinDef.COLORREF;
+                        rop   : WinDef.DWORD;
+                        rect  : Rect.T;
+                        comdc : WinDef.HDC) =
+    VAR
+      oldBrush: WinDef.HBRUSH;
+      solBrush: WinDef.HBRUSH;
+      status  : WinDef.BOOL;
+    BEGIN
+      IF rop # 0 THEN
+        solBrush := WinGDI.CreateSolidBrush (col);
+        <* ASSERT solBrush # NIL *>
+        oldBrush := WinGDI.SelectObject (hdc, solBrush);
+        <* ASSERT oldBrush # NIL *>
+        
+        status := WinGDI.BitBlt (hdc, rect.west, rect.north,
+                                 rect.east - rect.west, 
+                                 rect.south - rect.north, 
+                                 comdc, rect.west, rect.north, rop);
+        <* ASSERT status = True *>
+        
+        oldBrush := WinGDI.SelectObject (hdc, oldBrush);
+        <* ASSERT oldBrush = solBrush *>
+        status := WinGDI.DeleteObject (solBrush);
+        <* ASSERT status = True *>
+      END;
+    END BitBltFill;
+    
   VAR
     fastPath : BOOLEAN;
-    status   : WinDef.BOOL;
-    comdc    : WinDef.HDC;
-    bitmap   : WinDef.HBITMAP;
-    oldBitmap: WinDef.HBITMAP;
     pm       : PaintPrivate.Pixmap;
     delta    : Point.T;
     pst      : WinScreenType.T;
     color    : WinDef.COLORREF;
-    brush    : WinDef.HBRUSH;
-    auxBrush : WinDef.HBRUSH;
     brop     : INTEGER;
     frop     : INTEGER;
     pat0     : INTEGER;
     pat1     : INTEGER;
+    hbmp     : WinDef.HBITMAP := NIL;
   BEGIN
     WITH op = LOOPHOLE (cmdP, PaintPrivate.PixmapPtr)^ DO
 
@@ -203,9 +242,9 @@ PROCEDURE TextureCom (cmdP, endP: PaintPrivate.CommandPtr;
         RETURN ChicagoTextureCom (cmdP, endP, hdc, st);
       END;
 
-      (* First, determine if we can use a fast path.  For Windows NT, the fast
-         path is to fill the rectangle directly using a pattern brush.  The 
-         slow path is to copy the texture onto a memory device context, and 
+      (* First, determine if we can use a fast path.  
+         The fast path is to fill the rectangle directly using a pattern brush.
+         The slow path is to copy the texture onto a memory device context, and
          then to repeatedly bit-blit this memory device context onto "hdc". *)
 
       IF op.op >= 0 AND st.optable # NIL AND op.op < NUMBER(st.optable^) THEN
@@ -218,33 +257,10 @@ PROCEDURE TextureCom (cmdP, endP: PaintPrivate.CommandPtr;
 
       IF NOT fastPath THEN
 
-        (* Create a compatible device context *)
-        comdc := WinGDI.CreateCompatibleDC (hdc);
-        (* Create a bitmap that can hold the rectangle covered by op.clip *)
-        bitmap := WinGDI.CreateCompatibleBitmap (hdc, 
-                                                 op.clip.east - op.clip.west, 
-                                                 op.clip.south - op.clip.north);
-        (* Select the bitmap into "comdc". *)
-        oldBitmap := WinGDI.SelectObject (comdc, bitmap);
-        
-        (* Map point ("op.clip.west","op.clip.north") of page space to point 
-           (0,0) of device space. Since the device is a bitmap of width 
-           "op.clip.east - op.clip.west" and height "op.clip.south - 
-           op.clip.north", the rectangle "op.clip" of page space is mapped 
-           onto the device. *)
-        status := WinGDI.SetWindowOrgEx (comdc, op.clip.west, op.clip.north, NIL);
-        status := WinGDI.SetViewportOrgEx (comdc, 0, 0, NIL);
-        
-        (* I dabbled a bit around with "SetWorldTransform", but could 
-           not get it to work. Anyways, "SetWordTransform" is supported 
-           under NT, but not under Chicago. *)
-        
-        delta := op.delta;
-        IF delta # Point.Origin THEN
-          WITH pmb = WinScrnPixmap.PixmapDomain (st, pm) DO
-            IF NOT Rect.IsEmpty (pmb) THEN
-              delta := Rect.Mod (delta, pmb);
-            END;
+        WITH pmb = WinScrnPixmap.PixmapDomain (st, op.pm) DO
+          delta := Point.Add (op.delta, Rect.NorthWest (pmb));
+          IF NOT Rect.IsEmpty (pmb) THEN
+            delta := Rect.Mod (delta, pmb);
           END;
         END;
 
@@ -259,25 +275,9 @@ PROCEDURE TextureCom (cmdP, endP: PaintPrivate.CommandPtr;
         IF op.op >= 0 AND st.optable # NIL AND op.op < NUMBER(st.optable^) AND
           pst.pmtable # NIL AND pm < NUMBER (pst.pmtable^) THEN
           WITH tbl = st.optable[op.op] DO
-            
-            (* Select the pixmap into a pattern brush *)
-            brush := WinGDI.CreatePatternBrush (pst.pmtable[pm].hbmp);
-            <* ASSERT brush # NIL *>
-            
-            (* Set the pattern brush origin. The Windows way to do this is 
-               confusing in two respects: (1) One has to set the origin BEFORE
-               selecting the brush into the device context, and (2) the origin
-               is specified in device space, not in world/page space. *)
-            
-            status := WinGDI.SetBrushOrgEx (comdc, 
-                                            delta.h - op.clip.west, 
-                                            delta.v - op.clip.north, 
-                                            NIL); 
-            <* ASSERT status = True *>
-            
-            auxBrush := WinGDI.SelectObject (comdc, brush);
-            <* ASSERT auxBrush # NIL *>
-            
+
+            hbmp := pst.pmtable[pm].hbmp;
+
             (* In Windows, '0' pixels of the bitmap in the pattern brush are 
                drawn in the current text color, so the text color should be 
                "tbl.bop.col". '1' pixels are drawn in the current background 
@@ -287,13 +287,7 @@ PROCEDURE TextureCom (cmdP, endP: PaintPrivate.CommandPtr;
             (* Draw the pixels which are 0 in "pst.pmtable[pm].hbmp" as black 
                (all 0's), and the pixels which are 1 as white (all 1's) into 
                "comdc". *)
-            
-            (* Setting the colors of comdc seems to have no effect. *)
-            color := WinGDI.SetTextColor (comdc, WinGDI.RGB(0,0,0));
-            <* ASSERT color # WinGDI.CLR_INVALID *>
-            color := WinGDI.SetBkColor (comdc, WinGDI.RGB(255,255,255));
-            <* ASSERT color # WinGDI.CLR_INVALID *>
-           
+
             color := WinGDI.SetTextColor (hdc, WinGDI.RGB(0,0,0));
             <* ASSERT color # WinGDI.CLR_INVALID *>
             color := WinGDI.SetBkColor (hdc, WinGDI.RGB(255,255,255));
@@ -311,26 +305,13 @@ PROCEDURE TextureCom (cmdP, endP: PaintPrivate.CommandPtr;
           frop := 0;
         END;
 
-        (* Fill comdc, using the pattern brush *)
-        FillRect (comdc, op.clip);
-
-        (* STILL TO DO: delete "brush" *)
-
-        BitBltFill (hdc, pat0, brop, op.clip, comdc);
-        BitBltFill (hdc, pat1, frop, op.clip, comdc);
+        TileWithBitmap (hdc, op.clip, hbmp, delta, pat0, pat1, brop, frop);
         INC (cmdP, ADRSIZE(op));
 
         WHILE cmdP < endP AND cmdP.command = PC.RepeatCom DO
-          BitBltFill (hdc, pat0, brop, cmdP.clip, comdc);
-          BitBltFill (hdc, pat1, frop, cmdP.clip, comdc);
+          TileWithBitmap (hdc, cmdP.clip, hbmp, delta, pat0, pat1, brop, frop);
           INC (cmdP, ComSize);
         END;
-        
-        status := WinGDI.DeleteDC (comdc);
-        <* ASSERT status = True *>
-        status := WinGDI.DeleteObject (bitmap);
-        <* ASSERT status = True *>
-        
       ELSE (* fastPath = TRUE *)
 
         WITH ctxt = WinContext.PushTexture (hdc, st, op.op, op.pm, op.delta) DO
@@ -352,85 +333,10 @@ PROCEDURE TextureCom (cmdP, endP: PaintPrivate.CommandPtr;
   END TextureCom;
 
 
-
-PROCEDURE PixmapIs8x8 (pm: PaintPrivate.Pixmap; st: WinScreenType.T): BOOLEAN =
-  BEGIN
-    IF pm < 0 THEN
-      pm := WinScrnPixmap.SolidPixmap - pm;
-      st := st.bits;
-    END;
-    IF st.pmtable # NIL AND pm < NUMBER (st.pmtable^) THEN
-      WITH rect = st.pmtable[pm].domain DO
-        RETURN Rect.VerSize (rect) = 8 AND Rect.HorSize (rect) = 8;
-      END;
-    ELSE
-      RETURN TRUE;
-    END;
-  END PixmapIs8x8;
-
-
 PROCEDURE ChicagoTextureCom (cmdP, endP: PaintPrivate.CommandPtr;
                              hdc       : WinDef.HDC;
                              st        : WinScreenType.T): PaintPrivate.CommandPtr =
-  VAR
-    dci   : INTEGER;
-    status: WinDef.BOOL;
-  BEGIN
-    WITH op = LOOPHOLE (cmdP, PaintPrivate.PixmapPtr)^ DO
 
-      dci := WinGDI.SaveDC (hdc);
-      <* ASSERT dci # 0 *>
-
-      ClipToRect (hdc, op.clip);
-      ChicagoFill (hdc, st, op.clip, op.op, op.pm, op.delta, TRUE);
-
-      status := WinGDI.RestoreDC (hdc, -1);
-      <* ASSERT status = True *>
-
-      INC (cmdP, ADRSIZE(op));
-      WHILE cmdP < endP AND cmdP.command = PC.RepeatCom DO
-
-        dci := WinGDI.SaveDC (hdc);
-        <* ASSERT dci # 0 *>
-
-        ClipToRect (hdc, cmdP.clip);
-        ChicagoFill (hdc, st, cmdP.clip, op.op, op.pm, op.delta, TRUE);
-
-        status := WinGDI.RestoreDC (hdc, -1);
-        <* ASSERT status = True *>
-
-        INC (cmdP, ComSize);
-      END;
-
-    END;
-    RETURN cmdP;
-  END ChicagoTextureCom;
-
-PROCEDURE ClipToRect (hdc: WinDef.HDC; clip: Rect.T) =
-  VAR
-    hrgn  : WinDef.HRGN;
-    status: WinDef.BOOL;
-  BEGIN
-    hrgn := WinGDI.CreateRectRgn (clip.west, clip.north, 
-                                  clip.east, clip.south);
-    <* ASSERT hrgn # NIL *>
-
-    status := WinGDI.SelectClipRgn (hdc, hrgn);
-    <* ASSERT status # WinGDI.ERROR *>
-
-    status := WinGDI.DeleteObject (hrgn);
-    <* ASSERT status = True *>
-  END ClipToRect;
-
-
-PROCEDURE ChicagoFill (hdc  : WinDef.HDC;
-                       st   : WinScreenType.T;
-                       rect : Rect.T;
-                       op   : PaintPrivate.PaintOp;
-                       pm   : PaintPrivate.Pixmap;
-                       delta: Point.T;
-                       tile : BOOLEAN) =
-  
   PROCEDURE BitBlt (hdc   : WinDef.HDC;
                     col   : WinDef.COLORREF;
                     rop   : WinDef.DWORD;
@@ -438,8 +344,7 @@ PROCEDURE ChicagoFill (hdc  : WinDef.HDC;
                     delta : Point.T;
                     comdc : WinDef.HDC;
                     width : INTEGER;
-                    height: INTEGER;
-                    tile  : BOOLEAN) =
+                    height: INTEGER) =
     VAR
       oldBrush: WinDef.HBRUSH;
       solBrush: WinDef.HBRUSH;
@@ -451,21 +356,19 @@ PROCEDURE ChicagoFill (hdc  : WinDef.HDC;
         oldBrush := WinGDI.SelectObject (hdc, solBrush);
         <* ASSERT oldBrush # NIL *>
         
+        (* This code seems to work, but I have not convinced myself in any 
+           rigorous way that it indeed matches the Trestle specification 
+           precisely. *)
+
         WITH west = rect.west - (rect.west - delta.h) MOD width,
              north = rect.north - (rect.north - delta.v) MOD height DO
-          IF tile THEN
-            FOR x := west TO rect.east - 1 BY width DO
-              FOR y := north TO rect.south - 1 BY height DO
-                
-                status := WinGDI.BitBlt (hdc, x, y, width, height, 
-                                         comdc, 0, 0, rop);
-                <* ASSERT status = True *>
-              END;
+          FOR x := west TO rect.east - 1 BY width DO
+            FOR y := north TO rect.south - 1 BY height DO
+
+              status := WinGDI.BitBlt (hdc, x, y, width, height, 
+                                       comdc, 0, 0, rop);
+              <* ASSERT status = True *>
             END;
-          ELSE
-            status := WinGDI.BitBlt (hdc, west, north, width, height, 
-                                     comdc, 0, 0, rop);
-            <* ASSERT status = True *>
           END;
         END;
         
@@ -476,7 +379,374 @@ PROCEDURE ChicagoFill (hdc  : WinDef.HDC;
       END;
     END BitBlt;
 
+  PROCEDURE ChicagoFill (hdc  : WinDef.HDC;
+                         st   : WinScreenType.T;
+                         rect : Rect.T;
+                         op   : PaintPrivate.PaintOp;
+                         pm   : PaintPrivate.Pixmap;
+                         delta: Point.T) =
+    VAR
+      pst     : WinScreenType.T;
+      comdc   : WinDef.HDC;
+      oldBmp  : WinDef.HBITMAP;
+      hbmp    : WinDef.HBITMAP;
+      status  : WinDef.BOOL;
+      bmi     : WinGDI.BITMAPINFO;
+    BEGIN
+      IF pm < 0 THEN
+        pm := WinScrnPixmap.SolidPixmap - pm;
+        pst := st.bits;
+      ELSE
+        pst := st;
+      END;
 
+      IF op >= 0 AND st.optable # NIL AND op < NUMBER(st.optable^) AND
+         pst.pmtable # NIL AND pm < NUMBER (pst.pmtable^) THEN
+
+        WITH tbl    = st.optable[op],
+             spm    = pst.pmtable[pm],
+             height = Rect.VerSize (spm.domain),
+             width  = Rect.HorSize (spm.domain),
+             pixels = NEW (REF ARRAY OF WinGDI.RGBQUAD, height * width) DO
+
+          comdc := WinGDI.CreateCompatibleDC (hdc);
+          <* ASSERT comdc # NIL *>
+
+          hbmp := WinGDI.CreateCompatibleBitmap (hdc, width, height);
+          <* ASSERT hbmp # NIL *>
+
+          WITH h = bmi.bmiHeader DO
+            h.biSize := BYTESIZE(WinGDI.BITMAPINFOHEADER);
+            h.biWidth := width;
+            h.biHeight := height;
+            h.biPlanes := 1;
+            h.biBitCount := BITSIZE (WinDef.COLORREF);
+            h.biCompression := WinGDI.BI_RGB;
+          END;
+
+          status := WinGDI.GetDIBits (comdc, 
+                                      spm.hbmp,      
+                                      0,             (* start at scan line 0 *)
+                                      height,        (* copy "height" lines *)
+                                      ADR(pixels[0]),(* into "pixels" *)
+                                      ADR (bmi),
+                                      WinGDI.DIB_RGB_COLORS);
+          <* ASSERT status = height *>
+        
+          (* Use "SetDIBits" to copy "pixels" into "hbmp". Note that the 
+             specification of "SetDIBits" says that "hbmp" must not be 
+             selected into "comdc". *)
+
+          status := WinGDI.SetDIBits (comdc,
+                                      hbmp,
+                                      0,      
+                                      height, 
+                                      ADR(pixels[0]),
+                                      ADR (bmi),
+                                      WinGDI.DIB_RGB_COLORS);
+          <* ASSERT status = height *>
+
+          oldBmp := WinGDI.SelectObject (comdc, hbmp);
+          <* ASSERT oldBmp # NIL *>
+            
+          BitBlt (hdc, tbl.bop.col, tbl.brop3, rect, delta, 
+                  comdc, width, height);
+          BitBlt (hdc, tbl.fop.col, tbl.frop3, rect, delta, 
+                  comdc, width, height);
+
+          status := WinGDI.DeleteDC (comdc);
+          <* ASSERT status = True *>
+          status := WinGDI.DeleteObject (hbmp);
+          <* ASSERT status = True *>
+        END;
+      ELSE
+        (* "op" not in "st.optable", or "pm" not in "pst.pmtable".
+           Do nothing *)
+      END;
+    END ChicagoFill;
+
+  VAR
+    dci   : INTEGER;
+    status: WinDef.BOOL;
+    delta : Point.T;
+  BEGIN
+    WITH op = LOOPHOLE (cmdP, PaintPrivate.PixmapPtr)^ DO
+
+      WITH pmb = WinScrnPixmap.PixmapDomain (st, op.pm) DO
+        delta := Point.Add (op.delta, Rect.NorthWest (pmb));
+        IF NOT Rect.IsEmpty (pmb) THEN
+          delta := Rect.Mod (delta, pmb);
+        END;
+      END;
+
+      dci := WinGDI.SaveDC (hdc);
+      <* ASSERT dci # 0 *>
+
+      ClipToRect (hdc, op.clip);
+      ChicagoFill (hdc, st, op.clip, op.op, op.pm, delta);
+
+      status := WinGDI.RestoreDC (hdc, -1);
+      <* ASSERT status = True *>
+
+      INC (cmdP, ADRSIZE(op));
+      WHILE cmdP < endP AND cmdP.command = PC.RepeatCom DO
+
+        dci := WinGDI.SaveDC (hdc);
+        <* ASSERT dci # 0 *>
+
+        ClipToRect (hdc, cmdP.clip);
+        ChicagoFill (hdc, st, cmdP.clip, op.op, op.pm, delta);
+
+        status := WinGDI.RestoreDC (hdc, -1);
+        <* ASSERT status = True *>
+
+        INC (cmdP, ComSize);
+      END;
+
+    END;
+    RETURN cmdP;
+  END ChicagoTextureCom;
+
+(*****************************************************************************)
+(* Painting pixmaps                                                          *)
+(*****************************************************************************)
+
+(* This code has been tested on Windows 95 and Windows NT 4.0 using the 
+   test program "PixmapComTest".  I have done pretty exhaustive testing for
+   pixmaps of depth 1 and for the 16 basic paint-ops (excluding PaintOp.Copy).
+   For what it's worth, so far I have not seen any problems with higher-depth 
+   pixmaps. I have not tested whether RepeatComs work.
+
+   Note that the Win32 specification states that WinGDI.SetBrushOrgEx works
+   only for x and y coordinates between 0 and 7, and that I assume it to 
+   work for arbitrary coordinates. Under NT, this seems to be ok, but there
+   is no guarantee that it will work under Windows 95. *)
+
+
+PROCEDURE PixmapCom (cmdP, endP: PaintPrivate.CommandPtr;
+                     hdc       : WinDef.HDC;
+                     st        : WinScreenType.T): PaintPrivate.CommandPtr =
+  VAR
+    fastPath : BOOLEAN;
+    status   : WinDef.BOOL;
+    comdc    : WinDef.HDC;
+    bitmap   : WinDef.HBITMAP;
+    oldBitmap: WinDef.HBITMAP;
+    pm       : PaintPrivate.Pixmap;
+    pst      : WinScreenType.T;
+    apm      : PaintPrivate.Pixmap;
+    color    : WinDef.COLORREF;
+    brush    : WinDef.HBRUSH;
+    auxBrush : WinDef.HBRUSH;
+    oldBrush : WinDef.HBRUSH;
+    brop     : INTEGER;
+    frop     : INTEGER;
+    pat0     : INTEGER;
+    pat1     : INTEGER;
+    pmRect   : Rect.T;
+
+  PROCEDURE BitBltFill (hdc   : WinDef.HDC;
+                        col   : WinDef.COLORREF;
+                        rop   : WinDef.DWORD;
+                        rect  : Rect.T;
+                        comdc : WinDef.HDC) =
+  VAR
+    oldBrush: WinDef.HBRUSH;
+    solBrush: WinDef.HBRUSH;
+    status  : WinDef.BOOL;
+  BEGIN
+    IF rop # 0 THEN
+      solBrush := WinGDI.CreateSolidBrush (col);
+      <* ASSERT solBrush # NIL *>
+      oldBrush := WinGDI.SelectObject (hdc, solBrush);
+      <* ASSERT oldBrush # NIL *>
+            
+      status := WinGDI.BitBlt (hdc, 
+                               rect.west, rect.north, 
+                               rect.east - rect.west, rect.south - rect.north,
+                               comdc, 0, 0, rop);
+      <* ASSERT status = True *>
+            
+      oldBrush := WinGDI.SelectObject (hdc, oldBrush);
+      <* ASSERT oldBrush = solBrush *>
+      status := WinGDI.DeleteObject (solBrush);
+      <* ASSERT status = True *>
+    END;
+  END BitBltFill;
+
+  BEGIN
+    WITH op = LOOPHOLE (cmdP, PaintPrivate.PixmapPtr)^ DO
+
+      IF Bug95_PatternBrush AND NOT PixmapIs8x8 (op.pm, st) THEN
+        RETURN ChicagoPixmapCom (cmdP, endP, hdc, st);
+      END;
+
+      IF op.op >= 0 AND st.optable # NIL AND op.op < NUMBER(st.optable^) THEN
+        WITH tbl = st.optable[op.op] DO
+          brop := tbl.brop3;
+          frop := tbl.frop3;
+          fastPath := (tbl.bop.mode = tbl.fop.mode);
+        END;
+      ELSE
+        fastPath := TRUE;
+      END;
+
+      IF NOT fastPath THEN
+
+        (* Create a compatible device context *)
+        comdc := WinGDI.CreateCompatibleDC (hdc);
+
+        (* Create a bitmap that can hold the rectangle covered by the pixmap *)
+        WITH dom = WinScrnPixmap.PixmapDomain (st, op.pm) DO
+          bitmap := WinGDI.CreateCompatibleBitmap (hdc, 
+                                                   dom.east - dom.west, 
+                                                   dom.south - dom.north);
+          pmRect := Rect.Add (dom, op.delta);
+        END;
+
+        (* Select the bitmap into "comdc". *)
+        oldBitmap := WinGDI.SelectObject (comdc, bitmap);
+
+        (* Select the pixmap into a pattern brush *)
+        pm := op.pm;  apm := pm;
+        IF pm < 0 THEN
+          pm := WinScrnPixmap.SolidPixmap - pm;
+          pst := st.bits;
+        ELSE
+          pst := st;
+        END;
+
+        IF op.op >= 0 AND st.optable # NIL AND op.op < NUMBER(st.optable^) AND
+          pst.pmtable # NIL AND pm < NUMBER (pst.pmtable^) THEN
+          WITH tbl = st.optable[op.op] DO
+            
+            brush := WinGDI.CreatePatternBrush (pst.pmtable[pm].hbmp);
+            <* ASSERT brush # NIL *>
+            
+            auxBrush := WinGDI.SelectObject (comdc, brush);
+            <* ASSERT auxBrush # NIL *>
+            
+            (* In Windows, '0' pixels of the bitmap in the pattern brush are 
+               drawn in the current text color, so the text color should be 
+               "tbl.bop.col". '1' pixels are drawn in the current background 
+               color, so this color should be "tbl.fop.col". Counterintuive? 
+               Well, after all, this is Windows! *)
+            
+            (* Draw the pixels which are 0 in "pst.pmtable[pm].hbmp" as black 
+               (all 0's), and the pixels which are 1 as white (all 1's) into 
+               "comdc". *)
+            
+            (* Setting the colors of comdc seems to have no effect. *)
+            color := WinGDI.SetTextColor (comdc, WinGDI.RGB(0,0,0));
+            <* ASSERT color # WinGDI.CLR_INVALID *>
+            color := WinGDI.SetBkColor (comdc, WinGDI.RGB(255,255,255));
+            <* ASSERT color # WinGDI.CLR_INVALID *>
+           
+            color := WinGDI.SetTextColor (hdc, WinGDI.RGB(0,0,0)); 
+            <* ASSERT color # WinGDI.CLR_INVALID *>
+            color := WinGDI.SetBkColor (hdc, WinGDI.RGB(255,255,255));
+            <* ASSERT color # WinGDI.CLR_INVALID *>
+
+            pat0 := tbl.bop.col;
+            pat1 := tbl.fop.col;
+
+          END;
+        ELSE
+          brop := 0;
+          frop := 0;
+        END;
+
+        (* Fill comdc, using the pattern brush *)
+        FillRect (comdc, Rect.T {0, Rect.HorSize (pmRect),
+                                 0, Rect.VerSize (pmRect)});
+
+        oldBrush := WinGDI.GetCurrentObject (hdc, WinGDI.OBJ_BRUSH);
+
+        ClipToRect (hdc, op.clip);
+        BitBltFill (hdc, pat0, brop, pmRect, comdc);
+        BitBltFill (hdc, pat1, frop, pmRect, comdc);
+        INC (cmdP, ADRSIZE(op));
+
+        WHILE cmdP < endP AND cmdP.command = PC.RepeatCom DO
+          ClipToRect (hdc, cmdP.clip);
+          BitBltFill (hdc, pat0, brop, pmRect, comdc);
+          BitBltFill (hdc, pat1, frop, pmRect, comdc);
+          INC (cmdP, ComSize);
+        END;
+        
+        (* Clean up. *)
+        DisableClipping (hdc);
+
+        brush := WinGDI.SelectObject (hdc, oldBrush);
+        <* ASSERT brush # NIL *>
+        status := WinGDI.DeleteObject (brush);
+        <* ASSERT status = True *>
+        
+        status := WinGDI.DeleteDC (comdc);
+        <* ASSERT status = True *>
+        status := WinGDI.DeleteObject (bitmap);
+        <* ASSERT status = True *>
+        
+      ELSE (* fastPath = TRUE *)
+        WITH ctxt = WinContext.PushPixmap (hdc, st, op.op, op.pm, op.delta) DO
+          FillRect (hdc, op.clip);
+          INC (cmdP, ADRSIZE(op));
+          WHILE cmdP < endP AND cmdP.command = PC.RepeatCom DO
+            FillRect (hdc, cmdP.clip);
+            INC (cmdP, ComSize);
+          END;
+          WinContext.Pop (ctxt);
+        END;
+      END;
+    END;
+
+    RETURN cmdP;
+  END PixmapCom;
+
+
+PROCEDURE ChicagoPixmapCom (
+                cmdP, endP: PaintPrivate.CommandPtr;
+                hdc       : WinDef.HDC;
+                st        : WinScreenType.T): PaintPrivate.CommandPtr =
+
+  PROCEDURE BitBlt (hdc   : WinDef.HDC;
+                    col   : WinDef.COLORREF;
+                    rop   : WinDef.DWORD;
+                    rect  : Rect.T;
+                    comdc : WinDef.HDC;
+                    width : INTEGER;
+                    height: INTEGER) =
+    VAR
+      oldBrush: WinDef.HBRUSH;
+      solBrush: WinDef.HBRUSH;
+      status  : WinDef.BOOL;
+    BEGIN
+      IF rop # 0 THEN
+        solBrush := WinGDI.CreateSolidBrush (col);
+        <* ASSERT solBrush # NIL *>
+        oldBrush := WinGDI.SelectObject (hdc, solBrush);
+        <* ASSERT oldBrush # NIL *>
+        
+        (* This branch is taken for PixmapComs.  This code matches the
+           Trestle specification precisely. *)
+
+        status := WinGDI.BitBlt (hdc, rect.west, rect.north, width, height,
+                                 comdc, 0, 0, rop);
+        <* ASSERT status = True *>
+        
+        oldBrush := WinGDI.SelectObject (hdc, oldBrush);
+        <* ASSERT oldBrush = solBrush *>
+        status := WinGDI.DeleteObject (solBrush);
+        <* ASSERT status = True *>
+      END;
+    END BitBlt;
+
+
+PROCEDURE ChicagoFill (hdc  : WinDef.HDC;
+                       st   : WinScreenType.T;
+                       rect : Rect.T;
+                       op   : PaintPrivate.PaintOp;
+                       pm   : PaintPrivate.Pixmap) =
   VAR
     pst     : WinScreenType.T;
     comdc   : WinDef.HDC;
@@ -484,16 +754,7 @@ PROCEDURE ChicagoFill (hdc  : WinDef.HDC;
     hbmp    : WinDef.HBITMAP;
     status  : WinDef.BOOL;
     bmi     : WinGDI.BITMAPINFO;
-    k       := 0;
   BEGIN
-    IF delta # Point.Origin THEN
-      WITH pmb = WinScrnPixmap.PixmapDomain (st, pm) DO
-        IF NOT Rect.IsEmpty (pmb) THEN
-          delta := Rect.Mod (delta, pmb);
-        END;
-      END;
-    END;
-
     IF pm < 0 THEN
       pm := WinScrnPixmap.SolidPixmap - pm;
       pst := st.bits;
@@ -534,51 +795,24 @@ PROCEDURE ChicagoFill (hdc  : WinDef.HDC;
                                     WinGDI.DIB_RGB_COLORS);
         <* ASSERT status = height *>
         
-        (* On NT, we can use "SetDIBits" to copy "pixels" into "hbmp".
-           On Windows 95, the bitmap comes out black. So, we copy the 
-           pixels individually, using "SetPixelV". This works fine 
-           both on NT and on Windows 95. 
-           
-           Note that the spec of "SetDIBits" says that "hbmp" must not be
-           selected into "comdc", while the spec of "SetPixelV" says that
-           it must be. *)
+        (* Use "SetDIBits" to copy "pixels" into "hbmp". Note that the 
+           specification of "SetDIBits" says that "hbmp" must not be 
+           selected into "comdc". *)
 
-        IF NOT Bug95_SetDIBits THEN
-          status := WinGDI.SetDIBits (comdc,
-                                      hbmp,
-                                      0,      
-                                      height, 
-                                      ADR(pixels[0]),
-                                      ADR (bmi),
-                                      WinGDI.DIB_RGB_COLORS);
-          <* ASSERT status = height *>
+        status := WinGDI.SetDIBits (comdc,
+                                    hbmp,
+                                    0,      
+                                    height, 
+                                    ADR(pixels[0]),
+                                    ADR (bmi),
+                                    WinGDI.DIB_RGB_COLORS);
+        <* ASSERT status = height *>
 
-          oldBmp := WinGDI.SelectObject (comdc, hbmp);
-          <* ASSERT oldBmp # NIL *>
+        oldBmp := WinGDI.SelectObject (comdc, hbmp);
+        <* ASSERT oldBmp # NIL *>
             
-        ELSE (* Bug95_SetDIBits = TRUE *)
-          
-          oldBmp := WinGDI.SelectObject (comdc, hbmp);
-          <* ASSERT oldBmp # NIL *>
-          
-          k := 0;
-          FOR y := height - 1 TO 0 BY -1 DO
-            FOR x := 0 TO width - 1 DO
-              WITH p = pixels[k],
-                   col = WinGDI.RGB (p.rgbRed, p.rgbGreen, p.rgbBlue) DO
-                status := WinGDI.SetPixelV (comdc, x, y, col);
-                <* ASSERT status = True *>
-                INC (k);
-              END;
-            END;
-          END;
-            
-        END;
-
-        BitBlt (hdc, tbl.bop.col, tbl.brop3, rect, delta, 
-                comdc, width, height, tile);
-        BitBlt (hdc, tbl.fop.col, tbl.frop3, rect, delta, 
-                comdc, width, height, tile);
+        BitBlt (hdc, tbl.bop.col, tbl.brop3, rect, comdc, width, height);
+        BitBlt (hdc, tbl.fop.col, tbl.frop3, rect, comdc, width, height);
 
         status := WinGDI.DeleteDC (comdc);
         <* ASSERT status = True *>
@@ -590,263 +824,27 @@ PROCEDURE ChicagoFill (hdc  : WinDef.HDC;
     END;
   END ChicagoFill;
 
-(*****************************************************************************)
-(* Painting pixmaps                                                          *)
-(*****************************************************************************)
-
-(* For now, I try to treat pixmaps just like textures. This might not work 
-   for color pixmaps, and might not work for every PaintOp. 
-
-   This code has not been tested for every possible PaintOp and for color.
-   It seems to work with PaintOp.BgFg and with PaintOp.TransparentFg.
-   I should run a fullsuite of tests once I got rudimentary color working.
-
-   Note that the Win32 specification states that WinGDI.SetBrushOrgEx works
-   only for x and y coordinates between 0 and 7, and that I assume it to 
-   work for arbitrary coordinates. Under NT, this seems to be ok, but there
-   is no guarantee that it will work under Windows 95. *)
-
-
-PROCEDURE PixmapCom (cmdP, endP: PaintPrivate.CommandPtr;
-                     hdc       : WinDef.HDC;
-                     st        : WinScreenType.T): PaintPrivate.CommandPtr =
   VAR
-    fastPath : BOOLEAN;
-    status   : WinDef.BOOL;
-    comdc    : WinDef.HDC;
-    bitmap   : WinDef.HBITMAP;
-    oldBitmap: WinDef.HBITMAP;
-    pm       : PaintPrivate.Pixmap;
-    delta    : Point.T;
-    pst      : WinScreenType.T;
-    apm      : PaintPrivate.Pixmap;
-    color    : WinDef.COLORREF;
-    brush    : WinDef.HBRUSH;
-    auxBrush : WinDef.HBRUSH;
-    oldBrush : WinDef.HBRUSH;
-    brop     : INTEGER;
-    frop     : INTEGER;
-    pat0     : INTEGER;
-    pat1     : INTEGER;
+    pmRect: Rect.T;  (* The domain of the pixmap, offset by op.delta *)
   BEGIN
     WITH op = LOOPHOLE (cmdP, PaintPrivate.PixmapPtr)^ DO
-
-      IF Bug95_PatternBrush AND NOT PixmapIs8x8 (op.pm, st) THEN
-        RETURN ChicagoPixmapCom (cmdP, endP, hdc, st);
-      END;
-
-      IF op.op >= 0 AND st.optable # NIL AND op.op < NUMBER(st.optable^) THEN
-        WITH tbl = st.optable[op.op] DO
-          brop := tbl.brop3;
-          frop := tbl.frop3;
-          fastPath := (tbl.bop.mode = tbl.fop.mode);
-        END;
-      ELSE
-        fastPath := TRUE;
-      END;
-
-
-      IF NOT fastPath THEN
-        
-        (* Create a compatible device context *)
-        comdc := WinGDI.CreateCompatibleDC (hdc);
-        (* Create a bitmap that can hold the rectangle covered by op.clip *)
-        bitmap := WinGDI.CreateCompatibleBitmap (hdc, 
-                                                 op.clip.east - op.clip.west, 
-                                                 op.clip.south - op.clip.north);
-        (* Select the bitmap into "comdc". *)
-        oldBitmap := WinGDI.SelectObject (comdc, bitmap);
-        
-        (* Map point ("op.clip.west","op.clip.north") of page space to point 
-           (0,0) of device space. Since the device is a bitmap of width 
-           "op.clip.east - op.clip.west" and height "op.clip.south - 
-           op.clip.north", the rectangle "op.clip" of page space is mapped 
-           onto the device. *)
-        status := WinGDI.SetWindowOrgEx (comdc, op.clip.west, op.clip.north, NIL);
-        status := WinGDI.SetViewportOrgEx (comdc, 0, 0, NIL);
-        
-        (* I dabbled a bit around with "SetWorldTransform", but could 
-           not get it to work. Anyways, "SetWordTransform" is supported 
-           under NT, but not under Chicago. *)
-        
-        (* Select the pixmap into a pattern brush *)
-        pm := op.pm;  apm := pm;
-        delta := op.delta;
-        IF pm < 0 THEN
-          pm := WinScrnPixmap.SolidPixmap - pm;
-          pst := st.bits;
-        ELSE
-          pst := st;
-        END;
-        IF delta # Point.Origin THEN
-          WITH pmb = WinScrnPixmap.PixmapDomain (st, apm) DO
-            IF NOT Rect.IsEmpty (pmb) THEN
-              delta := Rect.Mod (delta, pmb);
-            END;
-          END;
-        END;
-        IF op.op >= 0 AND st.optable # NIL AND op.op < NUMBER(st.optable^) AND
-          pst.pmtable # NIL AND pm < NUMBER (pst.pmtable^) THEN
-          WITH tbl = st.optable[op.op] DO
-            
-            brush := WinGDI.CreatePatternBrush (pst.pmtable[pm].hbmp);
-            <* ASSERT brush # NIL *>
-            
-            (* Set the pattern brush origin. The Windows way to do this is 
-               confusing in two respects: (1) One has to set the origin BEFORE
-               selecting the brush into the device context, and (2) the origin
-               is specified in device space, not in world/page space. *)
-            
-            status := WinGDI.SetBrushOrgEx (comdc, 
-                                            delta.h - op.clip.west, 
-                                            delta.v - op.clip.north, 
-                                            NIL); 
-            <* ASSERT status = True *>
-            
-            auxBrush := WinGDI.SelectObject (comdc, brush);
-            <* ASSERT auxBrush # NIL *>
-            
-            (* In Windows, '0' pixels of the bitmap in the pattern brush are 
-               drawn in the current text color, so the text color should be 
-               "tbl.bop.col". '1' pixels are drawn in the current background 
-               color, so this color should be "tbl.fop.col". Counterintuive? 
-               Well, after all, this is Windows! *)
-            
-            (* Draw the pixels which are 0 in "pst.pmtable[pm].hbmp" as black 
-               (all 0's), and the pixels which are 1 as white (all 1's) into 
-               "comdc". *)
-            
-            (* Setting the colors of comdc seems to have no effect. *)
-            color := WinGDI.SetTextColor (comdc, WinGDI.RGB(0,0,0));
-            <* ASSERT color # WinGDI.CLR_INVALID *>
-            color := WinGDI.SetBkColor (comdc, WinGDI.RGB(255,255,255));
-            <* ASSERT color # WinGDI.CLR_INVALID *>
-           
-            color := WinGDI.SetTextColor (hdc, WinGDI.RGB(0,0,0)); 
-            <* ASSERT color # WinGDI.CLR_INVALID *>
-            color := WinGDI.SetBkColor (hdc, WinGDI.RGB(255,255,255));
-            <* ASSERT color # WinGDI.CLR_INVALID *>
-
-            pat0 := tbl.bop.col;
-            pat1 := tbl.fop.col;
-
-          END;
-        ELSE
-          brop := 0;
-          frop := 0;
-        END;
-
-        (* Fill comdc, using the pattern brush *)
-        FillRect (comdc, op.clip);
-
-        oldBrush := WinGDI.GetCurrentObject (hdc, WinGDI.OBJ_BRUSH);
-
-        BitBltFill (hdc, pat0, brop, op.clip, comdc);
-        BitBltFill (hdc, pat1, frop, op.clip, comdc);
-        INC (cmdP, ADRSIZE(op));
-
-        WHILE cmdP < endP AND cmdP.command = PC.RepeatCom DO
-          BitBltFill (hdc, pat0, brop, cmdP.clip, comdc);
-          BitBltFill (hdc, pat1, frop, cmdP.clip, comdc);
-          INC (cmdP, ComSize);
-        END;
-        
-        (* Clean up. *)
-        brush := WinGDI.SelectObject (hdc, oldBrush);
-        <* ASSERT brush # NIL *>
-        status := WinGDI.DeleteObject (brush);
-        <* ASSERT status = True *>
-        
-        status := WinGDI.DeleteDC (comdc);
-        <* ASSERT status = True *>
-        status := WinGDI.DeleteObject (bitmap);
-        <* ASSERT status = True *>
-        
-      ELSE (* fastPath = TRUE *)
-        
-        WITH ctxt = WinContext.PushTexture (hdc, st, op.op, op.pm, op.delta) DO
-          FillRect (hdc, op.clip);
-          INC (cmdP, ADRSIZE(op));
-          WHILE cmdP < endP AND cmdP.command = PC.RepeatCom DO
-            FillRect (hdc, cmdP.clip);
-            INC (cmdP, ComSize);
-          END;
-          WinContext.Pop (ctxt);
-        END;
-      END;
-    END;
-
-    RETURN cmdP;
-  END PixmapCom;
-
-
-PROCEDURE ChicagoPixmapCom (
-                cmdP, endP: PaintPrivate.CommandPtr;
-                hdc       : WinDef.HDC;
-                st        : WinScreenType.T): PaintPrivate.CommandPtr =
-  VAR
-    dci   : INTEGER;
-    status: WinDef.BOOL;
-  BEGIN
-    WITH op = LOOPHOLE (cmdP, PaintPrivate.PixmapPtr)^ DO
-
-      dci := WinGDI.SaveDC (hdc);
-      <* ASSERT dci # 0 *>
+      pmRect := Rect.Add (WinScrnPixmap.PixmapDomain (st, op.pm), op.delta);
 
       ClipToRect (hdc, op.clip);
-      ChicagoFill (hdc, st, op.clip, op.op, op.pm, op.delta, FALSE);
-
-      status := WinGDI.RestoreDC (hdc, -1);
-      <* ASSERT status = True *>
-
+      ChicagoFill (hdc, st, pmRect, op.op, op.pm);
       INC (cmdP, ADRSIZE(op));
+
       WHILE cmdP < endP AND cmdP.command = PC.RepeatCom DO
-
-        dci := WinGDI.SaveDC (hdc);
-        <* ASSERT dci # 0 *>
-
         ClipToRect (hdc, cmdP.clip);
-        ChicagoFill (hdc, st, cmdP.clip, op.op, op.pm, op.delta, FALSE);
-
-        status := WinGDI.RestoreDC (hdc, -1);
-        <* ASSERT status = True *>
-
+        ChicagoFill (hdc, st, pmRect, op.op, op.pm);
         INC (cmdP, ComSize);
       END;
+
+      DisableClipping (hdc);
 
     END;
     RETURN cmdP;
   END ChicagoPixmapCom;
-
-
-PROCEDURE BitBltFill (hdc   : WinDef.HDC;
-                      col   : WinDef.COLORREF;
-                      rop   : WinDef.DWORD;
-                      rect  : Rect.T;
-                      comdc : WinDef.HDC) =
-  VAR
-    oldBrush: WinDef.HBRUSH;
-    solBrush: WinDef.HBRUSH;
-    status  : WinDef.BOOL;
-  BEGIN
-    IF rop # 0 THEN
-      solBrush := WinGDI.CreateSolidBrush (col);
-      <* ASSERT solBrush # NIL *>
-      oldBrush := WinGDI.SelectObject (hdc, solBrush);
-      <* ASSERT oldBrush # NIL *>
-            
-      status := WinGDI.BitBlt (hdc, rect.west, rect.north,
-                               rect.east - rect.west, 
-                               rect.south - rect.north, 
-                               comdc, rect.west, rect.north, rop);
-      <* ASSERT status = True *>
-            
-      oldBrush := WinGDI.SelectObject (hdc, oldBrush);
-      <* ASSERT oldBrush = solBrush *>
-      status := WinGDI.DeleteObject (solBrush);
-      <* ASSERT status = True *>
-    END;
-  END BitBltFill;
 
 
 (*****************************************************************************)
@@ -1120,12 +1118,12 @@ PROCEDURE TextCom (cmd       : PaintPrivate.CommandPtr;
             IF PolyRegion.OverlapRect (pr, pAdr.clip) THEN
               WITH rgn = PolyRegion.ToRegion (pr) DO
                 IF NOT Region.IsEmpty (rgn) THEN
-                  SetClipRegion (hdc, rgn);
+                  ClipToRegion (hdc, rgn);
                   IF subbed THEN 
                     FillRect (hdc, rgn.r) 
                   END;
                   PaintString (hdc, st, op);
-                  UnsetClipRegion (hdc);
+                  DisableClipping (hdc);
                 END
               END;
               pr := PolyRegion.Empty
@@ -1135,12 +1133,12 @@ PROCEDURE TextCom (cmd       : PaintPrivate.CommandPtr;
           END;
           WITH rgn = PolyRegion.ToRegion (pr) DO
             IF NOT Region.IsEmpty (rgn) THEN
-              SetClipRegion (hdc, rgn); 
+              ClipToRegion (hdc, rgn); 
               IF subbed THEN 
                 FillRect (hdc, rgn.r) 
               END;
               PaintString (hdc, st, op);
-              UnsetClipRegion (hdc);
+              DisableClipping (hdc);
             END;
           END;
         END;
@@ -1307,7 +1305,7 @@ PROCEDURE ExtensionCom (cmdP, endP: PaintPrivate.CommandPtr;
           IF PolyRegion.OverlapRect(pr, cmdP.clip) THEN
             WITH rgn = PolyRegion.ToRegion(pr) DO
               IF NOT Region.IsEmpty(rgn) THEN
-                SetClipRegion (hdc, rgn);
+                ClipToRegion (hdc, rgn);
                 IF op.subCommand = PaintExt.LineCommand THEN
                   DrawLine (hdc, lineP.p, lineP.q);
                 ELSIF op.subCommand = PaintExt.FillCommand THEN
@@ -1315,7 +1313,7 @@ PROCEDURE ExtensionCom (cmdP, endP: PaintPrivate.CommandPtr;
                 ELSE
                   StrokePath(trsl, hdc, path)
                 END;
-                UnsetClipRegion (hdc);
+                DisableClipping (hdc);
               END
             END;
             pr := PolyRegion.Empty
@@ -1325,7 +1323,7 @@ PROCEDURE ExtensionCom (cmdP, endP: PaintPrivate.CommandPtr;
         END;
         WITH rgn = PolyRegion.ToRegion(pr) DO
           IF NOT Region.IsEmpty(rgn) THEN
-            SetClipRegion (hdc, rgn);
+            ClipToRegion (hdc, rgn);
             IF op.subCommand = PaintExt.LineCommand THEN
               DrawLine (hdc, lineP.p, lineP.q);
             ELSIF op.subCommand = PaintExt.FillCommand THEN
@@ -1333,7 +1331,7 @@ PROCEDURE ExtensionCom (cmdP, endP: PaintPrivate.CommandPtr;
             ELSE
               StrokePath(trsl, hdc, path)
             END;
-            UnsetClipRegion (hdc);
+            DisableClipping (hdc);
           END
         END;
 
@@ -1512,6 +1510,102 @@ PROCEDURE FillLine (                    self: FillMap;
 (*****************************************************************************)
 
 
+PROCEDURE FillRect (hdc: WinDef.HDC; READONLY r: Rect.T) =
+  VAR
+    rc    : WinDef.RECT;
+    pen   : WinDef.HPEN;
+    oldPen: WinDef.HPEN;
+    status: WinDef.BOOL;
+  BEGIN
+    IF r.west < r.east THEN
+      rc := FromRect(r);
+
+      (*
+       * One would assume that 
+       *     EVAL WinUser.FillRect (hdc, ADR(rc), hbr);
+       * should be sufficient here. However, "WinUser.FillRect" ignores the
+       * current raster operation mode for some reason.
+       *)
+
+      (* Load an invisible pen into the DC *)
+      oldPen := WinGDI.SelectObject (hdc, 
+                                     WinGDI.GetStockObject (WinGDI.NULL_PEN));
+      <* ASSERT oldPen # NIL *>
+
+      (* "WinGDI.Rectangle" uses both the current pen and the current brush *)
+      status := WinGDI.Rectangle (hdc, r.west, r.north, r.east+1, r.south+1);
+      <* ASSERT status = True *>
+
+      pen := WinGDI.SelectObject (hdc, oldPen);
+      <* ASSERT pen # NIL *>
+    END;
+  END FillRect;
+
+
+(********************
+(*
+ * Debugging gear
+ *)
+PROCEDURE StrokeRect (hdc: WinDef.HDC; READONLY r: Rect.T) =
+  VAR
+    rc    : WinDef.RECT;
+    oldBr : WinDef.HBRUSH;
+    oldPen: WinDef.HPEN;
+    status: WinDef.BOOL;
+  BEGIN
+    IF r.west < r.east THEN
+      rc := FromRect(r);
+
+      oldPen := WinGDI.SelectObject (hdc, 
+                                     WinGDI.GetStockObject (WinGDI.BLACK_PEN));
+      <* ASSERT oldPen # NIL *>
+      oldBr := WinGDI.SelectObject (hdc, 
+                                    WinGDI.GetStockObject (WinGDI.NULL_BRUSH));
+      <* ASSERT oldBr # NIL *>
+      (* "WinGDI.Rectangle" uses both the current pen and the current brush *)
+      status := WinGDI.Rectangle (hdc, r.west, r.north, r.east+1, r.south+1);
+      <* ASSERT status = True *>
+      oldBr := WinGDI.SelectObject (hdc, oldBr);
+      oldPen := WinGDI.SelectObject (hdc, oldPen);
+    END;
+  END StrokeRect;
+*************)
+
+
+(************
+(*
+ * More debugging gear
+ *)
+PROCEDURE MarkPoint (hdc: WinDef.HDC; READONLY a: Point.T) =
+  VAR
+    oldPen: WinDef.HGDIOBJ;
+  BEGIN
+    oldPen := WinGDI.SelectObject (hdc, 
+                                   WinGDI.GetStockObject (WinGDI.BLACK_PEN));
+    <* ASSERT oldPen # NIL *>
+    DrawLine(hdc, Point.T{a.h - 2, a.v}, Point.T{a.h + 2, a.v});
+    DrawLine(hdc, Point.T{a.h, a.v - 2}, Point.T{a.h, a.v + 2});
+    oldPen := WinGDI.SelectObject (hdc, oldPen);
+  END MarkPoint;
+***********)
+
+
+PROCEDURE PixmapIs8x8 (pm: PaintPrivate.Pixmap; st: WinScreenType.T): BOOLEAN =
+  BEGIN
+    IF pm < 0 THEN
+      pm := WinScrnPixmap.SolidPixmap - pm;
+      st := st.bits;
+    END;
+    IF st.pmtable # NIL AND pm < NUMBER (st.pmtable^) THEN
+      WITH rect = st.pmtable[pm].domain DO
+        RETURN Rect.VerSize (rect) = 8 AND Rect.HorSize (rect) = 8;
+      END;
+    ELSE
+      RETURN TRUE;
+    END;
+  END PixmapIs8x8;
+
+
 PROCEDURE FromRect (READONLY r: Rect.T): WinDef.RECT =
   BEGIN
     RETURN WinDef.RECT {left   := r.west,
@@ -1550,7 +1644,7 @@ PROCEDURE FromRegion (READONLY rgn: Region.T): WinDef.HRGN =
   END FromRegion;
 
 
-PROCEDURE SetClipRegion (hdc: WinDef.HDC; rgn: Region.T) =
+PROCEDURE ClipToRegion (hdc: WinDef.HDC; rgn: Region.T) =
   VAR
     hrgn := FromRegion(rgn);
     status: Ctypes.int;
@@ -1559,28 +1653,33 @@ PROCEDURE SetClipRegion (hdc: WinDef.HDC; rgn: Region.T) =
     <* ASSERT status # WinGDI.ERROR *>
     status := WinGDI.DeleteObject (hrgn);
     <* ASSERT status = True *>
-  END SetClipRegion;
+  END ClipToRegion;
 
 
-PROCEDURE UnsetClipRegion (hdc: WinDef.HDC) =
+PROCEDURE ClipToRect (hdc: WinDef.HDC; clip: Rect.T) =
   VAR
-    status: Ctypes.int;
+    hrgn  : WinDef.HRGN;
+    status: WinDef.BOOL;
+  BEGIN
+    hrgn := WinGDI.CreateRectRgn (clip.west, clip.north, 
+                                  clip.east, clip.south);
+    <* ASSERT hrgn # NIL *>
+
+    status := WinGDI.SelectClipRgn (hdc, hrgn);
+    <* ASSERT status # WinGDI.ERROR *>
+
+    status := WinGDI.DeleteObject (hrgn);
+    <* ASSERT status = True *>
+  END ClipToRect;
+
+
+PROCEDURE DisableClipping (hdc: WinDef.HDC) =
+  VAR
+    status: WinDef.BOOL;
   BEGIN
     status := WinGDI.SelectClipRgn (hdc, NIL);
     <* ASSERT status # WinGDI.ERROR *>
-  END UnsetClipRegion;
-
-
-PROCEDURE IsChicago (): BOOLEAN =
-  VAR
-    os_version : WinBase.OSVERSIONINFO;
-    status : WinDef.BOOL;
-  BEGIN
-    os_version.dwOSVersionInfoSize := BYTESIZE (os_version);
-    status := WinBase.GetVersionEx (ADR (os_version));
-    <* ASSERT status = True *>
-    RETURN os_version.dwPlatformId = WinBase.VER_PLATFORM_WIN32_WINDOWS;
-  END IsChicago;
+  END DisableClipping;
 
 
 BEGIN
