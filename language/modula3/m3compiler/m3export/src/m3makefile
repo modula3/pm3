@@ -619,7 +619,7 @@ CR,
 "%setup",CR,
 "%build",CR,
 "if test ${RPM_ARCH} = i386 -a ${RPM_OS} = Linux",CR,
-"  then if test -f /lib/libc.so.6",CR
+"  then if test -f /lib/libc.so.6",CR,
 "    then make -f Makefile.LINUXLIBC6 M3OPTIONS=\"-DLIST_FILES -DSETROOT=/usr -DEXPORTPATH=${RPM_BUILD_ROOT}\"",CR,
 "  else make -f Makefile.LINUXELF M3OPTIONS=\"-DLIST_FILES -DSETROOT=/usr -DEXPORTPATH=${RPM_BUILD_ROOT}\"",CR,
 "  fi",CR,
@@ -651,8 +651,8 @@ proc BuildRPM() is
 
   % Save the default install root
 
-  CheckExec(["cp","-p",EXPORT_TMP_SRC & "/" & tmplDir & "/" & COMMON,
-      EXPORT_TMP_TMP & "/" & tmplDir & "/" & "COMMON"],[],".")
+  CheckExec(["cp","-p",EXPORT_TMP_SRC & "/" & tmplDir & "/" & "COMMON",
+      EXPORT_TMP_TMP & "/" & tmplDir & "/" & "COMMON"],[],".","save COMMON")
 
   % Set the default install root for RPM
 
@@ -676,12 +676,12 @@ proc BuildRPM() is
 
   % Restore the previous default install root
 
-  CheckExec(["cp","-p",EXPORT_TMP_TMP & "/" & tmplDir & "/" & COMMON,
-      EXPORT_TMP_SRC & "/" & tmplDir & "/" & "COMMON"],[],".")
+  CheckExec(["cp","-p",EXPORT_TMP_TMP & "/" & tmplDir & "/" & "COMMON",
+      EXPORT_TMP_SRC & "/" & tmplDir & "/" & "COMMON"],[],".","restore COMMON")
 
   CheckExec(["rpm","-ba","--buildroot",dir & "/" & "tmp",
       "--rcfile",dir & "/" & "rpmrc",
-      versionName & ".spec"], ["","rpm.out","rpm.err"],
+      versionName & ".spec"], ["/dev/null","rpm.out","rpm.err"],
       dir & "/" & "SPECS", "building rpm failed")
 end
 

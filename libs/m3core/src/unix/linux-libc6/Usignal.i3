@@ -93,8 +93,10 @@ TYPE
 
 
 CONST
-  empty_sigset_t : sigset_t = sigset_t{ARRAY [0..SIGSET_NWORDS] OF INTEGER{0, ..}};
-  empty_sv_mask  : sigset_t = sigset_t{ARRAY [0..SIGSET_NWORDS] OF INTEGER{0, ..}};
+  empty_sigset_t : sigset_t = sigset_t{ARRAY [0..SIGSET_NWORDS - 1] 
+      OF INTEGER{0, ..}};
+  empty_sv_mask  : sigset_t = sigset_t{ARRAY [0..SIGSET_NWORDS - 1] 
+      OF INTEGER{0, ..}};
 
 CONST
   SV_ONSTACK   = 16_0001;  (* take signal on signal stack *)
