@@ -3307,20 +3307,20 @@ PROCEDURE Setup(t: T) RAISES {Error}=
 PROCEDURE FillNamingConvention(t: T; conv: M3Driver.NamingConvention;
     READONLY nm_conv: QVSeq.T) RAISES {Error} =
   BEGIN
-    IF nm_conv.size() < 29 THEN
+    IF nm_conv.size() < 30 THEN
       RAISE Error("Not enough elements for naming convention" & t.CR);
     END;
     FOR i := FIRST(M3Driver.Suffixes) TO LAST(M3Driver.Suffixes) DO
       conv.suffix[i] := QVal.ToText(t,nm_conv.get(ORD(i)));
     END;
-    conv.default_pgm := QVal.ToText(t,nm_conv.get(21));
-    conv.lib_prefix := QVal.ToText(t,nm_conv.get(22));
-    conv.dirSep := Text.GetChar(QVal.ToText(t,nm_conv.get(23)),0);
-    conv.EOL := QVal.ToText(t,nm_conv.get(24));
-    conv.pathSep :=Text.GetChar(QVal.ToText(t,nm_conv.get(25)),0);
-    conv.volSep :=Text.GetChar(QVal.ToText(t,nm_conv.get(26)),0);
-    conv.short_names :=QVal.ToBool(t,nm_conv.get(27));
-    conv.case_insensitive_ext :=QVal.ToBool(t,nm_conv.get(28));
+    conv.default_pgm := QVal.ToText(t,nm_conv.get(22));
+    conv.lib_prefix := QVal.ToText(t,nm_conv.get(23));
+    conv.dirSep := Text.GetChar(QVal.ToText(t,nm_conv.get(24)),0);
+    conv.EOL := QVal.ToText(t,nm_conv.get(25));
+    conv.pathSep :=Text.GetChar(QVal.ToText(t,nm_conv.get(26)),0);
+    conv.volSep :=Text.GetChar(QVal.ToText(t,nm_conv.get(27)),0);
+    conv.short_names :=QVal.ToBool(t,nm_conv.get(28));
+    conv.case_insensitive_ext :=QVal.ToBool(t,nm_conv.get(29));
   END FillNamingConvention;
 
 PROCEDURE GetSL(t: T): TEXT=

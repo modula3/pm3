@@ -5,6 +5,11 @@ OS=`uname -s`
 REV=`uname -r`
 ZZP=`cat zzp`
 
+SKIP_DOWNLOAD="F"
+SKIP_BUILD="F"
+SKIP_UPLOAD="F"
+SKIP_CLEAN="T"
+
 case ${ARCH}-${OS}-${REV} in
   i[3456789]86-Linux-*)
     TARGET=LINUXELF
@@ -23,8 +28,14 @@ case ${ARCH}-${OS}-${REV} in
   ;;
 esac
 
-rm TODO DONE
-ftp -n <<EOF
+#
+# Download the TODO/DONE, check, download the source and bootstrap,
+# untar the files.
+#
+
+if test ${SKIP_DOWNLOAD} = "F"
+  then rm TODO DONE
+  ftp -n <<EOF
 open m3.polymtl.ca
 user ftp ${TARGET}@m3.polymtl.ca
 cd /tmp/pm3/bootstrap/${TARGET}
@@ -32,6 +43,7 @@ get TODO
 cd /tmp/pm3/binaries/${TARGET}
 get DONE
 EOF
+fi
 
 if test ! -f TODO || ( test -f DONE && test `cat TODO` = `cat DONE` )
   then echo "nothing to do"
@@ -39,13 +51,14 @@ if test ! -f TODO || ( test -f DONE && test `cat TODO` = `cat DONE` )
 fi
 
 VERSION=`cat TODO`
-rm -r ${TARGET}
-mkdir ${TARGET}
 echo building ${VERSION}
 
-( 
-cd ${TARGET}
-ftp -n <<EOF
+if test ${SKIP_DOWNLOAD} = "F"
+  then rm -r ${TARGET}
+  mkdir ${TARGET}
+  ( 
+  cd ${TARGET}
+  ftp -n <<EOF
 open m3.polymtl.ca
 user ftp ${TARGET}@m3.polymtl.ca
 binary
@@ -55,21 +68,43 @@ cd /pub/m3/pkg
 get ${VERSION}.tgz
 EOF
 
-gunzip ${VERSION}.tgz
-tar -x -p -f ${VERSION}.tar
-rm ${VERSION}.tar
-gunzip ${VERSION}-boot.tgz
-tar -x -p -f ${VERSION}-boot.tar
-rm ${VERSION}-boot.tar
-)
+  gunzip ${VERSION}.tgz
+  tar -x -p -f ${VERSION}.tar
+  rm ${VERSION}.tar
+  gunzip ${VERSION}-boot.tgz
+  tar -x -p -f ${VERSION}-boot.tar
+  rm ${VERSION}-boot.tar
+  )
 
-if (cd ${TARGET}/${VERSION} && make exportall && cd binaries && mv ${TARGET} \
-    ${VERSION} && tar cf ../../../${VERSION}.tar ${VERSION}) \
-    1> out.tmp 2>errs.tmp
-  then rm -r ${TARGET}
-  gzip ${VERSION}.tar
-  mv ${VERSION}.tar.gz ${VERSION}.tgz
-ftp -n <<EOF
+fi
+
+#
+# Try to build it.
+#
+
+if test ${SKIP_BUILD} = "F"
+  then LD_LIBRARY_PATH=`pwd`/${TARGET}/${VERSION}/binaries/${TARGET}/usr/local/pm3-1.1/lib/m3/${TARGET}:${LD_LIBRARY_PATH}
+  export LD_LIBRARY_PATH
+
+  if (cd ${TARGET}/${VERSION} && make exportall && cd binaries && mv ${TARGET}\
+      ${VERSION} && tar cf ../../../${VERSION}.tar ${VERSION}) \
+      1> out.tmp 2>errs.tmp
+    then rm -r ${TARGET}
+    gzip ${VERSION}.tar
+    mv ${VERSION}.tar.gz ${VERSION}.tgz
+    COMPLETED="T"
+  else
+    COMPLETED="F"
+  fi
+fi
+
+#
+# Now, upload the result
+#
+
+if test ${SKIP_UPLOAD} = "F"
+  then if test COMPLETED = "T"
+    then ftp -n <<EOF
 open m3.polymtl.ca
 user ftp ${TARGET}@m3.polymtl.ca
 site group binaries
@@ -80,7 +115,7 @@ put ${VERSION}.tgz
 put TODO DONE
 EOF
   else
-ftp -n <<EOF
+    ftp -n <<EOF
 open m3.polymtl.ca
 user ftp ${TARGET}@m3.polymtl.ca
 site group binaries
@@ -91,7 +126,10 @@ put errs.tmp NOTDONE.errs
 put out.tmp NOTDONE.out
 EOF
 
+  fi
 fi
 
-rm ${VERSION}.tar ${VERSION}.tgz
+if test ${SKIP_CLEAN} = "F"
+  then rm ${VERSION}.tar ${VERSION}.tgz
+fi
 

@@ -929,10 +929,49 @@ PROCEDURE SetFontUnits(display: X.DisplayStar;
  *
  *  HGG: Need to write Externals for all of them - see Xm.h
  ****************)
+TYPE
+  StringCharSet = char_star;
+
+<*EXTERNAL  "XmStringCreate":C*>
+PROCEDURE StringCreate(str:char_star;
+                       charset:StringCharSet):String;
 
 <*EXTERNAL "XmStringCreateSimple":C*>
 PROCEDURE StringCreateSimple(str:char_star): String;
 
+(*---naming convention breask down due to 
+-----same name as type
+<*EXTERNAL "XmStringDirection":C*>
+PROCEDURE StringDirection(direction:StringDirection): String;
+-----------------------------------------*)
+
+
+<*EXTERNAL "XmStringSeparatorCreate":C*>
+PROCEDURE StringSeparatorCreate(): String;
+
+<*EXTERNAL "XmStringSegmentCreate":C*>
+PROCEDURE StringSegmentCreate(str:char_star;
+                              charset:StringCharSet;
+                              direction: StringDirection;
+                              separator: Xt.Boolean): String;
+
+<*EXTERNAL "XmStringLtoRCreate":C*>
+PROCEDURE StringLtoRCreate(str:char_star;
+                              charset:StringCharSet):String;
+ 
+<*EXTERNAL "XmStringCreateLtoR":C*>
+PROCEDURE StringCreateLtoR(str:char_star;
+                              charset:StringCharSet):String;
+
+<*EXTERNAL "XmStringInitContext":C*>
+PROCEDURE StringInitContext(VAR context:StringContext;
+                            string:String):Xt.Boolean;
+ 
+<*EXTERNAL "XmStringGetLtoR":C*>
+PROCEDURE StringGetLtoR(string:String;
+                        charset: StringCharSet;
+                        VAR str:char_star):Xt.Boolean;
+ 
 <*EXTERNAL "XmStringFree":C*>
 PROCEDURE StringFree(str:String);
 

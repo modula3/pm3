@@ -65,6 +65,13 @@ BEGIN
 END IsDrawnButton;
 
 (*----------------*)
+(*
+PROCEDURE IsFileSelectionDialog(w:Xt.Widget):Xt.Boolean =
+BEGIN
+  RETURN Xt.IsSubclass(w,xmFileSelectionDialogWidgetClass);
+END IsFileSelectionDialog;
+*)
+(*----------------*)
 PROCEDURE IsForm(w:Xt.Widget):Xt.Boolean =
 BEGIN
   RETURN Xt.IsSubclass(w,xmFormWidgetClass);

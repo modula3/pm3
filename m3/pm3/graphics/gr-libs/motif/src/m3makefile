@@ -9,7 +9,7 @@
 
 if PLATFORM_SUPPORTS_MOTIF
   import_Motif ()
-  import ("X11")
+  import ("X11R4")
 
   Interface ("IntrinsicP")
   Module    ("Xmacro")

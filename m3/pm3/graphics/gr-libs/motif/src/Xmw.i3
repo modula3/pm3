@@ -46,7 +46,7 @@ PROCEDURE IsXXX(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreateXXX":C *>
 PROCEDURE CreateXXX( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 ==========================*)
@@ -67,7 +67,7 @@ PROCEDURE IsArrowButton(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreateArrowButton":C *>
 PROCEDURE CreateArrowButton( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 (*-------------------*)
@@ -84,13 +84,13 @@ PROCEDURE IsBulletinBoard(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreateBulletinBoard":C *>
 PROCEDURE CreateBulletinBoard( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 <*EXTERNAL "XmCreateBulletinBoardDialog":C *>
 PROCEDURE CreateBulletinBoardDialog( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 
@@ -114,7 +114,7 @@ PROCEDURE IsCascadeButton(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreateCascadeButton":C *>
 PROCEDURE CreateCascadeButton( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 <*EXTERNAL "XmCascadeButtonHighlight":C*>
@@ -136,7 +136,7 @@ PROCEDURE IsDialogShell(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreateDialogShell":C *>
 PROCEDURE CreateDialogShell( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 (*-------------------*)
@@ -153,7 +153,7 @@ PROCEDURE IsDrawingArea(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreateDrawingArea":C *>
 PROCEDURE CreateDrawingArea( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 (*-------------------*)
@@ -170,7 +170,24 @@ PROCEDURE IsDrawnButton(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreateDrawnButton":C *>
 PROCEDURE CreateDrawnButton( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
+			 argCount:Xt.Cardinal): Xt.Widget;
+
+(*-------------------*)
+(* FileSelectionDialog       *)
+(*-------------------*)
+(*
+<*EXTERNAL*> 
+VAR xmFileSelectionDialogWidgetClass:Xt.WidgetClass;
+TYPE FileSelectionDialogWidgetClass = UNTRACED ROOT;
+TYPE FileSelectionDialogWidget      = UNTRACED ROOT;
+
+PROCEDURE IsFileSelectionDialog(w:Xt.Widget):Xt.Boolean;
+*)
+<*EXTERNAL "XmCreateFileSelectionDialog":C *>
+PROCEDURE CreateFileSelectionDialog( parent:Xt.Widget;
+	                 name: char_star;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 (*-------------------*)
@@ -187,13 +204,13 @@ PROCEDURE IsForm(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreateForm":C *>
 PROCEDURE CreateForm( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 <*EXTERNAL "XmCreateFormDialog":C *>
 PROCEDURE CreateFormDialog( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 (*-------------------*)
@@ -210,7 +227,7 @@ PROCEDURE IsFrame(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreateFrame":C *>
 PROCEDURE CreateFrame( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 (*-------------------*)
@@ -227,7 +244,7 @@ PROCEDURE IsLabel(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreateLabel":C *>
 PROCEDURE CreateLabel( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 (*-------------------*)
@@ -249,13 +266,13 @@ PROCEDURE IsList(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreateList":C *>
 PROCEDURE CreateList( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 <*EXTERNAL "XmCreateScrolledList":C *>
 PROCEDURE CreateScrolledList( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 <*EXTERNAL "XmListAddItem"*>
@@ -380,7 +397,7 @@ PROCEDURE IsMainWindow(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreateMainWindow":C *>
 PROCEDURE CreateMainWindow( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 
@@ -411,7 +428,7 @@ PROCEDURE IsMenuShell(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreateMenuShell":C *>
 PROCEDURE CreateMenuShell( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 (*-------------------*)
@@ -429,43 +446,43 @@ PROCEDURE IsMessageBox(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreateMessageBox":C *>
 PROCEDURE CreateMessageBox( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 <*EXTERNAL "XmCreateMessageDialog":C *>
 PROCEDURE CreateMessageDialog( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 <*EXTERNAL "XmCreateErrorDialog":C *>
 PROCEDURE CreateErrorDialog( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 <*EXTERNAL "XmCreateInformationDialog":C *>
 PROCEDURE CreateInformationDialog( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 <*EXTERNAL "XmCreateQuestionDialog":C *>
 PROCEDURE CreateQuestionDialog( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 <*EXTERNAL "XmCreateWarningDialog":C *>
 PROCEDURE CreateWarningDialog( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 <*EXTERNAL "XmCreateWorkingDialog":C *>
 PROCEDURE CreateWorkingDialog( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 
@@ -489,7 +506,7 @@ PROCEDURE IsPanedWindow(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreatePanedWindow":C *>
 PROCEDURE CreatePanedWindow( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 (*-------------------*)
 (* PushButton       *)
@@ -511,7 +528,7 @@ PROCEDURE IsPushButton(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreatePushButton":C *>
 PROCEDURE CreatePushButton( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 (*-------------------*)
@@ -528,43 +545,43 @@ PROCEDURE IsRowColumn(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreateRowColumn":C *>
 PROCEDURE CreateRowColumn( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 <*EXTERNAL "XmCreateRadioBox":C *>
 PROCEDURE CreateRadioBoxn( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 <*EXTERNAL "XmCreateWorkArea":C *>
 PROCEDURE CreateWorkArea( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 <*EXTERNAL "XmCreatePopupMenu":C *>
 PROCEDURE CreatePopupMenu( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 <*EXTERNAL "XmCreatePulldownMenu":C *>
 PROCEDURE CreatePulldownMenu( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 <*EXTERNAL "XmCreateOptionMenu":C *>
 PROCEDURE CreateOptionMenu( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 <*EXTERNAL "XmCreateMenuBar":C *>
 PROCEDURE CreateMenuBar( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 <*EXTERNAL "XmMenuPosition":C *>
@@ -594,7 +611,7 @@ PROCEDURE IsScale(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreateScale":C *>
 PROCEDURE CreateScale( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 <*EXTERNAL "XmScaleGetValue":C*>
@@ -622,7 +639,7 @@ PROCEDURE IsScrollBar(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreateScrollBar":C *>
 PROCEDURE CreateScrollBar( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 <*EXTERNAL "XmScrollBarGetValues":C*>
@@ -658,7 +675,7 @@ PROCEDURE IsScrolledWindow(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreateScrolledWindow":C *>
 PROCEDURE CreateScrolledWindow( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 <*EXTERNAL "InitializeScrollBars"*>
@@ -684,20 +701,20 @@ PROCEDURE IsSelectionBox(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreateSelectionBox":C *>
 PROCEDURE CreateSelectionBox( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 
 <*EXTERNAL "XmCreateSelectionDialog":C *>
 PROCEDURE CreateSelectionDialog( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 <*EXTERNAL "XmCreatePromptDialog":C *>
 PROCEDURE CreatePromptDialog( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 <*EXTERNAL "XmSelectionBoxGetChild":C *>
@@ -724,7 +741,7 @@ PROCEDURE IsSeparator(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreateSeparator":C *>
 PROCEDURE CreateSeparator( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 
@@ -745,7 +762,7 @@ PROCEDURE IsText(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreateText":C *>
 PROCEDURE CreateText( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 (*-------------------*)
@@ -762,7 +779,7 @@ PROCEDURE IsTextField(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreateTextField":C *>
 PROCEDURE CreateTextField( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 <*EXTERNAL "XmTextFieldGetString":C *>
@@ -889,7 +906,7 @@ PROCEDURE IsToggleButton(w:Xt.Widget):Xt.Boolean;
 <*EXTERNAL "XmCreateToggleButton":C *>
 PROCEDURE CreateToggleButton( parent:Xt.Widget;
 	                 name: char_star;
-			 args: UNTRACED REF Xt.ArgList;
+			 args: Xt.ArgList;
 			 argCount:Xt.Cardinal): Xt.Widget;
 
 (*-----------------*)

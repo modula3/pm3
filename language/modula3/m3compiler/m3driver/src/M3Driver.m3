@@ -456,6 +456,12 @@ PROCEDURE ResolveLib (VAR name: M3Path.T): TEXT =
         name.dir := a.arg;
         RETURN M3Path.Join (a.arg, name.base, NK.A, host := TRUE);
       END;
+      resolution := M3Path.Join (a.arg, name.base, NK.SO, host := TRUE);
+      IF (Utils.ModificationTime (resolution) # Utils.NO_TIME) THEN
+        Msg.Verbose ("resolve: ", name.base, " -> ", resolution);
+        name.dir := a.arg;
+        RETURN M3Path.Join (a.arg, name.base, NK.SO, host := TRUE);
+      END;
       a := a.next;
     END;
     name.dir := NIL;
@@ -477,7 +483,7 @@ PROCEDURE AddSourceFile (dir, name: TEXT;  cmd_line := FALSE)
     | NK.M3, NK.MC, NK.MS, NK.MO => AddModuleSource (file, info);
     | NK.IG, NK.MG               => AddGeneric (file, info);
     | NK.C, NK.H, NK.S, NK.O     => AddSource (file, info);
-    | NK.A                       => AddLibrary (file, info);
+    | NK.A, NK.SO                => AddLibrary (file, info);
     | NK.AX, NK.PX               => AddLinkInfo (file, info);
     ELSE                            VisitSourceDir (file, cmd_line);
     END;

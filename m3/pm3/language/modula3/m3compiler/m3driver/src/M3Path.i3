@@ -15,7 +15,7 @@ TYPE
 
 TYPE
   Kind = { I3, IC, IS, IO, M3, MC, MS, MO,
-           IG, MG, C, H, S, O, A, AX, PX, Unknown };
+           IG, MG, C, H, S, O, A, AX, PX, Unknown, IX, MX, EXE, SO };
 
 TYPE
   OSKind = RECORD

@@ -62,7 +62,7 @@ end
 
 % finally, build the exportable link and man page and export them
 ret = exec(["mv","gdb/gdb" & NAMING_CONVENTIONS[20], 
-    "m3gdb" & NAMING_CONVENTIONS[20])
+    "m3gdb" & NAMING_CONVENTIONS[20]])
 if not equal(ret,0) error("Failed to rename gdb to m3gdb") end
 
 BindExport ("m3gdb")

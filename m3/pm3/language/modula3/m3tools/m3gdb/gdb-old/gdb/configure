@@ -2022,7 +2022,7 @@ if test ${build} = ${host} -a ${host} = ${target} ; then
 #define HAVE_THREAD_DB_LIB 1
 EOF
 
-		CONFIG_LDFLAGS="${CONFIG_LDFLAGS} -Xlinker -export-dynamic"
+		CONFIG_LDFLAGS="${CONFIG_LDFLAGS}"
 	else
 		echo "$ac_t""no" 1>&6
 	fi

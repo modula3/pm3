@@ -31,7 +31,8 @@ TYPE
 TYPE
   OptArr = REF ARRAY OF TEXT;
 
-  Suffixes = {I3,IC,IS,IO,M3,MC,MS,MO,IG,MG,C,H,S,O,A,AX,PX,Unknown,IX,MX,EXE};
+  Suffixes = {I3,IC,IS,IO,M3,MC,MS,MO,IG,MG,C,H,S,O,A,AX,PX,Unknown,IX,MX,EXE,
+      SO};
 
   NamingConvention = REF RECORD
       suffix: ARRAY Suffixes OF TEXT;

@@ -4,6 +4,24 @@
 
 NOEXEC = lookup("NOEXEC","")
 
+FIRST_STEP = lookup("FIRST_STEP","")
+LAST_STEP = lookup("LAST_STEP","")
+
+if FIRST_STEP doStep = ""
+else doStep = "T"
+end
+
+readonly proc DoStep(nm) is
+  if equal(nm,FIRST_STEP) doStep = "T" end
+  if equal(nm,LAST_STEP) doStep = "" end
+
+  if doStep write(CR,"Start Step ",nm,CR,CR)
+  else write(CR,"Skip Step ",nm,CR,CR)
+  end
+
+  return doStep
+end
+
 readonly proc CheckErrors(file) is
   %Exec(["grep","[Ee][Rr][Rr][Oo][Rr]:"
   write("Unimplemented check errors for ", file, CR)
@@ -29,7 +47,7 @@ readonly proc CheckExec(command,io,wd,msg) is
   end
   if not(NOEXEC)
     local ret = exec(command,io,wd)
-    if not equal(ret,0) error(msg,CR) end
+    if not equal(ret,0) error(msg & "(returned " & ret & ")",CR) end
   end
 end
 
@@ -126,9 +144,10 @@ end
 
 readonly proc BuildDiff() is
   if currentVersionExists
-    CheckExec(["cvs","rdiff","-D",currentVersion[0],"-D",NOW,"m3/pm3"],
+    local ret = Exec(["cvs","rdiff","-D",currentVersion[0],"-D",NOW,"m3/pm3"],
         ["", EXPORT_TMP_SRC & "/" & DiffName(currentVersion,version), ""],
-        EXPORT_TMP_SRC, "cvs diff failed")
+        EXPORT_TMP_SRC)
+    write("NOTE: cvs rdiff returned ",ret,CR)
     CheckExec(["grep","-q","[^ ]", EXPORT_TMP_SRC & "/" & 
         DiffName(currentVersion,version)], [], 
         EXPORT_TMP_SRC, "no new version required")
@@ -211,6 +230,9 @@ readonly proc InstallNextVersion() is
   local ret = Exec(["rm", EXPORT_ROOT & "/" & "pkgf" & "/" & "pm3"],[],"")
   CheckExec(["ln","-s",EXPORT_SRC & "/" & versionName,
       EXPORT_ROOT & "/" & "pkgf" & "/" & "pm3"],[],"","link in pkgf failed")
+  local ret = Exec(["rm", EXPORT_ROOT & "/" & "pkg" & "/" & "pm3"],[],"")
+  CheckExec(["ln","-s",EXPORT_SRC & "/" & versionName,
+      EXPORT_ROOT & "/" & "pkg" & "/" & "pm3"],[],"","link in pkg failed")
 end
 
 %
@@ -274,78 +296,107 @@ end
 % Insure that the needed directories exist
 %
 
-BuildDirectories()
+if DoStep("BuildDirectories")
+  BuildDirectories()
+end
 
 %
 % Attempt to clean the current version from the temporary build directory
 % before building the next version
 %
 
-CleanTmpDirs("","",previousVersionExists,previousVersion)
-CleanTmpDirs(previousVersionExists,previousVersion,
-    currentVersionExists,currentVersion)
-CleanTmpDirs(currentVersionExists,currentVersion,nextVersionExists,version)
+if DoStep("CleanTmpDirs")
+  CleanTmpDirs("","",previousVersionExists,previousVersion)
+  CleanTmpDirs(previousVersionExists,previousVersion,
+      currentVersionExists,currentVersion)
+  CleanTmpDirs(currentVersionExists,currentVersion,nextVersionExists,version)
+end
 
-BuildDiff()
+if DoStep("BuildDiff")
+  BuildDiff()
+end
 
 %
 % Export the new version
 %
 
-CheckExec(["cvs","export","-D",NOW,"-d",versionName,"m3/pm3"],[],
-    EXPORT_TMP_SRC,"cvs export failed")
+if DoStep("cvsExport")
+  CheckExec(["cvs","export","-D",NOW,"-d",versionName,"m3/pm3"],[],
+      EXPORT_TMP_SRC,"cvs export failed")
+end
 
 %
 % Leave the original copy untouched. Take a copy to build the bootstraps
 % and binaries.
 %
 
-CheckExec(["cp","-a",EXPORT_TMP_SRC & "/" & versionName,EXPORT_TMP_TMP],
-    [], EXPORT_TMP_TMP,"copy source failed")
+if DoStep("cpSrc")
+  CheckExec(["cp","-a",EXPORT_TMP_SRC & "/" & versionName,EXPORT_TMP_TMP],
+      [], EXPORT_TMP_TMP,"copy source failed")
+end
 
 %
 % Build the bootstraps
 %
 
-CheckExec([BIN_USE & SL & "m3build",
-    "-DCACHE_CROSS_COMPILERS=" & EXPORT_TMP_CROSS_COMPILERS],
-    ["", EXPORT_TMP_TMP & "/" & versionName & "/" & "boot.stdout",
-    EXPORT_TMP_TMP & "/" & versionName & "/" & "boot.stderr"],
-    EXPORT_TMP_TMP & "/" & versionName & 
-    "/language/modula3/m3compiler/m3bootstrap","bootstrap build failed")
+if DoStep("buildBootstraps")
+  CheckExec([BIN_USE & SL & "m3build",
+      "-DCACHE_CROSS_COMPILERS=" & EXPORT_TMP_CROSS_COMPILERS],
+      ["", EXPORT_TMP_TMP & "/" & versionName & "/" & "boot.stdout",
+      EXPORT_TMP_TMP & "/" & versionName & "/" & "boot.stderr"],
+      EXPORT_TMP_TMP & "/" & versionName & 
+      "/language/modula3/m3compiler/m3bootstrap","bootstrap build failed")
+end
 
-MoveBootstraps()
+if DoStep("MoveBootstraps")
+  MoveBootstraps()
+end
 
 %
 % Take a copy of the bootstrap for the current platform and build binaries
 %
 
-CheckExec(["cp", "-a", "boot-" & TARGET, "Makefile", 
-    EXPORT_TMP_TMP & "/" & versionName], [], 
-    EXPORT_TMP_BOOTSTRAP & "/" & TARGET & "/" & versionName, 
-    "copy bootstrap to build binaries failed")
+if DoStep("cpBootTarget")
+  CheckExec(["cp", "-a", "boot-" & TARGET, "Makefile", 
+      EXPORT_TMP_TMP & "/" & versionName], [], 
+      EXPORT_TMP_BOOTSTRAP & "/" & TARGET & "/" & versionName, 
+      "copy bootstrap to build binaries failed")
+end
 
-CheckExec(["make","exportall"], ["", 
-    EXPORT_TMP_TMP & "/" & versionName & "/" & "make.stdout", 
-    EXPORT_TMP_TMP & "/" & versionName & "/" & "make.stderr"],
-    EXPORT_TMP_TMP & "/" & versionName,"building bootstrap failed")
+if DoStep("makeExportall")
+  CheckExec(["make","exportall"], ["", 
+      EXPORT_TMP_TMP & "/" & versionName & "/" & "make.stdout", 
+      EXPORT_TMP_TMP & "/" & versionName & "/" & "make.stderr"],
+      EXPORT_TMP_TMP & "/" & versionName,"building bootstrap failed")
+end
 
 %
 % Move the binaries to their correct location
 %
 
-CheckExec(["mv", EXPORT_TMP_TMP & "/" & versionName & "/" & "binaries" & "/" &
-    TARGET, EXPORT_TMP_BINARIES & "/" & TARGET & "/" & versionName],[],"",
-    "move binaries failed")
+if DoStep("mvBinaries")
+  CheckExec(["mv", EXPORT_TMP_TMP & "/" & versionName & "/" & "binaries" & "/"
+      & TARGET, EXPORT_TMP_BINARIES & "/" & TARGET & "/" & versionName],[],"",
+      "move binaries failed")
+end
 
-if not(NOEXEC)
-  > EXPORT_TMP_BINARIES & "/" & TARGET & "/" & "DONE" in
-    write(versionName,CR)
+if DoStep("done")
+  if not(NOEXEC)
+    > EXPORT_TMP_BINARIES & "/" & TARGET & "/" & "DONE" in
+      write(versionName,CR)
+    end
   end
 end
 
-RemovePreviousVersion()
+if DoStep("RemovePreviousVersion")
+  RemovePreviousVersion()
+end
 
-InstallNextVersion()
+if DoStep("InstallNextVersion")
+  InstallNextVersion()
+end
 
-UpdateVersionNumbers()
+if DoStep("UpdateVersionNumbers")
+  UpdateVersionNumbers()
+end
+
