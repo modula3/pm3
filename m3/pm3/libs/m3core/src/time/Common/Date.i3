@@ -6,7 +6,7 @@
 (* A "Date.T" is a moment in time, expressed according to the standard
    (Gregorian) calendar, as observed in some time zone.  A
    "Date.TimeZone" (or just a time zone) is an object that encapsulates
-   the rules for converting from UTC (universal coordinated time,
+   the rules for converting from UTC (Coordinated Universal Time,
    sometimes known as Greenwich mean time) to local time within a
    particular jurisdiction, taking into account daylight time when
    appropriate.
