@@ -190,10 +190,10 @@ typedef enum {NonOptimal, OptimalBreak, OptimalNoBreak} Formatter_BreakType;
 /* special symbols allowed in SPEC pragmas */
 %token IDENTPRIME UPARROWPRIME
 /* reserved words for ESC specifications in SPEC pragmas */
-%token ALL AXIOM DEPENDS
-%token ENSURES EXISTS FUNC IFF IMPLIES INV IS
+%token ALL AXIOM DEPEND
+%token ENSURES EXISTS FUNC IFF IMPLIES INVARIANT IS
 %token LET MAP MODIFIES ON PRED PROTECT
-%token REP REQUIRES
+%token ABSTRACT REQUIRES
 /*
 %token CONCAT DELETE INSERT MEMBER SHARED SUBSET
 %token MUT_GE MUT_GT MUT_LE MUT_LT
@@ -973,12 +973,14 @@ spec_proc_signature:
 spec_var: Var SP B spec_typed_id_list E ;
 
 spec_depend:
-      Depends SP qqid spec_opt_typed_id Colon A B spec_term_list E ;
+      Depend SP qqid spec_opt_typed_id Colon A B spec_term_list E ;
 
 spec_abstract:
-      Rep SP qqid spec_opt_typed_id Colon A qqid Lbracket qqid Rbracket A Iff   SP spec_pred
-    | Rep SP qqid spec_opt_typed_id Colon A qqid Lbracket qqid Rbracket A Equal SP expr
+      Abstract SP spec_abstract_lhs A Iff   SP spec_pred
+    | Abstract SP spec_abstract_lhs A Equal SP expr
     ;
+
+spec_abstract_lhs: qqid spec_opt_typed_id Colon A qqid Lbracket qqid Rbracket ;
 
 spec_opt_typed_id:
       /* empty */
@@ -996,7 +998,7 @@ spec_axiom: Axiom SP spec_pred ;
 
 spec_protect: Protect SP qqid_list A By SP spec_term_list ;
 
-spec_inv: Inv SP spec_pred ;
+spec_inv: Invariant SP spec_pred ;
 
 spec_let: Let SP Ident A Assign SP spec_term ;
 
@@ -1441,18 +1443,19 @@ While:         WHILE { PK ("WHILE");} NPS ;
 With:          WITH { PK ("WITH");} NPS ;
 
 /* ESC keywords */
+Abstract:      ABSTRACT { PK ("ABSTRACT");} NPS ;
 All:           ALL { PK ("ALL");} NPS ;
 Axiom:         AXIOM { PK ("AXIOM");} NPS ;
 /*Concat:        CONCAT { PK ("CONCAT");} NPS ;*/
 /*Delete:        DELETE { PK ("DELETE");} NPS ;*/
-Depends:       DEPENDS { PK ("DEPENDS");} NPS ;
+Depend:        DEPEND { PK ("DEPEND");} NPS ;
 Ensures:       ENSURES { PK ("ENSURES");} NPS ;
 Exists:        EXISTS { PK ("EXISTS");} NPS ;
 Func:          FUNC { PK ("FUNC");} NPS ;
 Iff:           IFF { PK ("IFF");} NPS ;
 Implies:       IMPLIES { PK ("IMPLIES");} NPS ;
 /*Insert:        INSERT { PK ("INSERT");} NPS ;*/
-Inv:           INV { PK ("INV");} NPS ;
+Invariant:     INVARIANT { PK ("INVARIANT");} NPS ;
 Is:            IS { PK ("IS");} NPS ;
 Let:           LET { PK ("LET");} NPS ;
 Map:           MAP { PK ("MAP");} NPS ;
@@ -1467,7 +1470,6 @@ On:            ON { PK ("ON");} NPS ;
 */
 Pred:          PRED { PK ("PRED");} NPS ;
 Protect:       PROTECT { PK ("PROTECT");} NPS ;
-Rep:           REP { PK ("REP");} NPS ;
 Requires:      REQUIRES { PK ("REQUIRES");} NPS ;
 /*
 Shared:        SHARED { PK ("SHARED");} NPS ;

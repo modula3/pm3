@@ -143,18 +143,19 @@ static KEYWORDENTRY aok[] = {
 "WITH", WITH,
 /* keywords of the extended static checker ESC
    which specifications are stored in SPEC pragmas */
+"ABSTRACT", ABSTRACT, /* documentation says REP instead */
 "ALL", ALL,
 "AXIOM", AXIOM,
 /*"CONCAT", CONCAT,*/
 /*"DELETE", DELETE,*/
-"DEPEND", DEPENDS, /* documentation differs here */
+"DEPEND", DEPEND, /* documentation says DEPENDS instead */
 "ENSURES", ENSURES,
 "EXISTS", EXISTS,
 "FUNC", FUNC,
 "IFF", IFF,
 "IMPLIES", IMPLIES,
 /*"INSERT", INSERT,*/
-"INVARIANT", INV, /* documentation differs here */
+"INVARIANT", INVARIANT, /* documentation says INV instead */
 "IS", IS,
 "LET", LET,
 "MAP", MAP,
@@ -169,7 +170,6 @@ static KEYWORDENTRY aok[] = {
 */
 "PRED", PRED,
 "PROTECT", PROTECT,
-"ABSTRACT", REP, /* documentation differs here */
 "REQUIRES", REQUIRES,
 /*
 "SHARED", SHARED,
