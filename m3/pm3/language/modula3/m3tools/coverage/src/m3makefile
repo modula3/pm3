@@ -12,7 +12,7 @@ if defined ("_all")
   if stale (obj, src)
     write (cmd)
     ret = exec (cmd)
-    if not equal(ret, 0) error("command failed with error code: ", ret)
+    if not equal(ret, 0) error("command failed with error code: ", ret) end
   end
 end
 LibdExport ("report_coverage.o")
@@ -25,7 +25,7 @@ if defined ("_all")
   if stale (pgm, src)
     write (cmd)
     ret = exec (cmd)
-    if not equal(ret, 0) error("command failed with error code: ", ret)
+    if not equal(ret, 0) error("command failed with error code: ", ret) end
   end
 end
 BindExport ("analyze_coverage")
