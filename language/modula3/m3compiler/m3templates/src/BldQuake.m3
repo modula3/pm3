@@ -1286,6 +1286,12 @@ PROCEDURE GenerateTFile(t: T) RAISES {Error} =
     END;
   END GenerateTFile;
 
+PROCEDURE DoGenerateTFile(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
+  BEGIN
+    <* ASSERT n_args = 0 *>
+    GenerateTFile(t);
+  END DoGenerateTFile;
+
 (*------------------------------------------------------------ .M3EXPORTS ---*)
 
 TYPE
@@ -3008,7 +3014,7 @@ PROCEDURE NewProc (nm      : TEXT;
 
 PROCEDURE InitProcs(): REF ARRAY OF ProcRec =
   VAR
-    Procs := NEW(REF ARRAY OF ProcRec, 110);
+    Procs := NEW(REF ARRAY OF ProcRec, 111);
   BEGIN
     Procs[0].proc := NewProc ("reset_cache", DoResetCache, 0, FALSE);
     Procs[1].proc := NewProc ("m3", DoM3, -1, FALSE);
@@ -3137,6 +3143,7 @@ PROCEDURE InitProcs(): REF ARRAY OF ProcRec =
     Procs[107].proc := NewProc("replacechar", DoReplaceChar, 3, TRUE);
     Procs[108].proc := NewProc("w2p", DoW2P, 1, TRUE);
     Procs[109].proc := NewProc("derived_resource", DoDerivedResource, 1, FALSE);
+    Procs[110].proc := NewProc("generate_tfile", DoGenerateTFile, 0, FALSE);
     RETURN Procs;
   END InitProcs;
 
