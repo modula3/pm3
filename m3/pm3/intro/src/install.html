@@ -143,9 +143,9 @@ ftp> get pm3-src-<I>version</I>.tar.gz
 ftp> get pm3-<I>version</I>-boot.tgz boot.tgz
 ftp> quit
 cassis> tar xpfz pm3-src-<I>version</I>.tar.gz
-cassis> cd pm3
 cassis> tar xpfz ../boot.tgz
-cassis> rm ../pm3-src-<I>version</I>.tar.gz ../boot.tgz
+cassis> rm pm3-src-<I>version</I>.tar.gz boot.tgz
+cassis> cd pm3
 cassis> setenv PATH /usr/local/pm3/bin:${PATH}
 cassis> setenv LD_LIBRARY_PATH \
 > /usr/local/pm3/lib/m3/<I>TARGET</I>:${LD_LIBRARY_PATH}
