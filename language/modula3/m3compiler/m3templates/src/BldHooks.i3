@@ -16,7 +16,7 @@ PROCEDURE CompileC(t: T; src, obj: TEXT; incl: QVSeq.T; optimize, debug,
                    shared: BOOLEAN): INTEGER RAISES {Error};
 PROCEDURE M3Link(t: T; prog: TEXT; objs, libs: QVSeq.T; debug, 
                  shared: BOOLEAN): INTEGER RAISES {Error};
-PROCEDURE M3MakeLib(t: T; name, libs, imp: TEXT; 
+PROCEDURE M3MakeLib(t: T; name: TEXT; libs, imp: QVSeq.T;
                     static, shared: BOOLEAN): INTEGER RAISES {Error};
 PROCEDURE M3Assemble(t: T; src, obj: TEXT; optimize, debug, shared: BOOLEAN):
   INTEGER RAISES {Error};

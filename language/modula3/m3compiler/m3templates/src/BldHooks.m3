@@ -172,16 +172,16 @@ PROCEDURE M3Link(t: T; prog: TEXT; objs, libs: QVSeq.T; debug,
     END;
   END M3Link;
 
-PROCEDURE M3MakeLib(t: T; name, libs, imp: TEXT; static, 
+PROCEDURE M3MakeLib(t: T; name: TEXT; libs, imp: QVSeq.T; static, 
                     shared: BOOLEAN): INTEGER RAISES {Error}=
   VAR args := NEW(REF ARRAY OF QValue.T, 5);
   BEGIN
     args[0].kind := QValue.Kind.String;
     args[0].int  := M3ID.Add(name);
-    args[1].kind := QValue.Kind.String;
-    args[1].int  := M3ID.Add(libs);
-    args[2].kind := QValue.Kind.String;
-    args[2].int  := M3ID.Add(imp);
+    args[1].kind := QValue.Kind.Array;
+    args[1].ref  := libs;
+    args[2].kind := QValue.Kind.Array;
+    args[2].ref  := imp;
     args[3].kind := QValue.Kind.String;
     args[3].int  := QValue.BoolID[static];
     args[4].kind := QValue.Kind.String;

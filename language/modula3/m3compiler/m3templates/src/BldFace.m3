@@ -193,11 +193,24 @@ PROCEDURE Link(t: T; prog: TEXT; objs: TextSeq.T; libs: LibSeq.T; debug,
     END;
   END Link;
 
-PROCEDURE MakeLib(t: T; name, libs, imp: TEXT; static,
+PROCEDURE MakeLib(t: T; name: TEXT; libs, imp: TextSeq.T; static,
                   shared: BOOLEAN) RAISES {InterErr} =
+  VAR 
+    libseq := NEW(QVSeq.T).init(libs.size());
+    impseq := NEW(QVSeq.T).init(imp.size());
+    val: QValue.T;
   BEGIN
     TRY
-      IF BldHooks.M3MakeLib(t.machine, name, libs, imp, static, 
+      val.kind := QValue.Kind.String;
+      FOR I := 0 TO libs.size() - 1 DO
+        val.int := M3ID.Add(libs.get(I));
+        libseq.addhi(val);
+      END;
+      FOR I := 0 TO imp.size() - 1 DO
+        val.int := M3ID.Add(imp.get(I));
+        impseq.addhi(val);
+      END;
+      IF BldHooks.M3MakeLib(t.machine, name, libseq, impseq, static, 
                             shared) # 0 THEN
         RAISE InterErr;
       END;
