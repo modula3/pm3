@@ -57,7 +57,7 @@ INITIAL_REACTOR_EDITOR = "emacsclient"
 % the installation will fail, but can be restarted after you have 
 % fixed the permissions.
 
-INSTALL_ROOT = "/usr/local/cm3/"
+INSTALL_ROOT = "/usr/local/pm3/"
 
 BIN_INSTALL   = INSTALL_ROOT & "bin"        % executables
 if M3_PROFILING 

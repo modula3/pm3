@@ -51,7 +51,7 @@ INITIAL_REACTOR_EDITOR = "emacsclient"
 
 % INSTALL_ROOT = "/usr/local/"
 % INSTALL_ROOT = "/proj/cmass/install.2/SPARC/"
-INSTALL_ROOT = "/usr/local/cm3/"
+INSTALL_ROOT = "/usr/local/pm3/"
 %-- handy for installations that keep all M3 stuff together
 
 BIN_INSTALL   = INSTALL_ROOT & "bin"        % executables
