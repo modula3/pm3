@@ -17,4 +17,4 @@ implementation ("Main")
 
 build_standalone () %-- we don't want to depend on the shared libraries...
 
-Program ("cm3")
+Program ("pm3")
