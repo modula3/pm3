@@ -216,11 +216,11 @@ PROCEDURE StripPacked (t: T): T =
       END;
       IF    (v.info.class = Class.Named)  THEN v := NamedType.Strip (v);
       ELSIF (v.info.class = Class.Packed) THEN v := PackedType.Base (v);
-      ELSE  RETURN u;
+      ELSE  RETURN v;
       END;
       IF    (v.info.class = Class.Named)  THEN v := NamedType.Strip (v);
       ELSIF (v.info.class = Class.Packed) THEN v := PackedType.Base (v);
-      ELSE  RETURN u;
+      ELSE  RETURN v;
       END;
       IF (u = v) THEN IllegalRecursion (t); RETURN ErrType.T END;
     END;
@@ -239,12 +239,12 @@ PROCEDURE Base (t: T): T =
       IF    (v.info.class = Class.Named)    THEN v := NamedType.Strip (v);
       ELSIF (v.info.class = Class.Subrange) THEN v := SubrangeType.Base (v);
       ELSIF (v.info.class = Class.Packed)   THEN v := PackedType.Base (v);
-      ELSE  RETURN u;
+      ELSE  RETURN v;
       END;
       IF    (v.info.class = Class.Named)    THEN v := NamedType.Strip (v);
       ELSIF (v.info.class = Class.Subrange) THEN v := SubrangeType.Base (v);
       ELSIF (v.info.class = Class.Packed)   THEN v := PackedType.Base (v);
-      ELSE  RETURN u;
+      ELSE  RETURN v;
       END;
       IF (u = v) THEN IllegalRecursion (t); RETURN ErrType.T END;
     END;
