@@ -18,9 +18,14 @@ TYPE
            IG, MG, C, H, S, O, A, AX, PX, Unknown };
 
 TYPE
-  OSKind = { Unix, GrumpyUnix, Win32, GnuWin32 };
-
-PROCEDURE SetOS (os: OSKind;  host: BOOLEAN);
+  OSKind = RECORD
+      suffix: ARRAY Kind OF TEXT;
+      lib_prefix, default_pgm: TEXT;
+      dirSep, volSep: CHAR;
+      case_insensitive_ext: BOOLEAN;
+    END;
+      
+PROCEDURE SetOS (READONLY os: OSKind;  host: BOOLEAN);
 (* Set the conventions for the specifed platform *)
 
 PROCEDURE Join (dir, base: TEXT;  k: Kind;  host: BOOLEAN): TEXT;

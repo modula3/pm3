@@ -13,8 +13,8 @@ MODULE M3Driver EXPORTS M3Driver, M3DriverRep;
       processes
 *)
 
-IMPORT Text, Rd, Wr, TextIntTbl AS TextSet, IntIntTbl AS IntSet;
-IMPORT FileRd, OSError, Fmt, IntRefTbl, TextRefTbl, FS, Process;
+IMPORT Text, Wr, TextIntTbl AS TextSet, IntIntTbl AS IntSet;
+IMPORT OSError, Fmt, IntRefTbl, TextRefTbl, FS, Process;
 IMPORT File, Time, Fingerprint;
 IMPORT RTCollector, (*RTCollectorSRC,*) RTutils, Thread, ETimer;
 IMPORT M3ID, M3CG, M3Timers, M3Compiler, Target, WebFile;
@@ -29,19 +29,12 @@ VAR
   void: INTEGER;    (* the value for tables used as sets *)
 
 TYPE
-  PassInfo = RECORD
-    cmd   : TEXT      := NIL;
-    args  : Arg.List  := NIL;
-    noise : TEXT      := NIL;
-  END;
-
-TYPE
   ASTCacheEntry = REF RECORD
     fullname   : TEXT    := NIL;
     name       : M3ID.T;
     time_stamp : INTEGER := 0;
     imports    : ASTList := NIL;
-    n_imports  : INTEGER := -1;   (* -1 = means list of imports not yet cheched*)
+    n_imports  : INTEGER := -1; (* -1 = means list of imports not yet cheched*)
     interface  : REFANY  := NIL;  (* Module.T *)
   END;
 
@@ -54,9 +47,9 @@ TYPE
 VAR
   interface     : Interface := NIL;
   writer        : Wr.T      := NIL;
-  n_targets     : INTEGER   := 0;
   lib_name      : TEXT      := NIL;
   pgm_name      : TEXT      := NIL;
+  no_m3main     : BOOLEAN   := FALSE;
   info_name     : TEXT      := NIL;
   compile_failed: BOOLEAN   := FALSE;
   keep_cache    : BOOLEAN   := FALSE;
@@ -64,39 +57,29 @@ VAR
   time_now : INTEGER; (* for AST cache *)
 
   warning_level : INTEGER   := 3;
-  warning_arg   : TEXT      := "-w3";
   make_mode     : BOOLEAN   := FALSE;
-  skip_std_lib  : BOOLEAN   := FALSE;
   keep_files    : BOOLEAN   := FALSE;
   dump_config   : BOOLEAN   := FALSE;
   do_coverage   : BOOLEAN   := FALSE;
-  keep_resolved : BOOLEAN   := FALSE;
   shared_libs   : BOOLEAN   := FALSE;
   gen_shared    : BOOLEAN   := FALSE;
   gen_static    : BOOLEAN   := FALSE;
   new_linkInfo  : BOOLEAN   := FALSE;
   bootstrap_mode: BOOLEAN   := FALSE;
-  search_path   : BOOLEAN   := FALSE;
   compile_once  : BOOLEAN   := FALSE;
   gui           : BOOLEAN   := FALSE;  (* for NT *)
   heap_stats    : BOOLEAN   := FALSE;
   skip_link     : BOOLEAN   := FALSE;
   has_loader    : BOOLEAN   := FALSE;
-  target_os     : M3Path.OSKind := M3Path.OSKind.Unix;
-  host_os       : M3Path.OSKind := M3Path.OSKind.Unix;
+  target_os     : NamingConvention;
+  host_os       : NamingConvention;
   target_machine: TEXT      := NIL;
     
-  pass_0        : PassInfo;
   includes      : TextSeq.T   := NIL;
-  pass_3        : PassInfo;
   ext_pass_6    : BOOLEAN   := FALSE;
   ext_pass_7    : BOOLEAN   := FALSE;
-  pass_8        : PassInfo;
   do_optimize   : BOOLEAN   := FALSE;
-  cc_optimize   : Arg.List  := NIL;
   do_debug      : BOOLEAN   := FALSE;
-  cc_debug      : Arg.List  := NIL;
-  include_dir   : TEXT      := NIL;
   link_coverage : TEXT      := NIL;
   backend_output:= BackendOutput.Asm;
   
@@ -130,13 +113,13 @@ PROCEDURE ResetCompiler (wr: Wr.T) =
     Unit.ResetPath();
   END ResetCompiler;
 
-PROCEDURE Compile(i: Interface; options: TEXT)
+PROCEDURE Compile(i: Interface)
   RAISES {M3Error} =
   BEGIN
     TRY
       (* EvaluateCacheSize(); *)
       InitFromInterface(i);
-      DoIt(options);
+      DoIt();
       (* EvaluateCacheSize(); *)
     EXCEPT
       | Error  =>  RAISE M3Error;
@@ -146,13 +129,31 @@ PROCEDURE Compile(i: Interface; options: TEXT)
 PROCEDURE InitFromInterface(i: Interface) RAISES {Error} =
   BEGIN
     interface := i;
+    dump_config := i.dump_config;
+    bootstrap_mode := i.bootstrap_mode;
+    gui := i.gui;
+    do_debug := i.do_debug;
+    heap_stats := i.heap_stats;
+    keep_cache := i.keep_cache;
+    keep_files := i.keep_files;
+    make_mode := i.make_mode;
+    compile_once := i.compile_once;
+    do_optimize := i.do_optimize;
+    skip_link := i.skip_link;
+    IF i.times THEN M3Timers.Start(); END;
+    do_coverage := i.do_coverage;
+    lib_name := i.lib_name;
+    pgm_name := i.pgm_name;
+    no_m3main := i.no_m3main;
+
+    Msg.SetLevel(VAL(MAX(ORD(FIRST(Msg.Level)),
+        MIN(i.msg_level,ORD(LAST(Msg.Level)))),Msg.Level));
+
+    IF Msg.level >= Msg.Level.Verbose THEN M3Timers.Start(); END;
+
+    warning_level := MIN(0,MAX(3,i.warning_level));
+
     link_coverage := i.link_coverage;
-    SetHostOS(i.conv);
-    IF i.target_conv # '\000' THEN
-      SetTargetOS(i.target_conv);
-    ELSE
-      SetTargetOS(i.conv);
-    END;
     shared_libs    := i.shared_libs;
     ext_pass_6     := i.ext_pass_6;
     backend_output := i.backend_output;
@@ -162,6 +163,24 @@ PROCEDURE InitFromInterface(i: Interface) RAISES {Error} =
     gen_static     := i.gen_static;
     gen_shared     := i.gen_shared;
     gen_method     := i.gen_method;
+    (* Used to have argument -D do
+         IF (arg_len = 2)
+           THEN Unit.ResetPath ();  n_tfiles := 0;
+           ELSE Unit.PushDir (Text.Sub (arg, 2, arg_len));
+         END;
+       And argument -T do
+
+         INC (n_tfiles);
+         IF (arg_len = 2)
+           THEN Unit.ResetPath ();  n_tfiles := 0;
+           ELSE Unit.PushTable (Text.Sub (arg, 2, arg_len));
+         END;
+
+       And no argument taken as source file
+         AddSourceFile (NIL, arg, cmd_line := TRUE);
+
+    *)
+
   END InitFromInterface;
 
 PROCEDURE ResetASTCache () =
@@ -184,22 +203,26 @@ PROCEDURE EvaluateCacheSize() =
   END EvaluateCacheSize;
 *)
 
+PROCEDURE Setup(host, target: NamingConvention) =
+  BEGIN
+    SetHostOS(host);
+    SetTargetOS(target);
+  END Setup;
+
 PROCEDURE Init(wr: Wr.T) =
   BEGIN
     interface     := NIL;
     writer        := wr;
     env           := NEW(Env);
-    n_targets     := 0;
     lib_name      := NIL;
     pgm_name      := NIL;
+    no_m3main     := FALSE;
     info_name     := NIL;
     compile_failed:= FALSE;
     time_now      := Utils.M3Time( Time.Now() );
 
     warning_level := 3;
-    warning_arg   := "-w3";
     make_mode     := FALSE;
-    skip_std_lib  := FALSE;
     keep_files    := FALSE;
     dump_config   := FALSE;
     do_coverage   := FALSE;
@@ -208,27 +231,19 @@ PROCEDURE Init(wr: Wr.T) =
     gen_static    := FALSE;
     new_linkInfo  := FALSE;
     bootstrap_mode:= FALSE;
-    search_path   := FALSE;
     compile_once  := FALSE;
     gui           := FALSE;  (* for NT *)
     heap_stats    := FALSE;
     skip_link     := FALSE;
     has_loader    := FALSE;
-    target_os     := M3Path.OSKind.Unix;
-    host_os       := M3Path.OSKind.Unix;
+    (* target_os, host_os do not have default values *)
     target_machine:= NIL;
 
-    pass_0        := NewPass ("*UNDEFINED*");
     includes      := NEW(TextSeq.T).init();
-    pass_3        := NewPass ("*UNDEFINED*");
     ext_pass_6    := FALSE;
     ext_pass_7    := FALSE;
-    pass_8        := NewPass (NIL);
     do_optimize   := FALSE;
-    cc_optimize   := Arg.NewList ();
     do_debug      := FALSE;
-    cc_debug      := Arg.NewList ();
-    include_dir   := NIL;
     link_coverage := NIL;
     backend_output:= BackendOutput.Asm;
 
@@ -256,7 +271,7 @@ PROCEDURE Init(wr: Wr.T) =
 
 (*------------------------------------------------------------------ main ---*)
 
-PROCEDURE DoIt (options: TEXT)
+PROCEDURE DoIt ()
   RAISES {Error} =
   BEGIN
 
@@ -266,7 +281,18 @@ RTCollectorSRC.gcRatio := 1.0;
 RTCollectorSRC.incremental := TRUE;
 **)
 
-      ParseCommandLine (options);
+      IF (dump_config) THEN
+        DumpConfiguration ();
+        M3Timers.Stop (writer);
+        CleanUp();
+        Process.Exit (0);
+      END;
+
+      IF (target_machine = NIL) THEN
+        Msg.FatalError (NIL, "target machine not specified");
+      END;
+
+      ReverseSources ();
 
       BuildSearchPaths ();
 
@@ -284,16 +310,20 @@ RTCollectorSRC.incremental := TRUE;
       DumpLinkInfo ();
       WebFile.Dump ();
 
-      IF (pgm_name # NIL) THEN
+      IF (lib_name # NIL) THEN
+        IF (bootstrap_mode)
+          THEN BuildBootLibrary ();
+          ELSE BuildLibrary ();
+        END;
+      ELSE
+        IF (pgm_name = NIL) THEN
+          pgm_name := M3Path.DefaultProgram (host := FALSE);
+        END;
+
         IF (bootstrap_mode) THEN
           BuildBootProgram ();
         ELSE
           BuildProgram ();
-        END;
-      ELSIF (lib_name # NIL) THEN
-        IF (bootstrap_mode)
-          THEN BuildBootLibrary ();
-          ELSE BuildLibrary ();
         END;
       END;
 
@@ -332,298 +362,6 @@ PROCEDURE CleanUp ()
     END;
   END CleanUp;
 
-(*------------------------------------------------- command line parsing ---*)
-
-PROCEDURE ParseCommandLine (options: TEXT)
-  RAISES {Error} =
-  VAR args := Arg.NewList ();
-      i, j : INTEGER:= 0;
-  BEGIN
-    (* build the initial argument list *)
-    options := options & " ";
-    WHILE i <= Text.Length(options) - 1 DO
-      IF Text.GetChar(options, i) = ' ' THEN
-        IF i # j  THEN
-          Arg.Append (args, Text.Sub(options, j, i-j));
-        END;
-        j:= i + 1;
-      END;
-      INC(i);
-    END;
-
-(*  FOR i := 1 TO Params.Count - 1 DO
-      Arg.Append (args, Params.Get (i));
-    END;*)
-
-    (* parse the argument list *)
-    ParseArgList (args);
-
-    IF (dump_config) THEN
-      DumpConfiguration ();
-      M3Timers.Stop (writer);
-      IF keep_cache THEN
-        Msg.Out("\nCan keep a cache of the interfaces with this option...\n");
-      END;
-      CleanUp();
-      Process.Exit (0);
-
-    ELSIF (n_targets = 0) THEN
-      pgm_name := M3Path.DefaultProgram (host := FALSE);
-    ELSIF (n_targets > 1) THEN
-      Msg.UsageError ("Only one of -c, -o, -a, -C, -S can be specified");
-    END;
-
-    IF (target_machine = NIL) THEN
-      Msg.FatalError (NIL, "target machine not specified");
-    END;
-
-    ReverseSources ();
-  END ParseCommandLine;
-
-PROCEDURE ParseFileArgs (file: TEXT)
-  RAISES {Error} =
-  VAR rd: Rd.T;  args := Arg.NewList ();
-  BEGIN
-    TRY
-      rd := FileRd.Open (file);
-    EXCEPT OSError.E (args) =>
-      Msg.FatalError (args, "unable to open argument file: ", file);
-    END;
-
-    TRY
-      WHILE NOT Rd.EOF (rd) DO
-        Arg.Append (args, Trim (Rd.GetLine (rd)));
-      END;
-      Rd.Close (rd);
-    EXCEPT
-    | Rd.Failure (args) =>
-        Msg.FatalError (args, "unable to read file: ", file);
-    | Rd.EndOfFile, Thread.Alerted =>
-        Msg.FatalError (NIL, "unable to read file: ", file);
-    END;
-
-    ParseArgList (args);
-  END ParseFileArgs;
-
-PROCEDURE ParseArgList (list: Arg.List)
-  RAISES {Error} =
-  VAR len: INTEGER;  arg: TEXT;
-  BEGIN
-    WHILE (list.cnt > 0) DO
-      arg := Arg.Pop (list);
-      len := Text.Length (arg);
-      IF (len < 1) THEN
-        (* empty argument ignore *)
-      ELSIF (Text.GetChar (arg, 0) # '-') OR (len < 2) THEN
-        AddSourceFile (NIL, arg, cmd_line := TRUE);
-      ELSE (* it's an option *)
-        ParseOption (arg, len, list);
-      END;
-    END;
-  END ParseArgList;
-
-PROCEDURE ParseOption (arg: TEXT;  arg_len: INTEGER;  rest: Arg.List)
-  RAISES {Error} =
-  VAR ok := FALSE;
-  BEGIN
-    CASE Text.GetChar (arg, 1) OF
-
-    | '?' => IF (arg_len = 2) THEN
-               dump_config := TRUE;  ok := TRUE;
-             END;
-
-    | 'a' => IF (arg_len = 2) THEN
-               lib_name := GetArg (arg, rest);  INC (n_targets);  ok := TRUE;
-             END;
-
-    | 'A' => IF (arg_len = 2) THEN
-               Arg.Append (pass_0.args, "-NoAsserts");  ok := TRUE;
-             END;
-
-    | 'b' => IF Text.Equal (arg, "-boot") THEN
-               bootstrap_mode := TRUE;  (*skip_std_lib := TRUE;*)  ok := TRUE;
-             END;
-
-    | 'c' => IF (arg_len = 2) THEN
-               INC (n_targets);  pgm_name := NIL;  lib_name := NIL; ok := TRUE;
-             ELSIF Text.Equal (arg, "-commands") THEN
-               Msg.SetLevel (Msg.Level.Commands);  ok := TRUE;
-             ELSIF Text.Equal (arg, "-config") THEN
-               dump_config := TRUE;  ok := TRUE;
-             ELSIF Text.Equal (arg, "-console") THEN
-               gui := FALSE;  ok := TRUE;
-             END;
-
-    | 'd' => IF Text.Equal (arg, "-debug") THEN
-               Msg.SetLevel (Msg.Level.Debug);  M3Timers.Start ();  ok := TRUE;
-             END;
-
-    | 'D' => IF (arg_len = 2)
-               THEN Unit.ResetPath ();  n_tfiles := 0;
-               ELSE Unit.PushDir (Text.Sub (arg, 2, arg_len));
-             END;
-             ok := TRUE;
-
-    | 'T' => INC (n_tfiles);
-             IF (arg_len = 2)
-               THEN Unit.ResetPath ();  n_tfiles := 0;
-               ELSE Unit.PushTable (Text.Sub (arg, 2, arg_len));
-             END;
-             ok := TRUE;
-
-    | 'F' => IF (arg_len > 2) THEN
-               ParseFileArgs (Text.Sub (arg, 2, arg_len));
-               ok := TRUE;
-             END;
-
-    | 'g' => IF (arg_len = 2) THEN
-               do_debug := TRUE;
-             ELSIF Text.Equal(arg, "-gui") THEN
-               gui := TRUE;
-             ELSE
-               do_debug := TRUE;
-               cc_debug := Arg.NewList ();
-               Arg.Append (cc_debug, arg);
-             END;
-             ok := TRUE;
-
-    | 'h' => IF Text.Equal (arg, "-heap_stats") THEN
-               heap_stats := TRUE;  ok := TRUE;
-             END;
-
-    | 'k' => IF Text.Equal (arg, "-keep_cache") THEN
-               keep_cache := TRUE;  ok := TRUE;
-             ELSIF (arg_len = 2) OR Text.Equal (arg, "-keep") THEN
-               keep_files := TRUE;  ok := TRUE;
-             END;
-
-    | 'L' => IF (arg_len = 2)
-               THEN lib_path := Arg.NewList ();
-               ELSE PushPath (Text.Sub (arg, 2, arg_len));
-             END;
-             ok := TRUE;
-
-    | 'l' => IF (arg_len > 2) THEN
-               VAR name: M3Path.T; BEGIN
-                 name.dir  := NIL;
-                 name.base := Text.Sub (arg, 2, arg_len);
-                 name.kind := NK.A;
-                 AddLibrary ( NIL, name);
-                 ok := TRUE;
-               END;
-             END;
-
-    | 'm' => IF Text.Equal (arg, "-make") THEN
-               (** Msg.SetLevel (Msg.Level.Explain); **)
-               make_mode := TRUE;  ok := TRUE;
-             END;
-
-    | 'n' => IF Text.Equal (arg, "-nostd") THEN
-               skip_std_lib := TRUE;  ok := TRUE;
-             ELSIF Text.Equal (arg, "-noflatten") THEN
-               search_path := TRUE;  ok := TRUE;
-             END;
-
-    | 'o' => IF (arg_len = 2) THEN
-               pgm_name := GetArg (arg, rest);  INC (n_targets);  ok := TRUE;
-             ELSIF Text.Equal (arg, "-once") THEN
-               compile_once := TRUE;  ok := TRUE;
-             END;
-
-    | 'O' => IF (arg_len = 2) THEN
-               do_optimize := TRUE;
-             ELSE
-               do_optimize := TRUE;
-               cc_optimize := Arg.NewList ();
-               Arg.Append (cc_optimize, arg);
-             END;
-             ok := TRUE;
-
-    | 's' => IF Text.Equal (arg, "-silent") THEN
-               Msg.SetLevel (Msg.Level.Silent);  ok := TRUE;
-             ELSIF Text.Equal (arg, "-skiplink") THEN
-               skip_link := TRUE;  ok := TRUE;
-             END;
-
-    | 't' => IF Text.Equal (arg, "-times") THEN
-               M3Timers.Start ();  ok := TRUE;
-             END;
-
-    | 'v' => IF Text.Equal (arg, "-verbose") THEN
-               Msg.SetLevel (Msg.Level.Verbose);
-               M3Timers.Start ();
-               ok := TRUE;
-             ELSIF (arg_len = 2) THEN
-               Msg.SetLevel (Msg.Level.Verbose);
-               M3Timers.Start ();
-               warning_level := 0;  warning_arg := "-w0";
-               ok := TRUE;
-             END;
-
-    | 'w' => IF Text.Equal (arg, "-why") THEN
-               Msg.SetLevel (Msg.Level.Explain);  ok := TRUE;
-             ELSIF Text.Equal (arg, "-windows") THEN
-               gui := TRUE;  ok := TRUE;
-             ELSIF Text.Equal (arg, "-w0") THEN
-               SetWarning (0, arg);  ok := TRUE;
-             ELSIF Text.Equal (arg, "-w1") THEN
-               SetWarning (1, arg);  ok := TRUE;
-             ELSIF Text.Equal (arg, "-w2") THEN
-               SetWarning (2, arg);  ok := TRUE;
-             ELSIF Text.Equal (arg, "-w3") THEN
-               SetWarning (3, arg);  ok := TRUE;
-             END;
-
-    | 'X' => IF (arg_len > 3) THEN
-               ok := TRUE;
-               CASE Text.GetChar (arg, 2) OF
-               | '0' => GetArgs (pass_0.args, arg);
-               | '8' => GetArgs (pass_8.args, arg);
-               ELSE (*error*) ok := FALSE;
-               END;
-             END;
-
-    | 'Y' => IF (arg_len > 3) THEN
-               ok := TRUE;
-               CASE Text.GetChar (arg, 2) OF
-               | '0' => GetPass (pass_0, arg);
-               | '8' => GetPass (pass_8, arg);
-               ELSE (*error*) ok := FALSE;
-               END;
-             END;
-
-    | 'Z' => IF (arg_len = 2) THEN
-               do_coverage := TRUE; ok := TRUE;
-             END;
-
-    | 'z' => IF (arg_len > 3) THEN
-               ok := TRUE;
-               CASE Text.GetChar (arg, 2) OF
-               | '0' => (* silently ignore the option *)
-               | '1' => (* silently ignore the option *)
-               | '4' => include_dir   := Text.Sub (arg, 3, arg_len);
-               | '7' => (* silently ignore the option *)
-               | '8' => (* silently ignore the option *)
-               | '9' => (* silently ignore the option *)
-               ELSE (*error*) ok := FALSE;
-               END;
-             END;
-
-    ELSE (* error *)
-    END;
-
-    IF (NOT ok) THEN Msg.UsageError ("unrecognized option \'", arg, "\'") END;
-  END ParseOption;
-
-PROCEDURE GetArg (arg: TEXT;  rest: Arg.List): TEXT
-  RAISES {Error} =
-  BEGIN
-    IF (rest.cnt <= 0) THEN
-      Msg.UsageError ("missing argument to \'", arg, "\' option");
-    END;
-    RETURN Arg.Pop (rest);
-  END GetArg;
-
 PROCEDURE SetTarget (tar: TEXT)
   RAISES {Error} =
   BEGIN
@@ -633,94 +371,38 @@ PROCEDURE SetTarget (tar: TEXT)
     target_machine := tar;
   END SetTarget;
 
-PROCEDURE SetHostOS (ch: CHAR)
-  RAISES {Error} =
-  VAR os := GetOSType (ch);
+PROCEDURE SetHostOS (conv: NamingConvention) =
+  VAR
+    osKind: M3Path.OSKind;
   BEGIN
-    M3Path.SetOS (os, host := TRUE);
-    host_os   := os;
+    GetOSKind(osKind,conv);
+    M3Path.SetOS(osKind, host := TRUE);
+    host_os := conv;
   END SetHostOS;
 
-PROCEDURE SetTargetOS (ch: CHAR)
-  RAISES {Error} =
-  VAR os := GetOSType (ch);
+PROCEDURE SetTargetOS (conv: NamingConvention) =
+  VAR
+    osKind: M3Path.OSKind;
   BEGIN
-    M3Path.SetOS (os, host := FALSE);
-    target_os := os;
+    GetOSKind(osKind,conv);
+    M3Path.SetOS(osKind, host := FALSE);
+    target_os := conv;
   END SetTargetOS;
 
-PROCEDURE GetOSType (ch: CHAR): M3Path.OSKind
-  RAISES {Error} =
+PROCEDURE GetOSKind(VAR osKind: M3Path.OSKind; conv: NamingConvention) =
   BEGIN
-    IF    (ch = '0')   THEN RETURN M3Path.OSKind.Unix;
-    ELSIF (ch = '1')   THEN RETURN M3Path.OSKind.GrumpyUnix;
-    ELSIF (ch = '2')   THEN RETURN M3Path.OSKind.Win32;
-    ELSIF (ch = '3')   THEN RETURN M3Path.OSKind.GnuWin32;
+    FOR i := 0 TO ORD(LAST(osKind.suffix)) DO
+      osKind.suffix[VAL(i,M3Path.Kind)] := conv.suffix[VAL(i,Suffixes)];
     END;
-    Msg.FatalError (NIL, "unrecognized os type: ", Text.FromChar (ch));
-    RETURN M3Path.OSKind.Unix;
-  END GetOSType;
-
-PROCEDURE SetWarning (level: INTEGER;  arg: TEXT) =
-  BEGIN
-    IF (level < warning_level) THEN
-      warning_level := level;
-      warning_arg   := arg;
-    END;
-  END SetWarning;
-
-PROCEDURE GetPass (VAR(*OUT*) pass: PassInfo;  value: TEXT)
-  RAISES {Error} =
-  VAR list := GetChunks (value);  n: Arg.T;
-  BEGIN
-    (* reset the pass *)
-    pass.cmd       := NIL;
-    pass.args.head := NIL;
-    pass.args.tail := NIL;
-    pass.args.cnt  := 0;
-
-    IF (list.cnt > 0) THEN
-      pass.cmd := list.head.arg;
-      n := list.head.next;
-      WHILE (n # NIL) DO Arg.Append (pass.args, n.arg);  n := n.next END;
-    END;
-   END GetPass;
-
-PROCEDURE GetArgs (args: Arg.List;  value: TEXT)
-  RAISES {Error} =
-  BEGIN
-    Arg.AppendL (args, GetChunks (value));
-  END GetArgs;
-
-PROCEDURE GetChunks (value: TEXT): Arg.List
-  RAISES {Error} =
-  (* extract the Ai in '-Xn/A1/A2/.../An/' *)
-  VAR
-    i, j: INTEGER;
-    len := Text.Length (value);
-    dot: CHAR;
-    result := Arg.NewList ();
-  BEGIN
-    IF (len < 5) THEN
-      Msg.FatalError (NIL, "improperly formatted argument: \"", value, "\"");
-    END;
-    dot := Text.GetChar (value, 3);
-    IF Text.GetChar (value, len-1) # dot THEN
-      Msg.FatalError (NIL, "improperly formatted argument: \"", value, "\"");
-    END;
-    j := 4;
-    WHILE (j < len) DO
-      i := j;
-      WHILE (j < len) AND Text.GetChar (value, j) # dot DO INC (j) END;
-      IF (i < j) THEN Arg.Append (result, Text.Sub (value, i, (j-i))); END;
-      INC (j);
-    END;
-    RETURN result;
-  END GetChunks;
+    osKind.lib_prefix := conv.lib_prefix;
+    osKind.default_pgm := conv.default_pgm;
+    osKind.dirSep := conv.dirSep;
+    osKind.volSep := conv.volSep;
+    osKind.case_insensitive_ext := conv.case_insensitive_ext;
+  END GetOSKind;
 
 PROCEDURE PushPath (new: TEXT) =
-  CONST Sep = ARRAY M3Path.OSKind OF CHAR { ':', ':', '+', ':' };
-  VAR x := Text.Length (new)-1;  y: INTEGER;  sep := Sep [host_os];
+  VAR x := Text.Length (new)-1;  y: INTEGER;  sep := host_os.pathSep;
   BEGIN
     WHILE (x >= 0) DO
       y := x;
@@ -730,39 +412,18 @@ PROCEDURE PushPath (new: TEXT) =
     END;
   END PushPath;
 
-PROCEDURE Trim (t: TEXT): TEXT =
-  VAR start := 0;  len := Text.Length (t);
-  BEGIN
-    WHILE (len > 0) AND (Text.GetChar (t, start) = ' ') DO
-      INC (start);
-      DEC (len);
-    END;
-    WHILE (len > 0) AND (Text.GetChar (t, start+len-1) = ' ') DO
-      DEC (len);
-    END;
-    RETURN Text.Sub (t, start, len);
-  END Trim;
-
 (*--------------------------------------------------------- help/config ---*)
 
 PROCEDURE DumpConfiguration () =
   CONST Bool = ARRAY BOOLEAN OF TEXT { "FALSE", "TRUE" };
   BEGIN
     Msg.Out  ("target       := ", target_machine, Wr.EOL);
-    Msg.OutL ("pass 0       := ", "m3c", pass_0.args);
-    Msg.OutL ("pass 3       := ", pass_3.cmd, pass_3.args);
-    IF (pass_8.cmd # NIL) THEN
-      Msg.OutL ("pass 8       := ", pass_8.cmd, pass_8.args);
-    END;
     Msg.OutL ("lib path     := ", NIL, lib_path);
-    Msg.Out  ("include      := ", include_dir, Wr.EOL);
     Msg.Out  ("make mode    := ", Bool [make_mode], Wr.EOL);
     Msg.Out  ("bootstrap    := ", Bool [bootstrap_mode], Wr.EOL); 
-    Msg.Out  ("std libs     := ", Bool [NOT skip_std_lib]);
     Msg.Out  ("keep files   := ", Bool [keep_files], Wr.EOL);
     Msg.Out  ("coverage     := ", Bool [do_coverage]," ",link_coverage,Wr.EOL);
-    Msg.OutL ("-O [cc]      => ", NIL, cc_optimize);
-    Msg.OutL ("-g [cc]      => ", NIL, cc_debug);
+    Msg.Out  ("keep_cache   := ", Bool [keep_cache], Wr.EOL);
   END DumpConfiguration;
 
 (*----------------------------------------------------------- libraries ---*)
@@ -998,9 +659,6 @@ PROCEDURE BuildSearchPaths () =
       WHILE iter.next(dir, void) DO
         IF NOT Text.Empty (dir) THEN Arg.Prepend (include_path, dir) END;
       END;
-    END;
-    IF (include_dir # NIL) AND NOT Text.Empty (include_dir) THEN 
-      Arg.Prepend (include_path, include_dir);
     END;
 
     n := include_path.head;
@@ -1308,8 +966,7 @@ PROCEDURE CompileS (f: FileInfo)
       Pass1 (f.source, f.object, f.name.base);
       Utils.NoteNewFile (f.object);
     ELSE (* NK.IS or NK.MS *)
-      IF  Pass7 (f.source, f.object, f.name.base)
-      AND Pass8 (f.source, f.object, f.name.base) THEN
+      IF  Pass7 (f.source, f.object, f.name.base) THEN
       END;
       Utils.NoteNewFile (f.object);
     END;
@@ -1341,8 +998,7 @@ PROCEDURE CompileC (f: FileInfo)
       tmpS := TempSName (f);
       IF (NOT keep_files) THEN Utils.NoteTempFile (tmpS) END;
       IF  Pass6 (f.source, tmpS, f.name.base)
-      AND Pass7 (tmpS, f.object, f.name.base)
-      AND Pass8 (tmpS, f.object, f.name.base) THEN
+      AND Pass7 (tmpS, f.object, f.name.base) THEN
       END;
       IF (NOT keep_files) THEN Utils.Remove (tmpS) END;
       Utils.NoteNewFile (f.object);
@@ -1411,8 +1067,7 @@ PROCEDURE PushOneM3 (f: FileInfo): BOOLEAN
         tmpS := TempSName (f);
         IF (NOT keep_files) THEN Utils.NoteTempFile (tmpS) END;
         IF Pass0 (f, tmpS) THEN
-          IF  Pass7 (tmpS, f.object, f.name.base)
-          AND Pass8 (tmpS, f.object, f.name.base) THEN
+          IF  Pass7 (tmpS, f.object, f.name.base) THEN
           END;
           need_merge := TRUE;
         END;
@@ -1435,8 +1090,7 @@ PROCEDURE PushOneM3 (f: FileInfo): BOOLEAN
         IF (NOT keep_files) THEN Utils.NoteTempFile (tmpS) END;
         IF Pass0 (f, tmpC) THEN
           IF  Pass6 (tmpC, tmpS, f.name.base)
-          AND Pass7 (tmpS, f.object, f.name.base)
-          AND Pass8 (tmpS, f.object, f.name.base) THEN
+          AND Pass7 (tmpS, f.object, f.name.base) THEN
           END;
           need_merge := TRUE;
         END;
@@ -2246,29 +1900,6 @@ PROCEDURE Pass7 (source, object: TEXT; <* UNUSED *> base: TEXT): BOOLEAN =
     RETURN TRUE;
   END Pass7;
 
-PROCEDURE Pass8 (source, object, base: TEXT): BOOLEAN
-  RAISES {Error} =
-  VAR args: Arg.List;  status: INTEGER;  stdout: TEXT;
-  BEGIN
-    IF (pass_8.cmd = NIL) THEN RETURN TRUE END;
-
-    ETimer.Push (M3Timers.pass_8);
-    args := Arg.NewList ();
-    Arg.AppendL (args, pass_8.args);
-    Arg.Append (args, "-o");
-    Arg.Append (args, object);
-    Arg.Append (args, source);
-
-    stdout := StdoutName (pass_8, base);
-    status := Utils.Execute (pass_8.cmd, args, stdout, fatal := TRUE);
-    IF (status # 0) THEN
-      compile_failed := TRUE;
-      Utils.Remove (object);
-    END;
-    IF (NOT keep_files) THEN Utils.Remove (stdout); END;
-    ETimer.Pop ();
-    RETURN (status = 0);
-  END Pass8;
 (*------------------------------------------------ m3main generation --------*)
 
 
@@ -2411,7 +2042,7 @@ PROCEDURE GenerateMain (base: Mx.LinkSet; name: TEXT; verbose: BOOLEAN;
 
 PROCEDURE BuildProgram ()
   RAISES {Error} =
-  CONST Desc_file = ".M3LINK";
+  (* CONST Desc_file = ".M3LINK"; *)
   VAR
     name     := "_m3main";
     Main_O   := M3Path.Join (NIL, name, NK.O, host := FALSE);
@@ -2427,14 +2058,11 @@ PROCEDURE BuildProgram ()
 
     IF (compile_failed) THEN
       Msg.Explain ("compilation failed => not building program \"",pgm_name,"\"");
-      IF has_loader THEN Utils.Remove (Desc_file); END;
+      (* IF has_loader THEN Utils.Remove (Desc_file); END; *)
       RETURN;
     END;
 
-    IF (target_os = M3Path.OSKind.Win32 OR
-        target_os = M3Path.OSKind.GnuWin32) THEN
-      pgm_file := pgm_name & ".exe";
-    END;
+    pgm_file := pgm_name & target_os.suffix[Suffixes.EXE];
     pgmTime := Utils.LocalModTime (pgm_file);
 
     pgmValid := (make_mode) AND (pgmTime # Utils.NO_TIME);
@@ -2476,23 +2104,26 @@ PROCEDURE BuildProgram ()
 
     IF pgmValid THEN RETURN END;
 
-    ETimer.Push (M3Timers.chkpgm);
-    IF NOT MxCheck.IsProgram (link_base, writer) THEN
-      IF has_loader THEN Utils.Remove (Desc_file); END;
-      Msg.FatalError (NIL, "incomplete program");
+    IF NOT no_m3main THEN
+      ETimer.Push (M3Timers.chkpgm);
+      IF NOT MxCheck.IsProgram (link_base, writer) THEN
+        (* IF has_loader THEN Utils.Remove (Desc_file); END; *)
+        Msg.FatalError (NIL, "incomplete program");
+      END;
+      ETimer.Pop ();
+
+      (* produce the module init list *)
+      GenerateMain (link_base, name, Msg.level >= Msg.Level.Debug,gui, 
+        gen_method);
+      pgm_obj.addhi(Main_O);
     END;
-    ETimer.Pop ();
 
-    (* produce the module init list *)
-    GenerateMain (link_base, name, Msg.level >= Msg.Level.Debug,
-                  gui AND (target_os = M3Path.OSKind.Win32), gen_method);
-
-    IF has_loader THEN WriteProgramDesc (Desc_file, Main_O); END;
+    (* IF has_loader THEN WriteProgramDesc (Desc_file, Main_O); END; *)
 
     IF skip_link THEN RETURN END;
 
     ETimer.Push (M3Timers.pass_2);
-    pgm_obj.addhi(Main_O);
+
     TRY
       interface.link(pgm_name, pgm_obj, pgm_lib, 
                      do_debug, shared_libs);
@@ -2508,6 +2139,9 @@ PROCEDURE BuildProgram ()
     END;
     ********)
   END BuildProgram;
+
+(*****************************************************
+  Was used for the experimental loader
 
 PROCEDURE WriteProgramDesc (desc_file, main_o: TEXT)
   RAISES {Error} =
@@ -2585,6 +2219,8 @@ PROCEDURE WriteProgramDesc (desc_file, main_o: TEXT)
     ETimer.Pop ();
   END WriteProgramDesc;
 
+****************************************************************)
+
 PROCEDURE BuildBootProgram ()
   RAISES {Error} =
   TYPE TextList = REF RECORD t: TEXT; next: TextList END;
@@ -2611,8 +2247,7 @@ PROCEDURE BuildBootProgram ()
     Main_C := M3Path.Join (NIL, "_m3main", NK.C, host := FALSE);
     Msg.Commands ("generate ", Main_C);
     wr := Utils.OpenWriter (Main_C, fatal := TRUE);
-    gen := MxGenC.New(link_base, wr, Msg.level >=Msg.Level.Debug,
-                      gui AND (target_os = M3Path.OSKind.Win32));
+    gen := MxGenC.New(link_base, wr, Msg.level >=Msg.Level.Debug, gui);
     gen.generateMain();
     Utils.CloseWriter (wr, Main_C);
     ETimer.Pop ();
@@ -2700,7 +2335,7 @@ PROCEDURE GenBootLine (wr: Wr.T;  f: FileInfo): TEXT
   BEGIN
     CASE f.name.kind OF 
     | F.I3, F.IC, F.IS =>
-      IF target_os = M3Path.OSKind.Win32 THEN
+      IF target_os.short_names THEN
         base := ShortenName(f.name.base);
       ELSE
         base := f.name.base;
@@ -2712,7 +2347,7 @@ PROCEDURE GenBootLine (wr: Wr.T;  f: FileInfo): TEXT
         RETURN base & "_i.o";
       END;
     | F.M3, F.MC, F.MS =>
-      IF target_os = M3Path.OSKind.Win32 THEN
+      IF target_os.short_names THEN
         base := ShortenName(f.name.base);
       ELSE
         base := f.name.base;
@@ -2807,7 +2442,6 @@ PROCEDURE BuildBootLibrary ()
   VAR
     f     : FileInfo;
     wr    : Wr.T;
-    name  := M3Path.Parse (lib_name, host := TRUE);
     objs  : TextList;
     t: TEXT;
   BEGIN
@@ -2996,13 +2630,6 @@ PROCEDURE AddMagic (u: Mx.Unit) =
 
 (*----------------------------------------------------------- file names ---*)
 
-PROCEDURE StdoutName (READONLY p: PassInfo;  base: TEXT): TEXT =
-  BEGIN
-    IF (Msg.level >= Msg.Level.Verbose) THEN RETURN NIL END;
-    IF p.noise = NIL THEN RETURN NIL END;
-    RETURN base & p.noise;
-  END StdoutName;
-
 PROCEDURE TempCName (f: FileInfo): TEXT =
   VAR ext := f.name.kind;  base: TEXT;  shorten := FALSE;
   BEGIN
@@ -3014,7 +2641,7 @@ PROCEDURE TempCName (f: FileInfo): TEXT =
     ELSE <* ASSERT FALSE *>
     END;
     base := f.name.base;
-    IF (shorten) AND (target_os = M3Path.OSKind.Win32) THEN
+    IF (shorten) AND target_os.short_names THEN
       base := ShortenName (f.name.base);
     END;
     RETURN M3Path.Join (NIL, base, ext, host := FALSE);
@@ -3029,7 +2656,7 @@ PROCEDURE TempSName (f: FileInfo): TEXT =
     ELSE <* ASSERT FALSE *>
     END;
     base := f.name.base;
-    IF (target_os = M3Path.OSKind.Win32) THEN
+    IF target_os.short_names THEN
       base := ShortenName (f.name.base);
     END;
     RETURN M3Path.Join (NIL, base, ext, host := TRUE);
@@ -3071,7 +2698,7 @@ PROCEDURE ObjectName (f: FileInfo): TEXT =
     END;
 
     base := f.name.base;
-    IF (target_os = M3Path.OSKind.Win32) AND (shorten) THEN
+    IF target_os.short_names AND (shorten) THEN
       base := ShortenName (f.name.base);
     END;
     RETURN M3Path.Join (NIL, base, ext, host := FALSE);
@@ -3149,14 +2776,6 @@ PROCEDURE PullForBootstrap (f: FileInfo;  text_file: BOOLEAN)
       END;
     END;
   END PullForBootstrap;
-
-PROCEDURE NewPass (cmd: TEXT): PassInfo =
-  VAR p: PassInfo;
-  BEGIN
-    p.cmd   := cmd;
-    p.args  := Arg.NewList ();
-    RETURN p;
-  END NewPass;
 
 (*---------------------------------------------------------------- errors ---*)
 

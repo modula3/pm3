@@ -2,6 +2,7 @@ INTERFACE BldQRep;
 
 IMPORT BldQuake, TextRefTbl, Pathname, IntTextTbl, TextLocTbl;
 IMPORT IntMapTbl, IntM3LibsTbl, TextSeq, QVSeq, M3Buf, TextTextTbl;
+IMPORT M3Driver;
 
 TYPE
   DelFileProc = PROCEDURE (t: BldQuake.T; x: TEXT);
@@ -23,6 +24,11 @@ TYPE
     EMACS_INSTALL   :  TEXT;
     DOC_INSTALL     :  TEXT;
     HTML_INSTALL    :  TEXT;
+    conv            :  M3Driver.NamingConvention;
+    target_conv     :  M3Driver.NamingConvention;
+    lib_name        : TEXT := NIL;
+    pgm_name        : TEXT := NIL;
+    no_m3main       : BOOLEAN := FALSE;
     CR              := "\n";
     SL              := "/";
     CRship          := "\n";

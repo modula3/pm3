@@ -14,8 +14,9 @@ EXCEPTION M3Error;
 EXCEPTION Error;
 
 PROCEDURE Init(wr: Wr.T);
+PROCEDURE Setup(host,target: NamingConvention);
 PROCEDURE ResetCompiler (wr: Wr.T);
-PROCEDURE Compile (i: Interface; options: TEXT) RAISES {M3Error};
+PROCEDURE Compile (i: Interface) RAISES {M3Error};
 PROCEDURE ResetASTCache ();
 PROCEDURE AddSourceFile (dir, name: TEXT;  cmd_line := FALSE) RAISES {Error};
 PROCEDURE AddLibrary (file: TEXT;  READONLY name: M3Path.T);
@@ -30,13 +31,38 @@ TYPE
 TYPE
   OptArr = REF ARRAY OF TEXT;
 
+  Suffixes = {I3,IC,IS,IO,M3,MC,MS,MO,IG,MG,C,H,S,O,A,AX,PX,Unknown,IX,MX,EXE};
+
+  NamingConvention = REF RECORD
+      suffix: ARRAY Suffixes OF TEXT;
+      default_pgm, lib_prefix, EOL: TEXT;
+      dirSep, volSep, pathSep: CHAR;
+      short_names, case_insensitive_ext: BOOLEAN;
+    END;
+
 EXCEPTION InterErr;
 
 TYPE
   Interface = OBJECT
+    dump_config     : BOOLEAN := FALSE;
+    bootstrap_mode  : BOOLEAN := FALSE;
+    gui             : BOOLEAN := FALSE;
+    do_debug        : BOOLEAN := FALSE;
+    heap_stats      : BOOLEAN := FALSE;
+    keep_cache      : BOOLEAN := FALSE;
+    keep_files      : BOOLEAN := FALSE;
+    make_mode       : BOOLEAN := TRUE;
+    compile_once    : BOOLEAN := FALSE;
+    do_optimize     : BOOLEAN := FALSE;
+    skip_link       : BOOLEAN := FALSE;
+    times           : BOOLEAN := FALSE;
+    do_coverage     : BOOLEAN := FALSE;
+    lib_name        : TEXT := NIL;
+    pgm_name        : TEXT := NIL;
+    no_m3main       : BOOLEAN := FALSE;
     link_coverage   : TEXT := NIL;
-    conv            : CHAR := '\000';
-    target_conv     : CHAR := '\000';
+    msg_level       : INTEGER := 0;
+    warning_level   : INTEGER := 3;
     target          : TEXT := NIL;
     shared_libs     : BOOLEAN := FALSE;
     ext_pass_6      : BOOLEAN := FALSE;

@@ -12,60 +12,24 @@ MODULE M3Path;
 IMPORT Text, TextF;
 
 CONST
-  Null      = '\000';
-  Colon     = ':';
-  Slash     = '/';
   BackSlash = '\\';
 
-CONST
-  DirSep = ARRAY OSKind OF CHAR { Slash,  Slash,  BackSlash,  BackSlash };
-  VolSep = ARRAY OSKind OF CHAR { Null,   Null,   Colon,   Colon  };
-
-CONST
-  DirSepText = ARRAY OSKind OF TEXT { "/",  "/",  "\\",  "\\"};
-
-TYPE
-  SMap = ARRAY Kind OF TEXT;
-
-CONST
-  Suffix = ARRAY OSKind OF SMap {
-  (* Unix *)       SMap { ".i3", ".ic", ".is", ".io",
-                          ".m3", ".mc", ".ms", ".mo",
-                          ".ig", ".mg", ".c", ".h", ".s",
-                          ".o", ".a", ".m3x", ".m3x", "" },
-  (* GrumpyUnix *) SMap { ".i3", ".ic", ".is", "_i.o",
-                          ".m3", ".mc", ".ms", "_m.o",
-                          ".ig", ".mg", ".c", ".h", ".s",
-                          ".o", ".a", ".m3x", ".m3x", "" },
-  (* Win32 *)      SMap { ".i3", ".ic", ".is", ".io",
-                          ".m3", ".mc", ".ms", ".mo",
-                          ".ig", ".mg", ".c", ".h", ".s",
-                          ".obj",".lib",".m3x", ".m3x", "" },
-  (* GnuWin32 *)   SMap { ".i3", ".ic", ".is", ".io",
-                          ".m3", ".mc", ".ms", ".mo",
-                          ".ig", ".mg", ".c", ".h", ".s",
-                          ".o", ".a", ".m3x", ".m3x", "" }
-  };
-
-CONST
-  Default_pgm = ARRAY OSKind OF TEXT{ "a.out", "a.out", "NONAME.EXE", "a.out"};
-
 VAR
-  os_map := ARRAY BOOLEAN OF OSKind { OSKind.Unix, OSKind.Unix };
+  os_map : ARRAY BOOLEAN OF OSKind;
   lcase  : ARRAY CHAR OF CHAR;
 
-PROCEDURE SetOS (kind: OSKind;  host: BOOLEAN) =
+PROCEDURE SetOS (READONLY kind: OSKind;  host: BOOLEAN) =
   BEGIN
-    os_map [host] := kind;
+    os_map[host] := kind;
   END SetOS;
 
 PROCEDURE Join (dir, base: TEXT;  k: Kind;  host: BOOLEAN): TEXT=
   VAR
     len    := 0;
-    os     := os_map [host];
-    ext    := Suffix [os][k];
-    d_sep  := DirSep [os];
-    v_sep  := VolSep [os];
+    ext    := os_map[host].suffix[k];
+    d_sep  := os_map[host].dirSep;
+    v_sep  := os_map[host].volSep;
+    lib_prefix := os_map[host].lib_prefix;
     result : TEXT;
   BEGIN
     (* find out how much space we need *)
@@ -73,8 +37,8 @@ PROCEDURE Join (dir, base: TEXT;  k: Kind;  host: BOOLEAN): TEXT=
       len := LAST (dir^);
       IF (dir[len-1] # d_sep) AND (dir[len-1] # v_sep) THEN INC (len); END;
     END;
-    IF (os # OSKind.Win32) AND ((k = Kind.A) OR (k = Kind.AX)) THEN
-      INC (len, 3);
+    IF (k = Kind.A) OR (k = Kind.AX) THEN
+      INC (len, Text.Length(lib_prefix));
     END;
     INC (len, LAST (base^));
     INC (len, LAST (ext^));
@@ -88,8 +52,8 @@ PROCEDURE Join (dir, base: TEXT;  k: Kind;  host: BOOLEAN): TEXT=
         result [len] := d_sep; INC (len);
       END;
     END;
-    IF (os # OSKind.Win32) AND ((k = Kind.A) OR (k = Kind.AX)) THEN
-      len := Append (result, "lib", len);
+    IF (k = Kind.A) OR (k = Kind.AX) THEN
+      len := Append (result, lib_prefix, len);
     END;
     len := Append (result, base, len);
     len := Append (result, ext, len);
@@ -110,9 +74,10 @@ PROCEDURE Parse (nm: TEXT;  host: BOOLEAN): T =
     d_index := -1;
     v_index := -1;
     start   := 0;
-    os      := os_map [host];
-    d_sep   := DirSep [os];
-    v_sep   := VolSep [os];
+    d_sep   := os_map[host].dirSep;
+    d_sep_text := Text.FromChar(d_sep);
+    v_sep   := os_map[host].volSep;
+    lib_prefix := os_map[host].lib_prefix;
     ext     : TEXT;
     ext_len : INTEGER;
   BEGIN
@@ -130,7 +95,7 @@ PROCEDURE Parse (nm: TEXT;  host: BOOLEAN): T =
       t.dir := Text.FromChars (SUBARRAY (nm^, 0, v_index+1));
       start := v_index + 1;
     ELSIF (d_index = 0) THEN
-      t.dir := DirSepText [os];
+      t.dir := d_sep_text;
       start := 1;
     ELSE
       t.dir := Text.FromChars (SUBARRAY (nm^, 0, d_index));
@@ -141,9 +106,9 @@ PROCEDURE Parse (nm: TEXT;  host: BOOLEAN): T =
     (* search for a matching suffix *)
     t.kind := Kind.Unknown;
     FOR k := FIRST (Kind) TO LAST (Kind) DO
-      ext := Suffix [os][k];
+      ext := os_map[host].suffix[k];
       ext_len := Text.Length (ext);
-      IF ExtMatch (nm, ext, os) THEN
+      IF ExtMatch (nm, ext, host) THEN
         t.kind := k;
         EXIT;
       END;
@@ -152,24 +117,24 @@ PROCEDURE Parse (nm: TEXT;  host: BOOLEAN): T =
     (* extract the base component *)
     t.base := Text.FromChars (SUBARRAY (nm^, start, base_len - ext_len));
 
-    IF (os # OSKind.Win32) AND ((t.kind = Kind.A) OR (t.kind = Kind.AX)) THEN
-      IF (LAST (t.base^) >= 3) AND (t.base[0] = 'l')
-        AND (t.base[1] = 'i') AND (t.base[2] = 'b') THEN
-        t.base := Text.Sub (t.base, 3);
+    IF (t.kind = Kind.A) OR (t.kind = Kind.AX) THEN
+
+      IF Text.Equal(lib_prefix,Text.Sub(t.base,0,Text.Length(lib_prefix))) THEN
+        t.base := Text.Sub(t.base, Text.Length(lib_prefix));
       END;
     END;
 
     RETURN t;
   END Parse;
 
-PROCEDURE ExtMatch (nm, ext: TEXT;  os: OSKind): BOOLEAN =
+PROCEDURE ExtMatch (nm, ext: TEXT;  host: BOOLEAN): BOOLEAN =
   VAR
     nm_len  := LAST (nm^);
     ext_len := LAST (ext^);
     j := 0;
   BEGIN
     IF (nm_len < ext_len) THEN RETURN FALSE END;
-    IF (os = OSKind.Win32) THEN
+    IF os_map[host].case_insensitive_ext THEN
       (* ignore case *)
       FOR i := nm_len-ext_len TO nm_len-1 DO
         IF lcase [nm[i]] # ext[j] THEN RETURN FALSE; END;
@@ -186,15 +151,15 @@ PROCEDURE ExtMatch (nm, ext: TEXT;  os: OSKind): BOOLEAN =
 
 PROCEDURE DefaultProgram (host: BOOLEAN): TEXT =
   BEGIN
-    RETURN Default_pgm [os_map [host]];
+    RETURN os_map[host].default_pgm;
   END DefaultProgram;
 
 PROCEDURE Convert (nm: TEXT;  host: BOOLEAN): TEXT =
   VAR
     len  := LAST (nm^);
     res  := TextF.New (len);
-    good := DirSep [os_map [host]];
-    bad  := DirSep [os_map [NOT host]];
+    good := os_map[host].dirSep;
+    bad  := os_map[NOT host].dirSep;
   BEGIN
     FOR i := 0 TO len-1 DO
       IF (nm[i] = bad)

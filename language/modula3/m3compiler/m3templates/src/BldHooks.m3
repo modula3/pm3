@@ -128,7 +128,7 @@ PROCEDURE WhereUnitsHooks(t: T): REF ARRAY OF IntM3LibsTbl.T RAISES {Error} =
 
 PROCEDURE CompileC(t: T; src, obj: TEXT; incl: QVSeq.T; optimize, debug,
                    shared: BOOLEAN): INTEGER RAISES {Error} =
-  VAR args := NEW(REF ARRAY OF QValue.T, 6);
+  VAR args := NEW(REF ARRAY OF QValue.T, 3);
   BEGIN
     args[0].kind := QValue.Kind.String;
     args[0].int  := M3ID.Add(src);
@@ -136,12 +136,6 @@ PROCEDURE CompileC(t: T; src, obj: TEXT; incl: QVSeq.T; optimize, debug,
     args[1].int  := M3ID.Add(obj);
     args[2].kind := QValue.Kind.Array;
     args[2].ref  := incl;
-    args[3].kind := QValue.Kind.String;
-    args[3].int  := QValue.BoolID[optimize];
-    args[4].kind := QValue.Kind.String;
-    args[4].int  := QValue.BoolID[debug];
-    args[5].kind := QValue.Kind.String;
-    args[5].int  := QValue.BoolID[shared];
     IF ExecHook(t, "m3_compile_c", args, TRUE) THEN
       t.pop(args[0]);
       RETURN QVal.ToInt(t, args[0]);
@@ -152,7 +146,7 @@ PROCEDURE CompileC(t: T; src, obj: TEXT; incl: QVSeq.T; optimize, debug,
 
 PROCEDURE M3Link(t: T; prog: TEXT; objs, libs: QVSeq.T; debug, 
                  shared: BOOLEAN): INTEGER RAISES {Error} =
-  VAR args := NEW(REF ARRAY OF QValue.T, 5);
+  VAR args := NEW(REF ARRAY OF QValue.T, 3);
   BEGIN
     args[0].kind := QValue.Kind.String;
     args[0].int  := M3ID.Add(prog);
@@ -160,10 +154,6 @@ PROCEDURE M3Link(t: T; prog: TEXT; objs, libs: QVSeq.T; debug,
     args[1].ref  := objs;
     args[2].kind := QValue.Kind.Array;
     args[2].ref  := libs;
-    args[3].kind := QValue.Kind.String;
-    args[3].int  := QValue.BoolID[debug];
-    args[4].kind := QValue.Kind.String;
-    args[4].int  := QValue.BoolID[shared];
     IF ExecHook(t, "m3_link", args, TRUE) THEN
       t.pop(args[0]);
       RETURN QVal.ToInt(t, args[0]);
@@ -174,7 +164,7 @@ PROCEDURE M3Link(t: T; prog: TEXT; objs, libs: QVSeq.T; debug,
 
 PROCEDURE M3MakeLib(t: T; name: TEXT; libs, imp: QVSeq.T; static, 
                     shared: BOOLEAN): INTEGER RAISES {Error}=
-  VAR args := NEW(REF ARRAY OF QValue.T, 5);
+  VAR args := NEW(REF ARRAY OF QValue.T, 3);
   BEGIN
     args[0].kind := QValue.Kind.String;
     args[0].int  := M3ID.Add(name);
@@ -182,10 +172,6 @@ PROCEDURE M3MakeLib(t: T; name: TEXT; libs, imp: QVSeq.T; static,
     args[1].ref  := libs;
     args[2].kind := QValue.Kind.Array;
     args[2].ref  := imp;
-    args[3].kind := QValue.Kind.String;
-    args[3].int  := QValue.BoolID[static];
-    args[4].kind := QValue.Kind.String;
-    args[4].int  := QValue.BoolID[shared];
     IF ExecHook(t, "m3_make_lib", args, TRUE) THEN
       t.pop(args[0]);
       RETURN QVal.ToInt(t, args[0]);
@@ -206,18 +192,12 @@ PROCEDURE NoteShlib(t: T; name: TEXT): INTEGER RAISES {Error} =
 
 PROCEDURE M3Assemble(t: T; src, obj: TEXT; optimize, debug, shared: BOOLEAN):
   INTEGER RAISES {Error}=
-  VAR args := NEW(REF ARRAY OF QValue.T, 5);
+  VAR args := NEW(REF ARRAY OF QValue.T, 2);
   BEGIN
     args[0].kind := QValue.Kind.String;
     args[0].int  := M3ID.Add(src);
     args[1].kind := QValue.Kind.String;
     args[1].int  := M3ID.Add(obj);
-    args[2].kind := QValue.Kind.String;
-    args[2].int  := QValue.BoolID[optimize];
-    args[3].kind := QValue.Kind.String;
-    args[3].int  := QValue.BoolID[debug];
-    args[4].kind := QValue.Kind.String;
-    args[4].int  := QValue.BoolID[shared];
     IF ExecHook(t, "m3_assemble", args, TRUE) THEN
       t.pop(args[0]);
       RETURN QVal.ToInt(t, args[0]);
@@ -228,18 +208,12 @@ PROCEDURE M3Assemble(t: T; src, obj: TEXT; optimize, debug, shared: BOOLEAN):
 
 PROCEDURE M3Backend(t: T; src, obj: TEXT; optimize, debug, 
                     shared: BOOLEAN): INTEGER RAISES {Error}=
-  VAR args := NEW(REF ARRAY OF QValue.T, 5);
+  VAR args := NEW(REF ARRAY OF QValue.T, 2);
   BEGIN
     args[0].kind := QValue.Kind.String;
     args[0].int  := M3ID.Add(src);
     args[1].kind := QValue.Kind.String;
     args[1].int  := M3ID.Add(obj);
-    args[2].kind := QValue.Kind.String;
-    args[2].int  := QValue.BoolID[optimize];
-    args[3].kind := QValue.Kind.String;
-    args[3].int  := QValue.BoolID[debug];
-    args[4].kind := QValue.Kind.String;
-    args[4].int  := QValue.BoolID[shared];
     IF ExecHook(t, "m3_backend", args, TRUE) THEN
       t.pop(args[0]);
       RETURN QVal.ToInt(t, args[0]);

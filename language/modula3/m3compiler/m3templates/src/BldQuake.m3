@@ -2,13 +2,12 @@ MODULE BldQuake EXPORTS BldQuake, BldQRep;
 
 IMPORT M3Driver, M3Buf, QMachine, QCode, QValue, QVal, M3ID, Wr;
 IMPORT QMachRep, IntTextTbl, Pathname, Text, M3File;
-IMPORT TextLocTbl, IntMapTbl, TextTextTbl, Fmt, QVSeq, IntM3LibsTbl;
-IMPORT M3Path, M3Libs, TextSeq, TextRefTbl, Utils, Unit, OSError, Msg;
+IMPORT TextLocTbl, IntMapTbl, TextTextTbl, QVSeq, IntM3LibsTbl;
+IMPORT M3Path, M3Libs, TextSeq, TextRefTbl, Utils, Unit, OSError;
 IMPORT FileWr, File, FS, Arg, BldPosix, BldWin32, BldHooks, Process;
 IMPORT Pipe, Thread, TextList, BldFace, FileRd, Rd;
 IMPORT Location AS Loc;
 FROM Quake IMPORT Error;
-IMPORT M3DriverRep;
 
 CONST
   M3EXPORTS = ".M3EXPORTS";
@@ -24,9 +23,6 @@ CONST
 
 VAR
   NOT_A_PACKAGE: M3ID.T;
-  NEED_OBJECTS: M3ID.T;
-  POSIX: M3ID.T;
-  WIN32: M3ID.T;
   all: M3ID.T;
 
 REVEAL
@@ -72,7 +68,6 @@ PROCEDURE Init (t: T; wr: Wr.T; package: TEXT; package_dir: Pathname.T;
     t.pkg_overrides := NEW(IntTextTbl.Default).init(10);
     t.locations := NEW(TextLocTbl.Default).init(10);
     t.pkg_dirs := NEW(IntMapTbl.Default).init(10);
-    t.compile_objects := NEW(QVSeq.T).init();
     t.m3libs := NEW(IntM3LibsTbl.Default).init();
     t.m3libs_x := NEW(TextSeq.T).init();
     t.other_libs := NEW(IntM3LibsTbl.Default).init();
@@ -94,6 +89,11 @@ PROCEDURE Init (t: T; wr: Wr.T; package: TEXT; package_dir: Pathname.T;
     t.cleanup_procs := NEW(TextSeq.T).init();
     t.m3_options := NEW(TextSeq.T).init();
     t.m3front_options := NEW(TextSeq.T).init();
+    t.conv := NIL;
+    t.target_conv := NIL;
+    t.lib_name := NIL;
+    t.pgm_name := NIL;
+    t.no_m3main := FALSE;
     RETURN t;
   END Init;
 
@@ -606,19 +606,12 @@ PROCEDURE DoImportObj(t: QMachine.T; n_args: INTEGER) RAISES {Error} =
   END DoImportObj;
 
 PROCEDURE ImportObj(t: T; x: TEXT) RAISES {Error} =
-  VAR file := PathOf(t, x); need_objects: QValue.T;
+  VAR file := PathOf(t, x);
   BEGIN
     TRY
       M3Driver.AddSourceFile(NIL, file, TRUE);
     EXCEPT
       M3Driver.Error => CErr("M3Driver.AddSourceFile");
-    END;
-    IF t.get(NEED_OBJECTS, need_objects) AND QVal.ToBool(t, need_objects) THEN
-      (* reuse need_objects *)
-      need_objects.kind := QValue.Kind.String;
-      need_objects.int := M3ID.Add(file);
-      need_objects.ref := NIL;
-      t.compile_objects.addhi(need_objects);
     END;
   END ImportObj;
 
@@ -683,17 +676,8 @@ PROCEDURE DoPgmObject(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
   END DoPgmObject;
 
 PROCEDURE PgmObject(t: T; x: TEXT; ext: TEXT) RAISES {Error} =
-  VAR need_objects: QValue.T;
   BEGIN
-    IF t.get(NEED_OBJECTS, need_objects) THEN
-      IF QVal.ToBool(t, need_objects) THEN
-        (* reuse need_objects *)
-        need_objects.kind := QValue.Kind.String;
-        need_objects.int := M3ID.Add(x & ext);
-        need_objects.ref := NIL;
-        t.compile_objects.addhi(need_objects);
-      END;
-    END;    
+  (* Do nothing. May be used to collect object files later *)
   END PgmObject;
 
 (*-------------------------------------------------------------- deleting ---*)
@@ -1414,11 +1398,13 @@ PROCEDURE U_Program(t: T; x: TEXT) RAISES {Error}=
   BEGIN
     GenM3Exports(t, x, GenType.Pgm);
     IF t.all THEN
+      t.no_m3main := FALSE;
       IF NOT Text.Equal(x, "") THEN
-        M3(t, "-o " & x);
+        t.pgm_name := x;
       ELSE
-        M3(t, "");
+        t.pgm_name := NIL;
       END;
+      M3(t);
       InstallSources(t);
     END;
     Deriveds(t, x, Exts2{ t.PGM_ext, ".m3x" });
@@ -1447,84 +1433,22 @@ PROCEDURE DoPROGRAM(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
   END DoPROGRAM;
 
 PROCEDURE CProgram(t: T; x: TEXT) RAISES {Error}=
-  TYPE 
-    Ext1 = ARRAY [1..1] OF TEXT;
-  VAR
-    arg          : QValue.T;
-    h_iterator   : TextTextTbl.Iterator;
-    c_iterator   : IntTextTbl.Iterator;
-    dir          : TEXT;
-    d            : TEXT;
-    xx           : INTEGER;
-    src          : TEXT;
-    obj          : TEXT;
-    cc           : TEXT;
-    link         : TEXT;
-    args         := Arg.NewList();
-    objects      := Arg.NewList();
-    pgm          : TEXT;
-    objseq       := NEW(TextSeq.T).init();
-    libname      : TEXT;
-    lib          : M3Libs.T;
+  TYPE
+    Exts2 = ARRAY [1..2] OF TEXT;
   BEGIN
-    pgm := ProgramName(t, x);
-    h_iterator := t.h_dirs.iterate();
-    WHILE h_iterator.next(dir, d) DO
-      Arg.Append(args, "-I" & dir);
-    END;
-      
-    c_iterator := t.c_inputs.iterate();
-    WHILE c_iterator.next(xx, src) DO
-      obj := M3ID.ToText(xx) & t.OBJ_ext;
-      IF t.all THEN
-        IF Stale(obj, src) OR StaleSeq(obj, t.h_inputs) THEN
-          IF NOT t.get(M3ID.Add("CC"), arg) THEN
-            Msg.FatalError(NIL, "CC not defined!"); <* NOWARN *>
-          END;
-          cc := QVal.ToText(t, arg);
-          Arg.Append(args, "-c");
-          Arg.Append(args, src);
-          TRY
-            EVAL Utils.Execute(cc, args, NIL, TRUE);
-          EXCEPT
-            M3Driver.Error => CErr("Utils.Execute");
-          END;
-        END;
-      END;
-      Arg.Append(objects, obj);
-      objseq.addhi(obj);
-    END;
-
+    GenM3Exports(t, x, GenType.Pgm);
     IF t.all THEN
-      IF StaleSeq(pgm, objseq) THEN
-        IF NOT t.get(M3ID.Add("LINK"), arg) THEN
-          Msg.FatalError(NIL, "LINK not defined!"); <* NOWARN *>
-        END;
-        link := QVal.ToText(t, arg);
-        Arg.Append(objects, "-o");
-        Arg.Append(objects, pgm);
-
-        FOR i := 0 TO t.other_libs_x.size() - 1 DO
-          libname := t.other_libs_x.get(i);
-          IF t.other_libs.get(M3ID.Add(libname), lib) THEN
-            Arg.Append(objects, "-l" & libname);
-            Arg.Append(objects, "-L" & lib.loc);
-          ELSE
-            RAISE Error("other_libs_x and other_libs are incoherent!");
-          END;
-        END;
-
-        TRY
-          EVAL Utils.Execute(link, objects, NIL, TRUE);
-        EXCEPT
-          M3Driver.Error => CErr("Utils.Execute");
-        END;
+      t.no_m3main := TRUE;
+      IF NOT Text.Equal(x, "") THEN
+        t.pgm_name := x;
+      ELSE
+        t.pgm_name := NIL;
       END;
+      M3(t);
+      InstallSources(t);
     END;
-    FOR i := 0 TO objseq.size() - 1 DO
-      Deriveds(t, objseq.get(i), t.no_extension );
-    END;
-    Deriveds(t, x, Ext1{ t.PGM_ext });
+    Deriveds(t, x, Exts2{ t.PGM_ext, ".m3x" });
+    Deriveds(t, "",Exts2{ M3WEB, M3TFILE });
   END CProgram;
 
 PROCEDURE DoCProgram(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
@@ -1558,7 +1482,8 @@ PROCEDURE Library(t: T; x: TEXT) RAISES {Error}=
                               hidden := HIDDEN, local := LOCAL));
     GenM3Exports(t, x, GenType.Lib);
     IF t.all THEN
-      M3(t, "-a " & lib);
+      t.lib_name := lib;
+      M3(t);
       InstallDerived(t, lib);
       InstallDerived(t, libmx);
       InstallSources(t);
@@ -1820,10 +1745,8 @@ PROCEDURE DoResetCache (<* UNUSED *> t: QMachine.T; n_args: INTEGER) =
     M3Driver.ResetASTCache();
   END DoResetCache;
 
-PROCEDURE M3 (t: T;  opt: TEXT) RAISES {Error} =
+PROCEDURE M3 (t: T) RAISES {Error} =
   VAR
-    options      : TEXT;
-    buf          : M3Buf.T;
     arg          : QValue.T;
     wr           : Wr.T;
     pkg          : INTEGER;
@@ -1861,23 +1784,11 @@ PROCEDURE M3 (t: T;  opt: TEXT) RAISES {Error} =
         RAISE Error("other_libs_x and other_libs are incoherent!");
       END;
     END;
-    (* pack the arguments into a single string *)
-    buf   := M3Buf.New ();
-    IF t.get(M3ID.Add("KEEP_CACHE"), arg) THEN
-      QVal.ToBuf(t, arg, buf);
-      M3Buf.PutChar(buf, ' ');
-    END;
-    M3Buf.PutText(buf, "-make ");
-    FOR i := 0 TO t.m3_options.size() - 1 DO
-      M3Buf.PutText(buf, t.m3_options.get(i) & " ");
-    END;
-    M3Buf.PutText(buf, opt);
-    options := M3Buf.ToText (buf);
 
     (* call the m3driver now integrated *)
     TRY
       interface := NEW(BldFace.T).init(t);
-      M3Driver.Compile(interface, options);
+      M3Driver.Compile(interface);
     EXCEPT
     | BldFace.Error => RAISE Error("couldn't initialize interface with the compiler!");
     | M3Driver.M3Error => RAISE Error(NIL);
@@ -1897,23 +1808,9 @@ PROCEDURE M3 (t: T;  opt: TEXT) RAISES {Error} =
   END M3;
 
 PROCEDURE DoM3 (t: QMachine.T;  n_args: INTEGER) RAISES {Error} =
-  VAR
-    first        := TRUE;
-    options      : TEXT;
-    buf          : M3Buf.T;
-    arg          : QValue.T;
   BEGIN
-    IF (n_args <= 0) THEN RETURN; END;
-
-    (* pack the arguments into a single string & pop the stack *)
-    buf   := M3Buf.New ();
-    FOR i := 1 TO n_args DO
-      IF first THEN first := FALSE ELSE M3Buf.PutChar (buf, ' ') END;
-      t.pop(arg);
-      QVal.ToBuf (t, arg, buf);
-    END;
-    options := M3Buf.ToText (buf);
-    M3(t, options);
+    <* ASSERT n_args = 0 *>
+    M3(t);
   END DoM3;
 
 (*--------------------------------------------------------------- m3front ---*)
@@ -2947,6 +2844,22 @@ PROCEDURE P2W(string: TEXT): TEXT=
     RETURN Text.FromChars(chars^);
   END P2W;
 
+PROCEDURE DoInc (t: QMachine.T;  n_args: INTEGER) RAISES {Error} =
+  VAR
+    string: QValue.T;
+    arg1, arg2: INTEGER;
+  BEGIN
+    <* ASSERT n_args = 2 *>
+    t.pop(string);
+    arg2 := QVal.ToInt(t, string);
+    t.pop(string);
+    arg1 := QVal.ToInt(t, string);
+    INC(arg1,arg2);
+    string.kind := QValue.Kind.Integer;
+    string.int := arg1;
+    t.push(string);
+  END DoInc;
+
 (*-------------------------------------------------------------- dummy ------*)
 
 PROCEDURE DoDummy(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
@@ -3061,24 +2974,6 @@ PROCEDURE Stale(target, source: TEXT): BOOLEAN =
     END;
   END Stale;
 
-PROCEDURE StaleSeq(target: TEXT; source: TextSeq.T): BOOLEAN =
-  VAR     
-    t : File.Status;
-    s : File.Status;
-  BEGIN
-    TRY
-      t := FS.Status(target);
-      FOR i := 0 TO source.size() - 1 DO
-        s := FS.Status(source.get(i));
-        IF t.modificationTime < s.modificationTime THEN
-          RETURN TRUE END;
-      END;
-      RETURN FALSE;
-    EXCEPT OSError.E =>
-      RETURN TRUE;
-    END;
-  END StaleSeq;
-
 PROCEDURE Escape (txt: TEXT): TEXT  =
   VAR
     buf     : M3Buf.T;
@@ -3133,10 +3028,10 @@ PROCEDURE NewProc (nm      : TEXT;
 
 PROCEDURE InitProcs(): REF ARRAY OF ProcRec =
   VAR
-    Procs := NEW(REF ARRAY OF ProcRec, 116);
+    Procs := NEW(REF ARRAY OF ProcRec, 117);
   BEGIN
     Procs[0].proc := NewProc ("reset_cache", DoResetCache, 0, FALSE);
-    Procs[1].proc := NewProc ("m3", DoM3, -1, FALSE);
+    Procs[1].proc := NewProc ("m3", DoM3, 0, FALSE);
     Procs[2].proc := NewProc("override", DoOverride, 2, FALSE);
     Procs[3].proc := NewProc("Pkg", DoPkg, 1, TRUE);
     Procs[4].proc := NewProc("M3include", DoM3include, 4, FALSE);
@@ -3269,189 +3164,110 @@ PROCEDURE InitProcs(): REF ARRAY OF ProcRec =
     Procs[113].proc := NewProc("gen_m3exports", DoGenM3Exports, 1, FALSE);
     Procs[114].proc := NewProc("install_sources", DoInstallSources, 0, FALSE);
     Procs[115].proc := NewProc("_install_file", DoInstallFile, 4, FALSE);
+    Procs[116].proc := NewProc("inc", DoInc, 2, TRUE);
     RETURN Procs;
   END InitProcs;
 
 PROCEDURE Setup(t: T) RAISES {Error}=
-  PROCEDURE GetIt(x: TEXT; msg: TEXT): TEXT RAISES {Error}=
+  PROCEDURE GetText(x: TEXT; msg: TEXT): TEXT RAISES {Error}=
     VAR val: QValue.T;
     BEGIN
       IF NOT t.get(M3ID.Add(x), val) THEN
         RAISE Error(msg & " " & x & " not defined" & t.CR);
       END;
       RETURN QVal.ToText(t, val);
-    END GetIt;
-  PROCEDURE ArrayToSeq(READONLY arr: ARRAY OF TEXT): QVSeq.T = 
-    VAR 
-      seq := NEW(QVSeq.T).init(NUMBER(arr));
-      val: QValue.T;
+    END GetText;
+  PROCEDURE GetVal(x: TEXT; msg: TEXT): QValue.T RAISES {Error}=
+    VAR val: QValue.T;
     BEGIN
-      val.kind := QValue.Kind.String;
-      val.ref  := NIL;
-      FOR i:= FIRST(arr) TO LAST(arr) DO
-        val.int := M3ID.Add(arr[i]);
-        seq.addhi(val);
+      IF NOT t.get(M3ID.Add(x), val) THEN
+        RAISE Error(msg & " " & x & " not defined" & t.CR);
       END;
-      RETURN seq;
-    END ArrayToSeq;
+      RETURN val;
+    END GetVal;
   VAR 
-    convention: INTEGER;
-    conv_val: QValue.T;
+    nm_conv: QVSeq.T;
+    tnm_conv: QVSeq.T;
     val: QValue.T;
     wr: Wr.T;
-  BEGIN    
-    val.kind := QValue.Kind.Array;
-    val.int := 0;
-    val.ref := t.compile_objects;
-    t.put(M3ID.Add("COMPILE_OBJECTS"), val);
+    host_os_type: TEXT;
+  BEGIN
+    (* Get the host and target naming conventions *)
+    t.conv := NEW(M3Driver.NamingConvention);
+    nm_conv := QVal.ToArray(t,
+        GetVal("NAMING_CONVENTIONS","naming conventions"));
+    FillNamingConvention(t,t.conv,nm_conv);
 
-    IF NOT t.get(M3ID.Add("NAMING_CONVENTIONS"), conv_val) THEN
-      RAISE Error("NAMING_CONVENTIONS not defined");
-    END;
-    convention := QVal.ToInt(t, conv_val);
-    CASE convention OF
-    | 0 =>
-      t.OBJ_ext := ".o";
-      t.IO_ext  := ".io";
-      t.MO_ext  := ".mo";
-      t.LIB_pre := "lib";
-      t.LIB_ext := ".a";
-      t.PGM_ext := "";
-    | 1 =>
-      t.OBJ_ext := ".o";
-      t.IO_ext  := "_i.o";
-      t.MO_ext  := "_m.o";
-      t.LIB_pre := "lib";
-      t.LIB_ext := ".a";
-      t.PGM_ext := "";
-    | 2 =>
-      t.OBJ_ext := ".obj";
-      t.IO_ext  := ".io";
-      t.MO_ext  := ".mo";
-      t.LIB_pre := "";
-      t.LIB_ext := ".lib";
-      t.PGM_ext := ".exe";
-    | 3 =>
-      t.OBJ_ext := ".o";
-      t.IO_ext  := ".io";
-      t.MO_ext  := ".mo";
-      t.LIB_pre := "lib";
-      t.LIB_ext := ".a";
-      t.PGM_ext := ".exe";
-    ELSE
-      RAISE Error("unknown naming convention: \"" & Fmt.Int(convention) & "\"." & t.CR);
-    END;
+    t.target_conv := NEW(M3Driver.NamingConvention);
+    tnm_conv := QVal.ToArray(t,
+        GetVal("TARGET_NAMING_CONVENTIONS","target naming conventions"));
+    FillNamingConvention(t,t.target_conv,tnm_conv);
 
-    val.kind := QValue.Kind.String;
-    val.int := M3ID.Add(t.OBJ_ext);
-    t.put(M3ID.Add("OBJ_ext"), val);
-    val.int := M3ID.Add(t.IO_ext);
-    t.put(M3ID.Add("IO_ext"), val);
-    val.int := M3ID.Add(t.MO_ext);
-    t.put(M3ID.Add("MO_ext"), val);
-    val.int := M3ID.Add(t.LIB_pre);
-    t.put(M3ID.Add("LIB_pre"), val);
-    val.int := M3ID.Add(t.LIB_ext);
-    t.put(M3ID.Add("LIB_ext"), val);
-    val.int := M3ID.Add(t.PGM_ext);
-    t.put(M3ID.Add("PGM_ext"), val);
+    M3Driver.Setup(t.conv, t.target_conv);
 
+    t.OBJ_ext := t.conv.suffix[M3Driver.Suffixes.O];
+    t.IO_ext  := t.conv.suffix[M3Driver.Suffixes.IO];
+    t.MO_ext  := t.conv.suffix[M3Driver.Suffixes.MO];
+    t.LIB_pre := t.conv.lib_prefix;
+    t.LIB_ext := t.conv.suffix[M3Driver.Suffixes.A];
+    t.PGM_ext := t.conv.suffix[M3Driver.Suffixes.EXE];
+    t.CR := t.conv.EOL;
+    t.SL := Text.FromChar(t.conv.dirSep);
+    t.CRship := GetText("CRship","CR ship");
+    t.SLship := GetText("SLship","SL ship");
+    t.QRPCR := "\")" & t.CR;
 
     (* get all install and use directories *)
-    t.PKG_USE       := GetIt("PKG_USE", "use directory");
-    t.PKG_INSTALL   := GetIt("PKG_INSTALL", "installation directory");
-    t.BIN_USE       := GetIt("BIN_USE", "use directory");
-    t.BIN_INSTALL   := GetIt("BIN_INSTALL", "installation directory");
-    t.LIB_USE       := GetIt("LIB_USE", "use directory");
-    t.LIB_INSTALL   := GetIt("LIB_INSTALL", "installation directory");
-    t.MAN_INSTALL   := GetIt("MAN_INSTALL", "installation directory");
-    t.EMACS_INSTALL := GetIt("EMACS_INSTALL", "installation directory");
-    t.DOC_INSTALL   := GetIt("DOC_INSTALL", "installation directory");
-    t.HTML_INSTALL  := GetIt("HTML_INSTALL", "installation directory");
+    t.PKG_USE       := GetText("PKG_USE", "use directory");
+    t.PKG_INSTALL   := GetText("PKG_INSTALL", "installation directory");
+    t.BIN_USE       := GetText("BIN_USE", "use directory");
+    t.BIN_INSTALL   := GetText("BIN_INSTALL", "installation directory");
+    t.LIB_USE       := GetText("LIB_USE", "use directory");
+    t.LIB_INSTALL   := GetText("LIB_INSTALL", "installation directory");
+    t.MAN_INSTALL   := GetText("MAN_INSTALL", "installation directory");
+    t.EMACS_INSTALL := GetText("EMACS_INSTALL", "installation directory");
+    t.DOC_INSTALL   := GetText("DOC_INSTALL", "installation directory");
+    t.HTML_INSTALL  := GetText("HTML_INSTALL", "installation directory");
 
-    t.intf_extensions[0] := ".ix";
-    t.intf_extensions[1] := ".ic";
-    t.intf_extensions[2] := ".is";
-    t.intf_extensions[3] := t.IO_ext;
-    val:= QValue.T{QValue.Kind.Array, 0, ArrayToSeq(t.intf_extensions)};
-    t.put(M3ID.Add("intf_extensions"), val);
-
-    t.impl_extensions[0] := ".mx";
-    t.impl_extensions[1] := ".mc";
-    t.impl_extensions[2] := ".ms";
-    t.impl_extensions[3] := t.MO_ext;
-    val := QValue.T{QValue.Kind.Array, 0, ArrayToSeq(t.impl_extensions)};
-    t.put(M3ID.Add("impl_extensions"), val);
-
-    t.c_extensions[0]    := ".s";
-    t.c_extensions[1]    := t.OBJ_ext;
-    val := QValue.T{QValue.Kind.Array, 0, ArrayToSeq(t.c_extensions)};
-    t.put(M3ID.Add("c_extensions"), val);
-
-    t.s_extensions[0]    := t.OBJ_ext;
-    val := QValue.T{QValue.Kind.Array, 0, ArrayToSeq(t.s_extensions)};
-    t.put(M3ID.Add("s_extensions"), val);
-
-    t.no_extension[0]    := "";
-    val := QValue.T{QValue.Kind.Array, 0, ArrayToSeq(t.no_extension)};
-    t.put(M3ID.Add("no_extension"), val);
-
-    t.rsrc_extensions[0] := ".i3";
-    t.rsrc_extensions[1] := ".m3";
+    t.intf_extensions[0] := t.conv.suffix[M3Driver.Suffixes.IX];
+    t.intf_extensions[1] := t.conv.suffix[M3Driver.Suffixes.IC];
+    t.intf_extensions[2] := t.conv.suffix[M3Driver.Suffixes.IS];
+    t.intf_extensions[3] := t.conv.suffix[M3Driver.Suffixes.IO];
+    t.impl_extensions[0] := t.conv.suffix[M3Driver.Suffixes.MX];
+    t.impl_extensions[1] := t.conv.suffix[M3Driver.Suffixes.MC];
+    t.impl_extensions[2] := t.conv.suffix[M3Driver.Suffixes.MS];
+    t.impl_extensions[3] := t.conv.suffix[M3Driver.Suffixes.MO];
+    t.c_extensions[0]    := t.conv.suffix[M3Driver.Suffixes.S];
+    t.c_extensions[1]    := t.conv.suffix[M3Driver.Suffixes.O];
+    t.s_extensions[0]    := t.conv.suffix[M3Driver.Suffixes.O];
+    t.no_extension[0]    := t.conv.suffix[M3Driver.Suffixes.Unknown];
+    t.rsrc_extensions[0] := t.conv.suffix[M3Driver.Suffixes.I3];
+    t.rsrc_extensions[1] := t.conv.suffix[M3Driver.Suffixes.M3];
     FOR i := 0 TO LAST(t.intf_extensions) DO
       t.rsrc_extensions[i+2] := t.intf_extensions[i];
     END;
     FOR i := 0 TO LAST(t.impl_extensions) DO
       t.rsrc_extensions[i+2+LAST(t.intf_extensions)+1] := t.impl_extensions[i];
     END;
-    val := QValue.T{QValue.Kind.Array, 0, ArrayToSeq(t.rsrc_extensions)};
-    t.put(M3ID.Add("rsrc_extensions"), val);
 
-    IF NOT t.get(M3ID.Add("HOST_OS_TYPE"),val) AND
-        NOT t.get(M3ID.Add("OS_TYPE"), val) THEN
-      Msg.FatalError(NIL, "couldn't get OS_TYPE"); <* NOWARN *>
-    END;
-    IF val.kind # QValue.Kind.String THEN
-      Msg.FatalError(NIL, "OS_TYPE "); <* NOWARN *>
-    END;
-    IF val.int =  POSIX THEN
+    host_os_type := GetText("HOST_OS_TYPE","host os type");
+
+    IF Text.Equal(host_os_type,"POSIX") THEN
       t.delete_file := BldPosix.DelFile;
       t.link_file := BldPosix.LinkFile;
       t.make_executable := BldPosix.MakeExec;
-      t.CR := BldPosix.CR;
-      t.SL := BldPosix.SL;
-      t.CRship := BldPosix.CRship;
-      t.SLship := BldPosix.SLship;
-      t.QRPCR := "\")" & t.CR;
-    ELSIF val.int = WIN32 THEN
+    ELSIF Text.Equal(host_os_type,"WIN32") THEN
       t.delete_file := BldWin32.DelFile;
       t.link_file   := BldWin32.LinkFile;
       t.make_executable := BldWin32.MakeExec;
-      t.CR          := BldWin32.CR;
-      t.SL          := BldWin32.SL;
-      t.CRship      := BldWin32.CRship;
-      t.SLship      := BldWin32.SLship;
-      t.QRPCR       := "\")" & t.CR;
     ELSE
-      Err("OS_TYPE unknown: " & QVal.ToText(t, val));
+      Err("OS_TYPE unknown: " & host_os_type);
     END;
    
     (* add the OS dependent variable to the global scope *)
 
-    val.kind := QValue.Kind.String;
-    val.ref := NIL;
-    val.int := M3ID.Add(t.CR);
-    t.put(M3ID.Add("CR"), val);
-    val.int := M3ID.Add(t.SL);
-    t.put(M3ID.Add("SL"), val);
-    val.int := M3ID.Add(t.CRship);
-    t.put(M3ID.Add("CRship"), val);
-    val.int := M3ID.Add(t.SLship);
-    t.put(M3ID.Add("SLship"), val);
-    val.int := M3ID.Add(t.QRPCR);
-    t.put(M3ID.Add("QRPCR"), val);
-
     (* define VISIBLE and HIDDEN *)
+    val.kind := QValue.Kind.String;
     val.int := M3ID.Add("");
     t.put(M3ID.Add("VISIBLE"), val);
     val.int := M3ID.Add("HIDDEN");
@@ -3486,6 +3302,25 @@ PROCEDURE Setup(t: T) RAISES {Error}=
 
   END Setup;
 
+PROCEDURE FillNamingConvention(t: T; conv: M3Driver.NamingConvention;
+    READONLY nm_conv: QVSeq.T) RAISES {Error} =
+  BEGIN
+    IF nm_conv.size() < 29 THEN
+      RAISE Error("Not enough elements for naming convention" & t.CR);
+    END;
+    FOR i := FIRST(M3Driver.Suffixes) TO LAST(M3Driver.Suffixes) DO
+      conv.suffix[i] := QVal.ToText(t,nm_conv.get(ORD(i)));
+    END;
+    conv.default_pgm := QVal.ToText(t,nm_conv.get(21));
+    conv.lib_prefix := QVal.ToText(t,nm_conv.get(22));
+    conv.dirSep := Text.GetChar(QVal.ToText(t,nm_conv.get(23)),0);
+    conv.EOL := QVal.ToText(t,nm_conv.get(24));
+    conv.pathSep :=Text.GetChar(QVal.ToText(t,nm_conv.get(25)),0);
+    conv.volSep :=Text.GetChar(QVal.ToText(t,nm_conv.get(26)),0);
+    conv.short_names :=QVal.ToBool(t,nm_conv.get(27));
+    conv.case_insensitive_ext :=QVal.ToBool(t,nm_conv.get(28));
+  END FillNamingConvention;
+
 PROCEDURE GetSL(t: T): TEXT=
   BEGIN
     RETURN t.SL;
@@ -3509,8 +3344,5 @@ PROCEDURE FErr(t: TEXT) RAISES {Error}=
 BEGIN
   (* init the IDs *)
   NOT_A_PACKAGE := M3ID.Add(NOT_A_PACKAGE_TEXT);
-  NEED_OBJECTS  := M3ID.Add("NEED_OBJECTS");
-  POSIX         := M3ID.Add("POSIX");
-  WIN32         := M3ID.Add("WIN32");
   all           := M3ID.Add("_all");
 END BldQuake.
