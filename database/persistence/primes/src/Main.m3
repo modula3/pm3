@@ -1,6 +1,6 @@
 MODULE Main;
 
-IMPORT IO, Database, Transaction, RTParams;
+IMPORT IO, Database, Transaction, RTParams, RTProcess;
 
 <* FATAL Transaction.InProgress *>
 <* FATAL Transaction.NotInProgress *>
@@ -17,13 +17,21 @@ TYPE
 CONST
   group = 10;
 
+PROCEDURE onint() =
+  BEGIN
+    quit := TRUE;
+  END onint;
+
 VAR
   tr := NEW(Transaction.T);
   head, p : Prime;
   i, n: INTEGER;
   divisor: BOOLEAN;
   db: Database.T;
+  quit := FALSE;
+  orig := RTProcess.OnInterrupt(onint);
 BEGIN
+
   TRY
     db := Database.Open("primes");
   EXCEPT
@@ -55,7 +63,7 @@ BEGIN
 
   i := 0;
   IO.Put("New primes:\n");
-  LOOP
+  WHILE NOT quit DO
     INC(n);
     divisor := FALSE;
     p := head;
@@ -72,4 +80,5 @@ BEGIN
       p := p.next;
     END;
   END;
+  EVAL RTProcess.OnInterrupt(orig);
 END Main.

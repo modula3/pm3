@@ -7,6 +7,11 @@ MODULE PageFile;
     $Revision$
     $Date$
     $Log$
+    Revision 1.3  2005/02/18 20:42:59  hosking
+    Merge in latest development branch of persistence support for PM3.
+    Includes support for BerkeleyDB as storage engine.
+    Also includes PPC_DARWIN port from cm3.
+
     Revision 1.2  2003/04/08 21:56:44  hosking
     Merge of PM3 with Persistent M3 and CM3 release 5.1.8
 
@@ -70,7 +75,8 @@ IMPORT
   Pathname, FS, RegularFile, OSError,
   PageData,
   ErrorSupport,
-  Uresource;
+  Uresource,
+  Utypes;
 
 REVEAL
   T                     = Public BRANDED OBJECT
@@ -302,14 +308,17 @@ BEGIN
   BEGIN
     (* determine number of open file-descriptors per process *)
     EVAL Uresource.getrlimit(Uresource.RLIMIT_NOFILE, rlp);
-    IF rlp.rlim_max # Uresource.RLIM_INFINITY AND
-      rlp.rlim_cur < rlp.rlim_max THEN
-      (* Set soft limit up to hard limit *)
-      rlp.rlim_cur := rlp.rlim_max;
-      EVAL Uresource.setrlimit(Uresource.RLIMIT_NOFILE, rlp);
+    WITH cur = Utypes.asLong(rlp.rlim_cur),
+         max = Utypes.asLong(rlp.rlim_max)
+     DO
+      IF max # Uresource.RLIM_INFINITY AND cur < max THEN
+        (* Set soft limit up to hard limit *)
+        rlp.rlim_cur := rlp.rlim_max;
+        EVAL Uresource.setrlimit(Uresource.RLIMIT_NOFILE, rlp);
+      END;
     END;
     (* we use at most half of all possibly open files *)
-    MaxOpenFiles := rlp.rlim_cur DIV 2;
+    MaxOpenFiles := Utypes.asLong(rlp.rlim_cur) DIV 2;
   END;
   OpenFiles := 0;
   ListHead := NIL;

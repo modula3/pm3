@@ -7,8 +7,13 @@ MODULE Daemon;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:42  hosking
-    Initial revision
+    Revision 1.2  2005/02/18 20:42:59  hosking
+    Merge in latest development branch of persistence support for PM3.
+    Includes support for BerkeleyDB as storage engine.
+    Also includes PPC_DARWIN port from cm3.
+
+    Revision 1.1.1.1  2003/03/27 15:25:42  hosking
+    Import of GRAS3 1.1
 
     Revision 1.1  1997/08/14 08:07:40  roland
     A procedure to fork a daemon process. The child can communicate with
@@ -59,7 +64,7 @@ PROCEDURE ForkDaemon (VAR rd: Rd.T; VAR wr: Wr.T): BOOLEAN
     EVAL Unix.umask(0);
     (* 4.  close all inherited files *)
     EVAL Uresource.getrlimit(Uresource.RLIMIT_NOFILE, rlp);
-    FOR fd := 0 TO rlp.rlim_cur DO
+    FOR fd := 0 TO Utypes.asLong(rlp.rlim_cur) DO
       (* close all file descriptors except for hwChild and hrChild *)
       IF fd # hrChild.fd AND fd # hwChild.fd THEN EVAL Unix.close(fd); END;
     END;
