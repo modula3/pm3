@@ -11,7 +11,7 @@ pkg, bootstrap, binaries, SRPMS).
 
 <H2>RPM installation</H2>
 
-<P>For LINUXELF and LINUXLIBC6, RPM source and binary packages are available
+<P>For LINUXLIBC6, RPM source and binary packages are available
 and may conveniently be installed with the <TT>rpm</TT> program. 
 This way, for most cases, nothing special (e.g. setting environment variables)
 should be required. It should be noted however that the default INSTALL_ROOT
@@ -146,6 +146,35 @@ cassis> setenv LD_LIBRARY_PATH \
 cassis> cd <I>version</I>
 cassis> make
 </TT></PRE>
+
+<H2>Calling the correct support tools</H2>
+
+<P>
+Users with non-standard environments may encounter installation problems,
+and must take special care to ensure that the necessary tools (C compiler,
+assembler, etc.) are correctly located by the boot <tt>Makefile</tt>. This
+warning applies especially to Solaris users, since the Sun C
+compiler is sold and installed separately from other systems tools,
+and hybrid Solaris/GNU environments seem to be fairly common.
+   
+<P>
+In general, the machine's native assembler, C compiler, and "make"
+must be used in preference to GNU's. Obvious exceptions are the
+Linux versions, for which "native" means "GNU"; and the SOLgnu
+version, for which one must use the native assembler together with
+GNU's <tt>gcc</tt> and <tt>make</tt>.
+
+<P> 
+Users should therefore prune their command directory list
+(<tt>$PATH</tt> in most shells) to the bare minimum, making sure
+that the native command directories appear before alternative ones
+(such as GNU's). In particular, the <tt>$PATH</tt> must not include
+any previous Modula-3 installation. Also, the shell environment
+variables <tt>$AS</tt>, <tt>$CC</tt>, and <tt>$MAKE</tt> should be
+set to the <em>absolute</em> pathnames of the corresponding
+executables. By the same token, all program names specified in the
+template file (<tt>"m3config/src/platform</tt>) should be absolute
+pathnames.
 
 </BODY></HTML>
 
