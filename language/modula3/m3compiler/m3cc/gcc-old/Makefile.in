@@ -36,7 +36,7 @@ SUBDIRS =
 # Selection of languages to be made.
 # This is overridden by configure.
 # CYGNUS LOCAL gcov
-LANGUAGES = c objective-c proto gcov
+LANGUAGES = c objective-c proto gcov m3cg
 
 # Selection of languages to be made during stage1 build.
 # This is overridden by configure.
@@ -580,7 +580,7 @@ FLAGS_TO_PASS = \
 
 # A list of all the language-specific executables.
 # This is overridden by configure.
-COMPILERS = cc1$(exeext) cc1obj$(exeext)
+COMPILERS = cc1$(exeext) cc1obj$(exeext) m3cgc1$(exeext)
 
 # Language-specific object files for C.
 C_OBJS = c-parse.o c-lang.o c-lex.o c-pragma.o \
@@ -600,6 +600,9 @@ BC_ALL = bc-arity.h bc-opcode.h bc-opname.h
 SCHED_PREFIX =
 SCHED_CFLAGS =
 # END CYGNUS LOCAL
+
+# Language-specific object files for M3CG
+M3CG_OBJS = c-convert.o m3.o
 
 # Language-independent object files.
 OBJS = toplev.o version.o tree.o print-tree.o stor-layout.o fold-const.o \
@@ -740,6 +743,7 @@ C c: cc1
 OBJC objc: cc1obj
 OBJECTIVE-C objective-c: cc1obj
 PROTO: proto
+M3CG m3cg: m3cgc1
 
 # Tell GNU make these are phony targets.
 .PHONY: C c OBJC objc OBJECTIVE-C objective-c PROTO proto
@@ -800,6 +804,9 @@ cc1: $(P) $(C_OBJS) $(OBJS) $(BC_OBJS) $(LIBDEPS)
 
 cc1obj: $(P) $(OBJC_OBJS) $(OBJS) $(BC_OBJS) $(LIBDEPS)
 	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ $(OBJC_OBJS) $(OBJS) $(BC_OBJS) $(LIBS)
+
+m3cgc1: $(P) $(M3CG_OBJS) $(OBJS) $(BC_OBJS) $(LIBDEPS)
+	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o m3cgc1 $(M3CG_OBJS) $(OBJS) $(BC_OBJS) $(LIBS)
 
 # Copy float.h from its source.
 gfloat.h: $(FLOAT_H)
@@ -1277,6 +1284,10 @@ objc-act.o : objc-act.c $(CONFIG_H) $(TREE_H) $(RTL_H) c-tree.h c-lex.h \
 # A file used by all variants of C.
 
 c-common.o : c-common.c $(CONFIG_H) $(TREE_H) c-tree.h c-lex.h flags.h
+
+# Modula-3 language specific files.
+
+m3.o : m3.c $(CONFIG_H) $(RTL_H) $(TREE_H) input.h flags.h insn-codes.h expr.h
 
 # Language-independent files.
 

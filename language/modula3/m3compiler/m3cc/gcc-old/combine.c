@@ -2980,8 +2980,15 @@ subst (x, from, to, in_dest, unique_copy)
     {
       /* If X is sufficiently simple, don't bother trying to do anything
 	 with it.  */
-      if (code != CONST_INT && code != REG && code != CLOBBER)
+      if (code != CONST_INT && code != REG && code != CLOBBER) {
 	x = simplify_rtx (x, op0_mode, i == 3, in_dest);
+	/*******
+        rtx tmp = simplify_rtx (x, op0_mode, i == 3, in_dest);
+	if ((tmp == XEXP(tmp,0)) || (tmp == XEXP(tmp,1)))
+	  error ("**CYCLE IN RTL**");
+        x = tmp;
+	*********/
+      }
 
       if (GET_CODE (x) == code)
 	break;
