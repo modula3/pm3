@@ -1080,19 +1080,16 @@ PROCEDURE ReadUp (           v : T;
 PROCEDURE SetSizeHints (VAR      xhints       : X.XSizeHints;
                         VAR      width, height: CARDINAL;
                         READONLY sh, sv       : VBT.SizeRange;
-                                 st           : XScreenType.T;
-                                 userPosition : BOOLEAN        ) =
+                                 st           : XScreenType.T ) =
   BEGIN
-    IF sv.hi < VBT.DefaultShape.hi OR sh.hi < VBT.DefaultShape.hi THEN
-      xhints.flags := X.PMinSize + X.PMaxSize
-    ELSE
-      xhints.flags := X.PMinSize
+    IF sv.hi < VBT.DefaultShape.hi OR sh.hi < VBT.DefaultShape.hi
+      THEN xhints.flags := X.PMinSize + X.PMaxSize + X.PResizeInc + X.PBaseSize
+      ELSE xhints.flags := X.PMinSize + X.PResizeInc + X.PBaseSize
     END;
-    IF userPosition THEN
-      INC(xhints.flags, X.USPosition + X.USSize)
-    ELSE
-      INC(xhints.flags, X.PPosition + X.PSize)
-    END;
+    xhints.base_width := 0;
+    xhints.base_height := 0;
+    xhints.width_inc := 1;
+    xhints.height_inc := 1;
     xhints.min_width := sh.lo;
     xhints.max_width :=
       MAX(MIN(sh.hi - 1, Rect.HorSize(st.rootDom)), sh.lo);
