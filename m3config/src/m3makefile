@@ -74,6 +74,7 @@ import("libm3")
 
 derived_interface ("M3Config", VISIBLE)
 SrcExport("COMMON")
+SrcExport("GCWRAP")
 SrcExport(TARGET)
 
 Library("m3config")
