@@ -214,8 +214,6 @@ CONST
 
 
 PROCEDURE Init (self: T; title: TEXT; x, y, w, h: INTEGER): T 
-    RAISES {GraphicsBase.Failure} =
-  VAR
   BEGIN
     (*** Initialize windowThreadCV ***)
     self.windowThreadCV := NEW (Thread.Condition);
@@ -2026,6 +2024,7 @@ TYPE
 
 
 PROCEDURE Apply (self: Closure): REFANY =
+  <* FATAL GraphicsBase.Failure *>
   VAR
     base  := self.base;
     status: WinDef.BOOL;
