@@ -21,7 +21,7 @@ PROCEDURE IsASCII (t: T): BOOLEAN =
 
 PROCEDURE IsSpace (t: T): BOOLEAN =
   BEGIN
-  END IsSpace
+  END IsSpace;
 (* Returns "TRUE" if "t" is a Unicode white space character. *)
 
 PROCEDURE IsLetter (t: T): BOOLEAN =
@@ -34,7 +34,7 @@ PROCEDURE IsDigit (t: T): BOOLEAN =
   END IsDigit;
 (* Returns "TRUE" if "t" is a Unicode digit. *)
 
-PROCEDURE IsLetterOrDigit (t): BOOLEAN =
+PROCEDURE IsLetterOrDigit (t: T): BOOLEAN =
   BEGIN
   END IsLetterOrDigit;
 (* == "IsLetter(t) OR IsDigit(t)". *)

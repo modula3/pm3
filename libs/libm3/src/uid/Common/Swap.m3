@@ -21,7 +21,7 @@ CONST
   B3 = 16_FF000000;
 
 
-  (* These will all be zero on machines with BYTESIZE(INTEGER) = 32 *)
+  (* These will all be zero on machines with BITSIZE(INTEGER) = 32 *)
   B4 = LeftShift(B3, 8);
   B5 = LeftShift(B4, 8);
   B6 = LeftShift(B5, 8);

@@ -29,7 +29,7 @@ PROCEDURE StartDaemon(passwd: TEXT);
 PROCEDURE RegisterBuiltin(name: TEXT; init: InitProc; request: RequestProc);
 
 TYPE
-  InitProc = PROCEDURE(TextRefTbl.T; error: TEXT): BOOLEAN;
+  InitProc = PROCEDURE(t: TextRefTbl.T; error: TEXT): BOOLEAN;
   RequestProc = PROCEDURE(command, path, query: TEXT);
 
 END IdeHTTP;

@@ -45,7 +45,7 @@ PROCEDURE IsLetter (t: T): BOOLEAN;
 PROCEDURE IsDigit (t: T): BOOLEAN;
 (* Returns "TRUE" if "t" is a Unicode digit. *)
 
-PROCEDURE IsLetterOrDigit (t): BOOLEAN;
+PROCEDURE IsLetterOrDigit (t: T): BOOLEAN;
 (* == "IsLetter(t) OR IsDigit(t)". *)
 
 PROCEDURE IsUpperCase (t: T): BOOLEAN;
