@@ -6,6 +6,8 @@
 
 INTERFACE Quake;
 
+IMPORT Wr;
+
 EXCEPTION
   Error (TEXT);
 
@@ -13,9 +15,12 @@ TYPE
   CodeStream <: REFANY;
   Machine    <: REFANY;
 
-PROCEDURE NewMachine (): Machine;
+PROCEDURE NewMachine (writer: Wr.T): Machine;
 
-PROCEDURE Run (m: Machine;  source_file: TEXT) RAISES {Error};
+PROCEDURE RunSourceFile (m: Machine;  source_file: TEXT)       RAISES {Error};
+
+PROCEDURE CompileSourceFile (source_file: TEXT): CodeStream    RAISES {Error};
+PROCEDURE RunCodeStream (m: Machine;  code_stream: CodeStream) RAISES {Error};
 
 PROCEDURE Define (m: Machine;  symbol, value: TEXT) RAISES {Error};
 

@@ -6,17 +6,28 @@
 
 MODULE Quake;
 
+IMPORT Wr;
 IMPORT QMachine, QValue, QCompiler, M3ID;
 
-PROCEDURE NewMachine (): Machine =
+PROCEDURE NewMachine (writer: Wr.T): Machine =
   BEGIN
-    RETURN NEW (QMachine.T).init ();
+    RETURN NEW (QMachine.T).init (writer);
   END NewMachine;
 
-PROCEDURE Run (m: Machine;  source_file: TEXT) RAISES {Error} =
+PROCEDURE RunSourceFile (m: Machine;  source_file: TEXT) RAISES {Error} =
   BEGIN
     m.evaluate (QCompiler.CompileFile (source_file));
-  END Run;
+  END RunSourceFile;
+
+PROCEDURE CompileSourceFile (source_file: TEXT): CodeStream RAISES {Error} =
+  BEGIN
+    RETURN QCompiler.CompileFile (source_file);
+  END CompileSourceFile;
+
+PROCEDURE RunCodeStream (m: Machine;  code_stream: CodeStream) RAISES {Error} =
+  BEGIN
+    m.evaluate (code_stream);
+  END RunCodeStream;
 
 PROCEDURE Define (m: Machine;  symbol, value: TEXT) RAISES {Error} =
   VAR v: QValue.T;

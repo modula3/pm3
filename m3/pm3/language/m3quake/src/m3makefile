@@ -7,7 +7,7 @@
 % Last modified on Fri Feb 17 15:05:48 PST 1995 by kalsow  
 %      modified on Sun Mar 27 10:38:19 PST 1994 by harrison
 
-m3_option ("-times")
+%m3_option ("-times")
 
 import("libm3")
 import("m3middle")
@@ -20,6 +20,7 @@ Module   ("QCompiler")
 Module   ("QValue")
 Table    ("QV", "Integer", "QValue")
 Sequence ("QV", "QValue")
+Interface("QMachRep")
 Module   ("QMachine")
 Module   ("QVal")
 

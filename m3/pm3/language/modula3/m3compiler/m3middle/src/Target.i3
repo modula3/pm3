@@ -23,7 +23,7 @@ INTERFACE Target;
 
 (*-------------------------------------------------------- initialization ---*)
 
-PROCEDURE Init (system: TEXT): BOOLEAN;
+PROCEDURE Init (system: TEXT; back_integrated: BOOLEAN): BOOLEAN;
 (* Initialize the variables of this interface to reflect the architecture
    of "system".  Returns TRUE iff the "system" was known and the initialization
    was successful.  *)

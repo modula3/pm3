@@ -5,11 +5,11 @@
 (* Last modified on Thu May 23 10:19:48 PDT 1996 by heydon     *)
 (*      modified on Tue Feb 28 15:59:51 PST 1995 by kalsow     *)
 
-MODULE QMachine;
+MODULE QMachine EXPORTS QMachine, QMachRep;
 
 IMPORT Atom, AtomList, IntRefTbl, Env, Fmt, Text, FileWr;
-IMPORT Wr, Thread, Stdio, OSError, TextSeq, TextF;
-IMPORT Pathname, Process, File, FS, RTParams;
+IMPORT Wr, Thread, OSError, TextSeq, TextF, Pipe;
+IMPORT Pathname, Process, File, FS, RTParams, FileRd, Rd;
 IMPORT M3ID, M3Buf, M3File;
 IMPORT QValue, QVal, QCode, QCompiler, QVTbl, QVSeq, QScanner;
 FROM Quake IMPORT Error;
@@ -19,21 +19,8 @@ TYPE
   Op = QCode.Op;
 
 REVEAL
-  T = T_ BRANDED "QMachine.T" OBJECT
-    reg       : Registers;
-    scopes    : ScopeStack     := NIL;
-    stack     : ValueStack     := NIL;
-    loops     : LoopStack      := NIL;
-    output    : OutputStack    := NIL;
-    frames    : FrameStack     := NIL;
-    includes  : IncludeStack   := NIL;
-    globals   : IntRefTbl.T    := NIL;  (* M3ID.T -> QValue.Binding *)
-    tmp_files : TextSeq.T      := NIL;
-    tracing   : BOOLEAN        := FALSE;
-    last_cp   : QCode.Stream   := NIL;
-    bindings  : QValue.Binding := NIL;
-    buffers   : BufStack;
-  OVERRIDES
+  T = Rep BRANDED "QMachine.T" OBJECT
+  OVERRIDES	
     init     := Init;
     evaluate := Evaluate;
     get      := Get;
@@ -43,68 +30,13 @@ REVEAL
     pop      := Pop;
     error    := Err;
     cleanup  := CleanUp;
+    call     := Call;
     cur_wr   := CurWr;
-  END;
-
-TYPE
-  Registers = RECORD
-    cp : QCode.Stream   := NIL; (* code pointer *)
-    pc : INTEGER        := 0;   (* program counter *)
-    xp : INTEGER        := 0;   (* scope stack pointer *)
-    sp : INTEGER        := 0;   (* value stack pointer *)
-    lp : INTEGER        := 0;   (* loop stack pointer *)
-    op : INTEGER        := 0;   (* output stack pointer *)
-    fp : INTEGER        := 0;   (* frame pointer *)
-    ln : INTEGER        := 0;   (* line number *)
-    ip : INTEGER        := 0;   (* include stack pointer *)
-    pi : QCode.ProcInfo := NIL; (* procedure info *)
-    fn : BOOLEAN        := FALSE; (* => expect return result *)
-  END;
-
-TYPE
-  ScopeStack   = REF ARRAY OF QValue.Scope;
-  ValueStack   = REF ARRAY OF QValue.T;
-  LoopStack    = REF ARRAY OF LoopInfo;
-  OutputStack  = REF ARRAY OF OutputInfo;
-  FrameStack   = REF ARRAY OF FrameInfo;
-  IncludeStack = REF ARRAY OF IncludeInfo;
-
-TYPE
-  LoopInfo = RECORD
-    iter     : QVTbl.Iterator  := NIL;
-    array    : QVSeq.T         := NIL;
-    next_elt : INTEGER         := 0;
-    variable : QValue.Binding  := NIL;
-  END;
-
-TYPE
-  OutputInfo = RECORD
-    name : TEXT := NIL;
-    wr   : Wr.T := NIL;
-  END;
-
-TYPE
-  FrameInfo = RECORD
-    proc   : QValue.Proc := NIL;
-    saved  : Registers;
-  END;
-
-TYPE
-  IncludeInfo = RECORD
-    file   : QCode.Stream;
-    old_cp : QCode.Stream;
-    old_pc : INTEGER;
-  END;
-
-TYPE
-  BufStack = RECORD
-    tos  : INTEGER := 0;
-    bufs : ARRAY [0..9] OF M3Buf.T;
   END;
 
 (*-------------------------------------------------------- initialization ---*)
 
-PROCEDURE Init (t: T): T =
+PROCEDURE Init (t: T; writer: Wr.T): T =
   VAR b: QValue.Binding;
   BEGIN
     t.scopes   := NEW (ScopeStack,  40);
@@ -122,6 +54,8 @@ PROCEDURE Init (t: T): T =
     END;
 
     EVAL PushScope (t);  (* so that "local" variables have a place to go *)
+
+    t.writer := writer;
     RETURN t;
   END Init;
 
@@ -134,7 +68,7 @@ PROCEDURE Evaluate (t: T;  s: QCode.Stream)
     Eval (t);
   END Evaluate;
 
-PROCEDURE Eval (t: T)
+PROCEDURE Eval (t: T; end_on_return: BOOLEAN := FALSE)
   RAISES {Error} =
   VAR
     op   : QCode.Op;
@@ -147,7 +81,9 @@ PROCEDURE Eval (t: T)
     bind : QValue.Binding;
     txt  : TEXT;
     buf  : M3Buf.T;
+    sfp  : INTEGER := 0;
   BEGIN
+    IF end_on_return THEN sfp := t.reg.fp END;
     LOOP
       IF (t.tracing) THEN TraceInstruction (t) END;
       WITH z = t.reg.cp.instrs [t.reg.pc] DO op := z.op;  arg := z.a; END;
@@ -389,10 +325,12 @@ PROCEDURE Eval (t: T)
           Pop (t, val);
           PopFrame (t);
           Push (t, val);
+          IF end_on_return AND sfp - 1 = t.reg.fp THEN EXIT END;
 
       | Op.Return =>
           CheckReturn (t, FALSE);
           PopFrame (t);
+          IF end_on_return AND sfp - 1 = t.reg.fp THEN EXIT END;
 
       END; (* case *)
     END; (* loop *)
@@ -403,35 +341,35 @@ PROCEDURE TraceInstruction (t: T) =
   VAR op: QCode.Op;  arg: INTEGER;
   BEGIN
     IF (t.last_cp # t.reg.cp) THEN
-      Wr.PutText (Stdio.stdout, "****** ");
+      Wr.PutText (t.writer, "****** ");
       IF (t.reg.cp # NIL) THEN
-        Wr.PutText (Stdio.stdout, M3ID.ToText (t.reg.cp.source_file));
+        Wr.PutText (t.writer, M3ID.ToText (t.reg.cp.source_file));
       END;
-      Wr.PutText (Stdio.stdout, " ******\n");
+      Wr.PutText (t.writer, " ******\n");
       t.last_cp := t.reg.cp;
     END;
 
     WITH z = t.reg.cp.instrs [t.reg.pc] DO op := z.op;  arg := z.a; END;
 
-    FOR i := 1 TO t.reg.xp DO  Wr.PutText (Stdio.stdout, "."); END;
-    Wr.PutText (Stdio.stdout, Fmt.Pad(Fmt.Int(t.reg.pc),4,' ',Fmt.Align.Left));
-    Wr.PutChar (Stdio.stdout, ' ');
-    Wr.PutText (Stdio.stdout, QCode.OpName[op]);
+    FOR i := 1 TO t.reg.xp DO  Wr.PutText (t.writer, "."); END;
+    Wr.PutText (t.writer, Fmt.Pad(Fmt.Int(t.reg.pc),4,' ',Fmt.Align.Left));
+    Wr.PutChar (t.writer, ' ');
+    Wr.PutText (t.writer, QCode.OpName[op]);
     CASE QCode.OpFormat [op] OF
     | 0 => (*done*)
-    | 1 => Wr.PutText (Stdio.stdout, "  ");
-           Wr.PutText (Stdio.stdout, Fmt.Int (arg));
-    | 2 => Wr.PutText (Stdio.stdout, "  (");
-           Wr.PutText (Stdio.stdout, Fmt.Int (arg));
-           Wr.PutText (Stdio.stdout, ") \"");
-           Wr.PutText (Stdio.stdout, M3ID.ToText (arg));
-           Wr.PutText (Stdio.stdout, "\"");
-    | 3 => Wr.PutText (Stdio.stdout, "  pc+(");
-           Wr.PutText (Stdio.stdout, Fmt.Int (arg));
-           Wr.PutText (Stdio.stdout, ") => ");
-           Wr.PutText (Stdio.stdout, Fmt.Int (t.reg.pc + 1 + arg));
+    | 1 => Wr.PutText (t.writer, "  ");
+           Wr.PutText (t.writer, Fmt.Int (arg));
+    | 2 => Wr.PutText (t.writer, "  (");
+           Wr.PutText (t.writer, Fmt.Int (arg));
+           Wr.PutText (t.writer, ") \"");
+           Wr.PutText (t.writer, M3ID.ToText (arg));
+           Wr.PutText (t.writer, "\"");
+    | 3 => Wr.PutText (t.writer, "  pc+(");
+           Wr.PutText (t.writer, Fmt.Int (arg));
+           Wr.PutText (t.writer, ") => ");
+           Wr.PutText (t.writer, Fmt.Int (t.reg.pc + 1 + arg));
     END;
-    Wr.PutText (Stdio.stdout, "\n");
+    Wr.PutText (t.writer, "\n");
   END TraceInstruction;
 (*------------------------------------------------------- procedure calls ---*)
 
@@ -458,6 +396,7 @@ PROCEDURE ExpandFrames (t: T) =
 PROCEDURE DoCall (t: T;  n_args: INTEGER;  isFunc: BOOLEAN)
   RAISES {Error} =
   VAR p: QValue.Proc;  s: QValue.Scope;  val: QValue.T;
+      normal := FALSE;
   BEGIN
     WITH f = t.frames[t.reg.fp-1] DO
       p := f.proc;
@@ -477,14 +416,24 @@ PROCEDURE DoCall (t: T;  n_args: INTEGER;  isFunc: BOOLEAN)
         t.reg.cp := NIL;
         t.reg.ln := 0;
         t.reg.fn := isFunc;
-        p.info.handler (t, n_args);
-        CheckReturn (t, p.info.isFunc);
-        IF p.info.isFunc THEN
-          Pop (t, val);
-          PopFrame (t);
-          Push (t, val);
-        ELSE
-          PopFrame (t);
+        TRY
+          p.info.handler (t, n_args);
+          normal := TRUE; (* flag that no exception has been raised *)
+        FINALLY
+          IF normal THEN
+            (* no exception raised *)
+            CheckReturn (t, p.info.isFunc);
+            IF p.info.isFunc THEN
+              Pop (t, val);
+              PopFrame (t);
+              Push (t, val);
+            ELSE
+              PopFrame (t);
+            END;
+          ELSE
+            (* the builtin raised an exception!!! *)
+            PopFrame (t);
+          END;
         END;
       ELSE
         f.saved.pi := t.reg.pi;
@@ -537,6 +486,31 @@ PROCEDURE CheckReturn (t: T;  with_value: BOOLEAN)
     END;
   END CheckReturn;
 
+PROCEDURE Call(t: T; proc: QValue.Proc; args: REF ARRAY OF QValue.T;
+               isFunc: BOOLEAN) RAISES {Error}=
+  VAR arg: QValue.T;
+  BEGIN
+    arg.kind := QValue.Kind.Proc;
+    arg.int := 0;
+    arg.ref := proc;
+    t.push(arg);
+    PushFrame(t);
+    (* push the args *)
+    IF args # NIL THEN
+      FOR i := FIRST(args^) TO LAST(args^) DO
+        t.push(args[i]);
+      END;
+      DoCall(t, NUMBER(args^), isFunc);
+    ELSE
+      DoCall(t, 0, isFunc);
+    END;
+    IF NOT proc.info.builtin THEN
+      Eval(t, TRUE);
+    END;
+  END Call;
+
+
+
 (*------------------------------------------------------- global bindings ---*)
 
 PROCEDURE Get (t: T;  name: M3ID.T;  VAR(*OUT*) value: QValue.T): BOOLEAN =
@@ -550,9 +524,10 @@ PROCEDURE Get (t: T;  name: M3ID.T;  VAR(*OUT*) value: QValue.T): BOOLEAN =
     END;
   END Get;
 
-PROCEDURE Put (t: T;  name: M3ID.T;  READONLY value: QValue.T)
+PROCEDURE Put (t: T;  name: M3ID.T;  READONLY value: QValue.T;
+               readonly: BOOLEAN := FALSE)
   RAISES {Error} =
-  VAR bind := DefineGlobal (t, name, readonly := FALSE);
+  VAR bind := DefineGlobal (t, name, readonly := readonly);
   BEGIN
     bind.value := value;
   END Put;
@@ -563,7 +538,7 @@ PROCEDURE PushScope (t: T): QValue.Scope =
   BEGIN
     IF (t.reg.xp >= NUMBER (t.scopes^)) THEN ExpandScopes (t); END;
     WITH s = t.scopes [t.reg.xp] DO
-      s := NEW (QValue.Scope);
+      IF (s = NIL) THEN s := NEW (QValue.Scope); END;
       IF (t.reg.xp > 0)
         THEN s.parent := t.scopes[t.reg.xp-1];
         ELSE s.parent := NIL;
@@ -772,7 +747,7 @@ PROCEDURE PopOutput (t: T)
 PROCEDURE CurWr (t: T): Wr.T =
   BEGIN
     IF (t.reg.op <= 0)
-      THEN RETURN Stdio.stdout;
+      THEN RETURN t.writer;
       ELSE RETURN t.output [t.reg.op-1].wr;
     END;
   END CurWr;
@@ -975,6 +950,7 @@ PROCEDURE DoArgList (t: T;  n_args: INTEGER) RAISES {Error} =
 
 PROCEDURE DoCopyIfNew (t: T;  n_args: INTEGER) RAISES {Error} =
   VAR val: QValue.T;  src, dest: TEXT;
+      equal:= FALSE;
   BEGIN
     <*ASSERT n_args = 2 *>
     Pop (t, val);  dest := QVal.ToText (t, val);
@@ -984,16 +960,14 @@ PROCEDURE DoCopyIfNew (t: T;  n_args: INTEGER) RAISES {Error} =
       dest := Pathname.Join (dest, Pathname.Last (src), NIL);
     END;
 
-    VAR equal := FALSE; BEGIN
-      TRY equal := M3File.IsEqual (src, dest) EXCEPT
-        OSError.E => (* SKIP *)
-      END;
-      TRY
-    	IF NOT equal THEN M3File.Copy (src, dest) END;
-      EXCEPT OSError.E (ec) =>
-    	Err (t, "unable to copy \""& src &"\" to \""& dest &"\""& OSErr (ec));
-      END;
-    END
+    TRY equal := M3File.IsEqual (src, dest) EXCEPT
+      OSError.E => (* SKIP *)
+    END;
+    TRY
+      IF NOT equal THEN M3File.Copy (src, dest) END;
+    EXCEPT OSError.E(ec) =>
+      Err (t, "unable to copy \""& src &"\" to \""& dest &"\""& OSErr (ec));
+    END;
   END DoCopyIfNew;
 
 PROCEDURE DoDefined (t: T;  n_args: INTEGER) RAISES {Error} =
@@ -1094,69 +1068,150 @@ PROCEDURE DoEscape (t: T;  n_args: INTEGER) RAISES {Error} =
   END DoEscape;
 
 PROCEDURE DoExec (t: T;  n_args: INTEGER) RAISES {Error} =
-  VAR
-    echo         := TRUE;
-    abortOnError := TRUE;
-    first        := TRUE;
-    command      : TEXT;
-    n            : INTEGER;
-    handle       : Process.T;
-    stdin, stdout, stderr: File.T;
-    args         : ARRAY [0..1] OF TEXT;
-    buf          : M3Buf.T;
+  VAR 
+    cmdval: QValue.T;
+    ioval : QValue.T;
+    wdval : QValue.T;
+    envval: QValue.T;
+    cmd   : TEXT;
+    args  : REF ARRAY OF TEXT;
+    wd    : TEXT;
+    env   : REF ARRAY OF TEXT;
+    seq   : QVSeq.T;
+    size  : INTEGER;
+    stdin : TEXT;
+    stdout: TEXT;
+    stderr: TEXT;
+    ret   : INTEGER;
   BEGIN
-    IF (n_args <= 0) THEN RETURN; END;
-
-    (* pack the arguments into a single string & pop the stack *)
-    buf   := GetBuf (t);
-    FOR i := t.reg.sp - n_args TO t.reg.sp - 1 DO
-      IF (first) THEN first := FALSE;  ELSE  M3Buf.PutChar (buf, ' ');  END;
-      QVal.ToBuf (t, t.stack[i], buf);
-      t.stack[i].ref := NIL;
+    IF (n_args < 1) THEN 
+      Err(t, "exec failed: must supply at least one argument!\n");
     END;
-    t.reg.sp := t.reg.sp - n_args;
-    command := M3Buf.ToText (buf);
-    FreeBuf (t,  buf);
-
-    (* strip the leading magic characters *)
-    n := 0;
-    WHILE n < Text.Length (command) DO
-      CASE Text.GetChar (command, n) OF
-      | '@' => echo := FALSE;
-      | '-' => abortOnError := FALSE;
-      ELSE EXIT;
+    (* pop the right arguments *)
+    IF n_args >= 2 THEN
+      IF n_args >= 3 THEN
+        IF n_args = 4 THEN
+          Pop(t, envval);
+          seq := QVal.ToArray(t, envval);
+          size := seq.size();
+          IF size > 0 THEN
+            env := NEW(REF ARRAY OF TEXT, size);
+            FOR i := 0 TO LAST(env^) DO
+              env[i] := QVal.ToText(t, seq.get(i));
+            END;
+          END;
+        ELSIF n_args > 4 THEN
+          Err(t, "exec failed: exec takes at most 4 arguments!\n");
+        END;
+        Pop(t, wdval);
+        wd := QVal.ToText(t, wdval);
       END;
-      INC (n);
-    END;
-    command := Text.Sub (command, n);
-
-    (* echo the command & flush any pending output *)
-    TRY
-      IF echo THEN
-        Wr.PutText (Stdio.stdout, command);
-        Wr.PutText (Stdio.stdout, Wr.EOL);
+      Pop(t, ioval);
+      seq := QVal.ToArray(t, ioval);
+      size := seq.size();
+      IF size > 0 THEN
+        stdin := QVal.ToText(t, seq.get(0));
+        IF Text.Equal(stdin, "") THEN stdin := NIL END;
       END;
-      Wr.Flush(Stdio.stdout);
-      Wr.Flush(Stdio.stderr);
-    EXCEPT
-    | Wr.Failure, Thread.Alerted => (* ignore *)
-    END;
-
-    (* finally, execute the command *)
-    args [0] := "-c";
-    args [1] := command;
-    TRY
-      Process.GetStandardFileHandles(stdin, stdout, stderr);
-      handle := Process.Create("sh", args, stdin := stdin, stdout := stdout,
-                                 stderr := stderr);
-      n := Process.Wait(handle);
-      IF (n # 0) AND abortOnError THEN
-        Err (t, Fmt.F("exit %s: %s", Fmt.Int(n), command));
+      IF size > 1 THEN
+        stdout := QVal.ToText(t, seq.get(1));
+        IF Text.Equal(stdout, "") THEN stdout := NIL END;
       END;
-    EXCEPT OSError.E (ec) =>
-      Err (t, "exec failed" & OSErr (ec) & " *** " & command);
+      IF size > 2 THEN
+        stderr := QVal.ToText(t, seq.get(2));
+        IF Text.Equal(stderr, "") THEN stderr := NIL END;
+      END;
+      IF size > 3 THEN
+        Err(t, "exec failed: the argument \"io\" must be an array of at most 3 lements!");
+      END;
     END;
+    Pop(t, cmdval);
+    seq := QVal.ToArray(t, cmdval);
+    size := seq.size();
+    IF size < 1 THEN
+      Err(t, "exec failed: the argument \"cmd\" must be an array of at least 1 element!");
+    END;
+    cmd := QVal.ToText(t, seq.get(0));
+    args := NEW(REF ARRAY OF TEXT, size - 1);
+    FOR i := 0 TO LAST(args^) DO
+      args[i] := QVal.ToText(t, seq.get(i + 1));
+    END;
+    
+    ret := Exec(t, cmd, args, stdin, stdout, stderr, wd, env);
+    cmdval.kind := QValue.Kind.Integer;
+    cmdval.int  := ret;
+    cmdval.ref  := NIL;
+    Push(t, cmdval);
   END DoExec;
+
+PROCEDURE Exec (t: T;  cmd: TEXT; args: REF ARRAY OF TEXT;
+                stdin, stdout, stderr: TEXT := NIL;
+                wd: TEXT := NIL;
+                env: REF ARRAY OF TEXT := NIL): INTEGER RAISES {Error} =
+  VAR
+    stdin_file   : File.T;
+    stdout_file  : File.T;
+    stderr_file  : File.T;
+    n            : INTEGER := -1;
+    handle       : Process.T;
+    buffer       : ARRAY [0 .. 4095] OF CHAR;
+    nb           : INTEGER;
+    rd           : FileRd.T;
+    hwChildOut, hrSelf : Pipe.T;
+  BEGIN
+    (* finally, execute the command *)
+    TRY
+      IF stdin # NIL THEN
+        stdin_file := FS.OpenFile(stdin, 
+                                  create := FS.CreateOption.Never,
+                                  access := FS.AccessOption.ReadOnly);
+      END;
+      IF stdout # NIL THEN
+        stdout_file := FS.OpenFile(stdout);
+      END;
+      IF stderr # NIL THEN
+        stderr_file := FS.OpenFile(stderr);
+      END;
+      IF stdout_file = NIL OR stderr_file = NIL THEN
+        Pipe.Open (hr := hrSelf,  hw := hwChildOut);
+        IF stdout_file = NIL THEN
+          stdout_file := hwChildOut;
+        END;
+        IF stderr_file = NIL THEN
+          stderr_file := hwChildOut;
+        END;
+      END;
+
+      handle := Process.Create(cmd, args^, env, wd, stdin_file, stdout_file,
+                               stderr_file);
+      IF stdin_file  # NIL THEN stdin_file.close()  END;
+      IF stdout_file # NIL THEN stdout_file.close() END;
+      IF stderr_file # NIL AND stderr_file # stdout_file THEN 
+        stderr_file.close() END;
+
+      IF hrSelf # NIL THEN
+        rd := NEW(FileRd.T).init(hrSelf);
+        LOOP
+          nb := Rd.GetSub(rd, buffer);
+          IF nb = NUMBER(buffer) THEN
+            Wr.PutString(t.writer, buffer);
+          ELSE
+            Wr.PutString(t.writer, SUBARRAY(buffer, 0, nb));
+            EXIT;
+          END;
+        END;
+        Rd.Close(rd);
+        Wr.Flush(t.writer);
+      END;
+      n := Process.Wait(handle);
+
+    EXCEPT 
+      | OSError.E (ec) =>
+        Err (t, "exec failed" & OSErr (ec) & " *** " & cmd);
+      | Wr.Failure, Thread.Alerted, Rd.Failure => (* ignore *)
+    END;
+    RETURN n;
+  END Exec;
 
 PROCEDURE DoFile (t: T;  n_args: INTEGER) =
   VAR path := M3ID.ToText (t.includes[t.reg.ip-1].file.source_file);
@@ -1185,11 +1240,16 @@ PROCEDURE DoFormat (t: T;  n_args: INTEGER) RAISES {Error} =
   END DoFormat;
 
 PROCEDURE DoInclude (t: T;  n_args: INTEGER) RAISES {Error} =
-  VAR path, old_path: TEXT;  val: QValue.T;  code: QCode.Stream;
+  VAR path: TEXT;  val: QValue.T;
   BEGIN
     <*ASSERT n_args = 1 *>
     Pop (t, val);  path := QVal.ToText (t, val);
+    Include(t, path);
+  END DoInclude;
 
+PROCEDURE Include (t: T;  path: TEXT) RAISES {Error} =
+  VAR old_path: TEXT;  code: QCode.Stream;
+  BEGIN
     IF NOT Pathname.Absolute (path) THEN
       old_path := M3ID.ToText (t.includes[t.reg.ip-1].file.source_file);
       path := Pathname.Join (Pathname.Prefix (old_path), path, NIL);
@@ -1205,7 +1265,7 @@ PROCEDURE DoInclude (t: T;  n_args: INTEGER) RAISES {Error} =
       PushInclude (t, code, f.saved);
       t.reg.ip := f.saved.ip;
     END;
-  END DoInclude;
+  END Include;
 
 PROCEDURE DoNormalize (t: T;  n_args: INTEGER) RAISES {Error} =
   VAR
@@ -1363,9 +1423,28 @@ PROCEDURE CleanUp (t: T) =
     END;
   END CleanUp;
 
-PROCEDURE UniqueTempFile (t: T): TEXT =
-  VAR root: TEXT := "/tmp/qk";  file := root;  seq := 0;
+PROCEDURE Root (): TEXT =
+  VAR root : TEXT := NIL;
   BEGIN
+    root := Env.Get ("TEMP");
+    IF root = NIL THEN
+      root := "/tmp/";
+    ELSE
+      root := root & "\\";
+    END;
+    root := root & "qk";
+    RETURN root;
+  END Root;
+
+PROCEDURE UniqueTempFile (t: T): TEXT RAISES {Error} =
+  VAR root : TEXT := NIL;
+      file := root;  seq := 0;
+  BEGIN
+    root := Root();
+    IF root = NIL THEN
+      Err (t, "Unable to create a temporary file");
+    END;
+
     file := root;
     LOOP
       TRY
@@ -1386,6 +1465,7 @@ PROCEDURE UniqueTempFile (t: T): TEXT =
 PROCEDURE Err (t: T;  msg: TEXT) RAISES {Error} =
   VAR buf := GetBuf (t);  txt: TEXT;
   BEGIN
+    M3Buf.PutText (buf, "quake error: ");   (* Added, Jerome Collin 08/08/6 *)
     M3Buf.PutText (buf, "runtime error: ");
     M3Buf.PutText (buf, msg);
     M3Buf.PutText (buf, "\n");

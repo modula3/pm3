@@ -7,7 +7,7 @@
 
 INTERFACE M3Timers;
 
-IMPORT ETimer;
+IMPORT ETimer, Wr;
 
 VAR (*READONLY*)
   copy:     ETimer.T := NIL;  (* copying files *)
@@ -37,7 +37,7 @@ VAR (*READONLY*)
 PROCEDURE Start ();
 (* allocate and intialize the timers *)
 
-PROCEDURE Stop ();
+PROCEDURE Stop (wr: Wr.T);
 (* dump the running timers *)
 
 END M3Timers.

@@ -43,7 +43,7 @@ CONST
 VAR (*CONST*)
   CCs : REF ARRAY OF CallingConvention;
 
-PROCEDURE Init (system: TEXT): BOOLEAN =
+PROCEDURE Init (system: TEXT; back_integrated: BOOLEAN): BOOLEAN =
   CONST FF = 16_ffff;
   VAR sys := 0;  max_align := 64;
   BEGIN
@@ -369,7 +369,7 @@ PROCEDURE Init (system: TEXT): BOOLEAN =
                  Aligned_procedures        := TRUE;
                  EOL                       := "\n";
 
-    |  12, 13 => (* LINUX, LINUXELF *)
+    |  12 => (* LINUX *)
                  max_align                 := 32;
                  Little_endian             := TRUE;
                  PCC_bitfield_type_matters := TRUE;
@@ -387,6 +387,31 @@ PROCEDURE Init (system: TEXT): BOOLEAN =
                  Global_handler_stack      := TRUE;
                  Aligned_procedures        := TRUE;
                  EOL                       := "\n";
+
+    |  13 => (* LINUXELF *)
+                 max_align                 := 32;
+                 Little_endian             := TRUE;
+                 PCC_bitfield_type_matters := TRUE;
+                 Structure_size_boundary   := 8;
+                 Bitfield_can_overlap      := FALSE;
+                 First_readable_addr       := 0;
+                 Jumpbuf_size              := 8 * Address.size;
+                 Jumpbuf_align             := Address.align;
+                 Fixed_frame_size          := 4 * Address.size;
+                 Guard_page_size           := 0 * Char.size;
+                 All_floats_legal          := TRUE;
+                 Has_stack_walker          := FALSE;
+                 Setjmp                    := "__setjmp";
+                 Checks_integer_ops        := FALSE;
+                 Global_handler_stack      := TRUE;
+                 Aligned_procedures        := TRUE;
+                 EOL                       := "\n";
+
+                 IF back_integrated THEN
+	           (* For the integrated backend Jerome Collin - 08/22/95 *)
+                   CCs := NEW (REF ARRAY OF CallingConvention, 1);
+                   LINUXELFCall (0, "C", 0);
+                 END;
 
     | 14 => (* NEXT *)
                  max_align                 := 16;
@@ -673,6 +698,16 @@ PROCEDURE NTCall (x: INTEGER;  nm: TEXT;  id: INTEGER; gnuWin32: BOOLEAN) =
       CCs[x].standard_structs := TRUE;
     END;
   END NTCall;
+
+PROCEDURE LINUXELFCall (x: INTEGER;  nm: TEXT;  id: INTEGER) =
+  BEGIN
+    CCs[x] := NEW (CallingConvention,
+                     name := nm,
+                     m3cg_id := id,
+                     args_left_to_right := FALSE,
+                     results_on_left  := FALSE,
+                     standard_structs := TRUE);
+  END LINUXELFCall;
 
 PROCEDURE FixI (VAR i: Int_type;  max_align: INTEGER) =
   BEGIN
