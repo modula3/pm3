@@ -5,7 +5,7 @@ IMPORT QMachRep, IntTextTbl, Pathname, Text, M3File;
 IMPORT TextLocTbl, IntMapTbl, TextTextTbl, Fmt, QVSeq, IntM3LibsTbl;
 IMPORT M3Path, M3Libs, TextSeq, TextRefTbl, Utils, Unit, OSError, Msg;
 IMPORT FileWr, File, FS, Arg, BldPosix, BldWin32, BldHooks, Process;
-IMPORT Pipe, Thread, TextList, BldFace;
+IMPORT Pipe, Thread, TextList, BldFace, FileRd;
 IMPORT Location AS Loc;
 FROM Quake IMPORT Error;
 IMPORT M3DriverRep;
@@ -2667,12 +2667,12 @@ PROCEDURE DoTryExec (t: QMachine.T;  n_args: INTEGER) RAISES {Error} =
     cmd          : TEXT;
     n            : INTEGER;
     handle       : Process.T;
-    chars        : REF ARRAY OF CHAR;
-    bytes        : ARRAY [0 .. 1023] OF File.Byte;
-    n_bytes      : INTEGER;
+    buffer       : ARRAY [0 .. 4095] OF CHAR;
+    nb           : INTEGER;
     args         : REF ARRAY OF TEXT;
     buf          : M3Buf.T;
     hwChildOut, hrSelf : Pipe.T;
+    rd           : FileRd.T;
     arg          : QValue.T;
   BEGIN
     IF (n_args <= 0) THEN RETURN; END;
@@ -2724,17 +2724,19 @@ PROCEDURE DoTryExec (t: QMachine.T;  n_args: INTEGER) RAISES {Error} =
                                stderr := hwChildOut);
       hwChildOut.close ();
 
-      n := Process.Wait(handle);
-      n_bytes := hrSelf.read(bytes, mayBlock:= FALSE);
-      IF n_bytes > 0 THEN
-        chars := NEW(REF ARRAY OF CHAR, n_bytes);
-        FOR i:= 0 TO n_bytes - 1 DO
-          chars[i] := VAL(bytes[i], CHAR);
-        END; 
-        Wr.PutText (t.writer, Text.FromChars(chars^) );
+      rd := NEW(FileRd.T).init(hrSelf);
+      LOOP
+        nb := Rd.GetSub(rd, buffer);
+        IF nb = NUMBER(buffer) THEN
+          Wr.PutString(t.writer, buffer);
+        ELSE
+          Wr.PutString(t.writer, SUBARRAY(buffer, 0, nb));
+          EXIT;
+        END;
       END;
-      hrSelf.close();
+      Rd.Close(rd);
       Wr.Flush(t.writer);
+      n := Process.Wait(handle);
 
     EXCEPT 
       | OSError.E =>
