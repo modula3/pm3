@@ -11,7 +11,7 @@ INTERFACE Unix;
 FROM Word IMPORT Or, And, Shift;
 
 FROM Ctypes IMPORT short, int, long, char_star, char_star_star, int_star;
-FROM Utypes IMPORT u_short, off_t, size_t, pid_t, gid_t;
+FROM Utypes IMPORT u_short, dev_t, off_t, size_t, pid_t, gid_t;
 FROM Utime IMPORT struct_timeval;
 
 (*** <unistd.h> ***)

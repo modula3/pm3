@@ -12,7 +12,7 @@ IMPORT Word;
 FROM Word IMPORT Or, And, Shift;
 
 FROM Ctypes IMPORT short, int, long, char_star, char_star_star, int_star;
-FROM Utypes IMPORT u_short, u_long, off_t, size_t;
+FROM Utypes IMPORT u_short, u_long, dev_t, off_t, size_t;
 FROM Utime IMPORT struct_timeval;
 
 CONST
