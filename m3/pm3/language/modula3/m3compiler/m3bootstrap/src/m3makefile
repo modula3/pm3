@@ -272,8 +272,8 @@ readonly proc BootstrapTarget(target) is
   end
 
   if equal(target,"SOLgnu") or equal(target,"SOLsun")
-    AS=/usr/ccs/bin/as
-    AR=/usr/ccs/bin/ld
+    AS = "/usr/ccs/bin/as"
+    AR = "/usr/ccs/bin/ld"
     header = header & "ASFLAGS=-s -P" & CR
   end
 
