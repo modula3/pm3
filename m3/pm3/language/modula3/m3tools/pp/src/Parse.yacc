@@ -722,6 +722,7 @@ type_constructor:
 type_constructor1:
       Bits A expr A For V type
     | Procedure AO signature
+    | callback_pragma Procedure AO signature
     | Untraced SP simple_object_type_list
     |             simple_object_type_list
     | Untraced SP brand Ref A type
@@ -836,9 +837,9 @@ override:
 
 external_pragma:
       Pr_External SP Rpragma
-    | Pr_External SP Ident SP Rpragma
+    | Pr_External SP Str_expr SP Rpragma
     | Pr_External SP Colon Ident SP Rpragma
-    | Pr_External SP Ident Colon Ident SP Rpragma
+    | Pr_External SP Str_expr Colon Ident SP Rpragma
     ;
 
 line_pragma:
@@ -859,7 +860,10 @@ begin_trace:
     | Begin V strace_pragma
     ;
 
-assert_pragma:     Pr_Assert     SP expr           SP Rpragma ;
+assert_pragma:
+      Pr_Assert     SP expr                SP Rpragma
+    | Pr_Assert     SP expr Comma Str_expr SP Rpragma
+    ;
 /*
 ll_pragma:         Pr_LL         SP expr           SP Rpragma ;
 spec_pragma:       Pr_Spec       SP expr           SP Rpragma ;
