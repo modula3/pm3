@@ -1186,10 +1186,20 @@ PROCEDURE Exec (t: T;  cmd: TEXT; args: REF ARRAY OF TEXT;
                                   access := FS.AccessOption.ReadOnly);
       END;
       IF stdout # NIL THEN
-        stdout_file := FS.OpenFile(stdout);
+        IF (Text.GetChar(stdout, 0) = '>') 
+          AND (Text.GetChar(stdout, 1) = '>') THEN
+          stdout_file := FS.OpenFile(Text.Sub(stdout, 2), FALSE);
+        ELSE
+          stdout_file := FS.OpenFile(stdout);
+        END;
       END;
       IF stderr # NIL THEN
-        stderr_file := FS.OpenFile(stderr);
+        IF (Text.GetChar(stderr, 0) = '>') 
+          AND (Text.GetChar(stderr, 1) = '>') THEN
+          stderr_file := FS.OpenFile(Text.Sub(stderr, 2), FALSE);
+        ELSE
+          stderr_file := FS.OpenFile(stderr);
+        END;
       END;
       IF stdout_file = NIL OR stderr_file = NIL THEN
         Pipe.Open (hr := hrSelf,  hw := hwChildOut);
