@@ -96,7 +96,7 @@ extern int RT0u__inCritical;
 #define ENTER_CRITICAL RT0u__inCritical++
 #define EXIT_CRITICAL  RT0u__inCritical--
 
-void (*RTHeapRep_Fault)();
+void (*RTHeapRep_Fault)(void *, int);
 void (*RTCSRC_FinishVM)();
 
 static char RTHeapDepC__c;
@@ -551,7 +551,7 @@ int gettimeofday(struct timeval *tp, void *tzp)
    * Some callers pass an invalid second argument
    * e.g., InitTimes in libXt
    */
-  if (tzp != null) {
+  if (tzp) {
     if (RTHeapRep_Fault) RTHeapRep_Fault(tzp, 1); /* make it readable */
     if (RTHeapRep_Fault) RTHeapRep_Fault(tzp, 2); /* make it writable */
   }
@@ -584,10 +584,12 @@ int ioctl(int fildes, int request, ...)
 
   ENTER_CRITICAL;
   va_start(args, request);
-  argp = va_arg(args, int);
+  argp = va_arg(args, void *);
   va_end(args);
-  if (RTHeapRep_Fault) RTHeapRep_Fault(argp, 1); /* make it readable */
-  if (RTHeapRep_Fault) RTHeapRep_Fault(argp, 2); /* make it writable */
+  if (argp) {
+    if (RTHeapRep_Fault) RTHeapRep_Fault(argp, 1); /* make it readable */
+    if (RTHeapRep_Fault) RTHeapRep_Fault(argp, 2); /* make it writable */
+  }
   result = _ioctl(fildes, request, argp);
   EXIT_CRITICAL;
   return result;

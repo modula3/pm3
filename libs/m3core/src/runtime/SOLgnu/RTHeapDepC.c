@@ -9,7 +9,7 @@
    the referents of all pointers about to passed to the system call, which
    ensures that the pages are not protected when the call is made.
 
-   Each wrapper is a critical section, with RTou__inCritical non-zero, so that
+   Each wrapper is a critical section, with RT0u__inCritical non-zero, so that
    another thread cannot cause the pages to become reprotected before the
    system call is performed.
 
@@ -96,7 +96,7 @@ extern int RT0u__inCritical;
 #define ENTER_CRITICAL RT0u__inCritical++
 #define EXIT_CRITICAL  RT0u__inCritical--
 
-void (*RTHeapRep_Fault)();
+void (*RTHeapRep_Fault)(void *, int);
 void (*RTCSRC_FinishVM)();
 
 static char RTHeapDepC__c;
@@ -584,10 +584,12 @@ int ioctl(int fildes, int request, ...)
 
   ENTER_CRITICAL;
   va_start(args, request);
-  argp = va_arg(args, int);
+  argp = va_arg(args, void *);
   va_end(args);
-  if (RTHeapRep_Fault) RTHeapRep_Fault(argp, 1); /* make it readable */
-  if (RTHeapRep_Fault) RTHeapRep_Fault(argp, 2); /* make it writable */
+  if (argp) {
+    if (RTHeapRep_Fault) RTHeapRep_Fault(argp, 1); /* make it readable */
+    if (RTHeapRep_Fault) RTHeapRep_Fault(argp, 2); /* make it writable */
+  }
   result = _ioctl(fildes, request, argp);
   EXIT_CRITICAL;
   return result;
