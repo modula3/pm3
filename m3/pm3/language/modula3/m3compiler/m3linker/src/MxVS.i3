@@ -23,6 +23,8 @@ TYPE
 CONST
   NoVS = 0; (* a value never returned by "Put" *)
 
+PROCEDURE Init();
+
 PROCEDURE Get (t: T;  VAR(*OUT*) i: Info);
 
 PROCEDURE Put (READONLY i: Info): T;

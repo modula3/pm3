@@ -14,10 +14,18 @@ TYPE
   HashTable  = REF ARRAY OF T;
 
 VAR
-  next_t    : T := NoVS + 1;
-  info      := NEW (InfoBuffer, 2000);
-  hashMask  : INTEGER := 2047; (* == 2^11-1 == 11 bits on *)
-  hashTable := NEW (HashTable, 2048);
+  next_t    : T;
+  info      : InfoBuffer;
+  hashMask  : INTEGER;
+  hashTable : HashTable;
+
+PROCEDURE Init() =
+  BEGIN
+    next_t    := NoVS + 1;
+    info      := NEW (InfoBuffer, 2000);
+    hashMask  := 2047; (* == 2^11-1 == 11 bits on *)
+    hashTable := NEW (HashTable, 2048);
+  END Init;
 
 PROCEDURE Get (t: T;  VAR(*OUT*) i: Info) =
   BEGIN
