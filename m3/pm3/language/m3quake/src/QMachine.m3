@@ -1171,15 +1171,13 @@ PROCEDURE Exec (t: T;  cmd: TEXT; args: REF ARRAY OF TEXT;
                 wd: TEXT := NIL;
                 env: REF ARRAY OF TEXT := NIL): INTEGER RAISES {Error} =
   VAR
-    stdin_file   : File.T;
-    stdout_file  : File.T;
-    stderr_file  : File.T;
+    stdin_file, stdout_file, stderr_file: File.T := NIL;
     n            : INTEGER := -1;
     handle       : Process.T;
     buffer       : ARRAY [0 .. 4095] OF CHAR;
     nb           : INTEGER;
     rd           : FileRd.T;
-    hwChildOut, hrSelf : Pipe.T;
+    hwChildOut, hrSelf : Pipe.T := NIL;
   BEGIN
     (* finally, execute the command *)
     TRY
@@ -1189,7 +1187,7 @@ PROCEDURE Exec (t: T;  cmd: TEXT; args: REF ARRAY OF TEXT;
                                   access := FS.AccessOption.ReadOnly);
       END;
       IF stdout # NIL THEN
-        IF (Text.GetChar(stdout, 0) = '>') 
+        IF (Text.Length(stdout) >= 2 AND Text.GetChar(stdout, 0) = '>') 
           AND (Text.GetChar(stdout, 1) = '>') THEN
           stdout_file := FS.OpenFile(Text.Sub(stdout, 2), FALSE);
           EVAL NARROW(stdout_file, RegularFile.T).seek(RegularFile.Origin.End, 
@@ -1199,7 +1197,7 @@ PROCEDURE Exec (t: T;  cmd: TEXT; args: REF ARRAY OF TEXT;
         END;
       END;
       IF stderr # NIL THEN
-        IF (Text.GetChar(stderr, 0) = '>') 
+        IF (Text.Length(stderr) >= 2 AND Text.GetChar(stderr, 0) = '>') 
           AND (Text.GetChar(stderr, 1) = '>') THEN
           stderr_file := FS.OpenFile(Text.Sub(stderr, 2), FALSE);
           EVAL NARROW(stderr_file, RegularFile.T).seek(RegularFile.Origin.End,
@@ -1212,7 +1210,12 @@ PROCEDURE Exec (t: T;  cmd: TEXT; args: REF ARRAY OF TEXT;
         IF t.writer = Stdio.stdout THEN
           VAR dumb: File.T; 
           BEGIN
-            Process.GetStandardFileHandles(dumb, stdout_file, stderr_file);
+            IF stdout_file = NIL THEN
+              Process.GetStandardFileHandles(dumb, stdout_file, dumb);
+            END;
+            IF stderr_file = NIL THEN
+              Process.GetStandardFileHandles(dumb, dumb, stderr_file);
+            END;
           END;
         ELSE
           Pipe.Open (hr := hrSelf,  hw := hwChildOut);
