@@ -10,6 +10,7 @@ readonly EXCEPTION_IMPL = {
   "AIX386"     : "ex_frame",
   "AP3000"     : "ex_frame",
   "ARM"        : "ex_frame",
+  "BSDI4"      : "ex_frame",
   "DS3100"     : "ex_stack",  % has a working stack walker
   "FBSD_ALPHA" : "ex_frame",
   "FreeBSD"    : "ex_frame",
@@ -34,6 +35,7 @@ readonly EXCEPTION_IMPL = {
   "SPARC"      : "ex_frame",
   "SUN3"       : "ex_frame",
   "SUN386"     : "ex_frame",
+  "Tru64v5"    : "ex_stack",  % has a working stack walker
   "UMAX"       : "ex_frame",
   "VAX"        : "ex_frame"
 }

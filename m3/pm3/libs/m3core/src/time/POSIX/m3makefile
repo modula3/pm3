@@ -12,6 +12,7 @@ readonly _DateImpls = {
   "AIX386"     : "DateBsd",
   "AP3000"     : "DateBsd",
   "ARM"        : "DateBsd",
+  "BSDI4"      : "DateBsd",
   "DS3100"     : "DateBsd",
   "DS3100_OSF" : "DateBsd",
   "FBSD_ALPHA" : "DateBsd",
@@ -37,6 +38,7 @@ readonly _DateImpls = {
   "SPARC"      : "DateBsd",
   "SUN3"       : "DateBsd",
   "SUN386"     : "DateBsd",
+  "Tru64v5"    : "DateBsd",
   "UMAX"       : "DateBsd",
   "VAX"        : "DateBsd"
 }

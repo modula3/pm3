@@ -7,12 +7,12 @@ import_lib("stdc++","/usr/lib")
 
 readonly proc cxx_source(x) is
   local fn = x & ".cxx"
-  local file = x & OBJ_ext
-  exec("g++ -g -c " & path_of(fn))
-  IMPORT_LIBS = [ file, IMPORT_LIBS ]
-  if NEED_OBJECTS
-    COMPILE_OBJECTS += file
-  end
+  local file = x & NAMING_CONVENTIONS[13]
+  local ret = 0
+  local cmd = ["g++", "-g", "-c", "-I../src/nsgmls/include", path_of(fn)]
+  if VERBOSE write(cmd) end
+  ret = exec(cmd)
+  import_obj(file)
 end
 
 cxx_source("m3sgml")

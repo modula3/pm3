@@ -1,0 +1,74 @@
+% 
+% Standard configuration file for Alpha running Tru64 V5.0.
+%
+
+readonly TARGET = "Tru64v5"
+
+include("COMMON")
+
+INSTALL_ROOT = "/usr/local/pm3"
+INSTALL_IMPLS = ""
+SKIP_M3GDB = "T"
+SKIP_GNUEMACS = "T"
+NO_ST_SPARE = "T"
+
+PLATFORM_SUPPORTS_MOTIF  = "T"
+PLATFORM_SUPPORTS_SHARED_LIB = ""  % does not seem to work with many libs
+%PLATFORM_SUPPORTS_LATEX = "T"
+
+setDefault("","")
+
+CC = [ "/bin/cc", "-ieee_with_no_inexact", "-c" ]
+LINK = [ "/bin/cc", "-ieee_with_no_inexact" ]
+MAKELIB = [ "/bin/ar", "crusl" ]
+MAKESHLIB = ["/usr/bin/ld", "-shared", "-expect_unresolved", "end" ,"-o"]
+ASM = [ LIB_USE & "/as", "-o"]         % Assembler
+FIXOBJ = [ LIB_USE & "/fixobj" ]
+
+GNU_CC = "cc"
+GNU_CFLAGS = []
+GNU_MAKE = "gmake"
+M3CC_MAKE = ["gmake", "BISON=yacc"]
+OPT_FLAG = []
+BOPT_FLAG = []
+DEBUG_FLAG = "-g"
+STATIC_FLAG = "-non_shared"
+LINK_suffix = ["-ldnet_stub", "-lm"]     % Tail of the link command
+% Do we need "-call_shared" or is it the default
+RPATH_FLAG = "-rpath"
+RPATH_prefix = ""
+
+proc m3_make_shared_lib (lib, objects, imported_libs) is
+  local lib_a    = format ("lib%s.a", lib)
+  local lib_so   = format ("lib%s.so", lib)
+  local cmd = [MAKESHLIB_CMD, lib_so, "-all", lib_a, "-none", objects,
+      "-ldnet_stub", "-lm", "-lc"]
+  if VERBOSE write(cmd, CR) end
+  return exec (cmd)
+end
+
+proc m3_assemble (source, object) is
+  local cmd = [ ASM_CMD, object, source ]
+  local ret = 0
+
+  if Options{"optimization"}[0]
+    cmd += [ "-O1" ]
+  else
+    cmd += [ "-O0" ]
+  end
+  if Options{"debuginfo"}[0] cmd += [ "-g" ] end
+
+  if VERBOSE write(cmd, CR) end
+  ret = exec (cmd)
+  if not equal(ret, 0) return ret end
+
+  cmd = [ FIXOBJ, "-o", object, source ]
+  if VERBOSE write(cmd, CR) end
+  return exec(cmd)
+end
+
+proc install_file (src, dest, mode) is
+  Note_install (src, dest)
+  local ret = exec (["installbsd", "-c", "-m", mode, src, dest])
+  if not equal(ret, 0) error("install failed with error code: ", ret) end
+end

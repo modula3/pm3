@@ -16,6 +16,7 @@ readonly _UnixPieces = {
   "AIX386"     : [ "aix-ps2-1-2" ],
   "AP3000"     : [ "ultrix-3-1.generic", "ultrix-3-1.AP3000" ],
   "ARM"        : [ "ultrix-3-1.generic", "ultrix-3-1.ARM" ],
+  "BSDI4"      : [ "bsdi-4" ],
   "DS3100"     : [ "ultrix-3-1.generic", "ultrix-3-1.DS3100" ],
   "DS3100_OSF" : [ "osf-1.generic", "osf-1.DS3100" ],
   "FBSD_ALPHA" : [ "fbsd-alpha" ],
@@ -41,6 +42,7 @@ readonly _UnixPieces = {
   "SPARC"      : [ "sunos-4-x" ],
   "SUN3"       : [ "ultrix-3-1.generic", "ultrix-3-1.SUN3" ],
   "SUN386"     : [ "ultrix-3-1.generic", "ultrix-3-1.SUN386" ],
+  "Tru64v5"    : [ "osf-1.generic", "osf-1.Tru64v5" ],
   "UMAX"       : [ "ultrix-3-1.generic", "ultrix-3-1.UMAX" ],
   "VAX"        : [ "ultrix-3-1.generic", "ultrix-3-1.VAX" ]
 }

@@ -21,8 +21,3 @@ Interface ("Ushm")
 Interface ("Usocket")
 Interface ("Uugid")
 Interface ("Uuio")
-Interface ("Uutmp")
-Interface ("Ustat")
-
-
-

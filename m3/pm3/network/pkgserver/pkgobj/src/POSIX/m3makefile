@@ -9,7 +9,7 @@
 
 readonly _osf_like_systems = {
   "ALPHA_OSF", "SPARC", "SOLsun", "SOLgnu", "HPPA", "LINUX", "LINUXELF",
-  "LINUXLIBC6"
+  "LINUXLIBC6", "Tru64v5"
 }
 
 if _osf_like_systems contains TARGET

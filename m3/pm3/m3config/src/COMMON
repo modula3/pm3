@@ -580,6 +580,7 @@ readonly Platforms = {
   "ALPHA_OSF" : [ "POSIX", "64BITS", "alpha-dec-osf1", "T"    ],
   "AP3000"    : [ "POSIX", "32BITS", "apollo68-bsd", ""       ],
   "ARM"       : [ "POSIX", "32BITS", "arm--riscos", ""        ],
+  "BSDI4"     : [ "POSIX", "32BITS", "i386-unknown-freebsdelf", "T" ],
   "DS3100"    : [ "POSIX", "32BITS", "decstation", "T"        ],
   "FBSD_ALPHA": [ "POSIX", "64BITS", "alpha-unknown-freebsd", "T" ],
   "FreeBSD"   : [ "POSIX", "32BITS", "i486-unknown-bsd", ""   ],
@@ -604,6 +605,7 @@ readonly Platforms = {
   "SPARC"     : [ "POSIX", "32BITS", "sparc-sun-sunos4.1", "T"],
   "SUN3"      : [ "POSIX", "32BITS", "m68k-sun-sunos4.1", ""  ],
   "SUN386"    : [ "POSIX", "32BITS", "i386-sun-sunos4.1", ""  ],
+  "Tru64v5"   : [ "POSIX", "64BITS", "alpha-dec-osf1", "T"    ],
   "UMAX"      : [ "POSIX", "32BITS", "encore-bsd", ""         ],
   "VAX"       : [ "POSIX", "32BITS", "vax-dec-ultrix", ""     ]
 }

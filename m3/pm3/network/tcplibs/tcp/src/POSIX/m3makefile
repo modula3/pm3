@@ -10,6 +10,7 @@ implementation("TCP")
 interface("TCPHack")
 
 if equal (TARGET, "ALPHA_OSF") or equal(TARGET, "DS3100")
+or equal (TARGET, "Tru64v5")
    implementation("TCPHack")
 else
    implementation("TCPHackNull")

@@ -15,6 +15,7 @@ readonly _FloatPieces = {
   "AIX386"     : _float_le,
   "AP3000"     : _float_le,
   "ARM"        : _float_le,
+  "BSDI4"      : _float_le,
   "DS3100"     : [ "IEEE", "IEEE-le", "DS3100" ],
   "DS3100_OSF" : [ "IEEE", "IEEE-le", "DS3100" ],
   "FBSD_ALPHA" : _float_le,
@@ -40,6 +41,7 @@ readonly _FloatPieces = {
   "SPARC"      : [ "IEEE", "IEEE-be", "SPARC" ],
   "SUN3"       : _float_be,
   "SUN386"     : [ "IEEE", "IEEE-le", "SUN386" ],
+  "Tru64v5"    : _float_le,
   "UMAX"       : _float_le,
   "VAX"        : [ "VAX" ]
 }
