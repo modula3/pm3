@@ -1,0 +1,151 @@
+<HTML>
+<HEAD>
+<TITLE>GNU emacs support</TITLE>
+</HEAD>
+<BODY>
+
+<H1>GNU emacs support</H1>
+<P>
+
+SRC Modula-3 comes with a mode for editing Modula-3 programs under
+<TT>gnuemacs</TT>.  Here is a list of the main features this mode
+provides:
+
+<UL>
+<LI> Indenting/pretty-printing
+<P>
+
+Modula-3 mode provides two methods of formatting code, one ``batch''
+and one ``interactive.'' The batch method invokes the program <A
+HREF="pprint.html"><TT>m3pp</TT></A>, which takes a program unit such
+as a procedure and formats it completely. The <TT>gnuemacs</TT>
+commands (and their keyboard shortcuts) that invoke <A
+HREF="../../pp/src"><TT>m3pp</TT></A> are: <P> <DL> <DT> <TT>M-x
+m3::pp-buffer</TT> (C-c b) <DD> Pretty prints the current buffer. <P>
+<DT> <TT>M-x m3::pp-region</TT> (C-c r) <DD> Pretty-prints the code
+between mark and point. <P> <DT> <TT>M-x m3::pp-unit</TT> (C-c u) <DD>
+Pretty-prints the ``unit'' containing the cursor. (A unit is a
+top-level construct such as <TT>CONST</TT>, <TT>TYPE</TT>,
+<TT>VAR</TT>, or <TT>PROCEDURE</TT>.) </DL> <P>
+
+The other method of formatting text is a more traditional one for
+<TT>gnuemacs</TT>, in which the language mode provides a key that
+indents the current line appropriately.  In keeping with the
+convention used in modes for other languages such as Lisp and C, the
+key used is <TT>TAB</TT>.  Typing <TT>TAB</TT> on a line indents the
+current line in a way that is (we hope) appropriate given the lines
+that precede it.
+<P>
+
+The two formatting methods are not mutually exclusive; perhaps
+you like the way <TT>m3pp</TT> lines up columns in declarations,
+but you also like to keep things indented while you type.  You
+can use the electric mode to get things close, then invoke
+<A HREF="pprint.html"><TT>m3pp</TT></A> when you're done. 
+<P>
+
+<LI> Avoidance of typing
+<P>
+
+Modula-3 mode offers some aid if you don't like typing a lot of
+uppercase keywords.  The <TT>TAB</TT> actually serves double
+duty; it not only indents the current line, but when invoked at
+the end of a word, it attempts to complete the current word as a
+keyword.  For example <TT>b TAB</TT> expands the <TT>b</TT> to
+<TT>BEGIN</TT>, provided the <TT>b</TT> appears in a context where 
+<TT>BEGIN</TT> may be a valid keyword.  There are some fairly extensive
+rules governing the contexts in which a given keyword is a valid
+completion; the net result is that it is seldom necessary to type
+more than one letter to get the correct completion.  If you
+specify a non-unique prefix of a set of keywords, it chooses the
+first in an ordering intended to capture frequency of use; it
+also presents the other choices, and typing <TT>TAB</TT> repeatedly
+cycles through these choices.
+<P>
+
+A pair of related features are ``<TT>END</TT>-completion'' and
+``<TT>END</TT>-matching.''  If the elisp variable
+<TT>m3::electric-end</TT> is set to <TT>'all</TT>, completing the
+keyword <TT>END</TT> has the additional effect of finding the
+construct that the <TT>END</TT> completes.  If that construct is a
+an interface, module, or procedure, it fills in the name of the
+completed construct after the <TT>END</TT>; otherwise, it inserts a
+comment containing the keyword of the completed construct.  If
+<TT>m3::electric-end</TT> is <TT>'proc-mod</TT>, it only fills in
+real names, never keyword comments.  Independently, a non-<TT>nil</TT>
+value of the elisp variable <TT>m3::blink-end-matchers</TT> causes
+completion of <TT>END</TT> to blink the cursor briefly at the
+beginning of the completed construct.
+<P>
+
+<LI> Finding files
+<P>
+
+The key <TT>C-c i</TT> is bound to <TT>m3::show-interface</TT>, which
+expects the point to be in an interface name, and attempts to
+find that interface and display it in another window.
+It uses a built-in list of directories.  The
+default value of this list is the one used at SRC; other
+sites will probably need to modify this.
+<P>
+
+The key <TT>C-c m</TT> is bound to <TT>m3::show-implementation</TT>.  This
+attempts to find the module that implements the interface in the
+current buffer.  As distributed, this function relies on SRC-specific
+conventions. Obviously, this may not work outside of SRC, and
+<TT>m3::show-implementation</TT> may need to be re-implemented or abandoned.
+</UL>
+<P>
+
+To have the Modula-3 mode automatically invoked when visiting a
+Modula-3 source file, you should put in your <TT>.emacs</TT>:
+<P>
+
+<PRE>
+    (autoload 'modula-3-mode "modula3")
+    (setq auto-mode-alist 
+         (append '(("\\.ig$" . modula-3-mode)
+                   ("\\.mg$" . modula-3-mode)
+                   ("\\.i3$" . modula-3-mode)
+                   ("\\.m3$" . modula-3-mode))
+                   auto-mode-alist))	
+</PRE>
+<P>
+
+It is also convenient to have the lines:
+<PRE>
+    (setq completion-ignored-extensions
+       (append '(".mo" ".mx" ".mc" ".io" ".ix") completion-ignored-extensions))
+</PRE>
+so that you don't get the files with those extensions offered as
+possible completions.
+<P>
+
+Your system administrator may have inserted these lines in the default
+macro files for your system.
+<P>
+
+<H2>Tags</H2>
+<P>
+
+There is also a program to build tags file for Modula-3 programs:
+<TT>m3tags</TT>; see the manpage for the details.  When the system is
+installed, a tag file for the public interfaces is built.  To access
+it, you need in your <TT>.emacs</TT> (or in the system initialization file)
+the line:
+<PRE>
+    (visit-tags-table "LIB_USE/FTAGS")
+</PRE>
+where <TT>LIB_USE</TT> is the place where the Modula-3 libraries have
+been installed.
+<P>
+
+<PRE>
+Last modified on Mon Jul 22 12:51:08 PDT 1996 by heydon 
+     modified on Fri Apr 22 11:35:32 PDT 1994 by kalsow 
+     modified on Thu Jan  7 18:40:57 PST 1993 by muller 
+</PRE>
+
+<!--Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>

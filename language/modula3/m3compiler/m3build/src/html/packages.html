@@ -1,0 +1,71 @@
+<HTML>
+<HEAD>
+<TITLE>Packages</TITLE>
+</HEAD>
+<BODY>
+
+<H1>Packages</H1>
+
+<P>
+PM3 is distributed as a set of packages.  Each package
+is contained in a single directory, named after the package,
+which conforms to a standard structure.
+The top level directory should contain 
+a <TT>src</TT> subdirectory containing Modula-3 source
+files. The compiler, <TT>m3build</TT>,
+also creates a derived <I>platform</I> directory for each platform on 
+which the package
+is built. Besides the <TT>src</TT> and <I>platforms</I> subdirectories,
+a package may contain other packages to form a package hierarchy.
+These other packages are often tutorials or tests related to the
+containing package.
+
+<P>
+There are three primary types of packages: program, library, and other.
+An <I>other</I> package contains
+a collection of sources, often documentation; it builds nothing.
+A program package constructs a single executable program by compiling
+and linking the contents of a set of source packages.
+Similarly, a library package constructs a
+single library from a set of source packages.
+<P>
+
+The <TT>m3makefile</TT>, that describes the package, resides in the
+<TT>src</TT> subdirectory of the package. Although it is common for all the
+Modula-3 sources to also reside in the src directory, they may be
+distributed in a more complex directory structure rooted at <TT>src</TT>.
+<P>
+The <TT>m3makefile</TT> for a source package simply lists the pieces of
+source that are to be included in programs or libraries that include the
+source package. It ends with a single <TT>OtherPackage()</TT> invocation.
+<P>
+The <TT>m3makefile</TT> for a program package names the sources
+needed to build the program, and the packages that it uses to
+satisfy its imports.  It ends with a
+single <TT>program()</TT> or <TT>Program()</TT> invocation.
+See the <A HREF="example.html">example</A>.
+<P>
+The <TT>m3makefile</TT> for a library package names the sources to be
+included in the library, and the packages that it uses to
+satisfy its imports.  It ends with a single
+<TT>library()</TT> or <TT>Library()</TT> invocation.
+<P>
+
+Note that as in a program, all the imports of a package must be
+satisfied.  If a package A builds a library and any of the objects in
+that library import interfaces from another library package B, then
+<TT>import(B)</TT> must be specified in A's <TT>m3makefile</TT>.
+
+<P>
+A package, once compiled with <TT>m3build</TT>, may have its
+exported (visible) files installed in a
+package repository with <A HREF="../../../m3ship/src">m3ship</A>.
+By default, <TT>m3ship</TT> installs packages in the public
+repository (e.g. <TT>/usr/local/lib/m3/pkg</TT>).
+Note that on some systems, you must have special privileges to install
+public packages.
+<P>
+
+<!--Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>

@@ -1,0 +1,132 @@
+CONST 
+  BoxBorder = 4, 
+  Hue = (Color.BlueHue + Color.CyanHue) / 2, 
+  FrameSz = 20, 
+  BgColor = Color.FromHSV(Color.YellowHue, 
+                          0.5, 0.7);
+
+PROC c := Blue(v) IS 
+  c := Color.FromHSV(Hue, v, 1) 
+END;
+
+PROC FillAndStroke(c) IS 
+  SAVE PS IN PS.SetColor(c); PS.Fill() END; 
+  PS.Stroke() 
+END;
+
+PROC Frame(sw, ne) IS 
+  Rect.Draw(R2.Minus(sw, (FrameSz, FrameSz)), 
+            R2.Plus(ne, (FrameSz, FrameSz))); 
+  FillAndStroke(BgColor) 
+END;
+
+UI PointTool(Frame);
+
+PROC ne := NE(c, txt) IS 
+  VAR w, h IN 
+    w, h := 
+      TextList.Size(TextList.FromText(txt)); 
+    ne := 
+      R2.Plus(c, 
+              (w / 2 + BoxBorder, 
+               h / 2 + BoxBorder)) 
+  END 
+END;
+
+PROC BoxC(c, txt) IS 
+  VAR ne IN 
+    ne := NE(c, txt); BoxCC(c, ne, txt) 
+  END 
+END;
+
+UI TextTool(BoxC);
+
+PROC BoxEast(p, txt) IS 
+  VAR w, h, c IN 
+    w, h := 
+      TextList.Size(TextList.FromText(txt)); 
+    c := R2.PlusX(p, -(w / 2 + BoxBorder)); 
+    BoxC(c, txt) 
+  END 
+END;
+
+UI TextTool(BoxEast);
+
+PROC BoxWest(p, txt) IS 
+  VAR w, h, c IN 
+    w, h := 
+      TextList.Size(TextList.FromText(txt)); 
+    c := R2.PlusX(p, w / 2 + BoxBorder); 
+    BoxC(c, txt) 
+  END 
+END;
+
+UI TextTool(BoxWest);
+
+PROC BoxCEast(c, e, txt) IS 
+  VAR ne IN 
+    ne := NE(c, txt); 
+    IF 
+      VAR ne2 = Geometry.HorVer(ne, e) IN 
+        BoxCC(c, ne2, txt) 
+      END 
+    FI 
+  END 
+END;
+
+UI TextTool(BoxCEast);
+
+PROC BoxCC(c, ne, txt) IS 
+  Rect.DrawC(c, ne); 
+  FillAndStroke(Blue(0.6)); 
+  TypeLinesC.Center(c, txt) 
+END;
+
+PROC Cmd0() IS 
+  IF 
+    VAR 
+      a ~ (-134.0566, -25.030142), b ~ (124.21063, 147.90538), 
+      c = (-9.694486, 136.33688), d ~ (-75.08494, 86.340324), 
+      e ~ (55.695965, 86.340324), f ~ (-9.694486, 36.343758), 
+      g ~ (82.55463, 86.340324), h ~ (82.55463, -13.652805), 
+      i ~ (46.957676, -13.652805), j ~ (-16.359444, 86.340324), 
+      k ~ (-3.0295274, 86.340324), l = (73.46604, 170.66006), 
+      m ~ (-134.0566, 85.709274), n ~ (124.21063, 89.501724), 
+      o = (62.105316, 147.90538), p = (63.62008, -25.030142) 
+    IN 
+      d HOR e AND 
+      d HOR g AND 
+      i HOR h AND 
+      c VER f AND 
+      g VER h AND 
+      Geometry.CongX(d, f, f, e) AND 
+      Geometry.CongY(c, d, d, f) AND 
+      Geometry.CongY(d, f, f, i) AND 
+      j HOR d AND 
+      e HOR k AND 
+      Geometry.CongX(j, f, f, k) AND 
+      m VER a AND 
+      n VER b AND 
+      o HOR b AND 
+      a HOR p -> 
+        PS.SetWidth(1.5); 
+        Frame(a, b); 
+        PS.MoveTo(c); 
+        PS.LineTo(d); 
+        PS.LineTo(f); 
+        PS.LineTo(e); 
+        PS.LineTo(c); 
+        PS.LineTo(f); 
+        PS.LineTo(i); 
+        PS.MoveTo(g); 
+        PS.LineTo(h); 
+        PS.Stroke(); 
+        PS.SetFont("Helvetica-Bold", PS.Medium); 
+        BoxEast(j, "AssocClass.Group"); 
+        BoxWest(k, "UnsafeAssoc.Group"); 
+        BoxWest(i, "MUTEX"); 
+        BoxCEast(c, l, "Association.Group"); 
+        BoxCEast(f, l, "AssocClass.GroupPrivate") 
+    END 
+  FI 
+END;

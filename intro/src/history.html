@@ -1,0 +1,71 @@
+<HTML><HEAD>
+<TITLE>History</TITLE>
+</HEAD><BODY>
+<H1>History</H1>
+
+<P>
+The Modula-3 distribution of Ecole Polytechnique de Montreal is directly
+based on SRC Modula-3 release 3.6, which appeared in early 1996.
+
+<H2>SRC Modula-3</H2>
+<P>
+Version 1.0 was the first public release of SRC Modula-3. It contained the
+compiler, runtime and a few tools. The compiler generated intermediate C code
+and was only tested on VAX Ultrix 3.1. Subsequent 1.x releases were ported
+to several platforms and the libraries reorganized.
+
+<P>
+Version 2.0 implements the twelve language changes proposed after the initial
+trial period. The compiler and code generator were rearranged and improved.
+With subsequent 2.x releases, several new platforms were supported and
+significant new packages appeared (FormsVBT, Zeus...).
+
+<P>
+Version 3.0 is the first public release of the gcc based native code
+generator m3cc, Modula-3 aware debugger m3gdb, and smart recompilation
+system m3build. The standard library was cleaned up after a close
+review by the interface police. A Windows NT port appeared as well as
+new significant packages such as Network objects and Obliq.
+Subsequent 3.x releases brought bug fixes, more platforms supported,
+speed tuning, and several new packages such as Stable Objects and Anim3D.
+
+<H2>PM3</H2>
+<P>
+With release 3.6, in early 1996, DEC SRC Modula-3 reached a mature state.
+Bill Kalsow, responsible for the compiler, left DEC SRC around that time
+and later joined Critical Mass, a commercial Modula-3 vendor. Since then,
+a number of advanced Modula-3 projects at DEC SRC continued in areas such 
+as 3D animation, static verification, constraint based geometrical editor, 
+and distributed
+applications. In many other areas, including the compiler and base libraries,
+few updates were made at DEC SRC. Moreover, these updates are available 
+separately from the release and must be integrated manually.
+
+<P>
+At the same time, several contributions appeared from Modula-3 programmers
+around the world and included several bug fixes, enhancements, and
+new libraries or tools such as a more platform independent version
+of Pickle, an integrated code generator for Linux ELF,
+a simplified single process version of m3build-m3-quake,
+a port of SRC Modula-3 to NT386 using gnu-win32, and several new
+packages such as CVSsup, M3COCO, and M3 TXL.
+
+<P>
+After consultations with several key academic Modula-3 programmers with 
+similar needs, including Peter Klein, Blair McIntyre, and Richard Watts,
+it was decided to create a new distribution based on SRC Modula-3.
+The new distribution is under CVS version control and is
+accessible to remote maintainers.
+
+<P>
+The first public release of PM3 included SRC release 3.6 with all patches 
+applied, a fast integrated Linux ELF code generator, a simplified
+m3build-m3-quake with accordingly simplified templates for platform
+customization, m3cc and m3gdb based on newer versions of gcc and gdb,
+full platform support for NT386GNU through gnu-win32,
+a simplified bootstrap and build process, a directory hierarchy
+to organize the 130+ packages, SGML/HTML based documentation,
+and an automated release procedure to produce updated sources, bootstraps
+and binaries every week.
+
+</BODY></HTML>

@@ -1,0 +1,42 @@
+<HTML><HEAD>
+<TITLE>A Simple Distributed Graphics Editor</TITLE>
+</HEAD>
+<BODY>
+<DIV CLASS=HEAD>
+<SPAN CLASS=AUTHOR>Michel Dagenais</SPAN>
+<SPAN CLASS=COPYRIGHT>Michel Dagenais, GNU General Public License, 1998</SPAN>
+<ADDRESS>
+michel.dagenais@polymtl.ca<BR>
+Ecole Polytechnique<BR>
+C.P. 6079, Succ. Centre-Ville<BR>
+Montreal, Quebec, H3C 3A7</ADDRESS>
+<SPAN CLASS=DATE>18 January 1998</SPAN>
+<SPAN CLASS=KEYWORD>distributed</SPAN>
+<SPAN CLASS=KEYWORD>persistent</SPAN>
+<SPAN CLASS=KEYWORD>graphics</SPAN>
+<SPAN CLASS=KEYWORD>editor</SPAN>
+</DIV>
+<H1>A Simple Distributed Graphics Editor</H1>
+
+<DIV CLASS=ABSTRACT>
+<P>This simple shared graphics editor is a good example of
+network and stable objects usage. It enables simultaneous editing
+of a <I>board</I> by several users.
+</DIV>
+
+<DL>
+<DT><A REL=INCLUDE HREF="../board/src">board</A><DD>
+    Base library used by board server and client.
+<DT><A REL=INCLUDE HREF="../boardclient/src">boardclient</A><DD>
+    Client graphical editor, exchanging update information with the
+    connected board server.
+<DT><A REL=INCLUDE HREF="../boardserver/src">boardserver</A><DD>
+    Board server exchanging update information with connected clients,
+    and managing the storage of <I>boards</I>.
+<DT><A REL=INCLUDE HREF="../calendar/src">calendar</A><DD>
+    A simple shared calendar application based on the board library
+    and boardserver.
+</DL>
+
+</BODY>
+</HTML>

@@ -1,0 +1,49 @@
+<HTML>
+<HEAD>
+<TITLE>Zeus animations</TITLE>
+</HEAD>
+<BODY>
+
+<H1>Zeus animations</H1>
+<P>
+
+The following procedures support building Zeus animations.
+<P>
+
+<B> zume(X) </B>  
+      run the Zeus event processor m3zume on the source file <TT>X.evt</TT>
+      to produce Modula-3 sources and other resources needed to build an
+      animation.  The resulting sources are included in any subsequent
+      compilation.
+<P>
+
+<B> zume3D(X) </B>
+      like <TT>zume</TT> but with the additional support for using
+      the 3D libraries.
+<P>
+
+<B> oblume(X,O) </B>
+      Like <TT>zume</TT>, runs the Zeus event processor on <TT>X.evt</TT>
+      and also bundles the source file <TT>O.obl</TT> which is assumed
+      to contain Obliq code.
+<P>
+
+<B> oblume3D(X,O) </B>
+      like <TT>oblume</TT> but with the additional support for using
+      the 3D libraries.
+<P>
+
+<B> junozume(X,V) </B>
+     Runs the Zeus event processor on <TT>X.evt</TT> to produce stubs
+     to connect to a Juno(1) animation server run with the <B>-zeus</B>
+     option. There can be at most one Juno view per Zeus animation.
+     <TT>V</TT> is the name of the view installed in the Zeus <I>Views</I>
+     menu. See the Juno(1) man page for a more complete
+     description of how to write a Juno animation view for
+     Zeus. See the README file in the junozeus package
+     for instructions on how to run an example view.
+<P>
+
+<!--Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>

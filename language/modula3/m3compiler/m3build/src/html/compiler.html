@@ -1,0 +1,152 @@
+<HTML>
+<HEAD>
+<TITLE>A tour of the compiler internals</TITLE>
+</HEAD>
+<BODY>
+
+<H1>A tour of the compiler internals</H1>
+<P>
+
+This section contains a brief introduction to the internal structure
+of the compiler.  This introduction is neither
+comprehensive nor tutorial; it is merely intended as a stepping stone
+for the courageous.
+<P>
+
+The compiler has undergone much evolution.  It started as a project to
+build a simple and easy to maintain compiler.  Somewhere along the way
+we decided to compile Modula-3.  Much later we decided to generate C.
+Now it generates native code directly.
+<P>
+
+The initial observation was that most compilers' data structures were
+visible and complex.  This situation makes it necessary to understand
+a compiler in its entirety before attempting non-trivial enhancements
+or bug fixes.  By keeping most of the compiler's primary data
+structures hidden behind opaque interfaces, we hoped to avoid this
+pitfall.  So far, bugs have been easy to find.  During early
+development, it was relatively easy to track the weekly language
+changes.
+<P>
+
+The compiler is decomposed by language feature rather than the more
+traditional compiler passes.  We attempted to confine each language
+feature to a single module.  For example, the parsing, name binding,
+type checking and code production for each statement is in its own
+module.  This separation means that only the <TT>CaseStmt</TT> module
+needs to know what data structures exist to implement
+<TT>CASE</TT> statements.
+Other parts of the compiler need only know that the <TT>CASE</TT>
+statement is a statement.  This fact is captured by the object subtype
+hierarchy.  A <TT>CaseStmt.T</TT> is a subtype of a <TT>Stmt.T</TT>.
+<P>
+
+The main object types within the compiler are: values, statements,
+expressions, and types.  ``Values'' is a misnomer; ``bindings'' would
+be better.  This object class include anything that can be named:
+modules, procedures, variables, exceptions, constants, types,
+enumeration elements, record fields, methods, and procedure formals.
+Statements include all of the Modula-3 statements.  Expressions include
+all the Modula-3 expression forms that have a special syntax.  And
+finally, types include the Modula-3 types.
+<P>
+
+The compiler retains the traditional separation
+of input streams, scanner, symbol table, and output stream.
+<P>
+
+The compilation process retains the usual phases.  Symbols are scanned
+as needed by the parser.  A recursive descent parser reads the entire
+source and builds the internal syntax tree.  All remaining passes
+simply add decorations to this tree.  The next phase binds all
+identifiers to values in scopes.
+Modula-3 allows arbitrary forward references so it is necessary
+to accumulate all names within a scope before binding any identifiers
+to values.  The next phase divides the types into structurally
+equivalent classes.  This phase actually occurs in two steps.  First,
+the types are divided into classes such that each class will have a
+unique C representation.  Then, those classes are refined into what
+Modula-3 defines as structurally equivalent types.  After the types
+have been partitioned, the entire tree is checked for type errors.
+Finally, the IL is emitted.
+<P>
+
+The intermediate language is defined as a sequence of calls on an
+<TT>M3CG.T</TT> object.  In the compiler front end there is a thin
+veneer interface, <TT>CG</TT>, that makes the actual calls.  The veneer
+converts between the bit-level addressing used in the front end
+and the byte-level addressing used by the back ends.  There are
+several implementations of <TT>M3CG.T</TT>.  The one that we
+currently use is <TT>M3CG_Wr</TT>.  It converts the stream of
+calls into a parseable stream of ASCII characters.
+<P>
+
+The current back end is constructed as <TT>gcc</TT> front end.
+It reads the <TT>M3CG</TT> output of the front end and produces
+the tree structures needed by <TT>gcc</TT>'s back end.
+<P>
+
+The front end is in the <TT>compiler</TT> package.
+Within that package the following directories exist:
+<PRE>
+    builtinOps    ABS, ADR, BITSIZE, ...
+    builtinTypes  INTEGER, CHAR, REFANY, ...
+    builtinWord   Word.And, Word.Or, ...
+    exprs         +, -, [], ^, AND, OR, ...
+    main          main program
+    misc          scanner, symbol tables, ...
+    stmts         :=, IF, TRY, WHILE, ...
+    types         ARRAY, BITS FOR, RECORD, ...
+    values        MODULE, PROCEDURE, VAR, ...
+</PRE>
+<P>
+
+The intermediate language is in the <TT>m3cg</TT> package.
+<P>
+
+The back end is in the <TT>m3cc</TT> package.  The single file that
+implements the <TT>M3CG</TT> reader is <TT>gcc/m3.c</TT>.
+<P>
+
+<H2>Linking</H2>
+
+<P>
+SRC Modula-3 uses a special two-phase linker.
+The first phase of the linker checks that all version stamps are
+consistent. It then generates in <I>m3main</I>
+declarations for the runtime type structures,
+and initialization code for the collection of objects to be linked.  
+The second phases calls the host
+system's linker to actually link the program.
+<P>
+The information needed by the first phase is generated by the compiler
+in a file ending in <TT>.m3x</TT>.
+For every symbol <TT>X.Z</TT> exported or imported by a module, the
+compiler generates a version stamp.
+These stamps are used to ensure that
+all modules linked into a single program agree on the type of <TT>X.Z</TT>.
+The linker will refuse to link programs with inconsistent
+version stamps.
+
+<H2>File extensions</H2>
+<P>
+SRC Modula-3 uses files with the following customizable suffixes:
+
+<DL>
+<DT>.i3 (.m3)<DD>Modula-3 interface (module) sources.
+<DT>.ig (.mg)<DD>generic interface (module) sources.
+<DT>.ic (.mc)<DD><TT>M3CG</TT> intermediate language files.
+<DT>.is (.ms)<DD>intermediate assembly files.
+<DT>.io (.mo)<DD>object files.
+<DT>.c<DD>C source files.
+<DT>.h<DD>C header files.
+<DT>.s<DD>foreign assembly source files.
+<DT>.o<DD>foreign object files.
+<DT>.a<DD>library archives.
+<DT>.m3x<DD>pre-linker information including version stamps.
+</DL>
+
+<!--Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>
+

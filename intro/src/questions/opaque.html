@@ -1,0 +1,108 @@
+<TITLE>What is the purpose of BRANDED and REVEAL?</TITLE>
+<H1>What is the purpose of BRANDED and REVEAL?</H1>
+<P>
+Allan Heydon writes:
+<P>
+These two keywords are necessary because of two quite different
+features of the language. REVEAL is necessary because Modula-3 has
+opaque types and partial revelations. BRANDED is necessary because the
+Modula-3 type system uses structural equivalence instead of name
+equivalence.
+<P>
+In Modula-3, the concrete structure of a type can be hidden from
+clients in an interface. A common idiom is:
+<P>
+<PRE><TT>
+  INTERFACE I;
+
+  TYPE
+    T &lt;: TPublic;
+    TPublic = OBJECT
+      (* fields *)
+    METHODS
+      (* methods *)
+    END;
+
+  END I.</TT></PRE>
+<P>
+The line &quot;T &lt;: TPublic&quot; introduces the type &quot;I.T&quot; as an opaque subtype
+of the type &quot;I.TPublic&quot;. It does not reveal any of the other details
+of the concrete structure of &quot;I.T&quot; to clients. Hence, &quot;I.T&quot; is said to
+be an <i>opaque type</i>. Put another way, the structure of &quot;I.T&quot; is
+only partially revealed to clients.
+<P>
+In addition, it is possible to reveal more of &quot;I.T&quot;'s structure in
+other interfaces, like this:
+<P>
+<PRE><TT>
+  INTERFACE IRep;
+
+  IMPORT I;
+
+  TYPE
+    TPrivate = I.TPublic OBJECT
+      (* more fields *)
+    METHODS
+      (* more methods *)
+    END;
+
+  REVEAL
+    I.T &lt;: TPrivate;
+
+  END IRep.</TT></PRE>
+<P>
+This interface declares a type &quot;IRep.TPrivate&quot; that is a subtype of
+&quot;I.TPublic&quot;. It also asserts that &quot;I.T&quot; is also a subtype of
+&quot;IRep.TPrivate&quot;. A client that imports only the interface &quot;I&quot; has
+access only to the fields and methods in &quot;I.TPublic&quot; when accessing an
+object of type &quot;I.T&quot;, but a client that imports both &quot;I&quot; and &quot;IRep&quot;
+also has access to the fields and methods in &quot;IRep.TPrivate&quot; when
+accessing an object of type &quot;I.T&quot;.
+<P>
+The &quot;REVEAL&quot; statement in this module simply asserts a subtype
+relation. Unlike type declarations, revelations introduce no new
+names. Hence, we could not have used the &quot;TYPE&quot; keyword in this case
+because the type &quot;I.T&quot; has already been declared once (albeit
+opaquely) in interface &quot;I&quot;.
+<P>
+Every opaque type must have a complete revelation. A complete
+revelation has the form:
+<P>
+<PRE><TT>
+  REVEAL
+    T = TConcrete;</TT></PRE>
+<P>
+The revelation specifies that &quot;TConcrete&quot; is the concrete type for the
+opaque type &quot;T&quot;.
+<P>
+The Modula-3 type system uses structural equivalence instead of name
+equivalence. This means that two types are equal iff they have the
+same structure. One consequence of this rule is that two types you
+might intend to be distinct may actually be equal. This can have
+unintended effects on the run-time behavior of your program. For
+example, if both types that you expect to be distinct are actually
+structurally equivalent and the two types guard two arms of a TYPECASE
+statement, the arm for the second type will never be taken.
+<P>
+If you want to avoid accidental equalities between two types, you can
+brand one (or both) of them with the BRANDED keyword. A branded type
+is equivalent to no other type, even if it is structurally equivalent
+to some other type. In essence, the BRANDED keyword adds a bit of
+virtual structure to the type that guarantees it will be distinct from
+every other type.
+<P>
+The Modula-3 syntax allows you to supply a text constant as a name for
+the brand. If you don't supply an explicit brand, the compiler will
+make one up; however, the implicit brand invented by the compiler is
+not guaranteed to be chosen deterministically. Hence, explicit brands
+are useful if you are communicating types from one process to another
+and if you want to be sure that the branded type written by one
+process matches the branded type read in by the other.
+<P>
+Any two opaque types in a program must be distinct. Otherwise, it
+would be too easy for clients to accidentally trip over type
+collisions like the TYPECASE example mentioned above. To enforce the
+restriction that all opaque types are distinct, the language requires
+that the type &quot;TConcrete&quot; in the complete revelation above must be a
+branded type.
+<P>

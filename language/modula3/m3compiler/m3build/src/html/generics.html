@@ -1,0 +1,157 @@
+<HTML>
+<HEAD>
+<TITLE>Generic support</TITLE>
+</HEAD>
+<BODY>
+
+<H1>Generic support</H1>
+<P>
+
+SRC Modula-3 includes both <A HREF="#instantiators">quake functions</A>
+you can use in your m3makefile for instantiating generics, and
+<A HREF="#basicTypes">basic type interfaces</A> you can supply as
+arguments to those functions.
+
+<H2><A NAME="instantiators">Generic Instantiation Functions</A></H2>
+
+Many of the packages that export generic interfaces and modules
+also define m3build procedures that will instantiate
+the generic source and add it to the list of Modula-3 sources
+to be compiled. The instantiated interfaces and modules are created in
+the build directory, so they won't clutter up your source directory.
+<P>
+
+<B> array_sort(nm, elt) </B>
+       instantiates the <A HREF="../../../m3sources/html/sort/src/ArraySort.ig.html"><TT>ArraySort</TT></A> generics to produce
+       <TT>nmArraySort.i3</TT> and  <TT>nmArraySort.m3</TT> which implement
+       a sort for arrays of <TT>elt.T</TT> values.
+<P>
+
+<B> Array_sort(nm, elt) </B>
+       like <TT>array_sort</TT>, but also makes the interface available
+       to importers outside the current package.
+<P>
+
+<B> list(nm, elt) </B>
+       instantiates the <A HREF="../../../m3sources/html/list/src/List.ig.html"><TT>List</TT></A> generics to produce
+       <TT>nmList.i3</TT> and  <TT>nmList.m3</TT> which implement
+       linked lists of <TT>elt.T</TT> values.
+<P>
+
+<B> List(nm, elt) </B>
+       like <TT>list</TT>, but also makes the interface available
+       to importers outside the current package.
+<P>
+
+<B> list_sort(nm, elt) </B>
+       instantiates the <A HREF="../../../m3sources/html/list/src/ListSort.ig.html"><TT>ListSort</TT></A> generics to produce
+       <TT>nmListSort.i3</TT> and  <TT>nmListSort.m3</TT> which implement
+       a sorting procedure for lists of <TT>elt.T</TT> values.  This
+       procedure assumes that <TT>list(nm,elt)</TT> has been called.
+<P>
+
+<B> List_sort(nm, elt) </B>
+       like <TT>list_sort</TT>, but also makes the interface available
+       to importers outside the current package.
+<P>
+
+<B> pqueue(nm, elt) </B>
+       instantiates the <A HREF="../../../m3sources/html/pqueue/src/PQueue.ig.html"><TT>PQueue</TT></A> generics to produce
+       <TT>nmPQ.i3</TT> and  <TT>nmPQ.m3</TT> which implement
+       a priority queue of <TT>elt.T</TT> values.
+<P>
+
+<B> Pqueue(nm, elt) </B>
+       like <TT>pqueue</TT>, but also makes the interface available
+       to importers outside the current package.
+<P>
+
+<B> sequence(nm, elt) </B>
+       instantiates the <A HREF="../../../m3sources/html/sequence/src/Sequence.ig.html"><TT>Sequence</TT></A> generics to produce
+       <TT>nmSeq.i3</TT>, <TT>nmSeqRep.i3</TT> and
+       <TT>nmSeq.m3</TT> which implement
+       a sequence of <TT>elt.T</TT> values.
+<P>
+
+<B> Sequence(nm, elt) </B>
+       like <TT>sequence</TT>, but also makes the interfaces available
+       to importers outside the current package.
+<P>
+
+<B> sorted_table(nm, key, value) </B>
+       instantiates the <A HREF="../../../m3sources/html/sortedtable/src/SortedTable.ig.html"><TT>SortedTable</TT></A> generics to produce
+       <TT>nmSortedTbl.i3</TT> and <TT>nmSortedTbl.m3</TT> which implement
+       a sorted table mapping from type <TT>key.T</TT> to <TT>value.T</TT>.
+<P>
+
+<B> Sorted_table(nm, key, value) </B>
+       like <TT>sorted_table</TT>, but also makes the interface available
+       to importers outside the current package.
+<P>
+
+<B> table(nm, key, value) </B>
+       instantiates the <A HREF="../../../m3sources/html/table/src/Table.ig.html"><TT>Table</TT></A> generics to produce
+       <TT>nmTbl.i3</TT> and <TT>nmTbl.m3</TT> which implement
+       a table mapping from type <TT>key.T</TT> to <TT>value.T</TT>.
+<P>
+
+<B> Table(nm, key, value) </B>
+       like <TT>table</TT>, but also makes the interface available
+       to importers outside the current package.
+<P>
+
+<H2><A NAME="basicTypes">Interfaces for Basic Types</A></H2>
+
+Many generic interfaces, such as
+<A HREF="../../../../../libs/libm3/src/table/Table.ig"><TT>Table</TT></A>
+and
+<A HREF="../../../../../libs/libm3/src/sequence/Sequence.ig"><TT>Sequence</TT></A>,
+require one or more of their argument interfaces to have a certain
+form. For example, the expect the principle type of the argument
+interface to be named "<CODE>T</CODE>", and they expect the interface
+to define certain constants and procedures. The basic Modula-3 library
+defines the following interfaces for basic types that can be used as
+arguments to such generics (each interface's principle type is shown
+in parentheses):
+
+<UL>
+<LI>
+<A HREF="../../../../../libs/m3core/src/text/Text.i3"><TT>Text</TT></A>
+(<CODE>TEXT</CODE>)
+<LI>
+<A HREF="../../../../../libs/libm3/src/atom/Atom.i3"><TT>Atom</TT></A>
+(<CODE>Atom.T</CODE>)
+<LI>
+<A HREF="../../../../../libs/libm3/src/types/Refany.i3"><TT>Refany</TT></A>
+(<CODE>REFANY</CODE>)
+<LI>
+<A HREF="../../../../../libs/libm3/src/types/Char.i3"><TT>Char</TT></A>
+(<CODE>CHAR</CODE>)
+<LI>
+<A HREF="../../../../../libs/libm3/src/types/Boolean.i3"><TT>Boolean</TT></A>
+(<CODE>BOOLEAN</CODE>)
+<LI>
+<A HREF="../../../../../libs/libm3/src/types/Integer.i3"><TT>Integer</TT></A>
+(<CODE>INTEGER</CODE>)
+<LI>
+<A HREF="../../../../../libs/libm3/src/types/RealType.i3"><TT>RealType</TT></A>
+(<CODE>REAL</CODE>)
+<LI>
+<A HREF="../../../../../libs/libm3/src/types/LongrealType.i3"><TT>LongrealType</TT></A>
+(<CODE>LONGREAL</CODE>)
+</UL>
+
+<P> But you aren't limited to these interfaces in your generic
+instantiations. You can also supply your own interface as an argument
+to a generic instantiation, so long as it meets all of the generic's
+requirements.
+
+<PRE>
+Last modified on Wed Aug 21 14:23:18 PDT 1996 by heydon 
+     modified on Thu Jun  1 08:18:55 PDT 1995 by kalsow 
+     modified on Thu Jan  7 18:40:57 PST 1993 by muller 
+</PRE>
+
+<!--Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>

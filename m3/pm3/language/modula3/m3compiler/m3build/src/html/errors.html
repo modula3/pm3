@@ -1,0 +1,25 @@
+<HTML>
+<HEAD>
+<TITLE>Error reporting</TITLE>
+</HEAD>
+<BODY>
+
+<H1>Error reporting</H1>
+<P>
+Errors encountered while processing the templates and <TT>m3makefiles</TT>
+are immediately reported and stop <TT>m3build</TT>.
+When processing the source files, (compiling to intermediate language,
+translating to assembly, producing object code), if errors are encountered
+they are reported and subsequent compilation phases for the offending file are
+suppressed. The processing continues with the other files, 
+but the final link step is skipped.
+<P>
+The compiler's error recovery is limited; it is often the case that errors
+following the first one are bogus or redundant.
+Error messages ending with a question mark are internal errors, and
+probably represent compiler bugs.
+<P>
+
+<!--Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>

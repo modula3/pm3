@@ -1,0 +1,57 @@
+<HTML>
+<HEAD>
+<TITLE>m3ship</TITLE>
+</HEAD>
+<BODY>
+
+<H1>m3ship</H1>
+<P>
+
+<EM>m3ship</EM>
+will ship all the build directories (for different architectural
+variants) that exist in the package.  It will refuse to ship anything if 
+it finds a variant that was built with "overrides", unless the "-k" option 
+is given, in which case it will ship all the variants except those that
+were built with overrides.
+<P>
+
+The syntax for invoking <B>m3ship</B> is
+<PRE>
+     m3ship [options]
+</PRE>
+<P>
+
+The following options are interpreted by <B>m3ship</B>.
+<UL>
+
+<LI> <B>-k</B>
+Don't generate an error message if any of the .M3SHIP files are
+missing.  Keep on going.
+<P>
+
+<LI> <B>-b</B> <I>"dir"</I>
+Use the  <I>dir</I> configuration and ship from the directory named <I>dir</I>.
+The default directory is configured into m3ship when
+it is installed.
+<P>
+
+<LI> <B>-d</B> <I>"dir"</I>
+Change the current directory to <I>dir</I>
+before doing anything.
+<P>
+
+<LI> <B>-S</B>
+Ship derived objects regardless of the current directory's name.
+Normally, if the current working directory is <B>src</B>, <B>m3ship</B>
+will refuse to build derived objects in it.
+<P>
+
+<LI> <B>-T</B> <I>"dir"</I>
+Read templates from <I>dir</I>
+instead of the default location.
+</UL>
+<P>
+
+<!--Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>

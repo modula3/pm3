@@ -1,0 +1,44 @@
+<HTML>
+<HEAD>
+<TITLE>The Reachability Requirement</TITLE>
+</HEAD>
+
+<BODY>
+<H1>The Reachability Requirement</H1>
+<P>
+
+When building a program, the linker determines which units (interfaces
+and modules) to include by traversing a directed graph. The nodes of
+the graph correspond to program units, and certain nodes of the graph
+are designated as <I>roots</I>. A unit <I>u</I> is included in the
+build if and only if <I>u</I> is reachable from some root, that is, if
+there exists a (possibly empty) path in the graph from some root
+<I>r</I> to <I>u</I>. We must now describe how the linker determines
+the set of roots and the set of edges in this graph.<P>
+
+Each program's <I>m3makefile</I> specifies a set of sources via quake
+calls like <B>interface(X)</B>, <B>implementation(X)</B>, and
+<B>module(X)</B>. Each of these calls adds the name of the source file
+(or unit) to the set of program sources.
+These program sources constitute the set of roots used
+to start the traversal. Notice that source files included via
+<B>include_dir(D)</B> or <B>include_pkg(P)</B> will get added to this
+list, but not those imported via <B>import(P)</B>.<P>
+
+The edges of the graph are determined by the IMPORT and EXPORTS
+relations among the units. An edge exists in the graph from the unit
+<I>A</I> to the unit <I>B</I> if and only if:<P>
+
+<UL>
+<LI> <I>A</I> IMPORTs <I>B</I>,
+<LI> <I>A</I> EXPORTS <I>B</I>, or
+<LI> <I>B</I> EXPORTS <I>A</I>.
+</UL>
+
+That is, if A IMPORTs B, then there is a directed edge from A to B in
+the graph, but if A EXPORTS B, then there is a bi-directional edge
+between A and B.<P>
+
+<!--Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>

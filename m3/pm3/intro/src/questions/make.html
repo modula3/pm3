@@ -1,0 +1,11 @@
+<TITLE> M3build versus Make or why m3 does not work?</TITLE>
+<H1> M3build versus Make or why m3 does not work?</H1>
+<P>
+The Modula-3 compiler m3 does a much finer grained dependency analysis than
+possible with make. For this reason, a very flexible front end, m3build,
+reads the program description files, m3makefile, and generates the commands
+required to compile and link Modula-3 programs and libraries. The m3makefile
+content is documented in the m3build documentation. Calling the m3 compiler
+directly is difficult and thus not recommended, especially on PM3 where
+it is now merged with m3build.
+<P>

@@ -1,0 +1,46 @@
+<HTML>
+<HEAD>
+<TITLE>Why objects and interfaces?</TITLE>
+</HEAD>
+<BODY>
+<H1>Why objects and interfaces?</H1>
+
+<P>
+Allan Heydon on <tt>comp.lang.modula3</tt>,  May 4th 1993:
+
+<P>
+Modula-3 provides two separate mechanisms for data-hiding: one for 
+hiding details about how interfaces are implemented, and the other 
+for hiding details about how objects are implemented.
+
+<P>
+The first data-hiding mechanism is realized by the distinction between 
+interfaces and modules. Clients can only import interfaces, so the 
+names declared in the modules implementing those interfaces are hidden 
+from clients. Note that this mechanism has only two levels; a name 
+is either declared in an interface, or it isn't. If a name is only 
+declared in a module, it can't be used by a client. 
+
+<P>
+The second data-hiding mechanism is realized by opaque types and 
+revelations. A Modula-3 interface may declare an object type to be 
+opaque, in which case only a subset of the fields and methods of 
+that object are revealed to clients importing the interface. Furthermore, 
+the Modula-3 revelation mechanism allows a designer to reveal successively 
+more fields and methods of an object in a series of interfaces. The 
+fields and methods visible to a client then depends on which interfaces 
+the client imports. 
+
+<P>
+The latter mechanism is quite flexible. As opposed to the interface/module 
+data-hiding mechanism, opaque types allow you to define an arbitrary 
+number of levels at which more and more information about the implementation 
+of your object is revealed. 
+
+<P>
+See Sections 2.2.10, 2.4.6, and 2.4.7 of "Systems Programming with 
+Modula-3" for more information about opaque types and about partial 
+and complete revelations. 
+
+</BODY>
+</HTML>

@@ -1,0 +1,33 @@
+<HTML>
+<HEAD>
+<TITLE>Network object support</TITLE>
+</HEAD>
+<BODY">
+
+<H1>Network object support</H1>
+<P>
+
+The following procedures are used to build programs using
+network objects.
+<P>
+
+<B> netobj(X,T) </B>
+      runs the network objects stub generator on the interface <TT>X.i3</TT>
+      to produce the network object glue needed to manipulate objects
+      of type <TT>X.T</TT>.  The resulting source files are included
+      in the current build.
+<P>
+
+<B> Netobj(X,T) </B>
+      Like <TT>netobj</TT>, but also exports the resulting interface.
+<P>
+
+<PRE>
+Last modified on Thu Jan  4 11:07:52 PST 1996 by heydon 
+     modified on Thu Jul 21 16:51:11 PDT 1994 by kalsow 
+     modified on Thu Jan  7 18:40:57 PST 1993 by muller 
+</PRE>
+
+<!--Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>

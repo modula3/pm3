@@ -1,0 +1,96 @@
+CONST 
+  Hue = (Color.BlueHue + Color.CyanHue) / 2, 
+  Gap = 5, 
+  FrameSz = 20, 
+  BgColor = Color.FromHSV(Color.YellowHue, 0.5, 
+                          0.7);
+
+PROC c := Blue(v) IS 
+  c := Color.FromHSV(Hue, v, 1) 
+END;
+
+PROC FillAndStroke(c) IS 
+  SAVE PS IN PS.SetColor(c); PS.Fill() END; 
+  PS.Stroke() 
+END;
+
+PROC Label(a, b, c, txt) IS 
+  IF 
+    VAR 
+      d ~ (2.3299086, -4.7832956) REL (a, b), 
+      e ~ (3.1381466, -4.389609) REL (a, b), 
+      f ~ (2.7340276, -4.5864525) REL (a, b) 
+    IN 
+      d = Geometry.HorVer(a, c) AND 
+      e = Geometry.HorVer(b, c) AND 
+      f = Geometry.Mid(d, e) -> 
+        TypeLinesL.West(f, txt) 
+    END 
+  FI 
+END;
+
+UI TextTool(Label);
+
+PROC Annotation(a, b, c, d, txt) IS 
+  IF 
+    VAR 
+      e ~ (1.862029, -1.933767) REL (a, b), 
+      f ~ (1.0278038, -2.3056452) REL (a, b), 
+      g ~ (1.4449164, -2.119706) REL (a, b), 
+      h ~ (3.0628786, -5.7492385) REL (a, b), 
+      dx, dy 
+    IN 
+      e = Geometry.HorVer(b, c) AND 
+      f = Geometry.HorVer(a, c) AND 
+      g = Geometry.Mid(f, e) AND 
+      h = Geometry.HorVer(g, d) -> 
+        TypeLinesL.West(h, txt); 
+        dx, dy := 
+          TextList.Size(TextList.FromText(txt)); 
+        Arrow.Straight(R2.PlusX(h, dx + Gap), g) 
+    END 
+  FI 
+END;
+
+UI TextTool(Annotation);
+
+PROC Frame(sw, ne) IS 
+  Rect.Draw(R2.Minus(sw, (FrameSz, FrameSz)), 
+            R2.Plus(ne, (FrameSz, FrameSz))); 
+  FillAndStroke(BgColor) 
+END;
+
+UI PointTool(Frame);
+
+PROC Cmd0() IS 
+  IF 
+    VAR 
+      a = (53.774113, -22.754675), b = (163.19518, 86.94581), 
+      c ~ (151.07706, 50.37898), d ~ (138.95895, 13.812153), 
+      e = R2.Plus(a, (12.118114, -7.5848923)), 
+      f ~ (-117.394196, -22.754675) 
+    IN 
+      Geometry.CongX(d, c, c, b) AND 
+      Geometry.CongY(b, c, c, d) AND 
+      Geometry.CongY(c, d, d, a) AND 
+      Geometry.CongX(a, e, c, b) AND 
+      f HOR a -> 
+        PS.SetWidth(1.5); 
+        Frame(f, b); 
+        Rect.Draw(a, b); 
+        FillAndStroke(Blue(1)); 
+        Rect.Draw(a, c); 
+        FillAndStroke(Blue(0.6)); 
+        Rect.Draw(a, d); 
+        FillAndStroke(Blue(0.2)); 
+        PS.SetFont("Helvetica", PS.Big); 
+        Label(b, c, e, "private:"); 
+        Label(c, d, e, "protected:"); 
+        Label(d, a, e, "public:"); 
+        Annotation(d, a, a, f, "All code"); 
+        Annotation(c, d, a, f, "Subclasses"); 
+        Annotation(b, c, a, f, 
+                   "Class implementation\n" & "and friend procedures") 
+    END 
+  FI 
+END;

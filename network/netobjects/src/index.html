@@ -1,0 +1,42 @@
+<HTML><HEAD>
+<TITLE>Network Objects</TITLE>
+</HEAD>
+<BODY>
+<DIV CLASS=HEAD>
+<SPAN CLASS=AUTHOR>Michel Dagenais</SPAN>
+<SPAN CLASS=COPYRIGHT>Michel Dagenais, GNU General Public License, 1998</SPAN>
+<ADDRESS>
+michel.dagenais@polymtl.ca<BR>
+Ecole Polytechnique<BR>
+C.P. 6079, Succ. Centre-Ville<BR>
+Montreal, Quebec, H3C 3A7</ADDRESS>
+<SPAN CLASS=DATE>18 January 1998</SPAN>
+<SPAN CLASS=KEYWORD>distributed</SPAN>
+<SPAN CLASS=KEYWORD>network objects</SPAN>
+<SPAN CLASS=KEYWORD>remote method invocation</SPAN>
+<SPAN CLASS=KEYWORD>rmi</SPAN>
+<SPAN CLASS=KEYWORD>wide audience</SPAN>
+</DIV>
+<H1>Network Objects</H1>
+
+<DIV CLASS=ABSTRACT>
+<P>Network objects offer transparent remote method invocation on objects.
+Network objects are simpler to use than remote procedure calls because
+objects store the remote connection information, and the runtime handles
+automatically the external data representation used to exchange
+parameters during remote calls.
+</DIV>
+
+<DL>
+<DT><A REL=INCLUDE HREF="../netobj/src">netobj</A><DD>
+    The network objects library.
+<DT><A REL=INCLUDE HREF="../netobjd/src">netobjd</A><DD>
+    The network object daemon used to facilitate the exchange
+    of network objects between remote processes.
+<DT><A REL=INCLUDE HREF="../stubgen/src">stubgen</A><DD>
+    The stub generator used by netobj to derive network objects
+    types from used defined types.
+</DL>
+
+</BODY>
+</HTML>

@@ -1,0 +1,58 @@
+<TITLE>Why CONST Comments in Variables Declarations?</TITLE>
+<H1>Why CONST Comments in Variables Declarations?</H1>
+<P>
+John Kominek (kominek@links.uwaterloo.ca) wrote:
+Sprinkled throughout SRC m3 you'll find "constant" variables exported
+in interfaces. For instance,
+<PRE><TT> 
+   VAR (*CONST*) Grain: LONGREAL;
+</TT></PRE> 
+<P>
+where Grain is assigned during module initialization.
+Instead, did the modula-3 designers consider doing this.
+<PRE><TT>
+   READONLY Grain: LONGREAL;
+</TT></PRE>
+<P>
+Here the keyword permits only exporting modules to modify the 
+Grain variable. Is there a problem with this proposal? The READONLY
+keyword is successfully used at procedure boundaries, so why not 
+also at interface boundaries?
+<P>
+Bill Kalsow replies:
+<P>
+A problem with this proposal is that any module can claim to export
+the interface containing the variable, hence any module could modify
+the variable.
+Note that CONST says more than just READONLY.  CONST implies that the
+variable should not be modified by clients and that once it is
+initialized, it won't be changed later by the implementation.
+READONLY would only mean that clients should not modify the variable.
+IMO, the "right" solution would have been to allow:
+<PRE><TT>
+    INTERFACE Foo;
+    CONST x: T;
+
+    MODULE Foo;
+    CONST x: T := &lt;value>;
+</TT></PRE>
+<P>
+In the same way it checks revelations for opaque types, the compiler
+could check that only one module provided a value for the constant.
+But, this proposal doesn't quite hang together either.
+Consider this example:
+<PRE><TT>
+    CONST x: INTEGER;
+    VAR   v: [0..x];
+</TT></PRE>
+<P>
+The language definition says that "v"s definition is illegal if "x < 0"
+because its type is "empty".  The system could refuse to run the
+program by delaying the check until it had seem the corresponding
+implementation module.  But, I think you'll agree that it could
+quickly turn into a mess.
+The most flexible handling of opacity I've seen is in Christian
+Collberg's PhD Thesis, "Flexible Encapsulation".  It was published Dec
+5, 1992 by the CS Dept at Lund University, Lund Sweden.  If I remember
+correctly, his system was capable of deferring all checks and
+decisions imposed by opaque declarations until link time.

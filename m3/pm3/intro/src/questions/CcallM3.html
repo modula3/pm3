@@ -1,0 +1,87 @@
+<HTML><HEAD>
+<TITLE>How to call Modula-3 procedures from a C program?</TITLE>
+</HEAD><BODY>
+<H1>How to call Modula-3 procedures from a C program?</H1>
+<P>
+Calling Modula-3 from C is tricky because M3 has a more elaborate run-time
+environment.  The simplest solution is to make the main program M3 and then
+call C via EXTERNAL routines.  Calling back into M3 is then relatively
+straightforward.
+<P>
+Here's an example.  It calls the C code to lodge the identity of the M3
+procedure to be called back which avoids having to know the actual name used
+by the linker.
+<P>
+First a little M3 module to be called from C (M3code), then a C module called
+by the M3 main and calling the M3 module (Ccode), and finally the main
+program (Main):
+<PRE><TT>
+(* M3code.i3 *)
+
+INTERFACE M3code;
+IMPORT Ctypes;
+PROCEDURE put (a: Ctypes.char_star);
+END M3code.
+
+(* M3code.m3 *)
+
+UNSAFE MODULE M3code;
+IMPORT Ctypes, IO, M3toC;
+
+PROCEDURE put (a: Ctypes.char_star) =
+  BEGIN
+    IO.Put (M3toC.StoT (a) &amp; "\n");
+  END put;
+
+BEGIN
+END M3code.
+
+(* Ccode.i3 *)
+
+&lt;*EXTERNAL*> INTERFACE Ccode;
+IMPORT Ctypes;
+PROCEDURE set (p: PROCEDURE (a: Ctypes.char_star));
+PROCEDURE act (a: Ctypes.char_star);
+END Ccode.
+
+/* Ccode.c */
+
+typedef void (*PROC)();
+static PROC action;
+
+void set (p)
+  PROC p;
+  {
+    action = p; /* register the M3 procedure */
+  }
+
+void act (a)
+  char *a;
+  {   
+    action (a); /* call the M3 procedure */
+  };
+
+(* Main.m3 *)
+
+UNSAFE MODULE Main;
+
+IMPORT Ccode, M3code, M3toC;
+
+BEGIN
+  Ccode.set (M3code.put);
+  Ccode.act (M3toC.TtoS ("Hello world"));
+END Main.
+
+(* m3makefile *)
+
+import(libm3)
+
+interface ("Ccode")
+c_source ("Ccode")
+module ("M3code")
+implementation("Main")
+program("mixed")
+</TT></PRE>
+</BODY></HTML>
+
+

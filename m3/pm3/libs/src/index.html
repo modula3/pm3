@@ -1,0 +1,54 @@
+<HTML><HEAD>
+<TITLE>General Purpose Libraries</TITLE>
+</HEAD>
+<BODY>
+<DIV CLASS=HEAD>
+<SPAN CLASS=AUTHOR>Michel Dagenais</SPAN>
+<SPAN CLASS=COPYRIGHT>Michel Dagenais, GNU General Public License, 1998</SPAN>
+<ADDRESS>
+michel.dagenais@polymtl.ca<BR>
+Ecole Polytechnique<BR>
+C.P. 6079, Succ. Centre-Ville<BR>
+Montreal, Quebec, H3C 3A7</ADDRESS>
+<SPAN CLASS=DATE>18 January 1998</SPAN>
+<SPAN CLASS=KEYWORD>operating system</SPAN>
+<SPAN CLASS=KEYWORD>input/output</SPAN>
+<SPAN CLASS=KEYWORD>data structures</SPAN>
+<SPAN CLASS=KEYWORD>geometry</SPAN>
+<SPAN CLASS=KEYWORD>wide audience</SPAN>
+</DIV>
+<H1>General Purpose Libraries</H1>
+
+<DIV CLASS=ABSTRACT>
+<P>This section contains general purpose libraries for Data Structures,
+memory management, input output, operating system access, and miscellaneous
+other topics not covered in the other sections.
+</DIV>
+
+<DL>
+<DT><A REL=INCLUDE HREF="../m3core/src">m3core</A><DD>
+    Core Modula-3 library containing the runtime support procedures
+    as well as all the platform dependent code.
+<DT><A REL=INCLUDE HREF="../libm3/src">libm3</A><DD>
+    Modula-3 standard library containing commonly used data structures,
+    input output, and operating system access procedures.
+<DT><A REL=INCLUDE HREF="../realgeometry/src">realgeometry</A><DD>
+    Geometry procedures based on REAL numbers.
+<DT><A REL=INCLUDE HREF="../set/src">set</A><DD>
+    Set data structure. The basic data structures in libm3 may be used
+    for representing sets but do not offer some of the more advanced operations
+    such as <I>union</I>.
+<DT><A REL=INCLUDE HREF="../tempfiles/src">tempfiles</A><DD>
+    Library for creating and automatically cleaning up temporary files.
+<DT><A REL=INCLUDE HREF="../digraph/src">digraph</A><DD>
+    Data structure for representing directed graphs.
+<DT><A REL=INCLUDE HREF="../parseparams/src">parseparams</A><DD>
+    Library for parsing command line options.
+<DT><A REL=INCLUDE HREF="../table-list/src">table-list</A><DD>
+    Linked list based version of the Table interface. In some cases
+    linked lists may be more efficient than the default hash table
+    based implementation.
+</DL>
+
+</BODY>
+</HTML>

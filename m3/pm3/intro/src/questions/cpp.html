@@ -1,0 +1,34 @@
+<TITLE>Can Modula-3 code call C++ and vice-versa?</TITLE>
+<H1>Can Modula-3 code call C++ and vice-versa?</H1>
+<P>
+There is no problem to call C++ functions declared as
+extern C. You must use a C++ aware linker (e.g. the C++ compiler).
+A complete example of M3 calling C++ objects, which in turn call
+M3 callbacks, is available in 
+<A HREF="../text/sgmltools/sgml/src/nsgmls">the sgml library</A>.
+<P>
+On some platforms, a call to get the static variables constructors called may
+be required:
+<P>
+From: gwyant@cloyd.East.Sun.COM (Geoffrey Wyant - Sun Microsystems Labs BOS)
+<P>
+You must use your C++ compiler as the linker, rather than /bin/cc
+or /bin/ld.
+<P>
+You need to call the function '_main'. The easiest way to do this
+is to have the following set of interfaces and implementations:
+<P>
+<PRE><TT>
+        INTERFACE CXXMain;
+          &lt;*EXTERN &quot;_main&quot;*&gt; CxxMain;
+        END CXXMain;
+
+        MODULE CXXMain;
+        BEGIN
+          CxxMain();
+        END;</TT></PRE>
+<P>
+and then import CXXMain into your M3 main module. This will
+ensure that the C++ function _main gets called.
+<P>
+

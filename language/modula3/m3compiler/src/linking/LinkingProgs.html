@@ -1,0 +1,39 @@
+<HTML>
+<HEAD>
+<TITLE>The Linker's Inclusion Algorithm</TITLE>
+</HEAD>
+
+<BODY>
+<H1>The Linker's Inclusion Algorithm</H1>
+<P>
+
+When you build a program package or library package that imports one
+or more library packages, the interfaces you IMPORT from within those
+imported packages must be visible. However, there are other
+requirements you must satisfy when building a program.<P>
+
+The Modula-3 language definition defines a complete <I>program</I> to
+be "a collection of modules and interfaces that contains every
+interface imported or exported by any of its modules or interfaces,
+and in which no procedure, module, or interface is multiply defined"
+(Section 2.5, page 42). There are other requirements on a complete
+program as well. For example, every declared procedure must have an
+implementation, and every opaque type must have a concrete
+revelation.<P>
+
+When you build a program that imports library packages, not all of the
+interfaces and modules in those libraries are necessarily included by
+the linker. In fact, only those interfaces and modules that satisfy a
+<I>reachability requirement</I> are linked into the final program.<P>
+
+<H2>More Information</H2>
+
+<UL>
+<LI><A HREF="ReachabilityReq.html">The Reachability Requirement</A>
+<LI><A HREF="ReachabilityExs.html">Reachability Examples</A>
+<LI><A HREF="LinkingLibs.html">Linking Library Packages</A>
+</UL>
+
+<!--Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>

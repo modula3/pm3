@@ -1,0 +1,115 @@
+# List of units with the same name along with the word count output
+# for the differences. Small numbers indicate small differences
+#
+diff m3tk/src/misc/TextExtras.i3 http/src/TextExtras.i3 0 0 0
+diff m3tk/src/misc/TextExtras.i3 webvbt/src/TextExtras.i3 0 0 0
+diff m3tk/src/misc/TextExtras.m3 http/src/TextExtras.m3 13 77 481
+diff m3tk/src/misc/TextExtras.m3 webvbt/src/TextExtras.m3 13 77 481
+# Identical except the m3tk version is a bit older; simplifications
+# were brought to the newer version.
+#
+diff netobj/src/netobjrt/AtomPkl.i3 sgml/src/sgmlc/AtomPkl.i3 0 0 0
+diff netobj/src/netobjrt/AtomPkl.m3 sgml/src/sgmlc/AtomPkl.m3 0 0 0
+# To share.
+#
+diff realgeometry/src/RealInterval.m3 fisheye/src/RealInterval.m3 199 937 5289
+diff realgeometry/src/RealPoint.m3 fisheye/src/RealPoint.m3 584 2514 14063
+diff realgeometry/src/RealInterval.i3 fisheye/src/RealInterval.i3 205 1341 7581
+diff realgeometry/src/RealRect.i3 fisheye/src/RealRect.i3 379 2358 14606
+diff realgeometry/src/RealRect.m3 fisheye/src/RealRect.m3 690 3630 21669
+diff realgeometry/src/RealPoint.i3 fisheye/src/RealPoint.i3 274 1599 9420
+# Both sets have a common origin. In fisheye, everything raises an
+# exception. However it is not handled anywhere. Converting fisheye should
+# be OK.
+#
+diff m3browser/src/TCPPeer.i3 tcpextras/src/TCPPeer.i3 0 0 0
+diff m3browser/src/TCPPeer.m3 tcpextras/src/POSIX/TCPPeer.m3 15 82 502
+# Almost identical. Check which one to retain.
+#
+diff buildlectern/src/OSUtils.i3 zeus/src/OSUtils.i3 83 547 3348
+diff buildlectern/src/OSUtils.i3 postcard/src/OSUtils.i3 164 1124 7139
+diff buildlectern/src/OSUtils.i3 webcard/src/OSUtils.i3 164 1124 7139
+diff buildlectern/src/OSUtils.m3 zeus/src/OSUtils.m3 99 413 3124
+diff buildlectern/src/OSUtils.m3 postcard/src/OSUtils.m3 339 1331 9789
+diff buildlectern/src/OSUtils.m3 webcard/src/OSUtils.m3 337 1317 9718
+# All different, except for webcard/postcard. Check however if these
+# functions could be put in a library.
+#
+diff m3tools/src/M3ID.i3 m3middle/src/M3ID.i3 55 384 2154
+diff m3tools/src/M3ID.m3 m3middle/src/M3ID.m3 560 2979 18651
+# Different. However along with m3browser/src/ID, a lot is shared with Atoms.
+#
+diff fours/src/Buf.i3 m3markup/src/Buf.i3 19 135 714
+diff fours/src/Buf.m3 m3markup/src/Buf.m3 74 319 1852
+# Fairly similar, could be shared. Pretty small, used to optimize.
+# This is also the case for Wx.T instead of Wr.T. Check the performance
+# difference and decide, perhaps.
+#
+diff m3markup/src/MarkUp.i3 m3tohtml/src/MarkUp.i3 18 128 772
+diff m3markup/src/MarkUp.m3 m3tohtml/src/MarkUp.m3 186 898 5469
+diff m3markup/src/M3MarkUp.m3 m3tohtml/src/M3MarkUp.m3 1165 5301 37835
+diff m3markup/src/M3MarkUp.i3 m3tohtml/src/M3MarkUp.i3 16 71 417
+# Same except that one uses Wx instead of Wr. Is the performance difference
+# worth it.
+#
+diff images/src/Images.m3 webvbt/src/Images.m3 359 1521 11391
+diff images/src/Images.i3 webvbt/src/Images.i3 182 1322 8246
+# Different things with images.
+#
+diff lecterntohtml/src/HTML.m3 webvbt/src/HTML.m3 441 1734 12520
+diff lecterntohtml/src/HTML.i3 webvbt/src/HTML.i3 167 803 5066
+# Look quite different.
+#
+diff fisheye/src/GraphVBT.m3 mgkit/src/GraphVBT.m3 5697 23300 199456
+diff fisheye/src/GraphVBT.i3 mgkit/src/GraphVBT.i3 949 6055 39187
+# Different things with graphs.
+#
+diff netobj/src/netobjrt/Protocol.i3 stubgen/src/Protocol.i3 113 770 5001
+# Different.
+#
+diff fours/src/Config.i3 columns/src/Config.i3 66 379 2379
+diff fours/src/Config.i3 postcard/src/Config.i3 99 502 3465
+diff fours/src/Config.i3 webcard/src/Config.i3 99 502 3465
+diff fours/src/Config.m3 columns/src/Config.m3 372 2008 13591
+diff fours/src/Config.m3 postcard/src/Config.m3 929 4419 34933
+diff fours/src/Config.m3 webcard/src/Config.m3 927 4405 34827
+# Different.
+#
+diff stablegen/src/FRefRefTbl.m3 stubgen/src/FRefRefTbl.m3 0 0 0
+diff stablegen/src/Type.i3 stubgen/src/Type.i3 66 457 2442
+diff stablegen/src/ValueProc.i3 stubgen/src/ValueProc.i3 0 0 0
+diff stablegen/src/Type.m3 m3front/src/types/Type.m3 1154 5657 38688
+diff stablegen/src/Type.m3 stubgen/src/Type.m3 416 2242 16409
+diff stablegen/src/AstToType.i3 stubgen/src/AstToType.i3 38 216 1332
+diff stablegen/src/Value.m3 stubgen/src/Value.m3 0 0 0
+diff stablegen/src/AstToType.m3 stubgen/src/AstToType.m3 952 3890 39952
+diff stablegen/src/TypeNames.i3 stubgen/src/TypeNames.i3 15 109 631
+diff stablegen/src/Value.i3 m3front/src/values/Value.i3 110 609 3574
+diff stablegen/src/Value.i3 stubgen/src/Value.i3 0 0 0
+diff stablegen/src/FRefRefTbl.i3 stubgen/src/FRefRefTbl.i3 0 0 0
+diff stablegen/src/TypeNames.m3 stubgen/src/TypeNames.m3 108 520 3811
+diff stablegen/src/Value.m3 m3front/src/values/Value.m3 499 2186 13908
+# Similar but different except for one or two trivial files which are
+# identical.
+#
+diff webcard/src/PostcardMain.m3 postcard/src/PostcardMain.m3 79 323 2586
+diff webcard/src/BuiltInDisplay.i3 postcard/src/BuiltInDisplay.i3 0 0 0
+diff webcard/src/BuiltInDisplay.m3 postcard/src/BuiltInDisplay.m3 425 1719 13521
+diff webcard/src/NI.i3 postcard/src/NI.i3 0 0 0
+diff webcard/src/NI.m3 postcard/src/NI.m3 0 0 0
+diff webcard/src/Closure.i3 postcard/src/Closure.i3 19 103 646
+diff webcard/src/FastMenu.i3 postcard/src/FastMenu.i3 0 0 0
+diff webcard/src/FastMenu.m3 postcard/src/FastMenu.m3 0 0 0
+diff webcard/src/BuiltInCompose.i3 postcard/src/BuiltInCompose.i3 0 0 0
+diff webcard/src/BuiltInCompose.m3 postcard/src/BuiltInCompose.m3 9 53 343
+diff webcard/src/UnixMail.m3 postcard/src/UnixMail.m3 8 40 292
+diff webcard/src/MiscUtils.m3 postcard/src/MiscUtils.m3 0 0 0
+diff webcard/src/UnixMail.i3 postcard/src/UnixMail.i3 0 0 0
+diff webcard/src/UtimeExtra.i3 postcard/src/UtimeExtra.i3 0 0 0
+diff webcard/src/Rescreen.m3 postcard/src/Rescreen.m3 0 0 0
+diff webcard/src/MailUtilities.i3 postcard/src/MailUtilities.i3 0 0 0
+diff webcard/src/MailUtilities.m3 postcard/src/MailUtilities.m3 0 0 0
+diff webcard/src/Rescreen.i3 postcard/src/Rescreen.i3 0 0 0
+diff webcard/src/MiscUtils.i3 postcard/src/MiscUtils.i3 0 0 0
+# Webcard is vastly inspired from postcard. Perhaps one replaces the
+# other or sharing could be done.

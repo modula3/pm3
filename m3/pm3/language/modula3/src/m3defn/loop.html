@@ -1,0 +1,26 @@
+<HTML>
+<HEAD>
+<TITLE>Modula-3: Loop statements</TITLE>
+</HEAD>
+<BODY>
+
+<H2>Loop</H2>
+<P>
+
+A statement of the form:
+<PRE>
+    LOOP S END
+</PRE>
+repeatedly executes <TT>S</TT> until it raises the exit-exception.
+Informally it is like:
+<PRE>
+    TRY S; S; S; ... EXCEPT  exit-exception  =&gt; (*skip*)  END
+</PRE>
+<P>
+
+<PRE>
+Last modified on Wed Apr  3 09:39:51 PST 1996 by heydon
+     modified on Mon Apr 18 14:04:28 PDT 1994 by kalsow
+</PRE>
+</BODY>
+</HTML>

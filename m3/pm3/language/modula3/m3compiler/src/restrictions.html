@@ -1,0 +1,110 @@
+<HTML>
+<HEAD>
+<TITLE>Implementation restrictions</TITLE>
+</HEAD>
+<BODY>
+
+<H1>Implementation restrictions</H1>
+<P>
+
+With a few exceptions, SRC Modula-3 implements the 
+<A HREF="../../src/m3defn/m3.html">Modula-3 language definition</A>.
+<P>
+
+<H2>Arithmetic checking</H2>
+<P>
+
+SRC Modula-3 does not generate any special checking for integer arithmetic
+overflow or underflow.  You get whatever checking <TT>gcc</TT> gives you.
+Depending on your machine, the
+<TT>FloatMode</TT> interface may be used to control floating point exceptions.
+<P>
+
+<H2>Packed types</H2>
+<P>
+
+Packed types are restricted.  The compiler enforces the rule that every scalar
+field (packed or unpacked) can be loaded by a simple ``load, shift, and mask''
+sequence on the machine.  So, for example, its not possible to
+have a 32-bit integer that crosses a 32-bit alignment boundary
+on a machine which only supports aligned 32-bit loads.
+<P>
+
+<H2>Stack overflow checking</H2>
+<P>
+
+SRC Modula-3 does not reliably detect thread stack overflows.  Stacks
+are only checked for overflow on procedure entry.  No checking is done
+on external procedures.  Thread stacks are allocated in fixed size
+chunks.  The required <TT>Thread</TT>
+interface has been augmented with
+the <TT>SizedClosure</TT> type to allow arbitrary sized stacks. The default
+size can be adjusted with <TT>Thread.MinDefaultStackSize</TT> and
+<TT>Thread.IncDefaultStackSize</TT>.
+<P>
+
+<H2>Exception semantics</H2>
+<P>
+
+On some platforms (<TT>ALPHA_OSF</TT> and <TT>DS3100</TT>), exceptions scopes
+are delimited by tables of PCs and exceptions are dispatched by a
+runtime routine that's able to unwind the stack.
+<P>
+
+On all other platforms,
+SRC Modula-3 uses C's <TT>setjmp</TT>/<TT>longjmp</TT> mechanism to
+unwind the stack when raising an exception.  A problem can
+occur:  assignments may appear to be undone.
+For example, consider
+<PRE>
+    TRY
+      i := 3;
+      P ();
+    EXCEPT E:
+      j := i;
+    END;
+</PRE>
+where <TT>P</TT> raises exception <TT>E</TT>.
+The compiler generates a <TT>setjmp</TT> at the beginning of
+the try statement.  If the C compiler allocates variable <TT>i</TT>
+to a register, the assignment of <TT>3</TT> may be lost during the
+<TT>longjmp</TT> and branch that gets to the handler.
+<P>
+
+<H2>Method constants</H2>
+<P>
+
+The language definition says that if <TT>T</TT> is an object type
+and <TT>m</TT> one of its methods, <TT>T.m</TT> denotes the procedure
+value that implements that method and that this value is a constant.
+In SRC Modula-3, <TT>T.m</TT> denotes the correct procedure constant,
+but since the compiler generates runtime code to locate the method,
+some uses of the constant that the <TT>C</TT> compiler must resolve at link
+time will cause <TT>C</TT> errors.
+For example,
+<PRE>
+    CONST P = T.m;  BEGIN P (...) ...
+</PRE>
+will work, since no initialized <TT>C</TT> storage is allocated for <TT>P</TT>.
+But the following generates initialized storage and will fail
+<PRE>
+    CONST X = ARRAY [0..2] OF Proc { T.m, ..};
+</PRE>
+<P>
+
+Similarly, although Modula-3 allows it, the following cannot be
+evaluated at compile time
+<PRE>
+    CONST X = (T.m = MyProcedure);
+</PRE>
+<P>
+
+<PRE>
+Last modified on Thu Jan  4 11:07:59 PST 1996 by heydon 
+     modified on Thu Jun  1 08:16:29 PDT 1995 by kalsow 
+     modified on Thu Jan  7 18:40:57 PST 1993 by muller 
+</PRE>
+
+<!--Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>

@@ -1,0 +1,48 @@
+<HTML>
+<HEAD>
+<TITLE>Miscellaneous procedures</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" VLINK="#006633">
+
+<H2>Miscellaneous declarations</H2>
+<P>
+
+The declarations in this section are typically only needed by
+specialised applications, for example the Modula-3 compiler or
+other quake templates.
+<P>
+
+<B> source(X) </B>  
+       declares that <TT>X</TT> contains non-compilable source.
+<P>
+
+<B> derived_interface(X,V) </B>
+       adds the derived interface <TT>X.i3</TT> to the list of
+       files to be compiled.  <TT>V</TT> must be either <TT>VISIBLE</TT>
+       or <TT>HIDDEN</TT> to indicate whether the interface should be
+       available to importers outside this package.
+<P>
+
+<B> derived_implementation(X) </B>
+       adds the derived module <TT>X.m3</TT> to the list of
+       files to be compiled.
+<P>
+
+<B> derived_c(X) </B>
+       adds the derived C code <TT>X.c</TT> to the list of
+       files to be compiled.
+<P>
+
+<B> derived_h(X) </B>
+       adds the derived include file <TT>X.h</TT> to the list of
+       include files available to the compiler.
+<P>
+
+<PRE>
+Last modified on Mon Feb 12 11:35:36 PST 1996 by heydon 
+     modified on Thu Jul 21 16:57:42 PDT 1994 by kalsow 
+     modified on Thu Jan  7 18:40:57 PST 1993 by muller 
+</PRE>
+<!--Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>

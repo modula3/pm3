@@ -1,0 +1,439 @@
+<HTML>
+<HEAD>
+<TITLE>Quake</TITLE>
+</HEAD>
+<BODY>
+
+<H1>=Quake</H1>
+
+<P>
+<B>Quake</B> is a simple, specialized
+language drawing on elements of the C language, the
+Bourne shell, and the C pre-processor.
+<P>
+
+<B>Quake</B> was designed to be a component of
+<A HREF="../../modula3/m3compiler/src/m3build/index.html">m3build</A>.
+Building a complete, general-purpose language was not
+one of the goals. M3build
+reads a set of <B>quake</B> language templates that define some
+operators, then executes an m3makefile in this context.  The templates
+define procedures to build lists of modules, libraries, and so on.
+
+<H2>Values</H2>
+<P>
+
+<B>Quake</B> is designed to make it easy to assemble arrays and tables of
+strings.  The value space is strings, arrays of strings, and tables of
+strings.  An array is a list of elements, and a table is a set of
+key/value pairs where the keys in a table are all distinct.
+<P>
+
+<H3>Strings</H3>
+<P>
+
+A string is a sequence (delimited by `"') of characters excluding
+newline and double quote.  Several special characters may be quoted
+(with `\') as follows:
+<PRE>
+    new-line    ignored
+    \\          \
+    \n          new-line
+    \r          return
+    \t          tab
+    \b          backspace
+    \f          formfeed
+    \"          double quote
+</PRE>
+<P>
+
+<H3>Arrays</H3>
+<P>
+
+An array is constructed using `[' and `]'.  `[]' is the empty array,
+`["a"]' is an array of the single string "a".  Elements are separated by
+`,'.  Thus `["a", "b"]' is an array of two elements---the strings "a"
+and "b".
+<P>
+
+Arrays are flattened whenever they are referenced.  This means that
+`["a", ["b", "c"]]' is converted the the array `["a", "b", "c"]'.  This
+means that an array can never be the element of another array.
+<P>
+
+Arrays are accessed by an integer index.  `a[2]' is the third element of
+the array a.  The index expression may also be a string which will be
+converted to an integer.  The range of the index is checked at run-time.
+<P>
+
+<H3>Tables</H3>
+<P>
+
+A table is constructed using `{' and `}'.  `{}' is the empty table.
+Elements of a table are given as key/value pairs.  An empty value may be
+omitted.  `{"a", "b"}' is a table containing two keys---the strings "a"
+and "b". `{"p" : "q"}' is the constructor for a table with the single
+key "p" whose value is the string "q". Missing values are returned as
+"".
+<P>
+
+Tables are accessed using expressions of the form `s{"a"}'.  This
+evaluates to the value of the key "a" in the table s.
+<P>
+
+<H2>Names</H2>
+<P>
+
+Names in <B>quake</B> start with an letter (`a'..`z', `A'..`Z') or an
+underscore (`_'), followed by those characters, digits (`0'..`9'),
+hyphens (`-'), or periods (`.').
+<P>
+
+If the lookup for a name fails (it is undefined in any of the enclosing
+scopes) it is installed in the current scope with an initial string
+value of the text of the name.
+<P>
+
+<H2>Comments</H2>
+<P>
+
+C-style comments are supported (delimited by `/*' and `*/') and do not
+nest.
+<P>
+
+Single-line comments are introduced with `%' and terminated with a new-line.
+<P>
+
+<H2>Conditionals</H2>
+<P>
+
+A Boolean value is represented as a string.  The empty string is false,
+and any other string is true.
+<P>
+
+<H2>Expressions</H2>
+<P>
+
+An expression is:
+<PRE>
+    string:                  "baz"
+    name:                    foo
+    environment variable:    $CPU_TYPE
+    array selector:          array[5]
+    array constructor:       ["a", "b"]
+    table selector:          t{"a"}
+    table constructor:       {"a" : "p", b}
+    function call:           f(a, "b")
+    parentheses:             a and (b or f(c))
+</PRE>
+<P>
+
+Operators are all left-associative, precedence is decreases from top to
+bottom in the following list.
+<PRE>
+    &           string catenation (`"Hello, " & foo')
+    contains    table inclusion (`s contains "a"')
+    not         logical negation (`not a')
+    and         logical conjunction (`c and not d')
+    or          logical disjunction (`a or b')
+</PRE>
+<P>
+
+A note on string catenation.  Operands of `&' are converted to strings
+whenever required and possible. Arrays and tables are converted to
+strings by catenating their elements (for tables, their keys) separated
+by a single spaces. For example, the expression
+<PRE>
+    "a" & " " & ["b", "c"]
+</PRE>
+evaluates to the string "a b c".
+<P>
+
+<H2>Statements</H2>
+<P>
+
+A statement is either an assignment, a procedure definition, a procedure
+invocation, a conditional statement, or a loop.
+<P>
+
+<H3>Assignment</H3>
+<P>
+
+Assign an expression (the string "bar") to the variable `foo' with
+<PRE>
+    foo = "bar"
+</PRE>
+<P>
+
+If `foo' already exists, and is an array, then
+<PRE>
+    foo += "baz"
+</PRE>
+extends the array to include a new final element; the string "baz".
+<P>
+
+<H3>Scope</H3>
+<P>
+
+<B>Quake</B> has a global name space, but local scopes are always introduced
+when a procedure is called, and a `foreach' loop is executed.
+<P>
+
+Scopes are searched from innermost to outermost each time a name is
+looked up.  The outermost scope is always the global scope.
+<P>
+
+Assignments can be made local to the innermost scope by prefixing the
+assignment statement with the keyword `local'. For example,
+<PRE>
+    local foo = "bog"
+</PRE>
+In which case the values of any other instances of `foo' in other scopes
+are hidden. The previous value of `foo' is restored once the local scope
+is released by exiting the procedure or `foreach' loop.
+<P>
+
+To protect a name in the current scope, use
+<PRE>
+    readonly dec = "digital"
+</PRE>
+<P>
+
+<H3>Procedures</H3>
+<P>
+
+Procedures may be defined in the global scope only.  Here is the
+definition of a procedure `simple', taking two arguments bound to the
+local names `prefix' and `suffix' in the procedure's local scope.
+<PRE>
+    proc simple(prefix, suffix) is
+      q = prefix & "." & suffix
+    end
+</PRE>
+The string `prefix & "." & suffix' is assigned to the global variable
+`q'.
+<P>
+
+This procedure can then be invoked with
+<PRE>
+    simple("Hello", "m3")
+</PRE>
+<P>
+
+Procedures can return values, in which case they become functions.  For
+example,
+<PRE>
+    proc combine(prefix, suffix) is
+      return prefix & "." & suffix
+    end
+</PRE>
+defines a function `combine' which catenates and returns the three
+strings `prefix', ".", and `suffix'.  Now the function `combine' can be
+used in an expression, for example
+<PRE>
+    q = combine("Hello", "m3")
+</PRE>
+assigns the string "Hello.m3" to `q'.
+<P>
+
+<H3>Conditional Statements</H3>
+<P>
+
+Values may be tested using the `if' statement. For example,
+<PRE>
+    if compiling
+      message = "compiling"
+    end
+</PRE>
+<P>
+
+If statements may have an else part, for example
+<PRE>
+    if not (ready or interested)
+      return
+    else
+      message = "congratulations"
+    end
+</PRE>
+returns from the current procedure if the test succeeds, otherwise
+executes the assignment statement.
+<P>
+
+<H3>Loops</H3>
+<P>
+
+`Foreach' statements iterate over the string values in an array or in a
+table. For example,
+<PRE>
+    foreach file in [".login", ".profile", ".Xdefaults"]
+      write("Copying " & file & " to " & backup_dir & "0)
+      copy_file(file, backup_dir)
+    end
+</PRE>
+binds the name `file' to each of ".login", ".profile", and ".Xdefaults"
+in turn in a local scope. This example assumes that the procedures
+`copy_file', and the variable `backup_dir' have already been defined.
+<P>
+
+Here is a function `squeeze' to remove duplicates from an array
+<PRE>
+    proc squeeze(array) is
+      local t = {}
+
+      foreach i in array
+        t{i} = ""
+      end
+
+      return [t]
+    end
+</PRE>
+<P>
+
+<H2>Keywords</H2>
+<P>
+
+Here is a list of reserved words in <B>quake</B>:
+<PRE>
+    and  contains  else  end  foreach  if  in
+    is  local  not  or  proc  readonly  return
+</PRE>
+<P>
+
+<H2>Built-in Procedures</H2>
+<P>
+
+<B>Quake</B> has a small collection of built-in procedures.  Built-ins cannot
+be redefined.  The built-ins `write' and `exec' are variadic.
+<UL>
+
+<LI><B>write(...)</B>
+Writes its arguments to the current output stream. Unlike the
+conversion of arrays to strings, there are no extra spaces inserted
+between arguments.
+
+<LI><B>error(...)</B>
+Writes its argument to the standard error stream and stops running
+<B>quake</B> with an error return value.
+
+<LI><B>include(file)</B>
+The contents of `file' is interpreted by <B>quake</B> in place of the call
+to `include'.  This is analogous the `#include' directive in the C
+preprocessor.  Calls to `include' nest until you run out of file
+descriptors or something equally bad.
+
+<LI><B>cp_if(src, dest)</B>
+If the file `src' differs from the file `dest', or `dest' is missing,
+copy `src' to `dest'.
+</UL>
+<P>
+
+<H2>Built-in Functions</H2>
+<P>
+
+<UL>
+<LI><B>arglist(pfx, array)</B>
+This function may be used to avoid the problems of limited space
+for argument lists in some command interpreters.  Some commands
+(notably `m3', the Modula-3 driver program) are prepared to accept
+arguments from a file.  The syntax for this is `-Ffile'.
+<P>
+
+Thus, `arglist("-F", really_huge_array)'
+returns either the original array if it's not really all that huge,
+or it creates a temporary file containing a list of the strings in
+the array (one to a line) and returns the string "-Ftemp" where
+`temp' is the name of the temporary file.
+
+<LI><B>defined(foo)</B>
+Returns true if `foo' is defined, otherwise returns false. Remember
+that the Boolean values false and true are represented as empty and
+non-empty strings respectively.  In this example, `foo' looks like
+a name, and is evaluated before begin passed to `defined'.  So if
+you really want to find out whether `foo' is defined, use
+`defined("foo")'.
+
+<LI><B>empty(foo)</B>
+Returns true if the string, array, or table is empty, false
+otherwise.
+
+<LI><B>equal(foo, bar)</B>
+Returns true if the strings `foo' and `bar' are equivalent.
+
+<LI><B>exec(cmd,io,wd,env)</B>
+executes the child process specified in cmd and returns the child
+return code. Cmd is an array containing the executable command followed
+by the individual command line arguments. The following arguments
+are optional. An array of file names is used for io to specify
+the standard input, output and error. Empty names refer to the
+existing standard files. When wd is present, it specifies the
+working directory. Finally, env is a vector of text which must have
+the form "NAME=VALUE".
+
+<LI><B>escape(s)</B>
+Returns the string `s' with backslash characters doubled.
+
+<LI><B>format(s, a...)</B>
+Returns the string `s' with each instance of `%s' replaced by
+successive `a' arguments.  The number of `a' arguments
+must match the number of `%s's.
+
+<LI><B>normalize(p, q)</B>
+If the path `p' is a prefix of the path `q', returns the path
+from directory `p' to file `q'.  Otherwise, returns `q'.
+
+<LI><B>path()</B>
+Returns the directory of the currently executing file as a string.
+
+<LI><B>stale(target, deps)</B>
+`target' is interpreted as a file name, as is `deps' (or the
+elements of `deps' if it's an array).  If the files `target' or
+`deps' cannot be found, or if (one of) `deps' is more recent than
+`target', `stale' returns true, otherwise false.
+
+<LI><B>unlink_file(f)</B>
+Deletes the file `f'.
+</UL>
+<P>
+
+<H2>Output Redirection</H2>
+
+<P>
+Output (from the `write' built-in procedure) may be temporarily
+redirected as follows:
+<PRE>
+    &gt; "foo.txt" in
+      write("Hello, world0)
+    end
+</PRE>
+The output of the calls to `write' is written to the file `foo.txt'.
+
+<P>
+Output may be appended to a file by using `>>' in place of `>'.
+
+<P>
+The special file names `_stdout' and `_stderr' are special and are bound
+to the file descriptors corresponding to normal and error terminal
+output respectively.
+
+<P>
+The default for output is the normal terminal stream.
+
+<H2>Notes</H2>
+<P>
+
+<B>Quake</B> does not garbage collect.  Reckless copying of large arrays can
+bloat the heap.
+<P>
+
+<H2>Author</H2>
+<P>
+
+<A HREF="http://www.broadvision.com/bio/stephen_harrison.html">
+Stephen Harrison</A>
+(sharrison@broadvision.com).
+<P>
+
+
+<!-- Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>

@@ -1,0 +1,42 @@
+<HTML><HEAD>
+<TITLE>Stable Objects</TITLE>
+</HEAD>
+<BODY>
+<DIV CLASS=HEAD>
+<SPAN CLASS=AUTHOR>Michel Dagenais</SPAN>
+<SPAN CLASS=COPYRIGHT>Michel Dagenais, GNU General Public License, 1998</SPAN>
+<ADDRESS>
+michel.dagenais@polymtl.ca<BR>
+Ecole Polytechnique<BR>
+C.P. 6079, Succ. Centre-Ville<BR>
+Montreal, Quebec, H3C 3A7</ADDRESS>
+<SPAN CLASS=DATE>18 January 1998</SPAN>
+<SPAN CLASS=KEYWORD>persistent</SPAN>
+<SPAN CLASS=KEYWORD>object</SPAN>
+<SPAN CLASS=KEYWORD>database</SPAN>
+</DIV>
+<H1>Stable Objects</H1>
+
+<DIV CLASS=ABSTRACT>
+<P>
+A persistent stable object logs all updating method calls and stores
+checkpoints of the current state from time to time. The current state
+may be recovered by reading the last checkpoint and replaying the log
+since the last checkpoint.
+
+<P>
+A persistent object may be derived automatically from an existing object type
+simply by identifying the selected object type in the m3makefile.
+</DIV>
+
+<DL>
+<DT><A REL=INCLUDE HREF="../stable/src">stable</A><DD>The stable objects
+    library provides the necessary runtime support as well as m3makefile
+    functions to derive stable objects.
+<DT><A REL=INCLUDE HREF="../stablegen/src">stablegen</A><DD>
+    Stub generator to derive a persistent object from an existing object
+    type.
+</DL>
+
+</BODY>
+</HTML>

@@ -1,0 +1,87 @@
+<HTML>
+<HEAD>
+<TITLE>Compiling for profiling and coverage analysis</TITLE>
+</HEAD>
+<BODY>
+
+<H1>Compiling for profiling and coverage analysis</H1>
+
+On most Unix systems, the programs prof(1), gprof(1), and
+analyze_coverage(1) can be used to profile your Modula-3 program's
+performance or to analyze which source lines of your program have been
+executed. However, in order to use these tools, you must compile your
+program with certain compiler options.<P>
+
+<H2>Profiling</H2>
+
+To profile your program for use with prof(1) or gprof(1), add 
+the following <A HREF="m3options.html">compiler option</A> to your
+m3makefile:<P>
+
+<PRE>
+  option("profiling","T")
+</PRE>
+
+This will cause your program to be compiled and linked for profiling. 
+If you have
+already built your program without profiling, and you want to turn
+profiling on, delete the object files and executable program
+and rebuild.
+<P>
+When you run your program, a file named "mon.out" (for prof(1)) or
+"gmon.out" (for gprof(1)) will be created. To view the profile, run
+the prof(1) or gprof(1) program using the command-line:<P>
+
+<PRE>
+  prof prog mon.out
+  gprof prog gmon.out
+</PRE>
+
+where <I>prog</I> is the filename of your program's binary.<P>
+
+<H2>Coverage Analysis</H2>
+
+To determine how many times each source line and procedure of your
+Modula-3 program were exececuted on a particular run, you need to
+compile it to be used with the analyze_coverage(1) tool. To do
+this, add the following <A HREF="m3options.html">compiler option</A>
+to your <A HREF="m3makefile.html"><TT>m3makefile</TT></A>:<P>
+
+<PRE>
+  option("coverage","T")
+</PRE>
+
+Coverage data will be available only for those modules that have been
+compiled with this option, so if you want coverage analysis for all
+your sources and you have just turned this option on, you will need to
+delete your derived directory and recompile everything. To produce the
+coverage data, you must also link your program with this option.<P>
+
+Once you've compiled your program for coverage analysis, just run it.
+By default, this will produce a file named "coverage.out" in the
+current directory (you can set the environment variable
+<TT>COVERAGE_DATABASE</TT> to the name of a different file if you
+prefer). This file is the coverage database. The coverage information
+is <I>accumulated</I> in this file from run to run, so if you want to
+see what your program does on a single run, you should delete the
+coverage database file before running your program. For the same
+reason, the profiling data file is rather large; furthermore, as it is
+augmented by each execution of the program, you may want to compress
+it from time to time (see <TT>analyze_coverage(1)</TT> for more
+details).<P>
+
+Once you've run your program, you can use the analyze_coverage(1) tool
+to show you what's in the coverage database. For this tool to work,
+you must point it to the directories containing your source files. You
+can do this by setting the <TT>COVERAGE_PATH</TT> environment
+variable, or by supplying the "-S" option to analyze_coverage(1).
+Again, see the analyze_coverage(1) man page for details.<P>
+
+Note that because of the extensive data collection performed by this mode of
+profiling, the execution time of the program can be significantly larger when
+it is enabled; thus, simultaneous time profiling can produce erroneous
+results.<P>
+
+<!--Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>

@@ -1,0 +1,15 @@
+<TITLE>What is the story with Trestle and OpenWindows?</TITLE>
+<H1>What is the story with Trestle and OpenWindows?</H1>
+<P>
+Mark Manasse says:
+<P>
+I think that the OpenWindows release should be enough (no need to 
+get the MIT X release), although there are a few things in Trestle
+that trigger devastating bugs in OpenWindows. But the only library
+we depend on is Xlib, R4 or later.
+<P>
+The main thing I know that crashes OW 2.0 is the code where we call 
+GrabKey specifying AnyKey.  You can either loop over all of the 
+keys, or you can just comment out the call; programs won't run exactly 
+the same, but you probably won't notice the difference.
+<P>

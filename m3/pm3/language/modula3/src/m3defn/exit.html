@@ -1,0 +1,47 @@
+<HTML>
+<HEAD>
+<TITLE>Modula-3: Exit statements</TITLE>
+</HEAD>
+<BODY>
+
+<A NAME=idx.102>
+<H2>Exit</H2>
+</A>
+<P>
+
+The statement
+<PRE>
+    EXIT
+</PRE>
+raises the exit-exception.  An <TT>EXIT</TT> statement must be textually
+enclosed by a
+<A HREF="loop.html"><TT>LOOP</TT></A>,
+<A HREF="while.html"><TT>WHILE</TT></A>,
+<A HREF="repeat.html"><TT>REPEAT</TT></A>,
+or
+<A HREF="for.html"><TT>FOR</TT></A>
+statement.
+<P>
+
+<A NAME=idx.103>We</A>
+define <TT>EXIT</TT> and <TT>RETURN</TT> in terms of exceptions in order
+to specify their interaction with the exception handling statements.
+As a pathological example, consider the following code, which is an
+elaborate infinite loop:
+<PRE>
+    LOOP
+      TRY
+        TRY EXIT FINALLY RAISE E END
+      EXCEPT
+        E => (*skip*)
+      END
+    END
+</PRE>
+<P>
+
+<PRE>
+Last modified on Wed Apr  3 09:39:07 PST 1996 by heydon
+     modified on Fri Apr 15 08:53:02 PDT 1994 by kalsow
+</PRE>
+</BODY>
+</HTML>

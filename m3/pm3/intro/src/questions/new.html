@@ -1,0 +1,495 @@
+<TITLE>Can a program recover from running out of virtual memory?</TITLE>
+<H1>Can a program recover from running out of virtual memory?</H1>
+<P>
+No, this turns out to be quite a thorny problem. I think 
+the best thing I can do is by attaching to this message the
+dialog that went on during the "beta test" of the new library interfaces 
+(SRC Research Report 113, "Some Useful Modula-3 Interfaces).  The 
+parties are Xerox PARC's David Goldberg, Hans Boehm, Alan Demers, 
+and David Nichols, and SRC's John DeTreville, who designed and implemented 
+the garbage collector in SRC Modula-3.  The dialog covers many of 
+the issues, and apparently ends when the participants run out of 
+steam. 
+<P>
+Paul McJones
+mcjones@src.dec.com
+(editor of SRC 113)
+
+<H2> RTAllocator should allow handling out of memory </H2>
+<P>
+David Goldberg: ... there is one system problem that is not currently
+    handled, namely running out of memory.  I would very, very much
+    like to see this handled in RTAllocator.  One approach was
+    suggested by Roy Levin a while back: Have a RegisterNoMemory(proc)
+    routine that causes proc() to be called when memory is gone (or
+    very low).  Example of use: in the 'Solitaire' program, the 'Hint'
+    button generates a tree of possible moves.  If this tree gets very
+    big and consumes all memory, the RegisterNoMemory proc could
+    abandon the search down the current branch, NIL-out that branch,
+    and ask for a garbage collection.  Currently what happens is that
+    Solitaire crashes if you bug 'Hint' and memory is low.
+<P>
+Interface Police: Ok, make a concrete proposal and we'll talk.  How 
+    low should memory be before the runtime complains?  Before or 
+    after a collection?  Is it ok to call your procedure from inside 
+    a runtime critical section (after all, you're probably in the 
+    middle of a NEW)?  Are multiple notification procedures allowed 
+    to be registered?  Shouldn't a routine that consumes arbitrary 
+    amounts of memory be coded to poll the allocator to ask how much 
+    memory is available? 
+<P>
+Hans Boehm/Alan Demers/David Goldberg/David Nichols:
+    We believe that programs wishing to handle allocation failures
+    will be able to do so with high (but not perfect) reliability if
+    the interface provides two features: versions of the
+    RTAllocator.New routines that report if the allocation is not
+    possible (either by returning NIL or raising an exception), and a
+    way to register a callback when memory is low.  Both features are
+    necessary.  Here are two typical scenarios:
+<P>
+<UL>
+<LI> The Solitaire program.
+        Before starting, Solitaire allocates a 'safety net' block of
+        memory, and registers a callback.  When memory is exhausted,
+        the callback frees the safety net, sets a flag, and returns.
+        In the Solitaire program proper, the inner loop of the move
+        generator checks the flag immediately after allocating a new
+        node.  If the flag is set, it abandons the search.  It would
+        not work for Solitiare to allocate new tree nodes with
+        RTAllocator.New() and check for an error: as memory gets low,
+        a library routine in some other package could cause an
+        allocation failure.
+<P>
+        Unfortunately, there is a race condition since another thread
+        could run and do an allocation between the time the faulting
+        NEW returns and all references to the search tree are NIL'ed.
+        This can be mimimized by adding some slop to the safety net.
+
+<LI> An editor that allocates O(n) bytes of memory when opening an
+        n-byte file.
+        If the users tries to open a huge file, you don't want to
+        crash, but rather tell the user that the file can't be opened
+        (in UNIX, the user can then kill some processes to regain swap
+        space and try again, or in an emacs-style editor he can delete
+        some buffers and try again).  A callback won't work for this,
+        because when attempting to open a huge file, the allocation
+        must be aborted: there just isn't enough memory to go around.
+        Instead an RTAllocator.New() routine should be used for this
+        allocation.
+<P>
+        However, the editor will also want to register a callback proc
+        to guard against NEW()s in other parts of the program that
+        can't be satisfied.  If the callback is passed the size of the
+        memory allocation that can't be satisfied, the callback will
+        be able to pick between two strategies.  If there is a 'safety
+        net' which is larger than the block to be allocated, the
+        callback can free it and set a "low on memory" flag, with the
+        editor cleaning up properly later.  If the safety net is not
+        big enough, the callback itself can attempt an emergency save
+        before crashing.
+</UL>
+<P>
+    Here's a specific proposal that embodies these ideas.  We're not
+    wedded to the details.  Note that RTCollector.LimitRelative is not
+    essential: it just lifts some of the functionality currently in
+    RTHeapPolicy.
+<P>
+<UL>
+<LI> Add the following to RTCollector.i3:
+<PRE><TT>
+      PROCEDURE LimitAbsolute(n: CARDINAL);
+
+      (* Don't let the heap grow beyond n bytes.  The collector/allocator
+         should observe this in all heap growth decisions.  *)
+
+      [Comment from Hans: I don't think there is a way to write
+      programs that are reasonable citizens on a shared system without
+      some such facility.]
+
+      PROCEDURE LimitRelative(x: REAL);
+
+      (* Advisory.  Try to keep the heap size at roughly x times the
+         amount of live data. (For ref counting it affects only the
+         backup collector for cycles.)  *)
+
+      [Comments from Hans: The performance of all collectors with
+      which I am familiar depends crucially on such a parameter.  Thus
+      it might as well be exposed in some portable interface.  (The
+      allocator should of course use less memory if it gains no time
+      advantage from using more.)  The "amount of live data" is, of
+      course, implementation defined, as are the minimum values of x
+      that have any chance of being observed.]
+</TT></PRE>
+
+<LI> In RTAllocator.i3, add OutOfMemory to RAISES clauses of all the
+       New routines, and add the following:
+
+<PRE><TT>
+      EXCEPTION OutOfMemory;
+
+      TYPE
+         CallBackObj = OBJECT notify(bytes: CARDINAL) END;
+
+      PROCEDURE RegisterHeapFullCallback(obj: CallBackObj);
+
+      (* Add obj.notify to the list of procs to be called if an
+         allocation request is about to fail, either because of lack
+         of memory, or due to violation of an
+         RTCollector.LimitAbsolute imposed limit.  The notify method
+         will be called with an argument specifying the size in bytes
+         of the allocate call that triggered the callback.  The notify
+         method may not allocate or acquire locks, or call any
+         procedures that do.  It may be invoked synchronously with any
+         combination of locks held.  (Should there be a way to delete
+         a registered callback?).  If a garbage collection after this
+         callback fails to reclaim enough memory to allocate the
+         requested object, an exception will be raised if the
+         allocation was through RTAllocator.  Otherwise a checked
+         runtime error will result.  The notify proc is not called
+         when memory fails from an RTAllocator.New call (these
+         failures can be caught by the user).
+
+         Typical actions by notify would include one of the following:
+
+         1) Clearing pointers to reduce the amount of accessible memory.
+         2) Calling RTCollector.LimitAbsolute with a larger limit.
+      *)
+</TT></PRE>
+
+<LI> Variations on this proposal:
+<P>
+      Might want to consider adding:
+<P>
+<PRE><TT>
+      PROCEDURE GetLimitAbsolute(): CARDINAL;
+      (* Return the current absolute heap limit *)
+</TT></PRE>
+<P>
+      The usefulness of RTCollector.LimitAbsolute in the callback
+      would be increased if there was a way to tell if this actually
+      freed up any more memory.  One approach would be to change
+      CallBackObj to
+<P>
+<PRE><TT>
+      TYPE
+         CallBackObj = OBJECT
+                          notify(bytes: CARDINAL; retry: BOOLEAN): BOOLEAN
+                       END;
+</TT></PRE>
+<P>
+      and change the action of RegisterHeapFullCallback to:
+<P>
+<PRE><TT>
+      (* If a garbage collection after all callbacks have been
+         executed fails to reclaim enough memory to allocate the
+         requested object, then any notify() procs that returned TRUE
+         will be called again with retry := TRUE.  Otherwise an
+         exception will be raised if the allocation was through
+         RTAllocator, or else a checked runtime error will result. *)
+</TT></PRE>
+<P>
+      Thus, if you wanted to first try and get more memory in the
+      callback by calling RTCollector.LimitAbsolute, you could return
+      TRUE and wait for a callback with retry = TRUE.  If this second
+      callback occurs, you will need to clear some pointers to free up
+      memory.  Or another variation: add
+<P>
+<PRE><TT>
+      PROCEDURE GetTotalBytesAllocated(): CARDINAL;
+      (* Returns the total number of bytes allocated since the program
+         begin.  A CARDINAL may not be big enough, perhaps this should
+         be a LONGREAL? *)
+</TT></PRE>
+<P>
+      Then the retry argument to the notify method can be eliminated,
+      since a call is a retry only if GetTotalBytesAllocated() shows
+      no additional allocations since the last callback.
+</UL>
+<P>
+
+John DeTreville: When I read your March proposal for handling running
+    out of memory on the traced heap, I didn't quite see how to
+    implement the details you gave.  I've been iterating to create
+    mechanisms that are simpler and more implementable, and I've now
+    arrived at quite a simple interface.
+<P>
+    In particular, I now believe that (almost) all the functionality
+    you ask for is already provided by the current interface.  I say
+    "almost" because there's a few status calls to be added, and
+    because some of the current mechanisms are clunky, but I believe I
+    can tell a convincing story.  Note that these mechanisms are or
+    would be in SRC-specific interfaces (currently called
+    RTAllocatorSRC, RTCollectorSRC, and RTHeapRep); I don't think we
+    understand them well enough to put them into the public IP
+    interfaces.
+<P>
+    Let's first distinguish VM limits from application-imposed limits.
+    The amount of VM available to the application is a hard limit,
+    although not one that can easily be predicted.  In the current SRC
+    M3 implementation, both the allocator and the collector allocate
+    VM from the kernel when necessary.  If the collector tries to
+    allocate VM and fails, the program must crash: there is no way to
+    reestablish the necessary invariants to let it continue.
+<P>
+    I propose treating VM exhaustion as a checked runtime error, in
+    the allocator and in the collector.  The goal is then to establish
+    and maintain an application-imposed limit that is uniformly
+    stricter than the VM limit, whatever that may be.
+<P>
+    You propose a mechanism to allow calls to the New* procedures to
+    fail if they would exceed the application-imposed limit.  Of
+    course, only a small part of the code would take advantage of this
+    facility.  This code could equally well query the heap to
+    determine the current size, and compare it against the limit; if
+    the program can also predict the size of the object to be
+    allocated, it can decide whether or not to proceed.
+<P>
+    This approach requires some collector-dependent code in the
+    application, but I doubt that it would be very much.  It also
+    allows possible race conditions, but I believe they're not much
+    worse in practice than in the original proposal.
+<P>
+    You also propose a mechanism to notify the program whenever the
+    limit is about to be exceeded.  It's quite complicated to get such
+    immediate notification.  First, the procedures notified can't
+    acquire locks or call most procedures in other modules.  Second,
+    it requires a new collection to run synchronously after the
+    procedures to see if enough space has been freed and whether some
+    of the procedures must be called again; this causes an
+    interruption of service.
+<P>
+    Here's a different proposal, which might not allow space bounds as
+    tight as in the original proposal, but which seems simpler.  We
+    would add a mechanism for an application thread to wait for the
+    next collection to finish.  This mechanism could replace the
+    current mechanisms for registering and unregistering synchronous
+    monitors, which have numerous complex and poorly documented
+    constraints on what actions they can perform.
+<P>
+    Each time through, the thread could compare the amount of space
+    still reachable to the application-imposed limit, and either free
+    some data before the next collection (the ability to hold locks
+    would be handy here) or increase "gcRatio" to make the collector
+    work harder and keep the total heap size under control, or both.
+<P>
+    There is still the danger that the application could allocate so
+    rapidly that this asynchronous thread might not be able to keep
+    up, but otherwise asynchronous actions seem a lot more reasonable
+    than synchronous.
+<P>
+    This is one approach, and there are others.  What's nice about
+    this design is that it requires almost no changes to the
+    interface, only better status reporting and a replacement of the
+    mechanisms for registering and unregistering synchronous
+    collection monitors.  Maybe you could even work around the current
+    lack of these facilities.  Let me know what you think.
+<P>
+Hans: One quick comment, without having thought much about the
+    rest:
+<P>
+        "This code could equally well query the heap to determine the
+        current size, and compare it against the limit; if the program
+        can also predict the size of the object to be allocated, it
+        can decide whether or not to proceed."
+<P>
+    Is this really true?  Since the collector can't move some objects,
+    there are presumably fragmentation issues.  Am I guaranteed to be
+    able to allocate 1 MB if the current heap size is 1 MB below the
+    limit?  This is certainly false in PCR, and I'm not sure how you
+    could guarantee it without remapping pages.
+<P>
+John: Hans Boehm notes that I was wrong about the client of New*
+    being able to predict whether an allocation would succeed or fail,
+    because of likely page-level fragmentation.  This needs to be
+    fixed in my proposal.
+<P>
+    To expand on my earlier message, let me outline a completely
+    different approach for handling heap overflow, that perhaps has
+    more in common with the original PARC proposal, but which seems
+    far too complex and unwieldy to me.  This complexity is why I
+    tried to work out a simpler approach, even at the cost of
+    providing fewer guarantees.
+<P>
+    We start by imagining that we want to be able to continue to run
+    even if we exhaust VM.  First, this means that we can never
+    allocate VM from inside the collector.  The implication is that
+    whenever we allocate VM in the allocator, we allocate enough extra
+    to tide us over through the next collection, no matter how much of
+    the heap it retains.  This suggests that we will significantly
+    overallocate VM.  For example, with a stop-and-copy collector and
+    gcRatio set to 1, a program with a stably-sized reachable set
+    currently requires 3 times as much space as the reachable set, but
+    the "failsafe gc" would require 4 times.
+<P>
+    (Doing even this well depends crucially upon the SRC
+    implementation detail that the current collector never copies
+    objects bigger than one page, but leaves them in place.
+    Otherwise, the possibility of fragmentation would make it much
+    more difficult to determine how much memory to leave free for the
+    collector, and in what sizes of runs of pages.  It will also take
+    some work to avoid off-by-one errors in predicting how much memory
+    a collection could take.)
+<P>
+    Of course, if the client decreases gcRatio, or switches from
+    sort-and-copy collection to concurrent collection, that would
+    require allocating more VM, to ensure that the collector cannot
+    run out of VM.  That means that these operations can also fail,
+    just like allocator operations.
+<P>
+    Only some programs will want to be able to back off when they
+    reach VM limits.  Others won't mind getting a checked runtime
+    error; in return, they will require less VM.  Therefore, we need
+    procedures to switch back and forth between these two modes.
+    Again, attempting to switch to failsafe mode can fail.
+<P>
+    The collector currently allocates its own space on the traced heap
+    during collections, which will have to be moved to the untraced
+    heap if we are to predict how much traced heap a collection can
+    use.  Note that in general, once VM is exhausted, allocations on
+    the untraced heap may start to fail, and so programs will probably
+    die very quickly once VM is exhausted.  But let's move on.
+<P>
+    In addition to the VM limit, we also want an application-imposed
+    limit on heap size.  The allocator and collector will guarantee
+    that the heap size will never exceed this limit.  Again, we will
+    overallocate VM in the allocator to avoid exceeding the limit in
+    the collector.  Again, setting the limit may fail.
+<P>
+    So what happens when a NEW fails, or a New*, or switching to
+    concurrent collection, or setting the application-imposed limit,
+    or whatever?  This happens whenever performing the operation would
+    exceed the application-imposed limit, or when attempts to allocate
+    enough extra VM fail.
+<P>
+    Some of these can signal an error, and the client can chose to do
+    something else instead.  In some cases, such as setting gcRatio,
+    it might make sense for the failing operation to tell the client
+    how close to the impossible value would be possible.
+<P>
+    NEW, though, should not signal an error; this would require
+    massive changes in all existing modules that would not be add
+    value to most clients.  In this case, I can't think of anything
+    much better than the original proposal.  Before attempting to
+    allocate the object, the collector will try to free up some
+    storage.  First, it can perform a collection, or finish the
+    current one.  If that doesn't do it, it can call one or more
+    procedures registered by the application to drop links to some
+    storage, or to change collector parameters.  If that doesn't do
+    it, we can perform another collection.  And so on and so on, until
+    the procedures say to give up.
+<P>
+    Note that these collections must be synchronous, since no
+    allocations may be possible until this mechanism completes, and
+    the collections will therefore cause interruptions of service.
+    Note also that the procedures cannot acquire locks, cannot
+    allocate storage, cannot call thread primitives, and so on, and
+    therefore cannot call into most libraries; they are essentially
+    restricted to reading and writing data structures whose
+    implementations they know, and changing collector parameters.
+    This seems excessively restrictive, but also unavoidable in this
+    approach.
+<P>
+    In short, this seems like a lot of extra mechanism to add to the
+    allocator and collector, that doesn't seem to do quite what you
+    want; it gives you strict limits, but at a cost.  My proposal of
+    this morning is at least much simpler, although it can give looser
+    limits.
+<P>
+John, continuing: Thinking a little more about the problem of running
+    out of storage in the untraced heap, it seems that the only
+    reasonable thing to do is to merge the implementation of the
+    untraced heap with the traced heap.  This was, untraced NEWs that
+    fail can be handled exactly the same way as traced NEWs, with a
+    synchronous cleanup routine that frees enough VM to proceed, or
+    resets parameters.
+<P>
+    This means that the allocator and collector cannot use the
+    untraced heap, but must either use a static amount of storage
+    which they could overflow, or must allocate enough extra in
+    response to client applications that they cannot possibly run out
+    of space.  The potential space overhead for maximum-sized stacks,
+    for example, is huge.
+<P>
+    The more this proposal is fleshed out, it more it seems that doing
+    a good job of recovering from heap overflows is quite tricky,
+    which is why I suggest a lower-tech approach for now.
+<P>
+Hans: I just went over the last few messages in this thread again.  I
+    think the bottom line is, as you say:
+<P>
+    It's hard to implement an out-of-memory call-back on top of the
+    current collector.  Given the current collector, a collector
+    call-back that allows polling is probably the best you can
+    reasonably do, and should certainly be provided.
+<P>
+    The remaining question, which also seems to be motivated by other
+    concerns here, is: To what extent are you tied to this collector
+    design?  The problem here seems to be mainly caused by copying old
+    generation objects, since you could perhaps bound the size of the
+    young generation?  My suspicion, based unfortunately only on
+    anecdotes, is that this is not a good idea anyway, since it uses
+    too much space, and is also fairly expensive in copying cost.
+    (PARCPlace seems to have arrived at the same conclusion, so
+    there's probably at least one other supporter of this position.
+    Some recent complaints here about space usage of Modula-3 programs
+    also point a bit in this direction.)
+<P>
+    Do you agree?  If so, should the interface be designed ignoring
+    current constraints, and should we initially accept a partial
+    implementation?
+<P>
+John: It's been a while, so let me recap where we are, or at least
+    where I am.
+<P>
+    We've been discussing mechanisms for Modula-3 programs to manage
+    their memory better.  In particular, we have proposed ways that
+    programs could bound the heap size and recover from heap overflow.
+<P>
+    I think this topic is complicated enough, and new enough, that we
+    shouldn't try to get it into the current set of portable
+    interfaces.  The Interface Police concur.
+<P>
+    We've floated two broad (families of) proposals for attacking this
+    problem:
+<P>
+<UL>
+<LI> Allow strong guarantees on the heap size; these guarantees
+    would never be broken.
+
+<LI> Allow the program to monitor its memory usage, discarding
+    excess data as necessary.
+</UL>
+<P>
+    I think that the first is achievable.  Adapting the current SRC Modula-3
+    (allocator and) collector to allow such guarantees would take a
+    month or so.  The principal problem is that the current collector
+    tries to maximize space/time performance, and giving such
+    guarantees will probably require extra memory to be set aside that
+    will never be used.  The collector would have two modes: with or
+    without guarantees.  Most programs would run without guarantees.
+<P>
+    I also think that a usable version of the second is possible with almost
+    no change to the current collector.  The programmer would have to
+    do more work, and wouldn't get any strong guarantees, but this
+    approach should work for many programs.
+<P>
+    We've also been discussing a third family of proposals, that seem
+    to combine the worst features of the first and second: they require
+    significant changes to the current collector, but son't give very
+    strong guarantees.  These seem much less interesting to me.
+<P>
+    Here's two pieces of opinion.
+<P>
+    First, I propose that we work out the details of #2, and you use
+    it for a couple of programs.  Get some experience with it.  This
+    could help inform a heavier-weight solution.
+<P>
+    Second, I wonder whether any of these solutions is a good
+    candidate for a portable interface.  It's one thing not to be
+    strictly incompatible with a given collector strategy, but quite
+    another to be easy to plug into an existing collector.  Modula-3
+    currently doesn't require very much from its collector; making
+    these proposals standard would significantly increase the
+    requirements on a Modula-3 implementor.
+<P>
+

@@ -1,0 +1,134 @@
+<HTML><HEAD>
+<TITLE>Installation</TITLE>
+</HEAD><BODY>
+<H1>Installation</H1>
+
+The latest version of PM3 may be obtained from m3.polymtl.ca by
+<A HREF="http://m3.polymtl.ca/m3/pkg">WWW</A> or
+(<A HREF="ftp://m3.polymtl.ca/pub/m3/pkg">FTP</A>).
+
+<H2>Binary Installation</H2>
+
+<P>A binary distribution of PM3 contains executable programs, libraries,
+and run time data files (scripts, bitmaps, document type definitions...).
+It comes in a tar compressed file and may be untarred from the root
+directory. As explained below, you need to set appropriately the PATH
+environment variable, and possibly the LD_LIBRARY_PATH environment
+variable on some of the platforms supporting shared libraries.
+<P>
+In the examples below, <I>TARGET</I> refers to the platform name and
+should be replaced by LINUXELF, SPARC, SOLgnu... depending on your
+target platform, and <I>version</I> refers to the PM3 version.
+<P>
+The PATH environment variable must contain the directory where the
+executable programs reside, typically /usr/local/pm3-1.1/bin.
+On platforms with shared libraries (dynamically linked), the dynamic linker
+must find the shared libraries along its path. Typically, the LD_LIBRARY_PATH
+environment variable will need to include 
+/usr/local/pm3-1.1/lib/m3/<I>TARGET</I>.
+For some platforms (LINUXELF, SPARC, SOLgnu), the shared libraries paths 
+are specified at link time and LD_LIBRARY_PATH need not contain 
+anything, if the shared libraries are at the location specified at link time.
+<P>
+Some programs require data files at run time. The locations for these files may
+be specified as a command line option for the program. Default locations
+use the values specified in the m3config library. These values reflect
+the compiler configuration templates at the time m3config was compiled.
+For the compiler itself (m3build and m3ship), a more elaborate scheme is
+used to find the templates. A command line option may be set 
+(<TT>-T path</TT>), the <TT>M3TEMPLATES</TT> environment variable may be
+specified, and the m3config library values serve as default location.
+Failing that, the <TT>PATH</TT> environment variable is used to locate
+<TT>m3build</TT> and the templates are assume to be reachable from there
+using the relative path <TT>../lib/m3/pkg/m3config/src</TT>. Because of this,
+the compiler finds automatically the templates in most cases, and the
+installation may look like:
+<PRE><TT>
+cassis> cd
+cassis>ftp m3.polymtl.ca
+ftp> binary
+ftp> cd pub/m3/binaries/<I>TARGET</I>
+ftp> ls
+ftp> cd <I>version</I>
+ftp> get usr.tgz
+ftp> quit
+cassis> cd /
+cassis> tar xpfz ~/usr.tgz
+cassis> rm ~/usr.tgz
+cassis> setenv PATH /usr/local/<I>version</I>/bin:${PATH}
+cassis> setenv LD_LIBRARY_PATH \
+> /usr/local/<I>version</I>/lib/m3/<I>TARGET</I>:${LD_LIBRARY_PATH}
+cassis>
+</TT></PRE>
+<P>
+In rare cases, (e.g. if the system libraries are at an unusual location),
+you may need to modify the templates in order to reflect your system
+configuration. This is achieved by examining the content
+of /usr/local/pm3-1.1/lib/m3/pkg/m3config/src/COMMON and
+overriding the improper variables and functions in the
+platform specific template 
+/usr/local/pm3-1.1/lib/m3/pkg/m3config/src/<I>TARGET</I>.
+
+<H2>Source only Installation</H2>
+<P>
+For a source only distribution, you need a compatible version of m3build and
+m3ship already installed. The PATH and LD_LIBRARY_PATH environment
+variables also need to be set properly as explained in the previous section.
+You may then customize the compiler configuration files in m3config/src,
+select the packages to compile in src/m3makefile,
+and then proceed with the compilation and installation 
+(<TT>m3build -DRECURSIVE</TT>).
+
+<PRE><TT>
+cassis> cd
+cassis>ftp m3.polymtl.ca
+ftp> binary
+ftp> cd pub/m3/pkg
+ftp> ls
+ftp> get <I>version</I>.tgz
+ftp> quit
+cassis> tar xpfz <I>version</I>.tgz
+cassis> rm <I>version</I>.tgz
+cassis> setenv PATH /usr/local/<I>version</I>/bin:${PATH}
+cassis> setenv LD_LIBRARY_PATH \
+> /usr/local/<I>version</I>/lib/m3/<I>TARGET</I>:${LD_LIBRARY_PATH}
+cassis> cd <I>version</I>
+cassis> m3build -DRECURSIVE
+</TT></PRE>
+
+<H2>Bootstrap Source Installation</H2>
+<P>
+The bootstrap for a platform contains the assembly source for all the files
+comprising m3build and m3ship, and suitable makefiles. 
+The PATH and LD_LIBRARY_PATH environment variables need to be set properly as
+in the previous sections. You may then customize the top level bootstrap
+makefile <TT>Makefile</TT> if needed, customize
+the compiler configuration files in m3config/src,
+select the packages to compile in src/m3makefile,
+and then proceed with the compilation and installation (<TT>make</TT>).
+
+<PRE><TT>
+cassis> cd
+cassis>ftp m3.polymtl.ca
+ftp> binary
+ftp> cd /pub/m3/pkg
+ftp> ls
+ftp> get <I>version</I>.tgz
+ftp> cd /pub/m3/bootstrap/<I>TARGET</I>
+ftp> get <I>version</I>.tgz boot.tgz
+ftp> quit
+cassis> tar xpfz <I>version</I>.tgz
+cassis> tar xpfz boot.tgz
+cassis> rm <I>version</I>.tgz boot.tgz
+cassis> setenv PATH /usr/local/<I>version</I>/bin:${PATH}
+cassis> setenv LD_LIBRARY_PATH \
+> /usr/local/<I>version</I>/lib/m3/<I>TARGET</I>:${LD_LIBRARY_PATH}
+cassis> cd <I>version</I>
+cassis> make
+</TT></PRE>
+
+</BODY></HTML>
+
+
+
+

@@ -1,0 +1,88 @@
+<HTML>
+<HEAD>
+<TITLE>m3build processing steps</TITLE>
+</HEAD>
+<BODY>
+<H1>m3build processing steps</H1>
+<P>
+When <TT>m3build</TT> is invoqued, it initializes the quake interpreter
+with values for <TT>BUILD_DIR</TT> (defaults to the platform name unless
+specified on the command line), <TT>PACKAGE</TT> (the name of the current
+directory), and <TT>PACKAGE_DIR</TT> (the full path of the current directory).
+The <I>build_target</I> is also defined as <TT>_build_target</TT>.
+It defaults to <I>all</I> (<TT>_all</TT>), and <I>clean</I> is the other
+typical value.
+<P>
+The second step is to find and interpret the platform dependent template,
+specified in <TT>BUILD_DIR</TT>.
+The template directory may be specified on the command line,
+in the <TT>M3TEMPLATES</TT> environment variable, and defaults to
+<TT>m3config/src</TT> within the directory specified in <TT>PKG_USE</TT>
+when <TT>m3build</TT> was compiled. As a last resort, directory
+<TT>../lib/m3/pkg/m3config/src</TT> is searched relative to the directory
+where the <TT>m3build</TT> executable may be found.
+<P>
+The next step is to insert all the definitions,
+and to interpret all the files, specified as command
+line options.
+<P>
+At this point, a number of quake variables are extracted by the compiler
+before the processing of the <TT>m3makefile</TT> starts. The <I>host</I>
+and <I>target</I> in these descriptions refer to platform types and
+differ only when cross compiling.
+
+<DL>
+<DT>NAMING_CONVENTIONS<DD>Vector containing all the host dependent
+file extensions (.s, .c, .o, .exe...).
+<DT>TARGET_NAMING_CONVENTIONS<DD>Vector containing all the target dependent
+file extensions.
+<DT>CRship<DD>End of line for .M3SHIP files.
+<DT>SLship<DD>Path separator for .M3SHIP files.
+<DT>PKG_USE, BIN_USE, LIB_USE<DD>Location of packages, program executables,
+and libraries.
+<DT>PKG_INSTALL, BIN_INSTALL, LIB_INSTALL, MAN_INSTALL, EMACS_INSTALL,
+    DOC_INSTALL, HTML_INSTALL<DD>Where to install packages, program 
+    executables, libraries, man pages, emacs lisp files, postscript files,
+    and html files. In most cases the USE and INSTALL directories are the
+    same.
+<DT>HOST_OS_TYPE<DD>The host operating system type (POSIX or WIN32).
+</DL>
+<P>
+The <TT>m3makefile</TT> is then processed, and the list of sources built,
+until the ending <TT>Library()</TT>, <TT>Program()</TT>, or 
+<TT>OtherPackage()</TT> quake function is encountered.
+At this point, the <TT>before_do_m3_hook()</TT> quake function is
+called to set things up before the compilation proceeds.
+More quake variables are then extracted by <TT>m3build</TT>.
+
+<DL>
+<DT>Options<DD>Table containing compilation options values.
+<DT>TARGET<DD>Target machine.
+<DT>M3_COVERAGE_LIB<DD>Library required for coverage analysis.
+<DT>INTERNAL_BACKEND, M3_BACKEND_OUTPUT<DD>Whether to use the internal backend.
+<DT>OPTION_GUI<DD>Whether to create a <I>gui</I> WIN32 application.
+</DL>
+
+The compilation then proceeds and <TT>m3build</TT> calls back a number of
+template defined quake procedures for various platform dependent tasks:
+
+<DL>
+<DT>m3_compile_c<DD>Compile a C file.
+<DT>m3_link<DD>Link a program.
+<DT>m3_make_lib<DD>Create static and dynamic libraries.
+<DT>m3_note_shlib<DD>Add libraries in the list of derived files.
+<DT>m3_assemble<DD>Assemble an assembly file.
+<DT>m3_backend<DD>Convert the intermediate language into assembly.
+<DT>install_file<DD>Install a file during m3ship.
+<DT>emacs_compile<DD>Compile and emacs lisp file.
+</DL>
+<P>
+In all cases, <TT>m3build</TT> creates or updates the files
+.M3EXPORTS (exported files), .M3IMPTAB (location of all imported files), 
+.M3SHIP (files to ship with m3ship), and .M3WEB (information for 
+the browser <TT>m3browser</TT>). With the <I>all</I> default 
+<I>build_target</I>, the actual compilation is performed. With the <I>clean</I>
+<I>build_target</I>, the list of derived files (which would have been created
+by the compilation) is used to clean the build directory.
+</BODY>
+</HTML>

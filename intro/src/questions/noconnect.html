@@ -1,0 +1,14 @@
+<TITLE>Why are exceptions raised by X or Network Objects applications?</TITLE>
+<H1>Why are exceptions raised by X or Network Objects applications?</H1>
+<P>
+Graphical applications (based on Trestle/X Windows) raise the
+TrestleComm.Failure exception when the DISPLAY environment variable is
+incorrect or the X server is refusing the connection. They raise
+MachineIDPosix.Failure if the network configuration files are
+incorrectly set up, especially on LINUX; /etc/hosts must contain at
+least a loopback address (127.0.0.1) and the /etc/rc scripts an
+appropriate ifconfig command (/etc/ifconfig lo 127.0.0.1; /etc/route
+add 127.0.0.1).  Applications with Network Objects may also raise
+exceptions or consume all the CPU time available when the network
+configuration files are incorrect.
+<P>

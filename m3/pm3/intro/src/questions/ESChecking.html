@@ -1,0 +1,12 @@
+<TITLE>Why are there strange pragmas for Locking levels and other properties?</TITLE>
+<H1>Why are there strange pragmas for Locking levels and other properties?</H1>
+<P>
+The Trestle (ui library) interfaces contain Locking level pragmas.
+The base interfaces (libm3 library) contain SPEC pragmas. These are
+not processed by the compiler. Instead the Extended Static Checker,
+currently under development at DEC SRC, will report on problems
+detected based on the program content and the information specified in
+these pragmas
+<A HREF="http://gatekeeper.dec.com/pub/misc/detlefs/escover.ps">[ESC]</A>.
+The Extended Static Checker is not yet available, it may be some time in the
+future.

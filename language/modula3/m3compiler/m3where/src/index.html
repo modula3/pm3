@@ -1,0 +1,90 @@
+<HTML>
+<HEAD>
+<TITLE>m3where</TITLE>
+</HEAD>
+<BODY>
+
+<H1>m3where</H1>
+<P>
+
+<EM>m3where</EM>
+is a program that locates Modula-3 source files, relative to a
+particular program or library package. By default it locates the given
+units relative to the default build directory of the package that is
+rooted at the current working directory. The <B>-d</B> option can be used
+to specify the pathname of a particular package to be used to locate
+the units. Sources that are <EM>hidden</EM> (not exported) by the
+packages are not located unless option <B>-h</B> is set.
+<P>
+
+The syntax for invoking <B>m3where</B> is
+<PRE>
+     m3where [options] [units ...]
+</PRE>
+<P>
+
+If no units are given, <B>m3where</B> enumerates all of the sources
+associated with the package and those that it imports. Sources that are 
+<EM>hidden</EM> (not exported) are not shown unless option <B>-h</B> is set.
+<P>
+
+The units are specified as filenames of the form "<TT>Foo.</TT><EM>xx</EM>",
+where "<EM>xx</EM>" is one of the standard
+Modula-3 file extensions (.i3, .m3, .ig, .mg...).
+Wildcards are not supported.
+<P>
+
+Note that, in order for <B>m3where</B> to work,
+<A HREF="../../m3build/src/index.html">m3build</A> must have
+been run at least once for the given package/build directory pair.
+<P>
+
+If the given units can be located, the full pathnames are output
+to the standard output, otherwise an error message is output.
+<P>
+
+The following options are interpreted by <B>m3where</B>.
+<UL>
+
+<LI> <B>-h</B>
+Show all sources, including the hidden ones.
+<P>
+
+<LI> <B>-b</B> <I>"dir"</I>
+Search the build directory named <I>dir</I>.
+The default directory is configured into <B>m3where</B> when
+it is installed.
+<P>
+
+<LI> <B>-d</B> <I>"dir"</I>
+Locate units from the package that is rooted at <I>dir</I>.
+<I>dir</I> must be an absolute pathname.
+<P>
+
+<LI> <B>-T</B> <I>"dir"</I>
+Read templates from <I>dir</I>
+instead of the default location.
+</UL>
+
+<P>
+For example,
+<PRE>
+    m3where Pathname.i3
+</PRE>
+would try to find the file <EM>Pathname.i3</EM> from the
+information in the build directory of the package rooted at the
+current working directory.
+<P>
+
+And,
+<PRE>
+    m3where -b NT386GNU -d /proj/m3/pkg/libm3 PathnameWin32.m3
+</PRE>
+would try to find the file <EM>PathnameWin32.m3</EM>
+using the information in the <EM>NT386GNU</EM> build directory of
+the <EM>libm3</EM> package.
+<P>
+
+<!--Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>

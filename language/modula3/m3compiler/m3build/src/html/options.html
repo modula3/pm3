@@ -1,0 +1,53 @@
+<HTML>
+<HEAD>
+<TITLE>m3build command line options</TITLE>
+</HEAD>
+<BODY>
+
+<H1>m3build command line options</H1>
+
+<P>
+The syntax for invoking <B>m3build</B>, within a package directory, is
+<PRE>
+     m3build [options] [target ...]
+</PRE>
+<P>
+If no target is specified, <B>all</B> is assumed.  It causes the
+specified program or library to be built.  The only other
+target that is supported in all
+<A HREF="m3makefile.html"><TT>m3makefiles</TT></A> is <B>clean</B>
+which removes any derived files created by <B>m3build all</B>.
+<P>
+
+The following options are interpreted by <TT>m3build</TT>.
+
+<DL>
+<DT>-b dir<DD>
+       Use the <TT>dir</TT> configuration and build in the directory
+       named <TT>dir</TT>.  The default build directory is configured
+       into <TT>m3build</TT> when it is installed.
+<DT>-d dir<DD>
+       Change the current directory to <TT>dir</TT> before doing anything.
+       This option is most useful when you're editing in the <TT>src</TT>
+       subdirectory and compile command you need is <TT>m3build -d ..</TT>.
+<DT>-F file<DD>
+       Read the quake code in <TT>file</TT> before the package 
+       <TT>m3makefile</TT>.
+<DT>-T dir<DD>
+     Read templates from <TT>dir</TT> instead of the default location.  The new
+     directory must include the full set of templates (e.g. <TT>COMMON</TT>,
+     <TT>PLATFORMS</TT>, ...).
+<DT>-S<DD>
+       Generate derived objects regardless of the current directory's
+       name.  Normally, if the current working directory is <TT>src</TT>,
+       <TT>m3build</TT> will refuse to build derived objects.
+<DT>-O<DD>
+       Read the <TT>m3overrides</TT> file if present.
+<DT>-Dname=value<DD>
+       Bind the <TT>value</TT> to <TT>name</TT> before reading the
+       <TT>m3makefile</TT>.
+</DL>
+
+<!--Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>

@@ -1,0 +1,12 @@
+<TITLE>Problems with threads, fork and VTALARM?</TITLE>
+<H1>Problems with threads, fork and VTALARM?</H1>
+<P>
+The threads are implemented using the virtual timer interrupt. Normally,
+the run time environment will catch the interrupt and determine if
+thread switching is appropriate. However, if a new process is created with
+fork, it will have the virtual timer activated and no interrupt handler
+to receive it, resulting in a core dump. If you use the standard procedure
+Process.Create to fork new processes, this will be handled automatically
+for you. If you insist on using fork, you need to disable the timer,
+fork and then reenable the timer.
+<P>

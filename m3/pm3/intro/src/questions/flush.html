@@ -1,0 +1,10 @@
+<TITLE>How to get output messages to appear immediately (flushing writers)?</TITLE>
+<H1>How to get output messages to appear immediately (flushing writers)?</H1>
+<P>
+Modula-3 Writers are buffered. Thus, you need to issue a Wr.Flush when
+the output should appear immediately, for instance to prompt the user
+for some input. Since this can become annoying, libraries in other languages
+sometimes offer the option of unbuffered writes. In Modula-3, an equivalent
+behavior is obtained with AutoFlushWr which gets a background thread to
+flush a writer at a specified interval.
+<P>

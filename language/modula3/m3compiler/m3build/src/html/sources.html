@@ -1,0 +1,97 @@
+<HTML>
+<HEAD>
+<TITLE>Specifying sources</TITLE>
+</HEAD>
+<BODY>
+
+<H1>Specifying sources</H1> 
+<P>
+
+The most primitive declarations in an <TT>m3makefile</TT> are those that
+identify source files.  They can be Modula-3, C or assembler files.  A
+source file has three attributes: a package, the subdirectory within
+the package where the declaration occurs, and a visibility.  The
+visibility has two values, <EM>visible</EM> and <EM>hidden</EM>.
+When a package A
+imports a package B, only the visible sources in B are available to
+compilations that occur in A. By default all sources are visible.
+However, it is possible to explicitly control the visibility of
+Modula-3 interfaces.
+<P>
+
+Source files are named relative to the <TT>m3makefile</TT> that mentions them.
+<P>
+
+The following calls define source files:
+<P>
+
+<B> interface(X) </B>  declares that the file <TT>X.i3</TT> contains an interface. 
+<P>
+
+<B> implementation(X) </B>  declares that the file <TT>X.m3</TT> contains a module. 
+<P>
+
+<B> module(X) </B>  declares both the interface <TT>X.i3</TT> and the module <TT>X.m3</TT>. 
+<P>
+
+<B> generic_interface(X) </B>  declares that the file <TT>X.ig</TT> contains
+   a generic interface. 
+<P>
+
+<B> generic_implementation(X) </B>  declares that the file <TT>X.mg</TT>
+   contains a generic module. 
+<P>
+
+<B> generic_module(X) </B>  declares both a generic interface and module. 
+<P>
+
+<B> h_source(X) </B>  declares that the file <TT>X.h</TT> contains a C include
+   file. 
+<P>
+
+<B> c_source(X) </B>  declares that the file <TT>X.c</TT> contains a C module. 
+<P>
+
+<B> s_source(X) </B>  declares that the file <TT>X.s</TT> contains an assembly
+   module. 
+<P>
+
+<B> pgm_source(X) </B>  declares that the file <TT>X</TT> contains compilable
+    source (e.g. <TT>.ic</TT>, <TT>.mc</TT>, <TT>.is</TT> or
+    <TT>.ms</TT> files).
+<P>
+
+With the exception of <TT>h_source</TT>, each of the procedures above
+defines a hidden source file.
+There are capitalized variants <B>Interface</B>, <B>Module</B>,
+<B>Generic_interface</B>, <B>Generic_implementation</B>, and
+<B>Generic_module</B> that identify their sources as visible.  Remember,
+only those interfaces that are marked as visible will be available to
+importers of your library or package.
+<P>
+
+With the exception of <B>generic_interface</B>,
+<B>generic_implementation</B>, and <B>h_source</B>, all other calls
+add their argument to the set <TT>PGM_SOURCES</TT>. This set is
+compiled by this invocation of <TT>m3build</TT>, either by the
+Modula-3 compiler or the C compiler, as appropriate.
+<P>
+
+<B> template(X) </B>
+   declares that the file <TT>X.tmpl</TT> contains quake code
+   that is to be included in this build, and in all builds that import this
+   package. 
+<P>
+
+The <B>template</B> call is used to extend the set of available
+procedures. For example, the table package includes a template that
+defines the <A HREF="generics.html"><B>table</B></A> procedure which
+instantiates the generic table module. See also the predefined
+general-purpose procedures for <A HREF="build-generics.html">instantiating
+generics</A> that you can use to define procedures in your own templates
+for instantiating your own generic modules.
+<P>
+
+<!--Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>

@@ -1,0 +1,53 @@
+<HTML>
+<HEAD>
+<TITLE>What is SRC Modula-3?</TITLE>
+</HEAD>
+<BODY>
+<H1>What is SRC Modula-3?</H1>
+
+<P>
+<A HREF="file://gatekeeper.dec.com/pub/DEC/Modula-3/">SRC-Modula-3 </A>
+was built by the DEC Systems Research Center and is freely available and
+redistributable, with source code.
+In Europe it is also available from
+ftp-i3.informatik.rwth-aachen.de in pub/Modula-3.
+The most recent version is release 3.6
+<P>
+The DEC SRC Modula-3 contains the following:
+<P>
+<UL><LI>  A native code compiler: uses the GCC backend; on machines/operating
+systems that have self-describing stacks, an optimized exception
+handling mechanism is provided, on other architectures,
+setjmp/longjmp is used. A very fast integrated backend is available
+on some platforms (currently NT386 and Linux i386).
+<P>
+The compilation system provides for minimal recompilation. 
+Only those units that depend on the modified interface item
+will be recompiled.
+<LI>  m3build: tool that performs dependency analysis and
+builds the Modula-3 programs and libraries.
+<LI>  m3gdb: a Modula-3 aware version of GDB.
+<LI> Several tools for performance and coverage analysis.
+<LI>  A large standard library (libm3)  providing
+<P>
+<UL><LI>  A multithread, incremental, generational, conservative garbage
+collector
+<LI>  Text manipulation.
+<LI>  Generic Containers: Lists, Sequences, Tables, SortedLists, SortedTables
+<LI>  Atoms and Symbolic expressions (Lisp like lists)
+<LI>  An extensible stream IO system
+<LI>  Typesafe binary object transcription (persistent objects)
+<LI>  Operating system interfaces
+<LI>  Portable interfaces to the language runtime
+</UL>
+<P>
+All standard libraries are thread-friendly. 
+Modula-3 can readily link with existing C libraries; many libraries 
+including X11R4 and various UNIX libraries are available as 
+part of libm3. 
+<LI>  Several other libraries for designing graphical user interfaces
+and distributed applications.
+</UL>
+
+</BODY>
+</HTML>

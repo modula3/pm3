@@ -1,0 +1,86 @@
+<HTML><HEAD>
+<TITLE>The SRC Modula-3 compiler</TITLE>
+</HEAD>
+<BODY>
+<DIV CLASS=HEAD>
+<SPAN CLASS=AUTHOR>Michel Dagenais</SPAN>
+<SPAN CLASS=COPYRIGHT>Michel Dagenais, GNU General Public License, 1998</SPAN>
+<ADDRESS>
+michel.dagenais@polymtl.ca<BR>
+Ecole Polytechnique<BR>
+C.P. 6079, Succ. Centre-Ville<BR>
+Montreal, Quebec, H3C 3A7</ADDRESS>
+<SPAN CLASS=DATE>18 January 1998</SPAN>
+<SPAN CLASS=KEYWORD>modula-3</SPAN>
+<SPAN CLASS=KEYWORD>compiler</SPAN>
+</DIV>
+<H1>The SRC Modula-3 compiler</H1>
+
+<DIV CLASS=ABSTRACT>
+<P>The DEC SRC compiler and supporting libraries.
+</DIV>
+
+<H2>The Compiler</H2>
+
+<DL>
+<DT><A REL=INCLUDE HREF="../m3build/src">m3build</A><DD>
+    The Modula-3 compiler.
+<DT><A REL=INCLUDE HREF="../m3ship/src">m3ship</A><DD>
+    The Modula-3 package installer.
+<DT><A REL=INCLUDE HREF="../m3where/src">m3where</A><DD>
+    An application to find the Modula-3 files used by a package.
+</DL>
+
+<H2>Language restrictions, pragmas and runtime</H2>
+
+<UL>
+<LI><A HREF="linking/LinkingProgs.html">The Linker's Inclusion Algorithm</A>
+<LI><A HREF="restrictions.html">Implementation restrictions</A>
+<LI><A HREF="pragmas.html">Pragmas</A>
+<LI><A HREF="m3args.html">Runtime arguments</A>
+<LI><A HREF="gc.html">Garbage collection</A>
+<LI><A HREF="runtime.html">A tour of the runtime</A>
+<LI><A HREF="scheduler.html">Thread scheduling</A>
+<LI><A HREF="signals.html">Unix signals usage</A>
+</UL>
+
+<H2>Compiler bootstrap and export procedures, and internal libraries</H2>
+
+<DL>
+<DT><A REL=INCLUDE HREF="../m3bootstrap/src">m3bootstrap</A><DD>
+    A script to generate bootstrap versions of the compiler for
+    the supported platforms.
+<DT><A REL=INCLUDE HREF="../m3export/src">m3export</A><DD>
+    A script to export source code, bootstrap packages and binaries
+    for the Polytechnique Montreal (PM3) distribution of the DEC SRC
+    Modula-3 compiler.
+<DT><A REL=INCLUDE HREF="../m3driver/src">m3driver</A><DD>
+    Compiler driver.
+<DT><A REL=INCLUDE HREF="../m3front/src">m3front</A><DD>
+    Modula-3 compiler front end.
+<DT><A REL=INCLUDE HREF="../m3linker/src">m3linker</A><DD>
+    Modula-3 pre-linker.
+<DT><A REL=INCLUDE HREF="../m3loader/src">m3loader</A><DD>
+    Experimental program loader to compile directly into memory
+    for immediate execution.
+<DT><A REL=INCLUDE HREF="../m3middle/src">m3middle</A><DD>
+    Interface between the frontend and the backend.
+<DT><A REL=INCLUDE HREF="../m3templates/src">m3templates</A><DD>
+    Compiler specific quake functions (used by m3build to interpret
+    m3makefiles).
+<DT><A REL=INCLUDE HREF="../m3cc/src">m3cc</A><DD>
+    GCC based code generator.
+<DT><A REL=INCLUDE HREF="../m3objfile/src">m3objfile</A><DD>
+    Support library for direct code generation.
+<DT><A REL=INCLUDE HREF="../m3back/src">m3back</A><DD>
+    Direct code generation for supported platforms.
+<DT><A REL=INCLUDE HREF="../m3staloneback/src">m3staloneback</A><DD>
+    Debugging tool for code generation.
+<DT><A REL=INCLUDE HREF="../cg-burs/src">cg-burs</A><DD>
+    Experimental burs based code generator.
+<DT><A REL=INCLUDE HREF="../m3tests/src">m3tests</A><DD>
+    Tests for the Modula-3 compiler.
+</DL>
+
+</BODY>
+</HTML>

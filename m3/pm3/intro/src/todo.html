@@ -1,0 +1,443 @@
+<HTML>
+<HEAD>
+<TITLE>Future Plans</TITLE>
+</HEAD>
+<BODY>
+
+<H1>Future Plans</H1>
+
+<H2>PM3</H2>
+
+<P>
+The following items are planned for <I>PM3</I>. Items are listed by 
+decreasing order of likelyhood of being implemented in the near future.
+Help on these items is most appreciated!
+
+<UL>
+<LI> Produce binaries for several platforms at every release through remote
+compilation servers. We have NT386GNU, SPARC, and SOLgnu computers readily
+accessible.
+
+<LI>Test on NT the new release and adapt to gnu-win32 Beta 19 whenever it
+comes out. Perhaps the w2p calls in the NT386GNU template could be removed 
+which would enable much more sharing of the template with other platforms.
+
+<LI>Add bug fixes, patches, and contributed packages. Blair's Pickle,
+Tony Hosking's Solaris stack walker, Spencer's emacs files,
+m3na, and M3 TXL are 
+among the items on the list. Check enumerating environment variables 
+under NT386GNU, proper deallocation
+of file handles, critical sections, and other handles in Win32 
+m3core/libm3 runtime.
+
+<LI>Do some profiling and optimisation on the integrated m3build/quake/m3
+and fast LINUXELF code generator.
+
+<LI>Decouple m3ship and m3where from m3templates. Currently m3ship is much
+too large needlessly.
+
+<LI>Progressively document all the packages using m3doc. For some packages
+a small introductory <TT>index.html</TT> file linking to public interfaces
+is sufficient. For some other packages, the m3totex documentation may be
+reused (libm3/m3core, trestle, vbtkit, formsvbt, netobj, stable, anim3D,
+m3tk).
+
+<LI>Remove all duplicate files in <I>pm3</I>.
+Keep a single copy or each in a library.
+A modified m3browser was used to print the list of duplicate files.
+The duplicate units (same name) found were analysed to distinguish
+simple name clashes from redundancy
+<A HREF="dupl.txt">[duplicates]</A>.
+
+<LI>Detect reusable components hidden in libraries and programs.
+Candidates include AtomPkl, FSM, MText. Find a <I>category specialist</I>
+for each category to drive this effort and enhance the reusable components.
+
+<LI>Increase the use of generic modules. Text may be used for UNICODE
+support through generics based on Char.T versus WChar.T ([0..65535]).
+Similarly, geometry could benefit from generics based on Integer.T, Float.T,
+Point = ARRAY Axis OF Unit, where Axis is {x,y} for 2D and {x,y,z} for 3D.
+This could perhaps lead to anim2D versus anim3D.
+
+<LI>Provide tools to support diagrams in M3doc
+(write <I>xfig to HTML</I> and support diagram tags in the conversion to
+LaTeX/Postscript).
+
+<LI>Build a library for browsing and analysing Modula-3 code, probably
+based on m3tk and m3browser. It could be used for computing metrics
+for Modula-3 programs, detecting procedure clones, extracting object oriented
+design diagrams (OMT/UML), or building an enhanced integrated development
+environment.
+Peter Klein is working on a Modula-3 development environment and associated
+user interface. 
+See the 
+<A HREF="file://ftp.informatik.rwth-aachen.de/pub/reports/1994/94-16.ps.gz"> 
+report </A>
+entitled ``Designing Software with Modula-3'',
+it describes a software architecture description language
+based on Modula-3.
+Klaus Preschern, Carsten Weich, Laszlo Boszormenyi
+have made the port of Modula-3 to the PC which includes
+a student-friendly development environment.
+
+<LI>Rework the HTML kit and the web packages to provide a single
+package for accessing WWW documents.
+
+<LI>Provide a high level Database interface, for both PostgresSQL and
+ODBC. Eventually provide a native implementation based on persistent objects
+for the same high level interface.
+
+<LI>Add some widgets to trestle/vbtkit like a grid (table/matrix) VBT.
+Incorporate modifications for a 3D look for scrollbars, Win32 mode
+for the TexteditVBT... Make rotated fonts available from Trestle.
+
+<LI>Find/develop graph layout and display packages. Such functionality
+may be available from the GRAS/Progres project. GraphVBT already does
+the display part.
+
+<LI>Extend the draw, sharedboard, html2ps, mgkit, visualobliq
+or anim3D packages to obtain
+a nice structured graphics package. This package, not unlike 
+Unidraw/Interviews, could be used as a basis for diagram editors,
+rich text editors, Web browser widget, user interface builder...
+
+<LI>C to Modula-3 converter, initially for declarations (.h files),
+to interface C libraries to Modula-3 programs,
+but eventually for complete programs. The initial translation would
+convert to equivalent UNSAFE structures but subsequent passes may try to
+convert char_star to TEXT and so on.
+
+<LI>Develop a network object activator. Network objects servers would
+be started on demand.
+
+<LI>Add some authentication and access control to network objects, probably
+along with IPv6.
+
+</UL>
+
+<H2>SRC Modula-3</H2>
+
+<P>
+Here is an unordered list of small and large tasks that should be done,
+which used to be kept on Bill Kalsow's desk and whiteboard.  But,
+since it seems to grow rather than shrink over time, here it
+is. If you want to work on any of these tasks, go for it.
+<P>
+Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.<BR>
+See the <A HREF="http://www.research.digital.com/SRC/m3sources/html/COPYRIGHT.html">COPYRIGHT</A> for a full description.
+
+<H3>Driver</H3>
+<UL>
+
+<LI><B>Atomic update of .m3x files</B>
+The .m3x files should be updated atomically.  If the files are
+damaged, users get terribly confused.  Similarly, if an object
+file gets produced and the version stamps don't get recorded,
+users are deceived.
+
+<LI><B>Integrate quake.</B>
+We should write a Modula-3 version of quake that's callable
+as a library routine.  Then, it should be integrated with the
+rest of the driver (Done in PM3).  
+The resulting program could persist throughout
+a development session.  Then, the reading, parsing and evaluation
+of m3makefiles could be cached across builds and
+the list of source files and configuration data wouldn't be
+passed through the file system.
+<P>
+
+<LI><B>AST cache policy.</B>
+The current driver keeps an in-memory cache of compiled interfaces,
+but never flushes entries.
+So, it's memory usage grows throughout a build.
+This will be unacceptable when the
+driver lives across multiple builds.
+<P>
+
+</UL>
+<P>
+
+<H3>Front end</H3>
+<UL>
+
+<LI><B>New definition of ADR.</B>
+The front end should default to using the new definition
+of ADR, where instead of ADDRESS, ADR(x) returns an UNTRACED REF T
+when the static type of x is T.  The new definition increases
+the safety of interfacing with the C world.  This feature is
+available new with the "-X0@-new_adr@" option, but it should
+just be the default.  The change will require a few source
+changes (m3core, libm3 and ui are already fixed).  Ideally,
+the new types wouldn't require runtime typecells since NEW
+is never called on the new types and TYPECASE isn't applicable
+to UNTRACED REFs.
+<P>
+
+<LI><B>Scanning floating-point literals.</B>
+The front end uses the ancient
+<TT>Convert</TT> interface to convert ascii floating point values
+to internal binary form.  We should use something like the new
+<TT>Lex</TT> interfaces.
+<P>
+
+<LI><B>Floating-point constant folding.</B>
+The compiler uses the host's LONGREAL type to represent floating-point
+values.  Instead, it should provide a faithful emulation of the
+target machine's floating point.  See <TT>m3middle/src/TFloat.m3</TT>.
+<P>
+
+<LI><B>FIRST/LAST(REAL)</B>
+According to the language definition, these should be plus and
+minus infinity on IEEE platforms.  I am pretty sure that even if the
+front end used the right values, it would fail to pass them
+precisely to the back end.
+<P>
+
+<LI><B>Missing debugger info.</B>
+The following things are not passed through to the debugger:
+<TT>IMPORT A AS B</TT>, named scalar constants, the Modula-3
+type of procedure return values.
+<P>
+
+<LI><B>Unreachable TYPECASE arms.</B>
+The compiler should emit a warning for a TYPECASE label T
+when an earlier label U is a supertype of T.
+<P>
+
+<LI><B>Packed array literals.</B>
+The front end doesn't always layout arrays of packed values
+correctly.  See procedure <TT>GenLiteral</TT> in
+<TT>m3front/src/exprs/ArrayExpr.m3</TT>.
+<P>
+
+<LI><B>Non-regular array literals.</B>
+The front end doesn't detect 2-D open array initializers where
+the inner array values are of different sizes until it gets
+into code generation.  It should cleanly report these errors
+during type checking.
+<P>
+
+<LI><B>Type names to prelinker.</B>
+If the front end passed user-sensible names for types back to
+the prelinker and they were preserved in the version stamp
+files, the prelinker could generate better error messages
+for inconsistencies (e.g. missing or repeated revelations)
+in the program's types.
+<P>
+
+<LI><B>Field packing.</B>
+Microsoft C supports a "pack" pragma that apparently overrides
+the normal field packing rules for structures.  The result is
+that the Modula-3 compiler and C compiler disagree about
+some field layout.  For example, <TT>CommDlg.PrintDlg</TT> has
+a 32-bit integer field that crosses a 32-bit boundary.  A fix would
+be to define a per-platform parameter that describes the minimum
+(as opposed to preferred) alignment required for full-word loads.
+Then, BITS FOR could be used to fix up the offending layouts.
+<P>
+
+<LI><B>Fingerprints of set literals.</B>
+Set literals are not canonicalized before they are fingerprinted.
+They should be.  See procedure <TT>GenFPLiteral</TT> in
+<TT>m3front/src/exprs/SetExpr.m3</TT>.
+<P>
+
+</UL>
+<P>
+
+
+<H3>GCC back end</H3>
+<UL>
+
+<LI><B>Stack overflow checking.</B>
+The gcc-based back end doesn't check for thread stack overflows.
+Whenever a procedure is entered whose stack frame is larger
+than the thread stack's guard page (<TT>Target.Guard_page_size</TT>),
+the back end should emit an explicit test for stack overflow.
+At the moment the front end doesn't tell the back end size
+of the guard page and the back end doesn't know the size
+of the stack frame when it begins emitting code for the
+procedure.
+<P>
+
+<LI><B>Gcc optimizer.</B>
+It seems that every time I try using the optimizer I get burned.
+The most likely cause is that <TT>m3cc/gcc/m3.c</TT> is not building
+properly decorated trees.  Given that there's almost no spec for
+well-formed trees, it's going to require intimite knowledge of gcc
+or lots of tinkering to find the problems.
+<P>
+
+<LI><B>Floating-point opcodes on Alpha.</B>
+The Alpha machine description should be modified to generate
+floating point opcodes that allow software fixups of denormalized
+values.  It should also insert trapb instructions where needed.
+<P>
+
+<LI><B>Mips-tfile vs. /bin/ld.</B>
+On DS3100, the version of mips-tfile in gcc 2.5.7 generates object files
+that cannot be linked by /bin/ld.  Problems occur when the object
+module defines an externally callable procedure and the linker
+is asked to generate the procedure table.  If this problem was
+fixed, we could generate direct procedure calls rather than indirecting
+through the interface records.
+<P>
+
+</UL>
+<P>
+
+<H3>NT back end</H3>
+<UL>
+
+<LI><B>Return values from external procedures.</B>
+Apparently, not all procedures (e.g. <TT>NB30.Netbios</TT>) return
+fully sign-extended results in the return register.  I guess the
+conservative thing to do is to sign or zero extend all procedure
+results from external procedures.  (and procedure variables too?)
+<P>
+
+<LI><B>DLLs.</B>
+We should be able to generate and use DLLs.  Unfortunately,
+Microsoft requires different code sequences to reference
+a global variable (e.g. interface record) from inside and
+outside a DLL.
+<P>
+
+<LI><B>CodeView symbols.</B>
+The hooks in <TT>M3ObjFile</TT> already exist, we just need to generate
+the debugging data for CodeView debuggers.
+<P>
+
+<LI><B>A RISC back end.</B>
+Somebody should use <TT>m3back</TT> and <TT>m3objfile</TT> as 
+starting points to building another backend for one of the
+current RISC processors.  It's <EM>much</EM> faster to compile
+directly from M3CG to object file than to go through the
+"ASCII IL -&gt; gcc -&gt; ASCII .s -&gt; assembler -&gt; object file"
+mess.  Once one RISC back end was written it should be pretty
+easy to write others.   Register handling will be the primary difference
+from the NT back end.  High quality code is not a goal.
+<P>
+
+</UL>
+<P>
+
+<H3>Runtime</H3>
+<UL>
+
+<LI><B>FloatMode and RealFloat interfaces.</B>
+Most platforms don't have full implementations of the floating-point
+interfaces.
+<P>
+
+<LI><B>Floating-point exceptions.</B>
+On the DS3100 platform, we attempt to convert floating point traps
+into the proper Modula-3 exception.  But, the traps are delivered
+via a Unix signal so the longjmp that delivers the exception must
+cross a signal handler stack frame.  The last time I checked we
+go a "longjmp botch", so either the jmpbuf is incorrect, or you're
+not supposed to be able to jump out of a signal handler.
+<P>
+
+<LI><B>NT -gui vs. Stdio.</B>
+When a windows subsystem ("-gui") program is started, it's not
+given a console.  Hence, writes to <TT>Stdio.stdout</TT> disappear.
+<TT>libm3/src/os/WIN32/ProcessWin32.m3</TT> should be modified
+so that the standard handles are bound to <TT>File.T</TT>s that
+lazily create consoles.  Then, adding print statements to a GUI
+program would produce useful output.
+<P>
+
+<LI><B>Table pickles.</B>
+The generic table package should register pickle specials.
+There's no need to pickle a table's internal hash table.
+The pickle should just contain a list of name/value pairs.
+The resulting pickle would be robust against changes in the
+table's hashing function.
+<P>
+
+<LI><B>Incremental GC.</B>
+Several platforms that are capable of supporting the VM-synchronized,
+incremental and generational features of the garbage collector, need
+work.  For example, ALPHA_OSF should be easy and NT386 should be possible.
+<P>
+
+<LI><B>TCP on NT/386</B>
+The Unix TCP veneer needs to be ported to use WinSock.
+<P>
+
+<LI><B>Error messages on NT</B>
+We need to write or find a routine that generates a readable
+message from an NT error number.  Such a routine must exist.
+<P>
+
+</UL>
+<P>
+
+<H3>Debugger</H3>
+<UL>
+
+<LI><B>Expression parsing and evaluation.</B>
+The current expression parser and evaluator are woefully inadequate.
+For example, they don't handle floating-point literals, TEXT literals,
+or most of the built-in operations.
+<P>
+
+</UL>
+<P>
+
+<H3>Misc.</H3>
+<UL>
+
+<LI><B>Versioned shared libraries.</B>
+There should be a way to provide multiple versions of a shared
+library.  Operating systems that support shared libraries usually
+support some sort of versioning.  The problem is to find a
+maintainable, portable way to do that in the current Modula-3 and
+m3build environment.
+<P> 
+
+<LI><B>QPT is broken.</B>
+Jim Larus' QPT doesn't seem to work with DS3100 binaries.  Possibly
+the problem is that it doesn't properly translate the exception
+tables in the initialized data segment.  ??
+<P>
+
+<LI><B>M3browser and type uids.</B>
+It should be possible to find types by their 32-bit UID
+using m3browser.
+<P>
+
+<LI><B>Exceptions as return values.</B>
+What would it cost in time and space to implement exceptions
+as simple return values?  Suppose you were allowed to change
+the calling convention so that each procedure call site
+had two return locations.  Then, non-exceptional returns would
+cost nothing (except a little code space) and exceptional
+returns would be quite fast.
+<P>
+
+<LI><B>Modula-3 parser.</B>
+There should be a reusable, lightweight Modula-3 parser.
+Probably the parser should be easy to hack and lightweight rather
+than fully general, extensible, and slow as molasses.
+<P>
+
+<LI><B>Validation suite.</B>
+The current test package <TT>m3tests</TT> is a joke.  Many
+more tests should be included.  The m3makefile should be made
+to work on NT.
+<P>
+
+<LI><B>M3ship warning.</B>
+M3ship should warn you if the m3makefile is newer than the
+.M3EXPORTS files.  Shipping a package after it's m3makefile
+has been modified, but before it's been reevaluated, often
+leads to confusion or surprise.
+<P>
+
+</UL>
+<P>
+
+</BODY>
+</HTML>

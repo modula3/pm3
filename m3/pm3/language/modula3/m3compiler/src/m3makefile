@@ -1,0 +1,14 @@
+
+HtmlFile("index.html")
+HtmlFile("gc")
+HtmlFile("index")
+HtmlFile("m3args")
+HtmlFile("pragmas")
+HtmlFile("restrictions")
+HtmlFile("runtime")
+HtmlFile("scheduler")
+HtmlFile("signals")
+
+include_dir("linking")
+
+OtherPackage("m3compiler")

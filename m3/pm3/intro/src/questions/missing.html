@@ -1,0 +1,8 @@
+<TITLE>What means Missing RTHooks or similar messages?</TITLE>
+<H1>What means Missing RTHooks or similar messages?</H1>
+<P>
+The standard library, libm3, is not included by default. You need in your
+m3makefiles to import("libm3") or to import a library which imports libm3.
+Otherwise, messages about run time procedures such as RTHooks not being
+available are produced.
+<P>

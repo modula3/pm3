@@ -1,0 +1,73 @@
+<HTML>
+<HEAD>
+<TITLE>Changing compiler options</TITLE>
+</HEAD>
+<BODY>
+
+<H1>Changing compiler options</H1>
+<P>
+
+<B> option(name,value)</B>  
+    sets the option <I>name</I> to the specified <I>value</I>.
+    An empty string is the boolean FALSE value. A non empty
+    string, typically "T", represents the boolean TRUE value.
+<P>
+
+<B>Important:</B> For the specified compiler options to take effect, your
+<TT>option</TT> lines must preceed any <TT>program</TT> or
+<TT>library</TT> directives in the <TT>m3makefile</TT>.
+
+<P>The recognized options are:
+
+<DL>
+<DT>optimization<DD>Produce optimized code.
+<DT>debuginfo<DD>Produce debugging information (default).
+<DT>coverage<DD>Produce code to generate coverage information.
+<DT>profiling<DD>Produce code to generate profiling information.
+<DT>shared_lib<DD>Create dynamic (shared) libraries (default).
+<DT>static_lib<DD>Create static libraries (default).
+<DT>standalone<DD>Link with static libraries to produce a standalone
+    executable program.
+<DT>gui<DD>Create a <I>gui</I> non console program on Win32.
+<DT>times<DD>Produce statistics about compilation time.
+<DT>msg_level<DD>Determine the level of verbosity for the compilation
+    from 0 to 4 (Silent, Explain, Commands, Verbose, Debug)
+<DT>warning_level<DD>Determine the compiler propension to issue
+    warnings, from 0 to 3
+<DT>internal_backend<DD>Use the faster internal backend, if available 
+    (default).
+</DL>
+
+<P>Other options are available for compilation debugging and performance
+   analysis, or for internal use. These options are not for the
+   casual user.
+
+<DL>
+<DT>keep_files<DD>Keep temporary files for debugging.
+<DT>bootstrap<DD>Create a bootstrap distribution.
+<DT>dump_config<DD>Print compiler configuration parameter.
+<DT>heap_stats<DD>Print heap usage statistics.
+<DT>keep_cache<DD>Persistent cache, (not usable).
+<DT>no_make<DD>Do not really build.
+<DT>compile_once<DD>Do not recompile for new opaque info.
+<DT>skip_link<DD>Do not link.
+<DT>m3main_in_C<DD>Generate the main program as a C file.
+<DT>NoChecks<DD>Disable runtime checks.
+<DT>NoAsserts<DD>Disable assertion checking.
+<DT>NoNarrowChk<DD>Disable runtime Narrow checks.
+<DT>NoRangeChk<DD>Disable runtime Range checks.
+<DT>NoReturnChk<DD>Disable runtime Return checks.
+<DT>NoCaseChk<DD>Disable runtime CASE statement checks.
+<DT>NoTypeCaseChk<DD>Disable runtime TYPECASE statement checks.
+<DT>NoNilChk<DD>Disable runtime NIL checks.
+<DT>NoRaisesChk<DD>Disable runtime RAISES checks.
+<DT>InitFloats<DD>Initialize floats to 0.0.
+<DT>vsdebug<DD>Debug version stamps.
+<DT>builtins<DD>Internal.
+<DT>load_map<DD>Internal.
+<DT>unfold_nested_procs<DD>Internal.
+</DL>
+
+<!--Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>

@@ -1,0 +1,8 @@
+<TITLE> Why programs receives a SEGV signal under the debugger?</TITLE>
+<H1>Why program receives a SEGV signal under the debugger?</H1>
+<P>
+The garbage collector on some platforms uses the SEGV (segmentation
+violation) signal to detect modified portions of the dynamically
+allocated space. It is possible to disable this feature or to inform
+the debugger to let these signals propagate. See the 
+<A HREF="../language/modula3/m3tools/m3gdb/src">m3gdb documentation</A>.

@@ -1,0 +1,32 @@
+<HTML>
+<HEAD>
+<TITLE>Importing foreign object files and libraries</TITLE>
+</HEAD>
+<BODY>
+
+<H1>Importing foreign object files and libraries</H1>
+<P>
+
+These procedures allow foreign objects and/or libraries to be included
+in a Modula-3 program.
+<P>
+
+<B> import_lib(X, P) </B>  
+           If <TT>P/libX.a</TT> is a library, includes <TT>-LP -lX</TT>
+           in the final link command.  Otherwise, includes <TT>-lX</TT>
+           in the final link command.
+<P>
+
+<B> import_obj(X) </B>  
+          Include <TT>X</TT> in the final link command.
+<P>
+
+<PRE>
+Last modified on Thu Jan  4 11:07:54 PST 1996 by heydon 
+     modified on Mon Jun 20 14:51:17 PDT 1994 by kalsow 
+     modified on Thu Jan  7 18:40:57 PST 1993 by muller 
+</PRE>
+
+<!--Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>

@@ -1,0 +1,87 @@
+<HTML>
+<HEAD>
+<TITLE>A simple example</TITLE>
+</HEAD>
+<BODY>
+
+<H1>A simple example</H1>
+<P>
+
+Here's a simple program composed of a main module,
+an imported interface and its implementation.
+<P>
+
+To begin, create a fresh directory for the package and within that
+directory, a directory for the source files:
+<PRE>
+    > mkdir hello
+    > cd hello
+    > mkdir src
+</PRE>
+<P>
+
+Create the following source files in the <TT>src</TT> directory:
+<P>
+
+In the file <TT>src/Main.m3</TT>:
+<PRE>
+    MODULE Main;
+    IMPORT A;
+    BEGIN
+      A.DoIt ();
+    END Main.
+</PRE>
+<P>
+
+In the file <TT>src/A.i3</TT>:
+<PRE>
+    INTERFACE A;
+    PROCEDURE DoIt ();
+    END A.
+</PRE>
+<P>
+
+In the file <TT>src/A.m3</TT>:
+<PRE>
+    MODULE A;
+    IMPORT Wr, Stdio;
+
+    PROCEDURE DoIt () =
+      &lt;*FATAL ANY*&gt;
+      BEGIN
+        Wr.PutText (Stdio.stdout, "Hello world.\n");
+        Wr.Close (Stdio.stdout);
+      END DoIt;
+
+    BEGIN
+    END A.
+</PRE>
+<P>
+
+In the file <TT>src/m3makefile</TT>:
+<PRE>
+    import ("libm3")
+    implementation ("Main")
+    module ("A")
+    program ("foo")
+</PRE>
+<P>
+
+Finally, from the package directory, <TT>hello</TT>, run
+<TT>m3build</TT>.
+If the compiler is installed correctly,
+it will compile the three source files and link them with the
+standard libraries.  The derived files will be placed in a directory
+that names the architecture.  On a 80x86 Linux machine,
+the directory is called <TT>LINUXELF</TT>.  The executable program
+will be named <TT>foo</TT> in the derived directory.
+
+<PRE>
+Last modified on Thu Jan  4 11:08:07 PST 1996 by heydon 
+     modified on Tue Jan  3 07:38:22 PST 1995 by kalsow 
+     modified on Thu Jan  7 18:40:57 PST 1993 by muller 
+</PRE>
+
+<!-- Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>

@@ -1,0 +1,111 @@
+<HTML><HEAD>
+<TITLE>Platform Support</TITLE>
+</HEAD><BODY>
+<H1>Platform Support</H1>
+<P>
+
+<H2>Supported platforms</H2>
+<P>
+PM3 has been ported to several platforms. Bootstraps for the following 
+platforms are currently produced regularly.
+
+<DL>
+<DT>DS3100<DD>DECstation 5000/200 Ultrix 4.2.
+<DT>FreeBSD2<DD>IBM PC, FreeBSD 2.0.
+<DT>HPPA<DD>HP 700/800, HP-UX 8.0.
+<DT>IRIX5<DD>SGI/MIPS, IRIX 5.2.
+<DT>LINUXELF<DD>IBM PC, Linux (ELF object file format)
+<DT>NT386GNU<DD>IBM PC, Windows/NT and Windows 95 using gnu-win32 tools.
+<DT>SOLgnu<DD>Sparcstation, Solaris-2.x w/ unbundled gcc.
+<DT>SPARC<DD>Sparcstation-1, SunOS 4.1.x.
+</DL>
+
+The following platforms are still active but bootstraps could not be
+built lately, mostly because of problems in the gcc based backend.
+
+<DL>
+<DT>ALPHA_OSF<DD>Alpha/AXP, OSF/1.
+<DT>IBMR2<DD>IBM RS/6000, AIX 3.1.
+<DT>NEXT<DD>NeXT(M68K).
+<DT>NT386<DD>IBM PC, Windows/NT and Windows 95.
+</DL>
+
+The following platforms have not been active lately.
+
+<DL>
+<DT>AP3000<DD>Apollo DN4500, Domain/OS 10.2
+<DT>ARM<DD>Acorn R260, RISC iX 1.21.
+<DT>FreeBSD<DD>IBM PC, FreeBSD 1.1.5
+<DT>HP300<DD>HP 9000/300, HP-UX 7.0
+<DT>IBMRT<DD>IBM RT, IBM/4.3 (AOS 4.3).
+<DT>LINUX<DD>IBM PC, Linux.
+<DT>OKI<DD>Okidata 7300 (i860) AT&amp;T SVR4.0.
+<DT>SEQUENT<DD>Sequent 386
+<DT>SOLsun<DD>Sparcstation, Solaris-2.x w/ bundled Sun C.
+<DT>SUN3<DD>Sun 3, SunOS 4.1
+<DT>SUN386<DD>Sun 386i, SunOS 4.0.1.
+<DT>UMAX<DD>Encore Multimax, UMAX 4.3 (R4.1.1).
+<DT>VAX<DD>VAX 8800, Ultrix 4.2.
+</DL>
+
+<H2>Porting to new platforms</H2>
+
+<P>
+In order to port PM3 to a new platform, the following steps are required.
+The differences in PM3 between different POSIX platforms are relatively small
+and a new port may often be achieved in a matter of a few days or less. 
+New entries in tables, and new directories, 
+are obtained by copying the corresponding portions from
+an existing similar platform and making a few modifications.
+It is assumed that the new platform already fits in 32 or 64 bits,
+and POSIX or WIN32; if not, additional work will be required.
+
+<UL>
+<LI>Install PM3 on a supported platform.
+<LI>Select a short unique name for the new platform.
+<LI>Add an entry for the platform in table <I>Platforms</I>
+    of the template file <TT>m3config/src/COMMON</TT>. Add a platform
+    specific template in directory <TT>m3config/src</TT>.
+<LI>In file <TT>language/modula3/m3compiler/m3middle/src/Target.m3</TT>,
+    add an entry in table <I>Systems</I>, and a section describing the
+    new platform in the <TT>CASE sys OF</TT> statement in the <I>Init</I>
+    procedure.
+<LI>In directory <TT>libs/m3core/src/C</TT>, add a platform specific
+    subdirectory defining the interface to C functions such as
+    <TT>setjmp</TT>, <TT>longjmp</TT>, <TT>_setjmp</TT>, <TT>_longjmp</TT>,
+    to <TT>stdio.h</TT>, and to <TT>string.h</TT>.  Be careful to
+    get the size of the <TT>jmp_buf</TT> right.
+
+<LI>In directory <TT>libs/m3core/src/Csupport</TT>, add a platform specific
+    subdirectory containing a properly configured <TT>dtoa.c</TT>.
+
+<LI>In file <TT>libs/m3core/src/float/m3makefile</TT> add an entry for the
+    new platform in table <I>_FloatPieces</I>.
+
+<LI>In file <TT>libs/m3core/src/runtime/m3makefile</TT> add an entry for the
+    new platform in table <I>EXCEPTION_IMPL</I>. Add a platform
+    specific subdirectory in <TT>libs/m3core/src/runtime</TT> implementing
+    the creation and manipulation of stacks for threads, and defining
+    and installing signal handlers for signals such as SIGVTALRM and
+    SIGSEGV.
+
+<LI>In file <TT>libs/m3core/src/time/POSIX/m3makefile</TT> add an entry for the
+    new platform in table <I>_DateImpls</I>.
+
+<LI>In file <TT>libs/m3core/src/unix/m3makefile</TT> add an entry for the
+    new platform in table <I>_UnixPieces</I>. If needed, add a platform
+    specific subdirectory in <TT>libs/m3core/src/unix</TT> defining the
+    interface to system services.
+
+<LI>In file <TT>libs/libm3/src/random/m3makefile</TT> add an entry for the
+    new platform in table <I>_RandomPieces</I>.
+
+<LI>In package <TT>language/modula3/m3compiler/m3bootstrap</TT> issue the
+    command <TT>m3build -DBOOTTARGET=XXX</TT>, where XXX should be replaced
+    by the new platform. If all goes well, a bootstrap should be produced
+    in the subdirectory <TT>YYY/pm3-XXX</TT> where YYY is the platform
+    from which the port is initiated. This bootstrap may then be used
+    as described in the installation instructions.
+</UL>
+
+</BODY></HTML>

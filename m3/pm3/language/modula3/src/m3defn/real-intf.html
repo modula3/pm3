@@ -1,0 +1,81 @@
+<HTML>
+<HEAD>
+<TITLE>Modula-3: Real, LongReal and Extended interfaces</TITLE>
+</HEAD>
+<BODY>
+
+<H2> The Real, LongReal and Extended interfaces </H2>
+<P>
+
+For definitions of the terms used in these interfaces, see the ANSI/IEEE
+Standard 754-1985 for floating-point arithmetic.
+<P>
+
+These interfaces define constant attributes of the three
+built-in floating-point types:
+<P>
+
+<PRE>
+INTERFACE Real; TYPE T = REAL;
+  CONST
+    Base: INTEGER = ...;
+    Precision: INTEGER = ...;
+    MaxFinite: T = ...;
+    MinPos: T = ...;
+    MinPosNormal: T = ...;
+  END Real.
+</PRE>
+<P>
+
+<PRE>
+INTERFACE LongReal; TYPE T = LONGREAL;
+  CONST
+    Base: INTEGER = ...;
+    Precision: INTEGER = ...;
+    MaxFinite: T = ...;
+    MinPos: T = ...;
+    MinPosNormal: T = ...;
+  END LongReal.
+</PRE>
+<P>
+
+<PRE>
+INTERFACE Extended; TYPE T = EXTENDED;
+  CONST
+    Base: INTEGER = ...;
+    Precision: INTEGER = ...;
+    MaxFinite: T = ...;
+    MinPos: T = ...;
+    MinPosNormal: T = ...;
+  END Extended.
+</PRE>
+<P>
+
+The specification is the same for all three interfaces:
+<P>
+
+<TT>Base</TT> is the radix of the floating-point representation for <TT>T</TT>.
+<P>
+
+<TT>Precision</TT> is the number of base-<TT>Base</TT> digits of
+precision for <TT>T</TT>.
+<P>
+
+<TT>MaxFinite</TT> is the maximum finite value in <TT>T</TT>.
+For non-IEEE implementations, this is the same as <TT>LAST(T)</TT>.
+<P>
+
+<TT>MinPos</TT> is the minimum positive value in <TT>T</TT>.
+<P>
+
+<TT>MinPosNormal</TT> is the minimum positive normal value in <TT>T</TT>;
+it differs from <TT>MinPos</TT> only for implementations (like IEEE) with
+denormalized numbers.
+<P>
+
+<PRE>
+Last modified on Wed Apr  3 09:38:59 PST 1996 by heydon
+     modified on Thu Jun  1 08:12:25 PDT 1995 by kalsow
+</PRE>
+</BODY>
+</HTML>

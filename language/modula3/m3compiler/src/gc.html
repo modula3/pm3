@@ -1,0 +1,58 @@
+<HTML>
+<HEAD>
+<TITLE>Garbage collection </TITLE>
+</HEAD>
+<BODY>
+
+<H1>Garbage collection</H1>
+<P>
+
+A crucial fact for clients of the garbage collector to know is that
+<EM>objects in the heap move</EM>.  If all references to a traced heap object
+are from other traced heap objects, the collector may move the
+referent.  Hence, it is a bad idea to hash pointer values.  References
+from the stack or untraced heap into the traced heap are never
+modified.
+<P>
+
+The current collector is, by default, incremental and generational.  
+The interruptions of service should be very small, and the overall 
+performance should be better than with the previous collectors.
+<P>
+
+The use of VM protection is currently implemented only for the LINUXELF,
+DS3100, SOLgnu, and SPARC architectures.  On other architectures,
+<A HREF="m3args.html"><TT>@M3novm</TT></A> is the default.
+<P>
+
+Note that the new optional background collection 
+thread is not on by default; this may change in the future.
+<P>
+
+When you debug a Modula-3 program with
+<A HREF="debugging.html"><TT>m3gdb</TT></A>,
+you will find it simplest to 
+run it with the <A HREF="m3args.html"><TT>@M3novm</TT></A> switch.
+<P>
+
+Because of the use of VM protection by the collector,
+there are some additional constraints 
+on what programs may legally do.  For example, you cannot pass an 
+address on the heap as an argument to <TT>sigvec</TT>(2).  These restrictions 
+are documented in <TT>RTHeapDepC.c</TT>.
+If they seem onerous, we might be able to eliminate some.
+Note also that <TT>fork()</TT> and <TT>vfork()</TT> are now
+relatively expensive operations, 
+since they cause the current collection to finish;
+this situation may improve in a future release. 
+<P>
+
+<PRE>
+Last modified on Thu Jan  4 11:08:06 PST 1996 by heydon 
+     modified on Wed May  4 08:03:11 PDT 1994 by kalsow 
+     modified on Thu Jan  7 18:40:57 PST 1993 by muller 
+</PRE>
+
+<!--Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>

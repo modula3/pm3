@@ -1,0 +1,44 @@
+<HTML>
+<HEAD>
+<TITLE>Overriding package locations</TITLE>
+</HEAD>
+<BODY>
+
+<H1>Overriding package locations</H1>
+<P>
+
+<B> override(P, D) </B>  
+          Use the version of package <TT>P</TT> in directory <TT>D/P</TT>
+          instead of the one in <TT>/pkg/P</TT>. While <TT>D</TT> must
+          be an absolute path, a relative path <TT>RD</TT> may be used with
+          the <TT>path_of</TT> function as <TT>override(P, path_of(RD))</TT>.
+ 
+<P>
+
+<TT>override</TT> alters the behaviour of the <TT>include_pkg</TT> and
+<TT>import</TT> procedures, and must be executed prior to any such calls
+to have an effect.
+<P>
+
+To help ensure that the public repositories are consistent,
+<TT>m3ship</TT> will refuse to install any package built using overrides.
+<P>
+
+When the <TT>-O</TT> option is specified, <TT>m3build</TT> looks for a file
+named <TT>m3overrides</TT> in the <TT>src</TT> directory and, if one
+exists, executes it immediately prior to executing <TT>m3makefile</TT>.
+By keeping all <TT>override</TT> calls in an <TT>m3overrides</TT> file
+and not in an <TT>m3makefile</TT>, you can build both private and public
+versions of packages without editting any files.
+<P>
+
+The overrides in effect when a package was built are automatically
+carried forward into importers of the package, so there is no need to
+restate the complete set of overrides at every level, only of those
+packages that are directly imported into a given package.
+<P>
+
+
+<!--Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>

@@ -1,0 +1,39 @@
+<HTML>
+<HEAD>
+<TITLE>Resources</TITLE>
+</HEAD>
+<BODY>
+
+<H1>Resources</H1>
+<P>
+
+The following procedures support the inclusion of arbitrary data,
+known as a resource, in a program.
+<P>
+
+<B> resource(file) </B>  
+          is shorthand for <TT>resource_named(file,file)</TT>.
+<P>
+
+<B> resource_named(rd,file) </B>  
+          declares that <TT>file</TT> is a resource file.  It will be
+          accessible via the reader <TT>rd</TT> if a bundle is built.
+<P>
+
+<B> bundle(m) </B>  
+          declares that the module <TT>m</TT> is to be built as a bundle
+          of the files specified by the prior calls to <TT>resource</TT> and
+          <TT>resource_named</TT>.
+<P>
+
+For a description of how to access resources from your running
+program, see the
+<A HREF="../../../../../libs/libm3/src/bundleintf/Bundle.i3">Bundle</A>
+and 
+<A HREF="../../../../../graphics/gr-libs/vbtkit/src/vbtkitutils/Rsrc.i3">Rsrc</A>
+interfaces.
+<P>
+
+<!--Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>

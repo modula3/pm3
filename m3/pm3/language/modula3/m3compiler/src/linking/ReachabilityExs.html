@@ -1,0 +1,142 @@
+<HTML>
+<HEAD>
+<TITLE>Linker Reachability Examples</TITLE>
+</HEAD>
+
+<BODY>
+<H1>Reachability Examples</H1>
+<P>
+
+These examples were suggested by Umesh Maheshwari
+(umesh@note.lcs.mit.edu).<P>
+
+<H2>Example 1</H2>
+
+Our first example consists of a program built from two packages: a
+library package named <I>LibPkg</I> and a program package named
+<I>ProgPkg</I>.<P>
+
+The <I>LibPkg</I> package consists of three source files: "X.i3",
+"Y.i3", and "Y.m3".<P>
+
+<PRE>
+  INTERFACE X;              INTERFACE Y;
+  TYPE T &lt;: ROOT;           END Y.
+  END X.
+  
+  MODULE Y;
+  IMPORT X; 
+  REVEAL X.T = ROOT BRANDED OBJECT c: CHAR END;
+  BEGIN END Y.
+</PRE>
+
+The <I>m3makefile</I> for package <I>LibPkg</I> is:<P>
+
+<PRE>
+  import(libm3)
+  Interface(X)
+  Module(Y)
+  Library(LibPkg)
+</PRE>
+
+The <I>ProgPkg</I> package consists of a single source file,
+"Main.m3".<P>
+
+<PRE>
+  MODULE Main;
+  IMPORT X;
+  BEGIN END Main.
+</PRE>
+
+The <I>m3makefile</I> for package <I>ProgPkg</I> is:<P>
+
+<PRE>
+  override(LibPkg, "../..")
+  import(libm3)
+  import(LibPkg)
+  implementation(Main)
+  program(Prog)
+</PRE>
+
+The unit graph constructed by the linker when it builds the
+<I>ProgPkg</I> program looks like this:<P>
+
+<IMG SRC="Example1.gif" ALT="[ Image for Figure 1 ]"><P>
+
+In this and subsequent figures, the roots are colored red, the
+reachable non-roots are colored blue, and the edges are labeled "I" or
+"E" to denote that the edge is due to an IMPORT or EXPORTS relation,
+respectively. Hence, the colored nodes correspond to the units
+included in the final build.<P>
+
+Since the units "Y.m3" and "Y.i3" are not reachable from the single
+root "Main.m3", the linker does not include them in the build. Hence,
+the linker does not find a concrete revelation for the type "X.T".
+When we run <I>m3build</I> on the <I>ProgPkg</I> package, the compiler
+prints out the following error message:<P>
+
+<PRE>
+   -> linking Prog
+  opaque type never revealed: _tb81ca1e6
+    defined in X.i3
+</PRE>
+
+The problem can be avoided in a number of ways, as shown in the
+following three examples.
+
+<H2>Example 2</H2>
+
+If we change "Main.m3" so that it imports "Y" as well as "X", the unit
+graph changes to look like this:<P>
+
+<IMG SRC="Example2.gif" ALT="[ Image for Figure 2 ]"><P>
+
+Now, both "Y.i3" and "Y.m3" are reachable from the root, so the linker
+finds a concrete revelation for "X.T", and the program builds
+successfully.<P>
+
+<H2>Example 3</H2>
+
+Starting from Example 1, we can instead export the interface "X" in
+the module "Y", like this:<P>
+
+<PRE>
+  MODULE Y EXPORTS X, Y;
+  IMPORT X; 
+  REVEAL X.T = ROOT BRANDED OBJECT c: CHAR END;
+  BEGIN END Y.
+</PRE>
+
+This adds a new EXPORTS edge to the unit graph:<P>
+
+<IMG SRC="Example3.gif" ALT="[ Image for Figure 3 ]"><P>
+
+Now, "Y.m3" has become reachable from the root "Main.m3" through
+"X.i3", so the linker again finds a concrete revelation for "X.T", and
+the program builds successfully.<P>
+
+<H2>Example 4</H2>
+
+Starting from the source files of Example 1, we can move all of the
+<I>LibPkg</I> sources into the <I>ProgPkg</I> package. The
+<I>m3makefile</I> for the <I>ProgPkg</I> then becomes:<P>
+
+<PRE>
+  import(libm3)
+  interface(X)
+  module(Y)
+  implementation(Main)
+  program(Prog)
+</PRE>
+
+This doesn't change the unit graph from Example 1, but it does
+makes all four of the sources roots:<P>
+
+<IMG SRC="Example4.gif" ALT="[ Image for Figure 4 ]"><P>
+
+Hence, "Y.m3" is once again seen by the linker, and the program builds
+successfully.<P>
+
+<!--Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>

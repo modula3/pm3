@@ -1,0 +1,36 @@
+<HTML>
+<HEAD>
+<TITLE>Building programs, libraries, and other packages</TITLE>
+</HEAD>
+<BODY>
+
+<H1>Building programs, libraries, and other packages</H1>
+<P>
+
+<DL>
+<DT>library(X)<DD>
+          compile the sources and build a
+          library, <TT>X</TT>, from the resulting compiled object files.
+          The visibility of the library is hidden.
+ 
+
+<DT>Library(X)<DD>
+          The same as <TT>library</TT>, but <TT>X</TT> is exported.
+ 
+
+<DT>program(X)<DD>
+          constructs an executable program named <TT>X</TT> from the given
+          sources.
+ 
+<DT>Program(X)<DD>  
+          like <TT>program</TT>, but <TT>X</TT> is exported to <TT>/bin</TT>.
+ 
+
+<DT>OtherPackage(X)<DD>
+    processes the m3makefile but without producing a program or library.
+    This is typically used for packages containing only documentation.
+</DL>
+
+<!--Copyright (C) 1992, 1996, Digital Equipment Corporation. All rights reserved.-->
+</BODY>
+</HTML>

@@ -1,0 +1,98 @@
+<HTML>
+<HEAD>
+<TITLE>How to read a single character as soon as typed?</TITLE>
+</HEAD>
+<BODY>
+<H1>How to read a single character as soon as typed?</H1>
+
+<P>
+Characters typed on the keyboard are usually buffered. They
+become visible to the reading program only when the buffer is
+full or after, for example, a carriage return is received.
+This is not specific to Modula-3. To access the characters as
+they are typed, single character commands in a full screen
+editor for example, the input reader must be configured properly.
+<P>
+<strong>From:</strong> <A HREF="mailto:rrw1000@cus.cam.ac.uk">rrw1000@cus.cam.ac.uk</A> (Richard Watts)<BR>
+
+<P>
+ The POSIX way of doing it is to use tcsetattr(), and here is some
+code that does it under Solaris 2.x (this was written for serial ports,
+but the same thing applies) :
+</P>
+<PRE><TT>
+PROCEDURE Open(port : CHAR; timeout : INTEGER := 30) : T RAISES {Error} =
+  VAR
+    term : TcPosix.termios;
+    file : TEXT;
+    fd : T;
+    rc : INTEGER;
+  BEGIN
+    (* Figure out which device we want to open : *)
+
+    CASE port OF
+      'A' =&gt; file := "/dev/ttya";
+    | 'B' =&gt; file := "/dev/ttyb";
+    ELSE RAISE Error("Invalid port " &amp; Fmt.Char(port) &amp; " specified.\n");
+    END;
+
+    (* Open it. 700 is a good default mode for serial ports. *)
+    fd := Unix.open(M3toC.TtoS(file),  Unix.O_RDWR
+                                            , 8_700);
+    IF fd = -1 THEN
+      RAISE Error("Open() on " &amp; file &amp; " failed.\n");
+    END;
+
+    (* Get the termios structure for it *)
+    rc := TcPosix.tcgetattr(fd, ADR(term));
+    IF rc # 0 THEN
+      EVAL Unix.close(fd);
+      RAISE Error("Couldn't get terminal attributes for " &amp; file &amp; ".\n");
+    END;
+
+    (* Modify the termios structure *)
+
+    (* The default baud rate is right, but we'd better set it anyway
+       in case someone left it set up wrong : *)
+    rc := TcPosix.cfsetospeed(ADR(term), TcPosix.B9600);
+
+    IF rc # 0 THEN
+      EVAL Unix.close(fd);
+      RAISE Error("Couldn't set output speed for " &amp; file &amp; "\n");
+    END;
+
+    rc := TcPosix.cfsetispeed(ADR(term), TcPosix.B9600);
+
+    IF rc # 0 THEN
+      EVAL Unix.close(fd);
+      RAISE Error("Couldn't set input speed for " &amp; file &amp; "\n");
+    END;
+
+    (* Modify the line discipline - reset ECHO and ICANON *)
+    term.c_lflag := Word.And( term.c_lflag,
+                              Word.Not(
+                                  Word.Or(TcPosix.ICANON,
+                                          TcPosix.ECHO)));
+    term.c_cc[TcPosix.VMIN] := 0;
+    term.c_cc[TcPosix.VTIME] := 0; (* Set up timing right *)
+
+    (* Now reset the terminal attributes *)
+    rc := TcPosix.tcsetattr(fd, TcPosix.TCSANOW, ADR(term));
+
+    IF rc # 0 THEN
+      EVAL Unix.close(fd);
+      RAISE Error("Can't set attributes for " &amp; file &amp; "\n");
+    END;
+    RETURN fd;
+  END Open;
+</TT></PRE>
+<P>
+ (TcPosix.i3 is one of my interfaces, not libm3's, and I'll supply
+it if you like, but it's just a wrapper to tcgetattr and friends. The
+baud rate stuff shouldn't be necessary for terminals (or serial
+ports..) ). You should be able to somehow get an Rd.T out of this,
+I think, but it may involve a bit of hacking.
+The University of Cambridge can't have these opinions even if it wants them.
+
+</BODY>
+</HTML>

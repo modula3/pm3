@@ -1,0 +1,38 @@
+<HTML><HEAD>
+<TITLE> How to copy heap objects? </TITLE>
+</HEAD><BODY>
+<H1> How to copy heap objects? </H1>
+<P>
+Deep copies are easily performed using Pickles. An object graph is
+Pickled to a text writer into a TEXT. Then, a copy is created by
+unpickling a new object graph from a text reader created from the
+TEXT.
+<P>
+Shallow copies are less often needed but may be performed with the
+following procedure:
+
+<PRE><TT>
+PROCEDURE Duplicate (r: REFANY): REFANY =
+  VAR
+    tc     := TYPECODE (r);
+    n_dims : INTEGER;
+    res    : REFANY;
+    shape  : RTHeapRep.ArrayShape;
+  BEGIN
+    IF (r = NIL) THEN RETURN NIL END;
+
+    (* allocate a new object of the same type (and shape) as the old one *)
+    RTHeapRep.UnsafeGetShape (r, n_dims, shape);
+    IF (n_dims &lt;= 0)
+      THEN res := RTAllocator.NewTraced (tc);
+      ELSE res := RTAllocator.NewTracedArray (tc, SUBARRAY(shape^, 0, n_dims));
+    END;
+
+    (* copy the old data into the new object *)
+    RTMisc.Copy (RTHeap.GetDataAdr (r), RTHeap.GetDataAdr (res),
+                 RTHeap.GetDataSize (r));
+
+    RETURN res;
+  END Duplicate;
+</TT></PRE>
+</BODY></HTML>
