@@ -971,9 +971,7 @@ spec_proc_signature:
 spec_var: Var spec_typed_id_list ;
 
 spec_depend:
-      Depends qqid                                 On spec_term_list
-    | Depends qqid Lbracket spec_typed_id Rbracket On spec_term_list
-    ;
+      Depends qqid spec_opt_typed_id On spec_term_list ;
 
 spec_abstract:
       Rep qqid spec_opt_typed_id Iff   spec_pred
@@ -1001,7 +999,9 @@ spec_inv: Inv spec_pred ;
 spec_let: Let Ident Assign spec_term ;
 
 
-spec_term: spec_term_sum ;
+/*spec_term: spec_term_sum ;*/
+
+spec_term: spec_pred ;
 
 spec_term_sum:
       spec_term_prod
@@ -1018,14 +1018,8 @@ spec_term_prod:
 
 spec_term_selector:
       spec_term_paren
-/*
     | qqid Lparen Rparen
     | qqid Lparen spec_term_list Rparen
-*/
-/*
-    | spec_term_selector Lparen Rparen
-    | spec_term_selector Lparen spec_term_list Rparen
-*/
     | spec_term_selector Lbracket spec_term_list Rbracket
     | spec_term_selector Uparrow
     ;
@@ -1045,10 +1039,17 @@ spec_prim_term:
     | qqid /* [ "'" ] */
     ;
 
+spec_pred: spec_quant ;
 
-spec_pred:
+spec_quant:
+      spec_concl
+    | Lparen All    Lbracket spec_typed_id_list Rbracket spec_concl Rparen
+    | Lparen Exists Lbracket spec_typed_id_list Rbracket spec_concl Rparen
+    ;
+
+spec_concl:
       spec_disj
-    | spec_pred spec_weak_pred_op spec_disj
+    | spec_disj spec_weak_pred_op spec_concl /* these operations are right-associative */
     ;
 
 spec_weak_pred_op: Implies | Iff ;
@@ -1063,17 +1064,14 @@ spec_conj:
     | spec_conj And spec_literal
     ;
 
-spec_literal:  /* was { NOT } Atm -- a bug? */
+spec_literal:
       spec_atom
-    | Not spec_atom
+    | Not spec_literal
     ;
 
 spec_atom:
-      Lparen spec_pred Rparen
-    | Lparen All    Lbracket spec_typed_id_list Rbracket spec_pred Rparen
-    | Lparen Exists Lbracket spec_typed_id_list Rbracket spec_pred Rparen
-    | spec_term spec_bin_rel spec_term
-    | spec_term
+      spec_term_sum spec_bin_rel spec_term_sum
+    | spec_term_sum
     ;
 
 spec_typed_id_list:
@@ -1094,7 +1092,11 @@ spec_sub_id_list:
     | spec_sub_id_list Comma spec_sub_id
     ;
 
-spec_sub_id: qqid spec_term_list ;
+spec_sub_id: qqid spec_term_bracket_list ;
+
+spec_term_bracket_list:
+      /* empty */
+    | spec_term_bracket_list Lbracket spec_term Rbracket;
 
 spec_proc_requires: Requires spec_pred ;
 
@@ -1122,7 +1124,6 @@ qqid_list:
       qqid
     | qqid_list Comma qqid
     ;
-
 
 
 /*--------------------- expressions ------------------------*/
@@ -1844,10 +1845,12 @@ yyerror(s) char *s; {
   Reset();
   Flush();
   if (calledFromEmacs == 0) {
+        /* XEmacs requires that character counting starts with 1
+            - very poor programming */
         fprintf (stderr,
-            "%s:%d: (column %d, byte %d) %s while pretty-printing\n",
+            "%s:%d:%d: (byte %d) %s while pretty-printing\n",
             (infileName != NULL) ? infileName : "",
-            currentRow, currentCol, lexposition, s);
+            currentRow+1, currentCol+1, lexposition, s);
         fprintf(stderr, "Error flagged in output\n");
   }
   PR ("(* SYNTAX ERROR *) ");
