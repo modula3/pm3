@@ -18,8 +18,8 @@ CC = [ "/bin/cc", "-ieee_with_no_inexact", "-c" ]
 LINK = [ "/bin/cc", "-ieee_with_no_inexact" ]
 MAKELIB = [ "/bin/ar", "crusl" ]
 MAKESHLIB = ["/usr/bin/ld", "-shared", "-expect_unresolved", "end" ,"-o"]
-ASM = ["/bin/as","-o"]         % Assembler
-FIXOBJ = [ LIB_USE & "/mips-tfile" ]
+ASM = [ LIB_USE & "/as", "-o"]         % Assembler
+FIXOBJ = [ LIB_USE & "/fixobj" ]
 
 OPT_FLAG = "-O"
 BOPT_FLAG = "-O2"
