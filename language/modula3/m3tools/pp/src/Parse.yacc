@@ -91,6 +91,8 @@
 
 %{
 
+#define NULL (0L)
+
 #define lexbufsize 500
 char lexbuf[2 * lexbufsize];
 int lexptr = 0;
@@ -1082,12 +1084,12 @@ NPS:
 
 /*----------------- formatting semantic routines -----------------------*/
 
-G:     { GR (); }       /* begin group */
-B0:    { BE (0.0); }      /* begin object - no indentation */
-B:     { BE (offset); } /* begin indented group */
-B2:    { BE (offset*2); } /* begin doubly indented group */
-E:     { EN (); }       /* end group/object */
-EF:    { ENF (); }	/* end group/object forcing comment output */
+G:     { GR (); };       /* begin group */
+B0:    { BE (0.0); };      /* begin object - no indentation */
+B:     { BE (offset); }; /* begin indented group */
+B2:    { BE (offset*2); }; /* begin doubly indented group */
+E:     { EN (); };       /* end group/object */
+EF:    { ENF (); };	/* end group/object forcing comment output */
 
 A:     { DoBreak (1, 2, 0.0); };     /* optimal, ununited break point */
 AO:    { DoBreak (1, 3, 0.0); };     /* nobreak-optimal, ununited break */
@@ -1095,20 +1097,20 @@ AX:    { DoBreak (0, 3, 0.0); };     /* no space, std indent */
 
 V:     { DoBreak (1, 1, 0.0); };     /* united break point */
 VZ:    { DoBreak (1, 1, -offset); };     /* space, outdent */
-VC:    { DoBreak (1, 1, -offset + 2.0 * bodySpaceWidth); }
+VC:    { DoBreak (1, 1, -offset + 2.0 * bodySpaceWidth); };
 
 Z:     { DoBreak (0, 0, 0.0); };     /* no space, no break unless blank line */
 SP:    { DoBreak (1, 0, 0.0); };     /* space */
 XSP:   { P2 (' '); };              /* simple space */
 
-BL:    { BL (); }                  /* forced break point */
+BL:    { BL (); };                  /* forced break point */
 
 AL2:   { DoAlign (2, 0); };        /* begin aligned object */
 AL3:   { DoAlign (3, 0); };
 ALZ5:  { DoAlign (5, 1); };
-EA:    { EndAlign (); }
+EA:    { EndAlign (); };
 /* Tell comment code when Formatter.Align is going to generate a newline. */
-ALNL:	{ ALNL(); }
+ALNL:	{ ALNL(); };
 
 SPNL:  { DoSPNL (); };             /* Space/Newline depending on the style */
 QSP:   { DoQSP (); };              /* Space or not, depending on the style */
