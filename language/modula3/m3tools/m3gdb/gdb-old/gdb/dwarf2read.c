@@ -1422,7 +1422,7 @@ read_structure_scope (die, objfile)
   sym = new_symbol (die, objfile);
   if (sym != NULL)
     {
-      SYMBOL_TYPE (sym) = type;
+      SET_SYMBOL_TYPE (sym) = type;
     }
 }
 
@@ -1517,7 +1517,7 @@ read_enumeration (die, objfile)
 	      SYMBOL_INIT_LANGUAGE_SPECIFIC (sym, cu_language);
 	      SYMBOL_NAMESPACE (sym) = VAR_NAMESPACE;
 	      SYMBOL_CLASS (sym) = LOC_CONST;
-	      SYMBOL_TYPE (sym) = type;
+	      SET_SYMBOL_TYPE (sym) = type;
 	      add_symbol_to_list (sym, list_in_scope);
 
 	      num_fields++;
@@ -1532,7 +1532,7 @@ read_enumeration (die, objfile)
   sym = new_symbol (die, objfile);
   if (sym != NULL)
     {
-      SYMBOL_TYPE (sym) = type;
+      SET_SYMBOL_TYPE (sym) = type;
     }
 }
 
@@ -2904,7 +2904,7 @@ new_symbol (die, objfile)
       /* default assumptions */
       SYMBOL_NAMESPACE (sym) = VAR_NAMESPACE;
       SYMBOL_CLASS (sym) = LOC_STATIC;
-      SYMBOL_TYPE (sym) = die_type (die, objfile);
+      SET_SYMBOL_TYPE (sym) = die_type (die, objfile);
 
       /* If this symbol is from a C++ compilation, then attempt to
          cache the demangled form for future reference.  This is a
@@ -2930,7 +2930,7 @@ new_symbol (die, objfile)
 	    {
 	      SYMBOL_VALUE_ADDRESS (sym) = DW_ADDR (attr);
 	    }
-	  SYMBOL_TYPE (sym) = make_function_type (die_type (die, objfile),
+	  SET_SYMBOL_TYPE (sym) = make_function_type (die_type (die, objfile),
 						  NULL);
 	  SYMBOL_CLASS (sym) = LOC_BLOCK;
 	  attr2 = dwarf_attr (die, DW_AT_external);

@@ -46,7 +46,7 @@ static void sig_print_header PARAMS ((void));
 
 static void resume_cleanups PARAMS ((int));
 
-static int hook_stop_stub PARAMS ((char *));
+static long hook_stop_stub PARAMS ((char *));
 
 static void delete_breakpoint_current_contents PARAMS ((PTR));
 
@@ -1757,7 +1757,7 @@ Further execution is probably impossible.\n");
   annotate_stopped ();
 }
 
-static int
+static long
 hook_stop_stub (cmd)
      char *cmd;
 {
@@ -2075,14 +2075,14 @@ struct restore_selected_frame_args {
   int level;
 };
 
-static int restore_selected_frame PARAMS ((char *));
+static long restore_selected_frame PARAMS ((char *));
 
 /* Restore the selected frame.  args is really a struct
    restore_selected_frame_args * (declared as char * for catch_errors)
    telling us what frame to restore.  Returns 1 for success, or 0 for
    failure.  An error message will have been printed on error.  */
 
-static int
+static long
 restore_selected_frame (args)
      char *args;
 {

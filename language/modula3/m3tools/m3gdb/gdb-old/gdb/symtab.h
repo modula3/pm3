@@ -88,6 +88,10 @@ struct general_symbol_info
 	{
 	  char *demangled_name;
 	} cplus_specific;
+      struct m3_specific	 /* For M3 */
+	{
+	  char *demangled_name;
+	} m3_specific;
       struct chill_specific      /* For Chill */
 	{
 	  char *demangled_name;
@@ -122,13 +126,20 @@ struct general_symbol_info
 #define SYMBOL_CPLUS_DEMANGLED_NAME(symbol)	\
   (symbol)->ginfo.language_specific.cplus_specific.demangled_name
 
+#define SYMBOL_M3_DEMANGLED_NAME(symbol)	\
+  (symbol)->ginfo.language_specific.m3_specific.demangled_name
+  
 /* Macro that initializes the language dependent portion of a symbol
    depending upon the language for the symbol. */
 
 #define SYMBOL_INIT_LANGUAGE_SPECIFIC(symbol,language)			\
   do {									\
     SYMBOL_LANGUAGE (symbol) = language;				\
-    if (SYMBOL_LANGUAGE (symbol) == language_cplus)			\
+    if (SYMBOL_LANGUAGE (symbol) == language_m3)			\
+      {									\
+	SYMBOL_M3_DEMANGLED_NAME (symbol) = NULL;			\
+      }									\
+    else if (SYMBOL_LANGUAGE (symbol) == language_cplus)		\
       {									\
 	SYMBOL_CPLUS_DEMANGLED_NAME (symbol) = NULL;			\
       }									\
@@ -155,6 +166,22 @@ struct general_symbol_info
 #define SYMBOL_INIT_DEMANGLED_NAME(symbol,obstack)			\
   do {									\
     char *demangled = NULL;						\
+    if (SYMBOL_LANGUAGE (symbol) == language_m3			        \
+	|| SYMBOL_LANGUAGE (symbol) == language_auto)			\
+      {									\
+	demangled = m3_demangle (SYMBOL_NAME (symbol));                 \
+	if (demangled != NULL)						\
+	  {								\
+	    SYMBOL_LANGUAGE (symbol) = language_m3;			\
+	    SYMBOL_M3_DEMANGLED_NAME (symbol) = 			\
+	      obsavestring (demangled, strlen (demangled), (obstack));	\
+	    free (demangled);						\
+	  }								\
+	else								\
+	  {								\
+	    SYMBOL_M3_DEMANGLED_NAME (symbol) = NULL;			\
+	  }								\
+      }									\
     if (SYMBOL_LANGUAGE (symbol) == language_cplus			\
 	|| SYMBOL_LANGUAGE (symbol) == language_auto)			\
       {									\
@@ -200,11 +227,13 @@ struct general_symbol_info
    for that symbol.  If no demangled name exists, returns NULL. */
 
 #define SYMBOL_DEMANGLED_NAME(symbol)					\
-  (SYMBOL_LANGUAGE (symbol) == language_cplus				\
-   ? SYMBOL_CPLUS_DEMANGLED_NAME (symbol)				\
-   : (SYMBOL_LANGUAGE (symbol) == language_chill			\
-      ? SYMBOL_CHILL_DEMANGLED_NAME (symbol)				\
-      : NULL))
+  (SYMBOL_LANGUAGE (symbol) == language_m3				\
+   ? SYMBOL_M3_DEMANGLED_NAME (symbol)					\
+   : (SYMBOL_LANGUAGE (symbol) == language_cplus		       	\
+      ? SYMBOL_CPLUS_DEMANGLED_NAME (symbol)				\
+      : (SYMBOL_LANGUAGE (symbol) == language_chill			\
+         ? SYMBOL_CHILL_DEMANGLED_NAME (symbol)				\
+         : NULL)))
 
 #define SYMBOL_CHILL_DEMANGLED_NAME(symbol)				\
   (symbol)->ginfo.language_specific.chill_specific.demangled_name
@@ -587,6 +616,7 @@ struct symbol
 
   /* Data type of value */
 
+  char m3_uid[9];
   struct type *type;
 
   /* Name space code.  */
@@ -621,7 +651,9 @@ struct symbol
 
 #define SYMBOL_NAMESPACE(symbol)	(symbol)->namespace
 #define SYMBOL_CLASS(symbol)		(symbol)->aclass
-#define SYMBOL_TYPE(symbol)		(symbol)->type
+#define SET_SYMBOL_TYPE(symbol) (symbol)->type
+#define SYMBOL_TYPE(symbol)	((symbol)->type ? (symbol)->type : \
+		 ((symbol)->type = m3_resolve_type ((symbol)->m3_uid)))
 #define SYMBOL_LINE(symbol)		(symbol)->line
 #define SYMBOL_BASEREG(symbol)		(symbol)->aux_value.basereg
 
@@ -1230,6 +1262,9 @@ clear_symtab_users PARAMS ((void));
 
 extern enum language
 deduce_language_from_filename PARAMS ((char *));
+
+extern char *
+m3_demangle PARAMS ((char *));
 
 /* symtab.c */
 

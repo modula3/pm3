@@ -41,6 +41,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "defs.h"
 #include "symtab.h"
+#include "value.h"
 #include "gdbtypes.h"
 #include "gdbcore.h"
 #include "symfile.h"
@@ -791,9 +792,9 @@ parse_symbol (sh, ax, ext_sh, bigend, section_offsets)
 
       /* Type could be missing if file is compiled without debugging info.  */
       if (sh->sc == scUndefined || sh->sc == scNil || sh->index == indexNil)
-	SYMBOL_TYPE (s) = nodebug_var_symbol_type;
+	SET_SYMBOL_TYPE (s) = nodebug_var_symbol_type;
       else
-	SYMBOL_TYPE (s) = parse_type (cur_fd, ax, sh->index, 0, bigend, name);
+	SET_SYMBOL_TYPE (s) = parse_type (cur_fd, ax, sh->index, 0, bigend, name);
       /* Value of a data symbol is its memory address */
       break;
 
@@ -830,7 +831,7 @@ parse_symbol (sh, ax, ext_sh, bigend, section_offsets)
 	  break;
 	}
       SYMBOL_VALUE (s) = svalue;
-      SYMBOL_TYPE (s) = parse_type (cur_fd, ax, sh->index, 0, bigend, name);
+      SET_SYMBOL_TYPE (s) = parse_type (cur_fd, ax, sh->index, 0, bigend, name);
       add_symbol (s, top_stack->cur_block);
       break;
 
@@ -839,7 +840,7 @@ parse_symbol (sh, ax, ext_sh, bigend, section_offsets)
       SYMBOL_NAMESPACE (s) = VAR_NAMESPACE;	/* so that it can be used */
       SYMBOL_CLASS (s) = LOC_LABEL;	/* but not misused */
       SYMBOL_VALUE_ADDRESS (s) = (CORE_ADDR) sh->value;
-      SYMBOL_TYPE (s) = mdebug_type_int;
+      SET_SYMBOL_TYPE (s) = mdebug_type_int;
       add_symbol (s, top_stack->cur_block);
       break;
 
@@ -887,7 +888,7 @@ parse_symbol (sh, ax, ext_sh, bigend, section_offsets)
       add_symbol (s, b);
 
       /* Make a type for the procedure itself */
-      SYMBOL_TYPE (s) = lookup_function_type (t);
+      SET_SYMBOL_TYPE (s) = lookup_function_type (t);
 
       /* Create and enter a new lexical context */
       b = new_block (top_stack->maxsyms);
@@ -1135,7 +1136,7 @@ parse_symbol (sh, ax, ext_sh, bigend, section_offsets)
 		  obsavestring (f->name, strlen (f->name),
 				&current_objfile->symbol_obstack);
 		SYMBOL_CLASS (enum_sym) = LOC_CONST;
-		SYMBOL_TYPE (enum_sym) = t;
+		SET_SYMBOL_TYPE (enum_sym) = t;
 		SYMBOL_NAMESPACE (enum_sym) = VAR_NAMESPACE;
 		SYMBOL_VALUE (enum_sym) = tsym.value;
 		if (SYMBOL_VALUE (enum_sym) < 0)
@@ -1159,7 +1160,7 @@ parse_symbol (sh, ax, ext_sh, bigend, section_offsets)
 
 	/* gcc puts out an empty struct for an opaque struct definitions,
 	   do not create a symbol for it either.  */
-	if (TYPE_NFIELDS (t) == 0)
+	if (TYPE_NFIELDS (t) == 0 && psymtab_language != language_m3)
 	  {
 	    TYPE_FLAGS (t) |= TYPE_FLAG_STUB;
 	    break;
@@ -1169,7 +1170,7 @@ parse_symbol (sh, ax, ext_sh, bigend, section_offsets)
 	SYMBOL_NAMESPACE (s) = STRUCT_NAMESPACE;
 	SYMBOL_CLASS (s) = LOC_TYPEDEF;
 	SYMBOL_VALUE (s) = 0;
-	SYMBOL_TYPE (s) = t;
+	SET_SYMBOL_TYPE (s) = t;
 	add_symbol (s, top_stack->cur_block);
 	break;
 
@@ -1204,6 +1205,7 @@ parse_symbol (sh, ax, ext_sh, bigend, section_offsets)
     case stEnd:		/* end (of anything) */
       if (sh->sc == scInfo || sh->sc == scCommon || sh->sc == scSCommon)
 	{
+ 	  m3_decode_struct (top_stack->cur_type);
 	  /* Finished with type */
 	  top_stack->cur_type = 0;
 	}
@@ -1224,7 +1226,7 @@ parse_symbol (sh, ax, ext_sh, bigend, section_offsets)
 	  s = new_symbol (MIPS_EFI_SYMBOL_NAME);
 	  SYMBOL_NAMESPACE (s) = LABEL_NAMESPACE;
 	  SYMBOL_CLASS (s) = LOC_CONST;
-	  SYMBOL_TYPE (s) = mdebug_type_void;
+	  SET_SYMBOL_TYPE (s) = mdebug_type_void;
 	  e = ((struct mips_extra_func_info *)
 	       obstack_alloc (&current_objfile->symbol_obstack,
 			      sizeof (struct mips_extra_func_info)));
@@ -1367,7 +1369,7 @@ parse_symbol (sh, ax, ext_sh, bigend, section_offsets)
       SYMBOL_NAMESPACE (s) = VAR_NAMESPACE;
       SYMBOL_CLASS (s) = LOC_TYPEDEF;
       SYMBOL_BLOCK_VALUE (s) = top_stack->cur_block;
-      SYMBOL_TYPE (s) = t;
+      SET_SYMBOL_TYPE (s) = t;
       add_symbol (s, top_stack->cur_block);
 
       /* Incomplete definitions of structs should not get a name.  */
@@ -1641,10 +1643,11 @@ parse_type (fd, ax, aux_index, bs, bigend, sym_name)
 	     exception is if we guessed wrong re struct/union/enum.
 	     But for struct vs. union a wrong guess is harmless, so
 	     don't complain().  */
-	  if ((TYPE_CODE (tp) == TYPE_CODE_ENUM
+	  if (((TYPE_CODE (tp) == TYPE_CODE_ENUM
 	       && type_code != TYPE_CODE_ENUM)
 	      || (TYPE_CODE (tp) != TYPE_CODE_ENUM
 		  && type_code == TYPE_CODE_ENUM))
+	      && !M3_TYPEP (TYPE_CODE (tp)))
 	    {
 	      complain (&bad_tag_guess_complaint, sym_name);
 	    }
@@ -1982,7 +1985,7 @@ parse_procedure (pr, search_symtab, lowest_pdr_addr, pst)
       SYMBOL_NAMESPACE (s) = VAR_NAMESPACE;
       SYMBOL_CLASS (s) = LOC_BLOCK;
       /* Donno its type, hope int is ok */
-      SYMBOL_TYPE (s) = lookup_function_type (mdebug_type_int);
+      SET_SYMBOL_TYPE (s) = lookup_function_type (mdebug_type_int);
       add_symbol (s, top_stack->cur_block);
       /* Wont have symbols for this one */
       b = new_block (2);
@@ -2035,7 +2038,7 @@ parse_procedure (pr, search_symtab, lowest_pdr_addr, pst)
   if (processing_gcc_compilation == 0
       && found_ecoff_debugging_info == 0
       && TYPE_CODE (TYPE_TARGET_TYPE (SYMBOL_TYPE (s))) == TYPE_CODE_VOID)
-    SYMBOL_TYPE (s) = nodebug_func_symbol_type;
+    SET_SYMBOL_TYPE (s) = nodebug_func_symbol_type;
 }
 
 /* Relocate the extra function info pointed to by the symbol table.  */
@@ -2823,10 +2826,13 @@ parse_partial_symbols (objfile, section_offsets)
 		case stBlock:	/* { }, str, un, enum*/
 		  /* Do not create a partial symbol for cc unnamed aggregates
 		     and gcc empty aggregates. */
+		  /* Unless language is Modula-3 (fake C structures
+		   * are used to pass type and symbol information!)
+		   */
 		  if ((sh.sc == scInfo
 		       || sh.sc == scCommon || sh.sc == scSCommon)
-		      && sh.iss != 0
-		      && sh.index != cur_sdx + 2)
+		      && (psymtab_language == language_m3
+			|| (sh.iss != 0 && sh.index != cur_sdx + 2)))
 		    {
 		      add_psymbol_to_list (name, strlen (name),
 					   STRUCT_NAMESPACE, LOC_TYPEDEF,
@@ -3279,7 +3285,7 @@ psymtab_to_symtab_1 (pst, filename)
 		  memset ((PTR) e, 0, sizeof (struct mips_extra_func_info));
 		  SYMBOL_NAMESPACE (s) = LABEL_NAMESPACE;
 		  SYMBOL_CLASS (s) = LOC_CONST;
-		  SYMBOL_TYPE (s) = mdebug_type_void;
+		  SET_SYMBOL_TYPE (s) = mdebug_type_void;
 		  SYMBOL_VALUE (s) = (long) e;
 		  e->pdr.framereg = -1;
 		  add_symbol_to_list (s, &local_symbols);
@@ -4232,7 +4238,7 @@ fixup_sigtramp ()
    */
   SYMBOL_NAMESPACE (s) = VAR_NAMESPACE;
   SYMBOL_CLASS (s) = LOC_BLOCK;
-  SYMBOL_TYPE (s) = init_type (TYPE_CODE_FUNC, 4, 0, (char *) NULL,
+  SET_SYMBOL_TYPE (s) = init_type (TYPE_CODE_FUNC, 4, 0, (char *) NULL,
 			       st->objfile);
   TYPE_TARGET_TYPE (SYMBOL_TYPE (s)) = mdebug_type_void;
 
@@ -4276,7 +4282,7 @@ fixup_sigtramp ()
     SYMBOL_VALUE (s) = (long) e;
     SYMBOL_NAMESPACE (s) = LABEL_NAMESPACE;
     SYMBOL_CLASS (s) = LOC_CONST;
-    SYMBOL_TYPE (s) = mdebug_type_void;
+    SET_SYMBOL_TYPE (s) = mdebug_type_void;
     current_objfile = NULL;
   }
 

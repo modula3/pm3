@@ -47,6 +47,7 @@
 #define DEBUG_EVENTS(x)	if (debug_events)	printf x
 #define DEBUG_MEM(x)	if (debug_memory)	printf x
 #define DEBUG_EXCEPT(x)	if (debug_exceptions)	printf x
+#define DEBUG_THREADS(x) if (debug_threads)	win32_print_threads x
 
 /* Forward declaration */
 extern struct target_ops child_ops;
@@ -64,6 +65,7 @@ static HANDLE current_process;
 static HANDLE current_thread;
 static int current_process_id;
 static int current_thread_id;
+static int current_context_pid;
 
 /* Counts of things. */
 static int exception_count = 0;
@@ -76,6 +78,7 @@ static int debug_exec = 0;		/* show execution */
 static int debug_events = 0;		/* show events from kernel */
 static int debug_memory = 0;		/* show target memory accesses */
 static int debug_exceptions = 0;	/* show target exceptions */
+static int debug_threads = 0;           /* show the internal thread list */
 
 /* This vector maps GDB's idea of a register's number into an address
    in the win32 exception context vector. 
@@ -230,6 +233,36 @@ static const struct xlate_exception
   {EXCEPTION_SINGLE_STEP, TARGET_SIGNAL_TRAP},
   {-1, -1}};
 
+/* Support functions to add/remove threads and their handles from the list */
+
+struct win32_thread_info {
+  HANDLE process;
+  HANDLE thread;
+  int process_id;
+  int thread_id;
+  struct win32_thread_info* next;
+};
+
+static void init_win32_thread_list();
+
+static void add_win32_thread(HANDLE process, HANDLE thread, int process_id, 
+    int thread_id);
+
+static void remove_win32_thread(int process_id, int thread_id);
+
+static struct win32_thread_info *get_win32_thread_info(int process_id, int thread_id);
+
+static int win32_thread_to_pid(int process_id, int thread_id);
+
+static struct win32_thread_info *pid_to_win32_thread(int pid);
+
+static void win32_check_context();
+
+static void win32_get_context(int pid);
+
+static void win32_print_threads(char *title);
+
+/* Actual implementations */
 
 static void 
 check (BOOL ok, const char *file, int line)
@@ -248,6 +281,7 @@ child_fetch_inferior_registers (int r)
     }
   else
     {
+      win32_check_context();
       supply_register (r, mappings[r].incontext);
     }
 }
@@ -262,6 +296,7 @@ child_store_inferior_registers (int r)
     }
   else
     {
+      /* should we check the win32_context yikes */
       read_register_gen (r, mappings[r].incontext);
     }
 }
@@ -355,7 +390,9 @@ handle_load_dll (char *eventp)
  
 
       context.ContextFlags = CONTEXT_FULL | CONTEXT_FLOATING_POINT;
-      GetThreadContext (current_thread, &context);
+
+      win32_get_context(win32_thread_to_pid(current_process_id, 
+          current_thread_id));
 
       /* The symbols in a dll are offset by 0x1000, which is the
 	 the offset from 0 of the first byte in an image - because
@@ -379,6 +416,7 @@ handle_exception (DEBUG_EVENT * event, struct target_waitstatus *ourstatus)
 {
   int i;
   int done = 0;
+
   ourstatus->kind = TARGET_WAITKIND_STOPPED;
 
 
@@ -417,7 +455,8 @@ handle_exception (DEBUG_EVENT * event, struct target_waitstatus *ourstatus)
       break;
     }
   context.ContextFlags = CONTEXT_FULL | CONTEXT_FLOATING_POINT;
-  GetThreadContext (current_thread, &context);
+  win32_get_context(win32_thread_to_pid(current_process_id, 
+      current_thread_id));
   exception_count++;
 }
 
@@ -435,6 +474,7 @@ child_wait (int pid, struct target_waitstatus *ourstatus)
       DEBUG_EVENT event;
       BOOL t = WaitForDebugEvent (&event, INFINITE);
       char *p;
+      struct win32_thread_info *tp;
 
       event_count++;
 
@@ -447,16 +487,24 @@ child_wait (int pid, struct target_waitstatus *ourstatus)
 	  DEBUG_EVENTS (("gdb: kernel event for pid=%d tid=%d code=%s)\n", 
 			event.dwProcessId, event.dwThreadId,
 			"CREATE_THREAD_DEBUG_EVENT"));
+          add_win32_thread(current_process, event.u.CreateThread.hThread, 
+              event.dwProcessId, event.dwThreadId);
+          add_thread(win32_thread_to_pid(event.dwProcessId, event.dwThreadId));
 	  break;
 	case EXIT_THREAD_DEBUG_EVENT:
 	  DEBUG_EVENTS (("gdb: kernel event for pid=%d tid=%d code=%s)\n",
 			event.dwProcessId, event.dwThreadId,
 			"EXIT_THREAD_DEBUG_EVENT"));
+          remove_win32_thread(event.dwProcessId, event.dwThreadId);
 	  break;
 	case CREATE_PROCESS_DEBUG_EVENT:
 	  DEBUG_EVENTS (("gdb: kernel event for pid=%d tid=%d code=%s)\n",
 			event.dwProcessId, event.dwThreadId,
 			"CREATE_PROCESS_DEBUG_EVENT"));
+          add_win32_thread(event.u.CreateProcessInfo.hProcess, 
+              event.u.CreateProcessInfo.hThread, 
+              event.dwProcessId, event.dwThreadId);
+          add_thread(win32_thread_to_pid(event.dwProcessId, event.dwThreadId));
 	  break;
 
 	case EXIT_PROCESS_DEBUG_EVENT:
@@ -467,7 +515,7 @@ child_wait (int pid, struct target_waitstatus *ourstatus)
 	  ourstatus->value.integer = event.u.ExitProcess.dwExitCode;
 	  CloseHandle (current_process);
 	  CloseHandle (current_thread);
-	  return current_process_id;
+	  return win32_thread_to_pid(current_process_id, current_thread_id);
 	  break;
 
 	case LOAD_DLL_DEBUG_EVENT:
@@ -490,7 +538,7 @@ child_wait (int pid, struct target_waitstatus *ourstatus)
 			event.dwProcessId, event.dwThreadId,
 			"EXCEPTION_DEBUG_EVENT"));
 	  handle_exception (&event, ourstatus);
-	  return current_process_id;
+	  return win32_thread_to_pid(current_process_id, current_thread_id);
 
 	case OUTPUT_DEBUG_STRING_EVENT: /* message from the kernel */
 	  DEBUG_EVENTS (("gdb: kernel event for pid=%d tid=%d code=%s)\n",
@@ -513,6 +561,7 @@ child_wait (int pid, struct target_waitstatus *ourstatus)
 	}
       DEBUG_EVENTS (("ContinueDebugEvent (cpid=%d, ctid=%d, DBG_CONTINUE);\n",
 		     current_process_id, current_thread_id));
+      DEBUG_THREADS(("In Wait for child event"));
       CHECK (ContinueDebugEvent (current_process_id,
 				 current_thread_id,
 				 DBG_CONTINUE));
@@ -557,7 +606,8 @@ child_attach (args, from_tty)
       gdb_flush (gdb_stdout);
     }
 
-  inferior_pid = current_process_id;
+  /* thread id is not set yet... yikes */
+  inferior_pid = win32_thread_to_pid(current_process_id, current_thread_id);
   push_target (&child_ops);
 }
 
@@ -738,19 +788,24 @@ child_create_inferior (exec_file, allargs, env)
   exception_count = 0;
   event_count = 0;
 
-  inferior_pid = pi.dwProcessId;
+  inferior_pid = win32_thread_to_pid(pi.dwProcessId, pi.dwThreadId);
+  current_context_pid = 0;
   current_process = pi.hProcess;
   current_thread = pi.hThread;
   current_process_id = pi.dwProcessId;
   current_thread_id = pi.dwThreadId;
   push_target (&child_ops);
   init_thread_list ();
+  init_win32_thread_list();
+  add_win32_thread(pi.hProcess, pi.hThread, pi.dwProcessId, pi.dwThreadId);
   init_wait_for_inferior ();
   clear_proceed_status ();
   target_terminal_init ();
   target_terminal_inferior ();
+  DEBUG_THREADS(("In create inferior child"));
 
   /* Ignore the first trap */
+  /* Should we mangle the pid (thread << 16 | process) */
   child_wait (inferior_pid, &dummy);
 
   proceed ((CORE_ADDR) - 1, TARGET_SIGNAL_0, 0);
@@ -763,6 +818,13 @@ child_mourn_inferior ()
   generic_mourn_inferior ();
 }
 
+
+static int 
+child_thread_alive(int pid)
+{
+  if(pid_to_win32_thread(pid)) return 1;
+  else return 0;
+}
 
 /* Send a SIGINT to the process group.  This acts just like the user typed a
    ^C on the controlling terminal. */
@@ -808,6 +870,16 @@ child_kill_inferior (void)
 void
 child_resume (int pid, int step, enum target_signal signal)
 {
+  struct win32_thread_info *tp;
+
+  tp = pid_to_win32_thread(pid);
+  if(tp)
+   { current_process = tp->process;
+     current_thread = tp->thread;
+     current_process_id = tp->process_id;
+     current_thread_id = tp->thread_id;
+   }
+
   DEBUG_EXEC (("gdb: child_resume (pid=%d, step=%d, signal=%d);\n", 
 	       pid, step, signal));
 
@@ -830,15 +902,21 @@ child_resume (int pid, int step, enum target_signal signal)
     }
 
   if (signal)
-    {
-      fprintf_unfiltered (gdb_stderr, "Can't send signals to the child.\n");
-    }
-
-  DEBUG_EVENTS (("gdb: ContinueDebugEvent (cpid=%d, ctid=%d, DBG_CONTINUE);\n",
-		 current_process_id, current_thread_id));
-  CHECK (ContinueDebugEvent (current_process_id,
-			     current_thread_id,
-			     DBG_CONTINUE));
+  {
+    DEBUG_EVENTS (("gdb: ContinueDebugEvent (cpid=%d, ctid=%d, DBG_EXCEPTION_NOT_HANDLED);\n",
+  		 current_process_id, current_thread_id));
+    CHECK (ContinueDebugEvent (current_process_id,
+  			     current_thread_id,
+			       DBG_CONTINUE));
+			       /*DBG_EXCEPTION_NOT_HANDLED)); */
+  }
+  else {
+    DEBUG_EVENTS (("gdb: ContinueDebugEvent (cpid=%d, ctid=%d, DBG_CONTINUE);\n",
+  		 current_process_id, current_thread_id));
+    CHECK (ContinueDebugEvent (current_process_id,
+  			     current_thread_id,
+ 			     DBG_CONTINUE));
+  }
 }
 
 static void
@@ -889,7 +967,7 @@ struct target_ops child_ops =
   child_mourn_inferior,		/* to_mourn_inferior */
   child_can_run,		/* to_can_run */
   0,				/* to_notice_signals */
-  0,				/* to_thread_alive */
+  child_thread_alive,		/* to_thread_alive */
   child_stop,			/* to_stop */
   process_stratum,		/* to_stratum */
   0,				/* to_next */
@@ -950,5 +1028,146 @@ _initialize_inftarg ()
 		  &setlist),
      &showlist);
 
+  add_show_from_set
+    (add_set_cmd ("debugthreads", class_support, var_boolean,
+		  (char *) &debug_threads,
+		  "Set whether to display internal thread list.",
+		  &setlist),
+     &showlist);
+
   add_target (&child_ops);
 }
+
+/* Implementation of support functions to add/remove threads and their handles
+   from the list. Indeed, most win32 functions only report the thread and
+   process id while the handles are required to operate on these (get or
+   set the thread context). There does not seem to be a function to get
+   the handle from the id. Thus, the handle to id mapping is stored when
+   all this information is obtained at creation time. */
+
+static struct win32_thread_info* win32_thread_list = NULL;
+
+static void 
+init_win32_thread_list()
+{
+  struct win32_thread_info *tp, *tpnext;
+
+  if (!win32_thread_list)
+    return;
+
+  for (tp = win32_thread_list; tp; tp = tpnext)
+    {
+      tpnext = tp->next;
+      free (tp);
+    }
+
+  win32_thread_list = NULL;
+}
+  
+static void 
+add_win32_thread(HANDLE process, HANDLE thread, int process_id, 
+    int thread_id)
+{
+  struct win32_thread_info *tp;
+
+  tp = (struct win32_thread_info *)xmalloc (sizeof (struct win32_thread_info));
+
+  tp->process = process;
+  tp->thread = thread;
+  tp-> process_id = process_id;
+  tp-> thread_id = thread_id;
+  tp->next = win32_thread_list;
+  win32_thread_list = tp;
+}
+
+static void 
+remove_win32_thread(int process_id, int thread_id)
+{
+  struct win32_thread_info **tp, *next;
+
+  for (tp = &win32_thread_list; *tp; tp = &((*tp)->next))
+   { if ((*tp)->process_id == process_id && (*tp)->thread_id == thread_id)
+      { next = (*tp)->next;
+        free(*tp);
+        *tp = next;
+        return;
+      }
+   }
+}
+
+static struct 
+win32_thread_info *get_win32_thread_info(int process_id, int thread_id)
+{
+  struct win32_thread_info *tp;
+
+  for (tp = win32_thread_list; tp; tp = tp->next)
+    if (tp->thread_id == thread_id && tp->process_id == process_id)
+      return tp;
+
+  return NULL;
+}
+
+static int win32_id_mask = 0x0000ffff;
+
+static int 
+win32_thread_to_pid(int process_id, int thread_id)
+{
+  return(((thread_id & win32_id_mask) << 16) | (process_id & win32_id_mask));
+}
+
+static struct win32_thread_info *pid_to_win32_thread(int pid)
+{
+  struct win32_thread_info *tp;
+
+  for (tp = win32_thread_list; tp; tp = tp->next)
+    if ((tp->thread_id & win32_id_mask) == ((pid >> 16) & win32_id_mask) && 
+        ((tp->process_id & win32_id_mask) == (pid & win32_id_mask)))
+      return tp;
+
+  return NULL;
+}
+
+static void win32_check_context()
+{
+  struct win32_thread_info *tp;
+
+  if(current_context_pid == inferior_pid) return;
+  win32_get_context(inferior_pid);
+}
+
+static void win32_get_context(int pid)
+{
+  struct win32_thread_info *tp;
+
+  DEBUG_THREADS(("In win32 get context"));
+  current_context_pid = pid;
+  tp = pid_to_win32_thread(pid);
+  GetThreadContext (tp->thread, &context);
+}
+
+static void win32_print_thread(char *title, int process_id, 
+    int thread_id, HANDLE process, HANDLE thread)
+{
+  int pid = win32_thread_to_pid(process_id, thread_id);
+  printf("win32gdb: %s\n", title);
+  printf("          pid %d, processId %d, threadId %d\n", pid, process_id,
+      thread_id);
+  printf("          process %p, thread %p\n\n", process, thread);
+}
+
+static void win32_print_threads(char *title)
+{
+  struct win32_thread_info *tp;
+
+  printf("win32gdb: debug_threads %s\n",title);
+  win32_print_thread("current variables", current_process_id, 
+      current_thread_id, current_process, current_thread);
+  printf("win32gdb: current_context_pid %d, inferior_pid %d\n\n",
+      current_context_pid, inferior_pid);
+
+  for (tp = win32_thread_list; tp; tp = tp->next)
+   { win32_print_thread("thread list item",tp->process_id, tp->thread_id,
+         tp->process, tp->thread);
+   }
+}
+

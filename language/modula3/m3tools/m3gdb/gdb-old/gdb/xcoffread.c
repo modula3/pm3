@@ -1502,7 +1502,7 @@ process_xcoff_symbol (cs, objfile)
 	 patch_block_stabs (), unless the file was compiled without -g.  */
 
       SYMBOL_NAME (sym) = SYMNAME_ALLOC (name, symname_alloced);
-      SYMBOL_TYPE (sym) = func_symbol_type;
+      SET_SYMBOL_TYPE (sym) = func_symbol_type;
 
       SYMBOL_CLASS (sym) = LOC_BLOCK;
       SYMBOL_DUP (sym, sym2);
@@ -1515,7 +1515,7 @@ process_xcoff_symbol (cs, objfile)
   else
     {
       /* In case we can't figure out the type, provide default. */
-      SYMBOL_TYPE (sym) = var_symbol_type;
+      SET_SYMBOL_TYPE (sym) = var_symbol_type;
 
       switch (cs->c_sclass)
 	{

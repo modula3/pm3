@@ -66,7 +66,7 @@ map_breakpoint_numbers PARAMS ((char *,	void (*)(struct breakpoint *)));
 static void
 ignore_command PARAMS ((char *, int));
 
-static int
+static long
 breakpoint_re_set_one PARAMS ((char *));
 
 static void
@@ -114,7 +114,7 @@ breakpoint_1 PARAMS ((int, int));
 static bpstat
 bpstat_alloc PARAMS ((struct breakpoint *, bpstat));
 
-static int
+static long
 breakpoint_cond_eval PARAMS ((char *));
 
 static void
@@ -1107,7 +1107,7 @@ bpstat_print (bs)
    The argument is a "struct expression *" that has been cast to char * to 
    make it pass through catch_errors.  */
 
-static int
+static long
 breakpoint_cond_eval (exp)
      char *exp;
 {
@@ -3389,7 +3389,7 @@ delete_command (arg, from_tty)
    The value we return ends up being the return value from catch_errors.
    Unused in this case.  */
 
-static int
+static long
 breakpoint_re_set_one (bint)
      char *bint;
 {

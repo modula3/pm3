@@ -72,7 +72,7 @@ struct print_symbol_args {
   GDB_FILE *outfile;
 };
 
-static int print_symbol PARAMS ((char *));
+static long print_symbol PARAMS ((char *));
 
 static void
 free_symtab_block PARAMS ((struct objfile *, struct block *));
@@ -541,7 +541,7 @@ Arguments missing: an output file name and an optional symbol file name");
    declared as char * to get it past catch_errors.  Returns 0 for error,
    1 for success.  */
 
-static int
+static long
 print_symbol (args)
      char *args;
 {

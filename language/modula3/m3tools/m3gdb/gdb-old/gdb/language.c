@@ -497,6 +497,8 @@ binop_result_type (v1, v2)
 	 not needed. */
       return l1 > l2 ? VALUE_TYPE(v1) : VALUE_TYPE(v2);
       break;
+   case language_m3:
+      error ("Missing M3 support in function binop_result_check.");/*FIXME*/
    case language_chill:
       error ("Missing Chill support in function binop_result_check.");/*FIXME*/
    }
@@ -676,6 +678,8 @@ integral_type (type)
       return TYPE_CODE(type) != TYPE_CODE_INT ? 0 : 1;
    case language_chill:
       error ("Missing Chill support in function integral_type.");  /*FIXME*/
+   case language_m3:
+      error ("Missing M3 support in function integral_type.");  /*FIXME*/
    default:
       error ("Language not supported.");
    }
@@ -707,6 +711,7 @@ character_type (type)
    {
    case language_chill:
    case language_m2:
+   case language_m3:
       return TYPE_CODE(type) != TYPE_CODE_CHAR ? 0 : 1;
 
    case language_c:
@@ -729,6 +734,7 @@ string_type (type)
    {
    case language_chill:
    case language_m2:
+   case language_m3:
       return TYPE_CODE(type) != TYPE_CODE_STRING ? 0 : 1;
 
    case language_c:
@@ -799,6 +805,8 @@ structured_type(type)
 	    (TYPE_CODE(type) == TYPE_CODE_ARRAY);
    case language_chill:
       error ("Missing Chill support in function structured_type.");  /*FIXME*/
+   case language_m3:
+      error ("Missing M3 support in function structured_type.");  /*FIXME*/
    default:
       return (0);
    }
@@ -1021,6 +1029,15 @@ binop_type_check(arg1,arg2,op)
 #ifdef _LANG_chill
        case language_chill:
 	 error ("Missing Chill support in function binop_type_check.");/*FIXME*/
+#endif
+
+#ifdef _LANG_m3
+       case language_m3:
+	 type = VALUE_TYPE (val);
+	 if (TYPE_CODE (type) != TYPE_CODE_M3_BOOLEAN)
+	   return 0;			/* Not a BOOLEAN at all */
+	 v = m3_unpack_int2 (val);
+	 return (v != 0); 
 #endif
 
       }

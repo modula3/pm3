@@ -134,7 +134,10 @@ compare_symbols (s1p, s2p)
   s1 = (struct symbol **) s1p;
   s2 = (struct symbol **) s2p;
 
-  return (STRCMP (SYMBOL_NAME (*s1), SYMBOL_NAME (*s2)));
+  if (SYMBOL_LANGUAGE (*s1) == language_m3) {
+    return (STRCMP (SYMBOL_SOURCE_NAME (*s1), SYMBOL_SOURCE_NAME (*s2))); }
+  else {
+    return (STRCMP (SYMBOL_NAME (*s1), SYMBOL_NAME (*s2))); }
 }
 
 /*
@@ -300,6 +303,9 @@ psymtab_to_symtab (pst)
       (*pst->read_symtab) (pst);
       do_cleanups (back_to);
     }
+
+  if (pst->symtab->language == language_m3) {
+    m3_fix_symtab (pst->symtab); }
 
   return pst->symtab;
 }
@@ -1380,6 +1386,8 @@ deduce_language_from_filename (filename)
     return language_fortran;
   else if (STREQ (c, ".mod"))
     return language_m2;
+  else if(STREQ(c,".m3") || STREQ(c,".i3") || STREQ(c,".mc") || STREQ(c,".ic"))
+    return language_m3;
   else if (STREQ (c, ".s") || STREQ (c, ".S"))
     return language_asm;
 
@@ -1760,6 +1768,9 @@ add_psymbol_to_list (name, namelength, namespace, class, list, val, coreaddr,
     }
   *list->next++ = psym;
   OBJSTAT (objfile, n_psyms++);
+  /* LDD: might cause bugs in 4.16 */
+  /* M3: need this to find the structs that encode type information */
+  SYMBOL_INIT_DEMANGLED_NAME (psym, &objfile->psymbol_obstack);
 }
 
 /* Initialize storage for partial symbols.  */

@@ -29,6 +29,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "demangle.h"
 #include "language.h"	/* For CAST_IS_CONVERSION */
 #include "f-lang.h"	/* for array bound stuff */
+#include "m3-lang.h"
+
+#define TYPE_MAGIC 1234567890
+
 
 /* Prototypes for local functions. */
 
@@ -367,6 +371,49 @@ init_array_element (array, element, exp, pos, noside, low_bound, high_bound)
   return index;
 }
 
+static LONGEST
+m3_div (a, b)
+  LONGEST a, b;
+{
+  if (a == 0) { return 0; }
+  if (a < 0) {
+    return (b < 0)
+             ? ((-a) / (-b))
+	     : (- ((-a-1) / b) - 1);
+  } else {
+    return (b < 0)
+             ? (- ((a - 1) / (-b)) - 1)
+             : (a / b);
+  }
+} /* m3_div */
+
+static LONGEST
+m3_modi (a, b)
+  LONGEST a, b;
+{
+  if (a == 0) { return 0; }
+  if (a < 0) {
+    return (b < 0)
+             ? (- ((-a) % (-b)))
+             : (b - 1 - ((-a-1) % b));
+  } else {
+    return (b < 0)
+             ? (b + 1 + ((a - 1) % (-b)))
+             : (a % b);
+  }
+} /* m3_modi */
+
+static double
+m3_modf (a, b)
+  double a, b;
+{
+  double  z = a / b;
+  LONGEST zi = (LONGEST) z;
+  if ((z < 0.0) && ((double)zi != z)) { zi--; }
+  return a - b * (double)zi;
+} /* m3_modf */
+
+
 value_ptr
 evaluate_subexp_standard (expect_type, exp, pos, noside)
      struct type *expect_type;
@@ -383,6 +430,8 @@ evaluate_subexp_standard (expect_type, exp, pos, noside)
   value_ptr *argvec;
   int upper, lower, retcode; 
   int code;
+  int float_ok, int_ok;
+  
 
   /* This expect_type crap should not be used for C.  C expressions do
      not have any notion of expected types, never has and (goddess
@@ -428,6 +477,7 @@ evaluate_subexp_standard (expect_type, exp, pos, noside)
       (*pos) += 3;
       if (noside == EVAL_SKIP)
 	goto nosideret;
+#if bad_for_m3
       if (noside == EVAL_AVOID_SIDE_EFFECTS)
 	{
 	  struct symbol * sym = exp->elts[pc + 2].symbol;
@@ -454,6 +504,7 @@ evaluate_subexp_standard (expect_type, exp, pos, noside)
 	  return value_zero (SYMBOL_TYPE (sym), lv);
 	}
       else
+#endif
 	return value_of_variable (exp->elts[pc + 2].symbol,
 				  exp->elts[pc + 1].block);
 
@@ -464,7 +515,14 @@ evaluate_subexp_standard (expect_type, exp, pos, noside)
 
     case OP_REGISTER:
       (*pos) += 2;
-      return value_of_register (longest_to_int (exp->elts[pc + 1].longconst));
+      arg1 = value_of_register (longest_to_int (exp->elts[pc + 1].longconst));
+      /* hack to convert registers to Modula-3 types... */
+      if (VALUE_TYPE(arg1) == builtin_type_long) {
+	VALUE_TYPE(arg1) = builtin_type_m3_integer;
+      } else if (VALUE_TYPE(arg1) = builtin_type_double) {
+	VALUE_TYPE(arg1) = builtin_type_m3_longreal;
+      }
+      return arg1;
 
     case OP_BOOL:
       (*pos) += 2;
@@ -475,6 +533,7 @@ evaluate_subexp_standard (expect_type, exp, pos, noside)
       (*pos) += 2;
       return value_of_internalvar (exp->elts[pc + 1].internalvar);
 
+    case OP_M3_TEXT:
     case OP_STRING:
       tem = longest_to_int (exp->elts[pc + 1].longconst);
       (*pos) += 3 + BYTES_TO_EXP_ELEM (tem + 1);
@@ -1590,6 +1649,716 @@ evaluate_subexp_standard (expect_type, exp, pos, noside)
     case OP_THIS:
       (*pos) += 1;
       return value_of_this (1);
+
+    case OP_M3_LONG:
+    case OP_M3_CHAR:
+      (*pos) += 3;
+      return value_from_longest (exp->elts[pc+1].type,
+                                 exp->elts[pc + 2].longconst);
+
+    case OP_M3_REEL:
+    case OP_M3_LREEL:
+    case OP_M3_XREEL: {
+      (*pos) += 3;
+      return value_from_double (exp->elts[pc + 1].type,
+				exp->elts[pc + 2].doubleconst); }
+
+    case STRUCTOP_M3_INTERFACE:
+    case STRUCTOP_M3_MODULE:
+    case STRUCTOP_M3_STRUCT: {
+      struct type *t;
+      value_ptr v;
+      int offset;
+      CORE_ADDR tc_addr;
+      char *field_name;
+
+      field_name = &exp->elts[pc + 2].string;
+      tem = longest_to_int (exp->elts[pc + 1].longconst);
+      (*pos) += 3 + BYTES_TO_EXP_ELEM (tem + 1);
+      arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+
+    deref:
+      t = VALUE_TYPE (arg1);
+      if (TYPE_CODE (t) == TYPE_CODE_M3_REFANY
+          || TYPE_CODE (t) == TYPE_CODE_M3_OBJECT
+          || TYPE_CODE (t) == TYPE_CODE_M3_ROOT) {
+        if (value_as_pointer (arg1) == 0) {
+          error ("Cannot dereference NIL"); }
+	t = find_m3_heap_type (value_as_pointer (arg1)); }
+
+      if (TYPE_CODE (t) == TYPE_CODE_M3_POINTER
+	  || TYPE_CODE (t) == TYPE_CODE_M3_INDIRECT) {
+	arg1 = value_at_lazy (TYPE_M3_TARGET (t), value_as_pointer (arg1)); 
+        goto deref; }
+
+      else if (TYPE_CODE (t) == TYPE_CODE_M3_OBJECT) {
+	tc_addr = find_m3_heap_tc_addr (value_as_pointer (arg1));
+	while (TYPE_CODE (t) == TYPE_CODE_M3_OBJECT) {
+	  if (find_m3_obj_field (t, field_name, 0, &offset, &t)) {
+	    arg1 = value_at_lazy (t, value_as_pointer (arg1));
+	    offset += 8 * tc_address_to_dataOffset (tc_addr); 
+	    goto found; }
+
+	  if (find_m3_obj_method (t, field_name, 0, &offset, &t)) {
+	    arg1 = value_at_lazy (t, tc_address_to_defaultMethods (tc_addr));
+	    offset += 8 * tc_address_to_methodOffset (tc_addr);
+	    goto found; }
+
+	  tc_addr = tc_address_to_parent_tc_address (tc_addr); 
+	  t = find_m3_type_from_tc (tc_addr); }
+	t = 0;
+        found:; }
+	
+      else if (TYPE_CODE (t) == TYPE_CODE_M3_RECORD) {
+	if (! find_m3_rec_field (t, field_name, 0, &offset, &t)) {
+	  t = 0; }}
+      else {
+	error ("cannot apply \".%s\" to a value that is not a record, a REF record nor an object", field_name);
+	return 0; }
+
+      if (!t) {
+	error ("no such field: %s", field_name);
+	return 0; }
+
+      v = allocate_value (t);
+      VALUE_LVAL (v) = 1;
+      VALUE_ADDRESS (v) = VALUE_ADDRESS (arg1);
+
+      if (offset % 8 != 0) {
+	  /* We have a non-byte aligned value, we need to pull it
+	     now, so that we can shift the bits.  Fortunately, we
+	     know that the type is a scalar.  We need to pull the
+	     word that contains this field, because the offset is 
+	     expressed from the lsb of this word */
+	LONGEST i;
+	VALUE_LAZY (v) = 0; 
+	target_read_memory (VALUE_ADDRESS (v) + VALUE_OFFSET (arg1)
+			      + offset / TARGET_LONG_BIT, 
+			    (char*) &i, TYPE_LENGTH (t));
+	*(LONGEST *) VALUE_CONTENTS_RAW (v) = m3_unpack_ord ((char *) &i,
+					           offset % TARGET_LONG_BIT, 
+						   TYPE_M3_SIZE (t), 0); }
+      else {
+	VALUE_LAZY (v) = 1; }
+      VALUE_OFFSET (v) = VALUE_OFFSET (arg1) + offset / 8;
+      return (v); }
+
+    case M3_FINAL_TYPE: {
+      struct type *arg1_type;
+
+      arg1 = evaluate_subexp (0, exp, pos, noside);
+      arg1_type = VALUE_TYPE (arg1);
+
+      while (TYPE_CODE (arg1_type) == TYPE_CODE_M3_INDIRECT) {
+	arg1_type = TYPE_M3_TARGET (arg1_type);
+	arg1 = value_at_lazy (arg1_type, m3_unpack_pointer2 (arg1)); }
+
+      if ((TYPE_CODE (arg1_type) == TYPE_CODE_M3_REFANY
+           || TYPE_CODE (arg1_type) == TYPE_CODE_M3_ROOT
+           || TYPE_CODE (arg1_type) == TYPE_CODE_M3_OBJECT)
+          && value_as_pointer (arg1) != 0) {
+	arg1_type = find_m3_heap_type (value_as_pointer (arg1)); }
+
+
+      VALUE_TYPE (arg1) = arg1_type;
+      return (arg1); }
+
+    case OP_M3_TYPE:
+      (*pos) += 2;
+      arg1 = allocate_value (exp->elts[pc+1].type);
+      *(LONGEST *) VALUE_CONTENTS_RAW (arg1) = TYPE_MAGIC;
+      return arg1;
+
+    case UNOP_M3_DEREF: {
+      struct type *res_type, *arg1_type;
+
+      arg1 = evaluate_subexp (0, exp, pos, noside);
+      arg1_type = VALUE_TYPE (arg1);
+
+      while (TYPE_CODE (arg1_type) == TYPE_CODE_M3_INDIRECT) {
+	arg1_type = TYPE_M3_TARGET (arg1_type);
+	arg1 = value_at_lazy (arg1_type, m3_unpack_pointer2 (arg1)); }
+
+      if (value_as_pointer (arg1) == 0) {
+        error ("^ applied to NIL"); }
+
+      if (TYPE_CODE (arg1_type) == TYPE_CODE_M3_REFANY) {
+	arg1_type = find_m3_heap_type (value_as_pointer (arg1)); }
+
+      if (TYPE_CODE (arg1_type) == TYPE_CODE_M3_POINTER) {
+        res_type = TYPE_M3_TARGET (arg1_type); }
+
+      else {
+        error ("^ applied to a non-REF"); }
+
+      return value_at_lazy (res_type, m3_unpack_pointer2 (arg1)); }
+
+    case UNOP_M3_NEG: {
+      arg1 = evaluate_subexp (0, exp, pos, noside);
+      
+      type = VALUE_TYPE (arg1);
+      if (TYPE_CODE (type) == TYPE_CODE_FLT)
+	return value_from_double (type, - m3_unpack_float2 (arg1));
+      else if (TYPE_CODE (type) == TYPE_CODE_M3_INTEGER)
+	return value_from_longest (type, - m3_unpack_int2 (arg1));
+      else {
+	error ("'-' must be applied to an integer or floating-point value");
+	return arg1;
+      }}
+      
+
+    case UNOP_M3_FIRST:
+    case UNOP_M3_LAST: 
+    case UNOP_M3_NUMBER: {
+      value_ptr res, array;
+      struct type *array_type, *index_type;
+      LONGEST lowerbound, upperbound, val;
+
+      array = evaluate_subexp (0, exp, pos, noside);
+      array_type = VALUE_TYPE (array);
+
+      while (TYPE_CODE (array_type) == TYPE_CODE_M3_POINTER
+	     || TYPE_CODE (array_type) == TYPE_CODE_M3_INDIRECT) {
+	array_type = TYPE_M3_TARGET (array_type);
+	array = value_at_lazy (array_type, m3_unpack_pointer2 (array));
+        if (array == 0) {
+          error ("FIRST, LAST or NUMBER applied to NIL");  }}
+
+      if (TYPE_CODE (array_type) == TYPE_CODE_M3_ARRAY) {
+	index_type = TYPE_M3_ARRAY_INDEX (array_type);
+	m3_ordinal_bounds (index_type, &lowerbound, &upperbound);
+      } else if (TYPE_CODE (array_type) == TYPE_CODE_M3_OPEN_ARRAY) {
+	lowerbound = 0;
+	upperbound = *(long*) (VALUE_CONTENTS (array) + sizeof(long)) - 1;
+      } else if (is_m3_ordinal_type (array_type)) {
+	index_type = array_type;
+	m3_ordinal_bounds (index_type, &lowerbound, &upperbound);
+      } else {
+	error ("FIRST, LAST, NUMBER can only be applied to arrays.");
+      }
+
+      res = allocate_value (builtin_type_m3_integer);
+      VALUE_LAZY (res) = 0;
+      switch (op) {
+	case UNOP_M3_FIRST:   val = lowerbound;  break;
+	case UNOP_M3_LAST:    val = upperbound;  break;
+	case UNOP_M3_NUMBER:  val = upperbound - lowerbound + 1; 
+                              index_type = builtin_type_m3_cardinal;  break;
+      }
+      res = allocate_value (index_type);
+      *(LONGEST *)VALUE_CONTENTS_RAW (res) = val;
+      VALUE_LAZY (res) = 0;
+      return res;
+    }
+
+    case UNOP_M3_ABS: {
+      struct type *arg1_type;
+      arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      arg1_type = VALUE_TYPE (arg1);
+      if (TYPE_CODE (arg1_type) == TYPE_CODE_M3_INTEGER) {
+	LONGEST val = m3_unpack_int2 (arg1);
+	if (val < 0) { val = -val; };
+	return value_from_longest (arg1_type, val);
+      } else if (TYPE_CODE (arg1_type) == TYPE_CODE_FLT) {
+	double val = m3_unpack_float2 (arg1);
+	if (val < 0.0) { val = -val; };
+	return value_from_double (arg1_type, val);
+      } else {
+	error ("ABS requires an INTEGER, REAL, LONGREAL, or EXTENDED parameter");
+	return arg1;
+      }}
+
+    case UNOP_M3_ADR: {
+      value_ptr v = evaluate_subexp_for_address (exp, pos, noside); 
+      TYPE_CODE (VALUE_TYPE (v)) = TYPE_CODE_M3_ADDRESS;
+      TYPE_M3_SIZE (VALUE_TYPE (v)) = TARGET_PTR_BIT;
+      return v; }
+
+    case UNOP_M3_ADRSIZE: {
+      LONGEST sz;
+      struct type *arg1_type;
+      arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      arg1_type = VALUE_TYPE (arg1);
+      sz = TYPE_M3_SIZE (arg1_type) / HOST_CHAR_BIT;
+      if (TYPE_CODE (arg1_type) == TYPE_CODE_M3_OPEN_ARRAY) {
+	error ("ADRSIZE(open array) not implemented");
+	sz = 1;
+      }
+      return m3_value_from_longest (builtin_type_m3_integer, sz); }
+
+    case UNOP_M3_BITSIZE: {
+      LONGEST sz;
+      struct type *arg1_type;
+      arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      arg1_type = VALUE_TYPE (arg1);
+      sz = TYPE_M3_SIZE (arg1_type);
+      if (TYPE_CODE (arg1_type) == TYPE_CODE_M3_OPEN_ARRAY) {
+	error ("BITSIZE(open array) not implemented");
+	sz = 8;
+      }
+      return m3_value_from_longest (builtin_type_m3_integer, sz); }
+
+    case UNOP_M3_BYTESIZE: {
+      LONGEST sz;
+      struct type *arg1_type;
+      arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      arg1_type = VALUE_TYPE (arg1);
+      sz = TYPE_M3_SIZE (arg1_type) / 8;
+      if (TYPE_CODE (arg1_type) == TYPE_CODE_M3_OPEN_ARRAY) {
+	error ("BYTESIZE(open array) not implemented");
+	sz = 1;
+      }
+      return m3_value_from_longest (builtin_type_m3_integer, sz);
+    }
+
+    case UNOP_M3_CEILING: {
+      struct type *arg1_type;
+      arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      arg1_type = VALUE_TYPE (arg1);
+
+      if (TYPE_CODE (arg1_type) == TYPE_CODE_FLT) {
+        double val;
+        LONGEST intval;
+        val  = m3_unpack_float2 (arg1);
+        intval = (LONGEST) (val);
+        if ((val > 0.0e0) && ((double)intval != val)) { intval++; }
+        return m3_value_from_longest (builtin_type_m3_integer, intval);
+      } else {
+	error ("CEILING must be applied to a floating-point value");
+	return arg1;
+      }
+    }
+
+    case UNOP_M3_FLOOR: {
+      struct type *arg1_type;
+      arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      arg1_type = VALUE_TYPE (arg1);
+
+      if (TYPE_CODE (arg1_type) == TYPE_CODE_FLT) {
+        double val;
+        LONGEST intval;
+        val  = m3_unpack_float2 (arg1);
+        intval = (LONGEST) (val);
+        if ((val < 0.0e0) && ((double)intval != val)) { intval--; }
+        return m3_value_from_longest (builtin_type_m3_integer, intval);
+      } else {
+	error ("FLOOR must be applied to a floating-point value");
+	return arg1;
+      }
+    }
+
+    case UNOP_M3_ROUND: {
+      struct type *arg1_type;
+      arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      arg1_type = VALUE_TYPE (arg1);
+
+      if (TYPE_CODE (arg1_type) == TYPE_CODE_FLT) {
+        double val;
+        LONGEST intval;
+        val  = m3_unpack_float2 (arg1);
+        intval = (LONGEST) (val + 0.5);
+        return m3_value_from_longest (builtin_type_m3_integer, intval);
+      } else {
+	error ("ROUND must be applied to a floating-point value");
+	return arg1;
+      }
+    }
+
+    case UNOP_M3_TRUNC: {
+      struct type *arg1_type;
+      arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      arg1_type = VALUE_TYPE (arg1);
+
+      if (TYPE_CODE (arg1_type) == TYPE_CODE_FLT) {
+        double val;
+        LONGEST intval;
+        val  = m3_unpack_float2 (arg1);
+        intval = (LONGEST) (val);
+        return m3_value_from_longest (builtin_type_m3_integer, intval);
+      } else {
+	error ("TRUNC must be applied to a floating-point value");
+	return arg1;
+      }
+    }
+
+    case UNOP_M3_ORD: {
+      arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      if (is_m3_ordinal_type (VALUE_TYPE (arg1))) {
+        LONGEST val;
+        val  = m3_unpack_int2 (arg1);
+        return m3_value_from_longest (builtin_type_m3_integer, val);
+      } else {
+	error ("value passed to ORD is not of an ordinal type");
+        return arg1;
+      }
+    }
+
+    case BINOP_M3_VAL: {
+      struct type *arg1_type;
+      arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      arg2 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      arg1_type = VALUE_TYPE (arg1);
+
+      if (TYPE_CODE (arg1_type) != TYPE_CODE_M3_INTEGER) {
+	error ("first argument of VAL must be an integer");
+	return arg1;
+      } else if ((*(LONGEST *) VALUE_CONTENTS_RAW (arg2) != TYPE_MAGIC) ||
+		 (! is_m3_ordinal_type (VALUE_TYPE(arg2)))) {
+	error ("second argument of VAL must be an ordinal type");
+	return arg1;
+      } else {
+        LONGEST val, lower, upper;
+        val  = m3_unpack_int2 (arg1);
+	m3_ordinal_bounds (VALUE_TYPE(arg2), &lower, &upper);
+	if ((val < lower) || (upper < val)) {
+	  error ("value passed to VAL is out of range");
+	  return arg1;
+        } else {
+          return m3_value_from_longest (VALUE_TYPE(arg2), val);
+        }
+      }
+    }
+
+    case BINOP_M3_FLOAT: {
+      struct type *arg1_type;
+      double val;
+
+      arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      arg2 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      arg1_type = VALUE_TYPE (arg1);
+
+      if (TYPE_CODE (arg1_type) == TYPE_CODE_FLT) {
+        val = m3_unpack_float2 (arg1);
+      } else if (TYPE_CODE (arg1_type) == TYPE_CODE_M3_INTEGER) {
+        val = (double) m3_unpack_int2 (arg1);
+      } else {
+	error ("first parameter of FLOAT must be an INTEGER, REAL, LONGREAL, or EXTENDED value");
+	return arg1;
+      }
+
+      if ((*(LONGEST *) VALUE_CONTENTS_RAW (arg2) != TYPE_MAGIC)
+	 || (TYPE_CODE (VALUE_TYPE(arg2)) != TYPE_CODE_FLT)) {
+	error ("second parameter of FLOAT must be REAL, LONGREAL, or EXTENDED");
+	return arg1;
+      }
+
+      return value_from_double (VALUE_TYPE(arg2), val);
+    }
+
+    case BINOP_M3_LOOPHOLE: {
+      struct type *arg1_type, *arg2_type;
+      arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      arg2 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      arg1_type = VALUE_TYPE (arg1);
+      arg2_type = VALUE_TYPE (arg2);
+
+      if (TYPE_CODE(arg1_type) == TYPE_CODE_M3_OPEN_ARRAY) {
+	error ("LOOPHOLE of open array values is illegal");
+        return arg1;
+      } else if (*(LONGEST *) VALUE_CONTENTS_RAW (arg2) != TYPE_MAGIC) {
+	error ("second parameter of LOOPHOLE must be a type");
+	return arg1;
+      } else if (TYPE_CODE (arg2_type) == TYPE_CODE_M3_OPEN_ARRAY) {
+	error ("LOOPHOLE to an open array type is not (yet) supported");
+        return arg1;
+      } else if (TYPE_M3_SIZE (arg1_type) != TYPE_M3_SIZE (arg2_type)) {
+	error ("size of value and type passed to LOOPHOLE don't agree");
+	return arg1;
+      }
+
+      VALUE_TYPE (arg1) = arg2_type;
+      return arg1;
+    }
+
+    case BINOP_M3_SUBSCRIPT: {
+      long lowerbound, upperbound, index_val; 
+      long offset;
+      struct type *index_type, *elem_type, *array_type;
+      value_ptr v, array, index;
+      long elt_size;
+
+      array = evaluate_subexp (0, exp, pos, noside);
+      index = evaluate_subexp (0, exp, pos, noside);
+      array_type = VALUE_TYPE (array);
+
+      while (TYPE_CODE (array_type) == TYPE_CODE_M3_POINTER
+	     || TYPE_CODE (array_type) == TYPE_CODE_M3_INDIRECT) {
+	array_type = TYPE_M3_TARGET (array_type);
+	array = value_at_lazy (array_type, m3_unpack_pointer2 (array)); }
+
+      if (TYPE_CODE (array_type) == TYPE_CODE_M3_ARRAY) {
+	index_type = TYPE_M3_ARRAY_INDEX (array_type);
+	elem_type  = TYPE_M3_ARRAY_ELEM (array_type);
+	elt_size   = TYPE_M3_SIZE (elem_type);
+	m3_ordinal_bounds (index_type, &lowerbound, &upperbound); }
+      else if (TYPE_CODE (array_type) == TYPE_CODE_M3_OPEN_ARRAY) {
+	elem_type = TYPE_M3_OPEN_ARRAY_ELEM (array_type);
+	lowerbound = 0;
+	upperbound = *(long*) (VALUE_CONTENTS (array) + TARGET_PTR_BIT/HOST_CHAR_BIT) - 1;
+        { struct type *e = elem_type;
+	  long n = (TARGET_PTR_BIT + TARGET_LONG_BIT) / HOST_CHAR_BIT;
+	  elt_size = 1;
+	  while (TYPE_CODE (e) == TYPE_CODE_M3_OPEN_ARRAY) {
+	    elt_size *= *(long*) (VALUE_CONTENTS (array) + n);
+	    n += sizeof (long);
+	    e = TYPE_M3_OPEN_ARRAY_ELEM (e); }
+	  elt_size *= TYPE_M3_SIZE (e); }}
+      else {
+	error ("indexed expression is not an array"); }
+
+      COERCE_REF (array);
+
+      index_val = m3_unpack_int2 (index);
+      if (lowerbound > index_val || index_val > upperbound) {
+	error ("range fault on array access");
+	return 0; }
+
+      offset = elt_size * (index_val - lowerbound);
+      if (offset % 8 != 0) {
+	error ("Extracting a bitfield"); 
+	return 0; }
+      
+      v = allocate_value (elem_type);
+
+      if (TYPE_CODE (array_type) == TYPE_CODE_M3_OPEN_ARRAY) {
+
+	if (TYPE_CODE (elem_type) == TYPE_CODE_M3_OPEN_ARRAY) {
+	  /* recreate a dope vector for the next guy */
+	  memcpy (VALUE_CONTENTS_RAW (v) + (TARGET_PTR_BIT / HOST_CHAR_BIT),
+		  VALUE_CONTENTS_RAW (array)
+		    + (TARGET_PTR_BIT + TARGET_LONG_BIT)/ HOST_CHAR_BIT, 
+		  TYPE_LENGTH (elem_type) - TARGET_LONG_BIT / HOST_CHAR_BIT);
+	  *(char **)VALUE_CONTENTS_RAW (v) = 
+	    *(char **)VALUE_CONTENTS_RAW (array) + offset / 8; }
+
+	else {
+	  /* mark the thing as not read yet */
+	  VALUE_LAZY (v) = 1;
+	  VALUE_LVAL (v) = VALUE_LVAL (array);
+	  VALUE_ADDRESS (v) = 
+	    (*(long*)(VALUE_CONTENTS_RAW (array))) + offset / 8;
+	  VALUE_OFFSET (v) = 0; }}
+
+      else {
+
+	if (VALUE_LAZY (array)) {
+	  VALUE_LAZY (v) = 1; }
+	else {
+	  memcpy (VALUE_CONTENTS_RAW (v), 
+		  VALUE_CONTENTS_RAW (array) + offset / 8,
+		  TYPE_LENGTH (elem_type)); }
+	VALUE_LVAL (v) = VALUE_LVAL (array);
+	if (VALUE_LVAL (array) == lval_internalvar) {
+	  VALUE_LVAL (v) = lval_internalvar_component; }
+	VALUE_ADDRESS (v) = VALUE_ADDRESS (array);
+	VALUE_OFFSET (v) = VALUE_OFFSET (array) + offset / 8;  }
+      return v; 
+      break; }
+      
+
+    case BINOP_M3_DIVIDE: {
+      float_ok = 1;
+      int_ok = 0;
+      goto arith_binop; }
+
+    case BINOP_M3_DIV: {
+      float_ok = 0;
+      int_ok = 1;
+      goto arith_binop; }
+
+    case BINOP_M3_MOD:
+    case BINOP_M3_MULT: 
+    case BINOP_M3_ADD:
+    case BINOP_M3_MINUS: {
+      float_ok = 1;
+      int_ok = 1;
+      goto arith_binop; }
+
+    arith_binop: {
+      value_ptr res;
+      LONGEST ival1, ival2;
+      double fval1, fval2;
+      struct type *arg1_type, *arg2_type;
+
+      arg1 = evaluate_subexp (0, exp, pos, noside);
+      arg2 = evaluate_subexp (0, exp, pos, noside);
+
+      arg1_type = VALUE_TYPE (arg1);
+    restart:
+      switch (TYPE_CODE (arg1_type)) 
+	{
+	case TYPE_CODE_M3_INDIRECT:
+	  arg1_type = TYPE_M3_TARGET (arg1_type);
+	  arg1 = value_at_lazy (arg1_type, m3_unpack_pointer2 (arg1));
+	  goto restart; 
+	case TYPE_CODE_M3_PACKED:
+	  arg1_type = TYPE_M3_TARGET (arg1_type);
+	  goto restart;
+	case TYPE_CODE_M3_CARDINAL:
+	case TYPE_CODE_M3_SUBRANGE:
+	  arg1_type = builtin_type_m3_integer;
+	  /* fall through */
+	case TYPE_CODE_M3_INTEGER:
+	  ival1 = m3_unpack_int2 (arg1);
+	  break;
+	case TYPE_CODE_FLT:
+	  fval1 = m3_unpack_float2 (arg1);
+	  arg1_type = builtin_type_double;
+	  break;
+	case TYPE_CODE_INT:
+	  ival1 = value_as_long (arg1);
+	  arg1_type = builtin_type_m3_integer;
+	  break;
+        case TYPE_CODE_M3_ADDRESS:
+        case TYPE_CODE_M3_POINTER:
+        case TYPE_CODE_M3_NULL:
+        case TYPE_CODE_M3_UN_ROOT:
+          ival1 = (LONGEST) m3_unpack_pointer2 (arg1);
+	  arg1_type = builtin_type_m3_integer;
+	  break;
+	default:
+	  arg1_type = builtin_type_m3_void;
+	  break; }
+
+      arg2_type = VALUE_TYPE (arg2);
+    restart2:
+      switch (TYPE_CODE (arg2_type)) 
+	{
+	case TYPE_CODE_M3_INDIRECT:
+	  arg2_type = TYPE_M3_TARGET (arg2_type);
+	  arg2 = value_at_lazy (arg2_type, m3_unpack_pointer2 (arg2));
+	  goto restart2; 
+	case TYPE_CODE_M3_PACKED:
+	  arg2_type = TYPE_M3_TARGET (arg2_type);
+	  goto restart2;
+	case TYPE_CODE_M3_CARDINAL:
+	case TYPE_CODE_M3_SUBRANGE:
+	  arg2_type = builtin_type_m3_integer;
+	  /* fall through */
+	case TYPE_CODE_M3_INTEGER:
+	  ival2 = m3_unpack_int2 (arg2);
+	  break;
+	case TYPE_CODE_FLT:
+	  fval2 = m3_unpack_float2 (arg2);
+	  arg2_type = builtin_type_double;
+	  break;
+	case TYPE_CODE_INT:
+	  ival2 = value_as_long (arg2);
+	  arg2_type = builtin_type_m3_integer;
+	  break;
+        case TYPE_CODE_M3_ADDRESS:
+        case TYPE_CODE_M3_POINTER:
+        case TYPE_CODE_M3_NULL:
+        case TYPE_CODE_M3_UN_ROOT:
+          ival2 = (LONGEST) m3_unpack_pointer2 (arg2);
+	  arg2_type = builtin_type_m3_integer;
+	  break;
+	default:
+	  arg2_type = builtin_type_m3_void;
+	  break; }
+
+
+      if (TYPE_CODE (arg1_type) != TYPE_CODE (arg2_type)
+	  || TYPE_CODE (arg1_type) == TYPE_CODE_M3_VOID
+	  || (TYPE_CODE (arg1_type) == TYPE_CODE_M3_INTEGER && !int_ok)
+	  || (TYPE_CODE (arg1_type) == TYPE_CODE_FLT && !float_ok)) {
+	error ("wrong arguments for binary operation");
+      }
+
+      if (TYPE_CODE (arg1_type) == TYPE_CODE_M3_INTEGER) {
+	LONGEST res;
+	switch (op) {
+	  case BINOP_M3_MULT: 	res = ival1 * ival2;          break;
+	  case BINOP_M3_ADD:	res = ival1 + ival2;          break;
+	  case BINOP_M3_MINUS:  res = ival1 - ival2;          break;
+	  case BINOP_M3_DIV:    res = m3_div (ival1, ival2);  break;
+	  case BINOP_M3_MOD:    res = m3_modi (ival1, ival2); break;
+	} /* switch */
+	return value_from_longest (builtin_type_m3_integer, res);
+      }
+
+      if (TYPE_CODE (arg1_type) == TYPE_CODE_FLT) {
+	double res;
+	switch (op) {
+	  case BINOP_M3_DIVIDE: res = fval1 / fval2;          break;
+	  case BINOP_M3_MULT:   res = fval1 * fval2;          break;
+	  case BINOP_M3_ADD:    res = fval1 + fval2;          break;
+	  case BINOP_M3_MINUS:  res = fval1 - fval2;          break;
+	  case BINOP_M3_MOD:    res = m3_modf (fval1, fval2); break;
+	}
+	return value_from_double (arg1_type, res);
+      }
+    }
+
+    case UNOP_M3_NOT: {
+      LONGEST val;
+      arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      val  = ! m3_unpack_int2 (arg1);
+      return m3_value_from_longest (builtin_type_m3_boolean, val);  }
+	
+    case BINOP_M3_AND: {
+      arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      if (m3_unpack_int2 (arg1) == 0) {	return arg1; }
+      return evaluate_subexp (NULL_TYPE, exp, pos, noside); }
+
+    case BINOP_M3_OR: {
+      arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      if (m3_unpack_int2 (arg1) == 1) {	return arg1; }
+      return evaluate_subexp (NULL_TYPE, exp, pos, noside); }
+
+    case BINOP_M3_EQUAL: {
+      arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      arg2 = evaluate_subexp (VALUE_TYPE (arg1), exp, pos, noside);
+      tem = m3_value_equal (arg1, arg2);
+      return m3_value_from_longest (builtin_type_m3_boolean, (LONGEST) tem); }
+
+    case BINOP_M3_NE: {
+      arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      arg2 = evaluate_subexp (VALUE_TYPE (arg1), exp, pos, noside);
+      tem = ! m3_value_equal (arg1, arg2);
+      return value_from_longest (builtin_type_m3_boolean, (LONGEST) tem); }
+
+    case BINOP_M3_LT: {
+      arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      arg2 = evaluate_subexp (VALUE_TYPE (arg1), exp, pos, noside);
+      tem = value_less (arg1, arg2);
+      return value_from_longest (builtin_type_m3_boolean, (LONGEST) tem); }
+
+    case BINOP_M3_LE: {
+      arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      arg2 = evaluate_subexp (VALUE_TYPE (arg1), exp, pos, noside);
+      tem = ! (value_less (arg2, arg1));
+      return value_from_longest (builtin_type_m3_boolean, (LONGEST) tem); }
+
+    case BINOP_M3_GT: {
+      arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      arg2 = evaluate_subexp (VALUE_TYPE (arg1), exp, pos, noside);
+      tem = value_less (arg2, arg1);
+      return value_from_longest (builtin_type_m3_boolean, (LONGEST) tem); }
+
+    case BINOP_M3_GE: {
+      arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      arg2 = evaluate_subexp (VALUE_TYPE (arg1), exp, pos, noside);
+      tem = ! (value_less (arg1, arg2));
+      return value_from_longest (builtin_type_m3_boolean, (LONGEST) tem); }
+
+    case BINOP_M3_MIN: {
+      arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      arg2 = evaluate_subexp (VALUE_TYPE (arg1), exp, pos, noside);
+      return value_less (arg1, arg2) ? arg1 : arg2; }
+
+    case BINOP_M3_MAX: {
+      arg1 = evaluate_subexp (NULL_TYPE, exp, pos, noside);
+      arg2 = evaluate_subexp (VALUE_TYPE (arg1), exp, pos, noside);
+      return value_less (arg1, arg2) ? arg2 : arg1; }
+
+    case BINOP_M3_CAT:
+      error ("Not yet implemented: '&' text concatenation");
+      return 0; 
+
+    case BINOP_M3_IN:
+      error ("Not yet implemented: 'IN' set membership test");
+      return 0; 
 
     case OP_TYPE:
       error ("Attempt to use a type name as an expression");

@@ -1284,8 +1284,8 @@ process_dst_symbols(objfile, entry, name, nsyms_ret)
 		else
 			SYMBOL_CLASS(sym) = LOC_LOCAL;
 		SYMBOL_LINE(sym) = line;
-		SYMBOL_TYPE(sym) = decode_type_desc(objfile, &symtype,
-						entry);
+		SET_SYMBOL_TYPE(sym) = decode_type_desc(objfile, &symtype,
+							entry);
 		SYMBOL_VALUE(sym) = 0;
 		switch (entry->rec_type)
 		{
@@ -1399,7 +1399,7 @@ process_dst_function(objfile, entry, name, address)
 		ftype->target_type = type;
 		ftype->code = TYPE_CODE_FUNC;
 	}
-	SYMBOL_TYPE(sym) = type->function_type;
+	SET_SYMBOL_TYPE(sym) = type->function_type;
 
 	/* Now add ourselves to the global symbols list */
 	element = (struct symbol_list *)

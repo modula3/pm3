@@ -129,7 +129,8 @@ enum language
    language_fortran,		/* Fortran */
    language_m2,			/* Modula-2 */
    language_asm,		/* Assembly language */
-   language_scm			/* Scheme / Guile */
+   language_scm,		/* Scheme / Guile */
+   language_m3                  /* Modula-3 */
 };
 
 /* the cleanup list records things that have to be undone
@@ -605,8 +606,8 @@ typedef int return_mask;
 extern NORETURN void
 return_to_top_level PARAMS ((enum return_reason)) ATTR_NORETURN;
 
-extern int
-catch_errors PARAMS ((int (*) (char *), void *, char *, return_mask));
+extern long
+catch_errors PARAMS ((long (*) (char *), void *, char *, return_mask));
 
 extern void warning_begin PARAMS ((void));
 

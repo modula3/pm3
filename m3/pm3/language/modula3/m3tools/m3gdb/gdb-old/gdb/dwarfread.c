@@ -1202,7 +1202,7 @@ read_structure_scope (dip, thisdie, enddie, objfile)
       sym = new_symbol (dip, objfile);
       if (sym != NULL)
 	{
-	  SYMBOL_TYPE (sym) = type;
+	  SET_SYMBOL_TYPE (sym) = type;
 	  if (cu_language == language_cplus)
 	    {
 	      synthesize_typedef (dip, objfile, type);
@@ -1663,7 +1663,7 @@ read_enumeration (dip, thisdie, enddie, objfile)
   sym = new_symbol (dip, objfile);
   if (sym != NULL)
     {
-      SYMBOL_TYPE (sym) = type;
+      SET_SYMBOL_TYPE (sym) = type;
       if (cu_language == language_cplus)
 	{
 	  synthesize_typedef (dip, objfile, type);
@@ -1780,7 +1780,7 @@ enum_type (dip, objfile)
 	  SYMBOL_INIT_LANGUAGE_SPECIFIC (sym, cu_language);
 	  SYMBOL_NAMESPACE (sym) = VAR_NAMESPACE;
 	  SYMBOL_CLASS (sym) = LOC_CONST;
-	  SYMBOL_TYPE (sym) = type;
+	  SET_SYMBOL_TYPE (sym) = type;
 	  SYMBOL_VALUE (sym) = list -> field.bitpos;
 	  if (SYMBOL_VALUE (sym) < 0)
 	    unsigned_enum = 0;
@@ -2938,7 +2938,7 @@ new_symbol (dip, objfile)
       /* default assumptions */
       SYMBOL_NAMESPACE (sym) = VAR_NAMESPACE;
       SYMBOL_CLASS (sym) = LOC_STATIC;
-      SYMBOL_TYPE (sym) = decode_die_type (dip);
+      SET_SYMBOL_TYPE (sym) = decode_die_type (dip);
 
       /* If this symbol is from a C++ compilation, then attempt to cache the
 	 demangled form for future reference.  This is a typical time versus
@@ -2956,7 +2956,7 @@ new_symbol (dip, objfile)
 	case TAG_global_subroutine:
 	case TAG_subroutine:
 	  SYMBOL_VALUE_ADDRESS (sym) = dip -> at_low_pc;
-	  SYMBOL_TYPE (sym) = lookup_function_type (SYMBOL_TYPE (sym));
+	  SET_SYMBOL_TYPE (sym) = lookup_function_type (SYMBOL_TYPE (sym));
 	  SYMBOL_CLASS (sym) = LOC_BLOCK;
 	  if (dip -> die_tag == TAG_global_subroutine)
 	    {
@@ -3087,7 +3087,7 @@ synthesize_typedef (dip, objfile, type)
       SYMBOL_NAME (sym) = create_name (dip -> at_name,
 				       &objfile->symbol_obstack);
       SYMBOL_INIT_LANGUAGE_SPECIFIC (sym, cu_language);
-      SYMBOL_TYPE (sym) = type;
+      SET_SYMBOL_TYPE (sym) = type;
       SYMBOL_CLASS (sym) = LOC_TYPEDEF;
       SYMBOL_NAMESPACE (sym) = VAR_NAMESPACE;
       add_symbol_to_list (sym, list_in_scope);

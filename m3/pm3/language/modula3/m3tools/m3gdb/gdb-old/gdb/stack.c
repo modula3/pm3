@@ -108,10 +108,10 @@ struct print_stack_frame_args {
   int args;
 };
 
-static int print_stack_frame_stub PARAMS ((char *));
+static long print_stack_frame_stub PARAMS ((char *));
 
 /* Pass the args the way catch_errors wants them.  */
-static int
+static long
 print_stack_frame_stub (args)
      char *args;
 {
@@ -152,11 +152,11 @@ struct print_args_args {
   struct frame_info *fi;
 };
 
-static int print_args_stub PARAMS ((char *));
+static long print_args_stub PARAMS ((char *));
 
 /* Pass the args the way catch_errors wants them.  */
 
-static int
+static long
 print_args_stub (args)
      char *args;
 {

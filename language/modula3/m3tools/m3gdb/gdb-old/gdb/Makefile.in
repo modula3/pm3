@@ -361,6 +361,7 @@ SFILES = bcache.c blockframe.c breakpoint.c buildsym.c callback.c c-exp.y \
 	printcmd.c remote.c remote-nrom.c scm-exp.c scm-lang.c scm-valprint.c \
 	source.c stabsread.c stack.c symfile.c symmisc.c \
 	symtab.c target.c thread.c top.c \
+	m3-uid.c m3-token.c m3-exp.c m3-lang.c m3-typeprint.c m3-valprint.c \
 	typeprint.c utils.c \
 	valarith.c valops.c valprint.c values.c \
 	serial.c ser-unix.c mdebugread.c os9kread.c
@@ -424,6 +425,7 @@ HFILES_NO_SRCDIR = bcache.h buildsym.h call-cmds.h coff-solib.h defs.h \
 	objfiles.h parser-defs.h partial-stab.h serial.h signals.h solib.h \
 	symfile.h stabsread.h target.h terminal.h typeprint.h xcoffsolib.h \
 	c-lang.h ch-lang.h f-lang.h m2-lang.h \
+	m3-uid.h m3-lang.h \
 	complaints.h valprint.h \
 	29k-share/udi/udiids.h 29k-share/udi_soc nindy-share/b.out.h \
 	nindy-share/block_io.h nindy-share/coff.h \
@@ -470,6 +472,7 @@ COMMON_OBS = version.o blockframe.o breakpoint.o findvar.o stack.o thread.o \
 	dbxread.o coffread.o elfread.o \
 	dwarfread.o dwarf2read.o mipsread.o stabsread.o corefile.o \
 	c-lang.o ch-exp.o ch-lang.o f-lang.o m2-lang.o \
+	m3-uid.o m3-lang.o m3-typeprint.o m3-valprint.o m3-token.o m3-exp.o \
 	scm-exp.o scm-lang.o scm-valprint.o complaints.o typeprint.o \
 	c-typeprint.o ch-typeprint.o f-typeprint.o m2-typeprint.o \
 	c-valprint.o cp-valprint.o ch-valprint.o f-valprint.o m2-valprint.o \
@@ -636,6 +639,8 @@ saber_gdb: $(SFILES) $(DEPFILES) copying.c version.c
 	#unload vx-share/*.h
 	#unload nindy-share/[A-Z]*
 	#load c-exp.tab.c m2-exp.tab.c
+	#load m3-token.c
+	#load m3-exp.c
 	#load copying.c version.c
 	#load ../opcodes/libopcodes.a
 	#load ../libiberty/libiberty.a
@@ -1571,5 +1576,7 @@ f-exp.tab.o: f-exp.tab.c f-lang.h $(defs_h) $(expression_h) \
 m2-exp.tab.o: m2-exp.tab.c $(defs_h) $(expression_h) $(gdbtypes_h) \
 	language.h m2-lang.h parser-defs.h $(symtab_h) $(value_h) \
 	$(bfd_h) objfiles.h symfile.h
+ 
+m3-valprint.c: m3-lang.h
 
 ### end of the gdb Makefile.in.

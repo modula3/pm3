@@ -335,6 +335,49 @@ alpha_find_saved_regs (frame)
   frame->saved_regs->regs[PC_REGNUM] = frame->saved_regs->regs[returnreg];
 }
 
+/*------------------------------------------- simple-minded sanity checks ---*/
+
+static CORE_ADDR
+check_reg (addr, tag)
+     CORE_ADDR addr;
+     char *tag;
+{
+  if ((addr <= 0x7fffffff) || (addr >> 48)) {
+    warning ("suspicious %s encountered: 0x%lx, zero used instead", tag, addr);
+    addr = 0;
+  }
+  return addr;
+}
+
+#define CHECK_PC(x) check_reg(x, "program counter")
+#define CHECK_SP(x) check_reg(x, "stack pointer")
+#define CHECK_FP(x) check_reg(x, "frame pointer")
+
+static CORE_ADDR
+check_sp (addr, callee)
+     CORE_ADDR addr;
+     struct frame_info *callee;
+{
+  if (callee) {
+    long delta;
+    delta = addr - callee->frame;
+    if (delta < 0) {
+      warning ("caller's stack pointer (0x%lx) is less than callee's (0x%lx)",
+	        addr, callee->frame);
+      warning ("  using zero instead");
+      return 0;
+    } else if (delta > 1000000) {
+      warning ("caller's stack pointer (0x%lx) is much larger (%ld bytes) than callee's (0x%lx)",
+	       addr, delta, callee->frame);
+      warning ("  using zero instead");
+      return 0;
+    }
+  }
+  return CHECK_SP (addr);
+}
+
+/*---------------------------------------------------------------------------*/
+
 static CORE_ADDR
 read_next_frame_reg(fi, regno)
      struct frame_info *fi;
@@ -367,9 +410,9 @@ alpha_frame_saved_pc(frame)
   int pcreg = frame->signal_handler_caller ? PC_REGNUM : frame->pc_reg;
 
   if (proc_desc && PROC_DESC_IS_DUMMY(proc_desc))
-      return read_memory_integer(frame->frame - 8, 8);
+      return CHECK_PC (read_memory_integer(frame->frame - 8, 8));
 
-  return read_next_frame_reg(frame, pcreg);
+  return CHECK_PC (read_next_frame_reg(frame, pcreg));
 }
 
 CORE_ADDR
@@ -392,7 +435,7 @@ alpha_saved_pc_after_call (frame)
   if (frame->signal_handler_caller)
     return alpha_frame_saved_pc (frame);
   else
-    return read_register (pcreg);
+    return CHECK_PC (read_register (pcreg));
 }
 
 
@@ -810,6 +853,8 @@ init_extra_frame_info (frame)
       else
 	frame->frame = read_next_frame_reg (frame->next, PROC_FRAME_REG (proc_desc))
 	  + PROC_FRAME_OFFSET (proc_desc);
+
+      frame->frame = check_sp (frame->frame, frame->next);
 
       if (proc_desc == &temp_proc_desc)
 	{

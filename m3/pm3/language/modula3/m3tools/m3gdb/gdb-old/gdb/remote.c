@@ -220,7 +220,7 @@ static void remote_fetch_registers PARAMS ((int regno));
 static void remote_resume PARAMS ((int pid, int step,
 				   enum target_signal siggnal));
 
-static int remote_start_remote PARAMS ((char *dummy));
+static long remote_start_remote PARAMS ((char *dummy));
 
 static void remote_open PARAMS ((char *name, int from_tty));
 
@@ -244,7 +244,7 @@ static void remote_mourn_1 PARAMS ((struct target_ops *));
 
 static void getpkt PARAMS ((char *buf, int forever));
 
-static int putpkt PARAMS ((char *buf));
+static long putpkt PARAMS ((char *buf));
 
 static void remote_send PARAMS ((char *buf));
 
@@ -469,7 +469,7 @@ get_offsets ()
 
 /* Stub for catch_errors.  */
 
-static int
+static long
 remote_start_remote (dummy)
      char *dummy;
 {
@@ -778,7 +778,6 @@ remote_wait (pid, status)
 	      {
 		unsigned char *p1;
 		char *p_temp;
-
 		regno = strtol ((const char *) p, &p_temp, 16); /* Read the register number */
 		p1 = (unsigned char *)p_temp;
 
@@ -1338,7 +1337,7 @@ remote_send (buf)
 /* Send a packet to the remote machine, with error checking.
    The data of the packet is in BUF.  */
 
-static int
+static long
 putpkt (buf)
      char *buf;
 {

@@ -1487,7 +1487,7 @@ process_coff_symbol (cs, aux, section_offsets, objfile)
   if (ISFCN (cs->c_type))
     {
       SYMBOL_VALUE (sym) += ANOFFSET (section_offsets, SECT_OFF_TEXT);
-       SYMBOL_TYPE(sym) = 
+       SET_SYMBOL_TYPE(sym) = 
 	 lookup_function_type (decode_function_type (cs, cs->c_type, aux));
 
       SYMBOL_CLASS (sym) = LOC_BLOCK;
@@ -1498,7 +1498,7 @@ process_coff_symbol (cs, aux, section_offsets, objfile)
     }
   else
     {
-      SYMBOL_TYPE (sym) = decode_type (cs, cs->c_type, aux);
+      SET_SYMBOL_TYPE (sym) = decode_type (cs, cs->c_type, aux);
       switch (cs->c_sclass)
 	{
 	  case C_NULL:
@@ -1582,7 +1582,7 @@ process_coff_symbol (cs, aux, section_offsets, objfile)
 		if (TYPE_LENGTH (SYMBOL_TYPE (sym)) < TYPE_LENGTH (temptype)
 		    && TYPE_CODE (SYMBOL_TYPE (sym)) == TYPE_CODE_INT)
 		  {
-		    SYMBOL_TYPE (sym) =
+		    SET_SYMBOL_TYPE (sym) =
 		      (TYPE_UNSIGNED (SYMBOL_TYPE (sym))
 		       ? lookup_fundamental_type (current_objfile,
 						  FT_UNSIGNED_INTEGER)
@@ -2106,7 +2106,7 @@ coff_read_enum_type (index, length, lastsym)
       for (; j < syms->nsyms; j++,n++)
 	{
 	  struct symbol *xsym = syms->symbol[j];
-	  SYMBOL_TYPE (xsym) = type;
+	  SET_SYMBOL_TYPE (xsym) = type;
 	  TYPE_FIELD_NAME (type, n) = SYMBOL_NAME (xsym);
 	  TYPE_FIELD_VALUE (type, n) = 0;
 	  TYPE_FIELD_BITPOS (type, n) = SYMBOL_VALUE (xsym);

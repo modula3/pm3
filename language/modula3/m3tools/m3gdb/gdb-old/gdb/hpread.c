@@ -1325,7 +1325,7 @@ hpread_read_enum_type (hp_type, dn_bufp, objfile)
       for (; j < syms->nsyms; j++, n++)
 	{
 	  struct symbol *xsym = syms->symbol[j];
-	  SYMBOL_TYPE (xsym) = type;
+	  SET_SYMBOL_TYPE (xsym) = type;
 	  TYPE_FIELD_NAME (type, n) = SYMBOL_NAME (xsym);
 	  TYPE_FIELD_VALUE (type, n) = 0;
 	  TYPE_FIELD_BITPOS (type, n) = SYMBOL_VALUE (xsym);
@@ -1410,7 +1410,7 @@ hpread_read_function_type (hp_type, dn_bufp, objfile)
 	SYMBOL_VALUE (sym) = paramp->dfparam.location;
 
       /* Get its type.  */
-      SYMBOL_TYPE (sym) = hpread_type_lookup (paramp->dfparam.type, objfile);
+      SET_SYMBOL_TYPE (sym) = hpread_type_lookup (paramp->dfparam.type, objfile);
 
       /* Add it to the list.  */
       add_symbol_to_list (sym, symlist);
@@ -1859,7 +1859,7 @@ hpread_process_one_debug_symbol (dn_bufp, name, section_offsets, objfile,
       new = push_context (0, valu);
 
       SYMBOL_CLASS (sym) = LOC_BLOCK;
-      SYMBOL_TYPE (sym) = hpread_read_function_type (hp_type, dn_bufp, objfile);
+      SET_SYMBOL_TYPE (sym) = hpread_read_function_type (hp_type, dn_bufp, objfile);
       if (dn_bufp->dfunc.global)
 	add_symbol_to_list (sym, &global_symbols);
       else
@@ -1953,14 +1953,14 @@ hpread_process_one_debug_symbol (dn_bufp, name, section_offsets, objfile,
 	}
       else
 	SYMBOL_VALUE (sym) = dn_bufp->dfparam.location;
-      SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->dfparam.type, objfile);
+      SET_SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->dfparam.type, objfile);
       add_symbol_to_list (sym, &local_symbols);
       break;
     case DNTT_TYPE_SVAR:
       /* Static variables.  */
       SYMBOL_CLASS (sym) = LOC_STATIC;
       SYMBOL_VALUE_ADDRESS (sym) = dn_bufp->dsvar.location;
-      SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->dsvar.type, objfile);
+      SET_SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->dsvar.type, objfile);
       if (dn_bufp->dsvar.global)
 	add_symbol_to_list (sym, &global_symbols);
       else if (WITHIN_FUNCTION (objfile))
@@ -1979,7 +1979,7 @@ hpread_process_one_debug_symbol (dn_bufp, name, section_offsets, objfile,
       SYMBOL_VALUE (sym)
 	+= HPREAD_ADJUST_STACK_ADDRESS (CURRENT_FUNCTION_VALUE (objfile));
 #endif
-      SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->ddvar.type, objfile);
+      SET_SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->ddvar.type, objfile);
       if (dn_bufp->ddvar.global)
 	add_symbol_to_list (sym, &global_symbols);
       else if (WITHIN_FUNCTION (objfile))
@@ -1991,7 +1991,7 @@ hpread_process_one_debug_symbol (dn_bufp, name, section_offsets, objfile,
       /* A constant (pascal?).  */
       SYMBOL_CLASS (sym) = LOC_CONST;
       SYMBOL_VALUE (sym) = dn_bufp->dconst.location;
-      SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->dconst.type, objfile);
+      SET_SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->dconst.type, objfile);
       if (dn_bufp->dconst.global)
 	add_symbol_to_list (sym, &global_symbols);
       else if (WITHIN_FUNCTION (objfile))
@@ -2001,7 +2001,7 @@ hpread_process_one_debug_symbol (dn_bufp, name, section_offsets, objfile,
       break;
     case DNTT_TYPE_TYPEDEF:
       SYMBOL_NAMESPACE (sym) = VAR_NAMESPACE;
-      SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->dtype.type, objfile);
+      SET_SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->dtype.type, objfile);
       if (dn_bufp->dtype.global)
 	add_symbol_to_list (sym, &global_symbols);
       else if (WITHIN_FUNCTION (objfile))
@@ -2011,7 +2011,7 @@ hpread_process_one_debug_symbol (dn_bufp, name, section_offsets, objfile,
       break;
     case DNTT_TYPE_TAGDEF:
       SYMBOL_NAMESPACE (sym) = STRUCT_NAMESPACE;
-      SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->dtype.type, objfile);
+      SET_SYMBOL_TYPE (sym) = hpread_type_lookup (dn_bufp->dtype.type, objfile);
       TYPE_NAME (sym->type) = SYMBOL_NAME (sym);
       TYPE_TAG_NAME (sym->type) = SYMBOL_NAME (sym);
       if (dn_bufp->dtype.global)
@@ -2022,35 +2022,35 @@ hpread_process_one_debug_symbol (dn_bufp, name, section_offsets, objfile,
 	add_symbol_to_list (sym, &file_symbols);
       break;
     case DNTT_TYPE_POINTER:
-      SYMBOL_TYPE (sym) = lookup_pointer_type (hpread_type_lookup
+      SET_SYMBOL_TYPE (sym) = lookup_pointer_type (hpread_type_lookup
 					       (dn_bufp->dptr.pointsto,
 						objfile));
       add_symbol_to_list (sym, &file_symbols);
       break;
     case DNTT_TYPE_ENUM:
       SYMBOL_NAMESPACE (sym) = STRUCT_NAMESPACE;
-      SYMBOL_TYPE (sym) = hpread_read_enum_type (hp_type, dn_bufp, objfile);
+      SET_SYMBOL_TYPE (sym) = hpread_read_enum_type (hp_type, dn_bufp, objfile);
       add_symbol_to_list (sym, &file_symbols);
       break;
     case DNTT_TYPE_MEMENUM:
       break;
     case DNTT_TYPE_SET:
-      SYMBOL_TYPE (sym) = hpread_read_set_type (hp_type, dn_bufp, objfile);
+      SET_SYMBOL_TYPE (sym) = hpread_read_set_type (hp_type, dn_bufp, objfile);
       add_symbol_to_list (sym, &file_symbols);
       break;
     case DNTT_TYPE_SUBRANGE:
-      SYMBOL_TYPE (sym) = hpread_read_subrange_type (hp_type, dn_bufp,
+      SET_SYMBOL_TYPE (sym) = hpread_read_subrange_type (hp_type, dn_bufp,
 						     objfile);
       add_symbol_to_list (sym, &file_symbols);
       break;
     case DNTT_TYPE_ARRAY:
-      SYMBOL_TYPE (sym) = hpread_read_array_type (hp_type, dn_bufp, objfile);
+      SET_SYMBOL_TYPE (sym) = hpread_read_array_type (hp_type, dn_bufp, objfile);
       add_symbol_to_list (sym, &file_symbols);
       break;
     case DNTT_TYPE_STRUCT:
     case DNTT_TYPE_UNION:
       SYMBOL_NAMESPACE (sym) = STRUCT_NAMESPACE;
-      SYMBOL_TYPE (sym) = hpread_read_struct_type (hp_type, dn_bufp, objfile);
+      SET_SYMBOL_TYPE (sym) = hpread_read_struct_type (hp_type, dn_bufp, objfile);
       add_symbol_to_list (sym, &file_symbols);
       break;
     default:

@@ -76,6 +76,7 @@ struct value
        lval enum above as "lval_reg_frame_relative".  */
     CORE_ADDR frame_addr;
     /* Type of the value.  */
+    char m3_uid [9];
     struct type *type;
     /* Values are stored in a chain, so that they can be deleted
        easily over calls to the inferior.  Values assigned to internal

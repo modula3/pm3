@@ -155,7 +155,7 @@ static void complete_command PARAMS ((char *, int));
 
 static void do_nothing PARAMS ((int));
 
-static int quit_cover PARAMS ((char *));
+static long quit_cover PARAMS ((char *));
 
 static void disconnect PARAMS ((int));
 
@@ -513,9 +513,9 @@ return_to_top_level (reason)
    catch_errors.  Note that quit should return to the command line
    fairly quickly, even if some further processing is being done.  */
 
-int
+long
 catch_errors (func, args, errstring, mask)
-     int (*func) PARAMS ((char *));
+     long (*func) PARAMS ((char *));
      PTR args;
      char *errstring;
      return_mask mask;
@@ -523,7 +523,7 @@ catch_errors (func, args, errstring, mask)
   jmp_buf saved_error;
   jmp_buf saved_quit;
   jmp_buf tmp_jmp;
-  int val;
+  long val;
   struct cleanup *saved_cleanup_chain;
   char *saved_error_pre_print;
   char *saved_quit_pre_print;
@@ -585,7 +585,7 @@ int signo;
 
 /* Just a little helper function for disconnect().  */
 
-static int
+static long
 quit_cover (s)
 char *s;
 {
@@ -3406,7 +3406,7 @@ init_main ()
 #ifdef DEFAULT_PROMPT
   prompt = savestring (DEFAULT_PROMPT, strlen(DEFAULT_PROMPT));
 #else
-  prompt = savestring ("(gdb) ", 6);
+  prompt = savestring ("(m3gdb) ", 8);
 #endif
 
   /* Set the important stuff up for command editing.  */

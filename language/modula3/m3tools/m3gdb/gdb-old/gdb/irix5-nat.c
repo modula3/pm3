@@ -245,7 +245,7 @@ disable_break PARAMS ((void));
 static void
 info_sharedlibrary_command PARAMS ((char *, int));
 
-static int
+static long
 symbol_add_stub PARAMS ((char *));
 
 static struct so_list *
@@ -561,7 +561,7 @@ find_solib (so_list_ptr)
 
 /* A small stub to get us past the arg-passing pinhole of catch_errors.  */
 
-static int
+static long
 symbol_add_stub (arg)
      char *arg;
 {

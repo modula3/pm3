@@ -41,7 +41,7 @@ static struct core_fns *core_file_fns = NULL;
 static void core_files_info PARAMS ((struct target_ops *));
 
 #ifdef SOLIB_ADD
-static int solib_add_stub PARAMS ((char *));
+static long solib_add_stub PARAMS ((char *));
 #endif
 
 static void core_open PARAMS ((char *, int));
@@ -106,7 +106,7 @@ core_close (quitting)
 /* Stub function for catch_errors around shared library hacking.  FROM_TTYP
    is really an int * which points to from_tty.  */
 
-static int 
+static long
 solib_add_stub (from_ttyp)
      char *from_ttyp;
 {

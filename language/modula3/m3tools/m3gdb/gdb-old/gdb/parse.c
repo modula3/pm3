@@ -601,6 +601,7 @@ length_of_subexp (expr, endpos)
     case STRUCTOP_PTR:
       args = 1;
       /* fall through */
+    case OP_M3_TEXT:
     case OP_M2_STRING:
     case OP_STRING:
     case OP_NAME:
@@ -642,6 +643,72 @@ length_of_subexp (expr, endpos)
       /* C++ */
     case OP_THIS:
       oplen = 2;
+      break;
+
+      /* Modula-3 */
+    case OP_M3_LONG:
+    case OP_M3_REEL:
+    case OP_M3_LREEL:
+    case OP_M3_XREEL:
+    case OP_M3_CHAR:
+      oplen = 4;
+      break;
+
+    case OP_M3_TYPE:
+      oplen = 3;
+      break;
+
+    case BINOP_M3_SUBSCRIPT:
+    case BINOP_M3_MULT:
+    case BINOP_M3_DIVIDE:
+    case BINOP_M3_DIV:
+    case BINOP_M3_MOD:
+    case BINOP_M3_ADD:
+    case BINOP_M3_MINUS:
+    case BINOP_M3_CAT:
+    case BINOP_M3_EQUAL:
+    case BINOP_M3_NE:
+    case BINOP_M3_LT:
+    case BINOP_M3_LE:
+    case BINOP_M3_GT:
+    case BINOP_M3_GE:
+    case BINOP_M3_IN:
+    case BINOP_M3_AND:
+    case BINOP_M3_OR:
+    case BINOP_M3_MAX:
+    case BINOP_M3_MIN:
+    case BINOP_M3_VAL:
+    case BINOP_M3_FLOAT:
+    case BINOP_M3_LOOPHOLE:
+      args = 2;
+      break;
+
+    case UNOP_M3_ABS:
+    case UNOP_M3_ADR:
+    case UNOP_M3_ADRSIZE:
+    case UNOP_M3_BITSIZE:
+    case UNOP_M3_BYTESIZE:
+    case UNOP_M3_CEILING:
+    case UNOP_M3_DEREF:
+    case UNOP_M3_FIRST:
+    case UNOP_M3_FLOOR:
+    case UNOP_M3_LAST: 
+    case UNOP_M3_NEG:
+    case UNOP_M3_NOT:
+    case UNOP_M3_NUMBER:
+    case UNOP_M3_ORD:
+    case UNOP_M3_ROUND:
+    case UNOP_M3_TRUNC:
+    case M3_FINAL_TYPE:
+      args = 1;
+      break;
+
+    case STRUCTOP_M3_INTERFACE:
+    case STRUCTOP_M3_MODULE:
+    case STRUCTOP_M3_STRUCT:
+      args = 1;
+      oplen = longest_to_int (expr->elts[endpos - 2].longconst);
+      oplen = 4 + BYTES_TO_EXP_ELEM (oplen + 1);
       break;
 
     default:
@@ -740,6 +807,7 @@ prefixify_subexp (inexpr, outexpr, inend, outbeg)
     case OP_LABELED:
       args = 1;
       /* fall through */
+    case OP_M3_TEXT:
     case OP_M2_STRING:
     case OP_STRING:
     case OP_NAME:
@@ -783,6 +851,72 @@ prefixify_subexp (inexpr, outexpr, inend, outbeg)
       oplen = 2;
       break;
 
+      /* Modula-3 */
+    case OP_M3_LONG:
+    case OP_M3_REEL:
+    case OP_M3_LREEL:
+    case OP_M3_XREEL:
+    case OP_M3_CHAR:
+      oplen = 4;
+      break;
+
+    case OP_M3_TYPE:
+      oplen = 3;
+      break;
+
+    case BINOP_M3_AND:
+    case BINOP_M3_OR:
+    case BINOP_M3_SUBSCRIPT:
+    case BINOP_M3_MULT:
+    case BINOP_M3_DIVIDE:
+    case BINOP_M3_DIV:
+    case BINOP_M3_MOD:
+    case BINOP_M3_ADD:
+    case BINOP_M3_MINUS:
+    case BINOP_M3_CAT:
+    case BINOP_M3_EQUAL:
+    case BINOP_M3_NE:
+    case BINOP_M3_LT:
+    case BINOP_M3_LE:
+    case BINOP_M3_GT:
+    case BINOP_M3_GE:
+    case BINOP_M3_IN:
+    case BINOP_M3_MAX:
+    case BINOP_M3_MIN:
+    case BINOP_M3_VAL:
+    case BINOP_M3_FLOAT:
+    case BINOP_M3_LOOPHOLE:
+      args = 2;
+      break;
+
+    case UNOP_M3_ABS:
+    case UNOP_M3_ADR:
+    case UNOP_M3_ADRSIZE:
+    case UNOP_M3_BITSIZE:
+    case UNOP_M3_BYTESIZE:
+    case UNOP_M3_CEILING:
+    case UNOP_M3_DEREF:
+    case UNOP_M3_FIRST:
+    case UNOP_M3_FLOOR:
+    case UNOP_M3_LAST: 
+    case UNOP_M3_NEG:
+    case UNOP_M3_NOT:
+    case UNOP_M3_NUMBER:
+    case UNOP_M3_ORD:
+    case UNOP_M3_ROUND:
+    case UNOP_M3_TRUNC:
+    case M3_FINAL_TYPE:
+      args = 1;
+      break;
+
+    case STRUCTOP_M3_INTERFACE:
+    case STRUCTOP_M3_MODULE:
+    case STRUCTOP_M3_STRUCT:
+      args = 1;
+      oplen = longest_to_int (inexpr->elts[inend - 2].longconst);
+      oplen = 4 + BYTES_TO_EXP_ELEM (oplen + 1);
+      break;
+      
     default:
       args = 1 + ((int) opcode < (int) BINOP_END);
     }
@@ -896,7 +1030,7 @@ parse_expression (string)
   register struct expression *exp;
   exp = parse_exp_1 (&string, 0, 0);
   if (*string)
-    error ("Junk after end of expression.");
+    error ("Junk after end of expression: \"%s\"", string);
   return exp;
 }
 

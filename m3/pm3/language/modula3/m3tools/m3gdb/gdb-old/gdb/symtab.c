@@ -497,6 +497,10 @@ lookup_symbol (name, block, namespace, is_a_field_of_this, symtab)
   register struct block *b;
   register struct minimal_symbol *msymbol;
 
+  block_found = 0;
+  /* I can't imagine why there are paths through this code that
+     don't set block_found!  - Bill Kalsow */
+           
   /* Search specified block and its superiors.  */
 
   while (block != 0)
@@ -630,7 +634,7 @@ found:
 
 	      if (symtab != NULL)
 		*symtab = s;
-	      return sym;
+	      return sym;  /* block_found == ??  - Bill Kalsow */
 	    }
 	  else if (MSYMBOL_TYPE (msymbol) != mst_text
 		   && MSYMBOL_TYPE (msymbol) != mst_file_text
@@ -659,7 +663,7 @@ found:
 	    error ("Internal: global symbol `%s' found in %s psymtab but not in symtab", name, ps->filename);
 	  if (symtab != NULL)
 	    *symtab = s;
-	  return sym;
+	  return sym;  /* block_found == ??  - Bill Kalsow */
 	}
     }
 
@@ -693,7 +697,7 @@ found:
 	    error ("Internal: static symbol `%s' found in %s psymtab but not in symtab", name, ps->filename);
 	  if (symtab != NULL)
 	    *symtab = s;
-	  return sym;
+	  return sym;  /* block_found == ??  - Bill Kalsow */
 	}
     }
 
@@ -726,10 +730,11 @@ lookup_partial_symbol (pst, name, global, namespace)
 	   pst->objfile->global_psymbols.list + pst->globals_offset :
 	   pst->objfile->static_psymbols.list + pst->statics_offset  );
 
-  if (global)		/* This means we can use a binary search. */
-    {
-      do_linear_search = 0;
+  do_linear_search = SYMBOL_LANGUAGE (*start) == language_cplus 
+    || SYMBOL_LANGUAGE (*start) == language_m3;
 
+  if (global && !do_linear_search)
+    {
       /* Binary search.  This search is guaranteed to end with center
          pointing at the earliest partial symbol with the correct
 	 name.  At that point *all* partial symbols with that name
@@ -742,10 +747,6 @@ lookup_partial_symbol (pst, name, global, namespace)
 	  center = bottom + (top - bottom) / 2;
 	  if (!(center < top))
 	    abort ();
-	  if (!do_linear_search && SYMBOL_LANGUAGE (*center) == language_cplus)
-	    {
-	      do_linear_search = 1;
-	    }
 	  if (STRCMP (SYMBOL_NAME (*center), name) >= 0)
 	    {
 	      top = center;
@@ -827,11 +828,14 @@ lookup_block_symbol (block, name, namespace)
   register int bot, top, inc;
   register struct symbol *sym;
   register struct symbol *sym_found = NULL;
-  register int do_linear_search = 1;
+  register int do_linear_search =
+    BLOCK_SHOULD_SORT (block) == 0
+      || (BLOCK_NSYMS (block) > 0 && 
+	  (SYMBOL_LANGUAGE (BLOCK_SYM (block, 0)) == language_m3
+	   || SYMBOL_LANGUAGE (BLOCK_SYM (block, 0)) == language_cplus));
 
   /* If the blocks's symbols were sorted, start with a binary search.  */
-
-  if (BLOCK_SHOULD_SORT (block))
+  if (!do_linear_search)
     {
       /* Reset the linear search flag so if the binary search fails, we
 	 won't do the linear search once unless we find some reason to
@@ -1508,17 +1512,16 @@ find_pc_line_pc_range (pc, startptr, endptr)
    of real code inside the function.  */
 
 static struct symtab_and_line
-find_function_start_sal PARAMS ((struct symbol *sym, int));
+find_function_start_sal PARAMS ((struct symbol *sym, int, CORE_ADDR));
 
 static struct symtab_and_line
-find_function_start_sal (sym, funfirstline)
+find_function_start_sal (sym, funfirstline, pc)
      struct symbol *sym;
      int funfirstline;
+     CORE_ADDR pc;
 {
-  CORE_ADDR pc;
   struct symtab_and_line sal;
 
-  pc = BLOCK_START (SYMBOL_BLOCK_VALUE (sym));
   if (funfirstline)
     {
       pc += FUNCTION_START_OFFSET;
@@ -1532,7 +1535,7 @@ find_function_start_sal (sym, funfirstline)
 #else
   /* Check if SKIP_PROLOGUE left us in mid-line, and the next
      line is still part of the same function.  */
-  if (sal.pc != pc
+  if (sal.pc != pc && sym != NULL
       && BLOCK_START (SYMBOL_BLOCK_VALUE (sym)) <= sal.end
       && sal.end < BLOCK_END (SYMBOL_BLOCK_VALUE (sym)))
     {
@@ -2061,7 +2064,8 @@ decode_line_1 (argptr, funfirstline, default_symtab, default_line, canonical)
 		      values.sals = (struct symtab_and_line *)xmalloc (sizeof (struct symtab_and_line));
 		      values.nelts = 1;
 		      values.sals[0] = find_function_start_sal (sym,
-								funfirstline);
+			funfirstline, BLOCK_START (SYMBOL_BLOCK_VALUE (sym)));
+
 		    }
 		  else
 		    {
@@ -2263,7 +2267,60 @@ decode_line_1 (argptr, funfirstline, default_symtab, default_line, canonical)
       return values;
     }
 
+  /* Let's try to interpret the whole arg as an expression */
+  { struct expression *expr;
+    struct symbol *exports;
+    value_ptr val;
+    struct type *implementers;
 
+    if ((expr = (struct expression *) catch_errors ((long (*)()) parse_expression, saved_arg, (char *) 0, RETURN_MASK_ALL)) != 0
+	&& (val = (value_ptr) catch_errors ((long (*)()) evaluate_expression, expr, (char *) 0, RETURN_MASK_ALL)) != 0) {
+      pc = 0;
+      if (TYPE_CODE (VALUE_TYPE (val)) == TYPE_CODE_FUNC) {
+	/* Found a minimal symbol of the form Unit__Entry
+	   (this happens when direct calls are used, -all_direct). */
+	pc = value_as_pointer (val);
+      } else if (TYPE_CODE (VALUE_TYPE (val)) == TYPE_CODE_M3_PROC) {
+	pc = m3_unpack_pointer2 (val);
+
+	if (pc == 0 && expr->elts[1].opcode == STRUCTOP_M3_INTERFACE) {
+	  /* may be we found a procedure exported by an interface but
+	     implemented by a module with a different name, and the
+	     init code did not run yet, so the interface interface
+	     record isn't set yet.  It could also be a global var so
+	     we have to be careful. saved_arg is of the form a.b, we
+	     want to isolate a. */
+	  int interface_name_length = *argptr - saved_arg;
+	  char *interface_name = alloca (interface_name_length + 1);
+	  char foo [1000];
+	  int i;
+	  strncpy (interface_name, saved_arg, interface_name_length);
+	  interface_name [interface_name_length] = 0;
+
+	  exports = lookup_symbol ("_m3_exporters", 0, 
+				     VAR_NAMESPACE, 0, NULL);
+	  if (exports != 0
+	      && (implementers 
+		  = lookup_struct_elt_type (SYMBOL_TYPE (exports), 
+					    interface_name, 1))
+	      != 0) {
+	    for (i = 0; i < TYPE_NFIELDS (implementers); i++) {
+	      sprintf (foo, "%s%s", TYPE_FIELD_NAME (implementers, i),
+		       *argptr);
+	      if (expr = (struct expression *) catch_errors
+                     ((long (*)()) parse_expression, foo, (char *) 0, RETURN_MASK_ALL)) {
+		if ((val = (value_ptr) catch_errors ((long (*)()) evaluate_expression,
+						 expr, (char *) 0,
+						 RETURN_MASK_ALL)) != 0) {
+		  if (TYPE_CODE (VALUE_TYPE (val)) == TYPE_CODE_M3_PROC) {
+		    pc = m3_unpack_pointer2 (val);
+		    break; }}}}}}}
+      if (pc != 0) {
+	while (**argptr != '\000') {
+	  (*argptr)++; }
+	sym = 0;
+	goto i_have_a_pc; }}}
+  
   /* Look up that token as a variable.
      If file specified, use that file's per-file block to start with.  */
 
@@ -2276,9 +2333,11 @@ decode_line_1 (argptr, funfirstline, default_symtab, default_line, canonical)
     {
       if (SYMBOL_CLASS (sym) == LOC_BLOCK)
 	{
+	  pc = BLOCK_START (SYMBOL_BLOCK_VALUE (sym));
+	i_have_a_pc:
 	  /* Arg is the name of a function */
 	  values.sals = (struct symtab_and_line *)xmalloc (sizeof (struct symtab_and_line));
-	  values.sals[0] = find_function_start_sal (sym, funfirstline);
+	  values.sals[0] = find_function_start_sal (sym, funfirstline, pc);
 	  values.nelts = 1;
 
 	  /* Don't use the SYMBOL_LINE; if used at all it points to
@@ -2287,7 +2346,7 @@ decode_line_1 (argptr, funfirstline, default_symtab, default_line, canonical)
 
 	  /* We might need a canonical line spec if it is a static
 	     function.  */
-	  if (s == 0)
+	  if (sym != NULL && s == 0)
 	    {
 	      struct blockvector *bv = BLOCKVECTOR (sym_symtab);
 	      struct block *b = BLOCKVECTOR_BLOCK (bv, STATIC_BLOCK);
@@ -2400,7 +2459,8 @@ decode_line_2 (sym_arr, nelts, funfirstline, canonical)
     {
       if (sym_arr[i] && SYMBOL_CLASS (sym_arr[i]) == LOC_BLOCK)
 	{
-	  values.sals[i] = find_function_start_sal (sym_arr[i], funfirstline);
+	  values.sals[i] = find_function_start_sal (sym_arr[i], funfirstline,
+			       BLOCK_START (SYMBOL_BLOCK_VALUE (sym_arr[i])));
 	  printf_unfiltered ("[%d] %s at %s:%d\n",
 			     (i+2),
 			     SYMBOL_SOURCE_NAME (sym_arr[i]),
