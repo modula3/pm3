@@ -199,13 +199,17 @@ readonly proc BootstrapTarget(target) is
     write("option(\"bootstrap\",\"T\")",CR)
     write("option(\"shared_lib\",\"\")",CR)
     if equal(target,"HPPA") or equal(target,"DS3100") or equal(target,"IRIX5")
-        or equal(target,"NT386GNU") or equal(target,"ALPHA_OSF") or
-        equal(target,"IBMR2")
+        or equal(target,"NT386GNU") or equal(target,"IBMR2")
       write("option(\"optimization\",\"\")",CR)
     else 
       write("option(\"optimization\",\"T\")",CR)
     end
-    write("option(\"debuginfo\",\"" & BOOTDEBUG & "\")",CR)
+    if equal(target,"ALPHA_OSF")
+      % m3cgc1 generates bad code when -g flag is not used
+      write("option(\"debuginfo\",\"T\")",CR)
+    else	
+      write("option(\"debuginfo\",\"" & BOOTDEBUG & "\")",CR)
+    end
     write("HOST=\"" & host & "\"",CR)
     write("USE_M3DOC=\"\"",CR)
     write("IBACK=\"\"",CR)
@@ -249,7 +253,7 @@ readonly proc BootstrapTarget(target) is
   CleanPkg("m3ship",target)
 
   local header = "M3OPTIONS=" & CR
-  local options = "\"CC=${CC}\" \"CCFLAGS=${CCFLAGS}\"" &
+  local options = "\"CC=${CC}\" \"CFLAGS=${CFLAGS}\"" &
       " \"AS=${AS}\" \"ASFLAGS=${ASFLAGS}\"" &
       " \"AR=${AR}\" \"ARFLAGS=${ARFLAGS}\"" &
       " \"RANLIB=${RANLIB}\" \"EXTRALIBS=${EXTRALIBS}\"" & 
@@ -257,16 +261,14 @@ readonly proc BootstrapTarget(target) is
 
   if equal(target,"NT386GNU")
     header = header & "EXTRALIBS=-ladvapi32" & CR
+  else if equal(target,"SOLsun")
+    header = header & "EXTRALIBS=-lsunmath -lm" & CR
+  else if equal(target,"HPPA")
+    header = header & "EXTRALIBS=-lm -lBSD" & CR
   else
-    if equal(target,"SOLsun")
-      header = header & "EXTRALIBS=-lsunmath -lm" & CR
-    else
-      if equal(target,"HPPA")
-        header = header & "EXTRALIBS=-lm -lBSD" & CR
-      else
-        header = header & "EXTRALIBS=-lm" & CR
-      end
-    end
+    header = header & "EXTRALIBS=-lm" & CR
+  end
+  end
   end
 
   if equal(target,"SOLgnu") or equal(target,"SOLsun")
@@ -277,6 +279,12 @@ readonly proc BootstrapTarget(target) is
     header = header & "AS=gas" & CR
     header = header & "CC=gcc" & CR
   end
+
+  if equal(target,"ALPHA_OSF")
+    header = header & "CFLAGS=-ieee_with_no_inexact -g3" & CR
+    header = header & "LDFLAGS=-ieee_with_no_inexact" & CR
+    header = header & "ASFLAGS=-g3" & CR
+  end     
 
   header = header & "RANLIB=touch" & CR
 
