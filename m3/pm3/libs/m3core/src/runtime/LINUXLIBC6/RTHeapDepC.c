@@ -564,7 +564,7 @@ int grouplist[];
   return result;
 }
 
-int getitimer(enum __itimer_which which, struct itimerval *value)
+int getitimer(__itimer_which_t which, struct itimerval *value)
 { int result;
 
   ENTER_CRITICAL;
@@ -610,7 +610,7 @@ int getpeername(int sockfd, struct sockaddr *addr, socklen_t *paddrlen)
   return result;
 }
 
-int getrlimit(enum __rlimit_resource resource, struct rlimit *rlp)
+int getrlimit(__rlimit_resource_t resource, struct rlimit *rlp)
 { int result;
 
   ENTER_CRITICAL;
@@ -1272,7 +1272,7 @@ int namelen;
   return result;
 }
 
-int setitimer(enum __itimer_which which, const struct itimerval *value, 
+int setitimer(__itimer_which_t which, const struct itimerval *value, 
    struct itimerval *ovalue)
 { int result;
 
@@ -1299,7 +1299,7 @@ char *file;
 }
 */
 
-int setrlimit(enum __rlimit_resource resource, const struct rlimit *rlp)
+int setrlimit(__rlimit_resource_t resource, const struct rlimit *rlp)
 { int result;
 
   ENTER_CRITICAL;
