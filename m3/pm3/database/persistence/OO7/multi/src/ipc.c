@@ -11,6 +11,7 @@
   
 int ipc_debug = 0;
 
+#ifdef linux
 #if defined(_SEM_SEMUN_UNDEFINED)
 /* according to X/OPEN we have to define it ourselves */
 union semun {
@@ -23,6 +24,13 @@ union semun {
 #else
 /* union semun is defined by including <sys/sem.h> */
 #endif
+#else
+union semun {
+  int     val;            /* value for SETVAL */
+  struct  semid_ds *buf;  /* buffer for IPC_STAT & IPC_SET */
+  u_short *array;         /* array for GETALL & SETALL */
+};
+#endif 
 
 /* Various operations */
 #define LOCKSZ 2
@@ -41,10 +49,10 @@ static int semid;
 void
 ipc_reset()
 {
-  if (ipc_debug) fprintf(stderr, "ipc_reset\n");
-
   key_t key;
   FILE * fp;
+
+  if (ipc_debug) fprintf(stderr, "ipc_reset\n");
 
   fp = fopen("_ipc", "a+");
   if(!fp) abort();
@@ -66,12 +74,12 @@ ipc_reset()
 void
 ipc_open(int clients, int threads)
 {
-  if (ipc_debug)
-    fprintf(stderr, "ipc_open clients=%d threads=%d\n", clients, threads);
-
   key_t key;
   FILE * fp;
  
+  if (ipc_debug)
+    fprintf(stderr, "ipc_open clients=%d threads=%d\n", clients, threads);
+
   fp = fopen("_ipc", "a+");
   if(!fp) abort();
   fclose(fp);
@@ -158,15 +166,17 @@ ipc_start(int threads)
       fprintf(stderr, "can't lock semaphore: %s\n", strerror(errno));
       abort();
     }
-    ushort values[3];
-    union semun arg;
-    arg.array = values;
-    if (semctl(semid, 0, GETALL, arg)) {
-      fprintf(stderr, "can't get values: %s\n", strerror(errno));
-      abort();
+    {
+      ushort values[3];
+      union semun arg;
+      arg.array = values;
+      if (semctl(semid, 0, GETALL, arg)) {
+	fprintf(stderr, "can't get values: %s\n", strerror(errno));
+	abort();
+      }
+      fprintf(stderr, "values %d: %d %d %d\n",
+	      getpid(), values[0], values[1], values[2]);
     }
-    fprintf(stderr, "values %d: %d %d %d\n",
-	    getpid(), values[0], values[1], values[2]);
     while (semop(semid, &op_unlock[0], UNLOCKSZ)) {
       if (errno == EINTR) {
 	sched_yield();
@@ -230,18 +240,20 @@ ipc_stop(int threads)
       fprintf(stderr, "can't lock semaphore: %s\n", strerror(errno));
       abort();
     }
-    ushort values[3];
-    union semun arg;
-    arg.array = values;
-    if (semctl(semid, 0, GETALL, arg)) {
-      fprintf(stderr, "can't get values: %s\n", strerror(errno));
-      abort();
-    }
-    fprintf(stderr, "values %d: %d %d %d\n",
-	    getpid(), values[0], values[1], values[2]);
-    if (semctl(semid, 0, SETALL, arg)) {
-      fprintf(stderr, "can't set values: %s\n", strerror(errno));
-      abort();
+    {
+      ushort values[3];
+      union semun arg;
+      arg.array = values;
+      if (semctl(semid, 0, GETALL, arg)) {
+	fprintf(stderr, "can't get values: %s\n", strerror(errno));
+	abort();
+      }
+      fprintf(stderr, "values %d: %d %d %d\n",
+	      getpid(), values[0], values[1], values[2]);
+      if (semctl(semid, 0, SETALL, arg)) {
+	fprintf(stderr, "can't set values: %s\n", strerror(errno));
+	abort();
+      }
     }
     while (semop(semid, &op_unlock[0], UNLOCKSZ)) {
       if (errno == EINTR) {

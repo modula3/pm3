@@ -1,6 +1,9 @@
 import("libpm3")
 import("OO7")
 
+if SYSTEM_LIBS contains "RT"
+  import_sys_lib("RT") %% for sched_yield on SOLgnu
+end
 c_source("ipc")
 Module("Multi")
 Program("multi")
