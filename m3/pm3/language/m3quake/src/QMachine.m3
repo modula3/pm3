@@ -880,7 +880,7 @@ PROCEDURE InitBuiltins () =
     Builtins [ 2] := NewBuiltin ("defined",     DoDefined,   1, TRUE);
     Builtins [ 3] := NewBuiltin ("empty",       DoEmpty,     1, TRUE);
     Builtins [ 4] := NewBuiltin ("equal",       DoEqual,     2, TRUE);
-    Builtins [ 5] := NewBuiltin ("error",       DoError,     1, FALSE);
+    Builtins [ 5] := NewBuiltin ("error",       DoError,    -1, FALSE);
     Builtins [ 6] := NewBuiltin ("escape",      DoEscape,    1, TRUE);
     Builtins [ 7] := NewBuiltin ("exec",        DoExec,     -1, TRUE);
     Builtins [ 8] := NewBuiltin ("file",        DoFile,      0, TRUE);
@@ -1032,11 +1032,15 @@ PROCEDURE DoEqual (t: T;  n_args: INTEGER) RAISES {Error} =
   END DoEqual;
 
 PROCEDURE DoError (t: T;  n_args: INTEGER) RAISES {Error} =
-  VAR val: QValue.T;
+  VAR buf := GetBuf(t);
   BEGIN
-    <*ASSERT n_args = 1 *>
-    Pop (t, val);
-    Err (t, QVal.ToText (t, val));
+    <*ASSERT n_args > 0 *>
+    FOR i := t.reg.sp - n_args TO t.reg.sp - 1 DO
+      QVal.ToBuf (t, t.stack[i], buf);
+      t.stack[i].ref := NIL;
+    END;
+    t.reg.sp := t.reg.sp - n_args;
+    Err (t, M3Buf.ToText (buf));
   END DoError;
 
 PROCEDURE DoEscape (t: T;  n_args: INTEGER) RAISES {Error} =
