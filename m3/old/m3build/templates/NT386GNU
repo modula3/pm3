@@ -10,13 +10,26 @@
 % Standard configuration file for LINUX
 %
 
+% Outstanding questions
+%
+% LIB_USE versus cross-compilation for m3 and m3cgc1
+%
+% shared libraries
+%
+% default libraries to load, opengl, paths for libraries...
+
 %-------------------------------------------------- compilation environment ---
 
-readonly TARGET = "LINUXELF"
+readonly TARGET = "NT386GNU"
 readonly DEFAULT_BUILD_DIR = TARGET
 
+if not defined(CROSS_PREFIX)
+  CROSS_PREFIX="i386-cygwin32-"
+end
+
 include ("PLATFORMS")  % get the target-dependent mappings
-include (OS_TYPE)      % get the OS-dependent functions
+%include (OS_TYPE)      % get the OS-dependent functions
+include ("POSIX")      % get the OS-dependent functions
 
 readonly NAMING_CONVENTIONS = "0"
 %                                        object files       libraries
@@ -88,39 +101,31 @@ readonly NEED_OBJECTS = "TRUE"
 % "import_TCP" is called from the tcp package.
 
 readonly proc import_X11R4() is
-  import_lib("Xaw",  "/usr/X11/lib")
-  import_lib("Xmu",  "/usr/X11/lib")
-  import_lib("Xext", "/usr/X11/lib")
-  import_lib("Xt",   "/usr/X11/lib")
-  import_lib("SM",   "/usr/X11/lib")
-  import_lib("ICE",  "/usr/X11/lib")
-  import_lib("X11",  "/usr/X11/lib")
 end
 
 readonly proc import_Motif() is
-  import_lib("Xm",   "/usr/X11/lib")
 end
 
 readonly proc import_DECPEX() is
-  % DEC PEX differs from MIT PEX, and is only supported on Digital machines.  
 end
 
 readonly proc import_OpenGL() is
-  % import_lib (GLU,  "/usr/lib")
-  % import_lib (GL,   "/usr/lib")
-  % import_lib (Xext, "/usr/lib")
+  %%% Note: Windows NT 3.5 supports OpenGL, Windows '95 does not (yet).
+  import_lib ("opengl32", "/usr/local/lib/i386-cygwin32")
+  import_lib ("glu32",    "/usr/local/lib/i386-cygwin32")
 end
 
 readonly proc import_TCP() is
+  import_lib("wsock32", "/usr/local/lib/i386-cygwin32")
 end
 
-readonly PLATFORM_SUPPORTS_X      = "TRUE"
-readonly PLATFORM_SUPPORTS_MOTIF  = "TRUE"
+readonly PLATFORM_SUPPORTS_X      = ""
+readonly PLATFORM_SUPPORTS_MOTIF  = ""
 readonly PLATFORM_SUPPORTS_DECPEX = ""
 readonly PLATFORM_SUPPORTS_OPENGL = ""
 
 % Does your X11 server have the shared memory extension?
-readonly X11_WITH_SHARED_MEM = "TRUE"
+readonly X11_WITH_SHARED_MEM = ""
 
 %-------------------------------------------------------------------- emacs ---
 % If you have emacs and want to compile ".el" files to ".elc" files,
@@ -142,19 +147,19 @@ end
 % The actual definitions must be kept on one line due to finicky details
 % of the bootstrap process.
 
-CC = _ifdef ("CC", CC, [ "gcc", "-fPIC" ])
+CC = _ifdef ("CC", CC, [ CROSS_PREFIX & "gcc" ])
 %--- C compiler with flags for compiling a single ".c" file
 
-LINK = _ifdef ("LINK", LINK, [ "gcc" ])
+LINK = _ifdef ("LINK", LINK, [ CROSS_PREFIX & "gcc" ])
 %--- C compiler with flags for linking
 
-MAKELIB = _ifdef ("MAKELIB", MAKELIB, [ "ar", "crus" ])
+MAKELIB = _ifdef ("MAKELIB", MAKELIB, [ CROSS_PREFIX & "ar", "crus" ])
 %--- program to build library archives
 
 RANLIB = _ifdef ("RANLIB", RANLIB, [ "touch" ])
 %--- program to index libraries
 
-ASM = _ifdef ("ASM", ASM, [ "as" ])
+ASM = _ifdef ("ASM", ASM, [ CROSS_PREFIX & "as" ])
 %--- assembler
 
 % The boostrap code is not PIC
@@ -179,7 +184,7 @@ GNU_MAKE   = _ifdef ("GNU_MAKE",   GNU_MAKE,   "make")
 % separator character must begin and end the value.
 
 % Where is the driver?
-M3 = LIB_USE & "/m3"
+M3 = "m3"
 
 % What are the standard flags?
 M3OPTIONS = [ "-w1", "-why", "-g" ]
@@ -191,7 +196,8 @@ M3_CONFIG = [
    "-Y4" & _pack_args (RANLIB),
    "-Y7" & _pack_args (ASM),
 
-   "-Y6@" & LIB_USE & "/m3cgc1@-quiet@-fPIC@",
+   "-Y6@" & CROSS_PREFIX & "m3cgc1@-fno-strength-reduce@-quiet@-dumpbase@",
+   %"-Y6@" & LIB_USE & "/m3cgc1@-quiet@",
    % --- the Modula-3 IL to assembly language pass
 
    "-z2@-lm@",  % --- libraries systematically linked with all programs
@@ -252,14 +258,14 @@ M3_CONFIG = [
 
 proc build_standalone() is
    % --- reset the linker to avoid shared libraries.
-   M3_CONFIG += "-Y1@gcc@"
-   M3_CONFIG += "-Y2@gcc@-static@"
+%   M3_CONFIG += "-Y1@gcc@"
+%   M3_CONFIG += "-Y2@gcc@-static@"
 end
 
 proc build_shared() is
    % --- reset the linker to use shared libraries.
-   M3_CONFIG += "-Y1@gcc@-fPIC@"
-   M3_CONFIG += "-Y2@gcc@-shared@"
+%   M3_CONFIG += "-Y1@gcc@-fPIC@"
+%   M3_CONFIG += "-Y2@gcc@-shared@"
 end
 
 %-------------------------------------------------------------------- hooks ---
@@ -271,30 +277,30 @@ proc before_library_hooks(x) is
 end
 
 proc after_library_hooks(x) is
-  local lib_a    = format ("lib%s.a", x)
-  local lib_so   = format ("lib%s.so", x)
-  local lib_sox  = format ("lib%s.so.3", x)
-  local lib_soxx = format ("lib%s.so.3.5", x)
-  if defined ("_all")
-    if stale (lib_a, lib_a)
-      write ("missing ", lib_a, ": not building ", lib_soxx, CR)
-    else
-      if stale (lib_soxx, lib_a)
-        exec ("gcc -shared -Wl,-soname", "-Wl," & lib_so,
-                "-o", lib_soxx, COMPILE_OBJECTS)
-      end
-      link_file(lib_soxx, lib_sox)
-      link_file(lib_soxx, lib_so)
-      install_derived (lib_soxx)
-      install_derived (lib_sox)
-      install_derived (lib_so)
-      install_link_to_derived (lib_sox, LIB_INSTALL)
-      install_link_to_derived (lib_so, LIB_INSTALL)
-    end
-  end
-  deriveds (lib_soxx, no_extension)
-  deriveds (lib_sox, no_extension)
-  deriveds (lib_so, no_extension)
+%  local lib_a    = format ("lib%s.a", x)
+%  local lib_so   = format ("lib%s.so", x)
+%  local lib_sox  = format ("lib%s.so.3", x)
+%  local lib_soxx = format ("lib%s.so.3.5", x)
+%  if defined ("_all")
+%    if stale (lib_a, lib_a)
+%      write ("missing ", lib_a, ": not building ", lib_soxx, CR)
+%    else
+%      if stale (lib_soxx, lib_a)
+%        exec ("gcc -shared -Wl,-soname", "-Wl," & lib_so,
+%                "-o", lib_soxx, COMPILE_OBJECTS)
+%      end
+%      link_file(lib_soxx, lib_sox)
+%      link_file(lib_soxx, lib_so)
+%      install_derived (lib_soxx)
+%      install_derived (lib_sox)
+%      install_derived (lib_so)
+%      install_link_to_derived (lib_sox, LIB_INSTALL)
+%      install_link_to_derived (lib_so, LIB_INSTALL)
+%    end
+%  end
+%  deriveds (lib_soxx, no_extension)
+%  deriveds (lib_sox, no_extension)
+%  deriveds (lib_so, no_extension)
 end
 
 proc before_program_hooks(x) is
@@ -317,3 +323,4 @@ end
 
 if defined("_bootstrap") include("COMMON.BOOT") end
 include ("COMMON")
+
