@@ -28,16 +28,14 @@ TYPE
 
 (* For a trapezoid "tr", 
 
-\medskip\bulletitem "tr.vlo" and "tr.vhi" are the "v" coordinates of its north and south edges, respectively;
-
-\medskip\bulletitem "tr.m1" and "tr.m2" are the slopes of its west and east edges, respectively, as "(delta v) / (delta h)". A denominator
+<UL><LI>"tr.vlo" and "tr.vhi" are the "v" coordinates of its north and south edges, respectively;
+<LI>"tr.m1" and "tr.m2" are the slopes of its west and east edges, respectively, as "(delta v) / (delta h)". A denominator
 of zero represents an infinite slope; i.e., a vertical
 edge. A numerator of zero is illegal. 
-
-\medskip\bulletitem "tr.p1" and "tr.p2" are points on the infinite lines
+<LI>"tr.p1" and "tr.p2" are points on the infinite lines
 that extend the west and east edges, respectively.  
+</UL>
 
-\medskip
 Trapezoids are closed on the north and west edges, open on the
 south and east edges, closed on the northwest corner, and open on
 the other corners. 

@@ -47,7 +47,7 @@ TYPE Flag = {Invalid, Inexact, Overflow, Underflow,
    of the first five flags is defined precisely in the IEEE floating
    point standard; roughly they mean:
 
-\begin{quote}   
+<BQ>   
    "Invalid" = invalid argument to an operation.  
 
    "Inexact" = an operation produced an inexact result.
@@ -66,7 +66,7 @@ TYPE Flag = {Invalid, Inexact, Overflow, Underflow,
    absolute value is too large to be represented.
 
    "IntDivByZero" = integer "DIV" or "MOD" by zero.
-\end{quote}
+</BQ>
 *)
 
 CONST NoFlags = SET OF Flag {};
@@ -89,7 +89,7 @@ TYPE Behavior = {Trap, SetFlag, Ignore};
 (* The behavior of an operation that causes one of the flag conditions
    is either:
 
-\begin{quote}  
+<BQ>  
    "Ignore" = return some result and do nothing.
 
    "SetFlag" = return some result and set the condition flag.  For
@@ -98,7 +98,7 @@ TYPE Behavior = {Trap, SetFlag, Ignore};
         
    "Trap" = possibly set the condition flag; in any case raise the
    "Trap" exception with the appropriate flag as the argument.
-\end{quote}
+</BQ>
 *)
 
 PROCEDURE SetBehavior(f: Flag; b: Behavior) RAISES {Failure};

@@ -13,23 +13,23 @@
 (* A "Path.T" is a sequence of straight and curved line segments,
    suitable for stroking or filling.
 
-   A {\it segment} is a directed arc in the Cartesian plane determined
+   A <I>segment</I> is a directed arc in the Cartesian plane determined
    by two cubic polynomials "h(t)", "v(t)", where "t" ranges over the
-   interval of real numbers "[0, 1]". The segment is said to {\it start}
-   at "(h(0), v(0))" and {\it end} at "(h(1), v(1))".  If "h" and "v"
-   are linear functions of "t", then the segment is {\it linear}: it
+   interval of real numbers "[0, 1]". The segment is said to <I>start</I>
+   at "(h(0), v(0))" and <I>end</I> at "(h(1), v(1))".  If "h" and "v"
+   are linear functions of "t", then the segment is <I>linear</I>: it
    consists of a line segment.  If "h" and "v" are constant functions of
-   "t", then the segment is {\it degenerate}: it consists of a single
+   "t", then the segment is <I>degenerate</I>: it consists of a single
    point.
 
-   The segments of a path are grouped into contiguous {\it subpaths},
-   which can be {\it open} or {\it closed}.  Within a subpath, each 
+   The segments of a path are grouped into contiguous <I>subpaths</I>,
+   which can be <I>open</I> or <I>closed</I>.  Within a subpath, each 
    segment starts where the previous segment ends.  In a closed subpath,
    the last segment ends where the first segment starts.  (This may also 
    happen for an open subpath, but this coincidence does not make the
    subpath closed.)
 
-   The {\it current point} of a path is the endpoint of the last segment
+   The <I>current point</I> of a path is the endpoint of the last segment
    of its last subpath, assuming this subpath is open.  If the path is 
    empty or if the last subpath is closed, the current point is undefined.   *)
 
@@ -68,7 +68,7 @@ PROCEDURE CurveTo(path: T; READONLY q, r, s: Point.T);
 
    (Where the primes denote differentiation with respect to "t".)  Then
    "CurveTo" adds the segment "(h(t), v(t))" for "t" between zero and
-   one.  (This is called the {\it Bezier} arc determined by "p", "q",
+   one.  (This is called the <I>Bezier</I> arc determined by "p", "q",
    "r", and "s".)  *)
 
 PROCEDURE Close(path: T);

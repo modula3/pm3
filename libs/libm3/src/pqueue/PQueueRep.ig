@@ -18,11 +18,11 @@ TYPE
 
 END PQueueRep.
 
-(* A "PQueue.Default" is represented by a data structure called a {\it heap}.
+(* A "PQueue.Default" is represented by a data structure called a <I>heap</I>.
    A heap is a complete binary tree in which each node has a priority at least
    that of its parent. Hence, the root of the tree has minimal priority.
 
-   A priority queue "pq: PQueue.Default" is {\it valid} (written "Valid(pq)")
+   A priority queue "pq: PQueue.Default" is <I>valid</I> (written "Valid(pq)")
    iff "pq.heap # NIL". The methods "init(pq, sizeHint)" and "fromArray(pq,
    e)" establish "Valid(pq)", and all of the other methods beside "pCompare"
    require "Valid(pq)".
@@ -30,9 +30,9 @@ END PQueueRep.
    A valid priority queue "pq: PQueue.Default" satisfies the following
    invariants:
 
-   1. 0 <= pq.sz <= LAST(pq.heap^)
+   1. 0 &lt;= pq.sz &lt;= LAST(pq.heap^)
 
-   2. (forall i: 1 < i <= sz: pq.pCompare(pq.heap[i DIV 2], pq.heap[i]) < 1)
+   2. (forall i: 1 &lt; i &lt;= sz: pq.pCompare(pq.heap[i DIV 2], pq.heap[i]) &lt; 1)
 
    The heap is represented by an array "pq.heap", and a count "pq.size" of the
    number of elements in the heap. The "pq.size" elements are stored in the

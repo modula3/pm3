@@ -5,4 +5,5 @@
 % Last modified on Mon Sep 20 12:30:39 PDT 1993 by kalsow 
 %      modified on Tue Aug 17 12:00:33 PDT 1993 by mcjones
 
+HtmlInterface("WeakRef")
 Module ("WeakRef")

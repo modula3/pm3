@@ -10,16 +10,52 @@
    sometimes known as Greenwich mean time) to local time within a
    particular jurisdiction, taking into account daylight time when
    appropriate.
-   \index{calendar date}
-   \index{local time}
-   \index{time!local}
-   \index{time zone}
-   \index{time!zone}
-   \index{universal coordinated time}
-   \index{time!UTC (universal coordinated time)}
-   \index{Greenwich mean time}
-   \index{time!Greenwich mean time}
-   \index{time!Date interface@{\tt Date} interface}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>calendar date</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>local time</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>time</SPAN>
+<SPAN CLASS=INDEX.KEY>local</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>time zone</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>time</SPAN>
+<SPAN CLASS=INDEX.KEY>zone</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>universal coordinated time</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>time</SPAN>
+<SPAN CLASS=INDEX.KEY>UTC (universal coordinated time)</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>Greenwich mean time</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>time</SPAN>
+<SPAN CLASS=INDEX.KEY>Greenwich mean time</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>time</SPAN>
+<SPAN CLASS=INDEX.KEY>Date interface</SPAN>
+<SPAN CLASS=INDEX.TEXT>&lt;TT&gt;Date&lt;/TT&gt; interface</SPAN>
+</SPAN>
+
 *)
 
 INTERFACE Date;
@@ -76,6 +112,6 @@ END Date.
    keep local time instead of UTC, and typically don't record the
    identity of the local time zone.  On such a system, "FromTime(t,
    Local)" always returns a result with "offset" equal to zero and
-   "zone" equal to {\tt \char'42[Unknown zone]\char'42}, and "UTC" is
+   "zone" equal to <TT>&#42;[Unknown zone]&#42;</TT>, and "UTC" is
    "NIL".
 *)

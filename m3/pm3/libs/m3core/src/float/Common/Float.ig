@@ -11,7 +11,7 @@
    specification of the procedures.  Non-IEEE implementations that
    have values similar to NaNs and infinities should explain how those
    values behave in an implementation guide. (NaN is an IEEE term
-   whose informal meaning is ``not a number''.) *)
+   whose informal meaning is "not a number".) *)
 
 GENERIC INTERFACE Float(R);
 
@@ -20,17 +20,19 @@ IMPORT FloatMode;
 TYPE T = R.T;
 
 PROCEDURE Scalb(x: T; n: INTEGER): T RAISES {FloatMode.Trap};
-(* Return $\hbox"x"\cdot 2^{\hbox"n"}$. *)
+(* Return <MATH>x..<MSUP><MI>2</MI><MI>n</MI></MSUP></MATH>. *)
 
 PROCEDURE Logb(x: T): T RAISES {FloatMode.Trap};
 (* Return the exponent of "x".  More precisely, return the unique
-   integer $n$ such that the ratio $\hbox"ABS(x) / Base"^{n}$ is in
+   integer "n" such that the ratio <MATH><MFRAC><MI>ABS(x)</MI>
+   <MROW><MSUP><MI>Base</MI><MI>n</MI></MSUP></MROW></MFRAC></MATH> is in
    the half-open interval "[1..Base)", unless "x" is denormalized, in
    which case return the minimum exponent value for "T". *)
 
 PROCEDURE ILogb(x: T): INTEGER;
 (* Like "Logb", but returns an integer, never raises an exception, and
-   always returns the $n$ such that $\hbox"ABS(x) / Base"^{n}$ is in
+   always returns the "n" such that ABS(x) / 
+   <MATH><MSUP><MI>Base</MI><MI>n</MI></MSUP></MATH> is in
    the half-open interval "[1..Base)", even for denormalized numbers.
    Special cases: it returns "FIRST(INTEGER)" when "x" = 0.0,
    "LAST(INTEGER)" when "x" is plus or minus infinity, and zero when
@@ -55,7 +57,10 @@ PROCEDURE IsNaN(x: T): BOOLEAN;
    "TRUE" if x is a NaN, "FALSE" otherwise. *)
 
 (*
-\index{NaN (not a number)}
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>NaN (not a number)</SPAN>
+</SPAN>
+
 *)
 
 
@@ -65,12 +70,12 @@ PROCEDURE Sign(x: T): [0..1];
    "Sign(-0) = 1" and "Sign(+0) = 0". *)
 
 PROCEDURE Differs(x, y: T): BOOLEAN;
-(* Return "(x < y OR y < x)".  Thus, for IEEE implementations,
+(* Return "(x &lt; y OR y &lt; x)".  Thus, for IEEE implementations,
    "Differs(NaN,x)" is always "FALSE"; for non-IEEE implementations,
    "Differs(x,y)" is the same as "x # y". *)
     
 PROCEDURE Unordered(x, y: T): BOOLEAN;
-(* Return "NOT (x <= y OR y <= x)". Thus, for IEEE implementations,
+(* Return "NOT (x &lt;= y OR y &lt;= x)". Thus, for IEEE implementations,
    "Unordered(NaN, x)" is always "TRUE"; for non-IEEE implementations,
    "Unordered(x, y)" is always "FALSE".
 *)
@@ -92,8 +97,16 @@ PROCEDURE FromDecimal(
     exp: INTEGER): T RAISES {FloatMode.Trap};
 (* Convert from floating-decimal to type "T". *)
 
-(* \index{floating-point!conversion from decimal}
-   \index{decimal conversion!to floating-point}
+(* <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>floating-point</SPAN>
+<SPAN CLASS=INDEX.KEY>conversion from decimal</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>decimal conversion</SPAN>
+<SPAN CLASS=INDEX.KEY>to floating-point</SPAN>
+</SPAN>
+
 
    Let "F" denote the nonnegative, floating-decimal number
 
@@ -121,8 +134,16 @@ TYPE DecimalApprox = RECORD
 PROCEDURE ToDecimal(x: T): DecimalApprox;
 (* Convert from type "T" to floating-decimal. *)
 
-(* \index{floating-point!conversion to decimal}
-   \index{decimal conversion!from floating-point}
+(* <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>floating-point</SPAN>
+<SPAN CLASS=INDEX.KEY>conversion to decimal</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>decimal conversion</SPAN>
+<SPAN CLASS=INDEX.KEY>from floating-point</SPAN>
+</SPAN>
+
 
    Let "D" denote "ToDecimal(x)".  Then, "D.class = Class(x)" and
    "D.sign = Sign(x)".  The other fields are defined only when
@@ -169,10 +190,13 @@ PROCEDURE ToDecimal(x: T): DecimalApprox;
 
    The idea of converting to decimal by retaining just as many digits
    as are necessary to convert back to binary exactly was popularized
-   by Guy L.~Steele Jr.\ and Jon L White~\cite{Steele}.  David M.~Gay
+   by Guy L.&nbsp;Steele Jr. and Jon L White
+   <A REL=BIB.ENTRY HREF="../../../../html/references.html#Steele">[Steele]
+   </A>. David M. Gay
    pointed out the importance, in this context, of demanding that the
    conversion to binary handle mid-point cases by a known
-   rule~\cite{Gay}.  For example, in IEEE double precision, the
+   rule <A REL=BIB.ENTRY HREF="../../../../html/references.html#Gay"> [Gay] 
+   </A>.  For example, in IEEE double precision, the
    floating-decimal number "1e23" is precisely halfway between two
    adjacent floating-binary numbers.  If conversion to binary were
    allowed to go either way in such a mid-point case, conversion to

@@ -34,9 +34,13 @@ TYPE T = OBJECT head: Elem.T; tail: T END;
 
 (* None of the operations of this interface modify the "head" field of
    an existing list element.  Operations that may modify the "tail"
-   field of existing list elements are called {\it destructive}.  By
+   field of existing list elements are called <I>destructive</I>.  By
    convention, their names end in "D".
-   \index{naming conventions!destructive list operations}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>naming conventions</SPAN>
+<SPAN CLASS=INDEX.KEY>destructive list operations</SPAN>
+</SPAN>
+
 *)
 
 PROCEDURE Cons(READONLY head: Elem.T; tail: T): T;

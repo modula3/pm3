@@ -7,6 +7,7 @@
 %      modified on Fri May  7 14:59:36 PDT 1993 by muller
 
 Generic_interface ("Float")
+HtmlGenericInterface("Float")
 
 Interface ("RealFloat")
 Interface ("LongFloat")

@@ -9,8 +9,15 @@
 
 (*
   "RTType" provides access to the runtime type system.
-  \index{runtime type}
-  \index{type!runtime}
+  <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>runtime type</SPAN>
+</SPAN>
+
+  <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>type</SPAN>
+<SPAN CLASS=INDEX.KEY>runtime</SPAN>
+</SPAN>
+
 
   Each reference type is assigned a unique typecode.  A typecode is
   ``proper'' if it lies in the range "[0..MaxTypecode()]".  The proper

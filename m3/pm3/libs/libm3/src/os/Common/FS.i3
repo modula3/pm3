@@ -5,7 +5,10 @@
 
 (* The "FS" interface provides persistent storage (files) and naming
    (directories).
-   \index{directory}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>directory</SPAN>
+</SPAN>
+
 *)
 
 INTERFACE FS;
@@ -20,7 +23,11 @@ PROCEDURE GetAbsolutePathname(p: Pathname.T): Pathname.T
 (* The new pathname will not involve any symbolic links or relative
    arcs (that is, occurrences of "Pathname.Parent" or
    "Pathname.Current".
-   \index{absolute pathname!from relative pathname}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>absolute pathname</SPAN>
+<SPAN CLASS=INDEX.KEY>from relative pathname</SPAN>
+</SPAN>
+
    *)
 
 (* The procedures "OpenFile" and "OpenFileReadonly" look up a pathname
@@ -65,14 +72,21 @@ PROCEDURE OpenFile(
    default value, with possible restrictions determined by the value
    of "access":
 
-   \begin{description}
-   \item["OnlyOwnerCanRead"] read access is allowed only by this user
-   \item["ReadOnly"] write access is allowed to no one (except via the
+   <DL>
+   <DT>"OnlyOwnerCanRead"<DD> read access is allowed only by this user
+   <DT>"ReadOnly"<DD> write access is allowed to no one (except via the
                      "File.T" returned by this call of "OpenFile")
-   \item["Default"] the default applies with no restrictions.
-   \end{description}
-   \index{creating a file}
-   \index{file!creation}
+   <DT>"Default"<DD> the default applies with no restrictions.
+   </DL>
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>creating a file</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>file</SPAN>
+<SPAN CLASS=INDEX.KEY>creation</SPAN>
+</SPAN>
+
 
    A newly-created file "f" has
 
@@ -147,7 +161,7 @@ TYPE
   END;
 
 VAR (*CONST*) DirectoryFileType: File.Type;
-(* Equal to {\tt Atom.FromText(\char'42Directory\char'42).} *)
+(* Equal to <TT>Atom.FromText(&#42;Directory&#42;).</TT> *)
 
 PROCEDURE Iterate(p: Pathname.T): Iterator
   RAISES {OSError.E};

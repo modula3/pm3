@@ -7,9 +7,18 @@
 (*|      modified on Wed Jul 3 04:15:39 1991 by muller      *)
 
 (* "RTAllocator" provides access to the runtime storage allocator.
-   \index{allocator}
-   \index{storage allocator}
-   \index{heap}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>allocator</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>storage allocator</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>heap</SPAN>
+</SPAN>
+
 *)
 
 INTERFACE RTAllocator;

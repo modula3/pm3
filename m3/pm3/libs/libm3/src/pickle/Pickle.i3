@@ -3,7 +3,7 @@
 (* Last modified on Wed Feb 10 16:25:53 1993 by birrell *)
 (*      modified on Tue Dec  8 11:32:52 1992 by gnelson *)
 
-(* A {\it pickle} is a representation of a Modula-3 value as 
+(* A <I>pickle</I> is a representation of a Modula-3 value as 
    a stream of bytes.  Writing a value as a pickle and 
    then reading it back produces a value ``equivalent'' to the 
    original value, in the sense that the value's non-ref 
@@ -107,12 +107,12 @@ PROCEDURE Read(rd: Rd.T): REFANY
 (* Most people should go no further.  The remainder of the 
    interface allows you to customize the pickling and unpickling
    of selected types.  There are two ways of doing this: you
-   can override the methods of objects called {\it pickle writers}
-   and {\it pickle readers}, or you can register {\it specials}
+   can override the methods of objects called <I>pickle writers</I>
+   and <I>pickle readers</I>, or you can register <I>specials</I>
    for particular types.  Several examples are presented
    after the end of the interface.
 
-   \paragraph{Pickle writers and readers.}
+   <H4> Pickle writers and readers. </H4>
    A "Pickle.Writer" is an object whose "write" method writes
    pickles to the writer stored in its "wr" data field.  
    You can override the "write" method to produce special
@@ -147,21 +147,21 @@ TYPE
 
    The default method "w.write(r)" behaves as follows:
 
-\begin{itemize}
-\item If "r=NIL", write a representation of "NIL" on "w.wr".
+<UL>
+<LI>If "r=NIL", write a representation of "NIL" on "w.wr".
 
-\item Otherwise if "r" has been previously written to the 
+<LI>Otherwise if "r" has been previously written to the 
       current pickle, write the index of "r" in this pickle 
       on "w.wr".
 
-\item Otherwise, find the "Special" (as defined below) for 
+<LI>Otherwise, find the "Special" (as defined below) for 
       the closest supertype of "r"'s allocated type for 
       which a special has been registered. Let "sp" be this 
       special (note that there always is such a special, since
       the implementation registers a special for "REFANY"). Call
       "writeType(sp.sc)", then write a representation of
       "TYPECODE(r)", then invoke "sp.write(r, w)".   
-\end{itemize}
+</UL>
 
    The call "w.writeType(tc)" writes bytes on w.wr to represent
    the type "tc" in a program-independent fashion. These bytes
@@ -215,15 +215,15 @@ TYPE
 
    The default method "r.read(r)" behaves as follows:
 
-\begin{itemize}
-\item If "r.rd" contains a representation of "NIL", consume those 
+<UL>
+<LI>If "r.rd" contains a representation of "NIL", consume those 
       bytes and return "NIL".
 
-\item Otherwise, if "r.rd" contains the index of a previously 
+<LI>Otherwise, if "r.rd" contains the index of a previously 
       read value in this pickle, consume those bytes and return
       that value.
 
-\item Otherwise compute "sc = readType()", and proceed as follows.
+<LI>Otherwise compute "sc = readType()", and proceed as follows.
       Find the registered special 
       "sp" (as defined below) whose "sp.sc" field equals "sc".  
       Read the representation of a type code "ac" from "r.rd".  
@@ -232,7 +232,7 @@ TYPE
       "r.noteRef(result, id)", and return the result.   Note that
       in the default case "sp" will be "RootSpecial()", defined
       below. 
-\end{itemize}
+</UL>
 
    In order to implement the second case above, the "Pickle.Reader"
    maintains a table mapping indexes to references.  In simple cases
@@ -273,7 +273,7 @@ TYPE
 
 | RETURN NEW(Reader, rd := rd).read();
 
-\paragraph{Specials.}
+<H4> Specials. </H4>
    Specials provide for customized pickling of specified data 
    types on every call of "read" or "write" in this process.  A
    client can achieve this effect for individual calls of "read"
@@ -285,16 +285,16 @@ TYPE
    methods are the default methods of the type "Special".   There
    are three constraints on the methods of a special:
 
-\begin{itemize}
-\item  the methods must leave the "Rd.T" or "Wr.T" positioned
+<UL>
+<LI>the methods must leave the "Rd.T" or "Wr.T" positioned
        after the last byte read or written;
 
-\item  the "read" method must consume the number of bytes written
+<LI>the "read" method must consume the number of bytes written
        by the "write" method;
 
-\item  the "read" method must produce a value equivalent to the
+<LI>the "read" method must produce a value equivalent to the
        one that was given to the "write" method.
-\end{itemize}
+</UL>
 
   If these rules are violated, the result could be either a
   checked runtime error or an invalid result from reading a
@@ -387,7 +387,7 @@ PROCEDURE ReRegisterSpecial(sp: Special);
    
 END Pickle.
 
-(* \paragraph{Examples.}  For example, suppose you
+(* <H4> Examples. </H4>  For example, suppose you
 are writing a pickle that contains many references of
 type "TEXT", and you want to modify the pickling process
 so that any texts that are "Text.Equal" will share storage.

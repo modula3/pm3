@@ -23,7 +23,7 @@ TYPE
   Origin = {Beginning, Current, End};
 
 VAR (*CONST*) FileType: File.Type;
-(* Equal to {\tt Atom.FromText(\char'42RegularFile\char'42).} *)
+(* Equal to <TT>Atom.FromText(&#42;RegularFile&#42;).</TT> *)
 
 END RegularFile.
 

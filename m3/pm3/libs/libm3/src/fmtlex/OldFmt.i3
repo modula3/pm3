@@ -78,7 +78,7 @@ PROCEDURE F(fmt: Text.T; t1, t2, t3, t4, t5: Text.T := NIL): Text.T RAISES {};
    field width, padding character and alignment.
 
    The syntax of a format specifier is:
-     %[-]{0-9}s
+     %[-]0-9s
    i.e. a percent character followed by an optional '-', an optional number
    and a compulsory terminating 's'.
 
@@ -132,7 +132,7 @@ PROCEDURE FN(fmt: Text.T; READONLY texts: ARRAY OF Text.T): Text.T RAISES {};
 
    Example:
      FN("%s %s %s %s %s %s %s",
-         Text.Array{"Too", "many", "arguments", "for", "F", "to", "handle"})
+         Text.Array"Too", "many", "arguments", "for", "F", "to", "handle")
    returns "Too many arguments for F to handle"
 *)
 

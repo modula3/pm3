@@ -8,8 +8,15 @@
 
 (* An "Atom.T" is a unique representative for a set of equal texts
    (like a Lisp atomic symbol)
-   \index{atomic symbol}
-   \index{symbolic expression!atom}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>atomic symbol</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>symbolic expression</SPAN>
+<SPAN CLASS=INDEX.KEY>atom</SPAN>
+</SPAN>
+
 *)
 
 INTERFACE Atom;

@@ -10,8 +10,15 @@
 
 (* The "Fmt" interface provides procedures for formatting numbers and
    other data as text.
-   \index{writing formatted data}
-   \index{formatted data!writing}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>writing formatted data</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>formatted data</SPAN>
+<SPAN CLASS=INDEX.KEY>writing</SPAN>
+</SPAN>
+
 *)
 
 INTERFACE Fmt;
@@ -19,7 +26,7 @@ INTERFACE Fmt;
 IMPORT Word, Real AS R, LongReal AS LR, Extended AS ER;
 
 PROCEDURE Bool(b: BOOLEAN): TEXT;
-(* Format "b" as {\tt \char'42TRUE\char'42} or  {\tt \char'42FALSE\char'42}. *)
+(* Format "b" as <TT>&#42;TRUE&#42;</TT> or  <TT>&#42;FALSE&#42;</TT>. *)
 
 PROCEDURE Char(c: CHAR): TEXT;
 (* Return a text containing the character "c". *)
@@ -61,20 +68,26 @@ PROCEDURE Extended(
 
 (*
 
-\paragraph*{Overview.}
+<H4> Overview. </H4>
 
    "Style.Sci" gives scientific notation with fields padded to fixed
    widths, suitable for making a table.  The parameter "prec"
    specifies the number of digits after the decimal point---that is,
    the relative precision.
-   \index{scientific notation}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>scientific notation</SPAN>
+</SPAN>
+
 
    "Style.Fix" gives fixed point, with "prec" once again specifying
    the number of digits after the decimal point---in this case, the
    absolute precision.  The results of "Style.Fix" have varying
    widths, but they will form a table if they are right-aligned (using
    "Fmt.Pad") in a sufficiently wide field.
-   \index{fixed-point notation}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>fixed-point notation</SPAN>
+</SPAN>
+
 
    "Style.Auto" is not intended for tables.  It gives scientific
    notation with at most "prec" digits after the decimal point for
@@ -91,11 +104,11 @@ PROCEDURE Extended(
    the result a legal Modula-3 literal of the appropriate type.
 
 
-\paragraph*{Accuracy.}
+<H4> Accuracy. </H4>
 
    As discussed in the "Float" interface, the call "ToDecimal(x)"
    converts "x" to a floating-decimal number with automatic precision
-   control~\cite{Steele,Gay}: Just enough digits are retained to
+   control&nbsp;<A REL=BIB.ENTRY HREF="../html/references.html#Steele"> [Steele] </A><A REL=BIB.ENTRY HREF="../html/references.html#Gay"> [Gay] </A>: Just enough digits are retained to
    distinguish "x" from other values of type "T", which implies that
    at most "T.MaxSignifDigits" are retained.  The "Real", "LongReal",
    and "Extended" procedures format those digits as an appropriate
@@ -114,7 +127,7 @@ PROCEDURE Extended(
    all, since trailing zeros are suppressed.
 
 
-\paragraph*{Details.}
+<H4> Details. </H4>
 
    We restrict ourselves at first to those cases where "Class(x)" is
    either "Normal" or "Denormal".
@@ -156,8 +169,8 @@ PROCEDURE Extended(
 | Fmt.Real(9.997e-6, Style.Auto, prec := 2) = "0.00001"
 
    "Style.Sci" handles zero by replacing the entire exponent field by
-   blanks, for example: {\tt \char'042\char'040 0.00\char'040
-   \char'040 \char'040 \char'040 \char'042}.  "Style.Fix" renders zero
+   blanks, for example: <TT>&#042;&#040; 0.00&#040;
+   &#040; &#040; &#040; &#042;</TT>.  "Style.Fix" renders zero
    with all digits zero; for example, "\char'042 0.00\char'042".
    "Style.Auto" renders zero as "\char'042 0\char'042".  On IEEE
    implementations, the value minus zero is rendered as a negative
@@ -269,7 +282,7 @@ PROCEDURE FN(fmt: TEXT; READONLY texts: ARRAY OF TEXT)
 |   ARRAY OF TEXT{"Too", "many", "arguments",
 |     "for", "F", "to", "handle"})
 
-   returns {\tt \char'42Too many arguments for F to handle\char'42}.
+   returns <TT>&#42;Too many arguments for F to handle&#42;</TT>.
 *)
 
 <*PRAGMA SPEC *>

@@ -3,15 +3,30 @@
 (* See the file COPYRIGHT for a full description. *)
 (* Last modified on Fri Jul 15 13:45:59 PDT 1994 by mcjones *)
 
-(* A "File.T", or {\em file handle}, is a source and/or sink of bytes.
+(* A "File.T", or <EM>file handle</EM>, is a source and/or sink of bytes.
    File handles provide an operating-system independent way to perform
    raw I/O.  For buffered I/O, use the "FileRd" and "FileWr"
    interfaces instead.  A file handle is created using "OpenFile" or
    "OpenFileReadonly" in the "FS" interface.
-   \index{file!handle}
-   \index{unbuffered file I/O}
-   \index{file!unbuffered I/O}
-   \index{I/O!unbuffered}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>file</SPAN>
+<SPAN CLASS=INDEX.KEY>handle</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>unbuffered file I/O</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>file</SPAN>
+<SPAN CLASS=INDEX.KEY>unbuffered I/O</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>I/O</SPAN>
+<SPAN CLASS=INDEX.KEY>unbuffered</SPAN>
+</SPAN>
+
 *)
 
 INTERFACE File;
@@ -85,7 +100,10 @@ END File.
 | END;
 | RETURN k
 
-   \index{non-blocking read}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>non-blocking read</SPAN>
+</SPAN>
+
 
    A result of zero always means end of file.  The meaning of a
    subsequent read after end of file has been reached is undefined for

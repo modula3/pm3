@@ -79,7 +79,7 @@ PROCEDURE AlertPause(n: LONGREAL) RAISES {Alerted};
 (* Like "Pause", but if the thread is marked alerted at the time of
    the call or sometime during the wait, raise "Alerted". *)
 
-(* \paragraph*{Specifying thread stack size.} Normally "Fork" uses a
+(* <H4> Specifying thread stack size. </H4> Normally "Fork" uses a
    default value for the size of the stack of the new thread.  It is
    possible to change the default value, and also to specify the value
    used for a particular call to "Fork" by supplying a "SizedClosure"

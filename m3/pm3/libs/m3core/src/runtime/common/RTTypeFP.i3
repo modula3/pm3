@@ -8,8 +8,16 @@
 
 (*
   "RTTypeFP" provides runtime access to type fingerprints.
-  \index{fingerprint!of type}
-  \index{type!fingerprint of}
+  <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>fingerprint</SPAN>
+<SPAN CLASS=INDEX.KEY>of type</SPAN>
+</SPAN>
+
+  <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>type</SPAN>
+<SPAN CLASS=INDEX.KEY>fingerprint of</SPAN>
+</SPAN>
+
 
   A type's fingerprint is a 64-bit checksum computed from its declaration.
   The probability of distinct types having the same fingerprint is very

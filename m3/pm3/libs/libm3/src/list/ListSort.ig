@@ -7,7 +7,11 @@
 
 (* The generic interface "ListSort" extends the generic interface
    "List" with sorting operations.
-   \index{sorting!lists}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>sorting</SPAN>
+<SPAN CLASS=INDEX.KEY>lists</SPAN>
+</SPAN>
+
  *)
 
 GENERIC INTERFACE ListSort(Elem, ElemList);

@@ -7,8 +7,15 @@
 (*|      modified on Wed Jul  3 04:15:39 1991 by muller         *)
 
 (* "RTCollector" provides control over the Modula-3 garbage collector.
-   \index{collector}
-   \index{garbage collector!control over}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>collector</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>garbage collector</SPAN>
+<SPAN CLASS=INDEX.KEY>control over</SPAN>
+</SPAN>
+
 *)
 
 INTERFACE RTCollector;
@@ -18,8 +25,8 @@ INTERFACE RTCollector;
    very long without a collector.  Even so, automatic garbage
    collection has some practical drawbacks.
 
-   \begin{enumerate}
-   \item
+   <OL>
+   <LI>
 
       The collector might move heap nodes to different addresses.  This is
       usually unnoticable to programs, but can cause problems when programs
@@ -28,33 +35,33 @@ INTERFACE RTCollector;
       "x^".  There are two main cases when programs must work with
       such addresses.
 
-      \begin{enumerate}
-      \item
+      <OL>
+      <LI>
 
          To implement hash tables, etc.
 
-      \item
+      <LI>
 
          To pass addresses to procedures written in other languages,
          which is inherently unportable.
 
-      \end{enumerate}
+      </OL>
 
-   \item
+   <LI>
 
       Unsafe code can put the traced heap temporarily into an
       inconsistent state.  If the collector happens to run then, it
       might delete nodes that seem unreachable but that in fact are
       accessible.  Of course, unsafe code itself is inherently unportable.
 
-   \end{enumerate}
+   </OL>
 
    This interface allows the program to control the Modula-3 collector
    to avoid such problems, as well as to pass hints to improve
    performance. *)
 
 (*
-\paragraph*{Disabling the collector.}
+<H4> Disabling the collector. </H4>
 
    The collector is initially enabled; the collector can reclaim
    storage, and move nodes in memory.  While the collector is
@@ -72,7 +79,7 @@ PROCEDURE Enable();
    than "Disable". *)
 
 (*
-\paragraph*{Disabling motion.}
+<H4> Disabling motion. </H4>
 
    Disabling motion gives fewer guarantees than disabling the
    collector; while motion is disabled, it is guaranteed only that no
@@ -91,7 +98,7 @@ PROCEDURE EnableMotion();
    more times than "DisableMotion". *)
 
 (*
-\paragraph*{Collecting.}
+<H4> Collecting. </H4>
 
    Calling "Collect" is a hint from the program that now would be a
    good time for a collection (for example, if a large amount of
@@ -105,7 +112,7 @@ PROCEDURE Collect();
 END RTCollector.
 
 (*
-\paragraph*{Implementation notes.}
+<H4> Implementation notes. </H4>
 
    This section describes the implementation of the SRC Modula-3
    collector, as a guide to SRC Modula-3 programmers and as an
@@ -116,7 +123,11 @@ END RTCollector.
    The SRC Modula-3 collector is an incremental, generational,
    conservative mostly-copying collector that uses VM protection on
    heap pages to be notified of certain heap accesses.
-   \index{garbage collector!properties of}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>garbage collector</SPAN>
+<SPAN CLASS=INDEX.KEY>properties of</SPAN>
+</SPAN>
+
 
    Because the SRC collector is conservative, an inaccessible node may
    be considered reachable if a bit-pattern either on a thread's stack
@@ -148,12 +159,19 @@ END RTCollector.
    performs a total collection before returning to the caller.
 
    The "@M3nogc" flag performs an initial call to "Disable".
-   \index{{\tt \char'100{}M3nogc} command-line flag}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>{\tt \char'100{}M3nogc} command-line flag</SPAN>
+</SPAN>
+
 
    The SRC collector also supports additional operations for
    controlling the frequency of collection, disabling and reenabling
    incremental and generational collection, reporting on collector
    performance, and so on.  These operations are accessible through the
    implementation-dependent "RTCollectorSRC" interface.
-   \index{RTCollectorSRC interface@{\tt RTCollectorSRC} interface}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>RTCollectorSRC interface</SPAN>
+<SPAN CLASS=INDEX.TEXT>&lt;TT&gt;RTCollectorSRC&lt;/TT&gt; interface</SPAN>
+</SPAN>
+
 *)

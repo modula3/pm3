@@ -14,7 +14,7 @@ IMPORT File;
 TYPE T <: File.T;
 
 VAR (*CONST*) FileType: File.Type;
-(* Equal to {\tt Atom.FromText(\char'42Terminal\char'42).} *)
+(* Equal to <TT>Atom.FromText(&#42;Terminal&#42;).</TT> *)
 
 END Terminal.
 

@@ -19,7 +19,7 @@ CONST
 
 (* Given the constants above, we have the following mapping for
    special characters that may appear in a text:
-
+<PRE><TT>
   encoded   decoded
     \\        \
     \'        '
@@ -31,6 +31,7 @@ CONST
     \0xx      0xx        where 0xx is an octal 000..077.
     \1xx      1xx        where 1xx is an octal 100..177.
     \x        x          where x is any other character.
+</TT></PRE>
 *)
 
 (* Summary.

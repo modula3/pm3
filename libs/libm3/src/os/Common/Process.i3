@@ -38,29 +38,62 @@ PROCEDURE Create(
    process (because "Params.Get(0)" returns the command name).  (See
    the "Params" interface for the way SRC Modula-3 treats parameters
    beginning with the characters "@M3".)
-   \index{parameters of a process}
-   \index{process!parameters}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>parameters of a process</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>process</SPAN>
+<SPAN CLASS=INDEX.KEY>parameters</SPAN>
+</SPAN>
+
 
    If "env" is not "NIL", it consists of a reference to an array of
    texts that must have the form "name=value".  If "env" is "NIL", it
    defaults to the environment variables of the caller's process.  A
    process can examine its own environment variables via the interface
    "Env".
-   \index{environment variables}
-   \index{process!environment variables}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>environment variables</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>process</SPAN>
+<SPAN CLASS=INDEX.KEY>environment variables</SPAN>
+</SPAN>
+
 
    If "wd" is "NIL", it defaults to the working directory of the
    caller's process.
-   \index{working directory}
-   \index{process!working directory}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>working directory</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>process</SPAN>
+<SPAN CLASS=INDEX.KEY>working directory</SPAN>
+</SPAN>
+
 
    If any of "stdin", "stdout", or "stderr" are "NIL", the
    corresponding file handle of the new process is "NIL".  A process
    can obtain its own standard file handles by calling the procedure
    "GetStandardFileHandles" defined later in this interface.
-   \index{standard I/O!file handles}
-   \index{process!standard I/O handles}
-   \index{I/O!standard handles}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>standard I/O</SPAN>
+<SPAN CLASS=INDEX.KEY>file handles</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>process</SPAN>
+<SPAN CLASS=INDEX.KEY>standard I/O handles</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>I/O</SPAN>
+<SPAN CLASS=INDEX.KEY>standard handles</SPAN>
+</SPAN>
+
 
    The sharing established by passing a "File.T" to a new process
    requires care.  For example, seeks done by either process affect
@@ -68,7 +101,7 @@ PROCEDURE Create(
    underlying channel.  See the end of this interface for an example
    of using "Create" with pipes.
 
-   \paragraph*{POSIX.} "Create" forks a child process, which executes
+   <H4> POSIX. </H4> "Create" forks a child process, which executes
    the specified command.  If "cmd" consists of a single (relative)
    arc name, "Create" searches each of the directories specified by
    the PATH environment variable for a file named "cmd" that is
@@ -77,7 +110,7 @@ PROCEDURE Create(
    process executes "/bin/sh" with the original arguments prefixed by
    the pathname determined earlier.
 
-   \paragraph*{Win32.} "Create" calls "Win32.CreateProcess".  If "cmd"
+   <H4> Win32. </H4> "Create" calls "Win32.CreateProcess".  If "cmd"
    consists of a single (relative) arc name, "Win32.CreateProcess"
    first appends ".EXE" if "cmd" includes neither an extension nor a
    final period, and then searches for this name in the following
@@ -99,10 +132,10 @@ PROCEDURE Wait(p: T): ExitCode;
    checked runtime error to call "Wait" twice on the same process
    handle. *)
 
-(* \paragraph*{POSIX.} The value returned by "Wait" is equal to the
+(* <H4> POSIX. </H4> The value returned by "Wait" is equal to the
    "status" result of the "wait" system call.
 
-   \paragraph*{Win32.} The value returned by "Wait" is "c MOD
+   <H4> Win32. </H4> The value returned by "Wait" is "c MOD
    (LAST(ExitCode) + 1)" where "c" is the value returned by
    "Win32.GetExitCodeProcess". *)
 
@@ -111,7 +144,10 @@ PROCEDURE Exit(n: ExitCode := 0);
    code "n".  Terminating a Modula-3 program by ``falling off the
    end'' is equivalent to calling "Exit(0)". *)
 
-(* \index{terminating execution} *)
+(* <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>terminating execution</SPAN>
+</SPAN>
+ *)
 
 PROCEDURE Crash(msg: TEXT);
 (* Call the registered exitors and terminate the program with the
@@ -149,7 +185,11 @@ CONST NullID: ID = 0;
 PROCEDURE GetID(p: T): ID;
 (* Return the process identifier of the process with handle "p". *)
 
-(* \index{process!identifier} *)
+(* <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>process</SPAN>
+<SPAN CLASS=INDEX.KEY>identifier</SPAN>
+</SPAN>
+ *)
 
 PROCEDURE GetMyID(): ID;
 (* Return the process identifier of the caller's process. *)
@@ -159,9 +199,21 @@ PROCEDURE GetStandardFileHandles(
 (* Return the standard input/output handles that were supplied when
    this process was created. *)
 
-(* \index{standard I/O!file handles}
-   \index{process!standard I/O handles}
-   \index{I/O!standard handles}
+(* <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>standard I/O</SPAN>
+<SPAN CLASS=INDEX.KEY>file handles</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>process</SPAN>
+<SPAN CLASS=INDEX.KEY>standard I/O handles</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>I/O</SPAN>
+<SPAN CLASS=INDEX.KEY>standard handles</SPAN>
+</SPAN>
+
 *)
 
 
@@ -170,8 +222,15 @@ PROCEDURE GetWorkingDirectory(): Pathname.T
 (* Return an absolute pathname for the working directory of the
    caller's process. *)
 
-(* \index{working directory}
-   \index{process!working directory}
+(* <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>working directory</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>process</SPAN>
+<SPAN CLASS=INDEX.KEY>working directory</SPAN>
+</SPAN>
+
 *)
 
 PROCEDURE SetWorkingDirectory(path: Pathname.T)
@@ -180,7 +239,7 @@ PROCEDURE SetWorkingDirectory(path: Pathname.T)
 
 END Process.
 
-(* \paragraph*{Example.} A typical use of "Create" is to run a filter
+(* <H4> Example. </H4> A typical use of "Create" is to run a filter
    process that reads from standard input and writes a transformed
    version to standard output.  The first step is to create two sets
    of pipes to carry the standard input and standard output of the new

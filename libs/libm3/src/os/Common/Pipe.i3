@@ -15,7 +15,7 @@ IMPORT File, OSError;
 TYPE T <: File.T;
 
 VAR (*CONST*) FileType: File.Type;
-(* Equal to {\tt Atom.FromText(\char'42Pipe\char'42).} *)
+(* Equal to <TT>Atom.FromText(&#42;Pipe&#42;).</TT> *)
 
 PROCEDURE Open(VAR (*OUT*) hr, hw: T) RAISES {OSError.E};
 (* Create a new channel allowing bytes written to "hw" to be read from

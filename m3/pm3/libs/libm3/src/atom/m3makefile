@@ -6,4 +6,5 @@
 %      modified on Mon Jun  8 16:01:57 PDT 1992 by mcjones
 
 Module("Atom")
+HtmlInterface("Atom")
 % implementation("AtomWeak")

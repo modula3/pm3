@@ -9,4 +9,9 @@
 Interface ("Time")
 Interface ("Tick")
 Interface ("Date")
+HtmlInterface ("Time")
+HtmlInterface ("Tick")
+HtmlInterface ("Date")
 Module ("FmtTime")
+
+

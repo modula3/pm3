@@ -7,9 +7,18 @@
 (*|      modified on Wed Jul  3 04:15:39 1991 by muller         *)
 
 (* "RTHeap" provides access to the layout of data on the heap.
-   \index{heap}
-   \index{storage allocator}
-   \index{allocator}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>heap</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>storage allocator</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>allocator</SPAN>
+</SPAN>
+
 *)
 
 (* Each referent on the heap, and the heap data record for each object, is

@@ -6,6 +6,7 @@
 %      modified on Tue Feb 11 16:32:02 PST 1992 by muller
 %
 
+HtmlInterface("Fingerprint")
 Module("Fingerprint")
 Module("Poly")
 module("PolyBasis")

@@ -10,8 +10,15 @@
 
 (* This interface provides access to the environment variables given
    to a process when it is started (see "Process.Create").
-   \index{environment variables}
-   \index{process!environment variables}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>environment variables</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>process</SPAN>
+<SPAN CLASS=INDEX.KEY>environment variables</SPAN>
+</SPAN>
+
 *)
 
 INTERFACE Env;

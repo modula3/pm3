@@ -9,3 +9,5 @@
 
 Module ("Env")
 Module ("Params")
+HtmlInterface("Params")
+HtmlInterface("Env")

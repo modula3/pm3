@@ -13,3 +13,5 @@ Module("TextExtras")
 Interface("TextF")
 implementation("UnsafeHash")
 Module("TextConv")
+
+HtmlInterface("Text")

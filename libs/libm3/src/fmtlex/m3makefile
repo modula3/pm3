@@ -17,3 +17,6 @@ Interface ("FmtBufTest")
 Module ("OldFmt")
 Module ("OldLex")
 Module ("OldScan")
+
+HtmlInterface("Lex")
+HtmlInterface("Fmt")

@@ -5,8 +5,14 @@
 
 (* "OSError.E" is an exception raised by a number of operating system
    interfaces such as "File", "FS", and "Process".
-   \index{errors, operating system}
-   \index{operating system errors}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>errors, operating system</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>operating system errors</SPAN>
+</SPAN>
+
 *)
 
 INTERFACE OSError;

@@ -7,8 +7,17 @@
 
 (* A "Time.T" represents a moment in time, reckoned as a number of
    seconds since some epoch or starting point.
-   \index{time!of day}
-   \index{time!Time interface@{\tt Time} interface}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>time</SPAN>
+<SPAN CLASS=INDEX.KEY>of day</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>time</SPAN>
+<SPAN CLASS=INDEX.KEY>Time interface</SPAN>
+<SPAN CLASS=INDEX.TEXT>&lt;TT&gt;Time&lt;/TT&gt; interface</SPAN>
+</SPAN>
+
 *)
 
 INTERFACE Time;
@@ -36,7 +45,10 @@ END Time.
    Date.UTC)".  Note that communicating a "Time.T" between systems,
    say via remote procedure call or pickles, is likely to be a bad
    idea.
-   \index{epoch}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>epoch</SPAN>
+</SPAN>
+
 
    In many computers, "Time.Now" is implemented with the technology 
    of an inexpensive wristwatch, and is therefore likely to suffer 

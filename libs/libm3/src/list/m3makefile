@@ -10,6 +10,8 @@
 
 Generic_module("List")
 Generic_module("ListSort")
+HtmlGenericInterface("List")
+HtmlGenericInterface("ListSort")
 
 template ("list")
 

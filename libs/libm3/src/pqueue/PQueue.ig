@@ -33,7 +33,7 @@ TYPE
     priority: Priority.T
   END;
 
-(* A "PQueue.Elt" is an {\it element\/} of a priority queue. Every element
+(* A "PQueue.Elt" is an <I>element</I> of a priority queue. Every element
    "elt" has a priority "elt.priority". *)
 
 EXCEPTION Empty; NotInQueue;

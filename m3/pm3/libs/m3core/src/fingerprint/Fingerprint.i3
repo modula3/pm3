@@ -11,10 +11,13 @@
    provides procedures that can be used to fingerprint
    text strings or more general data structures, such as 
    graphs.
-   \index{checksum}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>checksum</SPAN>
+</SPAN>
+
 
    The interface is based on the original idea of M. O. Rabin
-   \cite{Rabin}, as refined by Andrei Broder \cite{Broder}. *)
+   <A REL=BIB.ENTRY HREF="../../../libm3/src/html/references.html#Rabin"> [Rabin] </A>, as refined by Andrei Broder <A REL=BIB.ENTRY HREF="../../../libm3/src/html/references.html#Broder"> [Broder] </A>. *)
 
 INTERFACE Fingerprint;
 
@@ -62,31 +65,31 @@ PROCEDURE Hash(READONLY fp: T): INTEGER;
 
 END Fingerprint.
 
-(* \paragraph{The probabilistic guarantee.}
+(* <H4> The probabilistic guarantee. </H4>
 
 The fingerprint module produces a provably secure checksum.
 To explain exactly what this means requires a few definitions.
 
-Define a {\it nest} to be a text string or an ordered 
+Define a <I>nest</I> to be a text string or an ordered 
 pair of two nests.  The fingerprint "FP(x)" of a nest "x" 
 is defined as follows:
 
 | FP(x) = FromText(x) `if "x" is a text`
 | FP(x) = Combine(FP(y), FP(z)) `if "x" is a pair "(y, z)"`.
 
-Two nests "x" and "y" {\it collide} if "x # y" but 
+Two nests "x" and "y" <I>collide</I> if "x # y" but 
 "FP(x) = FP(y)".  (Two texts are equal if they
 are "Text.Equal", and two pairs are equal if their
 corresponding components are equal.  We assume that
 nests are finite and non-circular.)
 
-A nest "x" is a {\it subnest} of "y" if it occurs anywhere
+A nest "x" is a <I>subnest</I> of "y" if it occurs anywhere
 in "y"; that is, if it equals "y" or if "y" is an ordered
 pair and "x" is a subnest of one of "y"'s components.
 
-Define the {\it length} of a nest to be the sum of the
+Define the <I>length</I> of a nest to be the sum of the
 lengths of all the distinct texts that occur anywhere
-inside it, and the {\it size} of a nest to be the number 
+inside it, and the <I>size</I> of a nest to be the number 
 of distinct subnests that it has. For example, the 
 length of the nest
 
@@ -146,7 +149,7 @@ the text of the module "Fingerprint.m3", since that text contains the
 magic number as a constant, and therefore the probabilistic
 guarantee says nothing about the quality of its fingerprint.
 
-\paragraph{Example applications.}
+<H4> Example applications. </H4>
 
 Fingerprints are useful in many aspects of computer systems.  For 
 example, to determine if two long files stored on different computer 
@@ -177,7 +180,7 @@ making persistent storage typesafe.  The SRC Modula-3 runtime
 provides an interface for converting between typecodes and
 type fingerprints, for exactly this purpose.
 
-\paragraph{Fingerprinting general data structures.}
+<H4> Fingerprinting general data structures. </H4>
 
 The "Combine" function makes it convenient to fingerprint
 many data structures.  For example, consider a directed acyclic
@@ -227,7 +230,7 @@ same idea.  When designing fingerprinting algorithms for
 other data structures, it is important to remember that
 "Combine" is neither commutative nor associative.
 
-\paragraph{Pitfalls.}
+<H4> Pitfalls. </H4>
 
 The original fingerprint interface offered at SRC did not include the
 procedure "Combine".  The Vesta configuration management project built
@@ -245,7 +248,7 @@ with its size, and therefore the probabilistic
 guarantee becomes useless even for quite small DAGs.  
 
 Avoiding this error, the Vesta group computed the fingerprint
-of a node by concatenating the node's label with the {\it fingerprints}
+of a node by concatenating the node's label with the <I>fingerprints</I>
 of its children---treating these fingerprints as 8-byte texts---
 and fingerprinted the resulting text.  With this strategy, the
 number of texts fingerprinted is proportional to the number of

@@ -10,4 +10,4 @@
 
 Interface	("Thread")
 Interface	("Scheduler")
-
+HtmlInterface   ("Thread")

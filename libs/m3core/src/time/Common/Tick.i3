@@ -6,9 +6,21 @@
 (* A "Tick.T" represents a value of a clock with subsecond resolution.
    The exact resolution differs from implementation to implementation
    and is typically one sixtieth of a second or smaller.
-   \index{time!elapsed}
-   \index{elapsed time}
-   \index{time!Tick interface@{\tt Tick} interface}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>time</SPAN>
+<SPAN CLASS=INDEX.KEY>elapsed</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>elapsed time</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>time</SPAN>
+<SPAN CLASS=INDEX.KEY>Tick interface</SPAN>
+<SPAN CLASS=INDEX.TEXT><TT>Tick</TT> interface</SPAN>
+</SPAN>
+
 *)
 
 INTERFACE Tick;
@@ -33,7 +45,8 @@ PROCEDURE FromSeconds(s: LONGREAL): Word.T RAISES {Overflow};
 END Tick.
 
 (* If "t0" is a reading of the tick clock and "t1" is another reading
-   taken less than $\hbox"2"^{\hbox"Word.Size"}$ ticks after "t0",
+   taken less than <MATH><MSUP><MI>2</MI><MI>Word.Size</MI></MSUP></MATH>
+   ticks after "t0",
    then the number of ticks between "t0" and "t1" is "Word.Minus(t1,
    t0)".
 

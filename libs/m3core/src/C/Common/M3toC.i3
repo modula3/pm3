@@ -24,7 +24,7 @@ PROCEDURE FreeCopiedS(s: Ctypes.char_star);
 
 PROCEDURE TtoS(t: TEXT): Ctypes.char_star;
 (* Return a null-terminated C string with the same contents as "t",
-   and sharing storage with "t".  "FreeCopiedS" should {\em not} 
+   and sharing storage with "t".  "FreeCopiedS" should <EM>not</EM> 
    be called on the value returned by "TtoS". *)
 
 (* It is the client's responsibility to prevent the garbage collector

@@ -13,11 +13,21 @@
    some other address space, then when the variable is garbage-collected
    it may be important to deallocate the resource.  The "WeakRef"
    interface provides this additional control.
-   \index{weak reference}
-   \index{deallocating resources}
-   \index{garbage collection!weak references}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>weak reference</SPAN>
+</SPAN>
 
-   A {\it node} is a datum allocated on the traced heap. Thus a node
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>deallocating resources</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>garbage collection</SPAN>
+<SPAN CLASS=INDEX.KEY>weak references</SPAN>
+</SPAN>
+
+
+   A <I>node</I> is a datum allocated on the traced heap. Thus a node
    is either the referent of a variable of a fixed reference type or
    the data record of a traced object.  Note that a node is not a
    Modula-3 reference, but the allocated storage to which a reference
@@ -28,13 +38,13 @@
    weak reference, we write "nd(w)" to denote the node to which "w"
    refers.
 
-   We say that a weak reference "w" {\it dies} at the moment that the
+   We say that a weak reference "w" <I>dies</I> at the moment that the
    garbage collector detects that "nd(w)" is unreachable.  A precise
    definition of unreachable is given below.  Once a weak reference
    has died, it remains dead forever, even if the node to which
    it refers becomes reachable again.
 
-   Associated with each weak reference "w" is a {\it cleanup procedure}
+   Associated with each weak reference "w" is a <I>cleanup procedure</I>
    "cp(w)".  If the cleanup procedure is not "NIL", the garbage
    collector will schedule a call to it when the weak reference
    dies. *)
@@ -65,7 +75,7 @@ PROCEDURE ToRef(w: T): REFANY;
 
 TYPE CleanUpProc = PROCEDURE(READONLY w: T; r: REFANY);
 (* If "cp(w)" is not "NIL", then when "w" dies, the garbage collector
-   will schedule the call "cp(w)(w, <reference to nd(w)>)".  *)
+   will schedule the call "cp(w)(w, &lt;reference to nd(w)>)".  *)
 
 END WeakRef.
 
@@ -86,10 +96,10 @@ END WeakRef.
 
    Finally we come to the precise definition of ``reachable'':
 
-   A node is {\it reachable} if it can be reached by a path of traced
+   A node is <I>reachable</I> if it can be reached by a path of traced
    references starting from a current procedure activation record, a global
    variable, or a weakly referenced node with a non-nil
-   cleanup {\it other than itself}.
+   cleanup <I>other than itself</I>.
 
    Thus a weak reference to a node "nd" does not make "nd" reachable,
    but if it has a non-nil cleanup, it makes other nodes referenced 
@@ -109,9 +119,12 @@ END WeakRef.
    be cleaned up.  This situation represents a storage leak and 
    should be avoided.
 
-\subsection*{Examples}
+<H2> Examples </H2>
 
-{\bf 1}.\ \  Suppose you want writers of the class "WrX.T" to be automatically
+<OL>
+<LI>
+
+Suppose you want writers of the class "WrX.T" to be automatically
 flushed and closed if they become unreachable.  Then you could write
 code like the following in the "WrX" module:
 
@@ -138,9 +151,9 @@ after the test "NOT Wr.Closed(wr)" and before the call "Wr.Flush(wr)",
 since when "Cleanup" is called, the writer is unreachable.  Therefore 
 the cleanup method has exclusive access to the writer.
 
-\smallskip
+<LI>
 
-{\bf 2.}\ \  The network object runtime must map wire
+The network object runtime must map wire
 representations for network objects into surrogate objects.  To hand
 out the same surrogate for the same wire representation, it keeps a
 table mapping wire representations to surrogates.  This table contains
@@ -213,5 +226,7 @@ Here is a sketch of the code:
 |   END WireRepToSrg;
 
   In the above we assume that "NewSurrogate" creates a new surrogate
-  from a wire representation. *)
+  from a wire representation. 
+</OL>
+*)
 

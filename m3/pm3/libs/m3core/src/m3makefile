@@ -13,6 +13,7 @@
 
 %----------------------------------------------- machine dependent packages ---
 
+import("m3doc")
 include_dir ("Csupport")
 include_dir ("runtime")
 include_dir ("thread")

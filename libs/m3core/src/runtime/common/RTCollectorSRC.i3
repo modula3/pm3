@@ -8,7 +8,7 @@
 
 INTERFACE RTCollectorSRC;
 
-(* \paragraph*{When to collect.}
+(* <H4> When to collect. </H4>
 
    "StartCollection" and "FinishCollection" allow the programmer direct
    control over when to collect. *)
@@ -20,7 +20,7 @@ PROCEDURE StartCollection();
 PROCEDURE FinishCollection();
 (* Finish the current collection, if one is on progress. *)
 
-(* \paragraph*{Disabling VM protection.}
+(* <H4> Disabling VM protection. </H4>
 
    The SRC collector uses VM protection to implement incremental and
    generational collection.  The SRC collector's use of VM protection is
@@ -51,7 +51,7 @@ PROCEDURE FinishVM();
 (* Equivalent to "DisableVM{}; EnableVM()".  "FinishVM" unprotects all heap
    pages, and is intended for use from the debugger. *)
 
-(* \paragraph*{Tuning the SRC collector.}
+(* <H4> Tuning the SRC collector. </H4>
 
    The following read/write parameters tune the SRC collector's
    performance.  They may be set by the client at any point, although they
@@ -92,7 +92,7 @@ VAR generational := TRUE;        (* generational collection *)
    Generational collection almost always leads to performance
    improvement. *)
 
-(* \paragraph{Background Collection.}
+(* <H4> Background Collection. </H4>
 
    There is an optional ``background'' mode, which extends incremental mode
    with a background thread that moves collection ahead in the absence of

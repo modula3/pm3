@@ -31,8 +31,14 @@ TYPE
    of a root directory.  If a pathname is not absolute, it is
    interpreted relative to the working directory associated with the
    process (see "GetWorkingDirectory" in the "Process" interface).
-   \index{absolute pathname}
-   \index{relative pathname}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>absolute pathname</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>relative pathname</SPAN>
+</SPAN>
+
 
    Not all operating systems use the same syntax for pathnames, so we
    define the type "Arcs" to represent a pathname in a standard form
@@ -46,8 +52,14 @@ TYPE
 
    It is often useful to view an arc name as having two parts, a base
    and an extension, separated by a period, for example "Pathname.i3".
-   \index{extension of pathname}
-   \index{base of pathname}
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>extension of pathname</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>base of pathname</SPAN>
+</SPAN>
+
 
    See the end of this interface for operating-system specific
    details.
@@ -148,7 +160,7 @@ END Pathname.
 
 (*
 
-\paragraph*{POSIX.} Pathnames have the syntax:
+<H4> POSIX. </H4> Pathnames have the syntax:
 
 | Pathname = Absolute | Relative.
 | Absolute = "/" Relative.
@@ -167,7 +179,7 @@ END Pathname.
    to upper and lower case letters, digits, and these special
    characters:
 
-|  . `{\tt \char'137}` -
+|  . _ -
 
    Furthermore, it is recommended that arc names not start with hyphen
    (-).
@@ -179,14 +191,14 @@ END Pathname.
    final ``.'' if the extension is nonempty; it is the entire arc name
    if the extension is empty.
 
-\paragraph*{Win32.} Pathnames have the syntax, where backslash is not
+<H4> Win32. </H4> Pathnames have the syntax, where backslash is not
    an escape character but a literal character:
 
 | Pathname = Absolute | Relative.
-| Absolute = Volume "`{\tt \char'134}`" Relative.
+| Absolute = Volume "\" Relative.
 | Relative = [ArcName {"\" ArcName}].
 | ArcName  = Base "." Extension | "." | "..".
-| Volume   = Drive ":" | "`{\tt \char'134\char'134}`" Server "`{\tt \char'134}`" Share.
+| Volume   = Drive ":" | "\\" Server "\" Share.
 | Server   = ?
 | Share    = ?
 
@@ -196,10 +208,10 @@ END Pathname.
    and "Base" to between one and eight letters, digits, or these
    special characters:
 
-| $ % ' - _ @ { } `\char'176` `\char'140` ! # ( )
+| $ % ' - _ @ { } ~ ` ! # ( )
 
    "Extension" is one to three characters from the same set.  Certain
-   "Base"s, including AUX, CLOCK\$, COM1, CON, LPT1, NUL, and PRN are
+   "Base"s, including AUX, CLOCK$, COM1, CON, LPT1, NUL, and PRN are
    reserved---they name devices, regardless of the directory or
    extension.  Embedded (but not trailing) spaces are allowed in the
    "Base" of a file name (but not a directory name).
@@ -214,7 +226,7 @@ END Pathname.
    Unicode representation for pathname strings.  The NTFS file system
    stores full Unicode pathnames in the directories.
 
-\paragraph*{Macintosh.} Pathnames have the syntax:
+<H4> Macintosh. </H4> Pathnames have the syntax:
 
 | Pathname   = Absolute | Relative.
 | Absolute   = Volume ":" [ArcName {Colons ArcName}].
