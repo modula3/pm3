@@ -18,7 +18,7 @@ else
   TOUCH = "cat /dev/null >"
 end
 
-readonly new_m3build = format ("%s%s%s", BIN_USE, SL, "m3build -T /home/ldd/templates/ -DM3ZUME=/home/ldd/m3-3.6/bin/m3zume")
+readonly new_m3build = format ("%s%s%s", BIN_USE, SL, "m3build")
 readonly new_m3ship  = format ("%s%s%s", BIN_USE, SL, "m3ship")
 
 readonly proc BuildChunk (x) is
