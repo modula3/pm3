@@ -18,6 +18,6 @@
 #
 # For example:
 #DEFAULT		(echo ""; who am i; date; cat) >> $CVSROOT/CVSROOT/commitlog
-cm3     $CVSROOT/CVSROOT/log-pm3.sh %s
+pm3     $CVSROOT/CVSROOT/log-pm3.sh %s
 DEFAULT (echo ""; id; echo %s; date; cat) >> $CVSROOT/CVSROOT/commitlog-default
 
