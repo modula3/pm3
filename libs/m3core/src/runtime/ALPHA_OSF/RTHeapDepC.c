@@ -764,7 +764,9 @@ int getsysinfo(unsigned long op, caddr_t buffer, unsigned long nbytes, ...)
     MAKE_WRITABLE(buffer);
     MAKE_WRITABLE(start);
     MAKE_WRITABLE(arg);
-    MAKE_WRITABLE(flag);
+    /* flag may or may not be a pointer */
+    if (RTHeapRep_Fault) RTHeapRep_Fault(flag, 1); /* make it readable */
+    if (RTHeapRep_Fault) RTHeapRep_Fault(flag, 2); /* make it writable */
     result = syscall(SYS_getsysinfo, op, buffer, nbytes, start, arg, flag);
     EXIT_CRITICAL;
     return result;
