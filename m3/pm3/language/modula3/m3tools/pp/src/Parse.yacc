@@ -185,7 +185,7 @@ typedef enum {NonOptimal, OptimalBreak, OptimalNoBreak} Formatter_BreakType;
 %token PR_EXTERNAL PR_INLINE PR_OBSOLETE PR_UNUSED
 %token PR_FATAL PR_NOWARN PR_ASSERT PR_TRACE
 %token PR_LINE PR_PRAGMA PR_CALLBACK
-%token PR_LL PR_LLsup PR_EXPORTED PR_SPEC
+%token PR_LL PR_LLsup PR_EXPORTED PR_SPEC PR_LOOPINV
 
 /* special symbols allowed in SPEC pragmas */
 %token IDENTPRIME UPARROWPRIME
@@ -200,7 +200,7 @@ typedef enum {NonOptimal, OptimalBreak, OptimalNoBreak} Formatter_BreakType;
 */
 
 
-/* reserved words */ 
+/* reserved words */
 %token AND ANY ARRAY AS BGN BITS BRANDED BY CASE CONST 
 %token DIV DO ELSE ELSIF END EVAL EXCEPT EXCEPTION EXIT EXPORTS
 %token FINALLY FOR FROM GENERIC IF IMPORT IN INTERFACE LOCK LOOP
@@ -597,7 +597,7 @@ for_stmt:
       /* We need the B2/E here and not for similar statements because of
 	 the top-level A's. */
       B2 For SP Ident var_trace A Assign SP expr A To SP expr by Do E
-           stmts SPNL End
+           loopinv stmts SPNL End
     ;
 
 by:
@@ -628,7 +628,7 @@ lock_stmt:
     ;
 
 loop_stmt: 
-      Loop stmts SPNL End
+      Loop loopinv stmts SPNL End
     ;
 
 raise_stmt:
@@ -636,7 +636,7 @@ raise_stmt:
     ;
 
 repeat_stmt:
-      Repeat stmts VZ B Until A expr E
+      Repeat loopinv stmts VZ B Until A expr E
     ;
 
 return_stmt:
@@ -679,7 +679,7 @@ tcase:
     ;
 
 while_stmt:
-      While SP expr SP Do stmts SPNL End 
+      While SP expr SP Do loopinv stmts SPNL End 
     ;
 
 with_stmt:
@@ -875,6 +875,13 @@ assert_pragma:
     | Pr_Assert     SP expr Comma Str_expr SP Rpragma
     ;
 
+loopinv:
+      /* empty */
+    | V loopinv_pragma
+    ;
+
+loopinv_pragma:    Pr_LoopInv    SP spec_pred SP Rpragma ;
+
 
 
 fatal_pragma:      Pr_Fatal      SP fatal_exc_list SP Rpragma ;
@@ -894,11 +901,11 @@ exported_pragma:   Pr_Exported   SP Rpragma ;
 
 /* an anypragma can appear anywhere */
 anypragma:
-      pragma_pragma
-    | nowarn_pragma
-    | line_pragma
-    | ll_pragma
-    | spec_pragma
+      VZ pragma_pragma
+    | A nowarn_pragma
+    | A line_pragma
+    | VZ ll_pragma
+    | VZ spec_pragma
     ;
 
 /* these pragmas can appear anywhere,
@@ -1019,7 +1026,7 @@ spec_zquant:
 spec_concl: B spec_zconcl E ;
 spec_zconcl:
       spec_disj
-    | spec_disj A spec_weak_pred_op SP spec_concl /* these operations are right-associative */
+    | spec_disj SP spec_weak_pred_op A spec_concl /* these operations are right-associative */
     ;
 
 spec_weak_pred_op: Implies | Iff ;
@@ -1082,16 +1089,17 @@ spec_term_list:
 
 spec_prim_term:
       Card_const
-    | qqid
     | qqidp
     ;
 
+/* For my (Lemming's) taste the list should be separated
+   with semicolons for consistency reasons */
 spec_typed_id_list:
       Z spec_typed_id
     | spec_typed_id_list Z Comma A spec_typed_id
     ;
 
-spec_typed_id: Ident Colon SP spec_type ;
+spec_typed_id: id_list Colon SP spec_type ;
 
 spec_type:
       qqid
@@ -1142,9 +1150,27 @@ qqid_list:
     ;
 
 qqidp:
-      IdentPrime
-    | qqid Dot IdentPrime
+      qqid
+    | qqid Dot IdentPrime mixed_qqidp
+    | IdentPrime mixed_qqidp
     ;
+
+mixed_qqidp:
+      /* empty */
+    | mixed_qqidp Dot idp
+    ;
+
+/* this is the natural way,
+   but the parser must be able to switch to a primed qqid
+   if he encounters the first primed id,
+   this avoids conflicts between spec_term_selector and spec_prim_term
+qqidp:
+      idp
+    | qqidp Dot idp
+    ;
+*/
+
+idp: Ident | IdentPrime ;
 
 
 /*--------------------- expressions ------------------------*/
@@ -1369,6 +1395,7 @@ Pr_Line:       PR_LINE     { PF ("<* LINE",     fonts->fixedComment);} NPS ;
 Pr_LL:         PR_LL       { PF ("<* LL",       fonts->fixedComment);} NPS ;
 Pr_LLsup:      PR_LLsup    { PF ("<* LL.sup",   fonts->fixedComment);} NPS ;
 Pr_Spec:       PR_SPEC     { PF ("<* SPEC",     fonts->fixedComment);} NPS ;
+Pr_LoopInv:    PR_LOOPINV  { PF ("<* LOOPINV",  fonts->fixedComment);} NPS ;
 
 Ident:         IDENT { PRID (&lexbuf[$1]);} NPS ;
 IdentP:	       IDENT { PF (&lexbuf[$1], fonts->procName);} NPS ;
@@ -1488,7 +1515,7 @@ NPS:
     ;
 
 /* We use the unefficient right recursion to assert
-   that anypragma_space_list always start with any_pragma_list
+   that anypragma_space_list always start with anypragma_list
    as required by InitialNPS. */
 space_anypragma_list:
       space_list_emit
@@ -1501,8 +1528,8 @@ anypragma_space_list:
     ;
 
 anypragma_list:
-      A anypragma
-    | anypragma_list A anypragma
+      anypragma
+    | anypragma_list anypragma
     ;
 
 space_list_emit:

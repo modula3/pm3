@@ -41,6 +41,7 @@
 "<*"[ \t\f\n\r]*"LL"            {BufferLexeme(1); return(PR_LL);}
 "<*"[ \t\f\n\r]*"LL.sup"        {BufferLexeme(1); return(PR_LLsup);}
 "<*"[ \t\f\n\r]*"SPEC"          {BufferLexeme(1); return(PR_SPEC);}
+"<*"[ \t\f\n\r]*"LOOPINV"       {BufferLexeme(1); return(PR_LOOPINV);}
 
 "*>"		{BufferLexeme(1); return(RPRAGMA);}
 
