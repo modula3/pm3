@@ -146,6 +146,7 @@ PROCEDURE Init(t: T; m: BldQuake.T):T RAISES {Error} =
 
       GetOptionValue("warning_level",val);
       t.warning_level := QVal.ToInt(m,val);
+      m.m3front_options.addhi("-w" & QVal.ToText(m,val));
     EXCEPT
       Quake.Error => RAISE Error;
     END;

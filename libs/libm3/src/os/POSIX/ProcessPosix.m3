@@ -240,7 +240,7 @@ PROCEDURE ExecChild(
      iff successful. *)
     VAR res: BOOLEAN; BEGIN
       IF h # NoFileDescriptor
-        THEN res := NOT Unix.dup2(h, fd) < 0
+        THEN res := Unix.dup2(h, fd) >= 0
         ELSE res := Unix.fcntl(fd, Unix.F_SETFD, 1) >= 0
                     OR Uerror.errno = Uerror.EBADF;
       END;

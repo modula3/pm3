@@ -264,7 +264,7 @@ readonly proc RemovePreviousVersion() is
         if RPMBinaries contains platform
           ret = Exec(["rm", "-r", 
               EXPORT_BINARIES & "/" & platform & "/" & 
-              VersionName(previousVersion),"-RPMS"],[],".")
+              VersionName(previousVersion) & "-RPMS"],[],".")
         end
       end
     end
@@ -762,9 +762,10 @@ if defined("PRERELEASE")
   CheckExec(["make","exportall","M3OPTIONS=" & M3MAKEOPTIONS], 
       ["","make.stdout","make.stderr"],
       path_of("../../../../.."),"building bootstrap failed")
-  return
-  exit(1)
-end
+
+% Not in pre-release test mode
+
+else
 
 ReadVersionInfo()
 
@@ -914,4 +915,7 @@ if DoStep("UpdateVersionNumbers")
   UpdateVersionNumbers()
 end
 
-error("Finished export",CR)
+write("Finished export",CR)
+
+
+end % terminates the "else" section of the "if PRERELEASE"

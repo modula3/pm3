@@ -47,7 +47,7 @@ end
 readonly proc WriteMakefileLine(pkg,target,options) is
   % In a makefile, only real / may work
   write("\tcd boot-" & target & "/" & pkg & "/" & target & 
-      "; make -f make.boot " & options, CR)
+      "; ${MAKE} -f make.boot " & options, CR)
 
 end
 

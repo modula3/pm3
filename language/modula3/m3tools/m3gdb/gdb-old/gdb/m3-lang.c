@@ -28,6 +28,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #include "m3-uid.h"
 #include "frame.h"
 #include "target.h"
+#include "gdb_string.h"
 
 struct symbol * find_m3_ir ();
 

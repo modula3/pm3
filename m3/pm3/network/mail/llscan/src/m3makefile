@@ -34,3 +34,4 @@ end
 ManPage ("llscan", 1)
 LibExport ("scan.llscan")
 
+OtherPackage("llscan")

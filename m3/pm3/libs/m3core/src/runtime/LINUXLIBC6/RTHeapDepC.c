@@ -467,7 +467,7 @@ struct stat *buf;
 
   ENTER_CRITICAL;
   MAKE_WRITABLE(buf);
-  result = _fxstat(1, fd, buf);
+  result = _fxstat(3, fd, buf);
   EXIT_CRITICAL;
   return result;
 }
@@ -707,14 +707,14 @@ char *name2;
 }
 
 int lstat(path, buf)
-char *path;
+const char *path;
 struct stat *buf;
 { int result;
 
   ENTER_CRITICAL;
   MAKE_READABLE(path);
   MAKE_WRITABLE(buf);
-  result = _lxstat(1, path, buf);
+  result = _lxstat(3, path, buf);
   EXIT_CRITICAL;
   return result;
 }
@@ -1268,7 +1268,7 @@ struct rlimit *rlp;
 
 int setsockopt(fd, level, optname, optval, optlen)
 int fd, level, optname;
-void *optval;
+const void *optval;
 socklen_t optlen;
 { int result;
 
@@ -1388,14 +1388,14 @@ int sockvec[2];
 }
 
 int stat(path, buf)
-char *path;
+const char *path;
 struct stat *buf;
 { int result;
 
   ENTER_CRITICAL;
   MAKE_READABLE(path);
   MAKE_WRITABLE(buf);
-  result = _xstat(1, path, buf);
+  result = _xstat(3, path, buf);
   EXIT_CRITICAL;
   return result;
 }

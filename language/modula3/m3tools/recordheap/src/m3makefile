@@ -7,3 +7,5 @@
 
 BinExport ("recordheap")
 ManPage ("recordheap", 1)
+
+OtherPackage("recordheap")

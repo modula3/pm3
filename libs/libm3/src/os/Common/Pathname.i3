@@ -145,7 +145,13 @@ PROCEDURE LastExt(pn: T): TEXT;
 
 PROCEDURE ReplaceExt(pn: T; ext: TEXT): T;
 (* Return a pathname equal to "pn" except with the extension of the
-   final arc name replaced with "ext", which must be non-"NIL". *)
+   final arc name set to "ext", replacing the previous extension. If
+   the final arc name is empty, "pn" is returned unchanged; if the
+   extension of the final arc name is empty,
+
+| pn & "." & ext
+
+   is returned. *)
 
 VAR (*CONST*)
   Parent: TEXT;

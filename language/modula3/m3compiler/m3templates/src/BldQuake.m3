@@ -173,7 +173,11 @@ PROCEDURE Location(t: T; pkg: TEXT; subdir: Pathname.T): Pathname.T =
 
     IF NOT t.pkg_dirs.get(id, dir_map) THEN
       (* we've never heard of this package before *)
-      new_path := Pkg(t, pkg) & t.SL & subdir;
+      IF Pathname.Absolute(subdir) THEN
+        new_path := subdir;
+      ELSE
+        new_path := Pkg(t, pkg) & t.SL & subdir;
+      END;
       dir_map := NEW(TextTextTbl.Default).init(5);
       EVAL dir_map.put(subdir, new_path);
       EVAL t.pkg_dirs.put(id, dir_map);
@@ -184,7 +188,11 @@ PROCEDURE Location(t: T; pkg: TEXT; subdir: Pathname.T): Pathname.T =
     (* see if we've heard of this subdirectory *)
     IF NOT dir_map.get(subdir, new_path) THEN
       (* nope, it's a new subdirectory *)
-      new_path := Pkg(t, pkg) & t.SL & subdir;
+      IF Pathname.Absolute(subdir) THEN
+        new_path := subdir;
+      ELSE
+        new_path := Pkg(t, pkg) & t.SL & subdir;
+      END;
       EVAL dir_map.put(subdir, new_path);
       EVAL t.locations.put(new_path, Loc.T{id, subdir});
     END;
@@ -241,7 +249,13 @@ PROCEDURE PathOf(t: T; x: Pathname.T): Pathname.T RAISES {Error} =
     (* XXX DERIVED SOURCES !!! *)
     IF NOT Text.Equal(p, t.path_of_path) THEN
       t.path_of_path := p;
-      t.path_of_base := Pkg(t, t.package) & t.SL & PkgSubdir(t) & t.SL;
+      WITH subdir = PkgSubdir(t) DO
+       IF Pathname.Absolute(subdir) THEN
+          t.path_of_base := subdir & t.SL;
+       ELSE
+          t.path_of_base := Pkg(t, t.package) & t.SL & subdir & t.SL;
+        END;
+      END;
     END;
     RETURN t.path_of_base & x;
   END PathOf;
@@ -533,6 +547,13 @@ PROCEDURE U_MapAddH(t: T; unit: M3ID.T; pkg, subdir: TEXT;
                                    hidden := visibility, local := IMPORTED));
     t.h_inputs.addhi(loc & t.SL & unit_name);
     EVAL t.h_dirs.put(loc, loc);
+    IF visibility = VISIBLE THEN
+      TRY
+        M3Driver.AddSourceFile(loc, unit_name, TRUE);
+      EXCEPT
+        M3Driver.Error => CErr("M3Driver.AddSourceFile");
+      END;
+    END;
   END U_MapAddH;
 
 PROCEDURE Do_MapAddS(t: QMachine.T; n_args := 4) RAISES {Error} =
@@ -839,7 +860,7 @@ PROCEDURE HSource(t: T; x: TEXT) RAISES {Error}=
     t.h_inputs.addhi(here & t.SL & fn);
     EVAL t.h_dirs.put(here, here);
     TRY
-      M3Driver.AddSourceFile(NIL, PathOf(t, fn), TRUE);
+      M3Driver.AddSourceFile(here, fn, TRUE);
     EXCEPT
       M3Driver.Error => CErr("M3Driver.AddSourceFile");
     END;

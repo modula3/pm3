@@ -19,15 +19,17 @@ FROM Ctypes IMPORT
  *)
 
 (* major part of a device *)
-PROCEDURE major (x: int): int;
+PROCEDURE major (x: dev_t): int;
 
 (* minor part of a device *)
-PROCEDURE minor (x: int): int;
+PROCEDURE minor (x: dev_t): int;
 
 (* make a device number *)
 PROCEDURE makedev (x, y: int): dev_t;
 
 TYPE
+  long_long_uint      = ARRAY [0..1] OF uint;
+
   u_char  = unsigned_char;
   u_short = unsigned_short;
   u_int   = unsigned_int;
@@ -53,16 +55,16 @@ TYPE
   swblk_t      = long;
   size_t       = u_int;
   time_t       = long;
-  dev_t        = u_short;
+  dev_t        = long_long_uint;
   off_t        = long;
   paddr_t      = long;                (* sys V compatibility *)
   key_t        = long;                (* sys V compatibility *)
-  clock_t      = long;                 (* POSIX compliance    *)
-  mode_t       = u_short;             (* POSIX compliance    *)
-  nlink_t      = u_short;             (* POSIX compliance    *)
-  uid_t        = u_short;             (* POSIX compliance    *)
+  clock_t      = long;                (* POSIX compliance    *)
+  mode_t       = uint;                (* POSIX compliance    *)
+  nlink_t      = uint;                (* POSIX compliance    *)
+  uid_t        = uint;                (* POSIX compliance    *)
   pid_t        = int;                 (* POSIX compliance    *)
-  gid_t        = u_short;             (* POSIX compliance    *)
+  gid_t        = uint;                (* POSIX compliance    *)
 
 CONST
   NBBY = 8;                           (* number of bits in a byte *)

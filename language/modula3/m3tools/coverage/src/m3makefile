@@ -37,3 +37,5 @@ end
 BindExport (pgm)
 
 ManPage ("analyze_coverage", 1)
+
+OtherPackage("coverage")

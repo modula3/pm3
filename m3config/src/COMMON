@@ -600,9 +600,10 @@ readonly Options = {
   "gui"             : [ "", ""],  % Non console, gui, mode on Win32
   "times"           : [ "", ""],  % Produce statistics about compilation time 
   "msg_level"       : [ "1", "T", setMsgLevel],  
-                                  % Verbosity level from 0 to 5
+                                  % Verbosity level from 0 to 4
                                   % (Silent, Explain, Commands, Verbose, Debug)
-  "warning_level"   : [ "1", ""], % Warning Level from 0 to 3
+  "warning_level"   : [ "1", ""], % Skip warning messages of level less than
+                                  % warning level (0 all messages, 3 none)
   "internal_backend": [ "T", ""], % Use the faster internal backend
 
   % These options are not for the casual user

@@ -56,7 +56,6 @@ VAR
 
   time_now : INTEGER; (* for AST cache *)
 
-  warning_level : INTEGER   := 3;
   make_mode     : BOOLEAN   := FALSE;
   keep_files    : BOOLEAN   := FALSE;
   dump_config   : BOOLEAN   := FALSE;
@@ -151,8 +150,6 @@ PROCEDURE InitFromInterface(i: Interface) RAISES {Error} =
 
     IF Msg.level >= Msg.Level.Verbose THEN M3Timers.Start(); END;
 
-    warning_level := MIN(0,MAX(3,i.warning_level));
-
     link_coverage := i.link_coverage;
     shared_libs    := i.shared_libs;
     ext_pass_6     := i.ext_pass_6;
@@ -221,7 +218,6 @@ PROCEDURE Init(wr: Wr.T) =
     compile_failed:= FALSE;
     time_now      := Utils.M3Time( Time.Now() );
 
-    warning_level := 3;
     make_mode     := FALSE;
     keep_files    := FALSE;
     dump_config   := FALSE;
