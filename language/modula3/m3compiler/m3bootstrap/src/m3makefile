@@ -17,7 +17,7 @@ readonly proc BootstrapPkg(dir,pkg,target,host) is
   % Issue the m3build command for the package
 
   write("---------- Building " & pkg & " ----------" & CR)
-  ret = exec(["m3build", "-b", target, "-DHOST=" & host,
+  ret = exec(["m3build", "-b", target,
       "-T", ".." & SL & ".." & SL & ".." & SL & 
       ".." & SL & ".." & SL & ".." & SL & 
       ".." & SL & ".." & SL & ".." & SL & 
@@ -157,8 +157,7 @@ readonly proc CompileCrossCompiler(target,host) is
       ".." & SL & ".." & SL & ".." & SL & 
       ".." & SL & ".." & SL & ".." & SL & 
       "m3config" & SL & "src" , 
-      "-DM3CC_TARGET=" & target,
-      "-DGNU_CC=gcc", "-DGNU_CFLAGS=-O", "-DGNU_MAKE=make"], [], m3ccdir)
+      "-DM3CC_TARGET=" & target], [], m3ccdir)
   if not equal(ret, 0) error ("m3build failed for m3cc in " & target & CR) end
 
   % Keep the cross compiler under target-m3cgc1 and remove everything else.
@@ -194,16 +193,14 @@ readonly proc BootstrapTarget(target) is
   % bootstrap code size.
 
   > "pm3-" & target & SL & "config.tmpl" in
-    write("m3_option(\"-boot -O\")",CR)
-    write("remove_m3_option(\"-g\")",CR)
+    write("option(\"bootstrap\",\"T\")",CR)
+    write("option(\"optimization\",\"T\")",CR)
+    write("option(\"debuginfo\",\"\")",CR)
+    write("HOST=\"" & host & "\"",CR)
+    write("setDefault(\"\",\"\")",CR)
     write("BACKEND=[\"" & path() & SL & ".." & SL & host & SL & "pm3-" & 
         target & SL & "m3cgc1-" & target & 
         "\",\"-fno-strength-reduce\",\"-quiet\"]", CR)
-    write("IBACK=\"\"", CR)
-    write("HOST_OS_TYPE=\"POSIX\"", CR)
-    write("TARGET_NAMING_CONVENTIONS=NAMING_CONVENTIONS", CR)
-    write("NAMING_CONVENTIONS=0", CR)
-    write("if defined(\"m3_backend_external\") m3_backend_external() end", CR)
   end
 
   write("---------- Config file ----------", CR)
@@ -252,13 +249,17 @@ end
 % Create a bootstrap for each of these "target" in boot-target
 %
 
+foreach platform in Platforms
+  if Platforms{platform}[3] BootstrapTarget(platform) end
+end
+
 %BootstrapTarget("ALPHA_OSF")
 %BootstrapTarget("DS3100")
 %BootstrapTarget("FreeBSD2")
 %BootstrapTarget("HPPA")
 %BootstrapTarget("IBMR2")
 %BootstrapTarget("IRIX5")
-BootstrapTarget("LINUXELF")
+%BootstrapTarget("LINUXELF")
 %BootstrapTarget("NEXT")
 %BootstrapTarget("NT386")
 %BootstrapTarget("NT386GNU")

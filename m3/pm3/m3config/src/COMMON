@@ -1,36 +1,435 @@
+%
+% The COMMON file contains quake variables definitions and procedures which
+% are common to all platforms or for which there is a small number of
+% variants (e.g. POSIX vs WIN32).
+%
+% Often, several variables depend on another (e.g. LIB_INSTALL, PKG_INSTALL...
+% on INSTALL_ROOT). To avoid having to change all such variables after
+% a change, many variables are defined in "set" procedures. Thus, after 
+% changing INSTALL_ROOT, it is sufficient to call setInstallRoot.
+%
+% A typical target template does define TARGET, include COMMON,
+% redefine some variables and/or procedures, and call setDefault.
+%
 
 %
-% properties of the supported platforms
+% Miscellaneous platform features and paths
 %
 
-readonly Platforms = {
-  "AIX386"    : [ "POSIX", "32BITS", "i486-ibm-aix"       ],
-  "ALPHA_OSF" : [ "POSIX", "64BITS", "alpha-dec-osf1"     ],
-  "AP3000"    : [ "POSIX", "32BITS", "apollo68-bsd"       ],
-  "ARM"       : [ "POSIX", "32BITS", "arm--riscos"        ],
-  "DS3100"    : [ "POSIX", "32BITS", "decstation"         ],
-  "FreeBSD"   : [ "POSIX", "32BITS", "i486-unknown-bsd"   ],
-  "FreeBSD2"  : [ "POSIX", "32BITS", "i486-unknown-bsd"   ],
-  "HP300"     : [ "POSIX", "32BITS", "m68k-hp-hpux"       ],
-  "HPPA"      : [ "POSIX", "32BITS", "hppa1.1-hp-hpux"    ],
-  "IBMR2"     : [ "POSIX", "32BITS", "rs6000-ibm-aix3.2"  ],
-  "IBMRT"     : [ "POSIX", "32BITS", "romp-ibm-aos"       ],
-  "IRIX5"     : [ "POSIX", "32BITS", "mips-sgi-irix5"     ],
-  "LINUX"     : [ "POSIX", "32BITS", "i486--linux"        ],
-  "LINUXELF"  : [ "POSIX", "32BITS", "i486--linuxelf"     ],
-  "NEXT"      : [ "POSIX", "32BITS", "next-bsd"           ],
-  "NT386"     : [ "WIN32", "32BITS", "i486--nt"           ],
-  "NT386GNU"  : [ "WIN32", "32BITS", "i486--cygwin32"     ],
-  "OKI"       : [ "POSIX", "32BITS", "i860--sysv4.0"      ],
-  "SEQUENT"   : [ "POSIX", "32BITS", "i386-sequent-bsd"   ],
-  "SOLgnu"    : [ "POSIX", "32BITS", "sparc-sun-solaris2" ],
-  "SOLsun"    : [ "POSIX", "32BITS", "sparc-sun-solaris2" ],
-  "SPARC"     : [ "POSIX", "32BITS", "sparc-sun-sunos4.1" ],
-  "SUN3"      : [ "POSIX", "32BITS", "m68k-sun-sunos4.1"  ],
-  "SUN386"    : [ "POSIX", "32BITS", "i386-sun-sunos4.1"  ],
-  "UMAX"      : [ "POSIX", "32BITS", "encore-bsd"         ],
-  "VAX"       : [ "POSIX", "32BITS", "vax-dec-ultrix"     ]
-}
+PLATFORM_SUPPORTS_MOTIF  = ""
+PLATFORM_SUPPORTS_DECPEX = ""
+PLATFORM_SUPPORTS_OPENGL = ""
+PLATFORM_SUPPORTS_INTERNAL_BACKEND = ""
+PLATFORM_SUPPORTS_SHARED_LIB = ""
+X11_WITH_SHARED_MEM = "TRUE" % X11 server with shared memory extension
+INSTALL_IMPLS = "TRUE"       % install .m3 source files to ease browsing/debug
+% MAN_SECTION = "l"          % install man pages in section "l", not in 1..8
+
+X11ROOT = "/usr/lib"
+OPENGLROOT = "/usr/lib"
+INSTALL_ROOT = "/usr/local/pm3-1.1"
+
+CC = ["gcc","-c"]         % C compiler
+LINK = ["gcc"]            % Linker
+LINK_suffix = ["-lm"]     % Tail of the link command
+LINK_path_prefix = "-Wl," % Prefix for each library path argument
+MAKELIB = ["ar","crus"]   % Library archiver
+MAKESHLIB = ["gcc","-shared","-Wl,-soname"]  % Shared library builder
+RANLIB = ["touch"]        % Library index creator
+ASM = ["as","-o"]         % Assembler
+
+OPT_FLAG = "-O2"          % optimisation
+DEBUG_FLAG = "-g"         % debugging info
+LDEBUG_FLAG = "-g"
+PROF_FLAG = "-pg"         % profiling for gcc
+BPROF_FLAG = "-p"         % profiling for m3cgc1
+PIC_FLAG = "-fPIC"        % position independent code
+BPIC_FLAG = "-fPIC"       % position independent code for m3cgc1
+STATIC_FLAG = "-static"   % standalone executable
+DYNAMIC_FLAG = ""         % executable with shared libs
+RPATH_FLAG = "-Wl,-rpath" % run time path for shared library
+
+GNU_CC     = "gcc"        % C compiler for m3cc and m3gdb
+GNU_CFLAGS = "-O2"        % options for GNU_CC
+GNU_MAKE   = "make"       % make program for m3cc and m3gdb
+
+%
+% The system dependent naming conventions are in an array containing
+% the extensions for I3, IC, IS, IO, M3, MC, MS, MO, IG, MG, C, H, S, O, A, 
+% AX, PX, Unknown, IX, MX, and EXE files, the default program name, the library
+% prefix, the directory separator, the EOL, the path separator,
+% the volume separator, and if short names are required.
+
+POSIX_CONVENTIONS = [".i3", ".ic", ".is", ".io", ".m3", ".mc", ".ms", 
+    ".mo",".ig", ".mg", ".c", ".h", ".s", ".o", ".a", ".m3x", ".m3x", "",
+    ".ix", ".mx", "", "a.out","lib","/","\n",":","\000","",""]
+
+GRUMPY_POSIX_CONVENTIONS = [".i3", ".ic", ".is", "_i.o", ".m3", ".mc", ".ms", 
+    "_m.o",".ig", ".mg", ".c", ".h", ".s", ".o", ".a", ".m3x", ".m3x", "",
+    ".ix", ".mx", "", "a.out","lib","/","\n",":","\000","",""]
+
+WIN32_CONVENTIONS = [".i3", ".ic", ".is", ".io", ".m3", ".mc", ".ms", 
+    ".mo",".ig", ".mg", ".c", ".h", ".s", ".obj", ".lib", ".m3x", ".m3x", "",
+    ".ix", ".mx", ".exe", "NONAME.EXE","lib","\\","\r\n","+",":","T","T"]
+
+GNU_WIN32_CONVENTIONS = [".i3", ".ic", ".is", ".io", ".m3", ".mc", ".ms", 
+    ".mo",".ig", ".mg", ".c", ".h", ".s", ".o", ".a", ".m3x", ".m3x", "",
+    ".ix", ".mx", ".exe", "NONAME.EXE","lib","\\","\r\n",":",":","","T"]
+
+%
+% This procedure is called just before programs or libraries are built.
+% It is the appropriate place to compute the compilation commands and other
+% variables used by the compilation.
+%
+
+proc before_do_m3_hooks() is
+  setCommands("","")
+end
+
+%
+% The following procedures set many variables. They are called after
+% the values on which they depend are set or changed.
+%
+
+%
+% This is called after all the variables values are set in a target template.
+% It calls the other "Set" procedures.
+%
+
+proc setDefault(opt,val) is
+  setTarget(opt,val)
+  setOSConventions(opt,val)
+  setInstallRoot(opt,val)
+end
+
+%
+% These are called after the HOST and TARGET are set
+%
+
+proc setTarget (opt,val) is
+  local platform = Platforms{TARGET}
+
+  DEFAULT_BUILD_DIR = TARGET
+  OS_TYPE = platform[0]
+  WORD_SIZE = platform[1]
+  GNU_PLATFORM = platform[2]
+
+  HOST = lookup("HOST",TARGET)
+  platform = Platforms{HOST}
+  HOST_OS_TYPE = platform[0]
+end
+
+proc setOSConventions (opt,val) is
+  if equal(OS_TYPE,"POSIX")
+    PLATFORM_SUPPORTS_X = "TRUE"
+    TARGET_NAMING_CONVENTIONS = POSIX_CONVENTIONS
+  else
+    PLATFORM_SUPPORTS_X = ""
+    TARGET_NAMING_CONVENTIONS = GNU_WIN32_CONVENTIONS
+  end
+
+  if equal(HOST_OS_TYPE,"POSIX")
+    NAMING_CONVENTIONS = POSIX_CONVENTIONS
+  else
+    NAMING_CONVENTIONS = GNU_WIN32_CONVENTIONS
+  end
+
+  SL = NAMING_CONVENTIONS[23]
+  CR = NAMING_CONVENTIONS[24]
+  CRship = "\n"
+  SLship = "/"
+end
+
+%
+% This is called after INSTALL_ROOT is changed. The INSTALL directories
+% are created at m3ship time if they dont exist. You need the necessary
+% permissions to do so.
+%
+
+proc setInstallRoot (opt,val) is
+  BIN_INSTALL = INSTALL_ROOT & SL & "bin"                        % executables
+  LIB_INSTALL = INSTALL_ROOT & SL & "lib" & SL & "m3" & SL & TARGET % libraries
+  DOC_INSTALL = INSTALL_ROOT & SL & "lib" & SL & "m3" & SL & "doc"  % documents
+  PKG_INSTALL = INSTALL_ROOT & SL & "lib" & SL & "m3" & SL & "pkg"  % packages
+  EMACS_INSTALL = INSTALL_ROOT & SL & "lib" & SL & "elisp"   % emacs lisp code
+  MAN_INSTALL = INSTALL_ROOT & SL & "man"                    % man pages
+  HTML_INSTALL = INSTALL_ROOT & SL & "lib" & SL & "m3" & SL & "www" % hypertext
+
+  BIN_USE   = BIN_INSTALL  % on some systems like AFS, a different path is 
+  LIB_USE   = LIB_INSTALL  %   used to install.
+  PKG_USE   = PKG_INSTALL
+
+  M3_COVERAGE_LIB = LIB_USE & SL & "report_coverage.o"
+  BACKEND = [LIB_USE & SL & "m3cgc1", "-fno-strength-reduce", "-quiet"]
+end
+
+%
+% This is called once all the options affecting the commands are entered.
+%
+
+proc setCommands (opt,val) is
+  CC_CMD = CC
+  LINK_CMD = LINK
+  MAKELIB_CMD = MAKELIB
+  MAKESHLIB_CMD = MAKESHLIB
+  RANLIB_CMD = RANLIB
+  ASM_CMD = ASM
+  BACKEND_CMD = BACKEND
+
+  if Options{"internal_backend"}[0] and PLATFORM_SUPPORTS_INTERNAL_BACKEND
+    INTERNAL_BACKEND = "T"
+  else
+    INTERNAL_BACKEND = ""
+  end
+
+  if Options{"gui"}[0] and equal(OS_TYPE,"WIN32")
+    OPTION_GUI = "T"
+  else
+    OPTION_GUI = ""
+  end
+
+  if Options{"optimization"}[0]
+    CC_CMD += OPT_FLAG
+    BACKEND_CMD += OPT_FLAG
+    INTERNAL_BACKEND = ""
+  end
+
+  if Options{"debuginfo"}[0]
+    CC_CMD += DEBUG_FLAG
+    LINK_CMD += LDEBUG_FLAG
+    BACKEND_CMD += DEBUG_FLAG
+  end
+
+  if Options{"coverage"}[0]
+    CC_CMD += PROF_FLAG
+    LINK_CMD += PROF_FLAG
+    BACKEND_CMD += BPROF_FLAG
+    INTERNAL_BACKEND = ""
+  end
+
+  if INTERNAL_BACKEND
+    M3_BACKEND_OUTPUT = "OBJ"
+    m3front_option("-unfold_nested_procs")
+  else
+    M3_BACKEND_OUTPUT = "ASM"
+  end
+
+  if PLATFORM_SUPPORTS_SHARED_LIB
+    if Options{"shared_lib"}[0]
+      CC_CMD += PIC_FLAG
+      BACKEND_CMD += PIC_FLAG
+    end
+
+    if Options{"standalone"}[0]
+      LINK_CMD += STATIC_FLAG
+      LINK_libpath = ""
+    else
+      if DYNAMIC_FLAG LINK_CMD += DYNAMIC_FLAG end
+      if defined("TARGET_LIB_USE") 
+        LINK_CMD += [RPATH_FLAG, LINK_path_prefix & TARGET_LIB_USE]
+      end
+      LINK_libpath = RPATH_FLAG
+    end
+  end
+end
+
+%
+% The following procedures are useful to centralize the customization about
+% which files are required for X11, PEX, TCP... on different platforms.
+% They are called by packages needing these facilities. They may be
+% redefined in target templates.
+%
+
+proc import_X11() is
+  import_lib("Xaw", X11ROOT)
+  import_lib("Xmu", X11ROOT)
+  import_lib("Xext", X11ROOT)
+  import_lib("Xt", X11ROOT)
+  import_lib("SM", X11ROOT)
+  import_lib("ICE", X11ROOT)
+  import_lib("X11", X11ROOT)
+end
+
+proc import_Motif() is
+  import_lib("Xm", X11ROOT)
+end
+
+proc import_DECPEX() is
+  % DEC PEX differs from MIT PEX, and is only supported on Digital machines.  
+end
+
+proc import_OpenGL() is
+  import_lib (GLU, OPENGLROOT)
+  import_lib (GL, OPENGLROOT)
+  import_lib (Xext, OPENGLROOT)
+end
+
+proc import_TCP() is
+end
+
+%
+% These procedures are called automatically whenever the corresponding
+% option is changed. For options only affecting the compilation, it is 
+% sufficient to compute option dependent values in before_do_m3_hooks.
+% In other cases like VERBOSE, the value may be used any time after 
+% the msg_level option is set and a call is needed at option change.
+%
+
+proc m3frontOption (opt,val) is
+  if val m3front_option("-" & opt)
+  else remove_m3front_option("-" & opt)
+  end
+end
+
+proc setMsgLevel (opt,val) is
+  if equal(val,"0") or equal(val,"1") VERBOSE = ""
+  else VERBOSE = "T"
+  end
+end
+
+%
+% The following procedures are called back by the compiler driver at
+% different stages of the compilation. A non zero return value causes
+% the compilation to abort.
+%
+
+%
+% Convert emacs .el lisp files to precompiled .elc files
+%
+
+readonly proc emacs_compile (el) is
+  local ret = 0
+  ret = exec (["emacs", "-batch", "-f", "batch-byte-compile", el])
+  if not equal(ret, 0) error("emacs failed with error code: ", ret) end
+end
+
+%
+% Compile "source", a C source file, into "object", with "includes" an array
+% of include directorties.
+%
+
+proc m3_compile_c (source, object, includes) is
+  local cmd = [ CC_CMD, source]
+  foreach i in includes
+    cmd += "-I" & i
+  end
+  if object  cmd += [ "-o", object ] end
+  if VERBOSE write(cmd, CR) end
+  return exec(cmd)
+end
+
+%
+% Link "objects" and "imported_libs" into an executable program "prog".
+% Each imported library is a 2 element array [library_path,library_name].
+%
+
+proc m3_link (prog, objects, imported_libs) is
+  local cmd = [ LINK_CMD, "-o", prog, objects ]
+  foreach i in imported_libs
+    if not empty(i[0])
+      cmd += "-L" & i[0]
+      if LINK_libpath
+        cmd += [LINK_libpath, LINK_path_prefix & i[0]]
+      end
+    end
+    cmd += "-l" & i[1]
+  end
+
+  cmd += LINK_suffix
+
+  if VERBOSE write(cmd, CR) end
+  return exec (cmd)
+end
+
+%
+% Build library "lib" from "objects and "imported_libs".
+%
+
+proc m3_make_lib (lib, objects, imported_libs) is
+  local ret = 0
+
+  if Options{"static_lib"}[0]
+    local lib_a    = format ("lib%s.a", lib)
+    local cmd = [ MAKELIB_CMD, lib_a, objects, imported_libs ]
+    if VERBOSE write(cmd, CR) end
+    ret = exec (cmd)
+    if not equal(ret, 0) return ret end
+    cmd = [ RANLIB_CMD, lib_a ]
+    if VERBOSE write(cmd, CR) end
+    ret = exec (cmd)
+  end
+
+  if Options{"shared_lib"}[0] and PLATFORM_SUPPORTS_SHARED_LIB
+    local lib_so   = format ("lib%s.so", lib)
+    local lib_sox  = format ("lib%s.so.3", lib)
+    local lib_soxx = format ("lib%s.so.3.6", lib)
+    local cmd = [MAKESHLIB_CMD, LINK_path_prefix & lib_so, "-o",
+        lib_soxx, objects]
+
+    if VERBOSE write(cmd, CR) end
+    ret = exec (cmd)
+    if not equal(ret, 0) return ret end
+    link_file(lib_soxx, lib_sox)
+    link_file(lib_soxx, lib_so)
+  end
+  return ret
+end
+
+proc m3_note_shlib(lib) is
+  local lib_so   = format ("lib%s.so", lib)
+  local lib_sox  = format ("lib%s.so.3", lib)
+  local lib_soxx = format ("lib%s.so.3.6", lib)
+  if defined ("_all")
+    install_derived (lib_soxx)
+    install_derived (lib_sox)
+    install_derived (lib_so)
+    install_link_to_derived (lib_sox, LIB_INSTALL)
+    install_link_to_derived (lib_so, LIB_INSTALL)
+  end
+  deriveds (lib_soxx, [""])
+  deriveds (lib_sox, [""])
+  deriveds (lib_so, [""])
+end
+
+%
+% Convert the assembly "source" file into the relocatable binary "object".
+%
+
+proc m3_assemble (source, object) is
+  local cmd = [ ASM_CMD, object, source ]
+
+  if VERBOSE write(cmd, CR) end
+  return exec (cmd)
+end
+
+%
+% Convert the intermediate language "source" file into the assembly "object"
+%
+
+proc m3_backend (source, object) is
+  local cmd = [ BACKEND_CMD, "-o", object, source ]
+  
+  if VERBOSE write(cmd, CR) end
+  return exec(cmd)
+end
+
+%
+% Install file "src" into directory "dest" with access flags "mode".
+%
+
+proc install_file (src, dest, mode) is
+  Note_install (src, dest)
+  local ret = exec ([ "cp", "-a", src, dest ])
+  % exec (["install", "-c", "-m", mode, src, dest])
+end
+
+%
+% Support procedures that should not need to be redefined.
+%
+
+%
+% Extract the gnu_platform field
+%
 
 readonly proc gnu_platform (x) is
   if Platforms contains x
@@ -40,6 +439,29 @@ readonly proc gnu_platform (x) is
     return "unknown-unknown-unknown"
   end
 end
+
+%
+% Change an option
+%
+
+readonly proc option(opt,val) is
+  if Options contains opt
+    local a = Options{opt}
+    a[0] = val
+    call = a[1]
+    if call 
+      call = a[2]
+      call(opt,val)
+    end
+  else
+    write("Unknown option ",opt,CR)
+    error("Exiting")
+  end
+end
+
+%
+% Export source files
+%
 
 readonly proc SrcExport (nm) is
   local dest = PKG_INSTALL & SLship & PACKAGE & SLship & pkg_subdir()
@@ -51,4 +473,105 @@ readonly proc SrcdExport (nm) is
   deriveds(nm,no_extension)
   _install_file(nm,dest,"0644","T")
 end
+
+%
+% Packages which do not contain a program or library
+%
+
+readonly proc OtherPackage(name) is
+  before_do_m3_hooks()
+  gen_m3exports (name)
+  install_sources ()
+end
+
+%
+% Basic properties of the supported platforms. It is useful to define these
+% in COMMON for cross-compiling purposes. Each entry contains the OS_TYPE,
+% WORD_SIZE, GNU_PLATFORM, and whether it is an active platform for which
+% a bootstrap is to be made
+%
+
+readonly Platforms = {
+  "AIX386"    : [ "POSIX", "32BITS", "i486-ibm-aix", ""       ],
+  "ALPHA_OSF" : [ "POSIX", "64BITS", "alpha-dec-osf1", "T"    ],
+  "AP3000"    : [ "POSIX", "32BITS", "apollo68-bsd", ""       ],
+  "ARM"       : [ "POSIX", "32BITS", "arm--riscos", ""        ],
+  "DS3100"    : [ "POSIX", "32BITS", "decstation", "T"        ],
+  "FreeBSD"   : [ "POSIX", "32BITS", "i486-unknown-bsd", ""   ],
+  "FreeBSD2"  : [ "POSIX", "32BITS", "i486-unknown-bsd", "T"  ],
+  "HP300"     : [ "POSIX", "32BITS", "m68k-hp-hpux", ""       ],
+  "HPPA"      : [ "POSIX", "32BITS", "hppa1.1-hp-hpux", "T"   ],
+  "IBMR2"     : [ "POSIX", "32BITS", "rs6000-ibm-aix3.2", "T" ],
+  "IBMRT"     : [ "POSIX", "32BITS", "romp-ibm-aos", ""       ],
+  "IRIX5"     : [ "POSIX", "32BITS", "mips-sgi-irix5", "T"    ],
+  "LINUX"     : [ "POSIX", "32BITS", "i486--linux", ""        ],
+  "LINUXELF"  : [ "POSIX", "32BITS", "i486--linuxelf", "T"    ],
+  "NEXT"      : [ "POSIX", "32BITS", "next-bsd", "T"          ],
+  "NT386"     : [ "WIN32", "32BITS", "i486--nt", ""           ],
+  "NT386GNU"  : [ "WIN32", "32BITS", "i486--cygwin32", "T"    ],
+  "OKI"       : [ "POSIX", "32BITS", "i860--sysv4.0", ""      ],
+  "SEQUENT"   : [ "POSIX", "32BITS", "i386-sequent-bsd", ""   ],
+  "SOLgnu"    : [ "POSIX", "32BITS", "sparc-sun-solaris2", "T"],
+  "SOLsun"    : [ "POSIX", "32BITS", "sparc-sun-solaris2", "" ],
+  "SPARC"     : [ "POSIX", "32BITS", "sparc-sun-sunos4.1", "T"],
+  "SUN3"      : [ "POSIX", "32BITS", "m68k-sun-sunos4.1", ""  ],
+  "SUN386"    : [ "POSIX", "32BITS", "i386-sun-sunos4.1", ""  ],
+  "UMAX"      : [ "POSIX", "32BITS", "encore-bsd", ""         ],
+  "VAX"       : [ "POSIX", "32BITS", "vax-dec-ultrix", ""     ]
+}
+
+%
+% Allowed options. Each entry contains the current value, whether a hook
+% procedure should be called when the option value is changed, and the hook.
+%
+
+%
+% These variables must match the default value for the corresponding option.
+% They are updated by the hook when the option is changed.
+%
+
+VERBOSE = ""
+
+readonly Options = {
+  "optimization"    : [ "", ""],  % Produce optimized code
+  "debuginfo"       : [ "T", ""], % Produce debugging information
+  "coverage"        : [ "", ""],  % Produce Coverage information
+  "profiling"       : [ "", ""],  % Produce Profiling information
+  "shared_lib"      : [ "T", ""], % Create a shared library (.so)
+  "static_lib"      : [ "T", ""], % Create a static library (.a)
+  "standalone"      : [ "", ""],
+                                  % Build a static program without shared libs
+  "gui"             : [ "", ""],  % Non console, gui, mode on Win32
+  "times"           : [ "", ""],  % Produce statistics about compilation time 
+  "msg_level"       : [ "1", "T", setMsgLevel],  
+                                  % Verbosity level from 0 to 5
+                                  % (Silent, Explain, Commands, Verbose, Debug)
+  "warning_level"   : [ "1", ""], % Warning Level from 0 to 3
+  "internal_backend": [ "T", ""], % Use the faster internal backend
+
+  % These options are not for the casual user
+  "keep_files"      : [ "", ""],  % Keep temporary files for debugging
+  "bootstrap"       : [ "", ""],  % Used to create a bootstrap distribution
+  "dump_config"     : [ "", ""],  % Print compiler configuration parameter
+  "heap_stats"      : [ "", ""],  % Print heap usage statistics
+  "keep_cache"      : [ "", ""],  % Persistent cache, (not usable)
+  "no_make"         : [ "", ""],  % Do not really build (??)
+  "compile_once"    : [ "", ""],  % Do not recompile for new opaque info
+  "skip_link"       : [ "", ""],  % Do not link
+  "m3main_in_C"     : [ "", ""],  % Generate the main program as a C file
+  "NoChecks"        : [ "", "T", m3frontOption], % Disable some tuntime checks
+  "NoAsserts"       : [ "", "T", m3frontOption], %   use for benchmarking :-)
+  "NoNarrowChk"     : [ "", "T", m3frontOption],
+  "NoRangeChk"      : [ "", "T", m3frontOption],
+  "NoReturnChk"     : [ "", "T", m3frontOption],
+  "NoCaseChk"       : [ "", "T", m3frontOption],
+  "NoTypeCaseChk"   : [ "", "T", m3frontOption],
+  "NoNilChk"        : [ "", "T", m3frontOption],
+  "NoRaisesChk"     : [ "", "T", m3frontOption],
+  "InitFloats"      : [ "", "T", m3frontOption], % Initialize floats to 0.0
+  "vsdebug"         : [ "", "T", m3frontOption],
+  "builtins"        : [ "", "T", m3frontOption],
+  "load_map"        : [ "", "T", m3frontOption],
+  "unfold_nested_procs" : [ "", "T", m3frontOption]
+}
 
