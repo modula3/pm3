@@ -653,7 +653,7 @@ PROCEDURE XIOWait (fd: CARDINAL; read: BOOLEAN; interval: LONGREAL): WaitResult
         DEC (RT0u.inCritical);
       END;
       InternalYield ();
-      Cerrno.errno := self.select.errno;
+      Cerrno.SetErrno(self.select.errno);
       RETURN self.select.waitResult;
     END;
   END XIOWait;
@@ -886,7 +886,7 @@ BEGIN
                     CanRun(t);
                     EXIT;
                   ELSIF n < 0 THEN
-                    t.select.errno  := Cerrno.errno;
+                    t.select.errno  := Cerrno.GetErrno();
                     t.select.waitResult := WaitResult.Error;
                     CanRun(t);
                     EXIT;
@@ -1124,7 +1124,7 @@ PROCEDURE DetermineContext (oldSP: ADDRESS) =
     ELSE 
       (* we are starting the execution of a forked thread *)
       RTThread.handlerStack := self.context.handlers;
-      Cerrno.errno := self.context.errno;
+      Cerrno.SetErrno(self.context.errno);
       RTThread.allow_sigvtalrm ();
       DEC (RT0u.inCritical);
       
@@ -1158,7 +1158,7 @@ PROCEDURE InitContext (VAR c: Context;  size: INTEGER) =
       c.stackBottom := c.stack.first;
     END;
     c.handlers    := NIL;
-    c.errno       := Cerrno.errno;
+    c.errno       := Cerrno.GetErrno();
     
     (* mark the ends of the stack for a sanity check *)
     LOOPHOLE (c.stackTop, IntPtr)^ := seal;
@@ -1212,7 +1212,7 @@ PROCEDURE Transfer (VAR from, to: Context;  new_self: T) =
     IF (ADR (from) # ADR (to)) THEN
       RTThread.disallow_sigvtalrm ();
       from.handlers := RTThread.handlerStack;
-      from.errno := Cerrno.errno;
+      from.errno := Cerrno.GetErrno();
       IF new_self.txn # NIL AND self.txn # new_self.txn THEN
         RTHeapDB.Transfer(self.txn, new_self.txn);
       END;
@@ -1221,7 +1221,7 @@ PROCEDURE Transfer (VAR from, to: Context;  new_self: T) =
       myTxn := new_self.txn;
       RTThread.Transfer (from.buf, to.buf);
       RTThread.handlerStack := from.handlers;
-      Cerrno.errno := from.errno;
+      Cerrno.SetErrno(from.errno);
       RTThread.allow_sigvtalrm ();
     END;
   END Transfer;
@@ -1521,7 +1521,7 @@ PROCEDURE TxnAbort() =
               t.abortPending := TRUE;
               EXIT;
             END;
-            txn = txn.parent;
+            txn := txn.parent;
           END;
         END;
         t := t.next;
