@@ -1,7 +1,8 @@
 (* Copyright (C) 1993, Digital Equipment Corporation           *)
 (* All rights reserved.                                        *)
 (* See the file COPYRIGHT for a full description.              *)
-(* Last modified on Thu Mar 30 14:54:37 PST 1995 by mcjones    *)
+(* Last modified on Tue Jan 14 10:45:05 PST 1997 by heydon     *)
+(*      modified on Thu Mar 30 14:54:37 PST 1995 by mcjones    *)
 (*      modified on Wed Jun 22 16:45:37 PDT 1994 by kalsow     *)
 (*      modified on Mon Feb 22 11:41:21 PST 1993 by mjordan    *)
 
@@ -12,10 +13,15 @@ IMPORT Atom, AtomList, Ctypes, Env, File, FilePosix, M3toC, OSError,
   SchedulerPosix, Text, Thread, Unix, Uerror, Uexec, Uprocess, Ustat,
   Utime, Uugid, Word;
  
-REVEAL T = BRANDED REF RECORD
+REVEAL
+  T = BRANDED REF RECORD
     pid: INTEGER;
     waitOk := TRUE
   END;
+
+CONST
+  NoFileDescriptor: INTEGER = -1;
+  (* A non-existent file descriptor *)
 
 PROCEDURE Create(
     cmd: Pathname.T;
@@ -33,8 +39,14 @@ PROCEDURE Create(
     forkResult, execResult: INTEGER;
     forkErrno, execErrno: Ctypes.int;
     waitStatus: Uexec.w_A;
+    stdin_fd, stdout_fd, stderr_fd: INTEGER := NoFileDescriptor;
   BEGIN
-    WITH path = GetPathToExec(cmd) DO
+    VAR path := GetPathToExec(cmd); BEGIN
+      (* make sure the result is an absolute pathname if "wd # NIL" *)
+      IF wd # NIL AND NOT Text.Empty(wd) AND NOT Pathname.Absolute(path) THEN
+        path := Pathname.Join(GetWorkingDirectory(), path, ext := NIL);
+        <* ASSERT Pathname.Absolute(path) *>
+      END;
       argx := AllocArgs(path, Pathname.Base(cmd), params)
     END;
     IF env # NIL THEN
@@ -50,6 +62,12 @@ PROCEDURE Create(
      wdstr := NIL
     END;
 
+    (* grab the file descriptors from inside the traced File.Ts so
+       we don't trigger a GC after the vfork() call. *)
+    IF (stdin  # NIL) THEN stdin_fd  := stdin.fd;  END;
+    IF (stdout # NIL) THEN stdout_fd := stdout.fd; END;
+    IF (stderr # NIL) THEN stderr_fd := stderr.fd; END;
+
     (* Turn off the interval timer (so it won't be running in child). *)
     nit := Utime.struct_itimerval {
              it_interval := Utime.struct_timeval {0, 0},
@@ -64,10 +82,10 @@ PROCEDURE Create(
     execResult := 0;
     forkResult := Unix.vfork();
     IF forkResult = 0 THEN (* in the child *)
-      ExecChild(argx, envp, wdstr, stdin, stdout, stderr);
-     (* If ExecChild returns, the execve.  Let's try to leave a note
-        for our parent, in case we're still sharing their address
-        space. *)
+      ExecChild(argx, envp, wdstr, stdin_fd, stdout_fd, stderr_fd);
+      (* If ExecChild returns, the execve failed. Let's try to leave
+     	 a note for our parent, in case we're still sharing their
+     	 address space. *)
       execResult := -1;
       execErrno := Uerror.errno;
       Unix.underscore_exit(99)
@@ -124,7 +142,8 @@ PROCEDURE GetPathToExec(pn: Pathname.T): Pathname.T RAISES {OSError.E} =
           pn,
           NIL);
         result := Ustat.stat(M3toC.TtoS(prog), ADR(statBuf));
-        IF result = 0 AND Word.And(statBuf.st_mode, Ustat.S_IFMT) = Ustat.S_IFREG THEN
+        IF result = 0 AND
+           Word.And(statBuf.st_mode, Ustat.S_IFMT) = Ustat.S_IFREG THEN
           statBuf.st_mode := Word.And(statBuf.st_mode, MaskXXX);
           IF statBuf.st_mode # 0 THEN
             IF statBuf.st_mode = MaskXXX THEN RETURN prog END;
@@ -208,21 +227,26 @@ PROCEDURE ExecChild(
     argx: ArrCStr; (* see "AllocArgs" for layout *)
     envp: Ctypes.char_star_star;
     wdstr: Ctypes.char_star;
-    stdin, stdout, stderr: File.T)
+    stdin, stdout, stderr: INTEGER)
   RAISES {} =
 (* Modify Unix state using "stdin", ..., and invoke execve using
    "argx" and "envp".  Do not invoke scheduler, allocator, or
    exceptions.  Return only if a fatal Unix error is encountered, in
    which case Uerror.errno is set. *)
-  PROCEDURE SetFd(fd: INTEGER; h: File.T): BOOLEAN =
+
+  PROCEDURE SetFd(fd: INTEGER; h: INTEGER(*File.T*)): BOOLEAN =
   (* Make file descriptor "fd" refer to file "h", or set "fd"'s
-     close-on-exec flag if "h=NIL".  Return "TRUE" if succesful. *)
-    BEGIN
-      IF h # NIL THEN RETURN NOT Unix.dup2(h.fd, fd) < 0 END;
-      RETURN NOT Unix.fcntl(fd, Unix.F_SETFD, 1) < 0
+     close-on-exec flag if "h = NoFileDescriptor". Return "TRUE"
+     iff successful. *)
+    VAR res: BOOLEAN; BEGIN
+      IF h # NoFileDescriptor
+        THEN res := NOT Unix.dup2(h, fd) < 0
+        ELSE res := NOT Unix.fcntl(fd, Unix.F_SETFD, 1) < 0
+      END;
+      RETURN res
     END SetFd;
-  VAR res := 0; t: Ctypes.char_star;
-  BEGIN
+
+  VAR res := 0; t: Ctypes.char_star; BEGIN
     IF wdstr # NIL THEN
       IF Unix.chdir(wdstr) < 0 THEN RETURN END
     END;
