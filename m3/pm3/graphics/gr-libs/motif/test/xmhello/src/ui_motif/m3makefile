@@ -1,0 +1,10 @@
+import("libm3")
+import("X11R4")
+import("motif")
+module("MainWindow")
+module("Menu")
+module("Toolbar")
+
+HtmlInterface("MainWindow")
+HtmlInterface("Menu")
+HtmlInterface("Toolbar")

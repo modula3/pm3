@@ -1,0 +1,16 @@
+import("libm3")
+import("parseparams")
+%import("perlite")
+import("m3doc")
+
+module("AppModel")
+interface("UI")
+include_dir("ui_motif")
+implementation("Main")
+
+HtmlFile("index")
+HtmlInterface("AppModel")
+HtmlInterface("UI")
+HtmlRoot("index")
+
+Program("xmhello")

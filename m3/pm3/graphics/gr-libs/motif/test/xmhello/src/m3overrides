@@ -1,0 +1,2 @@
+override("motif","/project/genesis/utils/proj")
+override("X11R4","/project/genesis/utils/proj")
