@@ -72,7 +72,7 @@ readonly proc zume3D(x) is
     local cmd = [ _ZUME_EXEC, "-3D", path_of(x) ]
     write(cmd, CR)
     local ret = exec(cmd)
-    if not equal(ret, 0) error("command failed with error code: ", ret)
+    if not equal(ret, 0) error("command failed with error code: ", ret) end
   end
 
   foreach r in _ZUME_FV_FILES
