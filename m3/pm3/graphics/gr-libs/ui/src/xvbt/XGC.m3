@@ -3,7 +3,7 @@
 (* See the file COPYRIGHT for a full description. *)
 (* *)
 (* by Steve Glassman, Mark Manasse and Greg Nelson *)
-(* Last modified on Mon Apr  3 15:19:02 PDT 1995 by msm     *)
+(* Last modified on Thu Oct 17 10:54:21 PDT 1996 by msm     *)
 (*      modified on Fri Mar 11 16:59:42 PST 1994 by gnelson *)
 (*      modified on Mon Nov 22 13:43:22 PST 1993 by steveg  *)
 (*      modified on Fri May  7 17:10:42 PDT 1993 by mjordan *)
@@ -33,6 +33,7 @@ TYPE
                    gc   : X.GC                := NIL;
                    op                         := NullPaintOp;
                    pm   : PaintPrivate.Pixmap := 0;
+                   pmGen: INTEGER             := 0;
                    delta                      := Point.Origin;
                  END;
 
@@ -45,6 +46,7 @@ TYPE
                   gc   : X.GC                := NIL;
                   op                         := NullPaintOp;
                   pm   : PaintPrivate.Pixmap := 0;
+                  pmGen: INTEGER             := 0;
                   delta                      := Point.Origin;
                   mode                       := FIRST(XMode);
                   src  : X.Pixmap            := X.None;
@@ -67,6 +69,7 @@ TYPE
                 gc   : X.GC                := NIL;
                 op                         := NullPaintOp;
                 pm   : PaintPrivate.Pixmap := 0;
+                pmGen: INTEGER             := 0;
                 delta                      := Point.Origin;
                 wind                       := FIRST(VBT.WindingCondition);
               END;
@@ -75,6 +78,7 @@ TYPE
                   gc   : X.GC                := NIL;
                   op                         := NullPaintOp;
                   pm   : PaintPrivate.Pixmap := 0;
+                  pmGen: INTEGER             := 0;
                   delta                      := Point.Origin;
                   end                        := FIRST(VBT.EndStyle);
                   join                       := FIRST(VBT.JoinStyle);
@@ -149,6 +153,7 @@ PROCEDURE ResolveTextureGC (         dpy: X.DisplayStar;
     apm                         := pm;
     delta                       := del;
     pmb  : Rect.T;
+    gen                         := XScrnPxmp.PixmapGeneration(st, pm);
   BEGIN
     TRY
       IF pm = XScrnTpRep.SolidPixmap THEN
@@ -167,7 +172,8 @@ PROCEDURE ResolveTextureGC (         dpy: X.DisplayStar;
       WITH gca = st.textureGC DO
         FOR i := 0 TO LAST(gca) DO
           WITH gcr = gca[i] DO
-            IF (gcr.op = op) AND (gcr.pm = apm) AND (gcr.delta = delta) THEN
+            IF (gcr.op = op) AND (gcr.pm = apm) AND (gcr.delta = delta)
+                 AND (gen = gcr.pmGen) THEN
               res := gcr.gc;
               IF i # 0 THEN
                 temp := gcr;
@@ -225,6 +231,7 @@ PROCEDURE ResolveTextureGC (         dpy: X.DisplayStar;
         WITH gcr = gca[0] DO
           gcr.op := op;
           gcr.pm := apm;
+          gcr.pmGen := gen;
           gcr.delta := delta;
           gcr.gc := res
         END;
@@ -252,6 +259,7 @@ PROCEDURE ResolveFillGC (         dpy : X.DisplayStar;
     apm                         := pm;
     delta                       := del;
     pmb  : Rect.T;
+    gen                         := XScrnPxmp.PixmapGeneration(st, pm);
   BEGIN
     TRY
       IF pm < 0 THEN pm := XScrnTpRep.SolidPixmap - pm; pst := st.bits END;
@@ -263,7 +271,7 @@ PROCEDURE ResolveFillGC (         dpy : X.DisplayStar;
         FOR i := 0 TO LAST(gca) DO
           WITH gcr = gca[i] DO
             IF (gcr.op = op) AND (gcr.pm = apm) AND (gcr.delta = delta)
-                 AND (gcr.wind = wind) THEN
+                 AND (gcr.wind = wind) AND (gcr.pmGen = gen) THEN
               res := gcr.gc;
               IF i # 0 THEN
                 temp := gcr;
@@ -323,6 +331,7 @@ PROCEDURE ResolveFillGC (         dpy : X.DisplayStar;
         WITH gcr = gca[0] DO
           gcr.op := op;
           gcr.pm := apm;
+          gcr.pmGen := gen;
           gcr.delta := delta;
           gcr.gc := res;
           gcr.wind := wind
@@ -361,6 +370,7 @@ PROCEDURE ResolveStrokeGC (         dpy  : X.DisplayStar;
     apm                         := pm;
     delta                       := del;
     pmb  : Rect.T;
+    gen                         := XScrnPxmp.PixmapGeneration(st, pm);
   BEGIN
     TRY
       IF pm < 0 THEN pm := XScrnTpRep.SolidPixmap - pm; pst := st.bits END;
@@ -373,7 +383,7 @@ PROCEDURE ResolveStrokeGC (         dpy  : X.DisplayStar;
           WITH gcr = gca[i] DO
             IF (gcr.op = op) AND (gcr.pm = apm) AND (gcr.delta = delta)
                  AND (gcr.width = width) AND (gcr.end = end)
-                 AND (gcr.join = join) THEN
+                 AND (gcr.join = join) AND (gcr.pmGen = gen) THEN
               res := gcr.gc;
               IF i # 0 THEN
                 temp := gcr;
@@ -436,6 +446,7 @@ PROCEDURE ResolveStrokeGC (         dpy  : X.DisplayStar;
         WITH gcr = gca[0] DO
           gcr.op := op;
           gcr.pm := apm;
+          gcr.pmGen := gen;
           gcr.delta := delta;
           gcr.gc := res;
           gcr.width := width;
@@ -465,6 +476,7 @@ PROCEDURE ResolvePixmapGC (            dpy  : X.DisplayStar;
     mask: Ctypes.unsigned_long;
     pst : XScreenType.T;
     apm : PaintPrivate.Pixmap;
+    gen                        := XScrnPxmp.PixmapGeneration(st, pm);
   BEGIN
     TRY
       IF pm = XScrnTpRep.SolidPixmap THEN
@@ -485,10 +497,11 @@ PROCEDURE ResolvePixmapGC (            dpy  : X.DisplayStar;
           WITH gcr = gca[i] DO
             IF (gcr.op = op)
                  AND ((gcr.mode # XMode.UseFillRect)
-                        OR (gcr.pm = apm) AND (gcr.delta = delta)) THEN
+                        OR (gcr.pm = apm) AND (gcr.delta = delta)
+                             AND (gcr.pmGen = gen)) THEN
               res := gcr.gc;
               mode := gcr.mode;
-              IF apm = gcr.pm THEN
+              IF apm = gcr.pm AND gcr.pmGen = gen THEN
                 src := gcr.src
               ELSIF mode = XMode.UseFillRect OR (pst.pmtable = NIL)
                       OR (pm >= NUMBER(pst.pmtable^)) THEN
@@ -496,7 +509,8 @@ PROCEDURE ResolvePixmapGC (            dpy  : X.DisplayStar;
               ELSE
                 src := pst.pmtable[pm].pixmap;
                 gcr.src := src;
-                gcr.pm := apm
+                gcr.pm := apm;
+                gcr.pmGen := gen
               END;
               IF i # 0 THEN
                 temp := gcr;
@@ -558,6 +572,7 @@ PROCEDURE ResolvePixmapGC (            dpy  : X.DisplayStar;
         WITH gcr = gca[0] DO
           gcr.op := op;
           gcr.pm := apm;
+          gcr.pmGen := gen;
           gcr.delta := delta;
           gcr.mode := mode;
           gcr.src := src;

@@ -3,9 +3,9 @@
 (* See the file COPYRIGHT for a full description. *)
 (* *)
 (* by Steve Glassman, Mark Manasse and Greg Nelson *)
-(* Last modified on Thu Mar 10 19:16:30 PST 1994 by gnelson *)
+(* Last modified on Wed Oct 16 14:08:24 PDT 1996 by msm     *)
+(*      modified on Thu Mar 10 19:16:30 PST 1994 by gnelson *)
 (*      modified on Fri May  7 16:47:07 PDT 1993 by mjordan *)
-(*      modified on Fri Nov  6 20:05:02 PST 1992 by msm *)
 (* modified on Mon Feb 24 13:59:50 PST 1992 by muller *)
 
 <*PRAGMA LL*>
@@ -35,10 +35,11 @@ TYPE
              END;
 
   PixmapRecord = RECORD
-                   pixmap: X.Drawable;
-                   isLazy: BOOLEAN;
-                   domain: Rect.T;
-                   depth : INTEGER
+                   pixmap    : X.Drawable;
+                   isLazy    : BOOLEAN;
+                   domain    : Rect.T;
+                   depth     : INTEGER;
+                   generation: INTEGER;
                  END;
 
 CONST SolidPixmap: PaintPrivate.Pixmap = -1;

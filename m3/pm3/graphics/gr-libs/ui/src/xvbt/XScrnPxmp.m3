@@ -3,9 +3,10 @@
 (* See the file COPYRIGHT for a full description. *)
 (* *)
 (* by Steve Glassman, Mark Manasse and Greg Nelson *)
-(* Last modified on Mon Jan  8 14:16:32 PST 1996 by heydon  *)
+(* Last modified on Thu Oct 17 11:49:39 PDT 1996 by msm     *)
+(*      modified on Fri Oct 11 10:25:15 PDT 1996 by najork  *)
+(*      modified on Mon Jan  8 14:16:32 PST 1996 by heydon  *)
 (*      modified on Tue Jan 31 10:08:57 PST 1995 by kalsow  *)
-(*      modified on Sun Aug  7 02:52:01 PDT 1994 by msm     *)
 (*      modified on Fri Mar 11 15:30:28 PST 1994 by gnelson *)
 (*      modified on Mon Nov 22 13:39:27 PST 1993 by steveg  *)
 (*      modified on Fri May  7 17:28:53 PDT 1993 by mjordan *)
@@ -26,8 +27,11 @@ REVEAL
         bestX, bestY := ARRAY BOOLEAN OF INTEGER{-1, ..};
         (* [FALSE] => stipple, [TRUE] => tile *)
         tileGC            := ARRAY BOOLEAN OF X.GC{NIL, ..};
-        pmcount: CARDINAL := 0
+        pmcount: CARDINAL := 0;
         (* number of entries in pmtable *)
+        pmfree := -1;
+        (* index of first free list entry in pmtable below pmcount;
+           negative if none *)
       END;
 
 TYPE
@@ -58,20 +62,34 @@ PROCEDURE FromXPixmap (         st   : XScreenType.T;
                        READONLY dom  : Rect.T;
                                 depth: INTEGER        ): ScrnPixmap.T =
   BEGIN
-    RETURN NewPixmap(
-             st, XScrnTpRep.PixmapRecord{pixmap := xpm, domain := dom,
-                                         depth := depth, isLazy := FALSE})
+    RETURN NewPixmap(st, XScrnTpRep.PixmapRecord{
+                           pixmap := xpm, domain := dom, depth := depth,
+                           isLazy := FALSE, generation := 0})
   END FromXPixmap;
 
-PROCEDURE FakeCapture (         st    : XScreenType.T;
-                                w     : X.Drawable;
-                       READONLY dom: Rect.T;
-                                depth : INTEGER        ): ScrnPixmap.T =
+PROCEDURE FakeCapture (         st   : XScreenType.T;
+                                w    : X.Drawable;
+                       READONLY dom  : Rect.T;
+                                depth: INTEGER        ): ScrnPixmap.T =
   BEGIN
-    RETURN NewPixmap(
-             st, XScrnTpRep.PixmapRecord{pixmap := w, domain := dom,
-                                         depth := depth, isLazy := TRUE})
+    RETURN NewPixmap(st, XScrnTpRep.PixmapRecord{
+                           pixmap := w, domain := dom, depth := depth,
+                           isLazy := TRUE, generation := 0})
   END FakeCapture;
+
+PROCEDURE PixmapGeneration (st: XScreenType.T; pmId: INTEGER): INTEGER =
+  BEGIN
+    IF pmId < 0 THEN
+      IF pmId = XScrnTpRep.SolidPixmap THEN RETURN 0 END;
+      pmId := XScrnTpRep.SolidPixmap - pmId;
+      st := st.bits
+    END;
+    IF pmId < NUMBER(st.pmtable^) THEN
+      RETURN st.pmtable[pmId].generation
+    ELSE
+      RETURN 0
+    END
+  END PixmapGeneration;
 
 PROCEDURE PixmapDomain (st: XScreenType.T; pmId: INTEGER): Rect.T =
   BEGIN
@@ -129,29 +147,38 @@ PROCEDURE FinishCapture (st: XScreenType.T; pmId: INTEGER; xpm: X.Pixmap) =
   END FinishCapture; 
 
 PROCEDURE NewPixmap (         st : XScreenType.T;
-                     READONLY rec: XScrnTpRep.PixmapRecord): XPixmap
+                     rec: XScrnTpRep.PixmapRecord): XPixmap
   <* LL.sup = st.trsl *> =
   VAR res := NEW(XPixmap, depth := rec.depth, bounds := rec.domain);
+      id: CARDINAL := 0;
   BEGIN
     IF rec.depth = 1 THEN st := st.bits END;
     res.st := st;
-    WITH n = NUMBER(st.pmtable^) DO
-      IF n = st.pmcount THEN
-        WITH new = NEW(REF ARRAY OF XScrnTpRep.PixmapRecord, 2 * n) DO
-          FOR i := 0 TO n - 1 DO new[i] := st.pmtable[i] END;
-          st.pmtable := new
+    IF st.pmfree >= 0 THEN
+      id := st.pmfree;
+      rec.generation := st.pmtable[id].generation + 1;
+      st.pmfree := st.pmtable[id].depth
+    ELSE
+      id := st.pmcount;
+      INC(st.pmcount);
+      WITH n = NUMBER(st.pmtable^) DO
+        IF n = id THEN
+          WITH new = NEW(REF ARRAY OF XScrnTpRep.PixmapRecord, 2 * n) DO
+            FOR i := 0 TO n - 1 DO new[i] := st.pmtable[i] END;
+            st.pmtable := new
+          END
         END
       END
     END;
     IF st.bits = st THEN
-      res.id := XScrnTpRep.SolidPixmap - st.pmcount
+      res.id := XScrnTpRep.SolidPixmap - id
     ELSE
-      res.id := st.pmcount
+      res.id := id
     END;
-    st.pmtable[st.pmcount] := rec;
-    INC(st.pmcount);
+    st.pmtable[id] := rec;
     RETURN res
   END NewPixmap;
+
 
 <*INLINE*> PROCEDURE XDestroyImage (xim: X.XImageStar) =
   BEGIN
@@ -378,6 +405,8 @@ PROCEDURE PixmapFree (pm: XPixmap) RAISES {TrestleComm.Failure} =
       IF id < 0 THEN id := XScrnTpRep.SolidPixmap - id END;
       TrestleOnX.Enter(trsl);
       TRY
+        st.pmtable[id].depth := st.pmfree;
+        st.pmfree := id;
         IF st.pmtable[id].isLazy THEN
           st.pmtable[id].pixmap := X.None;
           st.pmtable[id].isLazy := FALSE
@@ -394,6 +423,7 @@ PROCEDURE PixmapFree (pm: XPixmap) RAISES {TrestleComm.Failure} =
       X.Error => RAISE TrestleComm.Failure
     END;
   END PixmapFree;
+
 
 EXCEPTION FatalError;
 

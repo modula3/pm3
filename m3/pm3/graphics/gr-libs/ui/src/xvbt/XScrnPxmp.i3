@@ -3,8 +3,8 @@
 (* See the file COPYRIGHT for a full description. *)
 (* *)
 (* by Steve Glassman, Mark Manasse and Greg Nelson *)
-(* Last modified on Fri Mar 11 15:30:30 PST 1994 by gnelson *)
-(*      modified on Fri Nov  6 17:50:55 PST 1992 by msm    *)
+(* Last modified on Wed Oct 16 14:08:23 PDT 1996 by msm     *)
+(*      modified on Fri Mar 11 15:30:30 PST 1994 by gnelson *)
 (*      modified on Mon Feb 24 13:59:53 PST 1992 by muller *)
 <*PRAGMA LL*>
 
@@ -49,6 +49,10 @@ PROCEDURE IsLazy(st: XScreenType.T; pmId: INTEGER): BOOLEAN;
 PROCEDURE GetDrawable(st: XScreenType.T; pmId: INTEGER): X.Drawable;
 <* LL.sup = st.trsl *>
 (* Return the drawable assoiciated with pmId *)
+
+PROCEDURE PixmapGeneration (st: XScreenType.T; pmId: INTEGER): INTEGER;
+<* LL.sup = st.trsl *>
+(* return an integer which, together with equality of pmId, guarantees that the underlying pixmap is unchanged. *)
 
 PROCEDURE PixmapDomain (st: XScreenType.T; pmId: INTEGER): Rect.T;
 <* LL.sup = st.trsl *>
