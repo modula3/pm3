@@ -16,7 +16,7 @@
    the main problem was to get it right for yacc (an expression can
    start by a type). */
 
-/* Expect 2 shift/reduce conflicts */
+/* Expect 3 shift/reduce conflicts */
 
 /* The effect of yyparse is to parse a fragment of the Modula 3
    language and emit a stream of characters and formatting codes
@@ -181,6 +181,7 @@ typedef enum {NonOptimal, OptimalBreak, OptimalNoBreak} Formatter_BreakType;
 %token PR_EXTERNAL PR_INLINE PR_OBSOLETE PR_UNUSED
 %token PR_FATAL PR_NOWARN PR_ASSERT PR_TRACE
 %token PR_LINE PR_PRAGMA PR_CALLBACK
+%token PR_LL PR_EXPORTED PR_SPEC
 
 /* reserved words */ 
 %token AND ANY ARRAY AS BGN BITS BRANDED BY CASE CONST 
@@ -355,6 +356,7 @@ decl_pragma:
     | decl_pragma unused_pragma NL
     | decl_pragma fatal_pragma NL
     | decl_pragma pragma_pragma NL
+    | decl_pragma exported_pragma NL
     ;
 
 const_decl_list:
@@ -422,7 +424,7 @@ return_type:
 
 raises:
       /* empty */
-    | Raises SP Lbrace B0 opt_qid_list E Rbrace
+    | Raises SP Lbrace B0 opt_qid_list E Rbrace nowarn
     | Raises SP Any
     ;
 
@@ -559,8 +561,8 @@ case:
     ;
 
 labels_list:
-      labels
-    | labels_list Z Comma A labels
+      nowarn labels
+    | labels_list Z Comma A nowarn labels
     ;
 
 labels:
@@ -859,6 +861,10 @@ begin_trace:
     ;
 
 assert_pragma:     Pr_Assert     SP expr           SP Rpragma ;
+/*
+ll_pragma:         Pr_LL         SP expr           SP Rpragma ;
+spec_pragma:       Pr_Spec       SP expr           SP Rpragma ;
+*/
 fatal_pragma:      Pr_Fatal      SP fatal_exc_list SP Rpragma ;
 pragma_pragma:     Pr_Pragma     SP id_list        SP Rpragma ;
 
@@ -872,7 +878,12 @@ unused_pragma:     Pr_Unused     SP Rpragma ;
 obsolete_pragma:   Pr_Obsolete   SP Rpragma ;
 nowarn_pragma:     Pr_Nowarn     SP Rpragma ;
 callback_pragma:   Pr_Callback   SP Rpragma ;
+exported_pragma:   Pr_Exported   SP Rpragma ;
 
+nowarn:
+      /* empty */
+    | QSP nowarn_pragma QSP
+    ;
 
 /*--------------------- expressions ------------------------*/
 
@@ -1094,8 +1105,14 @@ Pr_Unused:     PR_UNUSED   { PF ("<* UNUSED",   fonts->fixedComment);} NPS ;
 Pr_Obsolete:   PR_OBSOLETE { PF ("<* OBSOLETE", fonts->fixedComment);} NPS ;
 Pr_Nowarn:     PR_NOWARN   { PF ("<* NOWARN",   fonts->fixedComment);} NPS ;
 Pr_Line:       PR_LINE     { PF ("<* LINE",     fonts->fixedComment);} NPS ;
-Pr_Pragma:     PR_PRAGMA   { PF ("<* PRAGMA",   fonts->fixedComment);} NPS ;
 Pr_Callback:   PR_CALLBACK { PF ("<* CALLBACK", fonts->fixedComment);} NPS ;
+
+Pr_Pragma:     PR_PRAGMA   { PF ("<* PRAGMA",   fonts->fixedComment);} NPS ;
+Pr_Exported:   PR_EXPORTED { PF ("<* EXPORTED", fonts->fixedComment);} NPS ;
+/*
+Pr_LL:         PR_LL       { PF ("<* LL",       fonts->fixedComment);} NPS ;
+Pr_Spec:       PR_EXPORTED { PF ("<* SPEC",     fonts->fixedComment);} NPS ;
+*/
 
 Ident:         IDENT { PRID (&lexbuf[$1]);} NPS ;
 IdentP:	       IDENT { PF (&lexbuf[$1], fonts->procName);} NPS ;
