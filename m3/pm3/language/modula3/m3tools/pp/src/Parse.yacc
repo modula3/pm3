@@ -296,18 +296,18 @@ import_nl_list:
     ;
 
 import_nl:
-      From SP Ident SP Import SP B0 id_list            E Semi NL
-    |                  Import SP B0 import_module_list E Semi NL
+      From SP Ident SP Import SP B0 id_list E Semi NL
+    |                B Import A ALZ5 import_module_list Semi E E EA E NL
     ;
 
 import_module_list:
-                                 import_module
-    | import_module_list Comma A import_module
+                                            import_module
+    | import_module_list Comma XSP E E ALNL import_module
     ;
 
 import_module:
-      B Ident                E
-    | B Ident SP As SP Ident E
+      Inc G G Ident
+    | Inc G G Ident EF G SP As SP type
     ;
 
 block:
