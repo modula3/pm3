@@ -9,19 +9,21 @@
 %      modified on Fri Nov 28 09:37:24 1986 by mcvl
 
 
-c_source ("file")
-c_source ("inttable")
-c_source ("strlib")
-c_source ("varrayptr")
-c_source ("err")
-c_source ("llscan")
+sources = [ "file", "inttable", "strlib", "varrayptr", "err", "llscan" ]
+files = [ ] 
+
+
+foreach s in sources
+  c_source (s)
+  files += format("..%ssrc%s%s%s", SL, SL, s, ".c" )
+end
 
 if defined ("_all")
   local prog = "llscan"
-  local form = format ("-DDEFAULT_FORM=\\\"%s%sscan.llscan\\\"", LIB_USE, SL)
+  local form = format ("-DDEFAULT_FORM=\"%s%sscan.llscan\"", LIB_USE, SL)
   local ret = 0
-  local cmd = [ CC, "-I../src", "-D_BSD", form, "-o", prog, COMPILE_SOURCES ]
-  if stale (prog, COMPILE_SOURCES)
+  local cmd = [ CC, "-I../src", "-D_BSD", form, "-o", prog, files ]
+  if stale (prog, files)
     write(cmd, "\n")
     ret = exec (cmd)
     if not equal(ret, 0) error("command failed with error code: ", ret) end
