@@ -301,10 +301,13 @@ import_nl:
     ;
 
 import_module_list:
+                                 import_module
+    | import_module_list Comma A import_module
+    ;
+
+import_module:
       B Ident                E
     | B Ident SP As SP Ident E
-    | import_module_list Comma A B Ident                E
-    | import_module_list Comma A B Ident SP As SP Ident E
     ;
 
 block:
