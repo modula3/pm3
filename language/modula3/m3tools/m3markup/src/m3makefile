@@ -7,15 +7,15 @@
 import ("libm3")
 import ("m3tools")
 
-module ("Buf")
-module ("Wx")
-module ("CharMap")
-module ("ID")
-module ("XFormat")
-module ("MarkUp")
+Module ("Buf")
+Module ("Wx")
+Module ("CharMap")
+Module ("ID")
+Module ("XFormat")
+Module ("MarkUp")
 module ("M3MarkUp")
-module ("CMarkUp")
-module ("ErrLog")
+Module ("CMarkUp")
+Module ("ErrLog")
 
 Library ("m3markup")
 
