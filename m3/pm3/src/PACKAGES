@@ -100,10 +100,11 @@ PkgInfo("m3linker","language/modula3/m3compiler","","m3linker",tLib,"T",3,[],
     ["ALL"],[],"Modula-3 prelinker")
 
 PkgInfo("m3objfile","language/modula3/m3compiler","","m3objfile",tLib,"T",3,
-    [],["LINUXELF", "NT386"],[],"Modula-3 object file writers")
+    [],["LINUXLIBC6", "LINUXELF", "NT386"],[],"Modula-3 object file writers")
 
 PkgInfo("m3back","language/modula3/m3compiler","","m3back",tLib,"T",3,[],
-["LINUXELF", "NT386"],[],"Linux ELF and Windows/NT x86 back-ends")
+    ["LINUXLIBC6", "LINUXELF", "NT386"],[],
+    "Linux ELF and Windows/NT x86 back-ends")
 
 PkgInfo("m3driver","language/modula3/m3compiler","","m3driver",tLib,"T",3,[],
     ["ALL"],[],"Modula-3 compiler driver")
@@ -321,13 +322,13 @@ PkgInfo("cube","graphics/games","","cube",tProg,"T",3,[],["ALL"],[],
 PkgInfo("board","graphics/sharedboard","","board",tLib,"T",3,[],["ALL"],
     ["SHAREDBOARD"],"A network object graphical board")
 
-PkgInfo("boardclient","graphics/sharedboard","","board",tProg,"T",3,[],["ALL"],
+PkgInfo("boardclient","graphics/sharedboard","","board",tProg,"",3,[],["ALL"],
     ["SHAREDBOARD"],"A shared board client editor")
 
-PkgInfo("boardserver","graphics/sharedboard","","board",tProg,"T",3,[],["ALL"],
+PkgInfo("boardserver","graphics/sharedboard","","board",tProg,"",3,[],["ALL"],
     ["SHAREDBOARD"],"A shared board server")
 
-PkgInfo("calendar","graphics/sharedboard","","board",tProg,"T",3,[],["ALL"],
+PkgInfo("calendar","graphics/sharedboard","","board",tProg,"",3,[],["ALL"],
     ["SHAREDBOARD"],"A shared calendar board client")
 
 PkgInfo("codeview","graphics/animation","","codeview",tLib,"T",3,[],["ALL"],

@@ -243,6 +243,8 @@ readonly proc RemovePreviousVersion() is
     if not previousVersion[4]
       ret = Exec(["rm", "-r", EXPORT_SRC & "/" & VersionName(previousVersion)],
           [],".")
+      ret = Exec(["rm", EXPORT_ROOT & "/SRPMS/" & 
+          VersionName(previousVersion) & "-1.src.rpm"],[],".")
       ret = Exec(["rm", EXPORT_DOWNLOAD & "/" & VersionName(previousVersion) &
           ".html"],[],".")
     end
@@ -251,9 +253,19 @@ readonly proc RemovePreviousVersion() is
       if Platforms{platform}[3] 
         ret = Exec(["rm", "-r", 
             EXPORT_BOOTSTRAP & "/" & platform & "/" & 
-            VersionName(previousVersion),
-            EXPORT_BINARIES & "/" & platform & "/" & 
             VersionName(previousVersion)],[],".")
+
+        if Binaries contains platform
+          ret = Exec(["rm", "-r", 
+              EXPORT_BINARIES & "/" & platform & "/" & 
+              VersionName(previousVersion)],[],".")
+        end
+
+        if RPMBinaries contains platform
+          ret = Exec(["rm", "-r", 
+              EXPORT_BINARIES & "/" & platform & "/" & 
+              VersionName(previousVersion),"-RPMS"],[],".")
+        end
       end
     end
   end
@@ -347,8 +359,12 @@ readonly proc DownloadMenu() is
         CR)
 
     write("<P>Source code only (requires a Modula-3 compiler): ",
+        "as a compressed tar file, ",CR,
         "<A HREF=\"",DownloadQuery(VersionName(version),"T","NONE","",""),
-        "\">",VersionName(version) & "-src.tgz","</A>",CR)
+        "\">",VersionName(version) & "-src.tgz","</A>",CR,
+        ", or as a source RPM package, ",CR,
+        "<A HREF=\"../SRPMS/",VersionName(version),"-1.src.rpm\">",
+        VersionName(version),"-1.src.rpm</A>",CR)
 
     write("<DL>",CR)
     foreach platform in Platforms
@@ -360,11 +376,18 @@ readonly proc DownloadMenu() is
             DownloadQuery(VersionName(version),"",platform,"T",""),
             "\">",VersionName(version) & "-" & platform & "-boot.tgz",
             "</A>",CR)
+
         if Binaries contains platform
           write(", binaries <A HREF=\"",
               DownloadQuery(VersionName(version),"",platform,"","T"),
               "\">",VersionName(version) & "-" & platform & "-bin.tgz",
               "</A>",CR)
+        end
+
+        if RPMBinaries contains platform
+          write(", RPM binaries <A HREF=\"../binaries/",platform,
+              "/",VersionName(version),"-RPMS\">",
+              VersionName(version),"-RPMS</A>",CR)
         end
       end
     end
@@ -417,6 +440,7 @@ readonly proc BuildFAQ() is
   > dir & "/" & TARGET & "/" & "config.tmpl" in
     write("M3DOC_PREFIX=[\"" & EXPORT_TMP_TMP & "/" & versionName & 
         "\",\"" & PM3_WEB & "\"]",CR)
+    write("PLATFORM_SUPPORTS_LATEX=\"T\"",CR)
   end
   CheckExec(["m3build","-DBUILD_FAQ","-F",dir & "/" & TARGET & "/" & 
       "config.tmpl"],[],dir,"build postscript FAQ failed")
@@ -600,8 +624,8 @@ CR,
 
     if bundleHead
       >> spec in
-        write("%package ",bundle,CR,"Summary: ",bundle,CR,
-            "Group: ",subdirectory,
+        write("%package ",bundle,CR,"Summary: ",description,CR,
+            "Group: Development/Languages/Modula3/",subdirectory,
             CR,"%description ",bundle,CR,description,CR)
       end
     end
@@ -697,8 +721,10 @@ proc InstallRPM() is
   ret = Exec(["rm","-r","SRPMS.old"],[],EXPORT_ROOT)
   ret = Exec(["mv","RPMS","RPMS.old"],[],EXPORT_ROOT)
   ret = Exec(["mv","SRPMS","SRPMS.old"],[],EXPORT_ROOT)
-  CheckExec(["mv","RPMS",EXPORT_ROOT],[],dir,"Moving RPMS")
-  CheckExec(["mv","SRPMS",EXPORT_ROOT],[],dir,"Moving SRPMS")
+  CheckExec(["mv","RPMS",EXPORT_BINARIES & "/" & TARGET & "/" & 
+      VersionName(version) & "-RPMS"],[],dir,"Moving RPMS")
+  CheckExec(["mv","SRPMS" & "/" & VersionName(version) & "-1.src.rpm",
+      EXPORT_ROOT & "/" & "SRPMS"],[],dir,"Moving SRPMS")
 end
 
 %

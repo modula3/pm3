@@ -101,6 +101,12 @@ TYPE
       endElement := EndElementF;
     END;
 
+  HTMLCheck = Filter OBJECT METHODS OVERRIDES
+      init := InitCheck;
+      startElement := StartElementCheck;
+      endElement := EndElementCheck;
+    END;
+
   Table = REF RECORD
       nbRow, nbColumn: CARDINAL;
       rows: REF ARRAY OF Row;
@@ -1783,7 +1789,7 @@ PROCEDURE AdjustHref(self: HTMLtoHTML; READONLY e: SGML.StartElementEvent) =
         IF status.type = FS.DirectoryFileType THEN
           IF dashPos >= 0 THEN RAISE OSError.E(NIL); END;
 
-          newref := Pathname.Join(href,"index",".html");
+          newref := Pathname.Join(href,"index","html");
           error := NIL;
           status := FS.Status(Pathname.Join(inPrefix,newref));
 
@@ -1829,7 +1835,7 @@ PROCEDURE AdjustHref(self: HTMLtoHTML; READONLY e: SGML.StartElementEvent) =
            added to get out of the current package. *)
 
         IF newseq # NIL THEN
-          newseq.addhi(hrefseq.remlo()); (* initial NIL arc *)
+          newseq.addhi(hrefseq.get(0)); (* initial NIL arc *)
           newseq.addhi(Pathname.Parent); (* get out of the package dir *)
           FOR i := 1 TO pathseq.size() - 1 DO
             IF NOT Text.Equal(hrefseq.get(i),Pathname.Parent) THEN
@@ -1848,7 +1854,7 @@ PROCEDURE AdjustHref(self: HTMLtoHTML; READONLY e: SGML.StartElementEvent) =
            used in the source tree but not present in the install tree. *)
 
         IF newseq # NIL THEN
-          FOR i := hrefseq.size() - 1 TO 0 BY -1 DO
+          FOR i := hrefseq.size() - 1 TO 1 BY -1 DO
             IF Text.Equal(hrefseq.get(i),"src") THEN
               pkgNamePos := i - 1;
               EXIT;
@@ -1946,6 +1952,85 @@ CONST
     TF{"SPAN.INSTITUTION", "institution: ", "<DIV>", SpecialF.Default}
   };
 
+(* With HTMLCheck, the document is parsed and each hypertext link is checked
+   to see if valid. *)
+
+PROCEDURE InitCheck(self: Filter): Filter =
+  BEGIN
+    EVAL SGMLPrint.T.init(self);
+    self.tags := NEW(TextIntTbl.Default).init();
+    self.tagStack := NEW(IntSeq.T).init();
+    self.tagStack.addhi(0); (* In case we receive some data outside any tags *)
+    self.skip := TRUE;
+    RETURN self;
+  END InitCheck;
+
+PROCEDURE StartElementCheck(self: HTMLCheck; 
+    READONLY e: SGML.StartElementEvent)=
+  VAR
+    t: TEXT;
+    dashPos := -1;
+    status: File.Status;
+  BEGIN
+    IF verbose >= 2 THEN
+      WITH position = self.getDetailedLocation(e.pos) DO
+        Wr.PutText(Stdio.stdout,"In file " & position.filename & " line " & 
+            Fmt.Int(position.lineNumber) & " column " & 
+            Fmt.Int(position.columnNumber) & "\n");
+      END;
+    END;
+
+    INC(self.depth);
+
+    (* Do we have an A element, with an HREF attribute, and refering not
+       to an internal link (#...) or to a remote link (http:...) *)
+
+    IF Text.Equal(e.gi,"A") AND GetAttributeValue(e.attributes,"HREF",t) AND
+        Text.FindChar(t,'#') # 0 AND Text.FindChar(t,':') < 0 THEN
+      TRY
+        (* Local links must be relative *)
+
+        error := "incorrect HREF (non relative link) ";
+        IF Pathname.Absolute(t) THEN RAISE OSError.E(NIL); END;
+
+        (* Extract the file name (up to '#') and check if it exists relative
+           to the prefix of the input file name (inPrefix). *)
+
+        error := "incorrect HREF ";
+
+        dashPos := Text.FindChar(t,'#');
+        IF dashPos >= 0 THEN
+          status :=FS.Status(Pathname.Join(inPrefix,Text.Sub(t,0,dashPos)));
+        ELSE
+          status := FS.Status(Pathname.Join(inPrefix,t));
+        END;
+
+        (* The file exists but is a directory. In that case, a tag address
+           ('#') is not acceptable. *)
+
+        IF status.type = FS.DirectoryFileType AND dashPos >= 0 THEN 
+          RAISE OSError.E(NIL);
+        END;
+
+      EXCEPT
+      | OSError.E =>
+          IF error # NIL THEN
+            self.error(SGML.ErrorEvent{0,SGML.ErrorType.Warning,error
+                & t});
+          END;
+      END;
+    END;
+  END StartElementCheck;
+
+PROCEDURE EndElementCheck(self: Filter; READONLY e: SGML.EndElementEvent) =
+  BEGIN
+    DEC(self.depth);
+  END EndElementCheck;
+
+
+(* This starts the common part of the file with the command line options
+   processing. *)
+
 EXCEPTION UsageError(TEXT);
 
 (* Arguments not starting with a - are treated as file names. *)
@@ -1990,6 +2075,9 @@ PROCEDURE ParseOptions(): BOOLEAN RAISES {UsageError} =
         options.defaultDoctype := "HTML";
       ELSIF Text.Equal (arg, "-htmlhtml") THEN 
         conversion := "htmlhtml";
+        options.defaultDoctype := "HTML";
+      ELSIF Text.Equal (arg, "-htmlcheck") THEN 
+        conversion := "htmlcheck";
         options.defaultDoctype := "HTML";
       ELSIF Text.Equal (arg, "-report") THEN 
         report := TRUE;
@@ -2088,6 +2176,8 @@ BEGIN
         converter := NEW(HTMLtoTeX, wr := out).init();
       ELSIF Text.Equal(conversion,"htmlhtml") THEN
         converter := NEW(HTMLtoHTML, wr := out).init();
+      ELSIF Text.Equal(conversion,"htmlcheck") THEN
+        converter := NEW(HTMLCheck, wr := out).init();
       END;
 
       nbErrors := 0;
@@ -2105,7 +2195,7 @@ BEGIN
   EXCEPT
   | UsageError(t) =>
       Wr.PutText(Stdio.stderr,
-          t & "\n? usage: sgmlconv [-htmltex|-htmlhtml] [-r old new] [-path p]... " & 
+          t & "\n? usage: sgmlconv [-htmltex|-htmlhtml|-htmlcheck] [-r old new] [-path p]... " & 
           "[-dtd dtdSearchPath] [-report] [-v] [-vv] [-keep] [infile]" &
           " [outfile]\n");
   | Rd.Failure =>

@@ -1057,7 +1057,7 @@ m3_demangle (mangled)
   int i, uid;
   char demangled [100];
 
-  char * u;
+  char *u;
 
   if (mangled [0] == 'M' && mangled [2] == '_') {
     switch (mangled[1]) {
@@ -1153,8 +1153,8 @@ m3_demangle (mangled)
   }
 
   /* procedure: *__* */
-  if ((u = strchr (mangled, '_')) && u != mangled && u[1] == '_') {
-    strncpy (demangled, mangled, u - mangled);
+  if ((u = strchr (mangled, '_')) && (u != mangled) && (u[1] == '_')) {
+    strncpy (demangled, mangled, (size_t)(u - mangled));
     demangled [u - mangled] = '.';
     strcpy (demangled + (u - mangled) + 1, u + 2);
     return strsave (demangled);

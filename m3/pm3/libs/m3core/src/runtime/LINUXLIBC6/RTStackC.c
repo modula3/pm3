@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <setjmp.h>
+#include <jmp_buf.h>
 
 /* This is a partial stack walker for LINUXELF (dagenais@vlsi.polymtl.ca) */
 
@@ -27,9 +28,9 @@ void RTStack__GetThreadFrame (Frame *f, char *start, int len)
   jmp_buf *env = (jmp_buf *)start;
 
   if (len == sizeof (jmp_buf)) {
-    f->pc = (void *)((*env)[0].__pc);
-    f->sp = (void *)((*env)[0].__bp);
-    f->fp = (void *)((*env)[0].__sp);
+    f->pc = (void *)(env[JB_PC]);
+    f->sp = (void *)(env[JB_BP]);
+    f->fp = (void *)(env[JB_SP]);
   } else
     f->pc = f->sp = 0;
 }

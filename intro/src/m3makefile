@@ -11,6 +11,27 @@ HtmlFile("index")
 HtmlFile("install")
 HtmlFile("platforms")
 HtmlFile("todo")
+HtmlTextFile("dupl.txt")
+
+> "README.html" in
+  write(
+"<HTML><HEAD>",CR,
+"<TITLE>PM3: The Modula-3 distribution of Ecole Polytechnique de Montreal",CR,
+"</TITLE>",CR,
+"</HEAD>",CR,
+"<BODY>",CR,
+"<H1>PM3: The Modula-3 distribution of Ecole Polytechnique de Montreal",CR,
+"</H1>",CR,
+"<P>The subpackages contained in PM3 are located in ",
+    lookup(TARGET_PKG_USE,PKG_USE),CR,
+"Pointers to the relevant documentation may be found in the <TT>intro</TT>",CR,
+"subpackage <A HREF=\"",DOC_TO_PKG_USE,SL,"intro",SL,"src",SL,"index.html",
+    "\">[intro to pm3]</A>",CR,
+"</BODY>",CR,
+"</HTML>",CR)
+end
+
+DocdExport("README.html")
 
 include_dir("questions")
 

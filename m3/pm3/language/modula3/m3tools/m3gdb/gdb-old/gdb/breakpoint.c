@@ -138,7 +138,7 @@ remove_breakpoint PARAMS ((struct breakpoint *));
 static int
 print_it_normal PARAMS ((bpstat));
 
-static int
+static long
 watchpoint_check PARAMS ((char *));
 
 static int
@@ -1150,7 +1150,7 @@ bpstat_alloc (b, cbs)
 
 /* Check watchpoint condition.  */
 
-static int
+static long
 watchpoint_check (p)
      char *p;
 {

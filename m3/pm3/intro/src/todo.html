@@ -18,18 +18,6 @@ Help on these items is most appreciated!
 compilation servers. We have NT386GNU, SPARC, and SOLgnu computers readily
 accessible.
 
-<LI>Test on NT the new release and adapt to gnu-win32 Beta 19.
-It works but there seems to be a problem with the time related
-routines; TimeStamp generates a range fault which prevents many packages
-using it from working, and files are often recompiled when they should not.
-Perhaps using mingw32 together with gnu-win32 will redirect all the time
-related calls to native win32 libraries and cure the problem. Another
-possibility is to use a native port of gcc, binutils and gdb to win32 as
-a base; egcs may already offer native gcc and binutils. Using mingw32 gets
-rid of the cygwin32 dll for Modula-3 executables; using a native gcc and
-friends would get rid of cygwin32.dll for the compilation and debugging
-phases as well.
-
 <LI>Add Spencer's emacs files, m3na, and M3 TXL; if the authors submit
 an up to date version with HTML documentation, the inclusion will be
 immediate. Remove redundancy between the StubLib in
@@ -47,6 +35,11 @@ a small introductory <TT>index.html</TT> file linking to public interfaces
 is sufficient. For some other packages, the m3totex documentation may be
 reused (libm3/m3core, trestle, vbtkit, formsvbt, netobj, stable, anim3D,
 m3tk).
+
+<LI> For Windows NT, get someone to look for native versions of gcc, gdb and 
+binutils (avoiding the complexity of cygwin32.dll in the gnu-win32 chain 
+of tools), to check if m3gdb works on version 19 of gnu-win32, and to add 
+support for building dynamically linked libraries in the NT386GNU template.
 
 <LI>Duplicate modules in <I>pm3</I> were detected using a modified
 m3browser and removed. Some similar modules still exist and should be

@@ -32,7 +32,7 @@ end
 
 readonly proc HtmlFile (nm) is
   if USE_M3DOC
-    local dest = HTML_INSTALL & SL & PACKAGE & SL & pkg_subdir()
+    local dest = PKG_INSTALL & SL & PACKAGE & SL & pkg_subdir()
     local fn = nm & ".html"
     local src_file = path_of(fn)
     if defined("_all")
@@ -50,7 +50,7 @@ end
 
 readonly proc HtmlTextFile (nm) is
   if USE_M3DOC
-    local dest = HTML_INSTALL & SL & PACKAGE & SL & pkg_subdir()
+    local dest = PKG_INSTALL & SL & PACKAGE & SL & pkg_subdir()
     local src_file = path_of(nm)
     if defined("_all")
       htmlFiles += src_file
@@ -77,7 +77,7 @@ end
 
 readonly proc HtmlUnit(nm,ext) is
   if USE_M3DOC
-    local dest = HTML_INSTALL & SL & PACKAGE & SL & pkg_subdir()
+    local dest = PKG_INSTALL & SL & PACKAGE & SL & pkg_subdir()
     local fn = nm & "_" & ext & ".html"
     local src_file = path_of(nm & "." & ext)  
     if defined("_all")
@@ -102,7 +102,7 @@ add_m3_hook(m3doc_hook)
 
 readonly proc HtmlRoot (nm) is
   if USE_M3DOC
-    local dest = HTML_INSTALL & SL & PACKAGE & SL & pkg_subdir()
+    local dest = PKG_INSTALL & SL & PACKAGE & SL & pkg_subdir()
     local fn = nm & docExt
     local src_file = path_of(nm & ".html")  
 

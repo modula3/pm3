@@ -1268,7 +1268,7 @@ struct rlimit *rlp;
 
 int setsockopt(fd, level, optname, optval, optlen)
 int fd, level, optname;
-void *optval;
+const __ptr_t optval;
 socklen_t optlen;
 { int result;
 

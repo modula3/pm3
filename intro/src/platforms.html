@@ -10,11 +10,13 @@ PM3 has been ported to several platforms. Bootstraps for the following
 platforms are currently produced regularly.
 
 <DL>
+<DT>ALPHA_OSF<DD>Alpha/AXP, OSF/1.
 <DT>DS3100<DD>DECstation 5000/200 Ultrix 4.2.
 <DT>FreeBSD2<DD>IBM PC, FreeBSD 2.0.
 <DT>HPPA<DD>HP 700/800, HP-UX 8.0.
 <DT>IRIX5<DD>SGI/MIPS, IRIX 5.2.
-<DT>LINUXELF<DD>IBM PC, Linux (ELF object file format)
+<DT>LINUXELF<DD>IBM PC, Linux (ELF object file format), C library version 5.
+<DT>LINUXLIBC6<DD>IBM PC, Linux (ELF object file format), C library version 6.
 <DT>NT386GNU<DD>IBM PC, Windows/NT and Windows 95 using gnu-win32 tools.
 <DT>SOLgnu<DD>Sparcstation, Solaris-2.x w/ unbundled gcc.
 <DT>SPARC<DD>Sparcstation-1, SunOS 4.1.x.
@@ -24,7 +26,6 @@ platforms are currently produced regularly.
 built lately, mostly because of problems in the gcc based backend.
 
 <DL>
-<DT>ALPHA_OSF<DD>Alpha/AXP, OSF/1.
 <DT>IBMR2<DD>IBM RS/6000, AIX 3.1.
 <DT>NEXT<DD>NeXT(M68K).
 <DT>NT386<DD>IBM PC, Windows/NT and Windows 95.
@@ -109,8 +110,9 @@ and POSIX or WIN32; if not, additional work will be required.
     <TT>language/modula3/m3tools/pp/src/m3makefile</TT>,
     <TT>language/modula3/m3tools/gnuemacs/src/m3makefile</TT>,
     <TT>language/modula3/m3compiler/m3objfile/src/m3makefile</TT>,
-    <TT>language/modula3/m3compiler/m3driver/src/m3makefile</TT>, and
-    <TT>language/modula3/m3compiler/m3back/src/m3makefile</TT>, to enable
+    <TT>language/modula3/m3compiler/m3driver/src/m3makefile</TT>,
+    <TT>language/modula3/m3compiler/m3back/src/m3makefile</TT>, and
+    <TT>src/PACKAGES</TT> to enable
     some system specific features such as integrated backend, 
     or yacc vs bison.
 
@@ -123,3 +125,4 @@ and POSIX or WIN32; if not, additional work will be required.
 </UL>
 
 </BODY></HTML>
+

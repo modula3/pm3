@@ -24,7 +24,7 @@ LibdExport (obj)
 
 src = path_of ("analyze_coverage.c")
 obj = "analyze_coverage" & NAMING_CONVENTIONS[13] % .o
-pgm = "analyze_coverage" & NAMING_CONVENTIONS[20] % .exe
+pgm = program_name("analyze_coverage") % .exe
 
 if defined ("_all")
   if stale (pgm, src)

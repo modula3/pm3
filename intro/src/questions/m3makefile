@@ -27,6 +27,7 @@ HtmlFile("uppercase")
 HtmlFile("varconst")
 HtmlFile("vtalarm")
 HtmlFile("whatism3")
+HtmlFile("whym3")
 HtmlFile("whereused")
 HtmlFile("xnotfound")
 

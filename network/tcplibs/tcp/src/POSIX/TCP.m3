@@ -179,7 +179,8 @@ PROCEDURE CheckConnect(fd: INTEGER; ep: IP.Endpoint) : BOOLEAN
         Raise(Timeout);
     | Uerror.ENETUNREACH, Uerror.EHOSTUNREACH,  Uerror.EHOSTDOWN, Uerror.ENETDOWN =>
         Raise(IP.Unreachable);
-    | Uerror.EWOULDBLOCK, Uerror.EAGAIN,  Uerror.EINPROGRESS, Uerror.EALREADY =>
+    | <*NOWARN*> Uerror.EWOULDBLOCK, Uerror.EAGAIN,  Uerror.EINPROGRESS, 
+        Uerror.EALREADY =>
     ELSE RaiseUnexpected();
     END;
     RETURN FALSE;
@@ -299,7 +300,7 @@ PROCEDURE GetBytesFD(
         | Uerror.ETIMEDOUT => SetError(t,Timeout);
         | Uerror.ENETUNREACH, Uerror.EHOSTUNREACH,
              Uerror.EHOSTDOWN, Uerror.ENETDOWN => SetError(t,IP.Unreachable);
-        | Uerror.EWOULDBLOCK, Uerror.EAGAIN =>
+        | <*NOWARN*> Uerror.EWOULDBLOCK, Uerror.EAGAIN =>
             IF timeout = 0.0D0 OR
                    SchedulerPosix.IOAlertWait(t.fd, TRUE, timeout) =
                        SchedulerPosix.WaitResult.Timeout THEN
@@ -330,7 +331,7 @@ PROCEDURE PutBytesFD(t: T; READONLY arr: ARRAY OF CHAR)
         | Uerror.ETIMEDOUT => SetError(t,Timeout);
         | Uerror.ENETUNREACH, Uerror.EHOSTUNREACH,
              Uerror.EHOSTDOWN, Uerror.ENETDOWN => SetError(t,IP.Unreachable);
-        | Uerror.EWOULDBLOCK, Uerror.EAGAIN =>
+        | <*NOWARN*> Uerror.EWOULDBLOCK, Uerror.EAGAIN =>
              EVAL SchedulerPosix.IOAlertWait(t.fd, FALSE);
              (* IF Thread.TestAlert() THEN RAISE Thread.Alerted END *)
         ELSE

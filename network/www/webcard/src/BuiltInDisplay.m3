@@ -390,7 +390,7 @@ PROCEDURE IsMsgURL (w: Window; VAR url: TEXT): BOOLEAN =
 
 PROCEDURE OnShowEntire(fv: FormsVBT.T;
                       <*UNUSED*> name: TEXT;
-                      <*UNUSED*> arg: REFANY;
+                      arg: REFANY;
                       <*UNUSED*> ticks: VBT.TimeStamp) =
     (* LL = VBT.mu *)
   BEGIN
@@ -399,7 +399,7 @@ PROCEDURE OnShowEntire(fv: FormsVBT.T;
 
 PROCEDURE OnShowBrief(fv: FormsVBT.T;
                       <*UNUSED*> name: TEXT;
-                      <*UNUSED*> arg: REFANY;
+                      arg: REFANY;
                       <*UNUSED*> ticks: VBT.TimeStamp) =
     (* LL = VBT.mu *)
   BEGIN
@@ -674,11 +674,13 @@ PROCEDURE Fetch (id: INTEGER; url: TEXT) =
     Wr.Close(wr);
   END Fetch;
 
+(*
 PROCEDURE GetProtocol (url: TEXT): TEXT =
   VAR prefix := Text.FindChar(url, '/');
   BEGIN
     IF prefix = -1 THEN RETURN "" ELSE RETURN Text.Sub(url, 0, prefix) END
   END GetProtocol;
+*)
 
 PROCEDURE GetTail (url: TEXT): TEXT =
   VAR suffix := Text.FindCharR(url, '/');

@@ -111,7 +111,7 @@ BEGIN
   END
 END Expect ;
 
-PROCEDURE ExpectWeak(p : Parser ; sym : Symbol ; follow : SymSetRange) =
+<*NOWARN*>PROCEDURE ExpectWeak(p : Parser ; sym : Symbol ; follow : SymSetRange) =
 BEGIN
   IF (p.next.sym = sym) THEN
     Get(p)
@@ -124,7 +124,7 @@ BEGIN
   END
 END ExpectWeak ;
 
-PROCEDURE WeakSeparator(p : Parser ; sym : Symbol ;
+<*NOWARN*>PROCEDURE WeakSeparator(p : Parser ; sym : Symbol ;
                         syFol, repFol : SymSetRange) : BOOLEAN =
 VAR
   s : SymbolSet ;
