@@ -202,7 +202,9 @@ extern void i386_extract_return_value PARAMS ((struct type *, char [], char *));
   ((thisframe)->signal_handler_caller \
    ? (thisframe)->frame \
    : (!inside_entry_file ((thisframe)->pc) \
-      ? read_memory_integer ((thisframe)->frame, 4) \
+      ? (read_memory_integer_check((thisframe)->frame,4) \
+          ? read_memory_integer ((thisframe)->frame, 4) \
+          : 0) \
       : 0))
 
 /* A macro that tells us whether the function invocation represented
