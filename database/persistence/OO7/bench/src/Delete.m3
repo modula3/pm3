@@ -30,11 +30,11 @@ PROCEDURE delete1() =
 
       VAR ref: REFANY;
       BEGIN
-        IF Globals.CompPartIdx,get(compId, ref) THEN
+        IF Globals.CompPartIdx.get(compId, ref) THEN
           compH := ref;
           IF Globals.CompPartIdx.delete(compId, ref) THEN
             compH2 := ref;
-            IF compH2 != compH THEN
+            IF compH2 # compH THEN
               Put("index error in deleting composite part from its idx",
                   stderr);
             END;
