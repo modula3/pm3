@@ -21,7 +21,7 @@ INSTALL_ROOT = "\\usr\\pm3"
 
 LINK_suffix = [ "-luser32", "-lgdi32", "-ladvapi32", "-lnetapi32", "-lm" ]
 
-proc setNTLinkSuffix is
+proc setNTLinkSuffix() is
   if OPTION_GUI
     LINK_suffix += [ "-mwindows", "-lcomctl32", "-lcomdlg32", "-lkernel32", 
         "-e_mainCRTStartup" ]
