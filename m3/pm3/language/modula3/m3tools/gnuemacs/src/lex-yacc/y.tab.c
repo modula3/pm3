@@ -1,7 +1,6 @@
 
 /*  A Bison parser, made from ../parse.yacc
- by  GNU Bison version 1.27
-  */
+    by GNU Bison version 1.28  */
 
 #define YYBISON 1  /* Identify Bison output.  */
 
@@ -813,8 +812,8 @@ static const short yycheck[] = {   119,
     -1,    -1,    93,    95
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
-#line 3 "/p/gnu/lib/bison-1.27/bison.simple"
-/* This file comes from bison-1.27.  */
+#line 3 "/usr/share/bison.simple"
+/* This file comes from bison-1.28.  */
 
 /* Skeleton output parser for bison,
    Copyright (C) 1984, 1989, 1990 Free Software Foundation, Inc.
@@ -1027,7 +1026,7 @@ __yy_memcpy (char *to, char *from, unsigned int count)
 #endif
 #endif
 
-#line 216 "/p/gnu/lib/bison-1.27/bison.simple"
+#line 217 "/usr/share/bison.simple"
 
 /* The user can define YYPARSE_PARAM as the name of an argument to be passed
    into yyparse.  The argument should have type void *.
@@ -1417,7 +1416,7 @@ case 72:
     break;}
 }
    /* the action file gets copied in in place of this dollarsign */
-#line 542 "/p/gnu/lib/bison-1.27/bison.simple"
+#line 543 "/usr/share/bison.simple"
 
   yyvsp -= yylen;
   yyssp -= yylen;
