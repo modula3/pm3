@@ -172,6 +172,7 @@ typedef enum {NonOptimal, OptimalBreak, OptimalNoBreak} Formatter_BreakType;
 /* basic tokens */
 %token ENDOFFILE 0
 
+/* symbols */
 %token AMPERSAND ASSIGN ASTERISK BAR COLON COMMA DOT DOTDOT
 %token EQUAL GREATER GREQUAL LESS LSEQUAL MINUS SHARP PERIOD PLUS
 %token RARROW RPRAGMA RBRACE RBRACKET RPAREN SEMICOLON SLASH
@@ -185,6 +186,13 @@ typedef enum {NonOptimal, OptimalBreak, OptimalNoBreak} Formatter_BreakType;
 %token PR_FATAL PR_NOWARN PR_ASSERT PR_TRACE
 %token PR_LINE PR_PRAGMA PR_CALLBACK
 %token PR_LL PR_LLsup PR_EXPORTED PR_SPEC
+
+/* reserved words for ESC specifications in SPEC pragmas */
+%token ALL ALLOCATED AXIOM CONCAT DELETE DEPENDS
+%token ENSURES EXISTS FUNC IFF IMPLIES INSERT INV
+%token LET MAP MEMBER MODIFIES MUT_GE MUT_GT
+%token MUT_LE MUT_LT ON PRED PROTECT
+%token REP REQUIRES SHARED SUBSET
 
 /* reserved words */ 
 %token AND ANY ARRAY AS BGN BITS BRANDED BY CASE CONST 
@@ -861,6 +869,23 @@ assert_pragma:
     | Pr_Assert     SP expr Comma Str_expr SP Rpragma
     ;
 
+
+
+fatal_pragma:      Pr_Fatal      SP fatal_exc_list SP Rpragma ;
+
+fatal_exc_list:
+      qid_list
+    | Any
+    ;
+
+inline_pragma:     Pr_Inline     SP Rpragma ;
+unused_pragma:     Pr_Unused     SP Rpragma ;
+obsolete_pragma:   Pr_Obsolete   SP Rpragma ;
+callback_pragma:   Pr_Callback   SP Rpragma ;
+exported_pragma:   Pr_Exported   SP Rpragma ;
+
+
+
 /* an anypragma can appear anywhere */
 anypragma:
       pragma_pragma
@@ -891,22 +916,98 @@ line_pragma:
     | Pr_Line     SP Card_const SP Str_const SP Rpragma1
     ;
 
-/*
-spec_pragma:       Pr_Spec       SP expr           SP Rpragma1 ;
-*/
+spec_pragma:       Pr_Spec       SP esc_spec       SP Rpragma1 ;
 
-fatal_pragma:      Pr_Fatal      SP fatal_exc_list SP Rpragma ;
 
-fatal_exc_list:
-      qid_list
-    | Any
+/*------ specifications for ESC (extended static checker) ------*/
+
+esc_spec:
+      SpecProc
+    | SpecVar
+    | Abstract
+    | Depend
+    | PredDef
+    | FuncDef
+    | Axiom
+    | Protect
     ;
 
-inline_pragma:     Pr_Inline     SP Rpragma ;
-unused_pragma:     Pr_Unused     SP Rpragma ;
-obsolete_pragma:   Pr_Obsolete   SP Rpragma ;
-callback_pragma:   Pr_Callback   SP Rpragma ;
-exported_pragma:   Pr_Exported   SP Rpragma ;
+ Term ::= PrimTerm |
+             Term BinOp Term | 
+             "(" Term ")" | 
+             QualId "(" [TermList] ")" |
+             Term "[" TermList "]" |
+             Term "^"
+
+    BinOp ::= "+" | "-" | "*" | DIV | MOD
+
+    TermList ::= Term { "," Term }
+
+    PrimTerm ::= Number | QualId [ "'" ]
+
+    QualId ::= Id | QualId "." Id
+
+    Pred ::= Disj { WeakPredOp Disj }
+
+    WeakPredOp ::= IMPLIES | IFF
+
+    Disj ::= Conj { OR Conj }
+
+    Conj ::= Literal { AND Literal }
+
+    Literal ::= { NOT } Atm
+
+    Atm ::= "(" Pred ")" |
+            "(" ALL "[" TypedIdList "]" Pred ")" |
+            "(" EXISTS "[" TypedIdList "]" Pred ")" |
+            Term BinRel Term |
+            Term
+
+    TypedIdList ::= TypedId { "," TypedId }
+
+    TypedId ::= Id ":" Type
+
+    Type ::= QualId | MAP Type TO Type
+
+    BinRel ::= "<" | ">" | "<=" | ">=" | "=" | "#"
+
+    SpecProc ::= 
+      Signature [Modifies] [Requires] [Ensures]
+
+    Signature ::= QualId [ "(" IdList ")" ] [ ":" Type ]
+
+    Modifies ::= MODIFIES SubIdList
+
+    SubIdList ::= SubId { "," SubId }
+
+    SubId ::= QualId { "[" Term "]" }
+
+    Requires ::= REQUIRES Pred
+
+    Ensures ::= ENSURES Pred [ EXCEPT ExceptSpecList ]
+
+    ExceptSpecList ::= ExceptSpec { "|" ExceptSpec }
+
+    ExceptSpec ::= QualId [ "(" Id ")" ] "=>" Pred 
+
+    SpecVar ::= SPEC VAR TypedIdList
+
+    Depend ::= SPEC DEPENDS QualId [ "[" TypedId "]" ] "ON" TermList
+
+    Abstract ::= SPEC REP QualId [ "[" TypedId "]" ] IFF Pred
+               | SPEC REP QualId [ "[" TypedId "]" ] = Expr
+
+    PredDef ::= SPEC PRED Id "(" TypedIdList ")" IS Pred
+
+    FuncDef ::= SPEC FUNC Id [ "(" TypedIdlist ")" ] ":" Type
+
+    Axiom ::= SPEC AXIOM Pred
+
+    Protect ::= SPEC PROTECT QualIdList BY TermList
+
+    QualIdList ::= QualId { "," QualId }
+
+
 
 /*--------------------- expressions ------------------------*/
 
@@ -1113,13 +1214,6 @@ Lbrace:        LBRACE { PR ("{"); } NPS ;
 /* CommentPragmaAfterOpen:  * empty * | SP InitialNPS A ; */
 /* CommentPragmaAfterOpen2: * empty * |    InitialNPS ; */
 
-/*
-Pr_External:   PR_EXTERNAL { PF (&lexbuf[$1], fonts->fixedComment);} NPS ;
-Pr_Inline:     PR_INLINE { PF (&lexbuf[$1], fonts->fixedComment);} NPS ;
-Pr_Obsolete:   PR_OBSOLETE { PF (&lexbuf[$1], fonts->fixedComment);} NPS ;
-Pr_Unused:     PR_UNUSED { PF (&lexbuf[$1], fonts->fixedComment);} NPS ;
-*/
-
 Pr_External:   PR_EXTERNAL { PF ("<* EXTERNAL", fonts->fixedComment);} NPS ;
 Pr_Inline:     PR_INLINE   { PF ("<* INLINE",   fonts->fixedComment);} NPS ;
 Pr_Assert:     PR_ASSERT   { PF ("<* ASSERT",   fonts->fixedComment);} NPS ;
@@ -1135,9 +1229,7 @@ Pr_Nowarn:     PR_NOWARN   { PF ("<* NOWARN",   fonts->fixedComment);} NPS ;
 Pr_Line:       PR_LINE     { PF ("<* LINE",     fonts->fixedComment);} NPS ;
 Pr_LL:         PR_LL       { PF ("<* LL",       fonts->fixedComment);} NPS ;
 Pr_LLsup:      PR_LLsup    { PF ("<* LL.sup",   fonts->fixedComment);} NPS ;
-/*
-Pr_Spec:       PR_EXPORTED { PF ("<* SPEC",     fonts->fixedComment);} NPS ;
-*/
+Pr_Spec:       PR_SPEC     { PF ("<* SPEC",     fonts->fixedComment);} NPS ;
 
 Ident:         IDENT { PRID (&lexbuf[$1]);} NPS ;
 IdentP:	       IDENT { PF (&lexbuf[$1], fonts->procName);} NPS ;
@@ -1209,6 +1301,37 @@ Value:         VALUE { PK ("VALUE");} NPS ;
 Var:           VAR { PK ("VAR");} NPS ;
 While:         WHILE { PK ("WHILE");} NPS ;
 With:          WITH { PK ("WITH");} NPS ;
+
+/* ESC keywords */
+All:           ALL { PK ("ALL");} NPS ;
+Allocated:     ALLOCATED { PK ("ALLOCATED");} NPS ;
+Axiom:         AXIOM { PK ("AXIOM");} NPS ;
+Concat:        CONCAT { PK ("CONCAT");} NPS ;
+Delete:        DELETE { PK ("DELETE");} NPS ;
+Depends:       DEPENDS { PK ("DEPENDS");} NPS ;
+Ensures:       ENSURES { PK ("ENSURES");} NPS ;
+Exists:        EXISTS { PK ("EXISTS");} NPS ;
+Func:          FUNC { PK ("FUNC");} NPS ;
+Iff:           IFF { PK ("IFF");} NPS ;
+Implies:       IMPLIES { PK ("IMPLIES");} NPS ;
+Insert:        INSERT { PK ("INSERT");} NPS ;
+Inv:           INV { PK ("INV");} NPS ;
+Let:           LET { PK ("LET");} NPS ;
+Map:           MAP { PK ("MAP");} NPS ;
+Member:        MEMBER { PK ("MEMBER");} NPS ;
+Modifies:      MODIFIES { PK ("MODIFIES");} NPS ;
+Mut_ge:        MUT_GE { PK ("MUT_GE");} NPS ;
+Mut_gt:        MUT_GT { PK ("MUT_GT");} NPS ;
+Mut_le:        MUT_LE { PK ("MUT_LE");} NPS ;
+Mut_lt:        MUT_LT { PK ("MUT_LT");} NPS ;
+On:            ON { PK ("ON");} NPS ;
+Pred:          PRED { PK ("PRED");} NPS ;
+Protect:       PROTECT { PK ("PROTECT");} NPS ;
+Rep:           REP { PK ("REP");} NPS ;
+Requires:      REQUIRES { PK ("REQUIRES");} NPS ;
+Shared:        SHARED { PK ("SHARED");} NPS ;
+Subset:        SUBSET { PK ("SUBSET");} NPS ;
+
 
 /*--------------------- comments ------------------------*/
 
@@ -1601,12 +1724,10 @@ yyerror(s) char *s; {
   Reset();
   Flush();
   if (calledFromEmacs == 0) {
-        /* XEmacs requires that character counting starts with 1
-            - very poor programming */
         fprintf (stderr,
-            "%s:%d:%d: (byte %d) %s while pretty-printing\n",
+            "%s:%d: (column %d, byte %d) %s while pretty-printing\n",
             (infileName != NULL) ? infileName : "",
-            currentRow+1, currentCol+1, lexposition, s);
+            currentRow, currentCol, lexposition, s);
         fprintf(stderr, "Error flagged in output\n");
   }
   PR ("(* SYNTAX ERROR *) ");

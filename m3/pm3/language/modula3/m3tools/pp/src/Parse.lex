@@ -40,15 +40,20 @@
 "<*"[ \t\f\n\r]*"LINE"          {BufferLexeme(1); return(PR_LINE);}
 "<*"[ \t\f\n\r]*"LL"            {BufferLexeme(1); return(PR_LL);}
 "<*"[ \t\f\n\r]*"LL.sup"        {BufferLexeme(1); return(PR_LLsup);}
-%{
-/*
-"<*"		{BufferLexeme(1); return(LPRAGMA);}
 "<*"[ \t\f\n\r]*"SPEC"          {BufferLexeme(1); return(PR_SPEC);}
-*/
-%}
+
 "*>"		{BufferLexeme(1); return(RPRAGMA);}
 
 [ \t\f\n\r]	{ return (HandleSpaces()); }
+%{
+/*
+  We match "<"/"*" (look-ahead for "*") instead of "<*"
+  since HandleCommentPragma() contains a loop
+  that has to process nested comments
+  and since it must process the inner comments char-by-char
+  we do so at the top level as well.
+*/
+%}
 "<"/"*"		{ return (HandleCommentPragma()); }
 "("/"*"		{ return (HandleCommentPragma()); }
 
