@@ -29,7 +29,7 @@
     recovery procedure terminates (since this must be the
     end of the log).
 
-   \paragraph{Exceptions}
+   <H4> Exceptions </H4>
    Reading something that does not correspond to the requested
    type or reading beyond the end of file is reported as exception
    "Error". This might indicate a protocol error or just that the
@@ -53,7 +53,7 @@ PROCEDURE OutCall(log: Wr.T; procId: CARDINAL);
 (* Mark the beginning of a logged procedure-call. Procedures are
      identified by positive numbers (probably enumeration codes).
 
-    "OutCall()" has to be called {\em before} logging the procedure 
+    "OutCall()" has to be called <EM>before</EM> logging the procedure 
     parameters. *)
 
 PROCEDURE OutCallEndMark(log: Wr.T);
@@ -81,7 +81,7 @@ PROCEDURE InRef(log: Rd.T): REFANY RAISES {Error};
 (* Unmarshal a marshaled subtype of "REFANY" as pickled by "OutRef". *)
 
 
-(* \subsubsection*{Procedures for generic parameters logging} *)
+(* <H3> Procedures for generic parameters logging </H3> *)
 
 PROCEDURE OutChar(log: Wr.T; c: CHAR);
 (* Marshal a char *)
@@ -109,7 +109,7 @@ PROCEDURE OutExtended(log: Wr.T; x: EXTENDED);
 (* Marshal an extended in native format. *)
 
 
-(* \paragraph{Logreading procedures} \  *)
+(* <H4> Logreading procedures </H4> *)
 
 PROCEDURE InChar(log: Rd.T): CHAR
     RAISES {Error};

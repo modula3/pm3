@@ -54,8 +54,8 @@ INTERFACE LogManager;
 END LogManager.
 
 (* A "LogManager.T" manages a repository of named stable snapshots. 
-   A snapshot consists of two sequences of bytes, a {\it checkpoint} 
-   and a {\it redo log}.  The repository must be stable; that is, 
+   A snapshot consists of two sequences of bytes, a <I>checkpoint</I> 
+   and a <I>redo log</I>.  The repository must be stable; that is, 
    it must survive program crashes.  Here are specifications for 
    the methods of a "LogManager.T" named "lm": 
 

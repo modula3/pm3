@@ -9,7 +9,7 @@
 (*      modified on Tue Sep 27 11:37:33 PDT 1994 by weich      *)
 
 (* The generic module "StableRep" provides the part of the implementation
-   of stable objects "Stable.T" that is independent of {\tt Data.T} (see
+   of stable objects "Stable.T" that is independent of <TT>Data.T</TT> (see
    "Stable.ig" for a description of the methods). It is not intended that
    any client calls anything in this interface directly. Only the generated
    code references this interface.
@@ -49,7 +49,7 @@ TYPE
         readCheckpoint  := ReadCheckpoint;
       END;
 
-(* \subsubsection*{Implementations of "Stable.ig"-methods} *)
+(* <H3> Implementations of "Stable.ig"-methods </H3> *)
 
 PROCEDURE Init (    self       : Public;
                     dir        : Pathname.T;
@@ -71,7 +71,7 @@ PROCEDURE ReadCheckpoint (self: Public;
 PROCEDURE WriteCheckpoint (self: Public; wr: Wr.T)
   RAISES {StableError.E};
 
-(* \subsubsection*{Procedures to be called from the generated code} *)
+(* <H3> Procedures to be called from the generated code </H3> *)
 
 PROCEDURE Recover (t: StableData.T): StableData.T
   RAISES {StableError.E, StableLog.Error, OSError.E};

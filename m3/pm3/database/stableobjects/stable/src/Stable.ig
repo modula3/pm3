@@ -8,7 +8,7 @@
 (*      modified on Thu Jan 12 09:31:24 PST 1995 by chaiken    *)
 (*      modified on Tue Sep 27 11:53:14 PDT 1994 by weich      *)
 
-(*  A {\it stable object} is an object whose state is stored on the disk
+(*  A <I>stable object</I> is an object whose state is stored on the disk
     or other medium whence its state can be recovered if a program crashes.
     
     The generic interface "Stable" defines a subtype of a given object
@@ -36,8 +36,8 @@
     The strategy used by the "Stable" package is described more fully 
     by Andrew D. Birrell, Michael B. Jones, and Edward P. Wobber 
     in ``A simple and efficient implementation for small databases'', 
-    {\it Proceedings of the 11th ACM Symposium on Operating System 
-    Principles}.  This paper is also available as SRC Research Report 
+    <I>Proceedings of the 11th ACM Symposium on Operating System 
+    Principles</I>.  This paper is also available as SRC Research Report 
     24, January 1988. 
 
     The stable stub generator "stablegen" will automatically produce 
@@ -179,7 +179,7 @@ PROCEDURE Checkpoint(t: T) RAISES {StableError.E};
 
 END Stable.
 
-(* \subsection{Exceptions}
+(* <H2> Exceptions </H2>
    The "StableError.E" exception is raised in various circumstances.  The first
    element of the "AtomList.T" argument identifies the nature of the
    error.  Subsequent elements may identify further details of the
@@ -187,27 +187,27 @@ END Stable.
    propagated by the "Stable" package. 
    
 
-\subsection{Customizations}
-    \begin{itemize}
-    \item  If you don't want every update to be flushed
+<H2> Customizations </H2>
+    <UL>
+    <LI>If you don't want every update to be flushed
                  to disk, set "forceToDisk" to "FALSE" when initializing the
                  stable object, and flush the log
                  manually with the "flushLog" method.
-    \item  If you don't want to use "Pickle" for checkpointing, override
+    <LI>If you don't want to use "Pickle" for checkpointing, override
                  the "writeCheckpoint()" and "readCheckpoint()" methods of the stable
                  object to read and write checkpoints in your preferred format.
                  (If you are aiming at long-lived persistent state you should
                  avoid pickles, since new versions of the Modula-3 system can't always  
                  read pickles written by earlier versions.)
-    \item  If you don't want to store the stable state in the ordinary file system, 
+    <LI>If you don't want to store the stable state in the ordinary file system, 
                  implement your own log manager (as explained in the "LogManager" interface)
                  and pass your own manager to the "init" method instead of the default.
-    \item  If you don't want to use network-object style marshaling for recording
+    <LI>If you don't want to use network-object style marshaling for recording
                  the update method calls in the redo log, you will have to write
                  you own implementation of of "Stable(Data).m3" instead of using the
                  stub generator "stablegen".   (You may still find it
                  helpful to use the generated code as starting point.)
-    \end{itemize}
+    </UL>
 *)
 
 

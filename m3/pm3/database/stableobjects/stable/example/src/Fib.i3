@@ -8,7 +8,7 @@
 (* The example program declares a simple stable object and allows
    the user to drive state modifications and stability from the keyboard.
 
-   \subsection{Object Interface}
+   <H2> Object Interface </H2>
    The stable object is called "Fib" and generates a sequence of Fibonacci
    numbers.  
 *)
