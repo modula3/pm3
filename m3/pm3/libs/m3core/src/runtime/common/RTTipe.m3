@@ -358,7 +358,7 @@ PROCEDURE FixSizes (t: T;  READONLY p: Packing) =
           FixSizes (elt, p);
           IF (elt.kind = Kind.Packed) THEN
             arr.elt_pack := elt.size;
-            t.align := FindArrayAlign (elt, p);
+            t.align := FindArrayAlign (arr, elt, p);
           ELSE
             arr.elt_pack := RoundUp (elt.size, elt.align);
             t.align := elt.align;
@@ -412,7 +412,7 @@ PROCEDURE FixFields (fields: Field;  READONLY p: Packing;
 
     IF (size > 0) THEN
       (* find the largest alignment that doesn't change the record size *)
-      VAR x := p.max_align; BEGIN
+      VAR x := p.word_align; BEGIN
         WHILE (x > align) DO
           IF (size MOD x = 0) THEN align := x; EXIT; END;
           x := x DIV 2;
@@ -436,19 +436,26 @@ PROCEDURE FindRecordAlign (f: Field;  align: INTEGER;
 
 PROCEDURE FieldsAlignedOK (f: Field;  align: INTEGER;
                            READONLY p: Packing): BOOLEAN =
+  VAR ff: Field;  rec_offs := 0;
   BEGIN
-    WHILE (f # NIL) DO
-      IF NOT IsAlignedOK (f.type, align + f.offset, p) THEN RETURN FALSE; END;
-      f := f.next;
-    END;
+    REPEAT
+      ff := f;
+      WHILE (ff # NIL) DO
+        IF NOT IsAlignedOK (ff.type, rec_offs + ff.offset, p) THEN
+          RETURN FALSE;
+        END;
+        ff := ff.next;
+      END;
+      rec_offs := (rec_offs + align) MOD p.word_size;
+    UNTIL (rec_offs = 0);
     RETURN TRUE;
   END FieldsAlignedOK;
 
-PROCEDURE FindArrayAlign (elt: T;  READONLY p: Packing): INTEGER =
+PROCEDURE FindArrayAlign (arr: Array;  elt: T;  READONLY p: Packing): INTEGER =
   VAR align := elt.align;
   BEGIN
     WHILE (align < p.max_align) DO
-      IF IsAlignedOK (elt, align, p) THEN RETURN align; END;
+      IF IsAlignedOK (arr, align, p) THEN RETURN align; END;
       align := 2 * align;
     END;
     RETURN p.max_align;

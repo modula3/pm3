@@ -19,7 +19,8 @@ sgmlConvCmd = [BIN_USE & SL & "sgmlconv", "-r", ".i3", "_i3.html", "-r",
     "-r", ".doc", docExt, "-dtd", dtdDir ]
 callSgmlConv = ""
 
-m3SgmlCmd = [BIN_USE & SL & "m3tosgml","-html"]
+m3Sgml = BIN_USE & SL & "m3tosgml"
+m3SgmlCmd = [m3Sgml,"-html"]
 callM3Sgml = ""
 
 readonly proc AddDerivedHtmlFile (fn) is
@@ -117,8 +118,8 @@ readonly proc HtmlRoot (nm) is
         local tmp7 = nm & ".ind"
         local tmp8 = nm & ".ilg"
         checkExec([BIN_USE & SL & "sgmllinear", "-html", "-f", ".i3", 
-            "m3tosgml", "-f", ".ig", "m3tosgml", "-f", ".m3", "m3tosgml", 
-            "-f", ".mg", "m3tosgml", "-dtd", dtdDir, src_file, tmp1],[],"")
+            m3Sgml, "-f", ".ig", m3Sgml, "-f", ".m3", m3Sgml, 
+            "-f", ".mg", m3Sgml, "-dtd", dtdDir, src_file, tmp1],[],"")
         if PLATFORM_SUPPORTS_LATEX
           checkExec([BIN_USE & SL & "sgmlconv", "-report", "-htmltex", 
               "-dtd", dtdDir, tmp1,tmp2], [],"")

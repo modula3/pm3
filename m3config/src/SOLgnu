@@ -10,8 +10,18 @@ include("COMMON")
 
 X11ROOT = "/usr/openwin/lib"
 
-PLATFORM_SUPPORTS_MOTIF  = "TRUE"
-PLATFORM_SUPPORTS_SHARED_LIB = "TRUE"
+proc import_X11() is
+  import_lib("Xaw", X11ROOT)
+  import_lib("Xmu", X11ROOT)
+  import_lib("Xext", X11ROOT)
+  import_lib("Xt", X11ROOT)
+  import_lib("X11", X11ROOT)
+end
+
+PLATFORM_SUPPORTS_MOTIF  = "T"
+PLATFORM_SUPPORTS_SHARED_LIB = "T"
+PLATFORM_SUPPORTS_LATEX = ""
+SKIP_LLSCAN = "T"
 
 CC = [ "gcc", "-Wa,-P", "-c" ]
 LINK = [ "gcc" ]
@@ -20,7 +30,9 @@ MAKESHLIB = [ "/usr/ccs/bin/ld", "-dy", "-G", "-z", "text" ]
 ASM = [ "/usr/ccs/bin/as", "-s", "-o" ]
 
 STATIC_FLAG = [ "-Xlinker", "-dy", "-Xlinker", "-Bstatic" ]
-LINK_suffix = [ "-lsocket", "-lnsl", "-lm" ]
+LINK_suffix = [ "-lsocket", "-lnsl", "-lm", "-lintl", "-Xlinker", "-Bdynamic",
+    "-ldl" ]
+RPATH_FLAG = ""
 
 setDefault("","")
 

@@ -58,25 +58,26 @@ GNU_MAKE   = "make"       % make program for m3cc and m3gdb
 %
 % The system dependent naming conventions are in an array containing
 % the extensions for I3, IC, IS, IO, M3, MC, MS, MO, IG, MG, C, H, S, O, A, 
-% AX, PX, Unknown, IX, MX, and EXE files, the default program name, the library
-% prefix, the directory separator, the EOL, the path separator,
+% AX, PX, Unknown, IX, MX, EXE and SO files, the default program name, 
+% the library prefix, the directory separator, the EOL, the path separator,
 % the volume separator, and if short names are required.
 
 POSIX_CONVENTIONS = [".i3", ".ic", ".is", ".io", ".m3", ".mc", ".ms", 
     ".mo",".ig", ".mg", ".c", ".h", ".s", ".o", ".a", ".m3x", ".m3x", "",
-    ".ix", ".mx", "", "a.out","lib","/","\n",":","\n","",""]
+    ".ix", ".mx", "", ".so", "a.out","lib","/","\n",":","\n","",""]
 
 GRUMPY_POSIX_CONVENTIONS = [".i3", ".ic", ".is", "_i.o", ".m3", ".mc", ".ms", 
     "_m.o",".ig", ".mg", ".c", ".h", ".s", ".o", ".a", ".m3x", ".m3x", "",
-    ".ix", ".mx", "", "a.out","lib","/","\n",":","\n","",""]
+    ".ix", ".mx", "", ".so", "a.out","lib","/","\n",":","\n","",""]
 
 WIN32_CONVENTIONS = [".i3", ".ic", ".is", ".io", ".m3", ".mc", ".ms", 
     ".mo",".ig", ".mg", ".c", ".h", ".s", ".obj", ".lib", ".m3x", ".m3x", "",
-    ".ix", ".mx", ".exe", "NONAME.EXE","lib","\\","\r\n","+",":","T","T"]
+    ".ix", ".mx", ".exe", ".dll", "NONAME.EXE","lib","\\","\r\n","+",":","T",
+    "T"]
 
 GNU_WIN32_CONVENTIONS = [".i3", ".ic", ".is", ".io", ".m3", ".mc", ".ms", 
     ".mo",".ig", ".mg", ".c", ".h", ".s", ".o", ".a", ".m3x", ".m3x", "",
-    ".ix", ".mx", ".exe", "NONAME.EXE","lib","\\","\r\n",":",":","","T"]
+    ".ix", ".mx", ".exe", ".dll", "NONAME.EXE","lib","\\","\r\n",":",":","","T"]
 
 %
 % Provide for "hooks" to be called at the end of the m3makefile,

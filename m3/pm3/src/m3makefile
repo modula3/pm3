@@ -530,11 +530,6 @@ if equal (OS_TYPE, "POSIX")
   BuildChunk("language/modula3/m3tools","m3browser")
 end
 
-%--- m3ide --- utility -------------------------------------------------
-% simple integrated development environment based on emacs
-% requires: libm3
-BuildChunk("language/modula3/m3tools","m3ide")
-
 %--- tcl --- library -------------------------------------------------
 % a thin Modula-3 veneer on the TCL library (version 6.2).
 % requires: libm3  (TCL is required to build a shared library)
@@ -628,6 +623,11 @@ BuildChunk("graphics/forms","formsvbt")
 % a 1-1/2 view GUI editor for FormsVBT expressions
 % requires: formsvbt
 BuildChunk("graphics/forms","formsedit")
+
+%--- m3ide --- utility -------------------------------------------------
+% simple integrated development environment based on emacs
+% requires: libm3
+BuildChunk("language/modula3/m3tools","m3ide")
 
 %--- fisheye --- demo -------------------------------------------------
 % a demo of "fisheye" views for graph browsing
@@ -861,7 +861,7 @@ BuildChunk("language/m3obliq","vocgi")
 %--- llscan --- utility -------------------------------------------
 % a little mh program used by Postcard
 % requires: 
-if equal (OS_TYPE, "POSIX")
+if equal (OS_TYPE, "POSIX") and not defined("SKIP_LLSCAN")
   BuildChunk("network/mail","llscan")
 end
 

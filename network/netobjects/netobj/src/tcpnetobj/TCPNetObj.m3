@@ -110,6 +110,7 @@ PROCEDURE New() : Transport.T =
 (* exported to TCPNetObj *)
 
 PROCEDURE Locate (ep: IP.Endpoint) : NetObj.Address =
+  <*FATAL IP.Error*>
   BEGIN
     (* might want to cache the local ip address in IP.m3 *)
     IF ep.addr = IP.NullAddress THEN ep.addr := IP.GetHostAddr(); END;
