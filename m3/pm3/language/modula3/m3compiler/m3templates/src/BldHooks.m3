@@ -197,7 +197,7 @@ PROCEDURE M3MakeLib(t: T; name: TEXT; libs, imp: QVSeq.T; static,
 PROCEDURE NoteShlib(t: T; name: TEXT): INTEGER RAISES {Error} = 
   VAR args := NEW(REF ARRAY OF QValue.T, 1);
   BEGIN
-    args[1] := QValue.T{QValue.Kind.String, M3ID.Add(name), NIL};
+    args[0] := QValue.T{QValue.Kind.String, M3ID.Add(name), NIL};
     IF NOT ExecHook(t, "m3_note_shlib", args, FALSE) THEN
       RETURN -1;
     END;
