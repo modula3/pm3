@@ -121,10 +121,11 @@ PkgInfo("m3cgcat","language/modula3/m3compiler","","m3cgcat",tLib,"T",3,[],
     ["ALL"],[],"Output an M3CG file in ASCII/binary")
 
 PkgInfo("libcm3","language/modula3/m3compiler","","m3-base",tLib,"T",
-    3,[],["ALL"],[],"The CM3 compiler as a library")
+    3,[],["ALL"],[],
+    "The CM3 compiler as a library, for pm3/m3build/m3ship/m3where")
 
-PkgInfo("cm3","language/modula3/m3compiler","","m3-base",tLib,"T",3,[],
-    ["ALL"],[],"The CM3 compiler")
+PkgInfo("pm3","language/modula3/m3compiler","","m3-base",tLib,"T",3,[],
+    ["ALL"],[],"The PM3 compiler")
 
 PkgInfo("m3build","language/modula3/m3compiler","","m3-base",tLib,"T",3,[],
     ["ALL"],[],"The Modula-3 compiler")
