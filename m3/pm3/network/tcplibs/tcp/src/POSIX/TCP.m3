@@ -311,7 +311,7 @@ PROCEDURE GetBytesFD(
     END;
   END GetBytesFD;
 
-PROCEDURE PutBytesFD(t: T; VAR arr: ARRAY OF CHAR)
+PROCEDURE PutBytesFD(t: T; READONLY arr: ARRAY OF CHAR)
     RAISES {Wr.Failure, Thread.Alerted} =
   VAR pos := 0;
       len: INTEGER;
