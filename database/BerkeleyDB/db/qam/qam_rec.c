@@ -510,10 +510,9 @@ __qam_add_recover(dbenv, dbtp, lsnp, op, info)
 		/* Now update the actual page if necessary. */
 		if (cmp_n > 0) {
 			/* Need to redo add - put the record on page */
-			if (argp->off != 0) {
-				argp->data.doff = argp->off;
-				argp->data.dlen = argp->data.size;
-			}
+			argp->data.doff = argp->off;
+			argp->data.dlen = argp->data.size;
+			argp->data.flags = DB_DBT_PARTIAL;
 			if ((ret = __qam_pitem(dbc,
 			    pagep, argp->indx, argp->recno, &argp->data)) != 0)
 				goto err;
@@ -529,10 +528,9 @@ __qam_add_recover(dbenv, dbtp, lsnp, op, info)
 		 *	Otherwise just clear the valid bit
 		 */
 		if (argp->olddata.size != 0) {
-			if (argp->off != 0) {
-				argp->olddata.doff = argp->off;
-				argp->olddata.dlen = argp->data.size;
-			}
+			argp->olddata.doff = argp->off;
+			argp->olddata.dlen = argp->data.size;
+			argp->olddata.flags = DB_DBT_PARTIAL;
 			if ((ret = __qam_pitem(dbc, pagep,
 			    argp->indx, argp->recno, &argp->olddata)) != 0)
 				goto err;
