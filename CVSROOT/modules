@@ -24,3 +24,10 @@
 
 m3build2	m3/pkg/SRC-m3/m3build2
 m3driver	m3/pkg/SRC-m3/m3driver
+m3front		m3/pkg/SRC-m3/m3front
+m3linker	m3/pkg/SRC-m3/m3linker
+m3middle	m3/pkg/SRC-m3/m3middle
+m3quake		m3/pkg/SRC-m3/m3quake
+m3ship2		m3/pkg/SRC-m3/m3ship2
+m3templates	m3/pkg/SRC-m3/m3templates
+m3where2	m3/pkg/SRC-m3/m3where2
