@@ -4,7 +4,7 @@
 INTERFACE MxConfig;
 
 VAR
-  Filename := "cm3.cfg";
+  Filename := "pm3.cfg";
   DefaultPath := "";
 
 PROCEDURE FindFile (): TEXT;
