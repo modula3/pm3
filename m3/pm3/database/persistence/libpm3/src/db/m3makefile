@@ -1,4 +1,7 @@
-import ("BerkeleyDB")
+import_sys_lib("DB")
+
+c_source("BerkeleyDB")
+interface("BerkeleyDB")
 
 interface ("DB")
 

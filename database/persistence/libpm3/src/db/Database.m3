@@ -152,7 +152,6 @@ BEGIN
        result = BerkeleyDB.db_env_open(DB.dbenv, NIL, flags, 8_664) DO
     IF result # 0 THEN fatalError("db_env_open: ", result) END;
   END;
-  BerkeleyDB.db_env_set_errfile(DB.dbenv, DB.stderr);
   IF RTParams.IsPresent("cachesize") THEN
     TRY
       WITH cachesize = Scan.Int(RTParams.Value("cachesize")),
