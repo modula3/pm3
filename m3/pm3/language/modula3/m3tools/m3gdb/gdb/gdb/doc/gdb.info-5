@@ -1,0 +1,1345 @@
+This is ./gdb.info, produced by makeinfo version 4.0b from gdb.texinfo.
+
+INFO-DIR-SECTION Programming & development tools.
+START-INFO-DIR-ENTRY
+* Gdb: (gdb).                     The GNU debugger.
+END-INFO-DIR-ENTRY
+
+   This file documents the GNU debugger GDB.
+
+   This is the Ninth Edition, December 2001, of `Debugging with GDB:
+the GNU Source-Level Debugger' for GDB Version 5.1.0.1.
+
+   Copyright (C)
+1988,1989,1990,1991,1992,1993,1994,1995,1996,1998,1999,2000,2001
+Free Software Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Free Software" and "Free Software Needs Free
+Documentation", with the Front-Cover Texts being "A GNU Manual," and
+with the Back-Cover Texts as in (a) below.
+
+   (a) The FSF's Back-Cover Text is: "You have freedom to copy and
+modify this GNU Manual, like GNU software.  Copies published by the Free
+Software Foundation raise funds for GNU development."
+
+
+File: gdb.info,  Node: Create and Delete Tracepoints,  Next: Enable and Disable Tracepoints,  Up: Set Tracepoints
+
+Create and Delete Tracepoints
+-----------------------------
+
+`trace'
+     The `trace' command is very similar to the `break' command.  Its
+     argument can be a source line, a function name, or an address in
+     the target program.  *Note Set Breaks::.  The `trace' command
+     defines a tracepoint, which is a point in the target program where
+     the debugger will briefly stop, collect some data, and then allow
+     the program to continue.  Setting a tracepoint or changing its
+     commands doesn't take effect until the next `tstart' command;
+     thus, you cannot change the tracepoint attributes once a trace
+     experiment is running.
+
+     Here are some examples of using the `trace' command:
+
+          (gdb) trace foo.c:121    // a source file and line number
+          
+          (gdb) trace +2           // 2 lines forward
+          
+          (gdb) trace my_function  // first source line of function
+          
+          (gdb) trace *my_function // EXACT start address of function
+          
+          (gdb) trace *0x2117c4    // an address
+
+     You can abbreviate `trace' as `tr'.
+
+     The convenience variable `$tpnum' records the tracepoint number of
+     the most recently set tracepoint.
+
+`delete tracepoint [NUM]'
+     Permanently delete one or more tracepoints.  With no argument, the
+     default is to delete all tracepoints.
+
+     Examples:
+
+          (gdb) delete trace 1 2 3 // remove three tracepoints
+          
+          (gdb) delete trace       // remove all tracepoints
+
+     You can abbreviate this command as `del tr'.
+
+
+File: gdb.info,  Node: Enable and Disable Tracepoints,  Next: Tracepoint Passcounts,  Prev: Create and Delete Tracepoints,  Up: Set Tracepoints
+
+Enable and Disable Tracepoints
+------------------------------
+
+`disable tracepoint [NUM]'
+     Disable tracepoint NUM, or all tracepoints if no argument NUM is
+     given.  A disabled tracepoint will have no effect during the next
+     trace experiment, but it is not forgotten.  You can re-enable a
+     disabled tracepoint using the `enable tracepoint' command.
+
+`enable tracepoint [NUM]'
+     Enable tracepoint NUM, or all tracepoints.  The enabled
+     tracepoints will become effective the next time a trace experiment
+     is run.
+
+
+File: gdb.info,  Node: Tracepoint Passcounts,  Next: Tracepoint Actions,  Prev: Enable and Disable Tracepoints,  Up: Set Tracepoints
+
+Tracepoint Passcounts
+---------------------
+
+`passcount [N [NUM]]'
+     Set the "passcount" of a tracepoint.  The passcount is a way to
+     automatically stop a trace experiment.  If a tracepoint's
+     passcount is N, then the trace experiment will be automatically
+     stopped on the N'th time that tracepoint is hit.  If the
+     tracepoint number NUM is not specified, the `passcount' command
+     sets the passcount of the most recently defined tracepoint.  If no
+     passcount is given, the trace experiment will run until stopped
+     explicitly by the user.
+
+     Examples:
+
+          (gdb) passcount 5 2 // Stop on the 5th execution of tracepoint 2
+          
+          (gdb) passcount 12  // Stop on the 12th execution of the
+                                          // most recently defined tracepoint.
+          (gdb) trace foo
+          (gdb) pass 3
+          (gdb) trace bar
+          (gdb) pass 2
+          (gdb) trace baz
+          (gdb) pass 1        // Stop tracing when foo has been
+                                           // executed 3 times OR when bar has
+                                           // been executed 2 times
+                                           // OR when baz has been executed 1 time.
+
+
+File: gdb.info,  Node: Tracepoint Actions,  Next: Listing Tracepoints,  Prev: Tracepoint Passcounts,  Up: Set Tracepoints
+
+Tracepoint Action Lists
+-----------------------
+
+`actions [NUM]'
+     This command will prompt for a list of actions to be taken when the
+     tracepoint is hit.  If the tracepoint number NUM is not specified,
+     this command sets the actions for the one that was most recently
+     defined (so that you can define a tracepoint and then say
+     `actions' without bothering about its number).  You specify the
+     actions themselves on the following lines, one action at a time,
+     and terminate the actions list with a line containing just `end'.
+     So far, the only defined actions are `collect' and
+     `while-stepping'.
+
+     To remove all actions from a tracepoint, type `actions NUM' and
+     follow it immediately with `end'.
+
+          (gdb) collect DATA // collect some data
+          
+          (gdb) while-stepping 5   // single-step 5 times and collect data
+          
+          (gdb) end                // signals the end of actions.
+
+     In the following example, the action list begins with `collect'
+     commands indicating the things to be collected when the tracepoint
+     is hit.  Then, in order to single-step and collect additional data
+     following the tracepoint, a `while-stepping' command is used,
+     followed by the list of things to be collected while stepping.  The
+     `while-stepping' command is terminated by its own separate `end'
+     command.  Lastly, the action list is terminated by an `end'
+     command.
+
+          (gdb) trace foo
+          (gdb) actions
+          Enter actions for tracepoint 1, one per line:
+          > collect bar,baz
+          > collect $regs
+          > while-stepping 12
+            > collect $fp, $sp
+            > end
+          end
+
+`collect EXPR1, EXPR2, ...'
+     Collect values of the given expressions when the tracepoint is hit.
+     This command accepts a comma-separated list of any valid
+     expressions.  In addition to global, static, or local variables,
+     the following special arguments are supported:
+
+    `$regs'
+          collect all registers
+
+    `$args'
+          collect all function arguments
+
+    `$locals'
+          collect all local variables.
+
+     You can give several consecutive `collect' commands, each one with
+     a single argument, or one `collect' command with several arguments
+     separated by commas: the effect is the same.
+
+     The command `info scope' (*note info scope: Symbols.) is
+     particularly useful for figuring out what data to collect.
+
+`while-stepping N'
+     Perform N single-step traces after the tracepoint, collecting new
+     data at each step.  The `while-stepping' command is followed by
+     the list of what to collect while stepping (followed by its own
+     `end' command):
+
+          > while-stepping 12
+            > collect $regs, myglobal
+            > end
+          >
+
+     You may abbreviate `while-stepping' as `ws' or `stepping'.
+
+
+File: gdb.info,  Node: Listing Tracepoints,  Next: Starting and Stopping Trace Experiment,  Prev: Tracepoint Actions,  Up: Set Tracepoints
+
+Listing Tracepoints
+-------------------
+
+`info tracepoints [NUM]'
+     Display information the tracepoint NUM.  If you don't specify a
+     tracepoint number displays information about all the tracepoints
+     defined so far.  For each tracepoint, the following information is
+     shown:
+
+        * its number
+
+        * whether it is enabled or disabled
+
+        * its address
+
+        * its passcount as given by the `passcount N' command
+
+        * its step count as given by the `while-stepping N' command
+
+        * where in the source files is the tracepoint set
+
+        * its action list as given by the `actions' command
+
+          (gdb) info trace
+          Num Enb Address    PassC StepC What
+          1   y   0x002117c4 0     0     <gdb_asm>
+          2   y   0x0020dc64 0     0     in gdb_test at gdb_test.c:375
+          3   y   0x0020b1f4 0     0     in collect_data at ../foo.c:1741
+          (gdb)
+
+     This command can be abbreviated `info tp'.
+
+
+File: gdb.info,  Node: Starting and Stopping Trace Experiment,  Prev: Listing Tracepoints,  Up: Set Tracepoints
+
+Starting and Stopping Trace Experiment
+--------------------------------------
+
+`tstart'
+     This command takes no arguments.  It starts the trace experiment,
+     and begins collecting data.  This has the side effect of
+     discarding all the data collected in the trace buffer during the
+     previous trace experiment.
+
+`tstop'
+     This command takes no arguments.  It ends the trace experiment, and
+     stops collecting data.
+
+     *Note:* a trace experiment and data collection may stop
+     automatically if any tracepoint's passcount is reached (*note
+     Tracepoint Passcounts::), or if the trace buffer becomes full.
+
+`tstatus'
+     This command displays the status of the current trace data
+     collection.
+
+   Here is an example of the commands we described so far:
+
+     (gdb) trace gdb_c_test
+     (gdb) actions
+     Enter actions for tracepoint #1, one per line.
+     > collect $regs,$locals,$args
+     > while-stepping 11
+       > collect $regs
+       > end
+     > end
+     (gdb) tstart
+     	[time passes ...]
+     (gdb) tstop
+
+
+File: gdb.info,  Node: Analyze Collected Data,  Next: Tracepoint Variables,  Prev: Set Tracepoints,  Up: Tracepoints
+
+Using the collected data
+========================
+
+   After the tracepoint experiment ends, you use GDB commands for
+examining the trace data.  The basic idea is that each tracepoint
+collects a trace "snapshot" every time it is hit and another snapshot
+every time it single-steps.  All these snapshots are consecutively
+numbered from zero and go into a buffer, and you can examine them
+later.  The way you examine them is to "focus" on a specific trace
+snapshot.  When the remote stub is focused on a trace snapshot, it will
+respond to all GDB requests for memory and registers by reading from
+the buffer which belongs to that snapshot, rather than from _real_
+memory or registers of the program being debugged.  This means that
+*all* GDB commands (`print', `info registers', `backtrace', etc.) will
+behave as if we were currently debugging the program state as it was
+when the tracepoint occurred.  Any requests for data that are not in
+the buffer will fail.
+
+* Menu:
+
+* tfind::                       How to select a trace snapshot
+* tdump::                       How to display all data for a snapshot
+* save-tracepoints::            How to save tracepoints for a future run
+
+
+File: gdb.info,  Node: tfind,  Next: tdump,  Up: Analyze Collected Data
+
+`tfind N'
+---------
+
+   The basic command for selecting a trace snapshot from the buffer is
+`tfind N', which finds trace snapshot number N, counting from zero.  If
+no argument N is given, the next snapshot is selected.
+
+   Here are the various forms of using the `tfind' command.
+
+`tfind start'
+     Find the first snapshot in the buffer.  This is a synonym for
+     `tfind 0' (since 0 is the number of the first snapshot).
+
+`tfind none'
+     Stop debugging trace snapshots, resume _live_ debugging.
+
+`tfind end'
+     Same as `tfind none'.
+
+`tfind'
+     No argument means find the next trace snapshot.
+
+`tfind -'
+     Find the previous trace snapshot before the current one.  This
+     permits retracing earlier steps.
+
+`tfind tracepoint NUM'
+     Find the next snapshot associated with tracepoint NUM.  Search
+     proceeds forward from the last examined trace snapshot.  If no
+     argument NUM is given, it means find the next snapshot collected
+     for the same tracepoint as the current snapshot.
+
+`tfind pc ADDR'
+     Find the next snapshot associated with the value ADDR of the
+     program counter.  Search proceeds forward from the last examined
+     trace snapshot.  If no argument ADDR is given, it means find the
+     next snapshot with the same value of PC as the current snapshot.
+
+`tfind outside ADDR1, ADDR2'
+     Find the next snapshot whose PC is outside the given range of
+     addresses.
+
+`tfind range ADDR1, ADDR2'
+     Find the next snapshot whose PC is between ADDR1 and ADDR2.
+
+`tfind line [FILE:]N'
+     Find the next snapshot associated with the source line N.  If the
+     optional argument FILE is given, refer to line N in that source
+     file.  Search proceeds forward from the last examined trace
+     snapshot.  If no argument N is given, it means find the next line
+     other than the one currently being examined; thus saying `tfind
+     line' repeatedly can appear to have the same effect as stepping
+     from line to line in a _live_ debugging session.
+
+   The default arguments for the `tfind' commands are specifically
+designed to make it easy to scan through the trace buffer.  For
+instance, `tfind' with no argument selects the next trace snapshot, and
+`tfind -' with no argument selects the previous trace snapshot.  So, by
+giving one `tfind' command, and then simply hitting <RET> repeatedly
+you can examine all the trace snapshots in order.  Or, by saying `tfind
+-' and then hitting <RET> repeatedly you can examine the snapshots in
+reverse order.  The `tfind line' command with no argument selects the
+snapshot for the next source line executed.  The `tfind pc' command with
+no argument selects the next snapshot with the same program counter
+(PC) as the current frame.  The `tfind tracepoint' command with no
+argument selects the next trace snapshot collected by the same
+tracepoint as the current one.
+
+   In addition to letting you scan through the trace buffer manually,
+these commands make it easy to construct GDB scripts that scan through
+the trace buffer and print out whatever collected data you are
+interested in.  Thus, if we want to examine the PC, FP, and SP
+registers from each trace frame in the buffer, we can say this:
+
+     (gdb) tfind start
+     (gdb) while ($trace_frame != -1)
+     > printf "Frame %d, PC = %08X, SP = %08X, FP = %08X\n", \
+               $trace_frame, $pc, $sp, $fp
+     > tfind
+     > end
+     
+     Frame 0, PC = 0020DC64, SP = 0030BF3C, FP = 0030BF44
+     Frame 1, PC = 0020DC6C, SP = 0030BF38, FP = 0030BF44
+     Frame 2, PC = 0020DC70, SP = 0030BF34, FP = 0030BF44
+     Frame 3, PC = 0020DC74, SP = 0030BF30, FP = 0030BF44
+     Frame 4, PC = 0020DC78, SP = 0030BF2C, FP = 0030BF44
+     Frame 5, PC = 0020DC7C, SP = 0030BF28, FP = 0030BF44
+     Frame 6, PC = 0020DC80, SP = 0030BF24, FP = 0030BF44
+     Frame 7, PC = 0020DC84, SP = 0030BF20, FP = 0030BF44
+     Frame 8, PC = 0020DC88, SP = 0030BF1C, FP = 0030BF44
+     Frame 9, PC = 0020DC8E, SP = 0030BF18, FP = 0030BF44
+     Frame 10, PC = 00203F6C, SP = 0030BE3C, FP = 0030BF14
+
+   Or, if we want to examine the variable `X' at each source line in
+the buffer:
+
+     (gdb) tfind start
+     (gdb) while ($trace_frame != -1)
+     > printf "Frame %d, X == %d\n", $trace_frame, X
+     > tfind line
+     > end
+     
+     Frame 0, X = 1
+     Frame 7, X = 2
+     Frame 13, X = 255
+
+
+File: gdb.info,  Node: tdump,  Next: save-tracepoints,  Prev: tfind,  Up: Analyze Collected Data
+
+`tdump'
+-------
+
+   This command takes no arguments.  It prints all the data collected at
+the current trace snapshot.
+
+     (gdb) trace 444
+     (gdb) actions
+     Enter actions for tracepoint #2, one per line:
+     > collect $regs, $locals, $args, gdb_long_test
+     > end
+     
+     (gdb) tstart
+     
+     (gdb) tfind line 444
+     #0  gdb_test (p1=0x11, p2=0x22, p3=0x33, p4=0x44, p5=0x55, p6=0x66)
+     at gdb_test.c:444
+     444        printp( "%s: arguments = 0x%X 0x%X 0x%X 0x%X 0x%X 0x%X\n", )
+     
+     (gdb) tdump
+     Data collected at tracepoint 2, trace frame 1:
+     d0             0xc4aa0085       -995491707
+     d1             0x18     24
+     d2             0x80     128
+     d3             0x33     51
+     d4             0x71aea3d        119204413
+     d5             0x22     34
+     d6             0xe0     224
+     d7             0x380035 3670069
+     a0             0x19e24a 1696330
+     a1             0x3000668        50333288
+     a2             0x100    256
+     a3             0x322000 3284992
+     a4             0x3000698        50333336
+     a5             0x1ad3cc 1758156
+     fp             0x30bf3c 0x30bf3c
+     sp             0x30bf34 0x30bf34
+     ps             0x0      0
+     pc             0x20b2c8 0x20b2c8
+     fpcontrol      0x0      0
+     fpstatus       0x0      0
+     fpiaddr        0x0      0
+     p = 0x20e5b4 "gdb-test"
+     p1 = (void *) 0x11
+     p2 = (void *) 0x22
+     p3 = (void *) 0x33
+     p4 = (void *) 0x44
+     p5 = (void *) 0x55
+     p6 = (void *) 0x66
+     gdb_long_test = 17 '\021'
+     
+     (gdb)
+
+
+File: gdb.info,  Node: save-tracepoints,  Prev: tdump,  Up: Analyze Collected Data
+
+`save-tracepoints FILENAME'
+---------------------------
+
+   This command saves all current tracepoint definitions together with
+their actions and passcounts, into a file `FILENAME' suitable for use
+in a later debugging session.  To read the saved tracepoint
+definitions, use the `source' command (*note Command Files::).
+
+
+File: gdb.info,  Node: Tracepoint Variables,  Prev: Analyze Collected Data,  Up: Tracepoints
+
+Convenience Variables for Tracepoints
+=====================================
+
+`(int) $trace_frame'
+     The current trace snapshot (a.k.a. "frame") number, or -1 if no
+     snapshot is selected.
+
+`(int) $tracepoint'
+     The tracepoint for the current trace snapshot.
+
+`(int) $trace_line'
+     The line number for the current trace snapshot.
+
+`(char []) $trace_file'
+     The source file for the current trace snapshot.
+
+`(char []) $trace_func'
+     The name of the function containing `$tracepoint'.
+
+   Note: `$trace_file' is not suitable for use in `printf', use
+`output' instead.
+
+   Here's a simple example of using these convenience variables for
+stepping through all the trace snapshots and printing some of their
+data.
+
+     (gdb) tfind start
+     
+     (gdb) while $trace_frame != -1
+     > output $trace_file
+     > printf ", line %d (tracepoint #%d)\n", $trace_line, $tracepoint
+     > tfind
+     > end
+
+
+File: gdb.info,  Node: Languages,  Next: Symbols,  Prev: Tracepoints,  Up: Top
+
+Using GDB with Different Languages
+**********************************
+
+   Although programming languages generally have common aspects, they
+are rarely expressed in the same manner.  For instance, in ANSI C,
+dereferencing a pointer `p' is accomplished by `*p', but in Modula-2,
+it is accomplished by `p^'.  Values can also be represented (and
+displayed) differently.  Hex numbers in C appear as `0x1ae', while in
+Modula-2 they appear as `1AEH'.
+
+   Language-specific information is built into GDB for some languages,
+allowing you to express operations like the above in your program's
+native language, and allowing GDB to output values in a manner
+consistent with the syntax of your program's native language.  The
+language you use to build expressions is called the "working language".
+
+* Menu:
+
+* Setting::                     Switching between source languages
+* Show::                        Displaying the language
+* Checks::                      Type and range checks
+* Support::                     Supported languages
+
+
+File: gdb.info,  Node: Setting,  Next: Show,  Up: Languages
+
+Switching between source languages
+==================================
+
+   There are two ways to control the working language--either have GDB
+set it automatically, or select it manually yourself.  You can use the
+`set language' command for either purpose.  On startup, GDB defaults to
+setting the language automatically.  The working language is used to
+determine how expressions you type are interpreted, how values are
+printed, etc.
+
+   In addition to the working language, every source file that GDB
+knows about has its own working language.  For some object file
+formats, the compiler might indicate which language a particular source
+file is in.  However, most of the time GDB infers the language from the
+name of the file.  The language of a source file controls whether C++
+names are demangled--this way `backtrace' can show each frame
+appropriately for its own language.  There is no way to set the
+language of a source file from within GDB, but you can set the language
+associated with a filename extension.  *Note Displaying the language:
+Show.
+
+   This is most commonly a problem when you use a program, such as
+`cfront' or `f2c', that generates C but is written in another language.
+In that case, make the program use `#line' directives in its C output;
+that way GDB will know the correct language of the source code of the
+original program, and will display that source code, not the generated
+C code.
+
+* Menu:
+
+* Filenames::                   Filename extensions and languages.
+* Manually::                    Setting the working language manually
+* Automatically::               Having GDB infer the source language
+
+
+File: gdb.info,  Node: Filenames,  Next: Manually,  Up: Setting
+
+List of filename extensions and languages
+-----------------------------------------
+
+   If a source file name ends in one of the following extensions, then
+GDB infers that its language is the one indicated.
+
+`.c'
+     C source file
+
+`.C'
+`.cc'
+`.cp'
+`.cpp'
+`.cxx'
+`.c++'
+     C++ source file
+
+`.f'
+`.F'
+     Fortran source file
+
+`.ch'
+`.c186'
+`.c286'
+     CHILL source file
+
+`.mod'
+     Modula-2 source file
+
+`.s'
+`.S'
+     Assembler source file.  This actually behaves almost like C, but
+     GDB does not skip over function prologues when stepping.
+
+   In addition, you may set the language associated with a filename
+extension.  *Note Displaying the language: Show.
+
+
+File: gdb.info,  Node: Manually,  Next: Automatically,  Prev: Filenames,  Up: Setting
+
+Setting the working language
+----------------------------
+
+   If you allow GDB to set the language automatically, expressions are
+interpreted the same way in your debugging session and your program.
+
+   If you wish, you may set the language manually.  To do this, issue
+the command `set language LANG', where LANG is the name of a language,
+such as `c' or `modula-2'.  For a list of the supported languages, type
+`set language'.
+
+   Setting the language manually prevents GDB from updating the working
+language automatically.  This can lead to confusion if you try to debug
+a program when the working language is not the same as the source
+language, when an expression is acceptable to both languages--but means
+different things.  For instance, if the current source file were
+written in C, and GDB was parsing Modula-2, a command such as:
+
+     print a = b + c
+
+might not have the effect you intended.  In C, this means to add `b'
+and `c' and place the result in `a'.  The result printed would be the
+value of `a'.  In Modula-2, this means to compare `a' to the result of
+`b+c', yielding a `BOOLEAN' value.
+
+
+File: gdb.info,  Node: Automatically,  Prev: Manually,  Up: Setting
+
+Having GDB infer the source language
+------------------------------------
+
+   To have GDB set the working language automatically, use `set
+language local' or `set language auto'.  GDB then infers the working
+language.  That is, when your program stops in a frame (usually by
+encountering a breakpoint), GDB sets the working language to the
+language recorded for the function in that frame.  If the language for
+a frame is unknown (that is, if the function or block corresponding to
+the frame was defined in a source file that does not have a recognized
+extension), the current working language is not changed, and GDB issues
+a warning.
+
+   This may not seem necessary for most programs, which are written
+entirely in one source language.  However, program modules and libraries
+written in one source language can be used by a main program written in
+a different source language.  Using `set language auto' in this case
+frees you from having to set the working language manually.
+
+
+File: gdb.info,  Node: Show,  Next: Checks,  Prev: Setting,  Up: Languages
+
+Displaying the language
+=======================
+
+   The following commands help you find out which language is the
+working language, and also what language source files were written in.
+
+`show language'
+     Display the current working language.  This is the language you
+     can use with commands such as `print' to build and compute
+     expressions that may involve variables in your program.
+
+`info frame'
+     Display the source language for this frame.  This language becomes
+     the working language if you use an identifier from this frame.
+     *Note Information about a frame: Frame Info, to identify the other
+     information listed here.
+
+`info source'
+     Display the source language of this source file.  *Note Examining
+     the Symbol Table: Symbols, to identify the other information
+     listed here.
+
+   In unusual circumstances, you may have source files with extensions
+not in the standard list.  You can then set the extension associated
+with a language explicitly:
+
+`set extension-language .EXT LANGUAGE'
+     Set source files with extension .EXT to be assumed to be in the
+     source language LANGUAGE.
+
+`info extensions'
+     List all the filename extensions and the associated languages.
+
+
+File: gdb.info,  Node: Checks,  Next: Support,  Prev: Show,  Up: Languages
+
+Type and range checking
+=======================
+
+     _Warning:_ In this release, the GDB commands for type and range
+     checking are included, but they do not yet have any effect.  This
+     section documents the intended facilities.
+
+   Some languages are designed to guard you against making seemingly
+common errors through a series of compile- and run-time checks.  These
+include checking the type of arguments to functions and operators, and
+making sure mathematical overflows are caught at run time.  Checks such
+as these help to ensure a program's correctness once it has been
+compiled by eliminating type mismatches, and providing active checks
+for range errors when your program is running.
+
+   GDB can check for conditions like the above if you wish.  Although
+GDB does not check the statements in your program, it can check
+expressions entered directly into GDB for evaluation via the `print'
+command, for example.  As with the working language, GDB can also
+decide whether or not to check automatically based on your program's
+source language.  *Note Supported languages: Support, for the default
+settings of supported languages.
+
+* Menu:
+
+* Type Checking::               An overview of type checking
+* Range Checking::              An overview of range checking
+
+
+File: gdb.info,  Node: Type Checking,  Next: Range Checking,  Up: Checks
+
+An overview of type checking
+----------------------------
+
+   Some languages, such as Modula-2, are strongly typed, meaning that
+the arguments to operators and functions have to be of the correct type,
+otherwise an error occurs.  These checks prevent type mismatch errors
+from ever causing any run-time problems.  For example,
+
+     1 + 2 => 3
+but
+     error--> 1 + 2.3
+
+   The second example fails because the `CARDINAL' 1 is not
+type-compatible with the `REAL' 2.3.
+
+   For the expressions you use in GDB commands, you can tell the GDB
+type checker to skip checking; to treat any mismatches as errors and
+abandon the expression; or to only issue warnings when type mismatches
+occur, but evaluate the expression anyway.  When you choose the last of
+these, GDB evaluates expressions like the second example above, but
+also issues a warning.
+
+   Even if you turn type checking off, there may be other reasons
+related to type that prevent GDB from evaluating an expression.  For
+instance, GDB does not know how to add an `int' and a `struct foo'.
+These particular type errors have nothing to do with the language in
+use, and usually arise from expressions, such as the one described
+above, which make little sense to evaluate anyway.
+
+   Each language defines to what degree it is strict about type.  For
+instance, both Modula-2 and C require the arguments to arithmetical
+operators to be numbers.  In C, enumerated types and pointers can be
+represented as numbers, so that they are valid arguments to mathematical
+operators.  *Note Supported languages: Support, for further details on
+specific languages.
+
+   GDB provides some additional commands for controlling the type
+checker:
+
+`set check type auto'
+     Set type checking on or off based on the current working language.
+     *Note Supported languages: Support, for the default settings for
+     each language.
+
+`set check type on'
+`set check type off'
+     Set type checking on or off, overriding the default setting for the
+     current working language.  Issue a warning if the setting does not
+     match the language default.  If any type mismatches occur in
+     evaluating an expression while type checking is on, GDB prints a
+     message and aborts evaluation of the expression.
+
+`set check type warn'
+     Cause the type checker to issue warnings, but to always attempt to
+     evaluate the expression.  Evaluating the expression may still be
+     impossible for other reasons.  For example, GDB cannot add numbers
+     and structures.
+
+`show type'
+     Show the current setting of the type checker, and whether or not
+     GDB is setting it automatically.
+
+
+File: gdb.info,  Node: Range Checking,  Prev: Type Checking,  Up: Checks
+
+An overview of range checking
+-----------------------------
+
+   In some languages (such as Modula-2), it is an error to exceed the
+bounds of a type; this is enforced with run-time checks.  Such range
+checking is meant to ensure program correctness by making sure
+computations do not overflow, or indices on an array element access do
+not exceed the bounds of the array.
+
+   For expressions you use in GDB commands, you can tell GDB to treat
+range errors in one of three ways: ignore them, always treat them as
+errors and abandon the expression, or issue warnings but evaluate the
+expression anyway.
+
+   A range error can result from numerical overflow, from exceeding an
+array index bound, or when you type a constant that is not a member of
+any type.  Some languages, however, do not treat overflows as an error.
+In many implementations of C, mathematical overflow causes the result
+to "wrap around" to lower values--for example, if M is the largest
+integer value, and S is the smallest, then
+
+     M + 1 => S
+
+   This, too, is specific to individual languages, and in some cases
+specific to individual compilers or machines.  *Note Supported
+languages: Support, for further details on specific languages.
+
+   GDB provides some additional commands for controlling the range
+checker:
+
+`set check range auto'
+     Set range checking on or off based on the current working language.
+     *Note Supported languages: Support, for the default settings for
+     each language.
+
+`set check range on'
+`set check range off'
+     Set range checking on or off, overriding the default setting for
+     the current working language.  A warning is issued if the setting
+     does not match the language default.  If a range error occurs and
+     range checking is on, then a message is printed and evaluation of
+     the expression is aborted.
+
+`set check range warn'
+     Output messages when the GDB range checker detects a range error,
+     but attempt to evaluate the expression anyway.  Evaluating the
+     expression may still be impossible for other reasons, such as
+     accessing memory that the process does not own (a typical example
+     from many Unix systems).
+
+`show range'
+     Show the current setting of the range checker, and whether or not
+     it is being set automatically by GDB.
+
+
+File: gdb.info,  Node: Support,  Prev: Checks,  Up: Languages
+
+Supported languages
+===================
+
+   GDB supports C, C++, Fortran, Java, Chill, assembly, and Modula-2.
+Some GDB features may be used in expressions regardless of the language
+you use: the GDB `@' and `::' operators, and the `{type}addr' construct
+(*note Expressions: Expressions.) can be used with the constructs of
+any supported language.
+
+   The following sections detail to what degree each source language is
+supported by GDB.  These sections are not meant to be language
+tutorials or references, but serve only as a reference guide to what the
+GDB expression parser accepts, and what input and output formats should
+look like for different languages.  There are many good books written
+on each of these languages; please look to these for a language
+reference or tutorial.
+
+* Menu:
+
+* C::           C and C++
+* Modula-2::    Modula-2
+* Chill::        Chill
+
+
+File: gdb.info,  Node: C,  Next: Modula-2,  Up: Support
+
+C and C++
+---------
+
+   Since C and C++ are so closely related, many features of GDB apply
+to both languages.  Whenever this is the case, we discuss those
+languages together.
+
+   The C++ debugging facilities are jointly implemented by the C++
+compiler and GDB.  Therefore, to debug your C++ code effectively, you
+must compile your C++ programs with a supported C++ compiler, such as
+GNU `g++', or the HP ANSI C++ compiler (`aCC').
+
+   For best results when using GNU C++, use the stabs debugging format.
+You can select that format explicitly with the `g++' command-line
+options `-gstabs' or `-gstabs+'.  See *Note Options for Debugging Your
+Program or GNU CC: (gcc.info)Debugging Options, for more information.
+
+* Menu:
+
+* C Operators::                 C and C++ operators
+* C Constants::                 C and C++ constants
+* C plus plus expressions::     C++ expressions
+* C Defaults::                  Default settings for C and C++
+* C Checks::                    C and C++ type and range checks
+* Debugging C::                 GDB and C
+* Debugging C plus plus::       GDB features for C++
+
+
+File: gdb.info,  Node: C Operators,  Next: C Constants,  Up: C
+
+C and C++ operators
+...................
+
+   Operators must be defined on values of specific types.  For instance,
+`+' is defined on numbers, but not on structures.  Operators are often
+defined on groups of types.
+
+   For the purposes of C and C++, the following definitions hold:
+
+   * _Integral types_ include `int' with any of its storage-class
+     specifiers; `char'; `enum'; and, for C++, `bool'.
+
+   * _Floating-point types_ include `float', `double', and `long
+     double' (if supported by the target platform).
+
+   * _Pointer types_ include all types defined as `(TYPE *)'.
+
+   * _Scalar types_ include all of the above.
+
+
+The following operators are supported.  They are listed here in order
+of increasing precedence:
+
+`,'
+     The comma or sequencing operator.  Expressions in a
+     comma-separated list are evaluated from left to right, with the
+     result of the entire expression being the last expression
+     evaluated.
+
+`='
+     Assignment.  The value of an assignment expression is the value
+     assigned.  Defined on scalar types.
+
+`OP='
+     Used in an expression of the form `A OP= B', and translated to
+     `A = A OP B'.  `OP=' and `=' have the same precedence.  OP is any
+     one of the operators `|', `^', `&', `<<', `>>', `+', `-', `*',
+     `/', `%'.
+
+`?:'
+     The ternary operator.  `A ? B : C' can be thought of as:  if A
+     then B else C.  A should be of an integral type.
+
+`||'
+     Logical OR.  Defined on integral types.
+
+`&&'
+     Logical AND.  Defined on integral types.
+
+`|'
+     Bitwise OR.  Defined on integral types.
+
+`^'
+     Bitwise exclusive-OR.  Defined on integral types.
+
+`&'
+     Bitwise AND.  Defined on integral types.
+
+`==, !='
+     Equality and inequality.  Defined on scalar types.  The value of
+     these expressions is 0 for false and non-zero for true.
+
+`<, >, <=, >='
+     Less than, greater than, less than or equal, greater than or equal.
+     Defined on scalar types.  The value of these expressions is 0 for
+     false and non-zero for true.
+
+`<<, >>'
+     left shift, and right shift.  Defined on integral types.
+
+`@'
+     The GDB "artificial array" operator (*note Expressions:
+     Expressions.).
+
+`+, -'
+     Addition and subtraction.  Defined on integral types,
+     floating-point types and pointer types.
+
+`*, /, %'
+     Multiplication, division, and modulus.  Multiplication and
+     division are defined on integral and floating-point types.
+     Modulus is defined on integral types.
+
+`++, --'
+     Increment and decrement.  When appearing before a variable, the
+     operation is performed before the variable is used in an
+     expression; when appearing after it, the variable's value is used
+     before the operation takes place.
+
+`*'
+     Pointer dereferencing.  Defined on pointer types.  Same precedence
+     as `++'.
+
+`&'
+     Address operator.  Defined on variables.  Same precedence as `++'.
+
+     For debugging C++, GDB implements a use of `&' beyond what is
+     allowed in the C++ language itself: you can use `&(&REF)' (or, if
+     you prefer, simply `&&REF') to examine the address where a C++
+     reference variable (declared with `&REF') is stored.
+
+`-'
+     Negative.  Defined on integral and floating-point types.  Same
+     precedence as `++'.
+
+`!'
+     Logical negation.  Defined on integral types.  Same precedence as
+     `++'.
+
+`~'
+     Bitwise complement operator.  Defined on integral types.  Same
+     precedence as `++'.
+
+`., ->'
+     Structure member, and pointer-to-structure member.  For
+     convenience, GDB regards the two as equivalent, choosing whether
+     to dereference a pointer based on the stored type information.
+     Defined on `struct' and `union' data.
+
+`.*, ->*'
+     Dereferences of pointers to members.
+
+`[]'
+     Array indexing.  `A[I]' is defined as `*(A+I)'.  Same precedence
+     as `->'.
+
+`()'
+     Function parameter list.  Same precedence as `->'.
+
+`::'
+     C++ scope resolution operator.  Defined on `struct', `union', and
+     `class' types.
+
+`::'
+     Doubled colons also represent the GDB scope operator (*note
+     Expressions: Expressions.).  Same precedence as `::', above.
+
+   If an operator is redefined in the user code, GDB usually attempts
+to invoke the redefined version instead of using the operator's
+predefined meaning.
+
+* Menu:
+
+* C Constants::
+
+
+File: gdb.info,  Node: C Constants,  Next: C plus plus expressions,  Prev: C Operators,  Up: C
+
+C and C++ constants
+...................
+
+   GDB allows you to express the constants of C and C++ in the
+following ways:
+
+   * Integer constants are a sequence of digits.  Octal constants are
+     specified by a leading `0' (i.e. zero), and hexadecimal constants
+     by a leading `0x' or `0X'.  Constants may also end with a letter
+     `l', specifying that the constant should be treated as a `long'
+     value.
+
+   * Floating point constants are a sequence of digits, followed by a
+     decimal point, followed by a sequence of digits, and optionally
+     followed by an exponent.  An exponent is of the form:
+     `e[[+]|-]NNN', where NNN is another sequence of digits.  The `+'
+     is optional for positive exponents.  A floating-point constant may
+     also end with a letter `f' or `F', specifying that the constant
+     should be treated as being of the `float' (as opposed to the
+     default `double') type; or with a letter `l' or `L', which
+     specifies a `long double' constant.
+
+   * Enumerated constants consist of enumerated identifiers, or their
+     integral equivalents.
+
+   * Character constants are a single character surrounded by single
+     quotes (`''), or a number--the ordinal value of the corresponding
+     character (usually its ASCII value).  Within quotes, the single
+     character may be represented by a letter or by "escape sequences",
+     which are of the form `\NNN', where NNN is the octal representation
+     of the character's ordinal value; or of the form `\X', where `X'
+     is a predefined special character--for example, `\n' for newline.
+
+   * String constants are a sequence of character constants surrounded
+     by double quotes (`"').  Any valid character constant (as described
+     above) may appear.  Double quotes within the string must be
+     preceded by a backslash, so for instance `"a\"b'c"' is a string of
+     five characters.
+
+   * Pointer constants are an integral value.  You can also write
+     pointers to constants using the C operator `&'.
+
+   * Array constants are comma-separated lists surrounded by braces `{'
+     and `}'; for example, `{1,2,3}' is a three-element array of
+     integers, `{{1,2}, {3,4}, {5,6}}' is a three-by-two array, and
+     `{&"hi", &"there", &"fred"}' is a three-element array of pointers.
+
+* Menu:
+
+* C plus plus expressions::
+* C Defaults::
+* C Checks::
+
+* Debugging C::
+
+
+File: gdb.info,  Node: C plus plus expressions,  Next: C Defaults,  Prev: C Constants,  Up: C
+
+C++ expressions
+...............
+
+   GDB expression handling can interpret most C++ expressions.
+
+     _Warning:_ GDB can only debug C++ code if you use the proper
+     compiler.  Typically, C++ debugging depends on the use of
+     additional debugging information in the symbol table, and thus
+     requires special support.  In particular, if your compiler
+     generates a.out, MIPS ECOFF, RS/6000 XCOFF, or ELF with stabs
+     extensions to the symbol table, these facilities are all
+     available.  (With GNU CC, you can use the `-gstabs' option to
+     request stabs debugging extensions explicitly.)  Where the object
+     code format is standard COFF or DWARF in ELF, on the other hand,
+     most of the C++ support in GDB does _not_ work.
+
+  1. Member function calls are allowed; you can use expressions like
+
+          count = aml->GetOriginal(x, y)
+
+  2. While a member function is active (in the selected stack frame),
+     your expressions have the same namespace available as the member
+     function; that is, GDB allows implicit references to the class
+     instance pointer `this' following the same rules as C++.
+
+  3. You can call overloaded functions; GDB resolves the function call
+     to the right definition, with some restrictions.  GDB does not
+     perform overload resolution involving user-defined type
+     conversions, calls to constructors, or instantiations of templates
+     that do not exist in the program.  It also cannot handle ellipsis
+     argument lists or default arguments.
+
+     It does perform integral conversions and promotions, floating-point
+     promotions, arithmetic conversions, pointer conversions,
+     conversions of class objects to base classes, and standard
+     conversions such as those of functions or arrays to pointers; it
+     requires an exact match on the number of function arguments.
+
+     Overload resolution is always performed, unless you have specified
+     `set overload-resolution off'.  *Note GDB features for C++:
+     Debugging C plus plus.
+
+     You must specify `set overload-resolution off' in order to use an
+     explicit function signature to call an overloaded function, as in
+          p 'foo(char,int)'('x', 13)
+
+     The GDB command-completion facility can simplify this; see *Note
+     Command completion: Completion.
+
+  4. GDB understands variables declared as C++ references; you can use
+     them in expressions just as you do in C++ source--they are
+     automatically dereferenced.
+
+     In the parameter list shown when GDB displays a frame, the values
+     of reference variables are not displayed (unlike other variables);
+     this avoids clutter, since references are often used for large
+     structures.  The _address_ of a reference variable is always
+     shown, unless you have specified `set print address off'.
+
+  5. GDB supports the C++ name resolution operator `::'--your
+     expressions can use it just as expressions in your program do.
+     Since one scope may be defined in another, you can use `::'
+     repeatedly if necessary, for example in an expression like
+     `SCOPE1::SCOPE2::NAME'.  GDB also allows resolving name scope by
+     reference to source files, in both C and C++ debugging (*note
+     Program variables: Variables.).
+
+   In addition, when used with HP's C++ compiler, GDB supports calling
+virtual functions correctly, printing out virtual bases of objects,
+calling functions in a base subobject, casting objects, and invoking
+user-defined operators.
+
+
+File: gdb.info,  Node: C Defaults,  Next: C Checks,  Prev: C plus plus expressions,  Up: C
+
+C and C++ defaults
+..................
+
+   If you allow GDB to set type and range checking automatically, they
+both default to `off' whenever the working language changes to C or
+C++.  This happens regardless of whether you or GDB selects the working
+language.
+
+   If you allow GDB to set the language automatically, it recognizes
+source files whose names end with `.c', `.C', or `.cc', etc, and when
+GDB enters code compiled from one of these files, it sets the working
+language to C or C++.  *Note Having GDB infer the source language:
+Automatically, for further details.
+
+
+File: gdb.info,  Node: C Checks,  Next: Debugging C,  Prev: C Defaults,  Up: C
+
+C and C++ type and range checks
+...............................
+
+   By default, when GDB parses C or C++ expressions, type checking is
+not used.  However, if you turn type checking on, GDB considers two
+variables type equivalent if:
+
+   * The two variables are structured and have the same structure,
+     union, or enumerated tag.
+
+   * The two variables have the same type name, or types that have been
+     declared equivalent through `typedef'.
+
+
+   Range checking, if turned on, is done on mathematical operations.
+Array indices are not checked, since they are often used to index a
+pointer that is not itself an array.
+
+
+File: gdb.info,  Node: Debugging C,  Next: Debugging C plus plus,  Prev: C Checks,  Up: C
+
+GDB and C
+.........
+
+   The `set print union' and `show print union' commands apply to the
+`union' type.  When set to `on', any `union' that is inside a `struct'
+or `class' is also printed.  Otherwise, it appears as `{...}'.
+
+   The `@' operator aids in the debugging of dynamic arrays, formed
+with pointers and a memory allocation function.  *Note Expressions:
+Expressions.
+
+* Menu:
+
+* Debugging C plus plus::
+
+
+File: gdb.info,  Node: Debugging C plus plus,  Prev: Debugging C,  Up: C
+
+GDB features for C++
+....................
+
+   Some GDB commands are particularly useful with C++, and some are
+designed specifically for use with C++.  Here is a summary:
+
+`breakpoint menus'
+     When you want a breakpoint in a function whose name is overloaded,
+     GDB breakpoint menus help you specify which function definition
+     you want.  *Note Breakpoint menus: Breakpoint Menus.
+
+`rbreak REGEX'
+     Setting breakpoints using regular expressions is helpful for
+     setting breakpoints on overloaded functions that are not members
+     of any special classes.  *Note Setting breakpoints: Set Breaks.
+
+`catch throw'
+`catch catch'
+     Debug C++ exception handling using these commands.  *Note Setting
+     catchpoints: Set Catchpoints.
+
+`ptype TYPENAME'
+     Print inheritance relationships as well as other information for
+     type TYPENAME.  *Note Examining the Symbol Table: Symbols.
+
+`set print demangle'
+`show print demangle'
+`set print asm-demangle'
+`show print asm-demangle'
+     Control whether C++ symbols display in their source form, both when
+     displaying code as C++ source and when displaying disassemblies.
+     *Note Print settings: Print Settings.
+
+`set print object'
+`show print object'
+     Choose whether to print derived (actual) or declared types of
+     objects.  *Note Print settings: Print Settings.
+
+`set print vtbl'
+`show print vtbl'
+     Control the format for printing virtual function tables.  *Note
+     Print settings: Print Settings.  (The `vtbl' commands do not work
+     on programs compiled with the HP ANSI C++ compiler (`aCC').)
+
+`set overload-resolution on'
+     Enable overload resolution for C++ expression evaluation.  The
+     default is on.  For overloaded functions, GDB evaluates the
+     arguments and searches for a function whose signature matches the
+     argument types, using the standard C++ conversion rules (see *Note
+     C++ expressions: C plus plus expressions, for details).  If it
+     cannot find a match, it emits a message.
+
+`set overload-resolution off'
+     Disable overload resolution for C++ expression evaluation.  For
+     overloaded functions that are not class member functions, GDB
+     chooses the first function of the specified name that it finds in
+     the symbol table, whether or not its arguments are of the correct
+     type.  For overloaded functions that are class member functions,
+     GDB searches for a function whose signature _exactly_ matches the
+     argument types.
+
+`Overloaded symbol names'
+     You can specify a particular definition of an overloaded symbol,
+     using the same notation that is used to declare such symbols in
+     C++: type `SYMBOL(TYPES)' rather than just SYMBOL.  You can also
+     use the GDB command-line word completion facilities to list the
+     available choices, or to finish the type list for you.  *Note
+     Command completion: Completion, for details on how to do this.
+
+
+File: gdb.info,  Node: Modula-2,  Next: Chill,  Prev: C,  Up: Support
+
+Modula-2
+--------
+
+   The extensions made to GDB to support Modula-2 only support output
+from the GNU Modula-2 compiler (which is currently being developed).
+Other Modula-2 compilers are not currently supported, and attempting to
+debug executables produced by them is most likely to give an error as
+GDB reads in the executable's symbol table.
+
+* Menu:
+
+* M2 Operators::                Built-in operators
+* Built-In Func/Proc::          Built-in functions and procedures
+* M2 Constants::                Modula-2 constants
+* M2 Defaults::                 Default settings for Modula-2
+* Deviations::                  Deviations from standard Modula-2
+* M2 Checks::                   Modula-2 type and range checks
+* M2 Scope::                    The scope operators `::' and `.'
+* GDB/M2::                      GDB and Modula-2
+
