@@ -74,11 +74,11 @@ CONST
 (* The "FrameInfo" type must minimally include fields named "pc" and "sp". *)
 
 CONST
-  Has_stack_walker = FALSE;
+  Has_stack_walker = TRUE;
   (* Indicates whether this platform supports the stack walking functions
      defined in the "RTStack" interface. *)
 
-TYPE FrameInfo = RECORD pc, sp: ADDRESS END;
+TYPE FrameInfo = RECORD pc, sp, fp: ADDRESS END;
 
 END RTMachine.
 

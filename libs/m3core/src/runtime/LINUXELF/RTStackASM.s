@@ -1,8 +1,8 @@
 	.text
 	.align 2
 
-	.globl _RTStack__CurrentFrame
-_RTStack__CurrentFrame:
+	.globl RTStack__CurFrame
+RTStack__CurFrame:
 		                      # STACK = ret frame
 	popl %eax                     # STACK = frame
 	pushl %eax
@@ -17,8 +17,8 @@ _RTStack__CurrentFrame:
 	movl %ebp, 4(%eax)            # stuff our caller BP
 	ret
 
-	.globl _RTStack__PreviousFrame
-_RTStack__PreviousFrame:
+	.globl RTStack__PrevFrame
+RTStack__PrevFrame:
 	movl 4(%esp), %eax            # eax = ^callee
 	movl 4(%eax), %eax            # eax = callee.ebp
 	pushl 0(%eax)                 # push bp of caller
@@ -31,10 +31,18 @@ _RTStack__PreviousFrame:
 	popl 4(%eax)
 	ret
 
-	.globl _RTStack__Unwind
-_RTStack__Unwind:
-	movl 4(%esp), %eax            # eax = ^to
-	movl 8(%eax), %esp
-	movl 4(%eax), %ebp
-	jmp *(%eax)
-
+# Unwinding in this way does not work on i386 because esi, edi, ebx
+# belong to the caller and may be changed/saved by any nested callee.
+# However, it is not possible to know which callee has changed/saved
+# these and where they are saved on stack (they would appear between
+# the local variables and the arguments, both of which are variable
+# sized and their size is not recorded on the stack).
+# Michel Dagenais. dagenais@vlsi.polymtl.ca
+#
+#	.globl RTStack__Unwind
+#RTStack__Unwind:
+#	movl 4(%esp), %eax            # eax = ^to
+#	movl 8(%eax), %esp
+#	movl 4(%eax), %ebp
+#	jmp *(%eax)
+#
