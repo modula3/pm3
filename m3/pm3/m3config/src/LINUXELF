@@ -179,7 +179,12 @@ proc m3_link (prog, objects, imported_libs, debug, shared) is
   if not shared cmd += [ "-static" ] end
   cmd += [ "-o", prog, objects ]
   foreach i in imported_libs
-    if not empty(i[0]) cmd += "-L" & i[0] end
+    if not empty(i[0])
+      cmd += "-L" & i[0]
+      if shared % needed only if the final executable uses shared libs
+        cmd += ["-rpath", i[0]]
+      end
+    end
     cmd += "-l" & i[1]
   end
   cmd += "-lm"
