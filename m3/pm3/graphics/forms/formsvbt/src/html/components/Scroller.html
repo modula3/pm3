@@ -1,0 +1,71 @@
+<TITLE> Scroller (leaf, event) </TITLE>
+<H1> Scroller (leaf, event) </H1> 
+    
+<P>
+ An integer-valued scroll bar interactor.  The full range
+of the scroll bar is gray, and the ``thumb'' is a white
+rectangular stripe somewhere within the scroll bar.  The scroll
+bar represents the interval <TT>[Min .. Max]</TT>, and the thumb
+represents the subinterval <TT>[Value .. (Value+Thumb)]</TT>.
+    
+<HR><DL>
+
+<DT>Value <TT>GP</TT><DD> (Integer, <TT>50</TT>) <BR> 
+      The current value; always between Min and Max-Thumb, inclusive.
+
+<DT>Min <TT>GP</TT><DD> (Integer, <TT>0</TT>) <BR> 
+      The minimum value allowed.
+
+<DT>Max <TT>GP</TT><DD> (Integer, <TT>100</TT>) <BR> 
+      The maximum value allowed. Value is within Min and Max-Thumb. 
+
+<DT>Thumb <TT>GP</TT><DD> (Cardinal, <TT>0</TT>) <BR> 
+      A non-negative number no greater than Max-Min.
+
+<DT>Step <TT>GP</TT><DD> (Cardinal, <TT>1</TT>) <BR> 
+      The amount to increment or decrement Value when ``continuous scrolling.''
+
+<DT>Vertical<DD> (Boolean, <TT>FALSE</TT>) <BR> 
+      If true, the scroll bar is oriented vertically, from south (Min) 
+      to north (Max). Otherwise, the scroll bar goes from west to east.
+      
+</DL><HR>
+
+<DL>
+
+
+<DT><B>Behavior</B><DD> The user can adjust the position of the thumb with the 
+  mouse. For the sake of explanation, 
+  suppose that the scroll bar is adjacent and attached (via an 
+  application program) to a column containing the
+  numbers Min through Max. At any given time, Thumb+1 of the numbers 
+  (i.e., Value through Value+Thumb) are visible in the attached view.
+<DT><DD> The semantics of the mouse are as follows: A left click scrolls 
+  the view towards its end by moving the number at the mouse so it 
+  becomes the first number visible in the view. A right click scrolls 
+  the view towards its beginning by bringing the first number visible 
+  in the view to the position of the mouse. A middle click scrolls 
+  the view to the mouse by bringing the top of the thumb to the 
+  position of the mouse. Holding the left or right button without 
+  moving the mouse will cause (after a short time) continuous scrolling 
+  to begin. If you then drag the mouse, any continuous scrolling 
+  is terminated and the view scrolls with the mouse. 
+<DT><DD> An event is generated after each time the Value of the scroll 
+  bar is changed. That can happen after any click, while continuous 
+  scrolling is in effect, and while dragging the mouse.  When 
+  continuous scrolling causes the thumb to reach its limit, the scroll 
+  bar doesn't continue to generate events, since the value is no 
+  longer changing. 
+<DT><DD> It is not unreasonable for the application to modify properties 
+  of the scroll bar (the thumb, in particular) while processing an 
+  event. 
+
+<DT><B>Notes</B><DD> The scroll bar does not allow canceling. 
+
+<DT><B>Shape</B><DD> Vertical sliders have a minimum size of 13x27 pixels, with
+  infinite vertical stretch.  Horizontal sliders have a minimum
+  size of 27x13 pixels, with infinite horizontal stretch.
+
+</DL>
+<P><IMG SRC="../figs-long/scroll.ps">
+

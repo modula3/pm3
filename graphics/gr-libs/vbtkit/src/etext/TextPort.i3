@@ -14,19 +14,19 @@
    The methods and procedures in this interface fall into several categories,
    each dealing with different aspects of the text-editor. 
 
-   \begin{description}
+   <DL>
    
-   \item[Appearance] The client can choose the font, colors, margins,
+   <DT>Appearance<DD> The client can choose the font, colors, margins,
    and whether long lines should be clipped or wrapped. The fonts and
    colors can be changed dynamically.
 
-   \item[Access to the text] There are procedures to read and write
+   <DT>Access to the text<DD> There are procedures to read and write
    subsequences of the text, to read and set the current ``type-in''
    point (cursor position), to get the length of the text, and to make
    the text read-only.
 
-   \item[Keybindings and Text-Selections] A textport is initialized
-   with a {\em model}, an object (defined in the "TextPortClass"
+   <DT>Keybindings and Text-Selections<DD> A textport is initialized
+   with a <EM>model</EM>, an object (defined in the "TextPortClass"
    interface) that establishes the connection between keystrokes and
    editing operations, and the connection between mouse-gestures, the
    cursor position, local selections (including highlighted regions),
@@ -36,15 +36,15 @@
    model can be changed dynamically. The client may override the
    "filter" method to intercept keystrokes.
 
-   \item[Feedback] A textport has callback-methods that are invoked
+   <DT>Feedback<DD> A textport has callback-methods that are invoked
    when the text changes, when the user types Return or Tab, when the
    textport gains or loses the keyboard focus, when the visible
    region changes, and when errors are detected. All these methods
    have defaults.
 
-   \end{description}
+   </DL>
 
-   The locking level for all procedures is "LL <= VBT.mu" except as noted. *)
+   The locking level for all procedures is "LL &lt;= VBT.mu" except as noted. *)
 
 INTERFACE TextPort;
 
@@ -101,8 +101,8 @@ TYPE
    the user interface (keyboard and mouse).  The procedures "Replace",
    "Insert", "SetText", and "PutText" bypass the read-only protection,
    but these are not called by internal routines.  In all other
-   descriptions in this interface, the words {\it replace}, {\it insert},
-   {\it delete}, and so on should be understood as having the
+   descriptions in this interface, the words <I>replace</I>, <I>insert</I>,
+   <I>delete</I>, and so on should be understood as having the
    restriction that "v" is not read-only.
 
    If "model" is "Model.Default", then the default model (see below) 
@@ -122,11 +122,11 @@ TYPE
    The implementation calls "v.focus(gaining, time)" whenever
    "v" gains or loses the keyboard focus.  If "gaining" is "TRUE",
    then "v" is about to gain the keyboard focus (and "time" is a
-   valid event-time); i.e., this method is called {\em before} the
+   valid event-time); i.e., this method is called <EM>before</EM> the
    selection feedback is established, so it is reasonable to call
    "Select" (below) or put up some other indication.  If "gaining" is
    "FALSE", then "v" has just lost the keyboard focus (and "time"
-   is {\em not} valid), so it reasonable to take down whatever
+   is <EM>not</EM> valid), so it reasonable to take down whatever
    indicated that the focus had been acquired.  It is not within the
    power of the "focus" method to prevent "v" from gaining or
    losing the focus.  The default for this method is a no-op.
@@ -139,14 +139,17 @@ TYPE
    raises exceptions, but the client may wish to override this method
    in order to report the error in a popup window, for example. The
    default for this method is a procedure that tests whether the
-   environment-variable named "TEXTPORTDEBUG"\index{TEXTPORTDEBUG} is
+   environment-variable named "TEXTPORTDEBUG"<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>TEXTPORTDEBUG</SPAN>
+</SPAN>
+ is
    set (to any value); if so, it writes the message to
    "Stdio.stderr".
 
 *)
 
 
-(* \subsubsection{Access to the text}
+(* <H3> Access to the text </H3>
    
    The textport's initial read-only status depends on the "readOnly"
    parameter to the "init" method. The "getReadOnly" method returns
@@ -181,7 +184,7 @@ PROCEDURE Replace (v: T; begin, end: CARDINAL; newText: TEXT);
 
 PROCEDURE Insert (v: T; text: TEXT);
 (* If there is a replace-mode selection (see
-   Section~\ref{ReplaceMode}, page~\pageref{ReplaceMode}), replace it
+   Section&nbsp;<A REL=REF.NUMBER HREF="ReplaceMode"> [ReplaceMode] </A>, page&nbsp;<A REL=REF.PAGE HREF="ReplaceMode"> [ReplaceMode] </A>), replace it
    with "text"; otherwise insert "text" at the type-in point. In
    either case, this is a no-op if "text" is the empty string.  This
    procedure does not test the read-only status of "v".*)
@@ -207,7 +210,10 @@ PROCEDURE NewlineAndIndent (v: T);
 PROCEDURE IsVisible (v: T; pos: CARDINAL): BOOLEAN;
 (* Test whether the character at position "pos" is visible. *)
 
-(* \subsubsection {Models}\index{Model} *)
+(* <H3> Models </H3><SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>Model</SPAN>
+</SPAN>
+ *)
 
 TYPE
   Model = {Default, Ivy, Emacs, Mac, Xterm};
@@ -217,18 +223,21 @@ VAR
    DefaultModel: SpecificModel; 
 
 (* The default editing model, "DefaultModel", is initialized to the
-   environment variable named "TEXTPORTMODEL";\index{TEXTPORTMODEL} if that
+   environment variable named "TEXTPORTMODEL";<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>TEXTPORTMODEL</SPAN>
+</SPAN>
+ if that
    variable is not set, or set to something other than "emacs", "ivy",
    "mac", or "xterm" at startup time, then "Model.Emacs" will be used.  See
    the "EmacsModel", "IvyModel", "XtermModel", and "MacModel" interfaces in
-   Appendices \ref{EmacsModel}--\ref{XtermModel} for details on
+   Appendices <A REL=REF.NUMBER HREF="EmacsModel"> [EmacsModel] </A>--<A REL=REF.NUMBER HREF="XtermModel"> [XtermModel] </A> for details on
    keybindings, mouse-clicks, and selections.*)
 
 PROCEDURE ChangeAllTextPorts (v: VBT.T; newModel := Model.Default);
 (* For each textport "p" that is a descendent of VBT "v", call
    "p.setModel(newModel)". *)
 
-(* \subsubsection {Keybindings}\label{TextPortKeybindings}
+(* <H3 ID="TextPortKeybindings"> Keybindings </H3>
 
    The "TextPort" interface allows clients a great deal of flexibility
    in handling keystrokes.  "v.key(cd)" proceeds in
@@ -242,7 +251,7 @@ PROCEDURE ChangeAllTextPorts (v: VBT.T; newModel := Model.Default);
    handles low-level tasks such as converting ``Escape + character''
    into ``meta-character'' (in Emacs mode), 8-bit ``compose
    character'' operations, and so on.  The model may actually contain
-   a {\em chain} of keyfilters (see the "KeyFilter" interface), each
+   a <EM>chain</EM> of keyfilters (see the "KeyFilter" interface), each
    implementing some translation.
 
    In step 3, the model passes "cd" (possibly changed by the
@@ -254,38 +263,38 @@ PROCEDURE ChangeAllTextPorts (v: VBT.T; newModel := Model.Default);
    In the default "filter" method, there are several mutually
    exclusive possibilities, tested in this order:
 
-   \begin{itemize}
+   <UL>
 
-   \item{If the key is Return, then if the "shift" modifier is on, we
+   <LI>If the key is Return, then if the "shift" modifier is on, we
    insert a newline; if the "option" modifier is on, we insert a
    newline but leave the cursor in place; otherwise, we invoke
    "v.returnAction(cd)", another callback method. Its default
-   method calls "NewlineAndIndent(v, cd)".}
+   method calls "NewlineAndIndent(v, cd)".
 
-   \item{If the key is Tab, we invoke "v.tabAction(cd)".  The
-   default method inserts 4 spaces.}
+   <LI>If the key is Tab, we invoke "v.tabAction(cd)".  The
+   default method inserts 4 spaces.
 
-   \item{If the key is an ``arrow'' key, we call the model's
+   <LI>If the key is an ``arrow'' key, we call the model's
    "arrowKey" method, which moves the cursor one character forward,
    one character backward, one line up, or one line down, as
-   appropriate.}
+   appropriate.
 
-   \item{If the "control" modifier is on, we call the model's
-   "controlChord" method.}
+   <LI>If the "control" modifier is on, we call the model's
+   "controlChord" method.
 
-   \item{If the "option" modifier is on, we call the model's
-   "optionChord" method.}
+   <LI>If the "option" modifier is on, we call the model's
+   "optionChord" method.
 
-   \item{If the key is Backspace or Delete, we delete the previous
+   <LI>If the key is Backspace or Delete, we delete the previous
    character, or the current primary selection, if that is non-empty and
-   in replace-mode.}
+   in replace-mode.
 
-   \item{If the key is an ISO Latin-1 graphic character, we insert it into
-   the text.}
+   <LI>If the key is an ISO Latin-1 graphic character, we insert it into
+   the text.
 
-   \item{Otherwise, we ignore it.}
+   <LI>Otherwise, we ignore it.
 
-   \end{itemize}
+   </UL>
 
    Finally, we call "Normalize(v)", except in the "controlChord" and
    "optionChord" cases.
@@ -307,47 +316,53 @@ PROCEDURE HasFocus (v: T): BOOLEAN; <* LL.sup = VBT.mu *>
 (* Test whether "v" has the keyboard focus. *)
 
 
-(* \subsubsection{Selections}\label{TextPortSelections}
+(* <H3 ID="TextPortSelections"> Selections </H3>
 
    With various keyboard and mouse-gestures, the user may delimit a
-   range of text, known as a {\em local selection}.  The "TextPort"
-   interface defines two local selections, called {\em primary} and
-   {\em secondary}. The mechanism for doing this depends entirely on
+   range of text, known as a <EM>local selection</EM>.  The "TextPort"
+   interface defines two local selections, called <EM>primary</EM> and
+   <EM>secondary</EM>. The mechanism for doing this depends entirely on
    the textport's model. (In fact, only the Ivy model implements
    secondary selection.) The type-in point is always at one end or the
    other of the primary selection.
 
-   Primary selections in non-readonly textports may be in {\em
-   replace mode}, also called {\em pending-delete mode}. This means
+   Primary selections in non-readonly textports may be in <EM>
+   replace mode</EM>, also called <EM>pending-delete mode</EM>. This means
    that any text that is inserted will replace the primary selection,
    and that the Backspace and Delete keys will delete it.
 
-   Independent of the local selections are the two {\em global
-   selections} defined by Trestle: "VBT.Source" and "VBT.Target".  On
+   Independent of the local selections are the two <EM>global
+   selections</EM> defined by Trestle: "VBT.Source" and "VBT.Target".  On
    X window systems, these are defined by the X server, and are shared
    across applications. The Source selection, for example, is
    effectively the ``clipboard.'' Globals selections are ``owned'' by
    one program at a time; in Trestle programs, they are owned by one
    "VBT" at a time. While every textport may have a primary and
    secondary local selection, at most one can own Source, and at most
-   one can own Target. The {\em contents} of a global selection are
+   one can own Target. The <EM>contents</EM> of a global selection are
    controlled by its owner.
 
    The correspondence between local and global selections also depends
    entirely on the model. Every model implements an operation called
-   {\bf Copy}\index{Copy}, which is defined as follows: the textport
+   <B>Copy</B><SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>Copy</SPAN>
+</SPAN>
+, which is defined as follows: the textport
    acquires ownership of Source, and copies the Primary selection so
    that it is the contents of Source.
 
-   Some models establish an {\em alias}\index{alias} between a local
+   Some models establish an <EM>alias</EM><SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>alias</SPAN>
+</SPAN>
+ between a local
    and a global selection, which means that when that textport owns
    the global selection, the contents of the global selection are
-   {\em identical with} the contents of the local selection.
+   <EM>identical with</EM> the contents of the local selection.
 
    In the Ivy model, for example, Primary is an alias for Target, and
    Secondary is an alias for Source. In the Xterm model, Primary is an
    alias for Source. The other models do not use aliasing at all; they
-   implement {\bf Copy} by making a separate copy of the local
+   implement <B>Copy</B> by making a separate copy of the local
    selection. In those models, the contents of the global selection
    are not visible; i.e., they are not displayed in the textport.
 
@@ -355,24 +370,27 @@ PROCEDURE HasFocus (v: T): BOOLEAN; <* LL.sup = VBT.mu *>
    highlighting obeys the following conventions, applied in this
    order:
 
-   \begin{enumerate}\index{TextPortHighlighting}\label{TextPortHighlighting}
+   <OL><SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>TextPortHighlighting</SPAN>
+</SPAN>
 
-   \item A replace-mode Primary selection is highlighted with black
+   <LI ID="TextPortHighlighting">A replace-mode Primary 
+   selection is highlighted with black
    text on a light red background.  (On monochrome screens, it is
    highlighted with ``inverse video'': white text on a dark
    background.)
 
-   \item If a Source selection is visible (i.e., if it is aliased with
+   <LI>If a Source selection is visible (i.e., if it is aliased with
    a local selection), it is highlighted with a thin, green underline.
    (On monochrome screens, it is a thin, black underline.)
 
-   \item A Primary selection that is neither a replace-mode selection
+   <LI>A Primary selection that is neither a replace-mode selection
    nor a Source selection (e.g., a selection in the Emacs model), is
    underlined with a thick line.  On color screens, there is a further
    distinction: in a read-only text, the underline is blue; otherwise,
    the underline is red.
 
-   \end{enumerate}
+   </OL>
 
    A selection is represented by a pair of inclusive indexes ("begin"
    and "end") into the text.  The current selection-indices can be
@@ -398,8 +416,8 @@ PROCEDURE Select (v    : T;
    The parameters "replaceMode" and "caretEnd" are relevant only if
    the value of "sel" is "SelectionType.Primary".  If "replaceMode" is
    "TRUE" and the entire selection is writable, then "Insert" and
-   "VBT.Write" will {\em replace} the selected text; otherwise, they
-   cause the new text to be {\em inserted} at whichever end of the
+   "VBT.Write" will <EM>replace</EM> the selected text; otherwise, they
+   cause the new text to be <EM>inserted</EM> at whichever end of the
    primary selection is specified by "caretEnd". *)
 
 PROCEDURE IsReplaceMode (v: T): BOOLEAN;
@@ -428,12 +446,12 @@ PROCEDURE PutSelectedText (v: T;
    one, with "t".  If there is no such selection, this is a no-op. *)
 
 
-(* \subsubsection{Feedback}
+(* <H3> Feedback </H3>
 
    A textport maintains a ``modified'' flag.  Any operation that
    changes the text will cause this flag to be set to "TRUE".  If it
    was previously "FALSE", then the implementation calls
-   "v.modified()" {\it after} the change has already happened to "v".
+   "v.modified()" <I>after</I> the change has already happened to "v".
    The default is a no-op.  The "IsModified" and "SetModified"
    procedures set and test this flag, respectively. *)
 
@@ -446,15 +464,15 @@ PROCEDURE SetModified (v: T; value: BOOLEAN);
    invoke "v.modified", even if "value" is "TRUE". *)
 
 (* A textport also maintains a scrollbar (optional).  See the
-   "TextEditVBT" interface in Section~\ref{TextEditVBTSection}. *)
+   "TextEditVBT" interface in Section&nbsp;<A REL=REF.NUMBER HREF="TextEditVBTSection"> [TextEditVBTSection] </A>. *)
 
 PROCEDURE Normalize (v: T; to := -1);
 (* Scroll "v" if necessary to ensure that position "to" is visible.
-   If "to < 0", it refers to the current type-in point.  If "to" is
+   If "to &lt; 0", it refers to the current type-in point.  If "to" is
    larger than the length of the text, normalizes to the end of the
    text. *)
 
-(* \subsubsection{Direct access to the text} *)
+(* <H3> Direct access to the text </H3> *)
 
 PROCEDURE GetVText (v: T): VText.T;
 (* For wizards only: extract the underlying "VText".  It is legal to

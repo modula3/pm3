@@ -152,24 +152,27 @@ TYPE
                 update ()        <* LL = SELF.textport.mu *>
               END;
 
-(* \subsubsection{Models}\index{Model}
+(* <H3> Models </H3><SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>Model</SPAN>
+</SPAN>
+
 
    A "TextPortClass.Model" is the object that interprets keyboard and
    mouse events. The model can be replaced via "v.setModel".
 
-   {\em Keybindings}
+   <EM>Keybindings</EM>
 
    Trestle calls "v.key(cd)", which calls "m.keyfilter.apply(v,cd)",
-   as described on page~\pageref{TextPortKeybindings}. A keyfilter is
+   as described on page&nbsp;<A REL=REF.PAGE HREF="TextPortKeybindings"> [TextPortKeybindings] </A>. A keyfilter is
    essentially a linked list of objects, each of which implements some
    low-level character translation such as ``quoted insert'' or
    ``compose character.'' The last link calls "v.filter(cd)", which
    calls "m.controlChord" or "m.optionChord" for ``command-keys'',
    or "m.arrowKey" for cursor-keys.
    
-   {\em Text-selections}
+   <EM>Text-selections</EM>
 
-   As explained on page~\pageref{TextPortSelections}, the model
+   As explained on page&nbsp;<A REL=REF.PAGE HREF="TextPortSelections"> [TextPortSelections] </A>, the model
    interprets keyboard and mouse events to establish the local
    selections, Primary and Secondary, which are subsequences of the
    text, usually highlighted in some way. The model also deals with
@@ -198,9 +201,24 @@ TYPE
    replace the entire selection; Backspace deletes the entire
    selection.
 
-   {\em Selection-related editing operations}
-   \index{Cut}\index{Copy}\index{Paste}\index{Clear}
-   \index{Select All}
+   <EM>Selection-related editing operations</EM>
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>Cut</SPAN>
+</SPAN>
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>Copy</SPAN>
+</SPAN>
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>Paste</SPAN>
+</SPAN>
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>Clear</SPAN>
+</SPAN>
+
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>Select All</SPAN>
+</SPAN>
+
 
    The standard editing operations such as Cut, Copy, and Paste, are
    defined not merely in terms of the underlying text, but also in
@@ -208,26 +226,26 @@ TYPE
    Indeed, they are not functions at all; Copy does not return a copy
    of anything. 
 
-   \begin{description}
+   <DL>
 
-   \item[Copy] If the Primary selection is not empty, then acquire
+   <DT>Copy<DD> If the Primary selection is not empty, then acquire
    Source, and unless Primary is an alias for Source, make a copy of
    the Primary selection as the contents of Source. (If Primary is an
    alias for Source, no copy is needed.)
 
-   \item[Paste] If the Primary selection is not empty and is in
+   <DT>Paste<DD> If the Primary selection is not empty and is in
    replace-mode, then replace the Primary selection with the contents
    of Source. Otherwise, insert the contents of Source at the type-in
    point.
 
-   \item[Clear] Delete the contents of the Primary selection.
+   <DT>Clear<DD> Delete the contents of the Primary selection.
 
-   \item[Cut] This is defined as {\bf Copy} followed by {\bf Clear}.
+   <DT>Cut<DD> This is defined as <B>Copy</B> followed by <B>Clear</B>.
 
-   \item[Select All] Extend the Primary selection to include the
+   <DT>Select All<DD> Extend the Primary selection to include the
    entire text.
 
-   \end{description}
+   </DL>
 *)
 
 TYPE
@@ -334,7 +352,7 @@ TYPE
 
    "m.extend(rec,...)" extends the highlighting for the given selection. *)
 
-(* \subsubsection{Selections} *)
+(* <H3> Selections </H3> *)
 
 TYPE
   SelectionRecord = OBJECT
@@ -359,7 +377,7 @@ TYPE
 PROCEDURE ChangeIntervalOptions (v: T; rec: SelectionRecord)
   RAISES {VTDef.Error};
 (* Change the highlighting according to the conventions specified in
-   the "TextPort" interface (see page~\pageref{TextPortHighlighting}). *)
+   the "TextPort" interface (see page&nbsp;<A REL=REF.PAGE HREF="TextPortHighlighting"> [TextPortHighlighting] </A>). *)
 
 TYPE IRange = RECORD left, middle, right: CARDINAL END;
 
@@ -374,7 +392,7 @@ PROCEDURE GetRange (         v   : T;
    field or the "right" field, depending on which end the cursor was
    nearer. *)
 
-(* \subsubsection {Cursor-motion} *)
+(* <H3> Cursor-motion </H3> *)
 
 PROCEDURE ToPrevChar (v: T);
 PROCEDURE ToNextChar (v: T);
@@ -403,7 +421,7 @@ PROCEDURE FindPrevWord (v: T): TextPort.Extent;
    the left end of the extent.
 
    If the initial position is in the middle of a word, then the extent
-   actually covers the {\it current} word, but on successive calls, it
+   actually covers the <I>current</I> word, but on successive calls, it
    covers each following word in turn.
 
    "FindPrevWord" works the same as "ToNextWord", except that all the
@@ -414,7 +432,7 @@ PROCEDURE FindPrevWord (v: T): TextPort.Extent;
 *)
 
 
-(* \subsubsection {Deletion commands}
+(* <H3> Deletion commands </H3>
 
    All these procedures return an "Extent" indicating the range of
    characters that were deleted, or "TextPort.NotFound" if no
@@ -445,7 +463,7 @@ PROCEDURE DeleteCurrentWord (v: T): TextPort.Extent;
 PROCEDURE DeleteCurrentLine (v: T): TextPort.Extent;
 (* Delete line containing the cursor. *)
 
-(* \subsubsection {Other modification commands} *)
+(* <H3> Other modification commands </H3> *)
 
 PROCEDURE SwapChars(v: T);
 (* Swap the two characters to the left of the cursor. *)
@@ -453,7 +471,7 @@ PROCEDURE SwapChars(v: T);
 PROCEDURE InsertNewline(v: T);
 (* Insert a newline without moving the cursor. *)
 
-(* \subsubsection {Searching} *)
+(* <H3> Searching </H3> *)
 
 TYPE Loc = {First, Next, Prev};
 
@@ -477,7 +495,7 @@ PROCEDURE FindAndSelect (v         : T;
    successful, then select the found text in replace-mode.
    Otherwise, call "v.notFound()". *)
 
-(* \subsubsection {Scrolling the display} *)
+(* <H3> Scrolling the display </H3> *)
 
 PROCEDURE ScrollOneLineUp (v: T)
   RAISES {VTDef.Error, Rd.EndOfFile, Rd.Failure,
@@ -497,7 +515,7 @@ PROCEDURE ScrollOneScreenDown (v: T)
    not be normalized when done.  A ``screen'' contains "MAX(1, n-2)"
    lines, where "n" is the number of displayed lines. *)
 
-(* \subsubsection {Managing the ``Undo'' stack} *)
+(* <H3> Managing the ``Undo'' stack </H3> *)
 
 (* The ``Undo'' stack records all the editing changes made to the "TextPort".
    These changes can be undone; once undone, they can be redone.  There is no
@@ -528,14 +546,14 @@ PROCEDURE UndoCount (v: T): CARDINAL; <* LL < v.mu *>
 PROCEDURE RedoCount (v: T): CARDINAL; <* LL < v.mu *>
 (* Return the number of undone changes that can be redone. *)
 
-(* \subsubsection {Compose-character filtering} *)
+(* <H3> Compose-character filtering </H3> *)
 
 TYPE Composer <: KeyFilter.ComposeChar;
 (* This type overrides the "feedback" method to change the
    cursor-shape to "XC_exchange" during character-composition, and the
    standard ``text pointer'' otherwise. *)
 
-(* \subsubsection {Miscellany} *)
+(* <H3> Miscellany </H3> *)
 
 PROCEDURE TextReverse (t: TEXT): TEXT;
 PROCEDURE TextLowerCase (t: TEXT): TEXT;

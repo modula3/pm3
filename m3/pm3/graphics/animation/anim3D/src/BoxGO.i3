@@ -28,22 +28,22 @@ VAR
   Corner1 : PointProp.Name;
   Corner2 : PointProp.Name;
 
-(* In addition to the properties observed by all \type{GO}{T}'s and
-   \type{SurfaceGO}{T}'s, there are two additional properties that 
+(* In addition to the properties observed by all GO.T's and
+   "SurfaceGO.T"'s, there are two additional properties that 
    are observed by "BoxGO.T"'s:
 
    "Corner1" and "Corner2" are the names of two point properties that 
    describe the two cornerpoints of the box. They associate with 
-   \type{PointProp}{Val}s. If they are not specified, (0,0,0) and (1,1,1) 
+   "PointProp.Vals". If they are not specified, (0,0,0) and (1,1,1) 
    are used as cornerpoints. *)
 
 PROCEDURE New (a, b : Point3.T) : T;
 (* "New(a,b)" creates a new box and returns it. It also attaches the following
    properties to the new box:
-   \begin{verbatim}
+   <PRE>
      (Corner1,PointProp.NewConst(a))
      (Corner2,PointProp.NewConst(b))
-   \end{verbatim}
+   </PRE>
 *)
 
 

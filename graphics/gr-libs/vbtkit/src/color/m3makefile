@@ -12,3 +12,5 @@ Module ("Color")
 Module ("ColorName")
 interface ("ColorNameF")
 interface ("ColorNameTable")
+
+HtmlInterface("ColorName")

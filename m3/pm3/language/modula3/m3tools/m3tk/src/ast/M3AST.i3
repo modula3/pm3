@@ -22,7 +22,7 @@ attributes are indicated with a "FIELDS" declaration, for example:
 |  <* FIELDS OF Node 
 |       attribute_name: Attribute_type; *>
 
-\subsection{Attribute Types}
+<H2> Attribute Types </H2>
 
 Attribute types fall into three groups. First, lexical types denoting,
 for example, the characters of an identifier or the characters of a
@@ -45,7 +45,7 @@ type "X_NULL". Sequences of "X"'s (denoted by "{X}" in the syntax) are
 represented as instances of an abstract sequence type "SEQUENCE OF T".
 Finally, non-terminals that are defined by more than one rule, for
 example, "STM", are defined by object types referred to as classes
-(e.g. denoting the {\it class} of statements), with each choice
+(e.g. denoting the <I>class</I> of statements), with each choice
 appearing as a separate subtype. There are no instances of such class
 types in a tree instance, only of the subtypes.  To distinguish the
 class types, they are named using all upper case leters.
@@ -56,7 +56,7 @@ syntactic AST. For example, the "M3AST_SM" layer adds attributes to
 denote the results of static semantic analysis. These attributes are
 very often node types, but can be any Modula-3 type.
 
-\subsection{Multiple Inheritance}
+<H2> Multiple Inheritance </H2>
 
 There are a number of places where it would be convenient to declare a
 node as a subtype of more than one parent, that is, use multiple
@@ -69,7 +69,7 @@ Suppose we wish to declare a new node "A" which inherits from "X" and
 attribute named "vY" of type "Y". The "init" method for such a node
 is overridden to build this structure. *)
 
-(*\subsubsection{M3AST.NODE}
+(*<H3> M3AST.NODE </H3>
 
 This is the interface in which one would define attributes that were common
 to all Modula-3 AST nodes. In the current specification, there are no

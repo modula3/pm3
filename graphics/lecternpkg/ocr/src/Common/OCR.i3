@@ -53,7 +53,7 @@ PROCEDURE FromPBM(
    in little-endian order.  The origin for these coordinates is at the
    top left corner of the page, with positive coordinates representing
    positions below and to the right.  A bounding box includes every
-   pixel position "(x, y)" such that "w <= x < e" and "n <= y < s".
+   pixel position "(x, y)" such that "w &lt;= x &lt; e" and "n &lt;= y &lt; s".
    It is possible for "w = e" and/or "n = s", in which case the
    bounding box is empty (contains no pixels).
 

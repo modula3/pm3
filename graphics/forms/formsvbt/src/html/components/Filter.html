@@ -1,0 +1,62 @@
+<TITLE> Filter (filter) </TITLE>
+<H1> Filter (filter) </H1> 
+    
+<P>
+ Overlays its child with reactivity. 
+    
+<HR><DL>
+
+<DT>Cursor<DD> (Text) <BR> Names the cursor that will be displayed
+when the mouse is over the child.  The default is cursor is defined by
+the Trestle implementation. 
+
+<DT><DD> <I>Reactivity choices (mutually exclusive):</I>
+
+<DT>Active<DD> (Boolean, <TT>TRUE</TT>) <BR> When true,
+    mouse and keyboard events are relayed to child. This is the normal case.
+
+<DT>Passive<DD> (Boolean, <TT>FALSE</TT>) <BR> When true, doesn't
+    allow mouse or keyboard events to go to the child; in
+    addition, the cursor is changed to <TT>Cursor.NotReady</TT>, a watch-face.
+
+<DT>Dormant<DD> (Boolean, <TT>FALSE</TT>) <BR> When true, doesn't send 
+    mouse or keyboard events to the child; it also draws a grey screen
+	over the child.
+
+<DT>Vanish<DD> (Boolean, <TT>FALSE</TT>) <BR> When true, doesn't
+    send mouse or keyboard events to the child; in addition,
+    it draws over the child in the background color
+    thereby making it invisible.
+
+</DL><HR>
+
+<DL>
+
+<DT><B>Shape</B><DD> The shape of its child.
+
+<DT><B>Notes</B><DD> Of the four state properties, exactly one can be in effect at
+any instant.  If more than one is specified, they are considered in
+the order <TT>Vanish</TT>, <TT>Dormant</TT>, <TT>Passive</TT>, and
+<TT>Active</TT> to find the first one that is true.  If all are false
+(including <TT>Active</TT>, which defaults to true), an error is raised.
+
+To test the reactivity of a Filter, you can call one of the following
+procedures in the FormsVBT interface: <TT>IsActive</TT>,
+<TT>IsPassive</TT>, <TT>IsDormant</TT>, or <TT>IsVanished</TT>.  To change
+the reactivity or the cursor, call <TT>MakeActive</TT>,
+<TT>MakePassive</TT>, <TT>MakeDormant</TT>, or <TT>MakeVanish</TT>.
+
+FormsVBT provides a mechanism for accessing the nearest Filter
+component above a named interactor.  Thus, Filter interactors are
+typically left unnamed, and some named descendant is used to reference
+the Filter from the application program.
+
+As mentioned, the default is cursor is defined by the Trestle
+implementation.  Standard X screentypes support the cursors named in
+<I>X Window System</I> by Scheifler et.  al. <A REL=REFENTRY HREF="../references.html#XWindowSystem"> [XWindowSystem] </A> Appendix B.
+Therefore, for example, <TT>XC_arrow</TT> returns a cursor that behaves
+like the X arrow cursor on X screentypes, and like the default cursor
+on screentypes that have no cursor named <TT>XC_arrow</TT>.  *)
+
+</DL>
+

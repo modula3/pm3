@@ -47,7 +47,7 @@ TYPE
 (* The AST is capable of recording the complete set of characters that
 were present in the original source file, allowing exact reproduction.
 The class "SRC_NODE" is defined to denote a node that represents an
-entity in the source form of the program.  The {\it source position}
+entity in the source form of the program.  The <I>source position</I>
 of any "SRC_NODE" is available as an attribute, "lx_srcpos". The
 terminal symbols of the Modula-3 grammar are represented by subtypes
 of "SRC_NODE", as are whitespace, comments, pragmas, and illegal

@@ -1,0 +1,27 @@
+<TITLE> CloseButton (filter, event) </TITLE>
+<H1> CloseButton (filter, event) </H1> 
+    
+<P>
+ A button that closes a subwindow when clicked.  Its 
+  target may be specified using the For property; otherwise, it is 
+  the nearest subwindow ancestor of the CloseButton itself.
+
+<HR><DL>
+
+<DT>For<DD> (Symbol) <BR> If given, this names the target. The named component
+must be either an overlapping (non-background) child of a <TT>ZSplit</TT>,
+or a descendant of something that is. In the latter case, the actual
+target will be the <TT>ZSplit</TT> child, not the named descendant.
+      
+</DL><HR>
+
+<DL>
+
+<DT><B>Behavior</B><DD> Like a Button, but before generating an event, closes its 
+target (if the target is not already closed).
+  
+<DT><B>Shape</B><DD> The natural shape of its child (i.e., with no shrink
+or stretch), plus the border around the button.
+
+</DL>
+

@@ -15,7 +15,7 @@ TYPE T <: Public;
   Public = View.T;
 
 (* A "Win.T" is a "View.T" equipped with routines that trigger
-   {\em activities} in the display.
+   <EM>activities</EM> in the display.
    Some activities merely change the window's focus on the board,
    while others manipulate items.
    (The implementation of "Win.T" crafts its "position" and "key"
@@ -27,15 +27,15 @@ TYPE T <: Public;
    method with one that invokes different routines in response to
    different kinds of mouse clicks.) 
 
-   There are two kinds of activities: {\em actions} and {\em
-   events}. Actions have a distinct beginning and an end, such as
+   There are two kinds of activities: <EM>actions</EM> and <EM>
+   events</EM>. Actions have a distinct beginning and an end, such as
    typing into the window, or panning the window's focus on the board.
    On the other hand, events are single-stroke happenings, such as
    deleting an item, or pasting some text. When the client initiates 
    a new action, the current action, if any, is automatically terminated. 
 
-   \subsection{Actions}
-   At any time, the {\em status} of the window describes the current
+   <H2> Actions </H2>
+   At any time, the <EM>status</EM> of the window describes the current
    action (or the absence of any action). 
 *)
 
@@ -131,7 +131,7 @@ PROCEDURE Magnifying (wn: T; READONLY cd: VBT.MouseRec);
 PROCEDURE Reducing (wn: T; READONLY cd: VBT.MouseRec);
 (* Reduces the window's focus on the board. *)
 
-(* \subsection{Events} *)
+(* <H2> Events </H2> *)
 
 PROCEDURE ChangeFont (wn: T; fontName: TEXT);
 (* Changes the current font assocaited with the window. *)

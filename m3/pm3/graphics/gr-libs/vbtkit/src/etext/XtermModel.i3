@@ -43,19 +43,16 @@ END XtermModel.
 
    The only keybindings that are supported are these:
 
-\begin{center}
-\begin{tabbing}
-option-LongKeyName \= This is just a tab-setting line. \kill
- control-u    \> delete everything from the current position \\
-              \> to the beginning of the line \\
- control-z    \> {\bf Undo} \\
- control-shift-z    \> {\bf Redo} \\
- meta-x       \> {\bf Cut} \\ 
- meta-c       \> {\bf Copy} \\
- meta-v       \> {\bf Paste}
-
-\end{tabbing}
-\end{center}
+<PRE>
+option-LongKeyName  This is just a tab-setting line.
+ control-u     delete everything from the current position
+               to the beginning of the line
+ control-z     <B>Undo</B>
+ control-shift-z     <B>Redo</B>
+ meta-x        <B>Cut</B>
+ meta-c        <B>Copy</B>
+ meta-v        <B>Paste</B>
+</PRE>
 
    Note that Copy does very little; since Primary is an alias for
    Source, nothing is actually copied.

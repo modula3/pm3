@@ -1,0 +1,59 @@
+<TITLE> Viewport (filter) </TITLE>
+<H1> Viewport (filter) </H1>  
+
+<P>
+ A Viewport is a filter that provides scrollbars (both horizontal
+      and vertical) to let you scroll over its child-component when
+      the child's preferred size is bigger than the Viewport's size.
+      In much the same way as a Browser is used to view many lines of
+      text, a Viewport can be used to see a large VBox. Also,
+      Viewports have a mechanism for splitting into two or more views
+      of the child.
+
+<HR><DL>
+
+<DT>Step<DD> (Cardinal, 10) <BR> The number of pixels to move while
+      scrolling.
+
+</DL><HR><P> <I>Axis choices (mutually exclusive):</I>
+
+<DL>
+
+<DT>Vertical<DD> (Boolean, <TT>TRUE</TT>) <BR> If this is true, the
+   the typing meta-left-click in a vertical scrollbar will split the
+   view of the adjacent window. Meta-right-click will merge two views.
+
+<DT>Horizontal<DD> (Boolean, <TT>FALSE</TT>) <BR> 
+   If this is true, the
+   the typing meta-left-click in a horizontal scrollbar will split the
+   view of the adjacent window. Meta-right-click will merge two views.
+
+
+</DL><HR>
+
+<HR><DL> 
+<DT><DD> <I>Scrolling choices (mutually exclusive):</I>
+
+<DT>HorAndVer<DD> (Boolean, <TT>TRUE</TT>) <BR> This puts a horizontal
+      and  vertical scrollbar on every view, and a ``reset'' button in
+      the  southwest corner that moves the northwest corner of the
+      child to the northwest corner of the view.
+
+<DT>HorOnly<DD> (Boolean, <TT>FALSE</TT>) <BR> Places a horizontal scrollbar at the
+      bottom of the Viewport, and none at the side.
+
+<DT>VerOnly<DD> (Boolean, <TT>FALSE</TT>) <BR> Places a vertical scrollbar on the
+      left side of the Viewport, and none at the bottom.
+
+<DT>AlaViewport<DD> (Boolean, <TT>FALSE</TT>) <BR> This specifies that
+      there  is a scrollbar in the same axis as the Viewport.  Thus,
+      <TT>AlaViewport</TT> for a vertical viewport is equivalent to <TT>VerOnly</TT>.
+
+<DT>Auto<DD> (Boolean, <TT>FALSE</TT>) <BR> This specifies that scroll
+      bars  appear only when the preferred size of the child exceeds
+      the size of the Viewport (along that axis).
+
+<DT>NoScroll<DD> (Boolean, <TT>FALSE</TT>) <BR> This specifies that there
+      should be no scrollbars.
+
+</DL>

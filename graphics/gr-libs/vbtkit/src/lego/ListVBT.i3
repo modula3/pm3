@@ -10,7 +10,7 @@
 <* PRAGMA LL                                                                 *>
 
 (* A "ListVBT" defines a VBT class for displaying a list (or
-   table) of items.  Each item is in a {\em cell}.  All cells are
+   table) of items.  Each item is in a <EM>cell</EM>.  All cells are
    the same size.  They are displayed in a single vertical
    column, with a scrollbar. The location of the scrollbar is
    governed by the environment variable "SCROLLBARLOC", described
@@ -18,7 +18,7 @@
  
    The "ListVBT" itself deals with the details of being a VBT,
    maintains a table that maps a cell-number to a cell-value, and
-   maintains the {\em selection}, a distinguished subset of the
+   maintains the <EM>selection</EM>, a distinguished subset of the
    cells.  It uses subsidiary objects to handle the details of
    what cells look like on the screen ("Painter"), and how the
    list responds to mouse clicks ("Selector").
@@ -26,29 +26,29 @@
    This interface contains basic versions of each of the
    subsidiary objects:
 
-   \begin{itemize}
+   <UL>
 
-   \item "TextPainter", which treats cells' values as "TEXT" and
+   <LI>"TextPainter", which treats cells' values as "TEXT" and
    paints them.
 
-   \item "UniSelector", which maintains at most one selected
+   <LI>"UniSelector", which maintains at most one selected
    cell, adjusted by mouse clicks.
 
-   \item "MultiSelector", which uses mouse clicks for selection,
+   <LI>"MultiSelector", which uses mouse clicks for selection,
    but permits multiple cells to be selected.
 
-   \end{itemize}
+   </UL>
 
    The client can subclass these, or provide entirely different ones.
    A client that wishes to take actions in response to mouse clicks
    should subclass a "Selector". Similarly, a client that wishes to
    display objects other than text strings should subclass "Painter".
 
-   \subsubsection{Locking levels}
+   <H3> Locking levels </H3>
 
    "ListVBT" is internally synchronized; it can safely be called
-   from multiple threads.  All "ListVBT.T" methods have "LL.sup <
-   list".  In addition, "VBT.mu < list" for any "list" of type
+   from multiple threads.  All "ListVBT.T" methods have "LL.sup &lt;
+   list".  In addition, "VBT.mu &lt; list" for any "list" of type
    "ListVBT.T".
 
    VBT methods call "Selector" methods with "LL.sup = VBT.mu".
@@ -60,9 +60,9 @@
    list".
    
    The "TextPainter" class uses its own internal lock for font
-   information; \linebreak "TextPainter.setFont(v,font)" has "LL.sup < v".
+   information; "TextPainter.setFont(v,font)" has "LL.sup &lt; v".
 
-   \subsubsection{The type {ListVBT.T}}
+   <H3> The type {ListVBT.T </H3>
    *)
 
 
@@ -98,11 +98,11 @@ TYPE
            END;
 
 (* In the following descriptions, "v" is an object of type
-   "ListVBT.T", and a value "n" is said to be {\it in range} if
+   "ListVBT.T", and a value "n" is said to be <I>in range</I> if
 
-   \medskip {\display {\tt 0 $\leq$ n < v.count() }}
+   <TT>0 &lt;= n &lt; v.count() </TT>
 
-   \medskip "v.painter" is the list's painter; the client may read but not
+   "v.painter" is the list's painter; the client may read but not
    assign to this field, although the client may provide a value
    at allocation time.  If the actual painter has methods
    allowing it to be modified, the client is welcome to call
@@ -196,7 +196,7 @@ TYPE
    so the method mustn't operate on "v").
 *)
 
-(* \subsubsection{The Painter} *)
+(* <H3> The Painter </H3> *)
 
 (* Here is the definition of a "Painter".  In the comments about
    its methods, "v" is the VBT in which the painting is to take
@@ -251,7 +251,7 @@ TYPE
    that it contains no cells.  Typically, this just fills it with
    the background color used when painting cells. *)
 
-(* \subsubsection{TextPainter} *)
+(* <H3> TextPainter </H3> *)
 
 (* Perhaps the most common type of "Painter" is a "TextPainter".
    It displays cells whose values are text strings.  Here is its
@@ -282,7 +282,7 @@ TYPE
    "v" for redisplay.  "v" should be the relevant "ListVBT.T". *)
 
 
-(* \subsubsection{The Selector} *)
+(* <H3> The Selector </H3> *)
 
 (* Here is the definition of "Selector".  Recall that "LL.sup =
    VBT.mu" for all methods other than "init". *)
@@ -324,7 +324,7 @@ TYPE
    this cell.  The list itself has set a cage so that it receives
    further position reports. *)
 
-(* \subsubsection{UniSelector and MultiSelector} *)
+(* <H3> UniSelector and MultiSelector </H3> *)
 
 (* One common class of "Selector" is a "UniSelector".  It
    maintains the invariant that there is at most one selected
@@ -337,7 +337,7 @@ TYPE
 
 (* The other common class of "Selector" is "MultiSelector".  It
    permits multiple cells to be selected.  On an "insideClick"
-   firstDown, it remembers this cell as the {\em anchor}; if this is
+   firstDown, it remembers this cell as the <EM>anchor</EM>; if this is
    not a shift-click, it calls "selectNone" and inverts the
    selection state of this cell.  On an "insideDrag", it makes the
    selection state of all cells between this cell and the anchor

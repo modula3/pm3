@@ -17,8 +17,8 @@
 
    The locking level for any procedure in this interface that may
    alter an installed "VBT" is "LL.sup = VBT.mu". (See the 
-   {\it Trestle Reference Manual\/} for a complete description
-   of locking levels~\cite{TrestleTutorial}.) Most applications 
+   <I>Trestle Reference Manual</I> for a complete description
+   of locking levels&nbsp;<A REL=BIB.ENTRY HREF="html/references.html#TrestleTutorial"> [TrestleTutorial] </A>.) Most applications 
    don't need to worry about "VBT.mu" because their event-handlers 
    don't fork any threads that call FormsVBT. *)
 
@@ -32,9 +32,9 @@ EXCEPTION
   Unimplemented;
   Mismatch;
 
-(* \section{Creation, allocation, and initialization} *)
+(* <H1> Creation, allocation, and initialization </H1> *)
 
-(* An object "fv" of type "FormsVBT.T" (or simply, a {\it form}) is
+(* An object "fv" of type "FormsVBT.T" (or simply, a <I>form</I>) is
    created by parsing an S-expression.  These expressions are usually
    stored in files with the suffix ".fv".  One way of creating a form
    is to call the procedure "NewFromFile", or the method
@@ -93,7 +93,7 @@ TYPE
            END;
 
 (* The call "fv.init(description, raw, path)" initializes "fv" as a form
-   and returns "fv".  It creates a "VBT", {\it v}, from "description",
+   and returns "fv".  It creates a "VBT", <I>v</I>, from "description",
    which must contain a single, valid S-expression.  The methods
    "initFromFile", "initFromRd", "initFromSx", "initFromRsrc", and
    "initFromURL" provide analogous support for files, readers,
@@ -101,18 +101,18 @@ TYPE
 
    The "raw" parameter is used to control that actual internal structure
    "fv".  Regardless of the value of "raw," "fv" is a multi-filter and
-   "MultiFilter.Child(fv)" will always return {\it v}.  Internally, "fv" is
-   a filter; if "raw" is "TRUE", then the filter's child is {\it v}.
+   "MultiFilter.Child(fv)" will always return <I>v</I>.  Internally, "fv" is
+   a filter; if "raw" is "TRUE", then the filter's child is <I>v</I>.
    Otherwise, "fv" is ``cooked'', which means there are several filters
-   inserted between {\it v} and "fv", so that the filter's child has the
+   inserted between <I>v</I> and "fv", so that the filter's child has the
    following structure:
 
 | (ZSplit
 |   (Filter
 |     (HighlightVBT
-|       (Filter `{\it v}`))))
+|       (Filter `<I>v</I>`))))
 
-   The filter above {\it v} supports the common case of making an entire
+   The filter above <I>v</I> supports the common case of making an entire
    form passive without requiring an explicit "Filter" interactor in the
    description.  It also functions to restore the keyboard focus to
    whichever of the form's descendant-"VBT"s had most recently acquired the
@@ -135,14 +135,14 @@ TYPE
    typically describing the "VBT"-children of the outer component.
 
    The "VBT"-tree is created during a depth-first traversal of the
-   S-expression.  On the way down, each "VBT" is {\it allocated}, typically
+   S-expression.  On the way down, each "VBT" is <I>allocated</I>, typically
    with a call to "NEW(...)".  Then the subexpressions, if any, are
-   traversed.  On the way back up, each "VBT" is {\it initialized},
+   traversed.  On the way back up, each "VBT" is <I>initialized</I>,
    typically with a call to "v.init(...)".  The result is returned to the
    caller, where it is typically an argument to the parent's "init" method.
 
    In other words, allocation occurs top-down, and initialization occurs
-   bottom-up.  (For more details on allocation, see Section~\ref{realize}.)
+   bottom-up.  (For more details on allocation, see Section&nbsp;<A REL=REF.NUMBER HREF="#realize"> [realize] </A>.)
 
    For each subexpression, the parser produces a "VBT" whose type is
    defined in the "FVTypes" interface, and whose name corresponds to the
@@ -164,11 +164,11 @@ PROCEDURE GetZSplit (fv: T): ZSplit.T RAISES {Error};
    TRUE". *)
 
 (*
-\section{Events and Symbols} \label{sec:programming-events}
-\subsection{Attaching event-handlers}
+<H1 ID="sec:programming-events"> Events and Symbols </H1>
+<H2> Attaching event-handlers </H2>
 
    Most interactive components in the user interface generate
-   events. (See the Appendix~\ref{ap:longcatalog} for a
+   events. (See the Appendix&nbsp;<A REL=REF.NUMBER HREF="#ap:longcatalog"> [ap:longcatalog] </A> for a
    description of all components.) To register an event-handler for such a component,
    the component must be named, and the client must call "Attach"
    or "AttachProc", giving the name of the component and a
@@ -182,7 +182,7 @@ PROCEDURE Attach (fv: T; name: TEXT; cl: Closure) RAISES {Error};
    "Error" will be raised.  If "cl" is "NIL", then any existing
    event-handler for that component is removed.  Otherwise, when an
    event occurs in the named component, the implementation calls
-|    cl.apply(fv, name, `{\it time}`)
+|    cl.apply(fv, name, `<I>time</I>`)
    *)
 
 TYPE
@@ -198,7 +198,7 @@ PROCEDURE AttachProc (fv       : T;
 (* This is an alternate, somewhat simpler way to attach an
    event-handler.  When an event occurs in the named component,
    the implementation calls
-| p(fv, name, eventData, `{\it time}`)
+| p(fv, name, eventData, `<I>time</I>`)
    *)
 
 TYPE
@@ -224,13 +224,13 @@ PROCEDURE AttachEditOps (fv        : T;
    "TextEdit", "TypeIn", "Numeric", or "Typescript". If "cut" is not
    "NIL", then it must be the name of a component (typically a
    menu-button), and "AttachEditOps" will create an event-handler for
-   it that will invoke the {\bf Cut} operation on the text-editing
+   it that will invoke the <B>Cut</B> operation on the text-editing
    component.  Similarly, if "copy" is not "NIL", then it should name
    a component for which "AttachEditOps" will create an event-handler
-   that invokes the {\bf Copy} operation on the text-editing
+   that invokes the <B>Copy</B> operation on the text-editing
    component. Likewise for "paste", "clear", and so on. *)
 
-(* \subsection{Access to the current event} *)
+(* <H2> Access to the current event </H2> *)
 
 PROCEDURE GetTheEvent     (fv: T): AnyEvent.T    RAISES {Error};
 PROCEDURE GetTheEventTime (fv: T): VBT.TimeStamp RAISES {Error};
@@ -263,7 +263,7 @@ VAR MakeEventMiscCodeType: VBT.MiscCodeType; (* CONST *)
    its "type" field will be "MakeEventMiscCodeType". *)
 
 
-(* \subsection{Symbol management} *)
+(* <H2> Symbol management </H2> *)
 
 PROCEDURE AddSymbol (fv: T; name: TEXT) RAISES {Error};
 (* Add a ``virtual'' component to "fv" with the given "name".
@@ -283,9 +283,7 @@ PROCEDURE AddUniqueSymbol (fv: T): TEXT;
 (* Just like "AddSymbol", but finds a name that has not been used
    yet.  The name is returned. *)
 
-(* \section{Reading and Changing State}
-
-   \label{sec:programming-state}
+(* <H1 ID="sec:programming-state"> Reading and Changing State </H1>
 
    In response to an event or other occurrence, a program may
    want to read or change the state of various interactors in the
@@ -306,7 +304,7 @@ PROCEDURE AddUniqueSymbol (fv: T): TEXT;
    procedures, however, will raise "Error" if applied to a
    component that does not have a value.
 
-   \subsection{Access to the {\tt Main} and {\tt Value} properties}
+   <H2> Access to the <TT>Main</TT> and <TT>Value</TT> properties</H2>
 *) 
 
 PROCEDURE GetText (fv: T; name: TEXT): TEXT
@@ -341,7 +339,7 @@ PROCEDURE PutBoolean (fv: T; name: TEXT; val: BOOLEAN)
   RAISES {Error, Unimplemented};
 (* These are implemented for "Boolean" and "Choice". *)
 
-(* \subsection{Access to arbitrary properties}
+(* <H2> Access to arbitrary properties </H2>
 
    FormsVBT provides access to properties other than "Main" and
    "Value".  The intention is to provide access to all the inherited
@@ -353,10 +351,8 @@ PROCEDURE PutBoolean (fv: T; name: TEXT; val: BOOLEAN)
 | PutIntegerProperty(fv, name, "Min", 6)
    to change the value to 6.
  
-   \vspace {5mm}
-  {\bf WARNING: The current implementation provides access
-   only to the inherited properties, and even that access is limited.}
-   \vspace {5mm}
+  <B>WARNING: The current implementation provides access
+   only to the inherited properties, and even that access is limited.</B>
 
    Note also that changing the value of a property in a component will not affect
    its subcomponents. *)
@@ -419,7 +415,7 @@ PROCEDURE PutBooleanProperty (fv                : T;
    "Paused" and "FixedSize" properties of "Video", and for the
    "Mute" and "MuteWhenUnmapped" properties of "Audio" *)
 
-(* \subsection{Access to the underlying {\tt VBT}s} *)
+(* <H2> Access to the underlying VBTs</H2> *)
 
 PROCEDURE GetVBT (fv: T; name: TEXT): VBT.T RAISES {Error};
 (* Return the "VBT" corresponding to a named interactor in "fv".
@@ -431,7 +427,7 @@ PROCEDURE GetName (vbt: VBT.T): TEXT RAISES {Error};
    Otherwise, raisses "Error". *)
 
 
-(* \subsection{Radios and Choices} *)
+(* <H2> Radios and Choices </H2> *)
 
 PROCEDURE GetChoice (fv: T; radioName: TEXT): TEXT
   RAISES {Error, Unimplemented};
@@ -446,7 +442,7 @@ PROCEDURE IsSelected (fv: T; choiceName: TEXT): BOOLEAN
   RAISES {Error};
 (* Set/test a "Choice"-button without referring to its group. *)
 
-(* \subsection{Generic interactors} *)
+(* <H2> Generic interactors </H2> *)
 
 PROCEDURE GetGeneric (fv: T; genericName: TEXT): VBT.T
   RAISES {Error};
@@ -459,10 +455,13 @@ PROCEDURE PutGeneric (fv: T; genericName: TEXT; vbt: VBT.T)
    "VBT" is used: a "TextureVBT" with 0 size and 0 stretch in
    each dimension. *)
 
-(* \subsection{Special controls for Filters}
+(* <H2> Special controls for Filters </H2>
 
    The "(Filter ...)" expression in FormsVBT supports a feature called
-   {\em reactivity}.\index{reactivity} This has one of four states:
+   <EM>reactivity</EM>.<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>reactivity</SPAN>
+</SPAN>
+ This has one of four states:
    Active, Passive, Dormant, or Vanished.  The state can be specified
    in the description and changed by the application at runtime.  The
    default state is Active.  In the Passive state, the component and
@@ -477,8 +476,8 @@ PROCEDURE PutGeneric (fv: T; genericName: TEXT; vbt: VBT.T)
    by the Trestle implementation. An empty string (the default value)
    indicates that you don't care about the cursor shape. 
    
-   Standard X screentypes support the cursors named in {\it X Window
-   System} by Scheifler et.  al. \cite{XSpec} Appendix B. Therefore, for
+   Standard X screentypes support the cursors named in <I>X Window
+   System</I> by Scheifler et.  al. <A REL=BIB.ENTRY HREF="html/references.html#XSpec"> [XSpec] </A> Appendix B. Therefore, for
    example, "XC_arrow" returns a cursor that behaves like the X arrow 
    cursor on X screentypes, and like the default cursor on screentypes 
    that have no cursor named "XC_arrow". *)
@@ -501,7 +500,7 @@ PROCEDURE IsVanished (fv: T; name: TEXT): BOOLEAN RAISES {Error};
    exception is raised if no such ancestor can be found. *)
 
 
-(* \subsection{Access to Subwindows} *)
+(* <H2> Access to Subwindows </H2> *)
 
 PROCEDURE PopUp (fv        : T;
                  name      : TEXT;
@@ -515,11 +514,11 @@ PROCEDURE PopUp (fv        : T;
    be a non-background child of a "ZSplit", or some descendant
    thereof.  In the latter case, the ancestor that is a direct
    child of the "ZSplit" will be the thing popped up.  Call this
-   ancestor {\it zchild}.  "PopUp" is equivalent to activating
+   ancestor <I>zchild</I>.  "PopUp" is equivalent to activating
 
-| (PopButton (For `{\it zchild}`) ...)
+| (PopButton (For `<I>zchild</I>`) ...)
 
-   If the target {\it zchild} is already open or has been opened
+   If the target <I>zchild</I> is already open or has been opened
    before and has been moved by the user (to a location that is
    now visible), it will normally be left where the user left it.
    The "forcePlace" option will force it instead to be returned
@@ -537,7 +536,7 @@ PROCEDURE PopDown (fv: T; name: TEXT) RAISES {Error};
    focus to be lost.)  The exception is raised if "name" is not
    the name of an element of "fv". *)
 
-(* \subsection{Special controls for text-interactors} *) 
+(* <H2> Special controls for text-interactors </H2> *) 
 
 PROCEDURE TakeFocus (fv       : T;
                      name     : TEXT;
@@ -551,13 +550,13 @@ PROCEDURE TakeFocus (fv       : T;
    was taken, then select the entire contents of the interactor's "TextPort"
    as a primary selection in replace-mode. *)
 
-(* \section{Saving and restoring state} \label{sec:programming-snapshot} *)
+(* <H1 ID="sec:programming-snapshot"> Saving and restoring state </H1> *)
 
 (* FormsVBT allows clients
    to save and restore the entire state of a
    form. 
 
-   A {\em snapshot\/} is an S-expression that captures the state of components
+   A <EM>snapshot</EM> is an S-expression that captures the state of components
    in a form.  The call "fv.snapshot(wr)" writes a snapshot of "fv" to the
    writer "wr", and the call "fv.restore(rd)" reads a snapshot from the reader
    "rd" and restores the components of "fv" to the state in
@@ -598,8 +597,7 @@ PROCEDURE TakeFocus (fv       : T;
 
   *)
 
-(* \section{Dynamic Alteration of Forms}
-   \label{sec:programming-dynamicforms}
+(* <H1 ID="sec:programming-dynamicforms"> Dynamic Alteration of Forms </H1>
 
    FormsVBT provides facilities for modifying a form while a program is
    running.  For example, one might want to add or delete items in a menu.
@@ -681,19 +679,19 @@ PROCEDURE DeleteVBT (fv    : T;
 (* Like "Delete", this procedure deletes the children whose indices are in
    the range "[n ..  (n + count - 1)]" from the named component, which must
    be a Split.  Unlinke "Delete", the names of the "n" components, as well
-   as the names of all of the desendants of those components, are {\it not}
+   as the names of all of the desendants of those components, are <I>not</I>
    removed from "fv"'s namespace.  Thus, "DeleteVBT" is typically only used
    with children that were inserted using "InsertVBT". *)
 
 END FormsVBT.
 
-(* \section{Subclasses of components} \label{realize}
+(* <H1 ID="realize"> Subclasses of components </H1>
 
    As the subexpressions describing the form "fv" are being parsed, the
    "VBT"-components are created (allocated) by calling
-| fv.realize(`{\it type}`, `{\it name}`)
-   where {\it type} is the name of the first element of the subexpression,
-   and {\it name} is the "Name" property specified in the
+| fv.realize(`<I>type</I>`, `<I>name</I>`)
+   where <I>type</I> is the name of the first element of the subexpression,
+   and <I>name</I> is the "Name" property specified in the
    subexpression, or the empty string if no such property was
    specified.  For example, if the description contains the
    expression
@@ -737,9 +735,9 @@ END FormsVBT.
 |     END
 |   END Realize;
 
-   Note that the "realize" method does not {\it initialize} the
-   "VBT" that it allocates.  Actually, it may initialize any {\it
-   private} fields, such as the "index" field in this example,
+   Note that the "realize" method does not <I>initialize</I> the
+   "VBT" that it allocates.  Actually, it may initialize any
+   <I>private</I> fields, such as the "index" field in this example,
    but the "VBT"'s "init" method should not be called inside the
    call to "fv.realize", since it will be called later during
    a ``bottom-up'' initialization phase.  Of course, the
@@ -747,7 +745,7 @@ END FormsVBT.
    happens in that phase.
 
    A more complicated case arises with text-editing components.
-   Textports are {\em contained} in three forms: "TextEdit",
+   Textports are <EM>contained</EM> in three forms: "TextEdit",
    "Typescript", and "Numeric".  In a "TextEdit" components, the
    textport is in an exported field, "TextEditVBT.T.tp". If the
    "realize" method allocates a "TextPort.T", even a private subtype

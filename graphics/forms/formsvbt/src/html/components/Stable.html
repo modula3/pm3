@@ -1,0 +1,22 @@
+<TITLE> Stable (filter) </TITLE>
+<H1> Stable (filter) </H1>
+
+<P>
+ The Stable filter is used to mask out changes
+to its child's preferred size.
+
+<DL>
+
+<DT><B>Shape</B><DD> The max and min are its child's max and min size.
+The preferred size is the projection of its own size into the child's
+size range. Its own size is its current size if this is non-empty, or
+its last non-empty size otherwise. 
+
+<DT><B>Notes</B><DD> 
+A Stable is part of a ZChassis. In this way, whenever the user changes
+the size of a subwindow, that size will take precedence over any new
+size preferences given by the ZChassis's child.  A Stable is also
+inserted automatically by Trestle whenever a window is installed.
+
+</DL>
+

@@ -27,7 +27,7 @@ TYPE
            END;
 
 (* The following procedures create some popular types of
-   "MarginFeedbackVBT"s. See Figure~\ref{fig:marginfeedbacks}. *)
+   "MarginFeedbackVBT"s. See Figure&nbsp;<A REL=REF.NUMBER HREF="fig:marginfeedbacks"> [fig:marginfeedbacks] </A>. *)
 
 PROCEDURE NewCheck  (ch: VBT.T; shadow: Shadow.T := NIL): T;
 <* LL.sup <= VBT.mu *>

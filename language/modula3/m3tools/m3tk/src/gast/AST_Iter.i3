@@ -52,7 +52,7 @@ If a call of "self.next(r)" would return "TRUE", a call of
 "r") with the value "nn", otherwise a checked runtime error will
 occur. *)
 
-(* \subsubsection{Example} *)
+(* <H3> Example </H3> *)
 
 (* Using the iterator is straightforward and most procedures that
    visit nodes in a tree will take the following form:

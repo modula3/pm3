@@ -42,7 +42,7 @@ TYPE
    "VBT.CageType.Rectangle", then the cage rectangle is assumed to be
    "Rect.Empty"; otherwise the rectangle is irrelevant.
    
-   The "rpseqno" field is the {\it repainting sequence number}.  It is
+   The "rpseqno" field is the <I>repainting sequence number</I>.  It is
    incremented whenever the "badRgn" is expanded and recorded before
    activating a "repaint" method.  Thus when the repaint method returns,
    the current value can be compared with the recorded value to
@@ -146,7 +146,7 @@ TYPE STPub =
   END;
 
 (* The tables "st.ops", "st.fonts", "st.cursors", and "st.pixmaps" are
-   collectively called the screentype's {\it palette}.  They are used
+   collectively called the screentype's <I>palette</I>.  They are used
    to translate between screen-independent resources and
    screen-dependent resources.  For example, recall that "Pixmap.Gray"
    is a record containing the integer field "Pixmap.Gray.pm".  The

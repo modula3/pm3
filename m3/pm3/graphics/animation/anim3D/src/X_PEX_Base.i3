@@ -5,7 +5,7 @@
 (* Last modified on Thu May  5 22:03:31 PDT 1994 by najork                   *)
 (*       Created on Wed Feb 16 17:12:53 PST 1994 by najork                   *)
 
-(* "X_PEX_Base.T" is a subtype of \type{GraphicsBase}{T}. An object of 
+(* "X_PEX_Base.T" is a subtype of "GraphicsBase.T". An object of 
    this type provides an abstract interface to X windows and PEX. *)
 
 INTERFACE X_PEX_Base;

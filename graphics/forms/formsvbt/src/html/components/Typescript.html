@@ -1,0 +1,51 @@
+<TITLE> Typescript (leaf) </TITLE>
+<H1> Typescript (leaf) </H1>  
+
+<P>
+ This is like a TextEdit component, but the underlying
+      VBT class provides a reader and
+      a writer for accessing the text. The lines of text that have
+      been read become read-only as far as the editor is concerned. It
+      is useful for ``transcripts.''  With a small amount
+      of Modula-3 code, you can connect the reader and
+      writer to pipes that run a command interpreter.
+      Typescripts always have scrollbars.
+
+<HR><DL>
+
+<DT>ReadOnly<DD> (Boolean, <TT>FALSE</TT>) <BR> If true, the text-area will not
+    be editable.
+
+<DT>Clip<DD> (Boolean, <TT>FALSE</TT>) <BR> If true, the long lines will
+	be clipped, not wrapped.
+
+<DT>TurnMargin<DD> (Real, <TT>2.0</TT>) <BR>
+	If long lines are wrapped, then a small grey bar will appear
+	at the end of the first line and the beginning of the next to
+	indicate that the line was wrapped.  TurnMargin specifies the
+	width of the grey bar.
+
+<DT>FirstFocus<DD> (Boolean, <TT>FALSE</TT>) <BR> If true, and if this
+        component is in a subwindow or TSplit-child, then when that
+        component appears, this component will acquire the keyboard
+        focus, and its text will be selected in replace-mode.
+
+</DL><HR>
+
+<DL>
+<DT><B>Notes</B><DD> For details on the editing commands, see the description of
+      TextPort in the <I>VBTkit Reference Manual</I><A REL=REFENTRY HREF="../references.html#VBTkitRefman"> [VBTkitRefman] </A>.
+      The following code shows the Modula-3 code for accesses 
+      the underlying reader and writer:
+
+<PRE><TT>
+WITH v = FormsVBT.GetVBT(fv, "typescript") DO
+  rd := TypescriptVBT.GetRd(v);
+  wr := TypescriptVBT.GetWr(v);
+END;
+</TT></PRE><P>
+
+<DT><B>See Also</B><DD> TextEdit and TypeIn
+
+</DL>
+

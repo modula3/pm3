@@ -1,0 +1,30 @@
+<TITLE> Bar (leaf) </TITLE>
+<H1> Bar (leaf) </H1> 
+ 
+<P>
+ Displays a horizontal or vertical line, using the foreground
+color, with the specified size and stretchability in the principal
+direction of its parent.  <TT>Bar</TT> is exactly like <TT>Glue</TT>
+except that it uses the foreground color (<TT>Color</TT>) instead of the
+background color (<TT>BgColor</TT>).
+
+<HR><DL>
+
+<DT>Main<DD> (Size, <TT>1 + 0 - 0</TT>) <BR>
+      The size and stretchability in the principal direction of its parent.
+</DL><HR>
+
+<DL>
+<DT><B>Shape</B><DD> The principal direction is explicitly
+specified; the other direction has zero preferred and minimum
+size and is infinitely stretchable, thereby taking on the
+parent's shape.
+
+<DT><B>Notes</B><DD> Must be a child of a horizontal
+or vertical split (<TT>HBox</TT>, <TT>HVTile</TT>, <TT>VBox</TT>, or
+<TT>VTile</TT>).
+
+<DT><B>See Also</B><DD> Ridge and Chisel
+
+</DL>
+

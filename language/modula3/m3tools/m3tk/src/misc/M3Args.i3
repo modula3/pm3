@@ -65,14 +65,14 @@ to return "FALSE".  Flag keywords are always optional; their omission
 is equivalent to a value of "FALSE". The "Positional" setting, which
 also imples "Optional", is only relevant to a command line
 implementation, in which case, this and only this argument can be
-supplies without the keyword.  Keywords are assigned {\it short forms}
+supplies without the keyword.  Keywords are assigned <I>short forms</I>
 by concatenating all the upper-case letters in "argName" from left to
 right. So the short form of "PrintUnit" would be "pu". Numerics are
 not included in short-forms, so the the short-form of "LM3Check" would
 be "lmc". For any tool, all it's keyword names and their short forms
 must be unique. In addition, an implementation, for example based on a
 commmand line, may require that the keywords be unique across all the
-registered tools. A keyword may be denoted as {\it shared} by setting
+registered tools. A keyword may be denoted as <I>shared</I> by setting
 "shared = TRUE", in which case the same value will be propagated to
 all tools. If duplicates are not allowed and "shared = FALSE", a
 duplicate will cause a checked runtime error will occur. Prefix
@@ -121,7 +121,7 @@ PROCEDURE RegisterPrefix(
     shared := FALSE);
 (* Register a "Prefix" keyword called "argName" *)
 
-(* \subsection{Help information} *)
+(* <H2> Help information </H2> *)
 
 (* The way in which help information is requested and displayed is
 implementation dependent. For example, in a command line
@@ -144,7 +144,7 @@ for all "t" in the set of registered tools. *)
 PROCEDURE HelpPreamble(t: T) RAISES {};
 (* Display the general information on keyword types and short forms. *)
 
-(* \subsection{Getting and Setting Argument Values} *)
+(* <H2> Getting and Setting Argument Values </H2> *)
 
 (* Unbound arguments return "NIL" for "String" and "StringList"
 keywords.  The empty string list is denoted by a result "r" where
@@ -187,7 +187,7 @@ sub-strings at the boundaries defined by the comma or space characters
 and sets the value of "StringList" keyword "argName" in tool "t" to
 rge resulting list of sub-strings. *)
 
-(* \subsection{Example} *)
+(* <H2> Example </H2> *)
 
 (* In the initialisation code for the tool, place a call to "New", and
 record the tool handle.  For example:

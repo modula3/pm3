@@ -10,11 +10,11 @@
 
    The amount of light that falls onto another geometric object depends on the 
    distance between this object and the light source. This phenomenon is 
-   referred to as {\em attenuation}. Refer to the description of the 
-   \interface{PointLightGO} interface for details.
+   referred to as <EM>attenuation</EM>. Refer to the description of the 
+   "PointLightGO" interface for details.
 
    The geometry of the light cone is described by three parameters: 
-   The location or {\em origin} of the light source (i.e.\ the tip of the
+   The location or <EM>origin</EM> of the light source (i.e. the tip of the
    cone), the direction vector (going out of the center of the cone),
    and $\alpha$, the angle between the center vector of the cone and 
    its walls. 
@@ -23,7 +23,7 @@
    within the cone. By definition, the intensity in the center of the cone is
    1. Let $\beta$ be the angle between a particular ray of light within the 
    cone and the center of the cone. Then the intensity of this ray is 
-   ${\rm cos}^\gamma(\beta)$. So, if $\gamma$ is 0, the intensity is uniform 
+   $\rmcos^\gamma(\beta)$. So, if $\gamma$ is 0, the intensity is uniform 
    all over the cone (modulo attenuation). *)
 
 INTERFACE SpotLightGO;
@@ -43,7 +43,7 @@ PROCEDURE New (c : Color.T;  orig, dir : Point3.T;
                conc, spread, att0, att1 : REAL) : T;
 (* "l.init(c,orig,dir,conc,spread,att0,att1)" initializes a new spot light 
    source "l" and returns it. It also attaches the following properties to "l":
-   \begin{verbatim}
+   <PRE>
       (LightGO.Colour,ColourProp.NewConst(c)) 
       (LightGO.Switch,BooleanProp.NewConst(TRUE))
       (Origin,PointProp.NewConst(dir))
@@ -52,7 +52,7 @@ PROCEDURE New (c : Color.T;  orig, dir : Point3.T;
       (SpreadAngle,RealProp.NewConst(spread))
       (Attenuation0,RealProp.NewConst(att0))
       (Attenuation1,RealProp.NewConst(att1))
-   \end{verbatim}
+   </PRE>
 *)
 
 
@@ -63,33 +63,33 @@ VAR
   SpreadAngle   : RealProp.Name;
   Attenuation0  : RealProp.Name;
   Attenuation1  : RealProp.Name;
-(* In addition to the properties observed by all \type{GO}{T}'s and 
-   \type{LightGO}{T}'s, there are six additional properties that are 
+(* In addition to the properties observed by all "GO.T"'s and 
+   "LightGO.T"'s, there are six additional properties that are 
    observed by "SpotLightGO.T"'s. 
 
    "Origin" is the name of a property that determines the origin 
    of the light emitted by the light sources; it associates with a property 
-   value of type \type{PointProp}{Val}. 
+   value of type "PointProp.Val". 
 
    "Direction" is the name of a property that determines the direction 
    of the light emitted by the light sources; it associates with a property 
-   value of type \type{PointProp}{Val}. 
+   value of type "PointProp.Val". 
    
    "Concentration" is a property that determines the intensity distribution 
    within the light cone emitted by the spot light; it associates with a 
-   property value of type \type{RealProp}{Val}. 
+   property value of type "RealProp.Val". 
 
    "SpreadAngle" is a property that determines the angle (in radians) between 
    the center of the light cone and its walls; it associates with a property 
-   value of type \type{RealProp}{Val}. 
+   value of type "RealProp.Val". 
 
    "Attenuation0" is the name of a property that determines the constant 
    attenuation coefficient $C_0$; it associates with a property value of type 
-   \type{RealProp}{Val}. 
+   "RealProp.Val". 
 
    "Attenuation1" is the name of a property that determines the linear
    attenuation coefficient $C_1$; it associates with a property value of type 
-   \type{RealProp}{Val}. 
+   "RealProp.Val". 
 *)
 
 PROCEDURE SetOrigin (o : GO.T; origin : Point3.T);

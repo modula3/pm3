@@ -28,14 +28,14 @@ TYPE
   END;
 (* "qm.init(pts,s)" initializes the quad-mesh "qm" and returns it.
    "pts" is the matrix of points defining the quad-mesh; "s" is a 
-   `shape hint'', i.e.\ a hint whether each polygon of the quad-mesh 
+   `shape hint'', i.e. a hint whether each polygon of the quad-mesh 
    is convex, non-convex, or complex.
-   Refer to the \interface{GO} interface for details on shape hints. 
+   Refer to the "GO" interface for details on shape hints. 
    By default, the quad-mesh is drawn in the color specified by the 
-   \type{SurfaceGO}{Colour} property.
+   <TT>SurfaceGO.Colour</TT> property.
 
    "qm.addFacetColors(cols)" overrides the surface color specified by the 
-   \type{SurfaceGO}{Colour} property, and instead attaches an individual 
+   <TT>SurfaceGO.Colour</TT> property, and instead attaches an individual 
    color to each quadrangle. The quadrangle "(i,j)" 
    (i.e. the quadrangle specified by the points 
    "pts[i][j]", "pts[i][j+1]", "pts[i+1][j+1]", "pts[i+1][j]") is drawn in 
@@ -46,13 +46,13 @@ TYPE
    "qm.setColorOfFacet(i,j,c)" changes the color of quadrangle "(i,j)"
    to be "c". The exception "ColorsUndefined" is raised if no facet colors 
    have yet been attached to "qm". It is a fatal error if "i" or "j" 
-   specify an invalid quadrangle. {\em I should instead raise an exception!}
+   specify an invalid quadrangle. <EM>I should instead raise an exception!</EM>
 
-   {\em NOTES: (a) Points and colors should be exposed as properties. 
-   Refer to the \interface{PolygonGO} interface for an idea about how to do that.
+   <EM>NOTES: (a) Points and colors should be exposed as properties. 
+   Refer to the "PolygonGO" interface for an idea about how to do that.
    (b) It should be possible to attach single color values; in this case,
    all cells with a missing color value are drawn in the color specified by
-   "SurfaceGO.Colour".} *)
+   "SurfaceGO.Colour".</EM> *)
    
 
 END QuadMeshGO.

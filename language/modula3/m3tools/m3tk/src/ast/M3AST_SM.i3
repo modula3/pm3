@@ -32,7 +32,7 @@ IMPORT M3AST, M3AST_AS;
 "M3AST_AS". As with "M3AST_AS", the exact representation of the node
 attributes is left to a companion interface, e.g. "M3AST_SM_F".  A
 value of "NIL" is legal for (almost) all semantic attributes and is
-interpreted as {\it unset}, i.e. not computed.  However, there are a
+interpreted as <I>unset</I>, i.e. not computed.  However, there are a
 few cases in which "NIL" is legal because the corresponding syntactic
 attribute could legally be null, e.g. the default expression for a
 variable declaration.  In this case we use another distinguishing
@@ -65,7 +65,7 @@ a set, with the understanding that there will be no duplicates.
 
 <* PRAGMA FIELDS *>
 
-(*\subsection{Naming Conventions}
+(*<H2> Naming Conventions </H2>
 
 Semantic attributes are all prefixed with the characters "sm_".
 It is conventional to use the "Name_UNSET" name to indicate an attribute
@@ -83,13 +83,13 @@ TYPE
   EXP_NULL_UNSET = M3AST_AS.EXP_NULL;
   DEF_ID_NULL_UNSET = M3AST_AS.DEF_ID_NULL;
 
-(* These functions return distinguished values that indicate {\it unset}. *)
+(* These functions return distinguished values that indicate <I>unset</I>. *)
 
 PROCEDURE UNSET_EXP(): EXP_NULL_UNSET;
 
 PROCEDURE UNSET_DEF_ID(): DEF_ID_NULL_UNSET;
 
-(* \subsection{Unit Attributes} *)
+(* <H2> Unit Attributes </H2> *)
 
 (* A "UNIT" has a back pointer to the parent "Compilation_Unit". *)
 
@@ -98,15 +98,15 @@ PROCEDURE UNSET_DEF_ID(): DEF_ID_NULL_UNSET;
 
 (* A "UNIT_WITH_BODY" has the following semantic attributes:
 
-\begin{itemize}
-\item The set of units defined as the transitive closure of all imported 
+<UL>
+<LI>The set of units defined as the transitive closure of all imported 
       interfaces, plus, in the case of a module, the exported interfaces.
 
-\item The set of all "OBJECT" types and traced "REF" types in the unit.
+<LI>The set of all "OBJECT" types and traced "REF" types in the unit.
 
-\item For each "REVEAL" of a particular opaque type in the unit, information 
+<LI>For each "REVEAL" of a particular opaque type in the unit, information 
       that is needed for consistency checking by, say, a Modula-3 linker. 
-\end{itemize} *)
+</UL> *)
 
   <* FIELDS OF M3AST_AS.UNIT_WITH_BODY
        sm_import_s: SEQUENCE OF M3AST_AS_Used_interface_id.T;
@@ -150,7 +150,7 @@ same members as the "as_export_s" attribute. *)
   <* FIELDS OF M3AST_AS.Module
        sm_export_s := SEQUENCE OF M3AST_AS_Used_interface_id *>
 
-(*\subsection{Identifier Attributes}*)
+(*<H2> Identifier Attributes </H2>*)
 
 (* A "UNIT_ID" node has a back pointer to the enclosing "UNIT" *)
 
@@ -310,7 +310,7 @@ identifiers in "Named_type" nodes. *)
 |     binding.as_exp.sm_exp_type_spec; *)
 
 
-(*\subsection{Type Attributes} *)
+(*<H2> Type Attributes </H2> *)
 
 (* Enumeration types have an attribute specifying the number of elements. *)
 
@@ -395,12 +395,12 @@ types. *)
   Type_type <: M3AST_AS.TYPE_SPEC;
   Any_type <: M3AST_AS.TYPE_SPEC;
 
-(* The notion of {\it no-type} is convenient, e.g. for a procedure
+(* The notion of <I>no-type</I> is convenient, e.g. for a procedure
 call that does not return a result. *)
 
   Void_type <: M3AST_AS.TYPE_SPEC;
 
-(* \subsection{Expressin Attributes}*)
+(* <H2> Expressin Attributes </H2>*)
 
 (* All expressions have an associated type defined by the rules for
 expressions in the language definition. If an expression can be
@@ -448,7 +448,7 @@ node corresponding to the actual parameter. *)
 
   TypeActual <: M3AST_AS.EXP;
 
-(*\subsection{Identifier Scopes} *)
+(*<H2> Identifier Scopes </H2> *)
 
 (* It is sometimes convenient to enumerate all the "DEF_IDs" that are
 in scope at a particular point in an AST. This can be used, for
@@ -481,7 +481,7 @@ at level zero. The "SCOPE" of a "Block" node associated with a
                 M3AST_AS.Tcase_id, M3AST_AS.Handler_id
         vSCOPE: SCOPE *>
 
-(*\subsection{Multiple Inheritance Support} *)
+(*<H2> Multiple Inheritance Support </H2> *)
 
 (* Almost all the classes that were introduced at at this level
 involve multiple inheritance, which cannot be expressed driectly in
@@ -500,12 +500,12 @@ representation interface (e.g, "M3AST_SM_F").  *)
 |    IsA_SCOPE(VAR(*out*) scope: SCOPE): BOOLEAN;
 *)
 
-(* \subsection{Temporary Attributes}
+(* <H2> Temporary Attributes </H2>
 
 The following attributes are defined to be set after semantic analysis
-is complete, but have {\it temporary} status. The original notion of
+is complete, but have <I>temporary</I> status. The original notion of
 temporary was defined such that these attributes would not be saved in
-persistent ASTs, for example, in AST {\it pickles}. Certainly the
+persistent ASTs, for example, in AST <I>pickles</I>. Certainly the
 attributes can be recomputed in a single pass over the tree and the
 expectation is that an implementation will make this transparent to
 the client. For backward compatibility the attributes still contain

@@ -1,0 +1,115 @@
+<TITLE> FileBrowser (leaf, event) </TITLE>
+<H1> FileBrowser (leaf, event) </H1> 
+    
+<P>
+ A FileBrowser is used for examining directories and selecting files.
+
+<HR><DL>
+
+<DT>Value <TT>GP</TT><DD> (Text, <TT>"."</TT>)  <BR> 
+On retrieval, the value is the full pathname of the selected file, or
+<TT>NIL</TT> if no file is selected.  When specified, the value may be absolute or
+relative (to the currently displayed directory), and may name a file
+or a directory.  If a directory is specified, that directory is
+displayed but no file is selected, hence the new retrievable value is
+<TT>NIL</TT>.  An initial specification, if relative, is relative to the
+current working directory of the application.  Thus, the default
+initial value of ``.'' displays the current working directory.
+      
+<DT>Suffixes<DD> (TextList) <BR> If this property is
+    specified, the file-browser will show only those files
+    whose suffixes are in this list.  The strings should not
+    include the period; to include files that have no suffix,
+    use the empty string.  
+    
+    Example: <TT>(Suffixes "i3" "m3" "" "fv")</TT>
+    
+    (Directories are always shown.)
+
+<DT>ReadOnly<DD> (Boolean, <TT>FALSE</TT>) <BR> If true, the browser will only accept 
+      selection or naming of files that already exist.  Otherwise, 
+      user may name a new file by typing in the helper (see Helper).
+
+</DL><HR>
+
+<DL>
+
+
+<DT><B>Behavior</B><DD> The FileBrowser displays a list of the files in the current
+      directory, in alphabetic order.  The user can <I>select</I> a file 
+      by clicking on its name, and <I>activate</I> it by 
+      double-clicking.  Auto-scrolling works as for Browser.  In the 
+      default setup, only activating a file generates an event.  
+      Activating a directory makes that the current directory, and 
+      changes the display to show it.  
+<DT><DD>
+      If a helper is present (see Helper), it displays the
+      pathname of the current directory whenever the current
+      directory is changed.  The user may also type a filename in
+      the helper, and press Return to activate it.
+<DT><DD>
+      There are three ``states'' of selection in a FileBrowser with 
+      a Helper.  After a new directory has just been set, there is 
+      no selection; the value is <TT>NIL</TT>.  When the user clicks on an 
+      item in the browser, the browser has the selection, shown by 
+      a highlighted item;  when the user types any character in the 
+      helper, the helper has the selection; the highlight vanishes 
+      from the browser.  Thus it is possible to give a name for a 
+      file that does not yet exist, provided that ReadOnly is false.  
+      A relative pathname typed in the Helper is relative to the 
+      current directory.
+  <DT><DD>
+      We recommend using <TT>(LabelFont "fixed")</TT> for a filebrowser.
+
+<DT><B>Shape</B><DD> At minimum, large enough to hold its scrollbar plus the single 
+      string <TT>"XXXX"</TT> in the font being used, plus the shadow.  
+      Infinitely stretchable in both dimensions.
+
+<DT><B>Notes</B><DD> A Helper never generates events in its own name.  It can
+      be accessed in its own name, but this is not recommended.
+  <DT><DD>
+      OS-related errors can occur: nonexistent directory in path,
+      current directory became inaccessible, protection
+      violation, etc. The default reaction to these errors is
+      just to refuse to activate anything.  In such a state,
+      <TT>GetText</TT> will 	
+      return <TT>NIL</TT>.  The user can get out of this state
+      by typing an absolute pathname of a directory that is known
+      to exist.  The underlying <TT>FileBrowserVBT</TT> interface has a
+      mechanism (the <TT>error</TT> method) whereby the client can
+      be notified of such errors, to report them to the user
+      appropriately.
+
+<DT><B>See Also</B><DD> Helper and DirMenu
+
+</DL>
+
+<P>
+It is common (and recommended) practice to combine a FileBrowser, a
+DirMenu, and a Helper, with activation and cancellation buttons, in an
+arrangment like the following, which could be used in an ``Open...'' dialog.
+<PRE><TT>
+(ZChassis
+  (VBox
+    (HBox
+      (Shape (Width 150) (Height 150)
+        (VBox (LabelFont "fixed")
+          (DirMenu (For fb))
+          (Glue 6)
+          (Frame Lowered (BgColor "White")
+             (FileBrowser %fb ReadOnly))))
+      Fill
+      (Shape (Width 100)
+       (VBox Fill
+          (Button %open "Open")
+          (Glue 10)
+          (CloseButton "Cancel"))))
+    (HBox
+      (Shape (Width 30) (Height 16) "File:")
+      (Frame Lowered (BgColor "White")
+        (Helper (For fb) (Font "fixed"))))))
+	
+</TT></PRE><P>
+
+<IMG SRC="../figs-long/filebrowser.ps" ID="FileBrowserFigure">
+

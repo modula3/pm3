@@ -71,7 +71,7 @@ END KeyFilter.
    key labeled "Compose" or "Compose Character", which produces the
    "MultiKey" code. When you type that key, followed by ``c'' and
    ``o'', the filter passes the character for the copyright symbol,
-   \copyright, to the "next" filter. If there is no entry in the
+   &copy;, to the "next" filter. If there is no entry in the
    table, the filter does not pass anything to the "next" filter.  In
    any case, it always returns to its initial state.
 
@@ -80,16 +80,16 @@ END KeyFilter.
    example, produces a "KeyRec" with the "mod1" modifier (which
    Trestle represents as "VBT.Modifier.Option"). When the
    "ComposeChar" filter sees a "KeyRec" with this modifier, it
-   assumes that the user is {\em not} composing an 8-bit character,
+   assumes that the user is <EM>not</EM> composing an 8-bit character,
    so it calls "SELF.feedback(v,FALSE)" and "SELF.next.apply(v,cd)", and
    it returns to its initial state.
 
    A "Diacritical" filter also produces 8-bit characters. The filter
    looks at 2-character sequences; comma followed by ``c'', for
-   example, produces an ``c'' with a cedilla, \c{c}. If the sequence
+   example, produces an ``c'' with a cedilla, &ccedil;. If the sequence
    is not defined, such as comma followed by space, then filter passes
    both characters to the "next" filter; i.e., when it receives the
-   second "KeyRec", it makes {\em two} calls to "SELF.next.apply".
+   second "KeyRec", it makes <EM>two</EM> calls to "SELF.next.apply".
    (This is why the "KeyFilter" uses a "next" field instead of merely
    returning a "KeyRec".)
 
@@ -131,14 +131,14 @@ END KeyFilter.
 
    A "ComposeChar" object is not case-sensitive where there is no
    ambiguity.  For example, "c" and "o" can be combined to produce the
-   copyright symbol, \copyright; so can "C" and "O", "c" and "O", or
+   copyright symbol, &copy;; so can "C" and "O", "c" and "O", or
    "C" and "o".  By contrast, "e" and "`" can be combined to produce a
-   lower-case "e" with a grave accent, \`{e}, but "E" and "`" produce
-   an upper-case "E" with a grave accent, \`{E}.
+   lower-case "e" with a grave accent, e, but "E" and "`" produce
+   an upper-case "E" with a grave accent, E.
 
    Unless both of the characters are alphanumeric, they can be
    combined in either order.  So "`" and "e" have the same effect as
-   "e" and "`", but "o" and "c" do {\em not} combine to form the
+   "e" and "`", but "o" and "c" do <EM>not</EM> combine to form the
    copyright symbol.
 
 *)

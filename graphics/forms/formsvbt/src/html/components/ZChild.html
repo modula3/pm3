@@ -1,0 +1,33 @@
+<TITLE> ZChild (filter) </TITLE>
+<H1> ZChild (filter) </H1> 
+    
+<P>
+ A hook on which to hang various properties (such as At
+and Name) that control the behavior of an overlapping subwindow.
+    
+<HR><DL>
+
+<DT>At<DD> (At, <TT>0.5 0.5</TT>) <BR> 
+      Position, as discussed in Section <A REL=REF HREF="#sec:atprop"> [sec:atprop] </A>.  
+
+<DT>Open<DD> (Boolean, <TT>FALSE</TT>) <BR> 
+      If true, the subwindow is initially visible.  Otherwise,
+      it is invisible until opened by user or program action
+      (typically via PopButton or PopMButton).  Open subwindows
+      are useful for achieving layouts that cannot be achieved
+      by a hierarchy of HBoxes and VBoxes.
+
+</DL><HR>
+
+<DL>
+
+<DT><B>Notes</B><DD> In practice, most overlapping subwindows begin with a ZChild
+with properties.  ZChild itself has no interactive behavior or
+appearance, but because it is a HighlightVBT, it ensures that
+Buttons and other descendants that also highlight by HighlightVBT
+don't visually interfere with other overlapping subwindows.
+
+<DT><B>See Also</B><DD> ZSplit and ZChassis
+     
+</DL>
+

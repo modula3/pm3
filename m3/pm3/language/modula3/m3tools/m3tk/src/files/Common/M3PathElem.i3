@@ -22,8 +22,8 @@ TYPE T <: Public;
 CONST
   CurrentDir = "";
 
-(* An "M3PathElem.T" is a unique representative for a set of {\it
-equal} directories, where equality is a file system specific notion.
+(* An "M3PathElem.T" is a unique representative for a set of <I>
+equal</I> directories, where equality is a file system specific notion.
 For example two textually different names may denote the same
 directory by the mechanism of symbolic links.  The "text" method
 returns the directory name after any environment variables have been

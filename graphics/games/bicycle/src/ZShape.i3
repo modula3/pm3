@@ -26,14 +26,14 @@ PROCEDURE New(
     : T; <* LL <= VBT.mu *>
 (* "New(...)" is equivalent to "NEW(T).init(...)". *)
 
-(* \subsubsection{Getting domains} *)
+(* <H3> Getting domains </H3> *)
 
 
 PROCEDURE GetDomain(ch: VBT.T): Region.T;
 <* LL.sup = VBT.mu *>
 (* Return the effective domain of "ch". *)
 
-(* \subsubsection{Restricting the domain to a region} *)
+(* <H3> Restricting the domain to a region </H3> *)
 
 (* You can supply procedures to control what portions of a child's
    domain are excluded when the child is reshaped.  If you don't

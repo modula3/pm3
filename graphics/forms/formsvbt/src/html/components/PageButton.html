@@ -1,0 +1,37 @@
+<TITLE> PageButton (filter, event) </TITLE>
+<H1> PageButton (filter, event) </H1> 
+    
+<P>
+ A button that switches to the next or previous child of a TSplit. 
+Its target is a TSplit, which may be specified by the <TT>For</TT> property; 
+otherwise the target is the nearest TSplit ancestor of the PageButton itself.
+
+<HR><DL>
+
+<DT>For<DD> (Symbol) <BR> If given, names the target, which must be a 
+      TSplit.
+      
+<DT>Back<DD> (Boolean, <TT>FALSE</TT>) <BR> If true, the button advances backward 
+      among children of the TSplit, otherwise it advances forward.
+
+</DL><HR>
+
+<DL>
+
+<DT><B>Behavior</B><DD> PageButton is like a Button, but before generating an event,
+it switches the children of a TSplit.  However, if the TSplit
+is not Circular, and if the last (first) child is already being
+displayed, nothing happens and no event is generated.
+    
+<DT><B>Shape</B><DD> The natural shape of its child (i.e., with no shrink
+or stretch), plus the border around the button.
+
+<DT><B>Notes</B><DD> If a PageButton is a descendant of the TSplit it controls, 
+it will naturally vanish when activated, due to the nature of TSplits.
+<DT><DD> You may specify more than one PageButton for the same
+TSplit.
+
+<DT><B>See Also</B><DD> LinkButton, PageMButton, and TSplit
+
+</DL>
+

@@ -8,13 +8,13 @@
 <* PRAGMA LL *>
 <* PRAGMA SUBTYPE *>
 
-(* A "ZChassisVBT" multi-filter provides a {\em chassis} for a
+(* A "ZChassisVBT" multi-filter provides a <EM>chassis</EM> for a
    subwindow. The visual display of the chassis is hard-wired into
    this module; in particular, it won't look like a top-level window
    of most of the common X window managers.  The top of the chassis is
-   a banner containing (from left to right) a {\em close button}, {\em
-   draggable title}, and a {\em grow button}. (See
-   Figure~\ref{fig:zchassis}.)
+   a banner containing (from left to right) a <EM>close button</EM>, <EM>
+   draggable title</EM>, and a <EM>grow button</EM>. (See
+   Figure&nbsp;<A REL=REF.NUMBER HREF="fig:zchassis"> [fig:zchassis] </A>.)
 
    Clicking on the close button unmaps the "ZChassisVBT", thereby
    causing it to disappear.  Dragging the title allows the user to
@@ -67,7 +67,7 @@ END ZChassisVBT.
    An alternative method, "v.initFromEdges", also initializes "v",
    using different information for specifying the initial location of
    the subwindow.  (See the "ZChildVBT" interface on
-   page~\pageref{ZChildVBTSection} for details of the "h", "v", "loc",
+   page&nbsp;<A REL=REF.PAGE HREF="ZChildVBTSection"> [ZChildVBTSection] </A> for details of the "h", "v", "loc",
    and "type" parameters to "init", as well as for details of the "w",
    "e", "n", "s", and "type" parameters to "initFromEdges".)
 
@@ -90,7 +90,7 @@ END ZChassisVBT.
 |              (ZGrow "G"))
 |        (Frame `{\it ch}`)))))
 
-   See Figure~\ref{fig:zchassis}.
+   See Figure&nbsp;<A REL=REF.NUMBER HREF="fig:zchassis"> [fig:zchassis] </A>.
    
    However, don't try to traverse the VBT tree directly; it is subject
    to change.  To retrieve the contents of a chassis "v", use

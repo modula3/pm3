@@ -1,0 +1,36 @@
+<TITLE> Menu (split, event) </TITLE>
+<H1> Menu (split, event) </H1>  
+    
+<P>
+ A pull-down menu.  The first
+child, the ``anchor'', looks just like a button, and when it is
+clicked, it pops up the second child.  The second child can be any
+component, and is surrounded by a raised shadow. All other children
+are ignored.  A menu requires a ZSplit somewhere in its ancestry;
+FormsVBT provides one of these by default.
+
+<HR><DL>
+
+<DT>NotInTrestle<DD> (Boolean, <TT>FALSE</TT>) <BR> If true, the menu is installed
+      into a local ZSplit, rather than directly into Trestle,
+      when popped up.  Menus installed in Trestle may exceed
+      the size of the containing window.
+
+</DL><HR>
+
+<DL>
+
+<DT><B>Behavior</B><DD> Pops up the second child when the first child is
+  clicked, and keeps it there until the mouse button is released.
+  Typically, the the second child contains a VBox of menu buttons
+  (MButton, PopMButton, PageMButton, LinkMButton).
+<DT><DD>
+  An event is generated just after the anchor button is activated, 
+  and before the second child of Menu is popped up. This is useful 
+  for clients whose menu contents are changing dynamically and should
+  be made consistent only when the menu is about to be displayed.
+
+<DT><B>Shape</B><DD> The shape of its first child plus its shadow.
+
+</DL>
+

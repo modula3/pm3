@@ -1,0 +1,33 @@
+<TITLE> VPackSplit (split) </TITLE>
+<H1> VPackSplit (split) </H1> 
+    
+<P>
+ Organizes its children vertically, in order from top to bottom,
+like paragraphs in a newspaper.  The children in any given column have
+their west boundaries aligned, and all children that are first in
+their column have their north borders equal to the north border of the
+parent. A child is vertically clipped only if its requested vertical
+size exceeds the parent's vertical size; in this case the child will
+be alone in its column.
+    
+<HR><DL>
+
+<DT>HGap<DD> (Real, 2.0) <BR> This many points separate each column of 
+        children.
+
+<DT>VGap<DD> (Real, 2.0) <BR> This many points separate each child 
+        vertically.
+
+<DT>Background<DD> (Text, ``White'') <BR> Inter-children (HGap), inter-row 
+        (VGap), and end-of-line spaces are displayed in this texture.
+
+</DL><HR>
+
+<DL>
+
+<DT><B>Shape</B><DD> The shape is unconstrained in the vertical axis.
+
+<DT><B>See Also</B><DD> HPackSplit
+
+</DL>
+

@@ -1,0 +1,63 @@
+<TITLE> Scale (filter) </TITLE>
+<H1> Scale (filter) </H1> 
+    
+<P>
+ Scale provides a filter that changes the
+<I>resolution</I>, not the size, of its child.  Both graphics and fonts are
+scaled.
+
+<HR><DL>
+
+<DT>HScale <TT>GP</TT><DD> (Real, <TT>1.0</TT>) <BR> The horizontal scaling factor.
+ 
+
+<DT>VScale <TT>GP</TT><DD> (Real, <TT>1.0</TT>) <BR> The vertical scaling factor.
+
+<DT>Auto<DD> (Boolean, <TT>FALSE</TT>) <BR> 
+Dynamically set the scaling such that the child's
+natural size always fills its domain.
+
+<DT>AutoFixed<DD> (Boolean, <TT>FALSE</TT>) <BR> Like Auto, but always use
+set the horizontal and vertical scaling factors to the same number.
+</DL><HR>
+
+<DL>
+
+<DT><B>Shape</B><DD> The shape of the child.
+
+<DT><B>Notes</B><DD> Auto takes precedence over AutoFixed, which takes precedence
+over HScale or VScale.
+<DT><DD>
+There are two ways you can use a "Scale" component: With the HScale
+and VScale properties, the "Scale" allows you to explicitly set a
+horizontal and vertical scale factor. Alternatively, with Auto the
+scale factors are set so that the child's natural size always fills
+the screen real estate it's been given. A varient of Auto is
+AutoFixed: here, the child is scaled by the same amount both
+horizontally and vertically.  The amount is chosen so that the natural
+size of child just fits in the larger direction given and fits fine in
+the other direction.
+<DT><DD>
+You should only retrive and modify the values of HScale and VScale if
+the component was created without Auto or AutoFixed.
+<DT><DD>
+Scale does not change the size of the child, just the
+size of the ``pixels.''  Graphic elements will be scaled fairly
+precisely.  Fonts will be scaled to the nearest available font.
+If you are scaling components that include text, for best
+results, HScale and VScale should have the same value.  
+<DT><DD>
+If you are specifying a Font or LabelFont in a component that
+is going to be scaled, you should use the ``long form'' of the
+font's name in order to specify the point size; e.g.,
+
+<PRE><TT>
+(Font
+  (Family "fixed")
+  (WeightName "medium")
+  (Slant "r")
+  (Width "normal")
+  (PointSize 120))
+</TT></PRE><P>
+</DL>
+

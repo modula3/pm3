@@ -36,7 +36,7 @@ PROCEDURE Install (v          : VBT.T;
 END XTrestle.
 
 (* The syntax of these switches is described in the X manpage and in
-   {\it The X Window System\/} \cite{XWindowSystem}.
+   <I>The X Window System</I> <A REL=BIB.ENTRY HREF="../../../../html/references.html#XWindowSystem"> [XWindowSystem] </A>.
 
    If there is a "-display" argument, it will be made the default
    Trestle connection for those procedures in the "Trestle" interface

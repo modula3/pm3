@@ -5,7 +5,7 @@
 (* Last modified on Fri Aug 18 09:38:06 PDT 1995 by najork                   *)
 (*       Created on Wed Feb 16 17:12:53 PST 1994 by najork                   *)
 
-(* "X_OpenGL_Base.T" is a subtype of \type{GraphicsBase}{T}. An object of 
+(* "X_OpenGL_Base.T" is a subtype of "GraphicsBase.T". An object of 
    this type provides an abstract interface to X windows and OpenGL. *)
 
 INTERFACE X_OpenGL_Base;

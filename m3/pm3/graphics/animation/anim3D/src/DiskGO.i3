@@ -28,20 +28,20 @@ VAR
   Center : PointProp.Name;
   Normal : PointProp.Name;
   Radius : RealProp.Name;
-(* In addition to the properties observed by all \type{GO}{T}'s and
-   \type{SurfaceGO}{T}'s, there are three additional properties that 
+(* In addition to the properties observed by all "GO.T"'s and
+   "SurfaceGO.T"'s, there are three additional properties that 
    are observed by "DiskGO.T"'s:
 
    "Center" is the name of a property that describes the center  
-   of the disk. It associates with a \type{PointProp}{Val}. If no "Center" 
+   of the disk. It associates with a "PointProp.Val". If no "Center" 
    property is specified, the disk is centered around the origin.
 
    "Normal" is the name of a property that describes the normal vector 
-   of the disk. It associates with a \type{PointProp}{Val}. If no "Normal" 
+   of the disk. It associates with a "PointProp.Val". If no "Normal" 
    property is specified, the normal vector is taken to be (0,0,1).
 
    "Radius" is the name of a property that describes the radius of the 
-   disk. It associates with a \type{RealProp}{Val}. If no "Radius" property
+   disk. It associates with a "RealProp.Val". If no "Radius" property
    is specified, the disk has a radius of 1. 
 
    Assume that in a given context and at a given point in time, the property 
@@ -50,11 +50,9 @@ VAR
    to "n", and "Radius" maps to a real property value which evaluates to "r".
    "p", "n", and "r" define the position and shape of the disk 
    in this context and at this time as shown below:
-   \begin{center}
-   \begin{tabular}{c}
-   \psfig{figure=images/DiskGO.ps,silent=}
-   \end{tabular}
-   \end{center}
+   <TABLE><TR><TD>
+   \psfigfigure=images/DiskGO.ps,silent=
+   </TABLE>
 *)
 
 
@@ -62,11 +60,11 @@ PROCEDURE New (p : Point3.T; n : Point3.T; r : REAL; prec := 10) : T;
 (* "New(p,n,r,prec)" creates a new disk, whose surface is approximated by a 
    polygon with "prec" edges, and returns it. It also attaches the following 
    properties to the new cone:
-    \begin{verbatim}
+   <PRE>
      (Center,PointProp.NewConst(p))
      (Normal,PointProp.NewConst(n))
      (Radius,RealProp.NewConst(r))
-   \end{verbatim}
+   </PRE>
 *)
    
 

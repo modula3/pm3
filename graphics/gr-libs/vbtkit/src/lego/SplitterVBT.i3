@@ -12,7 +12,7 @@
 
 (* A "SplitterVBT.T" is a parent window that partitions its screen
    into a row or column of children windows, depending on the
-   {\em axis} of the split, with adjusting bars between all
+   <EM>axis</EM> of the split, with adjusting bars between all
    children.  The adjusting bars allow the user to adjust the
    allocation of screen real estate among the splitter's
    children, subject to the size constraints of each child.

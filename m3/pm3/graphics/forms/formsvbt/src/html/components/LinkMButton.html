@@ -1,0 +1,28 @@
+<TITLE> LinkMButton (filter, event) </TITLE>
+<H1> LinkMButton (filter, event) </H1> 
+    
+<P>
+ This is the ``menu-style'' equivalent of LinkButton; 
+it provides ``random access'' to a child of a TSplit.  
+
+<HR><DL>
+
+<DT>For<DD> (Symbol) <BR> The target, which must be specified.  The named 
+      component must be either a TSplit child, or a descendant of 
+      something that is.  In the latter case the TSplit child is the 
+      true target.
+      
+</DL><HR>
+
+<DL>
+
+<DT><B>Behavior</B><DD> Like an MButton, but before generating an event, it switches 
+a TSplit to display a specific child.
+
+<DT><B>Shape</B><DD> The natural shape of its child (i.e., with no shrink
+or stretch), plus the border around the button.
+
+<DT><B>See Also</B><DD> LinkButton, PageMButton, and TSplit
+
+</DL>
+

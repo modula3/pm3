@@ -1,0 +1,8 @@
+HtmlTextFile("about.ps")
+HtmlTextFile("confirm.ps")
+HtmlTextFile("filedialog.ps")
+HtmlTextFile("finder.ps")
+HtmlTextFile("m3makefile")
+HtmlTextFile("manpage.ps")
+HtmlTextFile("ppwidth.ps")
+HtmlTextFile("revert.ps")

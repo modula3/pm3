@@ -28,20 +28,20 @@ VAR
   Point1 : PointProp.Name;
   Point2 : PointProp.Name;
   Radius : RealProp.Name;
-(* In addition to the properties observed by all \type{GO}{T}'s and
-   \type{SurfaceGO}{T}'s, there are three additional properties that 
+(* In addition to the properties observed by all "GO.T"'s and
+   "SurfaceGO.T"'s, there are three additional properties that 
    are observed by "CylinderGO.T"'s:
 
    "Point1" is the name of a property that describes the first endpoint 
-   of the cylinder. It associates with a \type{PointProp}{Val}. If no "Point1" 
+   of the cylinder. It associates with a "PointProp.Val". If no "Point1" 
    property is specified, the cylinder starts at the origin.
 
    "Point2" is the name of a property that describes the second endpoint 
-   of the cylinder. It associates with a \type{PointProp}{Val}. If no "Point2" 
+   of the cylinder. It associates with a "PointProp.Val". If no "Point2" 
    property is specified, the cylinder ends at point (1,0,0).
 
    "Radius" is the name of a property that describes the radius of the 
-   cylinder. It associates with a \type{RealProp}{Val}. If no "Radius" property
+   cylinder. It associates with a "RealProp.Val". If no "Radius" property
    is specified, the cylinder has a radius of 1. 
 
    Assume that in a given context and at a given point in time, the property 
@@ -50,22 +50,20 @@ VAR
    to "p2", and "Radius" maps to a real property value which evaluates to "r". 
    "p1", "p2", and "r" define the position and shape of the cylinder 
    in this context and at this time as shown below:
-   \begin{center}
-   \begin{tabular}{c}
-   \psfig{figure=images/CylinderGO.ps,width=3in,silent=}
-   \end{tabular}
-   \end{center}
+   <TABLE><TR><TD>
+   \psfigfigure=images/CylinderGO.ps,width=3in,silent=
+   </TABLE>
 *)
 
 PROCEDURE New (p1, p2 : Point3.T; r : REAL; prec := 30) : T;
 (* "New(p1,p2,r,prec)"  creates a new cylinder, whose surface is composed 
    of "prec" rectangles, and returns it. It also attaches the following 
    properties to the new cylinder:
-   \begin{verbatim}
+   <PRE>
      (Point1,PointProp.NewConst(p1))
      (Point2,PointProp.NewConst(p2))
      (Radius,RealProp.NewConst(r))
-   \end{verbatim}
+   </PRE>
 *)
   
 (* The following three procedures provide sugaring to attach 

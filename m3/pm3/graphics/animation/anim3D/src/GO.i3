@@ -25,8 +25,8 @@ EXCEPTION StackError;
 TYPE
   Shape = {Complex, NonConvex, Convex, Unknown};
 (* "Shape" is used to provide shape hints to some type geometric objects 
-   that are composed of polygons (right now, \type{PolygonGO}{T} and 
-   \type{QuadMeshGO}{T}).
+   that are composed of polygons (right now, <TT>PolygonGO.T</TT> and 
+   <TT>QuadMeshGO.T</TT>).
    "Convex" indicates that the object is composed of convex polygons,
    "NonConvex" indicates that the object is composed on non-convex polygons 
    that have non-intersecting border lines, "Convex" indicates that the 
@@ -71,8 +71,8 @@ TYPE
    We also say that ("pn","pv") is attached to the geometric object.
 
    Name/Value associations in the property mapping are guaranteed to be
-   compatible, i.e. a properity name of type \type{PointProp}{Name} will be 
-   associated with a value of type \type{PointProp}{Val}. 
+   compatible, i.e. a properity name of type <TT>PointProp.Name</TT> will be 
+   associated with a value of type <TT>PointProp.Val</TT>. 
 
    "o.setProp(p)" attaches the property "p" to "o". 
 
@@ -84,7 +84,7 @@ TYPE
    If $M_o$("pn") = "pv", then "o.getProp(pn)" returns "pv".
    If $M_o$("pn") is undefined, then "o.getProp(pn)" raises "PropUndefined". 
 
-   Geometric objects can have names, i.e.\ strings that identify them. Names 
+   Geometric objects can have names, i.e. strings that identify them. Names 
    provide a convenient way to find a geometric object within a scene DAG. 
    No two GOs with a common ancestor should have the same name; however,
    this is not enforced. 
@@ -95,14 +95,14 @@ TYPE
    "o.findName(name)" returns a descendent of "o" with name "name" if there
    is one, "NIL" otherwise.
 
-   Geometric objects are reactive. A {\em callback object} is an object 
+   Geometric objects are reactive. A <EM>callback object</EM> is an object 
    that responds to a particular kind of events. Currently, there are four 
-   types of callback objects: \type{MouseCB}{T} (objects that handle mouse 
-   button presses and releases), \type{PositionCB}{T} (objects that handle 
-   mouse movements), and \type{KeyCB}{T} (objects that handle key presses and 
+   types of callback objects: <TT>MouseCB.T</TT> (objects that handle mouse 
+   button presses and releases), <TT>PositionCB.T</TT> (objects that handle 
+   mouse movements), and <TT>KeyCB.T</TT> (objects that handle key presses and 
    releases). 
 
-   Associated with each geometric object are four {\em callback object stacks},
+   Associated with each geometric object are four <EM>callback object stacks</EM>,
    one for each type of callback object. When a mouse/position/key/click
    event is delivered to "o", the top callback object on the corresponding 
    stack is invoked to handle it. If there is no such object, the event is 
@@ -127,9 +127,9 @@ TYPE
    The remaining methods perform analogous tasks for position, and key 
    callbacks.
 
-   {\em The event handling model is largely untested. It is probably
+   <EM>The event handling model is largely untested. It is probably
    the least stable part of the interface. Expect changes to "...CB.T",
-   "...CB.Rec", and the "invoke...CB" methods.} *)
+   "...CB.Rec", and the "invoke...CB" methods.</EM> *)
 
 VAR
   Transform : TransformProp.Name;

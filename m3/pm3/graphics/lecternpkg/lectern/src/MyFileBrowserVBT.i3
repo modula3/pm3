@@ -13,33 +13,40 @@
 (* A "FileBrowserVBT" displays the files in a directory, and allows
    the user to traverse the file system and to select one or more
    files.  There are two additional widgets that can be associated
-   with a "FileBrowserVBT".  A {\em helper}
-   \index{FBHelper}\label{FBHelper} is a type-in field that displays
+   with a "FileBrowserVBT".  A <A ID="FBHelper"><EM>helper</EM></A>
+   <SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>FBHelper</SPAN>
+</SPAN>
+   is a type-in field that displays
    the pathname of the directory and allows the user to type new
-   pathnames.  A {\em directory-menu}\index{FBDirMenu}
-   \label{FBDirMenu} is a menu containing the names of each level in
+   pathnames.  A <A ID="FBDirMenu"><EM>directory-menu</EM></A>
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>FBDirMenu</SPAN>
+</SPAN>
+
+   is a menu containing the names of each level in
    the directory tree, with the root at the bottom; you can go to any
    level in the tree by selecting the appropriate item in the menu.
 
    There are two user-actions, selecting and activating.
 
-   \begin{itemize}
+   <UL>
 
-   \item The user may {\it select} items, either by single-clicking on
+   <LI>The user may <I>select</I> items, either by single-clicking on
    an item to select just that one, or by single-clicking and dragging
    to select a range.  Shift-clicking adds to the selection.  A change
    in selection is reported to the client by invoking the
    "selectItems" method.  The client can read the current selection by
    calling "GetFile" or "GetFiles".
 
-   \item The user may {\it activate} an item, either by
+   <LI>The user may <I>activate</I> an item, either by
    double-clicking on it, or by typing its name in the helper followed
    by Return.
 
-   Activation of a {\it file} is reported to the client by invoking
+   Activation of a <I>file</I> is reported to the client by invoking
    the "activateFile" method, whose default is a no-op.
 
-   Activation of a {\it directory} is reported by invoking the
+   Activation of a <I>directory</I> is reported by invoking the
    "activateDir" method, whose default behavior is to call "Set" to
    display the activated directory.
 
@@ -48,7 +55,7 @@
    double-click will be reported as an "AnyEvent.Mouse", and Return
    will be reported as an "AnyEvent.Key".
 
-   \end{itemize}
+   </UL>
 
    Directories are indicated in the display by showing some text
    (e.g., ``(dir)'') after the name, but that is not part of the
@@ -142,9 +149,9 @@ TYPE
 
 TYPE Selector <: ListVBT.MultiSelector;
 
-(* \subsubsection{The Helper} 
+(* <H3> The Helper </H3> 
    
-   The FileBrowser's helper (see page \pageref{FBHelper}) is a
+   The FileBrowser's helper (see page <A REL=REF.PAGE HREF="FBHelper"> [FBHelper] </A>) is a
    "TypeinVBT".  Once the user types in the helper, any selected items
    in the browser are unselected.  If the user types Return in the
    browser, that will activate the name in the Helper.
@@ -159,7 +166,7 @@ PROCEDURE SetHelper (v: T; helper: Helper) RAISES {Error};
 (* Sets the helper for "v" to be "helper", and fills it with
    "GetDir(v)". *)
 
-(* \subsubsection{The Directory-Menu} *)
+(* <H3> The Directory-Menu </H3> *)
 
 (* The directory menu shows the name of each of the parent directories,
    going back to the root directory. *)
@@ -188,7 +195,7 @@ PROCEDURE SetDirMenu (v: T; dm: DirMenu);
    current directory. *)
 
 
-(* \subsubsection{FileBrowser options} *)
+(* <H3> FileBrowser options </H3> *)
 
 (* A file browser can be ``read-only'': *)
 
@@ -218,7 +225,7 @@ PROCEDURE SetSuffixes (v: T; suffixes: TEXT);
    no suffix.''  Calling "SetSuffixes" procedure does not force
    "v" to be redisplayed. *)
 
-(* \subsubsection{Setting the displayed directory} *)
+(* <H3> Setting the displayed directory </H3> *)
 
 PROCEDURE Set (v       : T;
                pathname: Pathname.T;
@@ -255,7 +262,7 @@ PROCEDURE Refresh (v: T) RAISES {Error};
    catches "Error" and takes no other action, the browser will be
    empty but not broken. *)
 
-(* \subsubsection{Retrieving selections from the browser} *)
+(* <H3> Retrieving selections from the browser </H3> *)
 
 PROCEDURE GetFiles (v: T): TextList.T RAISES {Error};
 <* LL.sup = VBT.mu *>

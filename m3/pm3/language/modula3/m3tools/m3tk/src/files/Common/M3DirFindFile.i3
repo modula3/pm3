@@ -69,7 +69,7 @@ the directories in the list. The search is ordered so if there are two
 file names in different directories which match a given name and
 extension the file name earliest on the directory list will be
 returned. If "oldFinder # NIL", it is used to propagate information
-from directories marked as {\it read-only} to the new finder. If an
+from directories marked as <I>read-only</I> to the new finder. If an
 error occurs reading any of the directories, then if "errorHandler = NIL"
 "OSError.E" will be raised. If "errorHandler # NIL", 
 "errorHandler.callback(dir, ec)" will be called, where "dir" represents

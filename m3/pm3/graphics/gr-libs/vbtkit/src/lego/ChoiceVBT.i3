@@ -10,7 +10,7 @@
 <* PRAGMA SUBTYPE *>
 
 (* A "ChoiceVBT" multi-filter behaves in concert with other
-   "ChoiceVBT"s to implement {\em radio buttons}. Abstractly, a
+   "ChoiceVBT"s to implement <EM>radio buttons</EM>. Abstractly, a
    "ChoiceVBT" "v" consists of
 
 | state(v)       TRUE `or` FALSE

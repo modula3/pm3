@@ -134,7 +134,7 @@ PROCEDURE MakeVFont (         font     : Font.T;
 (* Creates a VFont, which is a massaged version of a Font.T. If a character
    exists in the font and is in "printable" and is not a tab or new-line,
    it will be displayed from the font. If '\t' is not in printable, tabs
-   will display as \011. If '\t' is in printable, then tabs will display as
+   will display as 11. If '\t' is in printable, then tabs will display as
    white-space to the next tab-stop (multiple of 8 space-widths) if
    whiteTabs is true, or as a special glyph of that width if whiteTabs is
    false. *)
@@ -234,7 +234,7 @@ PROCEDURE Move (         vtext             : T;
    The dividers array tells the new v coordinate (absolute) of the divider
    below each region except the last. If scroll is TRUE, screen bits may be
    moved to reduce the cost of later Updates. Move raises Error if
-   NUMBER(dividers) < vtext^.regionMax. *)
+   NUMBER(dividers) &lt; vtext^.regionMax. *)
 
 
 PROCEDURE Rescreen (vtext: T; READONLY cd: VBT.RescreenRec) RAISES {};
@@ -421,7 +421,7 @@ PROCEDURE Scroll (vtext: T; r: Region; displacement: INTEGER)
   RAISES {VTDef.Error, Rd.EndOfFile, Rd.Failure, Thread.Alerted};
 (* Scrolls the display within region r. The displacement parameter encodes
    both the direction and distance to scroll. If displacement > 0 the
-   region scrolls displacement lines toward-end-of-file; if displacement <
+   region scrolls displacement lines toward-end-of-file; if displacement &lt;
    0 the region scrolls -displacement lines toward-start-of-file; if
    displacement = 0 nothing happens. This procedure enforces the
    constraints on text display as described under New. After calling
@@ -556,7 +556,7 @@ PROCEDURE PounceLocate (              vtext         : T;
    coordinates. The out indexes "indexL" and "indexR" will be at most one
    character apart; they define the position pointed to. The output
    "lineNumber" is the screen line number pointed to in the view. The
-   output "c" is the character pointed to, if indexL < indexR. *)
+   output "c" is the character pointed to, if indexL &lt; indexR. *)
 
 PROCEDURE PounceExtend (                vtext         : T;
                                         r             : Region;

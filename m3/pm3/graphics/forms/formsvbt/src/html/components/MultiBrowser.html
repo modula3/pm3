@@ -1,0 +1,59 @@
+<TITLE> MultiBrowser (leaf, event) </TITLE>
+<H1> MultiBrowser (leaf, event) </H1> 
+    
+<P>
+ A browser on a collection of text strings that allows multiple 
+items to be selected.
+
+<HR><DL>
+
+<DT><DD> <I>Contents (<TT>Items</TT> takes precedence):</I>
+
+<DT>Items<DD> (TextList) <BR> The contents of the browser. <BR>
+      Example:  <TT>(Items "a" "b" "c")</TT>
+      
+<DT>From<DD> (Text) <BR> If present, this names a resource from which the
+	initial browser contents will be taken, one item per line.
+
+</DL><HR><P> <I>Initial choices (<TT>Value</TT> takes precedence):</I>
+
+<DL>
+
+<DT>Value<DD> (CardinalList) <BR> The positions of selected items.
+      <BR> Example: <TT>(Value 1 3 5 2)</TT>.
+      
+<DT>Select<DD> (TextList) <BR> The list of initially selected
+      items.  <BR> Example: <TT>(Items "c" "a")</TT>
+
+<HR><DT>Quick<DD> (Boolean, <TT>FALSE</TT>) <BR> If true, every selection action 
+	is reported as an event.  Otherwise, only double-click actions are 
+	reported.
+
+      
+</DL><HR>
+
+<DL>
+
+<DT><B>Behavior</B><DD> Displays items vertically, with a
+scrollbar at the left.  The left button modifies the selection: If the 
+item under the cursor is not currently selected, it becomes selected; 
+if it is currently selected, it is deselected. Dragging sets 
+the state of the additional items to the state it gave to the first 
+item. Middle and right buttons clear any existing selection, and 
+select the item under the cursor. Dragging selects additional items 
+as the mouse passes over them; retreating unselects items. 
+Autoscrolling is implemented, and it continues to select or unselect 
+items as they scroll by. 
+<DT><DD> 
+When <TT>Quick</TT> is true, every selection 
+action also generates an event, on the up-click. Otherwise, an event 
+is not generated until the second up-click of a double-click.
+
+<DT><B>Shape</B><DD> At minimum, large enough to hold its scrollbar plus the single 
+string <TT>"XXXX"</TT> in the font being used, plus a shadow.  Infinitely 
+stretchable in both dimensions.
+
+<DT><B>See Also</B><DD> Browser
+
+</DL>
+

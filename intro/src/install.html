@@ -5,15 +5,20 @@
 <H1>Installation</H1>
 
 <P>The latest version of PM3 may be obtained from m3.polymtl.ca by
-<A HREF="http://m3.polymtl.ca/m3/download">WWW</A> or
-(<A HREF="ftp://m3.polymtl.ca/pub/m3/pkg">FTP</A>).
+<A HREF="http://m3.polymtl.ca/m3/download">WWW</A>
+(or <A HREF="ftp://m3.polymtl.ca/pub/m3">FTP</A> in subdirectories
+pkg, bootstrap, binaries, SRPMS).
 
 <H2>RPM installation</H2>
 
 <P>For LINUXELF and LINUXLIBC6, RPM source and binary packages are available
 and may conveniently be installed with the <TT>rpm</TT> program. 
 This way, for most cases, nothing special (e.g. setting environment variables)
-should be required.
+should be required. It should be noted however that the default INSTALL_ROOT
+for RPM packages is <TT>/usr</TT> instead of <TT>/usr/local/pm3</TT>,
+thus for instance, in the installation instructions, 
+directory /usr/local/pm3/lib/m3/<I>TARGET</I> in fact refers
+to /usr/lib/m3/<I>TARGET</I>.
 
 <H2>Binary Installation</H2>
 
@@ -50,7 +55,8 @@ Failing that, the <TT>PATH</TT> environment variable is used to locate
 <TT>m3build</TT> and the templates are assume to be reachable from there
 using the relative path <TT>../lib/m3/pkg/m3config/src</TT>. Because of this,
 the compiler finds automatically the templates in most cases, and the
-installation may look like:
+installation may look like (the ftp transfer is only needed if you dont use
+the simpler WWW download menu):
 <PRE><TT>
 cassis> cd
 cassis>ftp m3.polymtl.ca
@@ -85,7 +91,9 @@ variables also need to be set properly as explained in the previous section.
 You may then customize the compiler configuration files in m3config/src,
 select the packages to compile in src/PACKAGES,
 and then proceed with the compilation and installation 
-(<TT>m3build</TT>).
+(<TT>m3build</TT>). Typically the source is downloaded through the
+WWW download menu, and the ftp transfer may be omitted from the 
+following procedure.
 
 <PRE><TT>
 cassis> cd

@@ -1,0 +1,32 @@
+<TITLE> Glue (leaf) </TITLE>
+<H1> Glue (leaf) </H1> 
+    
+<P>
+ A piece of filler for spacing other objects.  Glue displays
+using the background color, BgColor.  (To use the foreground
+color, use a Bar component.)  Unlike Fill, Glue has specified size and
+no stretchability in the principal direction (horizontal or
+vertical) of its parent.
+    
+<HR><DL>
+
+<DT>Main<DD> (Size, <TT>1 + 0 - 0</TT>) <BR> 
+The size and stretchability in the principal direction of its parent.
+
+</DL><HR>
+
+<DL>
+
+<DT><B>Shape</B><DD> The principal direction is explicitly
+specified; the other direction has zero preferred and minimum
+size and is infinitely stretchable, thereby taking on the
+parent's shape.
+
+<DT><B>Notes</B><DD> Must be a child of a horizontal
+or vertical split (<TT>HBox</TT>, <TT>HVTile</TT>, <TT>VBox</TT>, or
+<TT>VTile</TT>).
+
+<DT><B>See Also</B><DD> Fill
+
+</DL>
+

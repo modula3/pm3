@@ -26,4 +26,9 @@ Module    ("Manpage")
 module    ("Macro")
 Module    ("RefListUtils")
 
+HtmlInterface("FVTypes")
+HtmlInterface("FormsVBT")
+HtmlFile("index")
+include_dir("html")
+
 Library   ("m3formsvbt")

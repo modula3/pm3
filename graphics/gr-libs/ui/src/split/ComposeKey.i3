@@ -95,7 +95,7 @@ END ComposeKey.
 
    Unless both of the characters are alphanumeric, they can be
    combined in either order.  So "`" and "e" have the same effect as
-   "e" and "`", but "o" and "c" do {\em not} combine to form the
+   "e" and "`", but "o" and "c" do <EM>not</EM> combine to form the
    copyright symbol.
 
    If there is no known combination for the two characters, then

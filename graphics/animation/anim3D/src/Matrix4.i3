@@ -33,15 +33,15 @@ PROCEDURE TransformUnitCube (p, a, b, c : Point3.T) : T;
 (* This function is useful to map prototypes of geometric objects
    (circles, spheres, disks, cylinders, etc) onto actual instances.
    "TransformUnitCube(p,a,b,c)" returns a matrix "M", such that
-\begin{verbatim}
-   TransformPoint3(M,Point3.T{0.0,0.0,0.0}) = p
-   TransformPoint3(M,Point3.T{1.0,0.0,0.0}) = a
-   TransformPoint3(M,Point3.T{0.0,1.0,0.0}) = b
-   TransformPoint3(M,Point3.T{0.0,0.0,1.0}) = c
-\end{verbatim}
+   <PRE>
+   TransformPoint3(M,Point3.T0.0,0.0,0.0) = p
+   TransformPoint3(M,Point3.T1.0,0.0,0.0) = a
+   TransformPoint3(M,Point3.T0.0,1.0,0.0) = b
+   TransformPoint3(M,Point3.T0.0,0.0,1.0) = c
+   </PRE>
 
    The above 4 equations over points define a system of linear equations, 
-   which can be solved statically (i.e.\ no gaussian elimination is needed 
+   which can be solved statically (i.e. no gaussian elimination is needed 
    at run time). So, calls to "TransformUnitCube" are very cheap.
 *)
 

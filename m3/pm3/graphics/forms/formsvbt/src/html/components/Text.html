@@ -1,0 +1,48 @@
+<TITLE> Text (leaf) </TITLE>
+<H1> Text (leaf) </H1> 
+
+<P>
+ Displays a single-line text string. By default, 
+the string is centered horizontally and vertically.
+
+<HR><DL>
+
+<DT><DD> <I>Contents (<TT>Main</TT> takes precedence):</I>
+
+<DT>Main <TT>GP</TT><DD> (Text) <BR> The text.
+
+<DT>From<DD> (Text) <BR> The name of a resource from which 
+      the text will be taken.
+
+</DL><HR><P> <I>Centering choices (mutually exclusive):</I>
+
+<DL>
+
+<DT>Center<DD> (Boolean, <TT>TRUE</TT>) <BR> Causes the text to be
+    centered.
+    
+<DT>LeftAlign<DD> (Boolean, <TT>FALSE</TT>) <BR> Causes the text to be
+      left-aligned.
+
+<DT>RightAlign<DD> (Boolean, <TT>FALSE</TT>) <BR> Causes the text to be
+      right-aligned.
+
+<HR>
+
+<DT>Margin<DD> (Real, <TT>2.0</TT>) <BR> Forces this many points of margin on 
+      the east and west sides of the text.
+
+
+</DL><HR>
+
+<DL>
+
+<DT><B>Shape</B><DD> The bounding rectangle of the text when rendered in the current
+LabelFont, plus <TT>2 * Margin</TT> in each axis.
+
+<DT><B>Notes</B><DD> <TT>Text</TT> components use the <TT>LabelFont</TT> property, not the
+	<TT>Font</TT> property.
+<!--SPOT CLASS=INDEX ID="idx_&lt;TT>LabelFont&lt;/TT>_&lt;TT>LabelFont&lt;/TT>"-->
+ 
+</DL>
+

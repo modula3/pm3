@@ -1,0 +1,39 @@
+<TITLE> Pixmap (leaf) </TITLE>
+<H1> Pixmap (leaf) </H1> 
+
+<P>
+ Displays a pixmap, centered in the space available. The image in
+	the pixmap is a resource in ``pnm'' format, representing one of
+	three types of images: ``pbm'' is a 1-bit-deep (bitmap) image; ``pgm''
+	is a greyscale image; ``ppm'' is a color image.	
+
+<HR><DL>
+
+<DT>Main <TT>P</TT><DD> (Text) <BR> The name of a resource containing the
+ 	image for a  pixmap. The image must be in ``pnm'' format.
+
+<DT>Accurate<DD> (Boolean, <TT>FALSE</TT>) <BR> If the image is
+	is greyscale or color (pgm or ppm), this property
+	determines how each RGB value in the pixmap should be
+	displayed on a color-mapped display.
+
+<DT>NeedsGamma<DD> (Boolean, <TT>FALSE</TT>) <BR> If the image is
+	is greyscale or color (pgm or ppm), this property
+	indicates whether to let Trestle gamma-correct the colors.
+	
+</DL><HR>
+
+<DL>
+
+<DT><B>Notes</B><DD> The current foreground and background colors are used for bitmap
+	(pbm) images. In all three formats, if the image is smaller
+	than the space available, the current background color is used
+	for the surrounding space.
+      
+<DT><B>Shape</B><DD> The shape of the pixmap, with infinite stretchability in both 
+  dimensions.
+
+<DT><B>See Also</B><DD> Texture
+
+</DL>
+

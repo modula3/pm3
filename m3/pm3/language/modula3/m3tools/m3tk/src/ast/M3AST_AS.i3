@@ -36,7 +36,7 @@ TYPE
 (* To support clients of previous versions of this interface, "SRC_NODE"
 is passed through by this interface. *)
 
-(* \subsection{Identifiers} *)
+(* <H2> Identifiers </H2> *)
 
 TYPE
    ID = M3AST_LX.ID;
@@ -49,7 +49,7 @@ each construct that can introduce a new identifier definition has an
 aassociated, unique, subtype, e.g.  "Proc_id" for identifiers
 associated with "PROCEDURE" declarations. *)
 
-(* \subsubsection{Definitions} *)
+(* <H3> Definitions </H3> *)
 
   DEF_ID <: ID;
   DEF_ID_NULL = DEF_ID;
@@ -87,7 +87,7 @@ identifiers below are subtypes of "TYPED_ID". *)
   With_id <: TYPED_ID;             (* WITH b *)
   Exc_id <: TYPED_ID;              (* EXCEPTION E(T) *)
 
-(* \subsubsection{Uses}
+(* <H3> Uses </H3>
 Identifier uses are separated into three distinct subtypes.
 Firstly, there are several cases where the binding of the use is
 required by the language definition to be to an "Interface_id", e.g.
@@ -121,7 +121,7 @@ such a node can be empty, denoted by NIL. *)
        as_id: Used_def_id; *>
 
 
-(* To support the {\em multiple inheritance} of the "ID", or "USED_ID"
+(* To support the <EM>multiple inheritance</EM> of the "ID", or "USED_ID"
 classes, methods are provided to enquire whether any "M3AST.NODE" instance
 is also a member of these classes. See, for example,
 "Exp_used_id" in the expressions section. These methods are actually
@@ -132,7 +132,7 @@ revealed in the representation interface, e.g. "M3AST_AS_F".
 |       IsA_ID(VAR (*out*) id): BOOLEAN; *)
 
 
-(* \subsection{Compilation Units}
+(* <H2> Compilation Units </H2>
 
 In order to provide a node in which to place to miscellaneous
 attributes, e.g. compilation status, the AST is rooted in a node
@@ -156,7 +156,7 @@ forms of "UNIT". *)
   <* FIELDS OF UNIT
      as_id: UNIT_ID; *>
 
-(* Generic definitions and {\it normal} units both have {\it bodies}, i.e.
+(* Generic definitions and <I>normal</I> units both have <I>bodies</I>, i.e.
 imports and declarations, and these are associated with the class
 "UNIT_WITH_BODY". *)
 
@@ -240,7 +240,7 @@ the AST to denote the choice, with subtypes "Simple_import" and
      as_intf_id: Used_interface_id;
      as_id_s: SEQUENCE OF Used_def_id; *>
 
-(* \subsection{Declarations and Revelations}
+(* <H2> Declarations and Revelations </H2>
 The concrete syntax groups revelations under the "Decl" rules.  In
 the AST we introduce a class "DECL_REVL" to handle either, and two
 subtypes "DECL" and "Revelation_s" *)
@@ -333,7 +333,7 @@ latter constraint is not expressed in the AST. *)
   Subtype_reveal <: REVELATION;    (* REVEAL T <: U *)
   Concrete_reveal <: REVELATION;   (* REVEAL T = U *)
 
-(* \subsubsection{Type Productions} *)
+(* <H3> Type Productions </H3> *)
 
 (* There are situations where an attribute can be either a type or an
 expression, so we define the class "EXP_TYPE" to denote that choice. *)
@@ -507,16 +507,16 @@ may be NIL. *)
   Raisees_any <: RAISEES;  (* RAISES ANY *)
 
 (* Opaque types have no direct correspondence in the concrete syntax.
-In effect they encode the "<:" in a "Subtype_decl", and provide a unique
+In effect they encode the "&lt;:" in a "Subtype_decl", and provide a unique
 node for each declaration, which is convenient for subsequent semantic
 analysis. The "as_type" attribute encodes the "M3TYPE" that actually
-appeared to the right of the "<:". *)
+appeared to the right of the "&lt;:". *)
 
   Opaque_type <: TYPE_SPEC;
   <* FIELDS OF Opaque_type
     as_type: M3TYPE; *>
 
-(* \subsection{Expression productions}
+(* <H2> Expression productions </H2>
 
 There is no analogue of "ConstExpr" in the abstract syntax. *)
 
@@ -524,7 +524,7 @@ There is no analogue of "ConstExpr" in the abstract syntax. *)
   EXP_NULL = EXP; 
 
 (* In "M3AST_LX", the class "LITERAL" was declared as a subtype of
-"SRC_NODE". At this point we {\it reveal} that "LITERAL" is actually a
+"SRC_NODE". At this point we <I>reveal</I> that "LITERAL" is actually a
 subtype of "EXP". We also introduce distinct subtypes of "LITERAL" to
 denote the different cases. Note that since "EXP" is defined as a
 subtype of "SRC_NODE_C", literals will inherit the "lx_node_s"
@@ -661,7 +661,7 @@ binary operations. *)
      as_exp: EXP;
      as_id: Exp_used_id *>
 
-(* \subsubsection{Statements} *)
+(* <H3> Statements </H3> *)
 
 (* The "STM" class captures all possible statement productions. *)
 

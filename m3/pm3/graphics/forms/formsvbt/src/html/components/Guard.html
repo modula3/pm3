@@ -1,0 +1,22 @@
+<TITLE> Guard (filter, event) </TITLE>
+<H1> Guard (filter, event) </H1> 
+    
+<P>
+ A filter that covers its child with a striped shadow. On the
+first click, the guard is removed, exposing and activating the child.
+If the mouse moves out of the guarded area, the guard returns.
+
+<DL>
+
+<DT><B>Behavior</B><DD> On down-click, the shadow becomes recessed; restores the 
+raised shadow on up-click or chord-abort, and generates an event if
+the mouse is still within the button on the up-click.
+
+<DT><B>Shape</B><DD> The shape of its child plus the shadow.
+
+<DT><B>Notes</B><DD> A guard is often used around a component whose action has has
+	potentially serious side-effects; e.g., <TT>(Button
+	"Delete")</TT>, <TT>(Boolean "Override")</TT>.
+
+</DL>
+

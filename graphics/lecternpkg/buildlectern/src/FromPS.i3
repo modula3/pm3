@@ -42,7 +42,7 @@ EXCEPTION Error(TEXT);
 
    The call "t.nextImage(rd)" sets "rd" to a reader delivering an
    image of the next page and returns "TRUE", or returns "FALSE" if no
-   more pages remain.  "rd" should {\em not} be closed.
+   more pages remain.  "rd" should <EM>not</EM> be closed.
 
    The call "t.nextOCR(wr, h, w, nW, nWB)" writes to "wr" a list of
    the recognized words followed by a list of the corresponding
@@ -50,8 +50,8 @@ EXCEPTION Error(TEXT);
    offset of the first bounding box relative to the initial position
    of "wr", and returns without closing "wr". The OCR data is
    delivered in the same format as by "OCR.FromPBM".  "nextOCR" should
-   only be called {\em after} after a call of "t.nextImage(rd)" has
-   returned "TRUE" {\em and} the corresponding image has been read
+   only be called <EM>after</EM> after a call of "t.nextImage(rd)" has
+   returned "TRUE" <EM>and</EM> the corresponding image has been read
    from "rd".  "h" must be the height of the image (in scanlines) just
    read from "rd".
 

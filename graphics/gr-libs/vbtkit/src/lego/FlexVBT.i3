@@ -7,12 +7,12 @@
 (*      modified on Tue Jun 16 13:08:50 PDT 1992 by muller                   *)
 <* PRAGMA LL *>
 
-(* The "FlexVBT.T" is a filter whose shape is based on a {\em natural}
-   size with some {\em stretch} and {\em shrink}.  If a natural amount
+(* The "FlexVBT.T" is a filter whose shape is based on a <EM>natural</EM>
+   size with some <EM>stretch</EM> and <EM>shrink</EM>.  If a natural amount
    is left unspecified, the stretch and shrink are applied relative to
    the child's size.  If a stretch or shrink is left unspecified, 0 is
    assumed.  All units are specified in millimeters.  See
-   Figure~\ref{flexvbt} for examples.
+   Figure&nbsp;<A REL=REF.NUMBER HREF="flexvbt"> [flexvbt] </A> for examples.
 
    This interface is similar to "RigidVBT", but more powerful in that
    one can specify a size based on a child's size and can dynamically

@@ -7,10 +7,10 @@
 
 
 (* In accordance with the terminology used by Trestle, we refer to mouse 
-   movements as to {\em position events}. A position event is represented
+   movements as to <EM>position events</EM>. A position event is represented
    by a record "PositionCB.Rec".
 
-   A {\em position event callback object} is an object which has one
+   A <EM>position event callback object</EM> is an object which has one
    method, "invoke". Each geometric object has a stack of position callback
    objects. When a position event "pr" is relayed to a particular geometric
    "o", the the message "cb.invoke(pr)" is sent to the top callback
@@ -44,8 +44,8 @@ TYPE
    "modifiers" is the set of modifiers (Shift, Control, Mouse Buttons, etc.) 
    that was active when the movement took place.
 
-   {\em NOTE: There is a fair chance that I will add other fields to "Rec",
+   <EM>NOTE: There is a fair chance that I will add other fields to "Rec",
    once we have gained more experience with event handling. So far, I pretty
-   much mimick (part of) what is there in "VBT.PositionRec".} *)
+   much mimick (part of) what is there in "VBT.PositionRec".</EM> *)
 
 END PositionCB.

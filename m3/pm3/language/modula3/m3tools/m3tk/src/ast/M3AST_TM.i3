@@ -21,7 +21,7 @@
 (* All rights reserved.                                        *)
 (* See the file COPYRIGHT for a full description.              *)
 
-(* "M3AST_TM" defines some {\em temporary} AST attributes to support
+(* "M3AST_TM" defines some <EM>temporary</EM> AST attributes to support
 the semantic analyser. *)
 
 INTERFACE M3AST_TM;

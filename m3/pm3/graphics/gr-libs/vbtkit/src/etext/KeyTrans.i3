@@ -22,14 +22,12 @@ CONST
 PROCEDURE Latin1 (key: VBT.KeySym): CHAR;
 (* Return the ISO-Latin-1 character corresponding to "key".
 
-   \medskip\bulletitem If "32 <= key <= 255", then return
+   <UL><LI>If "32 &lt;= key &lt;= 255", then return
    "VAL(key, CHAR)".
-
-   \medskip\bulletitem If "key" is "Key.Backspace", "Key.Tab",
+<LI>If "key" is "Key.Backspace", "Key.Tab",
    "Key.Return", "Key.Escape", or "Key.Delete", then return the
    corresponding character.
-
-   \medskip\bulletitem Otherwise return "NullKey" *)
+<LI>Otherwise return "NullKey" *)
    
 PROCEDURE TTY (READONLY cd: VBT.KeyRec): CHAR;
 (* Similar to "Latin1", but if this is a control key, then clear

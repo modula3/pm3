@@ -17,3 +17,6 @@ Module ("VBTKitEnv")
 Module ("XParam")
 Module ("XTrestle")
 
+HtmlInterface("XTrestle")
+HtmlInterface("XParam")
+HtmlInterface("Rsrc")

@@ -1,0 +1,32 @@
+<TITLE> LinkButton (filter, event) </TITLE>
+<H1> LinkButton (filter, event) </H1> 
+    
+<P>
+ A button that provides ``random access'' to a child of a TSplit.  
+Switches a TSplit to display the specified child.
+
+<HR><DL>
+
+<DT>For<DD> (Symbol) <BR> The target, which must be specified.  The named 
+      component must be either a TSplit child, or a descendant of 
+      something that is.  In the latter case the TSplit child is the 
+      true target.
+      
+</DL><HR>
+
+<DL>
+
+<DT><B>Behavior</B><DD> Like a Button, but before generating an event, switches 
+a TSplit to display a specific child.
+
+<DT><B>Shape</B><DD> The natural shape of its child (i.e., with no shrink
+or stretch), plus the border around the button.
+
+<DT><B>Notes</B><DD> The LinkButton need not be a descendant of the TSplit
+it controls.  You may specify more than one LinkButton for the
+same TSplit.
+
+<DT><B>See Also</B><DD> LinkMButton, PageButton, and TSplit
+
+</DL>
+

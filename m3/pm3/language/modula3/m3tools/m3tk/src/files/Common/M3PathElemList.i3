@@ -4,7 +4,7 @@
 
 (* "M3PathElemList" is an instantiation of the "List" interface
 with an "M3PathElem.T". It provides the abstraction of a 
-{\it search path} as a list of directories. *)
+<I>search path</I> as a list of directories. *)
 
 INTERFACE M3PathElemList = List(M3PathElem) 
 END M3PathElemList.

@@ -9,13 +9,13 @@
 (* The 3D animation library supports two kinds of animations: synchronous
    and asynchronous ones. 
 
-   An asynchronous animation is performed by attaching an {\em unsynchronized
-   time-variant property value} "pv" to a geometric object "go". Attaching 
+   An asynchronous animation is performed by attaching an <EM>unsynchronized
+   time-variant property value</EM> "pv" to a geometric object "go". Attaching 
    "pv" to "go" immediately starts to animate "go" in some fashion, the 
    animation ends once "pv" is again detached. 
    
    A synchronous animation, on the other hand, is performed by attaching a
-   {\em synchronized time-variant property value} "pv" to a geometric object
+   <EM>synchronized time-variant property value</EM> "pv" to a geometric object
    "go", and then issuing an animation request to "pv". Associated with each 
    synchronous property value is an "AnimHandle.T". However, "pv" will not 
    immediately start to change. 

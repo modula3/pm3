@@ -37,7 +37,7 @@ for the backend to allow a stub to be generated. *)
         pl_isexportedby_s: SeqM3AST_AS_Module_id.T;
         pl_missing_proc_s: SeqM3AST_AS_Proc_id.T; *>
 
-(* The {\em depends-on} set is computed for each module. *)
+(* The <EM>depends-on</EM> set is computed for each module. *)
 
    <* FIELDS OF M3AST_AS.Module
         pl_dependson_s: SeqM3AST_AS_Module.T; *>

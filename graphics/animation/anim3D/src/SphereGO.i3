@@ -27,16 +27,16 @@ VAR
   Center : PointProp.Name;
   Radius : RealProp.Name;
 
-(* In addition to the properties observed by all \type{GO}{T}'s and
-   \type{SurfaceGO}{T}'s, there are two additional properties that 
+(* In addition to the properties observed by all "GO.T"'s and
+   "SurfaceGO.T"'s, there are two additional properties that 
    are observed by "SphereGO.T"'s:
 
    "Center" is the name of a property that describes the center of the sphere.
-   It associates with a \type{PointProp}{Val}. If no "Center" property
+   It associates with a "PointProp.Val". If no "Center" property
    is specified, the sphere is centered at the origin.
 
    "Radius" is the name of a property that describes the radius of the sphere.
-   It associates with a \type{RealProp}{Val}. If no "Radius" property
+   It associates with a "RealProp.Val". If no "Radius" property
    is specified, the sphere has a radius of 1. *)
 
 
@@ -44,10 +44,10 @@ PROCEDURE New (center : Point3.T; radius : REAL; prec := 30) : T;
 (* "New(center,radius,prec)" creates a new sphere, whose surface is composed of
    "prec" strips of "prec" triangles, and returns it. It also attaches the 
    following properties to the new sphere:
-   \begin{verbatim}
+   <PRE>
      (Center,PointProp.NewConst(center))
      (Radius,RealProp.NewConst(radius))
-   \end{verbatim}
+   </PRE>
 *)
 
 (* The following two procedures provide sugaring to attach 

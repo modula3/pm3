@@ -30,7 +30,7 @@ INTERFACE StdFormat;
 IMPORT M3AST_AS;
 
 PROCEDURE Set(n: M3AST_AS.SRC_NODE_C; indent := 0);
-(* {\em Format} the tree "n" in a standard way, by modifying the "lx_node_s"
+(* <EM>Format</EM> the tree "n" in a standard way, by modifying the "lx_node_s"
 attribute of "n" and its children. *)
 
 END StdFormat.

@@ -1,0 +1,1473 @@
+<TITLE> The FormsVBT Language </TITLE>
+<H1> The FormsVBT Language </H1>
+
+<!--SPOT CLASS=FORTOC ID="ftc_Describes the syntax and primitives of the language."-->
+<P>
+The FormsVBT language provides a mechanism for textually describing a
+user interface.  The language is not a general-purpose programming
+language. It has no variables, control structure, or runtime
+computation. Rather, it's a declarative textual description of the
+hierarchical arrangement of <EM>components</EM> that make up the user
+interface, written as an <EM>S-expression</EM>.  Fig. <A REL=REF HREF="#fig:horn"> [fig:horn] </A>
+shows a simple user interface and its S-expression.
+
+
+<H2 ID="sec:language-syntax">Basic Syntax</H2>
+
+<P>
+Each component is written as an S-expression that begins with
+type of the component, such as
+<TT>Border</TT>, <TT>Button</TT>, or <TT>VBox</TT>.  Following the
+type are subexpressions that describe either<EM>properties</EM> or <EM>
+children</EM> (sub-components). Properties provide additional information
+that control the appearance or behavior of the component.  The
+S-expression in Fig. <A REL=REF HREF="#fig:horn"> [fig:horn] </A> contains properties
+<TT>Pen</TT>,
+<TT>Pattern</TT>, <TT>Width</TT>, <TT>Height</TT>, <TT>BgColor</TT>,
+and <TT>Color</TT>.  Property-expressions are distinguished
+from child-expressions by their names.  There is one
+important rule to remember:
+
+<BLOCKQUOTE>
+<P><EM> In any S-expression, all property expressions must appear
+before any sub-components.
+</EM>
+</BLOCKQUOTE>
+<P>
+Properties are discussed in detail in Section <A REL=REF HREF="#sec:language-properties"> [sec:language-properties] </A>.
+
+<P><IMG ID="fig:horn" SRC="figs/horn.ps" UNITS=en WIDTH=144>
+<PRE><TT>
+(Border (Pen 20) (Pattern "NWDiagonal")
+  (Button %cornet
+    (VBox
+      (Shape (Width 50) (Height 40) 
+        (Pixmap "Trumpet"))
+      (Text (BgColor "Black") (Color "White") "Horn"))))
+</TT></PRE>
+
+<P>A very simple user interface and its description
+in the FormsVBT language.  The user interface consists of a button that is
+surrounded by a border.  The button itself displays a pixmap of a trumpet above
+the word ``Horn''. At runtime, the application will register an event-handler
+for the component named ``cornet''; the event-handler will be invoked when the
+user clicks on the button.
+
+
+<H2 ID="sec:language-kinds">Components</H2>
+<P>
+The components of FormsVBT can be categorized in two ways: by the
+number of children that they take, or by their function. In the first
+categorization, we have <EM>leaves</EM>, <EM>filters</EM>, and <EM>splits</EM>:
+
+<UL>
+<LI> A <I>leaf</I> has no children.
+
+<LI> A <I>filter</I> has exactly one child.
+
+<LI> A <I>split</I> contains any number of children.
+
+</UL>
+<P>
+In Fig. <A REL=REF HREF="#fig:horn"> [fig:horn] </A>, <TT>Text</TT> and <TT>Pixmap</TT> are leaf
+components; <TT>Border</TT>, <TT>Button</TT>, and <TT>Shape</TT> are filters; and
+<TT>VBox</TT> is the only component in the form that is a split.
+<P>
+The second way to categorize the components is by their function:
+<UL>
+<LI>
+     <EM>Passive visuals</EM>
+      establish appearance and spacing. Examples include
+     <TT>Text</TT>, <TT>Glue</TT>, and <TT>Border</TT>.
+<LI>
+     <EM>Basic interactors</EM>
+     contain an editable value that both the user and the 
+     application can read and modify. Examples include
+     <TT>TypeIn</TT>, <TT>Numeric</TT>, and <TT>FileBrowser</TT>.
+<LI>
+     <EM>Interactive modifiers</EM>
+     add behavior to a child. The prototypical example
+     is a <TT>Button</TT>. Most interactive modifiers also
+     add some type of visual feedback. For example, a <TT>Button</TT>
+     adds a ``shadow'' around its child to make the child appear
+     3-dimensional. Some modifiers, like a <TT>Boolean</TT>,
+     also involve an editable value.
+<LI>
+     <EM>Helpers</EM> are components that control other components
+     in some way. For example, a <TT>PopButton</TT> is a button that
+     causes a subwindow (<TT>ZChassis</TT> or <TT>ZChild</TT>) to appear. 
+     A <TT>DirMenu</TT> is a pull-down menu that is used with a 
+     <TT>FileBrowser</TT>.
+     The items in the menu are the 
+     ancestors of the directory currently being displayed.
+<LI>
+     <EM>Groupers</EM> declare that all their descendants belong to one
+     group for some particular purpose.  A <TT>Radio</TT> unites a group
+     of radio buttons, which are <TT>Choice</TT> components.
+<LI>
+     <EM>Geometers</EM> take an arbitrary number of children and lay them out 
+     in some way. Examples include <TT>VBox</TT>, <TT>HPackSplit</TT>,
+     and <TT>TSplit</TT>. An <TT>HPackSplit</TT>
+     formats its children like words in an unjustified paragraph. A
+     <TT>TSplit</TT> is a temporal split---at any time, exactly one 
+     of its children is visible.
+</UL>
+
+
+<H2 ID="sec:language-properties">Properties</H2>
+<P>
+Properties provide information that modifies the appearance or behavior 
+of a component. A property subexpression has the following
+format:
+
+<PRE><TT>
+    (<I>keyword</I> <I>value</I>)
+</TT></PRE>
+<P>
+The keyword implies the expected <I>type</I> of the value; values are
+type-checked when the description is parsed by FormsVBT. 
+Nearly all properties have default values
+and can be omitted.
+If you are developing a form using the <TT>formsedit</TT>
+interface-builder, then type- and syntax-errors will be reported and
+highlighted each time that you issue the ``Do It'' command.  If an
+application gives the FormsVBT runtime system a syntactically
+incorrect S-expression to parse, FormsVBT will raise an exception to
+signal the syntax error. 
+
+For example, the expression
+
+<PRE><TT>
+    (Boolean (CheckMark TRUE) (MenuStyle TRUE) "Gravity")
+</TT></PRE>
+<P>
+defines a Boolean interactor with two properties.  The
+<TT>CheckMark</TT> property says to use a check mark rather than
+a check box for visual feedback, and the <TT>MenuStyle</TT>
+property says that the Boolean should be responsive to a mouse
+rolling into it, rather than responding only to a mouse click.
+You would use <TT>MenuStyle</TT> when the Boolean is an element
+of a menu.
+<P>
+A <EM>value</EM> must have one of the following types:
+
+<DL>
+<DT><B>Text</B><DD> 
+A quoted string.
+<PRE><TT>
+  (Border (Pattern "NWDiagonals") ...)
+</TT></PRE><P>
+
+<DT><B>Cardinal</B><DD> 
+A positive integer.
+<PRE><TT>
+  (TSplit (Value 4) ...)
+</TT></PRE><P>
+
+<DT><B>Integer</B><DD> 
+An integer.
+<PRE><TT>
+  (Numeric (Min -100) (Max 100))
+</TT></PRE><P>
+
+<DT><B>Real</B><DD> 
+A real number. A whole number does not need a decimal point, and a number
+between -1 and 1 does not need a leading zero.
+<PRE><TT>
+  (Border (Pen 4.25) ...)
+</TT></PRE><P>
+
+<DT><B>Boolean</B><DD> 
+The token <TT>TRUE</TT> or <TT>FALSE</TT>.
+<PRE><TT>
+  (Boolean (MenuStyle TRUE) ...)
+</TT></PRE><P>
+
+<DT><B>CardinalList</B><DD>
+A list of positive integers. 
+<PRE><TT>
+  (MultiBrowser (Value 1 5 3 19))
+</TT></PRE><P>
+
+<DT><B>TextList</B><DD>
+A list of quoted strings. 
+<PRE><TT>
+  (FileBrowser (Suffixes "i3" "m3"))
+</TT></PRE><P>
+
+<DT><B>Symbol</B><DD><!--SPOT CLASS=INDEX ID="idx_Symbol names_Symbol names"-->
+A name. 
+For example, the <TT>For</TT> and <TT>Name</TT> properties are of this type:
+<PRE><TT>
+  (PageButton (For letters) "Next")
+  (Button (Name no) "Cancel")
+</TT></PRE><P>
+<P>
+Names are either identifiers (a letter followed by any number of
+letters, digits, or underscores), or non-empty sequences of characters
+from the set
+<PRE><TT>
+	! # $ % &amp; * + - . / : &lt; = &gt; ? @ [ ] ^ _ { } ~
+</TT></PRE>
+<P>
+or a sequence of characters and escape sequences surrounded by
+vertical bars (e.g., <TT>|Sue's button|</TT>). The escape sequences are
+<PRE><TT>
+	\n \t \r \f \\ \|
+</TT></PRE><P>
+and <TT>\</TT> followed by three octal digits.
+
+
+<DT><B>Font</B><DD ID="fontProp"><!--SPOT CLASS=INDEX ID="idx_Font descriptions_Font descriptions"-->
+The name of a font conforming to the specifications in ``X Logical Font
+Descriptions'' <A REL=REFENTRY HREF="references.html#XWindowSystem"> [XWindowSystem] </A>.  The font can be specified
+in two ways:  A quoted string in the form that <TT>xlsfonts</TT>
+prints and accepts as a pattern (we call this the
+<I>string format</I>), or a list of parenthesized keyword pairs for
+the parts of a font (we call this the <I>list format</I>).
+Consider the following example:
+<PRE><TT>
+  (VBox 
+    (Text (LabelFont "helvetica_bold14") 
+        "Helvetica Bold @ 14pts")
+    (Text (LabelFont "-*-courier-medium-*-140-*") 
+        "Courier @ 14pt")
+    (HBox (LabelFont (Family "Times")
+                     (PointSize 140))
+      (Text "Times@14pt")
+      (Text (LabelFont Reset 
+                       (Family "*")
+                       (Width "semicondensed")) 
+         "SemiCondensed@any")
+      (Text (LabelFont (PointSize 180)
+                       (Slant "i")) 
+          "Italics@14pt"))))
+</TT></PRE>
+<P>
+The font specification for the top two children of the VBox use the string format. 
+The other font specifications are in the list format. Here's
+what the example looks like:
+
+<P><IMG SRC="figs/fonts.ps">
+
+In the list format, the keywords for the parts of a font are
+
+<TABLE COLSPEC="L L L L">
+<TBODY><TR><TD><P>Foundry<TD><P>Family<TD><P>WeightName<TD><P>Slant
+<TR><TD><P>Width<TD><P>PointSize<TD><P>HRes<TD><P>VRes
+<TR><TD><P>Spacing<TD><P>AvgWidth<TD><P>Registry<TD><P>Encoding
+</TBODY></TABLE>
+
+<TT>PointSize</TT>, <TT>HRes</TT>, <TT>VRes</TT>,
+and <TT>AvgWidth</TT> take cardinal values or the string <TT>"*"</TT>.
+All the others take strings.
+
+Unspecified parts of a font take on the value of the nearest
+ancestor component for which the part was specified using the
+list format.  However, the keyword <TT>Reset</TT> causes all
+unspecified parts of a font to take on the default values
+assigned by FormsVBT.
+
+<DT><B>Color</B><DD><!--SPOT CLASS=INDEX ID="idx_Color specification_Color specification"-->
+The description of a color either as a triplet of real numbers
+between 0.0 and 1.0 representing RGB or HSV values, or as a
+string. The following example shows both formats:
+<PRE><TT>
+  (Pixmap
+    (BgColor .5 0.23 1.0)
+    (Color "VeryPaleRed") "MailBox")
+</TT></PRE>
+<P>
+The triplet may be preceded by one of the symbols <TT>RGB</TT> or
+<TT>HSV</TT>.  The default is <TT>RGB</TT>. The symbol <TT>HSV</TT>
+represents hue-saturation-value. Example:
+<PRE><TT>
+  (BgColor HSV 0.1 0.45 0.222)
+</TT></PRE><P>
+Appendix <A REL=REF HREF="#ap:colornames"> [ap:colornames] </A>
+describes the conventions used for naming colors.
+
+<DT><B>Sx</B><DD>
+An S-expression in the FormsVBT language. For example, the <TT>Title</TT>
+property of a <TT>ZChassis</TT> (a frame for a subwindow) has this type:
+
+<PRE><TT>
+  (ZSplit
+    (ZBackground ...)
+    (ZChassis
+      (Title 
+        (HBox 
+          Fill 
+          "Window # "
+          (Border (Text %wid =""))
+          Fill))
+      ...))
+</TT></PRE><P>
+
+<DT><B>Enumeration</B><DD>
+A set of mutually exclusive tokens. 
+FormsVBT supports the following enumerations:
+
+<DL>
+<DT>Alignment
+<DD>Center, LeftAlign, RightAlign}
+
+<DT>Axis
+<DD>Horizontal, Vertical
+
+<DT>FeedbackStyle
+<DD>CheckBox, CheckMark, Inverting
+
+<DT>Reactivity
+<DD>Active, Passive, Dormant, Vanish
+
+<DT>ScrollStyle
+<DD>HorOnly, VerOnly, NoScroll, AlaViewport, Auto
+
+<DT>ShadowStyle
+<DD>Flat, Raised, Lowered, Ridged, Chiseled
+</DL>
+
+Think of each enumeration as a collection of Boolean properties, at
+most one of which may be specified as <TT>TRUE</TT>.  If no choices are
+specified, then it's as if the default choice was given.  Here are
+some examples:
+<PRE><TT>
+(Viewport (VerOnly TRUE) (Horizontal TRUE) ...)
+(Filter (Dormant TRUE) (Vanish FALSE)
+    (Button ...))
+(Frame (Raised TRUE)
+    (Rim (Frame (Lowered TRUE) ...)))
+</TT></PRE><P>
+
+<DT><B>Size</B><DD>
+The description of the dimensions of a component along some axis.
+It has the syntax
+<PRE><TT>
+    [size] [+ stretch] [- shrink]
+</TT></PRE><P>
+where size, stretch, and shrink are specified as points in real numbers.
+Stretch and shrink, if both specified, may be in either order. Spaces are
+required around the plus and minus signs. The keyword <TT>Inf</TT>
+is used to indicate a very large value for stretch.
+See Section <A REL=REF HREF="#sec:language-sizespec"> [sec:language-sizespec] </A> for more details.
+
+<DT><B>At</B><DD>
+The location of a subwindow component relative to its parent.  There
+are two ways to specify this location: you can say where the center or
+a particular corner should be positioned; or you can specify where the
+four edges should appear. To position a subwindow by its center or
+corner, you write
+<PRE><TT>
+(At h v [Center | NW | NE | SE | SW] [Scaled | Absolute])
+</TT></PRE>
+<P>
+If you don't specify the center or a corner, the default is <TT>
+Center</TT>. If you don't specify whether <TT>h</TT> and <TT>v</TT> are scaled
+or absolute, the default for this form is <TT>Scaled</TT>, which means
+that <TT>h</TT> and <TT>v</TT> indicate the proportionate placement in the
+horizontal and vertical directions of the center or corner; in this
+case, <TT>h</TT> and <TT>v</TT> must be numbers in the range 0--1.
+Otherwise, in the absolute case, <TT>h</TT> and <TT>v</TT> represent the
+horizontal and vertical distance, in points, between the subwindow's center or
+corner, and the parent window's northwest corner.
+<P>
+To position a subwindow by its edges, you write
+<PRE><TT>
+(At west east north south [Absolute | Scaled])
+</TT></PRE><P>
+<P>
+The default in this case is <TT>Absolute</TT>, not <TT>Scaled</TT>; it
+indicates the distance in points between the subwindow's edges and the
+parent's west and north edges. Note that this is the only case in
+which you can specify the subwindow's exact size.
+<P>
+<TT>Scaled</TT> indicates the proportion of the parent window's width and
+height that mark the subwindow's boundaries. For example,
+<PRE><TT>
+(At .10 .10 .90 .90 Scaled)
+</TT></PRE><P>
+is effectively a ``10% Rim'' around the subwindow, while 
+<PRE><TT>
+(At .50 .50 1 1 Scaled)
+</TT></PRE><P>
+places the subwindow in the parent window's southeast quadrant.
+See Section <A REL=REF HREF="#sec:language-atspec"> [sec:language-atspec] </A> for more details.
+
+</DL>
+
+
+<H3>Varieties of Properties</H3>
+
+<P>
+Properties come in three varieties:  class-specific, inherited, and universal.
+
+<H4>Class-Specific Properties</H4>
+<P>
+<I>Class-specific</I> properties are defined in conjunction 
+with a specific component class, and are allowed only on components 
+of that class.  It is fine for several components to 
+use the same 
+specific property.
+<P>
+There are two very common class-specific properties: <TT>Main</TT> and
+<TT>Value</TT>.
+
+<DL>
+
+<DT><TT>Main</TT>
+<DD>  Many passive leaf components exist to display some object; such an
+      object is specified by a property called <TT>Main</TT>, whose type 
+      varies.  If this property exists, it is usually required.  Its 
+      value is usually specified by a shorthand:  it simply follows the 
+      component keyword, without the word <TT>Main</TT> or parentheses.  
+      Here are two examples, in the abbreviated format:
+<PRE><TT>
+    (Texture "Gray")
+    (Pixmap "OpenRightArrow")
+</TT></PRE><P>
+
+<DT><TT>Value</TT>
+<DD>  The <TT>Value</TT> property specifies
+      the initial state of some user-modifiable value. The type of this 
+      property depends upon the value type of the interactor.  No class 
+      has both a <TT>Main</TT> property and a <TT>Value</TT> property.
+      Here are two examples, in the abbreviated format:
+<PRE><TT>
+    (Numeric =5)
+    (TextBrowser (From "choices.txt") =(2 5 1))
+</TT></PRE><P>
+
+</DL>
+<P>
+Other specific properties (and there are many) are described with 
+their component classes in Appendix <A REL=REF HREF="longcatalog.html#ap:longcatalog"> [ap:longcatalog] </A>.
+
+<H4>Universal Properties</H4>
+
+<P><I>Universal properties</I> are applicable to components of all classes, and
+have a system-defined meaning.  There is currently only one such property:
+<TT>Name</TT>.
+
+<DL>
+<DT><TT>Name</TT> (type: <B>Symbol</B>; default: none)
+<DD>  The name of a component, for access by the application.
+      The type of the <TT>Name</TT> property is a <B>Symbol</B> and
+      it has no default value. A form
+      may not contain duplicate names; not all components
+      need to have a <TT>Name</TT> property. The property may be
+      abbreviated: <TT>(Name goButton)</TT> can be written as
+      <TT>%goButton</TT>.
+</DL>
+
+<H4 ID="sec:inherited-props">Inherited Properties</H4>
+
+<P><I>Inherited properties</I>, like universal properties, may be specified for any
+component, though they are not relevant to all classes.  But they have the
+special feature that a value specified for one component becomes the default
+value for all descendants of that component.  Thus an
+inheritable property specification applies not to one VBT, but to an entire
+subtree. The inherited properties are: <TT>Font</TT> and <TT>LabelFont</TT>;
+<TT>Color</TT> and <TT>BgColor</TT>; <TT>LightShadow</TT>, <TT>DarkShadow</TT>, and
+<TT>ShadowSize</TT>. In essence, the inherited properties determine
+the overall ``look and feel'' of the user interface.
+
+<DL>
+
+<DT><TT>Font</TT> (type: <B>Font</B>; default: see below)
+<DD>  The font for components that display selectable text,
+      such as <TT>TextEdit</TT> and the type-in part of a <TT>Numeric</TT>.
+      The type of the <TT>Font</TT> property is <B>Font</B>, and the default
+      value would be written in list format as follows:
+<PRE><TT>
+  (Font
+    (Foundry "*")
+    (Family "fixed")
+    (WeightName "medium")
+    (Slant "r")
+    (Width "normal")
+    (PointSize 120)
+    (HRes "*")
+    (VRes "*")
+    (Spacing "*")
+    (AvgWidth "*")
+    (Registry "iso8859")
+    (Encoding "1"))
+</TT></PRE><P>
+Essentially, it's a 12-point, fixed-width font that can be scaled (using 
+the <TT>Scale</TT> component).
+
+<DT><TT>LabelFont</TT> (type: <B>Font</B>; default: see below)
+<DD>  The font for components that display non-selectable text,
+      such as <TT>Text</TT>, and various browsers such as <TT>MultiBrowser</TT>
+      and <TT>FileBrowser</TT>. 
+      The type of the <TT>LabelFont</TT> property is <B>Font</B>, and the default
+      value would be written in list format as follows:
+<PRE><TT>
+  (LabelFont
+    (Foundry "*")
+    (Family "helvetica")
+    (WeightName "bold")
+    (Slant "r")
+    (Width "*")
+    (PointSize 120)
+    (HRes "*")
+    (VRes "*")
+    (Spacing "*")
+    (AvgWidth "*")
+    (Registry "iso8859")
+    (Encoding "1"))
+</TT></PRE><P>
+Essentially, it's a 12-point, boldface helvetica font that can be scaled
+(using the <TT>Scale</TT> component).
+
+<DT><TT>Color</TT> (type: <B>Color</B>; default: <TT>0 0 0</TT>)
+<DD> The foreground
+color; used for displaying text, bars, borders, the ``on'' pixels of
+pixmaps and textures, and so on.  The default foreground color is
+black.
+
+<DT><TT>BgColor</TT> (type: <B>Color</B>; default: <TT>.8 .8 .8</TT>)
+<DD>The
+background color; used for displaying text background, glue, and the
+``off'' pixels of textures.  The default background color is a light
+gray.
+
+<DT><TT>LightShadow</TT> (type: <B>Color</B>; default: <TT>1 1 1</TT>)
+<DD>The color
+used for the ``light shadow'' in implementing a Motif-like 3-d look.
+The default light shadow is white.
+
+<DT><TT>DarkShadow</TT> (type: <B>Color</B>; default: <TT>.333 .333 .333</TT>).
+<DD> The color used for the ``dark shadow'' in implementing a Motif-like
+3-d look.  The default dark shadow is a dark gray.
+
+<DT><TT>ShadowSize</TT> (type: <B>Real</B>; default: <TT>1.5</TT>).
+<DD> The absolute value of this property is the size of
+the ``shadow'' in implementing a Motif-like 3-d looks.
+The default value is 1.5 points.
+
+</DL>
+
+<H4 ID="sec:look-and-feel">Look and Feel</H4>
+
+<P>
+In order to have an effective Motif-like look and feel, you need to change the
+<TT>LightShadow</TT> and <TT>DarkShadow</TT> whenever you change the
+<TT>BgColor</TT>.  Shiz Kobara <A REL=REFENTRY HREF="references.html#kobara"> [kobara] </A> provides an excellent set of
+guidelines for choosing harmonious color triples.
+<P>
+On a grayscale monitor, objects are displayed using the intensity of their
+color. 
+<P>
+On a monochrome monitor, FormsVBT does not support a Motif-like look
+and feel.  Rather, the user interface appears ``Macintosh-like.''  For
+example, feedback on buttons is given by inverting the image of an
+object rather than raising and lowering the object; a Radio button
+uses bitmaps showing a filled or empty circle rather than a 3-d
+diamond that is either raised or recessed.  Behind the scenes, two
+things are happening.  First, on monochrome displays,
+<TT>BgColor</TT> displays as background and the other colors
+display in foreground.  Second, the FormsVBT interactors are
+implemented in such a way as to give feedback using a 2-d style when
+displaying on a monochrome dispay.
+<P>
+Actually, the FormsVBT interactors use the Motif-like style only
+when they are on a non-monochrome display <EM>and</EM> the <TT>ShadowSize</TT>
+property is positive.  Therefore, you can force a non 3-d look
+for a color or gray-scale monitor by setting the
+<TT>ShadowSize</TT> to be 0. You should probably also change the
+<TT>BgColor</TT> to be white in this case.  Alternatively, you
+may find it convenient to set <TT>ShadowSize</TT> to be a negative
+number and the shadow colors to be black, as follows:
+
+<PRE><TT>
+  (BgColor "White") 
+  (LightShadow "Black") 
+  (DarkShadow "Black") 
+  (ShadowSize -1.5)
+</TT></PRE><P>
+This setup will cause the shadows on various objects, like buttons, to
+appear as black borders.  
+
+<H2 ID="sec:language-shortcuts">Syntactic Shortcuts</H2>
+
+<P>
+This section describes various shortcuts that make FormsVBT 
+descriptions more readable. 
+
+<OL>
+
+<LI>
+   The <TT>Main</TT> property may be given simply by
+   giving its value, without the keyword or parentheses.  This is allowed 
+   only for leaf components.
+<BLOCKQUOTE>
+<P><TT>(Texture (Main "LightGray"))</TT> is same as <TT>(Texture "LightGray")</TT>
+</BLOCKQUOTE>
+
+<LI>
+   The <TT>Value</TT> property may be abbreviated by an equal sign, without
+   parentheses, <EM>and with no intervening space</EM>.
+<BLOCKQUOTE>
+<P><TT>(Numeric (Value 27))</TT> is same as <TT>(Numeric =27)</TT>
+</BLOCKQUOTE>
+   Exception: If it's a <B>TextList</B> or <B>CardinalList</B>, then
+parentheses are needed. 
+<BLOCKQUOTE>
+<P><TT>(MultiBrowser (Value 4 9 2))</TT> is same as <TT>(MultiBrowser =(4 9 2))</TT>
+</BLOCKQUOTE>
+   
+<LI>
+   The <TT>Name</TT> property may be abbreviated by a percent sign.
+<BLOCKQUOTE>
+<P><TT>(Button (Name xyz) ...)</TT> is same as <TT>(Button %xyz ...)</TT>
+</BLOCKQUOTE>
+
+<LI>
+   Any Boolean-valued property may be set true simply by giving its
+   name, without parentheses.  By convention, the default value
+   of all Boolean properties is false.
+<BLOCKQUOTE>
+<P><TT>(TypeIn (Scrollable TRUE))</TT> is same as <TT>(TypeIn Scrollable)</TT>
+</BLOCKQUOTE>
+   An element of an enumeration is a Boolean.
+<BLOCKQUOTE>
+<P><TT>(Viewport (Auto TRUE) ...)</TT> is same as <TT>(Viewport Auto ...)</TT>
+</BLOCKQUOTE>
+
+<LI>
+   A component of class <TT>Text</TT> may be given simply as a quoted
+   string, provided that no properties other than the string are 
+   specified.
+<BLOCKQUOTE>
+<P><TT>(Text "Hello")</TT> is same as <TT>"Hello"</TT>
+</BLOCKQUOTE>
+
+<LI>
+   Any leaf component from the following list
+<BLOCKQUOTE>
+   <P><TT>Bar Chisel Fill Glue Ridge</TT>
+</BLOCKQUOTE>
+    may be given by its keyword, without parentheses.
+<BLOCKQUOTE>
+<P><TT>(HBox "A Heading" (Fill))</TT> is same as <TT>(HBox "A Heading" Fill)</TT>
+</BLOCKQUOTE>
+</OL>
+
+
+<H2 ID="sec:language-macros">Macros</H2>
+
+<P>
+The FormsVBT language supports macros. A macro is a procedure that
+returns an S-expression, called the <EM>expansion</EM>, that replaces the
+macro call; that is, the expansion is itself a FormsVBT expression.
+The parameters passed to the macro are not evaluated by the call,
+although they may be evaluated in the body of the macro. A macro
+definition can appear anywhere a component or property can appear.
+<P>
+A macro-definition has the following syntax:
+<P>
+<TT>    
+(Macro <I>name [</I>BOA<I>] </I>(<I>formal</I> ... <I>formal</I>)
+<I>expression</I>)
+</TT>
+<P>
+A formal parameter is either a name or a list of the form
+<P>
+<TT>(<I>name</I> <I>default</I>)</TT>
+<P>
+where <I>default</I> is any S-expression, the default value for
+the parameter.
+<P>
+A macro uses either positional binding or keyword binding, but
+not both.  If the definition includes the keyword <TT>BOA</TT>
+(``By Order of Arguments''), then the macro uses positional
+binding, and the macro-call must have the form
+<P>
+<TT>    
+(<I>name</I> <I>actual</I> ... <I>actual</I>)
+</TT>
+<P>
+The actuals are bound to the formals in left-to-right order.  
+<P>
+If the definition does not include the keyword <TT>BOA</TT>, then
+the macro uses keyword binding, and the macro-call must have
+the form
+ <P>
+<TT>(<I>name</I> (<I>formal</I> <I>actual</I>) ... (<I>formal</I> <I>actual</I>))
+</TT>
+<P>
+The actuals are bound to the formal parameters with corresponding
+names.
+<P>
+The number of actual parameters may not exceed the number
+of formal parameters.  If there are fewer actuals than formals,
+then all the remaining formals must have default values.
+<P>
+The body of the macro-definition is an expression that is evaluated
+(expanded) when the macro is called.  Typically, the body is a quoted
+or backquoted S-expression.  As in Common Lisp macros, quoted
+S-expressions are constants; they expand into themselves.  Backquoted
+expressions are <EM>templates</EM>; all of the subexpressions are treated
+as constants except for expressions preceded by a comma or a
+comma-atsign combination.  In the expression <TT>`(A ,x B)</TT>, the
+value of <TT>x</TT> is substituted as the second element of the list; the
+expanded list will always have length 3. In the expression <TT>`(A ,@x B)</TT>,
+the value of <TT>x</TT> must be a list, and the elements of that
+list are ``spliced in'' between <TT>A</TT> and <TT>B</TT>; the expanded list
+will have length 2 (if the value of <TT>x</TT> is the empty list) or
+more.
+
+
+For example, here is a macro that puts a 2-point border around its argument,
+after surrounding the argument by 16 points of background space on all
+four sides:
+
+<PRE><TT>    
+    (Macro Boxed (x)
+      `(Border (Pen 2) (Rim (Pen 16) ,x)))
+</TT></PRE>
+<P>
+The call <TT>(Boxed (x (Text (BgColor "Red") "Warning")))</TT>
+expands to 
+
+<PRE><TT>    
+    (Border (Pen 2)
+      (Rim (Pen 16)
+        (Text (BgColor "Red") "Warning"))))
+</TT></PRE>
+<P>
+If the definition of <TT>Boxed</TT> had included the keyword <TT>BOA</TT>
+then the expression could have been written as 
+<PRE><TT>    
+(Boxed (Text (BgColor "Red") "Warning"))
+</TT></PRE>
+<P>
+Thus, for all practical purposes, we've effectively added a new
+filter-component called <TT>Boxed</TT> to the FormsVBT language.
+<P>
+Here is an example showing the use of default values:
+
+<PRE><TT>
+    (Macro Ht BOA (v (n 16)) `(Shape (Height ,n) ,v))
+</TT></PRE>
+<P>
+With this definition, the call
+<TT>
+(Ht (Button "Go!") 20)
+</TT><P>
+expands into
+
+<PRE><TT>
+    (Shape (Height 20) (Button "Go!"))
+</TT></PRE><P>
+<P>
+The call 
+<TT>
+(Ht (Button "Stop"))
+</TT><P>
+uses the default value of <TT>n</TT> and expands into
+
+<PRE><TT>
+    (Shape (Height 16) (Button "Stop"))
+</TT></PRE>
+<P>
+An example using comma-atsign:
+
+<PRE><TT>
+    (Macro V (items) 
+      `(VBox (Color "Red") Fill ,@items Fill)) 
+</TT></PRE>
+<P>
+Given this definition, the call
+<TT>(V (items ("abc" "def" "hij")))</TT> expands into
+
+<PRE><TT>
+    (VBox (Color "Red") Fill "abc" "def" "ghi" Fill)
+</TT></PRE>
+<P>
+Macros must be defined before they are called.  The effect of
+using a macro to redefine an existing name (e.g., <TT>VBox</TT>)
+is undefined. 
+<P>
+It is permitted for a macro to expand into another
+<TT>Macro</TT>-expression, or into an expression <EM>containing</EM>
+another <TT>Macro</TT>-expression.  Nested backquotes are
+permitted; they follow Common Lisp evaluation-semantics.
+<P>
+The expressions that are permitted in the body of a macro are not
+restricted to quoted and backquoted expressions.  As we have already
+seen, an expression may be the name of a formal parameter; the value
+of such an expression is the value of the corresponding actual
+parameter. Other expressions that are permitted include the following:
+
+<DL>
+<DT><TT>(Cat <I>x y z ...</I> ) </TT>
+<DD>There must be at least two arguments, and all of them must have type
+<TT>TEXT</TT>. The result has type <TT>TEXT</TT>. Example: <TT>(Cat "Gate-"
+x "-button")</TT>
+
+<DT> <TT>(Empty <I>x</I>)</TT><DD>
+The argument must be a <TT>TEXT</TT>; the result has type <TT>BOOLEAN</TT>.
+
+<DT> <TT>(Equal <I>x y</I>)</TT><DD>
+The arguments may have any type; the result has type <TT>BOOLEAN</TT>.
+
+<DT> <TT>(Length <I>x</I>)</TT><DD>
+The argument must be a <TT>TEXT</TT> or a list; the result has type <TT>INTEGER</TT>.
+(FormsVBT does not support a separate type for cardinals.)
+
+<DT> <TT>(Sub <I>s start count</I>)</TT><DD>
+The argument <I>s</I> must be a <TT>TEXT</TT>; <I>start</I> and <I>count</I>
+must be non-negative integers. The result is a <TT>TEXT</TT>.
+
+<DT> <TT>(SymbolName <I>x</I>)</TT><DD>
+The argument must be a symbol; the result is a <TT>TEXT</TT>.
+
+<DT> <TT>(Intern <I>x</I>)</TT><DD>
+The argument must be a <TT>TEXT</TT>; the result is a symbol.
+
+<DT> <TT>(Cons <I>x y</I>)</TT><DD>
+The first argument may have any type. (All S-expressions are REFs.)
+The second argument must be a list. The result is a list.
+
+<DT> <TT>(List <I>x y z ...</I>)</TT><DD>
+The arguments may have any type; the result is a list.
+
+<DT> <TT>(<TT>List*</TT> <I>x y ... z</I>)</TT><DD>
+There must be at least two arguments.
+The last argument must be a list; the others may have any type, and
+they are ``consed'' onto the front of the last argument.
+Example: <TT>(List* 1 2 3 '(a b))</TT> is same as <TT>(1 2 3 a b)</TT>
+
+<DT> <TT>(Append <I>x y z ...</I>)</TT><DD>
+All the arguments must be lists; the result is a list.
+
+<DT> <TT>(Nth <I>x n</I>)</TT><DD>
+The first argument must be a list; the second argument must be an
+integer in the range <EM>[0 .. RefList.Length(<I>x</I>) - 1]</EM>. The result
+is the nth element of the list.
+
+<DT> <TT>(NthTail <I>x n</I>)</TT><DD>
+The first argument must be a list; the second argument must be an
+integer in the range <EM>[0 .. RefList.Length(<I>x</I>) - 1]</EM>. The result
+is the nth tail of the list.
+
+<DT> <TT>(IF <I>pred x y</I>)</TT><DD>
+The value of the first argument must be a <TT>BOOLEAN</TT>. If the value
+is <TT>TRUE</TT>, then <I>x</I> is evaluated, and its value is the value
+of this expression.  Otherwise, <I>y</I> is evaluated, and its value is
+the value of this expression. I.e., this is <TT>IF</TT> as in Lisp, not
+as in Modula-3.
+
+<DT> <TT>(AND <I>x y z ...</I>)</TT><DD>
+All the arguments must be of type <TT>BOOLEAN</TT>, as is the result.
+The arguments are evaluated from left to right. If any argument
+evaluates to <TT>FALSE</TT>, the value of this expression is <TT>FALSE</TT>,
+and the remaining arguments are not evaluated. If all the arguments
+evaluate to <TT>TRUE</TT>, or if there are no arguments, then the value
+of this expression is <TT>TRUE</TT>.
+
+<DT> <TT>(OR <I>x y z ...</I>)</TT><DD>
+All the arguments must be of type <TT>BOOLEAN</TT>, as is the result.
+The arguments are evaluated from left to right. If any argument
+evaluates to <TT>TRUE</TT>, the value of this expression is <TT>TRUE</TT>,
+and the remaining arguments are not evaluated. If all the arguments
+evaluate to <TT>FALSE</TT>, or if there are no arguments, then the value
+of this expression is <TT>FALSE</TT>.
+
+<DT> <TT>(NOT <I>x</I>)</TT><DD>
+The argument must be a <TT>BOOLEAN</TT>, as is the result.
+
+<DT> <TT>(= <I>x y z ...</I>)</TT><DD>
+There must be at least two arguments.  If <I>x</I> is a number (integer
+or real), then all the other arguments must be numbers of the same
+type as <I>x</I>, and the result is <TT>TRUE</TT> if they are all equal,
+and <TT>FALSE</TT> otherwise.  If <I>x</I> is not a number, then the
+result is <TT>TRUE</TT> if all the arguments are the same REF.
+
+<DT> <TT>(&lt; <I>x y z ...</I>)</TT>
+<TT>(&lt;= <I>x y z ...</I>)</TT>
+<TT>(&gt; <I>x y z ...</I>)</TT>
+<TT>(&gt;= <I>x y z ...</I>)</TT>
+<DD> There must be at least two arguments, and they must all be numbers of
+the same type as <I>x</I>. The result is of type <TT>BOOLEAN</TT>.
+<P>
+<TT>(&lt; <I>x y z ...</I>)</TT> is same as <TT> (AND (&lt; <I>x y</I>) (&lt; <I> y z</I>) ...)</TT>
+<P>
+Likewise for the other operations.
+
+<DT> <TT>NIL</TT>
+<DD>This is a constant.
+
+</DL>
+
+<P>Macros provide one kind of extensibility to the FormsVBT language.
+Another kind of extensibility is provided by the <TT>realize</TT>
+method for a <TT>FormsVBT.T</TT> object.   The <TT>realize</TT> method allows the
+programmer to define subtypes of the <TT>VBT</TT> classes that
+FormsVBT uses, such as the <TT>FVTypes.FVButton</TT>.  However,
+it is not currently possible for the client to extend the
+language with any other <TT>VBT</TT> classes, such as <TT>
+TranslateVBT.T</TT> or a client-defined subtype of <TT>VBT.Leaf</TT>.
+See
+Section <A REL=REF HREF="../FormsVBT.i3#realize"> [realize] </A> for details.
+
+
+<H2 ID="sec:language-sizing">Layout</H2>
+
+<P>
+Every component has a <I>natural size</I> in the horizontal and
+vertical axes; these are its <I>width</I> and <I>height</I>.  It may
+also have <I>shrinkability</I> and <I>stretchability</I> in each axis,
+to allow it to adapt in a visually pleasing way as the window is
+resized. The <I>minimum</I> size of a child in each axis is its
+natural size minus its shrinkability, and the <I>maximum</I> size in
+each axis is its natural size plus its stretchability. The <I>size
+range</I> of a component in each axis is the interval between its
+minimum and its maximum.
+<P>
+The size ranges in each axis are computed for a top-level window by a
+bottom-up process. Each split computes its ranges as a function of the
+size ranges of its children; the function used depends on the type of
+the split.
+<P>
+FormsVBT uses TeX's ``boxes-and-glue'' layout model.  At the center of the
+layout strategy are two split classes, <TT>HBox</TT> and <TT>VBox</TT>.  These
+organize the layout of their children along the horizontal and vertical
+axes, respectively.  To keep the discussion simple, we will explain the
+algorithm for <TT>HBox</TT>.
+<P>
+An <TT>HBox</TT> reports its size as follows. An
+<TT>HBox</TT>'s natural width is the sum of the natural widths of its
+children; its width shrinkability is the sum of the width shrinkabilities of its
+children (but no more than its natural size), and its width stretchability
+is the sum of the width stretchabilities of its children.  An
+<TT>HBox</TT>'s height range is the intersection of the height ranges of its
+children (if the intersection is empty, the children's maximum heights
+are increased until the intersection is non-empty). The <TT>HBox</TT>'s
+natural height is the maximum of the natural heights of its children,
+projected into the range.
+<P>
+Ultimately, the shape of each top-level window is controlled by the
+user through a window manager. The window manager allows the user to
+shrink and grow a top-level window in each axis. However, the window
+manager will not let user grow a top-level window beyond its maximum
+size bounds, or shrink a top-level window below its minumum size
+bounds, in each axis. When a top-level window's size is changed, the
+new size-information is propagated down through the top-level window's
+tree of subwindows. How each split component communicates this
+information to its children depends on the type of the component.
+<P>
+When an <TT>HBox</TT> is given some screen real estate to allocate among its
+children, here's what happens. In the vertical dimension, it gives each child
+the same vertical height it has been given; that's easy. In the horizontal
+dimension, things are more interesting. The <TT>HBox</TT> computes the sum of the
+natural widths of the children; this is the natural width of the <TT>HBox</TT>.
+Ideally, the <TT>HBox</TT> would give each child its natural width and that's all
+there is to it.  If this is not possible, then either the <TT>HBox</TT> has extra
+space it must divide among the children, or the <TT>HBox</TT> must take away space
+from its children.
+<P>
+In the first case, the <TT>HBox</TT> allocates its extra space in proportion to
+the children's stretchabilities.  For example, if the first child has twice as
+much stretchability as the middle child, and three times as much as the third
+and last child, then the extra space is divided 6/11, 3/11, and 2/11 to
+the children, from left to right.  In the second case, the <TT>HBox</TT> takes
+away space from the children in proportion to the amount that each child can
+shrink.
+<P> 
+If the sum of the minimum sizes of the children is greater than the size of the
+<TT>HBox</TT>, then the <TT>HBox</TT> is said to be <I>overfull</I>.  In this case
+the children are considered in order and given their minimum sizes, as long as
+there is room.  The first child that doesn't fit is given all the space that's
+left, and the remaining children are given size zero.
+<P>
+If the sum of the maximum sizes of the children is less than the size of the
+parent, the split is said to be <I>underfull</I>. This produces a state in which
+the children are stretched larger than their maximum sizes, but in proportion
+to their relative stretchabilities.
+
+
+<H3 ID="sec:language-sizespec">How Sizes are Specified</H3>
+
+<P>
+Most of the time, sizes are not given explicitly; natural sizes are
+allowed to take effect.  Leaf components have an inherent natural size
+that is usually data-dependent.  For example, the size of a
+<TT>Text</TT> is the size of the rectangle needed to display it in the
+appropriate font.  In each axis, it has no shrinkability but
+``infinite'' stretchability.  A vertical <TT>Scroller</TT> has a fixed
+width (a natural size with no stretch and no shrink).  Its natural
+vertical size is quite small (enough to show a ``thumb''), it has no
+vertical shrinkability, and it has infinite vertical stretchability.
+In practice, a vertical scrollbar is an element of an <TT>HBox</TT>, so
+it takes on the size of the other elements of the <TT>HBox</TT>.
+<P>
+A filter component derives its size information from its child.  A
+<TT>Border</TT> component, for example, takes the size of its child, but
+adds twice the border's thickness in both dimensions.  A <TT>Guard</TT>
+takes on precisely the size of its child.
+Appendix <A REL=REF HREF="longcatalog.html#ap:longcatalog"> [ap:longcatalog] </A> describes how each component computes
+its shape.
+<P>
+A property of type <B>Size</B> is used to describe the size
+of a component along one dimension. It has the syntax
+<PRE><TT>
+    [size] [+ stretch] [- shrink]
+</TT></PRE><P>
+where size, stretch, and shrink are specified as points in real numbers.
+Stretch and shrink, if both specified, may be in either order. Spaces are
+required around the plus and minus signs. The keyword <TT>Inf</TT>
+is used to indicate a very large value for stretch; it may also
+be spelled <TT>inf</TT> or <TT>INF</TT>.
+<P>
+A natural size may be overridden, completely or in part, by specifying the
+<TT>Width</TT> and <TT>Height</TT> properties on a <TT>Shape</TT> filter.  For the
+sake of simplicity, let's consider just the <TT>Width</TT> property.  There are
+eight situations to consider: when size, stretch, and shrink are all missing;
+when just size is given; when just stretch and shrink appear; and so on. 
+<P>
+See Table <A REL=REF HREF="#flexvbt"> [flexvbt] </A> for details.
+
+<TABLE BORDER ID="flexvbt">
+<CAPTION>This table describes what <TT>Shape</TT> reports, as a function of its
+child's size. The notation <TT>&lt;q-p, q, q+r&gt;</TT> refers to the child's size:
+the natural size is <TT>q</TT>; it has <TT>p</TT> shrinkability, so it can shrink
+to a minimum of <TT>q-p</TT>, and it can stretch to a maximum of <TT>q+r</TT>.
+</CAPTION>
+
+<TBODY>
+<TR><TH><P>all missing<TD><P><TT>&lt;q-p, q, q+r></TT><BR>A no-op; reports the child's size
+
+<TR><TH><P><TT>size</TT><TD><P><TT>&lt;size, size, size></TT><BR>
+    Constrains child's natural size to <TT>size</TT>, with no stretch or shrink
+
+<TR><TH><P><TT>- shrink</TT><TD><P><TT>^lt;q-shrink, q, q+r></TT><BR>
+    Forces child's shrink to be <TT>shrink</TT>; doesn't change
+  child's natural size or stretchability
+
+<TR><TH><P><TT>+ stretch</TT><TD><P><TT>&lt;q-p, q, q+stretch></TT><BR>
+    Forces child's stretch to be <TT>stretch</TT>; doesn't change
+  child's natural size or shrinkability
+
+<TR><TH><P><TT>- shrink + stretch</TT><TD><P><TT>&lt;q-shrink, q, q+stretch></TT><BR>
+    Changes child's shrink to be <TT>shrink</TT> and its 
+ stretch to be <TT>stretch</TT>; doesn't change child's natural size
+
+<TR><TH><P><TT>size - shrink</TT><TD><P><TT>&lt;size-shrink, size, size></TT><BR>
+    Changes child's size to be <TT>size</TT> with no stretchability
+  and with <TT>shrink</TT> shrinkability
+
+<TR><TH><P><TT>size + stretch</TT><TD><P><TT>&lt;size, size, size+stretch></TT><BR>
+    Changes child's size to be <TT>size</TT> with no shrinkability
+ and with <TT>stretch</TT> stretchability
+
+<TR><TH><P><TT>size - shrink + stretch</TT><TD><P><TT>&lt;size-shrink, size, size+stretch></TT><BR>
+    Changes child's size to be <TT>size</TT> with <TT>shrink</TT>
+ shrinkability and with <TT>stretch</TT> stretchability
+</TBODY>
+</TABLE>
+<P>
+A few common paradigms merit mention. First, to 
+remove whatever inherent stretchability a component has, use
+<PRE><TT>
+    (Shape (Width + 0) ...)
+</TT></PRE><P>
+Second, to make a component stretchy regardless of its inherent 
+stretchiness, use
+<PRE><TT>
+    (Shape (Width + Inf) ...)
+</TT></PRE><P>
+And third, to 
+set a component to a particular size, e.g, 100, use:
+<PRE><TT>
+    (Shape (Width 100) ...)
+</TT></PRE><P>
+
+
+<H3>Precedence of Size Constraints</H3>
+<P>
+The various constraints on the size of an object sometimes come into 
+conflict.  They take precedence as follows:
+
+<OL>
+<LI> Downward-propagating constraints:  window size forced by Trestle,
+vertical size forced by an <TT>HBox</TT>, and so on.
+
+<LI> Explicit size information, given by a <TT>Shape</TT> filter.
+
+<LI> Upward-propagating natural size information: inherent size of leaves,
+filters taking size from their children, an <TT>HBox</TT> taking width from the
+sum of its children's widths, on so on.
+</OL>
+
+
+<H2 ID="sec:language-atspec">Subwindows</H2>
+
+<P>In addition to organizing child components by grouping them
+horizontally or vertically, FormsVBT allows child components to
+overlap. The split that does this organization is called a
+<TT>ZSplit</TT>.
+<P>
+There are two very different ways to use a <TT>ZSplit</TT>.
+
+<OL>
+<LI> If you don't like arranging elements in horizontal and
+vertical boxes, you could place each element at a specific
+location.  Many UI Builders follow this model; it has its
+advantages and disadvantages.  We rarely use this style at SRC.
+
+<LI> You can use <TT>ZSplit</TT>s as a container for
+overlapping, often transient <I>subwindows</I> that are not
+installed as top-level windows.
+
+</OL>
+<P>
+Without loss of generality, we'll talk just about the second style
+of use.
+<P>
+A <TT>ZSplit</TT> is written like this:
+
+<PRE><TT>
+(ZSplit
+      <I>The first child:</I>
+  (ZBackground ...)
+      <I>Any number of other z-children:</I>
+  (ZChild ...)
+  (ZChassis ...)
+  ...
+  )
+</TT></PRE>
+
+<P>
+The first child is called the <I>background</I>.  It is displayed
+below all other children.
+<P>
+The other children are ordered from bottom to top in the
+z-dimension.  A non-background child of a <TT>ZSplit</TT> should
+be a <TT>ZChild</TT> or a <TT>ZChassis</TT>.  It has an <TT>Open</TT>
+property to say if it should be initially visible (``mapped'')
+or invisible (``unmapped'').
+<P>
+It also has an <TT>At</TT> property to control where it should
+appear when it is made visible.  The syntax of the <TT>At</TT>
+property is described below.
+<P>
+A <TT>PopButton</TT> is a button that causes a named subwindow
+to appear.  A <TT>PopMButton</TT> is a version of <TT>PopButton</TT>
+that is appropriate for inclusion in a menu.
+<P>
+A <TT>CloseButton</TT> is a button that causes a named subwindow
+to disappear.
+<P>
+A <TT>ZGrow</TT> is a button that is used to change the size of a
+subwindow.  A <TT>ZMove</TT>-component is used to change a
+subwindow's position by dragging.
+<P>
+A <TT>ZChassis</TT> is just a <TT>ZChild</TT> that has a standard
+configuration, including a frame whose banner includes a
+<TT>CloseButton</TT>, a title inside a <TT>ZMove</TT>, and a
+<TT>ZGrow</TT>.
+
+
+<H4 ID="sec:atprop">The ``At'' Property</H4><!--SPOT CLASS=INDEX ID="idx_At_At"-->
+<P>
+The location of a subwindow (denoted by a <TT>ZChild</TT> and
+<TT>ZChassis</TT> component) is specified using a property named
+<TT>At</TT>. The <TT>At</TT> property is a list that can take one of two
+forms: the ``corner'' form (two numbers, an optional corner, and an
+optional coordinate type); or the ``edges'' form (four numbers and an
+optional coordinate type). The coordinate types are either <TT>
+Absolute</TT>, which means that the coordinates represent the distance in
+points from the background window's northwest corner, or <TT>Scaled</TT>,
+which means that the coordinates represent a fraction (a number in the
+range 0--1) of the background window's width or height. Here are the
+two forms of the <TT>At</TT> property:
+<TT>
+(At <I>h</I> <I>v</I> [Center | NW | SW | NE | SE] [Scaled | Absolute] )
+(At <I>west</I> <I>east</I> <I>north</I> <I>south</I> [Absolute | Scaled] )
+</TT>
+
+<P>
+If the list contains two numbers, then these coordinates specify the
+center of the subwindow.  If the list contains two numbers and a
+corner, then these coordinates specify the position of that corner of
+the subwindow.  In either case the default coordinate type is 
+<TT>Scaled</TT>.
+<P>
+For example, <TT>(At 0.5 0.5)</TT> means that the center of the
+subwindow should be placed halfway across and halfway down the
+background window, i.e., that it should be centered in the background
+window. (If there is no <TT>At</TT> property, this is the default.)
+<P>
+<TT>(At 0.2 0.3 NW)</TT> means that the northwest corner of the
+subwinbdow should be place 20% of the way across the background
+window, and 30% down. This can also be written as <TT>(At 0.2 0.3
+NW Scaled)</TT>. Scaled coordinates must be written as numbers (integers
+or reals) in the range 0--1.
+<P>
+<TT>(At 100 237.5 Absolute)</TT> means that the center of the subwindow should be
+placed 100 points east and 237.5 points south of the background
+window's northwest corner. 
+<P>
+<TT>(At 100 237.5 SE Absolute)</TT> means
+that the subwindow's southeast corner should be placed at that
+position.
+<P>
+Alternatively, you may specify the <EM>edges</EM> of the subwindow by
+using a list with four numbers, representing the west, east, north,
+and south edges, in that order. The numbers may be followed by a
+coordinate type; the default coordinate type in the 4-number form is
+<TT>Absolute</TT>, not <TT>Scaled</TT> as it is in the 2-number form.
+<P>
+If the coordinate type is <TT>Absolute</TT>, then the coordinates
+represent the distance in points from the background window's
+northwest corner; this is the only form in which you can specify the
+subwindow's actual size. For example, <TT>(At 20 120 60 300)</TT> means
+that the subwindow's width should be 100 points wide (120 - 20) and
+240 points tall (300 - 60), and that its northwest corner should be
+20 points east and 60 points south of the background window's
+northwest corner.
+<P>
+<TT>(At .10 .90 .30 1 Scaled)</TT> means that the subwindow occupies the
+middle 80% horizontally (.90 - .10) and the bottom 70% (1 - .30) of
+the background window. 
+<P>
+<TT>(At .5 1 .5 1 Scaled)</TT> would place the
+subwindow in the southeast quadrant of the background window.
+<P>
+Here are some additional examples:
+
+<PRE><TT>
+    (ZChassis %A (At .2 .3 NW) ...)
+    (ZChassis %B (At 130 200 SE) ...)
+    (ZChassis %C (At .1 .6 .2 1) ...)
+    (ZChassis %D (At 20 120 60 300)
+</TT></PRE>
+<P>
+If the <TT>ZSplit</TT> containing
+the subwindow is 200 points wide and 300 points high,
+here is what each specification means:
+
+<UL>
+<LI>
+Subwindow <TT>A</TT> has its northwest corner at (40, 90). That is, its northwest
+corner is 40 points to the right of 
+the <TT>ZSplit</TT>'s left edge and 90 points below the top.
+<LI> 
+Subwindow <TT>B</TT> has its southeast corner at (130, 200).
+<LI> 
+Subwindows <TT>C</TT> and <TT>D</TT> 
+have the same positions: The northwest corner is at (20, 60)
+and the southeast corner is at (120, 300).
+</UL>
+<P>
+The actual location of a subwindow has two additional
+restrictions.  First, FormsVBT will ensure that the size it gives
+a subwindow will be within the subwindow's acceptable dimensions: the
+northwest corner stays fixed, and the southwest corner is
+adjusted.  Second, FormsVBT will not pop up a subwindow with
+its northwest corner north or west of the visible portion of
+its parent; it will move the subwindow away from the specified
+position in order to bring it into view.
+
+
+<H2 ID="sec:language-shortcatalog">Catalog of Components</H2>
+
+<P>
+This section provides a brief description of current FormsVBT 
+components. Appendix <A REL=REF HREF="longcatalog.html#ap:longcatalog"> [ap:longcatalog] </A> describes the details of 
+each component.
+
+<H4>Visual components</H4>
+<P>
+These leaf and filter components have no interactive behavior; they are used to
+provide appearance and positioning control.
+
+<DL>
+<DT><TT>Border</TT> <DD> displays space, in the foreground color, around its child 
+<DT><TT>Rim</TT> <DD> displays space, in the background color, around its child 
+<DT><TT>Pixmap</TT> <DD> displays a pixmap, centered 
+<DT><TT>Text</TT> <DD> displays a single-line text 
+<DT><TT>Texture</TT> <DD> displays a textured rectangle
+
+<DT><TT>Bar</TT> <DD> a line in the foreground color; child of HBox or VBox 
+<DT><TT>Glue</TT><DD> a piece of background filler; child of HBox or VBox 
+<DT><TT>Fill</TT><DD> an infinitely stretchable background filler; child of HBox or VBox
+
+<DT><TT>Frame</TT> <DD> draws a 3-d border around its child
+<DT><TT>Chisel</TT> <DD> like Bar, but line appears 3-d, chiseled into background
+<DT><TT>Ridge</TT> <DD> like Bar, but line appears 3-d, raised above background
+
+<DT><TT>Scale</TT> <DD> enlarges or shrinks child 
+<DT><TT>Shape</TT> <DD> constrains shape of child
+</DL>
+
+<P>
+The following filters respond to mouse activity. They do not report
+events to the application program.
+
+<DL>
+<DT><TT>Viewport</TT> <DD> adds scrollbars around a child for panning
+<DT><TT>Filter</TT> <DD> controls reactivity and visibility of child
+</DL>
+
+
+<H4>Basic Interactors</H4>
+<P>
+These are leaf components that have a user-modifiable value.  They 
+should always be named so that the application will have access to 
+the value.
+
+<DL>
+<DT><TT>Numeric</TT> <DD> an editable integer 
+<DT><TT>Browser</TT> <DD> 
+    a group of lines of text, of which one may be selected 
+<DT><TT>MultiBrowser</TT> <DD> 
+    a <TT>Browser</TT> in which multiple lines may be selected
+<DT><TT>Generic</TT> <DD> a placeholder to be taken over by the application 
+<DT><TT>Scroller</TT> <DD> a vertical or horizontal scrollbar
+</DL>
+
+
+<H4>Text Editing Interactors</H4>
+<P>
+These leaf components provide extensive text editing facilities.
+
+<DL>
+<DT><TT>TypeIn</TT> <DD> an editable-text region, typically single-line 
+<DT><TT>TextEdit</TT><DD> a scrollable text-editing area 
+<DT><TT>Typescript</TT> <DD> a <TT>TextEdit</TT> with a reader and writer
+</DL>
+
+
+<H4>File Browser Interactors</H4>
+<P>
+A <TT>FileBrowser</TT> displays the names of the files in a
+directory, initially the current working directory.  The user
+can traverse the file system by double-clicking on elements in
+the browser.  There are two related leaf interactors that
+facilitate traversal.
+
+<DL>
+<DT><TT>FileBrowser</TT> <DD> the list of filenames
+<DT><TT>Helper</TT> <DD> an area for typing filenames 
+<DT><TT>DirMenu</TT> <DD> a pulldown menu containing the names of
+  parent directories
+</DL>
+
+
+<H4>Basic Buttons</H4>
+
+<P>These filters take a child and add some interactive behavior to it.
+
+<DL>
+<DT><TT>Button</TT> <DD> generates an event when clicked 
+<DT><TT>Guard</TT> <DD> click once to remove and expose underlying component
+<DT><TT>TrillButton</TT> <DD> generates an event while mouse is down
+</DL>
+
+
+<H4>Boolean and Radio Buttons</H4>
+
+<P>A <TT>Boolean</TT> and <TT>Choice</TT> are types of buttons that also 
+maintain some state.
+A <TT>Radio</TT> is a ``grouper'': it takes a child and changes
+neither its appearance nor its behavior.  
+Rather, it specifies that it and all its descendants are members 
+of one ``group'' for some particular purpose.
+
+<DL>
+<DT><TT>Boolean</TT> <DD> toggles on/off when clicked 
+<DT><TT>Choice</TT> <DD> a radio button; selects itself when clicked 
+<DT><TT>Radio</TT> <DD> defines a group of Choice components
+</DL>
+
+
+<H4>Drag and Drop</H4>
+
+<P>These buttons provide a way to implement ``drag-n-drop''
+and to get semantic feedback.
+
+<DL>
+<DT><TT>Source</TT> <DD> a button that is dragged 
+<DT><TT>Target</TT> <DD> the thing into which a <TT>Source</TT> is dropped
+</DL>
+
+
+<H4>Menus</H4>
+
+<DL>
+<DT><TT>Menu</TT> <DD> a pull-down menu; pulls down when anchor is clicked 
+<DT><TT>MButton</TT> <DD> a pull-down menu element; generates an event on up-click
+</DL>
+<P>
+Other buttons that can be put into a menu are <TT>Boolean</TT>, <TT>Choice</TT>,
+and <TT>PopMButton</TT>.
+
+
+<H4>Horizontal and Vertical Splits</H4>
+<P>
+Splits take an arbitrary number of children and lay them out in some 
+fashion. These splits implement the TeX-like ``boxes-and-glue'' layout model.
+
+<DL>
+<DT><TT>HBox</TT> <DD> horizontal layout
+<DT><TT>VBox</TT> <DD> vertical layout
+<DT><TT>HTile</TT> <DD> 
+	an <TT>HBox</TT> with user-adjustable divider bars between children
+<DT><TT>VTile</TT> <DD> 
+	 <TT>VBox</TT> with user-adjustable divider bars between children
+<DT><TT>HPackSplit</TT> <DD> 
+    arranges children like words in a paragraph
+<DT><TT>VPackSplit</TT> <DD> 
+    arranges children like paragraphs in a multi-column newspaper
+</DL>
+<P>
+The layout algorithm for <TT>HTile</TT> and <TT>VTile</TT> is slightly
+different than for <TT>HBox</TT> and <TT>VBox</TT> when the size of one of
+its children changes. In the case of the tiles, the algorithm tries to
+keep existing children with their same relative sizes, which might
+have been adjusted by the user from their initial assignments. The
+<TT>HBox</TT> and <TT>VBox</TT> always re-assign sizes, independent of the
+current sizes of the children.
+
+
+<H4>Subwindows</H4>
+
+<P>A <TT>ZSplit</TT> organizes its children as overlapping subwindows. The following
+components allow the user to control the appearance, location, and size of
+subwindows.
+  
+<DL>
+<DT><TT>CloseButton</TT> <DD> closes a subwindow 
+<DT><TT>PopButton</TT> <DD> pops up a subwindow 
+<DT><TT>PopMButton</TT> <DD> a menu item that pops up a subwindow 
+<DT><TT>ZBackground</TT> <DD> needed around the background child 
+<DT><TT>ZChild</TT> <DD> needed around non-background children
+  <TT>ZGrow</TT> <DD> a button for resizing a subwindow 
+<DT><TT>ZMove</TT> <DD> a button for repositioning a subwindow 
+<DT><TT>ZChassis</TT> <DD> a handy combination of <TT>ZChild</TT>, 
+    <TT>CloseButton</TT>, <TT>ZMove</TT>, and <TT>ZGrow</TT>
+</DL>
+
+
+<H4>Temporal Windows</H4>
+
+<DL>
+<DT><TT>TSplit</TT> <DD> a temporal window that organizes its children so that
+     exactly one child is visible at any given time.
+<DT><TT>LinkButton</TT> <DD> displays a specific child in a <TT>TSplit</TT>.
+<DT><TT>PageButton</TT> <DD> switches children displayed in a <TT>TSplit</TT>.
+</DL>
+
+<P>A common use of a <TT>TSplit</TT> is to make an arbitrary component
+appear or disappear under user control. The component whose visibility
+is to be toggled is put into a <TT>TSplit</TT> with one sibling: a
+component with no size. A
+<TT>LinkButton</TT> to the component will cause it to appear, and another
+<TT>LinkButton</TT> to the sibling will effectively cause the component to
+disappear.
+

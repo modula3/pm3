@@ -1,0 +1,26 @@
+<TITLE> Generic (leaf) </TITLE>
+<H1> Generic (leaf) </H1> 
+    
+<P>
+ A placeholder, intended to be taken over by the application.  
+Should always be given a name, so the application can access it. 
+Often has some application-defined interactive behavior.  Until taken 
+over, this has the shape and appearance of <BR>
+<TT>    (Shape (Width 0 + 0) (Height 0 + 0) "")</TT>
+
+<DL>
+
+<DT><B>Notes</B><DD> To take over a Generic, use <TT>PutGeneric</TT>; to retrieve
+the VBT, use <TT>GetGeneric</TT>.  A Generic is implemented as
+a Filter.T, whose child is the VBT specified using
+<TT>PutGeneric</TT>.  Whenever <TT>PutGeneric</TT> is invoked, the
+size of the new VBT is propagated appropriately.
+
+Generic should be used only when there is no comparable
+interactor provided by FormsVBT, or when the VBT will change
+dynamically.  If you want to use a <I>subtype</I> of an interactor,
+you should override the <TT>realize</TT> method of the FormsVBT
+object; see <TT>FormsVBT.i3</TT>.
+    
+</DL>
+

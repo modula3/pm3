@@ -28,7 +28,7 @@ TYPE T <: Filter.T;
    instead, it repaints by copying from the off-screen buffer.
 
    In addition to its off-screen buffer, a "DblBufferVBT.T" maintains a
-   \it{saved buffer} and provides operations for copying the off-screen buffer
+   <I>saved buffer and provides operations for copying the off-screen buffer
    to and from the saved buffer. This is convenient for building up a
    background to be restored on each frame of an animation, for example.
    The initial content of the saved buffer is a conceptually infinite pixmap
@@ -46,7 +46,7 @@ PROCEDURE Restore(v: VBT.T); <* LL.sup < v *>
    buffer of the first such ancestor to be a copy of its saved buffer. *)
 
 (* "Save(v)" and "Restore(v)" force all painting operations (paint
-   \it{batches}, in Trestle terminology) from "v" up to the relevant
+   <I>batches, in Trestle terminology) from "v" up to the relevant
    off-screen buffer. This will work smoothly if "v" is the only leaf
    decendant of the relevant double buffer (i.e., if all splits between them
    are filters). Otherwise, you may get the wrong answer due to unforced paint

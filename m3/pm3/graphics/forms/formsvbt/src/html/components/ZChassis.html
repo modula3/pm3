@@ -1,0 +1,58 @@
+<TITLE> ZChassis (filter) </TITLE>
+<H1> ZChassis (filter) </H1> 
+    
+<P>
+ A handy setup for a standard, titled, draggable subwindow
+    (a non-background child of a ZSplit).  The top of the
+    subwindow contains a banner with a <I>close button</I>, a
+    <EM>title</EM> that can be used to drag the window, and a
+    <EM>grow button</EM>.  
+<HR><DL>
+
+<DT>At<DD> (List, <TT>0.5 0.5</TT>) <BR> This determines the initial
+    position of the subwindow.  See ZChild.
+
+<DT>Open<DD> (Boolean, <TT>FALSE</TT>) <BR> If true, the subwindow is initially
+    visible.  See ZChild.
+
+<DT>Title<DD> (Sx, <TT>(Text "&lt;Unnamed>")</TT>) <BR> This is the
+    text inside the draggable part of the title bar. 
+
+<DT>NoClose<DD> (Boolean, <TT>FALSE</TT>) <BR> If true, the close button
+    is omitted.
+
+</DL><HR>
+
+<DL>
+
+<DT><B>Shape</B><DD> Shape of its child plus borders, frames, and the title bar.
+
+<DT><B>See Also</B><DD> ZSplit and ZChild
+
+</DL>
+
+<P>Except for some details of the feedback and the handling of keywords,
+ZChassis could be defined by a macro:
+
+<PRE><TT>
+  (Macro ZChassis ((Open   FALSE)
+                   (At     (0.5 0.5))
+                   (Title  "&lt;Untitled>")
+                   child)
+    `(ZChild
+       (Open ,Open)
+       (At ,@At)
+       (Stable
+         (Border
+           (VBox
+             (HBox
+               (CloseButton "C")
+               Bar
+               (Shape (Width + Inf) (ZMove ,Title))
+               Bar
+               (ZGrow "G"))
+             Bar
+             (Frame ,child))))))
+</TT></PRE>
+
+

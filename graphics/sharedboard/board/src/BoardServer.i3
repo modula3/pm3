@@ -31,7 +31,7 @@ EXCEPTION Failed (TEXT);
    The state of the board is saved in the specified directory.
 
    The "open" method returns an already created board. (If the board is
-   not already {\em loaded} in the memory of the server, it gets loaded from
+   not already <EM>loaded</EM> in the memory of the server, it gets loaded from
    the saved state. Subsequent "open" calls use the in-memory copy.)
 
    The stable state of the board is updated in the background.

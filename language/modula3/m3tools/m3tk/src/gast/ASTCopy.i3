@@ -64,10 +64,10 @@ call of "NEW(Closure, callback := YourCallback).init()". The closure can be
 subtyped to provide for shared state to be accessed during the
 callbacks. The "vm" argument can be used to control when the callback
 are made in the way described in the "ASTWalk" interface. On an
-{\em entry} callback to a node, the value of the "ncopy" will be "NIL".
-On an {\em exit} callback, "ncopy" will refer to the newly created copy.
+<EM>entry</EM> callback to a node, the value of the "ncopy" will be "NIL".
+On an <EM>exit</EM> callback, "ncopy" will refer to the newly created copy.
 
 The "IgnoreChildren" procedure can be called to suppress the copying
 of a node's children. Once control leaves the node from which the call
 was made, the suppression is disabled. It is only effective when
-called in {\em entry} mode. *)
+called in <EM>entry</EM> mode. *)

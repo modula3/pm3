@@ -115,11 +115,11 @@ TYPE
    cached values are used. 
 
    Nodes can be damaged in two ways: 
-   \begin{enumerate}
-   \item By operations that change the scene DAG (i.e.\ the group operations
+   <OL>
+   <LI>By operations that change the scene DAG (i.e. the group operations
          "add", "remove", and "flush").
-   \item By changes in the value of an attached property. 
-   \end{enumerate}
+   <LI>By changes in the value of an attached property. 
+   </OL>
 
    Calling "root.adjust(time)" serves two purposes: It reevaluates all the 
    properties attached to all descendants of "root", and damages those nodes 

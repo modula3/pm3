@@ -7,10 +7,10 @@
 
 
 (* In accordance with the terminology used by Trestle, we refer to key 
-   transitions as to {\em key events}. A key event is represented
+   transitions as to <EM>key events</EM>. A key event is represented
    by a record "KeyCB.Rec".
 
-   A {\em key event callback object} is an object which has one
+   A <EM>key event callback object</EM> is an object which has one
    method, "invoke". Each geometric object has a stack of key callback
    objects. When a key event "kr" is relayed to a particular geometric
    "o", the the message "cb.invoke(kr)" is sent to the top callback
@@ -46,8 +46,8 @@ TYPE
    "modifiers" is the set of modifiers (Shift, Control, Mouse Buttons, etc.) 
    that was active when the transition took place.
 
-   {\em NOTE: There is a fair chance that I will add other fields to "Rec",
+   <EM>NOTE: There is a fair chance that I will add other fields to "Rec",
    once we have gained more experience with event handling. So far, I pretty
-   much mimick (part of) what is there in "VBT.KeyRec".} *)
+   much mimick (part of) what is there in "VBT.KeyRec".</EM> *)
 
 END KeyCB.

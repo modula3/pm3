@@ -23,8 +23,8 @@
 
 (* The traditional method for specifying the syntax of a programming
 language is in some variant of Backus-Naur form, or BNF. In this
-method, one specifies the syntax by a grammar consisting of {\it
-productions}. Each production defines the syntax of one element of the
+method, one specifies the syntax by a grammar consisting of <I>
+productions</I>. Each production defines the syntax of one element of the
 language, say, a statement. For example, the Modula-3 "WHILE"
 statement is defined as follows:
 
@@ -38,9 +38,9 @@ right-hand side are called "terminals". A terminal may denote a
 language keyword like "WHILE" or an entity that is defined elsewhere,
 for example a "TEXT" literal defined by the Modula-3 token grammar.
 
-Such grammars define the {\it external} form of programs, which is
+Such grammars define the <I>external</I> form of programs, which is
 biased towards ease of reading by programmers and parsing by
-compilers. As a result they tend to obscure the {\it essential}
+compilers. As a result they tend to obscure the <I>essential</I>
 structure of the language. For example, what is really important about
 a "WHILE" statement is that it contains an "Expr" and an "S"
 construct; the keywords "WHILE", "DO" and "END" could be altered
@@ -52,10 +52,10 @@ representation of programs that carries only the essential
 information.
 
 We will refer to the syntax of the external form of a language as the
-{\it concrete} syntax. If we abstract from the representational
-details of the concrete syntax, what we are left with is an {\it
-abstract} syntax for the language, defined by an {\it abstract
-grammar}.
+<I>concrete</I> syntax. If we abstract from the representational
+details of the concrete syntax, what we are left with is an <I>
+abstract</I> syntax for the language, defined by an <I>abstract
+grammar</I>.
 
 Like the grammar for the concrete syntax, the abstract grammar is also
 defined in terms of productions, terminals and non-terminals. To
@@ -65,8 +65,8 @@ for productions, one that is closer to the syntax of aggregate types
 facilitates the mapping of the abstract syntax into Modula-3 data
 types.
 
-The abstract grammar defines a finite set of {\it constructs}
-using a finite set of {\it productions}, defined according to
+The abstract grammar defines a finite set of <I>constructs</I>
+using a finite set of <I>productions</I>, defined according to
 the conventions in the Modula-3 report, as follows:
 
 |  Production = Construct "=" Aggregate | Choice .
@@ -87,9 +87,9 @@ The abstract grammar production for a "WhileSt" might be defined as:
 |  STM = WhileSt | ... .
 
 In the same way that a program defined by the concrete grammar has an
-associated representation as a {\it parse tree}, so the equivalent
+associated representation as a <I>parse tree</I>, so the equivalent
 program defined in terms of the abstract grammar has a representation
-as an {\it abstract syntax tree}. The leaves of the tree denote
+as an <I>abstract syntax tree</I>. The leaves of the tree denote
 terminal constructs, the interior nodes represent non-terminal
 constructs, and the attribute names label the branches. The above
 definition of the abstract grammar permits a node to have either a
@@ -107,13 +107,13 @@ AST and its associated parse tree will always be similar in form;
 however, the AST will usually contain less nodes, due to the reduction
 in the number of constructs.
 
-It is important to note that when we talk of a {\it tree}, we are
-referring to the {\it abstraction} of a tree. It is not implied
+It is important to note that when we talk of a <I>tree</I>, we are
+referring to the <I>abstraction</I> of a tree. It is not implied
 that there is an actual data structure containing records and
 pointers. Such a structure is only one possible representation,
 although a convenient and common choice.
 
-\subsection{Specifying an AST in Modula-3}
+<H2> Specifying an AST in Modula-3 </H2>
 
 This section describes in general terms how the definition of a
 language in terms of an abstract grammar, and its associated AST, is
@@ -139,7 +139,7 @@ LM3 allows object types to be annotated with "abstract" or
 "specification" fields, thus permitting one to reason about these fields
 without having to commit to a representation as an actual object
 field. We will use specification fields to denote the attributes of an
-aggregate production. LM3 also provides the notion of a {\it sequence}
+aggregate production. LM3 also provides the notion of a <I>sequence</I>
 as a primitive, again allowing the representation to be deferred.  We
 will use this facility to denote attributes that represent sequences
 of nodes.
@@ -176,7 +176,7 @@ requirements and processing time. It is not the role of this interface
 to make those choices, only to provide mechanisms and standards to
 support them.
 
-\subsection{Augmenting an AST}
+<H2> Augmenting an AST </H2>
 
 There are many reasons why we might want to augment an AST definition
 with additional constructs and attributes. The overriding reason is
@@ -205,7 +205,7 @@ since there is nothing to prevent the augmented attributes in several
 nodes having as value a reference to the same node, thus forming a
 directed graph structure. However, it is conventional to continue to
 use the term "AST" to refer to the entire structure. Note also that, unlike
-the the attributes that denote the {\it pure} abstract syntax tree,
+the the attributes that denote the <I>pure</I> abstract syntax tree,
 the additional attributes can be of any type that is provided by the
 Modula-3 language.
 
@@ -214,7 +214,7 @@ generate additional information that is of potential use by other
 tools.  It is generally very much easier to attach this information
 directly to the AST than to create a separate data structure.
 
-\subsection{AST Layers}
+<H2> AST Layers </H2>
 
 The previous section suggested augmenting the AST with attributes that
 capture the result of an analysis by a given tool. In a rich
@@ -224,21 +224,21 @@ declared in the same interface, the result will be overwhelming. In
 addition, the scope for separate development will be greatly reduced.
 Previous AST designs, for example, DIANA, have specified the
 attributes for a fixed set of tools, thus placing additional tools at
-a disadvantage. One solution is to define a {\it property set}
+a disadvantage. One solution is to define a <I>property set</I>
 attribute on each node, that is capable of storing many attributes of
 different types, but this has the disadvantages of storage and access
 time overheads plus a more complex programming interface.
 
 The basic idea is to define each set of nodes and attributes independently,
 and then define an AST as a combination of some or all of these
-sets. We refer to each set as an AST {\em layer} or, occasionally,
-a {\em view}. 
+sets. We refer to each set as an AST <EM>layer</EM> or, occasionally,
+a <EM>view</EM>. 
 
-\subsection{AST Layers in Modula-3}
+<H2> AST Layers in Modula-3 </H2>
 
 This section describes how the notion of separate layers of an AST
 is mapped into the facilities available in Modula-3. The solution
-makes extensive use of {\it interfaces} and {\it partial revelations}. 
+makes extensive use of <I>interfaces</I> and <I>partial revelations</I>. 
 
 An AST for a specific language is specified as a set of interfaces,
 which share the naming convention "LLAST", where "LL" is a
@@ -283,7 +283,7 @@ Using these conventions, interfaces are constructed as follows. The
 |         as_stmt_s: SEQUENCE OF STM; *>
 |
 
-Now consider a {\em static semantic} layer for the above grammer, in which
+Now consider a <EM>static semantic</EM> layer for the above grammer, in which
 all "EXPR" nodes are given a "type", denoted by the class "LTYPE".
 
 |  INTERFACE LLAST_SM;
@@ -295,7 +295,7 @@ all "EXPR" nodes are given a "type", denoted by the class "LTYPE".
 |       sm_ltype: LTYPE; *>
 
 
-\subsubsection{Defining the concrete representation}
+<H3> Defining the concrete representation </H3>
 
 In practice there are two ways in which to represent the abstract
 attributes defined in the "FIELDS" specifications, either directly as
@@ -396,7 +396,7 @@ the extensibility of the environment. It is perhaps unfortunate that
 Modula-3 does not support multiple inheritance, which would avoid the
 nuisance of the layer linearisation.  *)
 
-(* \subsection{Basic Definitions} *)
+(* <H2> Basic Definitions </H2> *)
 
 INTERFACE AST;
 

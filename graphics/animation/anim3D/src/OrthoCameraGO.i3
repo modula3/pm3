@@ -13,11 +13,10 @@
    and the parallelopiped's height and width (which is determined by height
    and aspect ratio). The figure below illustrates the role of the parameters:
    
-   \begin{center}
-   \begin{tabular}{c}
-   \psfig{figure=images/OrthoCamera.ps,width=4in,silent=} 
-   \end{tabular}
-   \end{center}
+   <TABLE><TR><TD>
+   \psfigfigure=images/OrthoCamera.ps,width=4in,silent= 
+   </TABLE>
+
 *)
 
 INTERFACE OrthoCameraGO;
@@ -35,23 +34,23 @@ TYPE
 PROCEDURE New (from, to, up : Point3.T; height : REAL) : T;
 (* "New(from,to,up,height)" creates a new orthographic camera "cam" and 
    returns it. It also attaches the following properties to "cam":
-   \begin{verbatim}
+   <PRE>
       (CameraGO.From,PointProp.NewConst(from))
       (CameraGO.To,PointProp.NewConst(to))
       (CameraGO.Up,PointProp.NewConst(up))
       (CameraGO.Aspect,RealProp.NewConst(1.0))
       (Height,RealProp.NewConst(height))
-   \end{verbatim}
+   </PRE>
 *)
 
 VAR
   Height : RealProp.Name;
-(* In addition to the properties observed by all \type{GO}{T}'s and 
-   \type{CameraGO}{T}'s, there is one additional property that is 
+(* In addition to the properties observed by all "GO.T"'s and 
+   "CameraGO.T"'s, there is one additional property that is 
    observed by "OrthoCameraGO.T"'s. 
    "Height" is the name of a property that determines the height 
    of the viewing parallelopiped; it associates with a property value of 
-   type \type{RealProp}{Val}. The width of the parallelopiped is the height 
+   type "RealProp.Val". The width of the parallelopiped is the height 
    times the aspect ratio. *)
 
 END OrthoCameraGO.

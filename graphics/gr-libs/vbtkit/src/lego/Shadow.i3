@@ -20,7 +20,7 @@
    chiseling a ``groove'' into the background.  A 3-D line has
    the visual effect of being either a ``ridge'' above the
    background or a ``groove'' chiseled into the background (see
-   Figure~\ref{fig:shadows}).
+   Figure&nbsp;<A REL=REF.NUMBER HREF="fig:shadows"> [fig:shadows] </A>).
 
    These visual effects are actually quite simple to accomplish
    by drawing parts of the 3-D border or 3-D line using a dark
@@ -38,36 +38,30 @@
    The following chart summarizes the visual effects:
 
 
-             \begin{center}
-             \begin{tabular}{l|l|l}
-
-             {\em Style}   & {\em North/West} & {\em South/East}\\
-             \hline
-                 Flat      &   Background  &  Background\\
-                 Raised    &   Light       &  Dark\\
-                 Lowered   &   Dark        &  Light\\
-                 Ridged    &   Light/Dark  &  Dark/Light\\
-                 Chiseled  &   Dark/Light  &  Light/Dark
-
-             \end{tabular}
-             \end{center}
+<TABLE><TR><TD><EM>Style</EM><TD> <EM>North/West</EM><TD> <EM>South/East</EM>
+<TR><TD> Flat      <TD>   Background  <TD>  Background
+<TR><TD> Raised    <TD>   Light       <TD>  Dark
+<TR><TD> Lowered   <TD>   Dark        <TD>  Light
+<TR><TD> Ridged    <TD>   Light/Dark  <TD>  Dark/Light
+<TR><TD> Chiseled  <TD>   Dark/Light  <TD>  Light/Dark
+</TABLE>
 
    For maximum effectiveness, the child's background should be a
-   color whose saturation level is about 50\%, and the light and
+   color whose saturation level is about 50%, and the light and
    dark shadows should be colors with the same hue and lightness,
-   but with saturation levels of 25\% and 75\% respectively.
+   but with saturation levels of 25% and 75% respectively.
 
    On a monochrome display, the 3-D borders and lines appear flat and
-   50\% of the size they'd be on non-monochrome displays. Also, those
+   50% of the size they'd be on non-monochrome displays. Also, those
    VBTkit widgets that use 3-D borders for feedback (say, a button
    that gives the effect of lowering its contents when depressed) are
    implemented in such a way as to give feedback in a non-3-D manner
-   (e.g., the {\tt ShadowedFeedbackVBT} 
-   interface in Section~\ref{ShadowedFeedbackVBTSection}). 
+   (e.g., the <TT>ShadowedFeedbackVBT</TT> 
+   interface in Section&nbsp;<A REL=REF.NUMBER HREF="ShadowedFeedbackVBTSection"> [ShadowedFeedbackVBTSection] </A>). 
 
    You can force VBTkit widgets to use a non-3-D style of 
    feedback by specifying a shadow size that is negative. Such widgets
-   will draw borders and lines with 50\% of the absoluate value of
+   will draw borders and lines with 50% of the absoluate value of
    the shadow size. (You should also be sure to set the light and dark 
    shadow to be the same as the foreground color.) *)
 

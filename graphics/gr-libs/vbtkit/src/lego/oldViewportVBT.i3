@@ -12,7 +12,7 @@
 (* A "ViewportVBT" is a multi-filter that displays multiple
    views of a child "VBT", with optional horizontal and
    vertical scrollbars.  When the child's preferred size is
-   larger than the viewport's {\em interior} (that is, the screen
+   larger than the viewport's <EM>interior</EM> (that is, the screen
    of the viewport minus the scrollbars), the child is reformatted
    to its preferred size.  Since only part of the child is
    visible, the user can pan the child using the scrollbars.
@@ -81,31 +81,31 @@ TYPE
      AlaViewport, 
      Auto};
 
-(* \noindent The styles are as follows:
+(* The styles are as follows:
 
-   \begin{itemize}
+   <UL>
 
-   \item "HorAndVer" puts a horizontal and vertical scrollbar
+   <LI>"HorAndVer" puts a horizontal and vertical scrollbar
    on every view.  In addition, nestled between the scrollbars
    in the southwest corner, there's a little ``reset'' button
    that moves the northwest corner of the child to the northwest
    corner of the view.
 
-   \item "HorOnly" places a scrollbar at the bottom.
+   <LI>"HorOnly" places a scrollbar at the bottom.
 
-   \item "VerOnly" places a scrollbar at the left side.
+   <LI>"VerOnly" places a scrollbar at the left side.
 
-   \item "NoScroll" specifies that views will not have scrollbars.
+   <LI>"NoScroll" specifies that views will not have scrollbars.
 
-   \item "AlaViewport" specifies that there is a scrollbar in the
+   <LI>"AlaViewport" specifies that there is a scrollbar in the
    same axis as the viewport.  Thus, "AlaViewport" for a vertical
    viewport is equivalent to "VerOnly".
 
-   \item "Auto" specifies that scrollbars appear only when the
+   <LI>"Auto" specifies that scrollbars appear only when the
    preferred size of the child exceeds the size of the viewport (in
    that dimension).
 
-   \end{itemize} *)
+   </UL> *)
 
 
 (* There are two possible shape-relationships between a viewport
@@ -122,7 +122,7 @@ TYPE ShapeStyle = {Unrelated, Related};
    width of the child in a "Vertical" viewport is the width of the
    viewport. *)
 
-(* \subsubsection{Panning the contents} *)
+(* <H3> Panning the contents </H3> *)
 
 
 PROCEDURE ScrollTo (         v    : T;
@@ -154,7 +154,7 @@ PROCEDURE Normalize (v: T; w: VBT.T; view: View := 0);
    executes outside event-time, it explicitly causes all marked
    "VBT"s to be redisplayed after it calls "ScrollTo". *)
 
-(* \subsubsection{Multiple views} *)
+(* <H3> Multiple views </H3> *)
 
 PROCEDURE AddView (v: T; pred: View := -1; split := TRUE):
   View;

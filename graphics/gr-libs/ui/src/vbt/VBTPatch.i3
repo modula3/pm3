@@ -4,7 +4,7 @@
 (*                                                                           *)
 (* Last modified on Mon Feb 24 13:58:56 PST 1992 by muller                   *)
 
-(* \subsection{Texturing irregular patches} *)
+(* <H2> Texturing irregular patches </H2> *)
 
 INTERFACE VBTPatch;
 

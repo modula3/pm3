@@ -20,18 +20,18 @@ TYPE T <: Public;
        quit ();
      END;
 
-(* A "View.T", or a {\em view}, is a  window owned by a board client
+(* A "View.T", or a <EM>view</EM>, is a  window owned by a board client
    that displays the items in a rectangular portion of the board even 
    as the items are created, modified, or deleted by other clients. 
    A view also provides  rudimentary support to its owner client to
    create, modify or delete items. 
 
-   The rectangular portion displayed by the view is called its {\em
-   focus}. The view may have cached a larger portion of the board, so
+   The rectangular portion displayed by the view is called its <EM>
+   focus</EM>. The view may have cached a larger portion of the board, so
    that changing the focus does not require communication with the
    board. The rectangular portion that the view has cached is called
-   its {\em scope}, and the list of cached items is called its {\em
-   display list}. 
+   its <EM>scope</EM>, and the list of cached items is called its <EM>
+   display list</EM>. 
 
    The method call "init (bd)" method connects the view to the board "bd".
    The "refresh" method is there so that it may be extended by
@@ -105,7 +105,7 @@ PROCEDURE ModifyItems (v: T; its: Item.TArray; additive: BOOLEAN;
 
 (* The view makes use of the last two arguments to update its display
    efficiently. 
-   If "additive" is true, the modification is {\em additive} in that the new
+   If "additive" is true, the modification is <EM>additive</EM> in that the new
    image of the item can be simply painted over the old one.
    For example, "additive" is true  when characters are added to a
    text item, or when its color changes, but false when its font changes.

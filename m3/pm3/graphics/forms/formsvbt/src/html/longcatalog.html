@@ -1,0 +1,166 @@
+<TITLE> Full Description of Components </TITLE>
+<H1 ID="ap:longcatalog"> Full Description of Components </H1>
+
+
+<!--SPOT CLASS=FORTOC ID="ftc_This is an in-depth reference section; do not feel obliged to read it on your first reading of this manual."-->
+
+<P>
+This appendix contains a complete description of each FormsVBT 
+component. Each description contains the following sections: 
+
+<UL>
+<LI> A banner containing the component's name, syntactic
+classification (<TT>Leaf</TT>, <TT>Filter</TT>, or <TT>Split</TT>),
+and whether it generates an <I>event</I>; <TT>FormsVBT.Attach</TT> and
+<TT>FormsVBT.AttachProc</TT> can be used to attach an <I>event-handler</I> to such a
+component.
+
+<LI> A short description of the component.
+
+<LI> The class-specific properties, if any, for the component.
+
+<LI> A description of the component's interactive behavior, if it
+generates an event.
+
+<LI> The component's shape information.
+
+<LI> Additional notes (optional). 
+
+</UL>
+
+<P>The first line of each class-specific property contains the property
+name, the access information, the type, the default value, and a
+description of the property. Example:
+
+<HR><DL>
+<DT>Value <TT>GP</TT><DD> (Boolean, <TT>FALSE</TT>)
+</DL><HR>
+<P>
+The property name, <TT>Value</TT> in this example, is the symbol that
+would appear in the S-expression.  The access information is indicated
+by the letters G and P. G means that the value of this property
+can be retrieved at runtime (``Get''); P means that the value can be set at
+runtime (``Put'').
+<P>
+If the name of the property is <TT>Value</TT> or <TT>Main</TT>, then you can
+retrieve the value of the property by calling <TT>GetText</TT>,
+<TT>GetInteger</TT>, or <TT>GetBoolean</TT>, depending on the type of the
+property, and you can set the value by calling <TT>PutText</TT>,
+<TT>PutInteger</TT>, or <TT>PutBoolean</TT>. 
+<P>
+For properties other than <TT>Value</TT> or <TT>Main</TT>, you can retrieve the
+value of the property by calling <TT>GetTextProperty</TT> or <TT>
+GetIntegerProperty</TT>,and you can set the value by calling <TT>
+PutTextProperty</TT> or <TT>PutIntegerProperty</TT>. These procedures take
+the name of the property as an argument.
+<P>
+The descriptions in this appendix do not include the components'
+inheritable properties (see section <A REL=REF HREF="language.html#sec:inherited-props"> [sec:inherited-props] </A>,
+page <A REL=REF HREF="language.html#sec:inherited-props"> [sec:inherited-props] </A>).  All (well-behaved) components
+use these properties for displaying information.  Some of these can be
+accessed at runtime, as the following list indicates:
+
+<HR><DL>
+
+<DT>Font <TT>GP</TT><DD> (Font, default on page <A REL=REF HREF="language.html#sec:inherited-props"> [sec:inherited-props] </A>)
+<BR> The font used for Browser, DirMenu, FileBrowser, Helper, MultiBrowser,
+Numeric, TextEdit, Typein, and Typescript.
+
+<DT>LabelFont <TT>GP</TT><DD> (Font, default on page <A REL=REF HREF="language.html#sec:inherited-props"> [sec:inherited-props] </A>) <BR>
+The font used for Text and the Title of a ZChassis.
+
+<DT>Color <TT>P</TT><DD> (Color, <TT>"Black"</TT>) The foreground color.
+
+<DT>BgColor <TT>P</TT><DD> (Color, <TT>0.8 0.8 0.8</TT>) The background color.
+
+<DT>LightShadow<DD> (Color, <TT>"White"</TT>)
+
+<DT>DarkShadow<DD> (Color, <TT>0.333 0.333 0.333</TT>)
+
+<DT>ShadowSize<DD> (Real, <TT>1.5</TT>)
+</DL><HR>
+<P>
+Some components define enumerations that specify mutually
+exclusive
+<!--SPOT CLASS=INDEX ID="idx_Mutually exclusive properties_Mutually exclusive properties"-->
+choices for a single,
+unnamed property. Syntactically, these are all Boolean properties, but
+unlike other Boolean properties, which always have a <TT>FALSE</TT>
+default value, one of these will default to
+<TT>TRUE</TT>.  Furthermore, specifying any of them as
+<TT>TRUE</TT> has the effect of declaring all the others to be
+<TT>FALSE</TT>.
+<P>
+For example, the shadow-style of a Frame may be raised, flat, lowered,
+ridged, or chiseled.  The default is <TT>Raised</TT>, but if you write
+<PRE><TT>
+(Frame Lowered ...)
+</TT></PRE><P>
+or, equivalently,
+<PRE><TT>
+(Frame (Lowered TRUE) ...)
+</TT></PRE><P>
+then that has the effect of declaring <TT>Raised</TT>, <TT>Flat</TT>, etc.,
+to be false.
+<P>
+
+<UL>
+<LI> <A REL=SUBDOCUMENT HREF="components/Bar.html"> Bar (leaf) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Boolean.html"> Boolean (filter, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Border.html"> Border (filter) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Browser.html"> Browser (leaf, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Button.html"> Button (filter, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Chisel.html"> Chisel (leaf) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Choice.html"> Choice (filter, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/CloseButton.html"> CloseButton (filter, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/DirMenu.html"> DirMenu (leaf, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/FileBrowser.html"> FileBrowser (leaf, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Fill.html"> Fill (leaf) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Filter.html"> Filter (filter) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Frame.html"> Frame (filter) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Generic.html"> Generic (leaf) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Glue.html"> Glue (leaf) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Guard.html"> Guard (filter, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/HBox.html"> HBox (split) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/HPackSplit.html"> HPackSplit (split) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/HTile.html"> HTile (split) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Helper.html"> Helper (leaf, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Insert.html"> Insert (leaf) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/LinkButton.html"> LinkButton (filter, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/LinkMButton.html"> LinkMButton (filter, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/MButton.html"> MButton (filter, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Menu.html"> Menu (split, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/MultiBrowser.html"> MultiBrowser (leaf, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Numeric.html"> Numeric (leaf, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/PageButton.html"> PageButton (filter, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/PageMButton.html"> PageMButton (filter, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Pixmap.html"> Pixmap (leaf) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/PopButton.html"> PopButton (filter, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/PopMButton.html"> PopMButton (filter, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Radio.html"> Radio (filter, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Ridge.html"> Ridge (leaf) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Rim.html"> Rim (filter) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Scale.html"> Scale (filter) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Scroller.html"> Scroller (leaf, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Shape.html"> Shape (filter) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Source.html"> Source (filter, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Stable.html"> Stable (filter) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/TSplit.html"> TSplit (split) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Target.html"> Target (filter) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Text.html"> Text (leaf) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/TextEdit.html"> TextEdit (leaf) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Texture.html"> Texture (leaf) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/TrillButton.html"> TrillButton (filter, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/TypeIn.html"> TypeIn (leaf, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Typescript.html"> Typescript (leaf) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/VBox.html"> VBox (split) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/VPackSplit.html"> VPackSplit (split) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/VTile.html"> VTile (split) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/Viewport.html"> Viewport (filter) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/ZBackground.html"> ZBackground (filter) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/ZChassis.html"> ZChassis (filter) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/ZChild.html"> ZChild (filter) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/ZGrow.html"> ZGrow (filter, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/ZMove.html"> ZMove (filter, event) </A>
+<LI> <A REL=SUBDOCUMENT HREF="components/ZSplit.html"> ZSplit (split) </A>
+</UL>

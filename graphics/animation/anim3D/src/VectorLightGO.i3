@@ -30,20 +30,20 @@ TYPE
 PROCEDURE New (c : Color.T; dir : Point3.T) : T;
 (* "New(c,dir)" creates a new vector light source "l" and returns it.
    It also attaches attaches the following properties to "l":
-   \begin{verbatim}
+   <PRE>
      (LightGO.Colour,ColourProp.NewConst(c)) 
      (LightGO.Switch,BooleanProp.NewConst(TRUE))
      (Direction,PointProp.NewConst(dir))
-   \end{verbatim}
+   </PRE>
 *)
 
 VAR
   Direction : PointProp.Name;
-(* In addition to the properties observed by all \type{GO}{T}'s and 
-   \type{LightGO}{T}'s, there is one additional property that is observed 
+(* In addition to the properties observed by all "GO.T"'s and 
+   "LightGO.T"'s, there is one additional property that is observed 
    by "VectorLightGO.T"'s. "Direction" is the name of a property that 
    determines the direction of the light emitted by the light sources; 
-   it associates with a property value of type \type{PointProp}{Val}. *)
+   it associates with a property value of type "PointProp.Val". *)
 
 PROCEDURE SetDirection (o : GO.T; dir : Point3.T);
 (* "SetDirection" is a convenience procedure. The expression 

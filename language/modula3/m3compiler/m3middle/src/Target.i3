@@ -148,7 +148,7 @@ PROCEDURE ConventionFromID (id: INTEGER): CallingConvention;
 
 
 (*
-  name => the name recognized in an <*EXTERNAL*> pragma, or as a prefix
+  name => the name recognized in an &lt;*EXTERNAL*> pragma, or as a prefix
           to a PROCEDURE declaration. 
 
   m3cg_id => tag used to indicate convention to the back end.

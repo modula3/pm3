@@ -1,0 +1,24 @@
+<TITLE> VBox (split) </TITLE>
+<H1> VBox (split) </H1> 
+    
+<P>
+ Organizes its children vertically, in order from top to bottom. 
+If it is taller than the sum of its children's heights, the 
+excess is distributed equally among all stretchable children, as 
+far as they will stretch.  If all stretchability is exceeded, the 
+excess will be given to the last child.  If it is shorter than the 
+sum of its children's heights, it clips on the bottom, perhaps making 
+some children entirely invisible.  All children have width equal 
+to the width of the VBox.  Section <A REL=REF HREF="../language.html#sec:language-sizing"> [sec:language-sizing] </A> explains 
+the layout model in detail.
+
+<DL>
+
+<DT><B>Shape</B><DD> The height is the sum of its children's heights; the width 
+is the maximum of the children's widths, but is stretchable only 
+if all of them are.
+
+<DT><B>See Also</B><DD> HBox
+
+</DL>
+

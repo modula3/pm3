@@ -1,0 +1,35 @@
+<TITLE> HPackSplit (split) </TITLE>
+<H1> HPackSplit (split) </H1> 
+    
+<P>
+ Organizes its children like words of text in a ragged-right 
+paragraph. The children in any given row have their north boundaries 
+aligned, and all children that are first in their row have their 
+west borders equal to the west border of the parent. A child is 
+horizontally clipped only if its requested horizontal size exceeds 
+the parent's horizontal size; in this case the child will be alone 
+in its row.
+    
+<HR><DL>
+
+<DT>HGap<DD> (Real, <TT>2.0</TT>) <BR> This many points separate each child 
+        horizontally.
+
+<DT>VGap<DD> (Real, <TT>2.0</TT>) <BR> This many points separate each row of 
+        children.
+
+<DT>Background<DD> (Text, <TT>"White"</TT>) <BR>
+Inter-children (<TT>HGap</TT>), inter-row (<TT>VGap</TT>), and
+end-of-line spaces are displayed in this texture.
+
+</DL><HR>
+
+<DL>
+
+<DT><B>Shape</B><DD> The shape is unconstrained in the principal axis and fixed in
+the other axis.
+
+<DT><B>See Also</B><DD> VPackSplit
+
+</DL>
+

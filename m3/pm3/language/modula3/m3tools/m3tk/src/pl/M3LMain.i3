@@ -32,7 +32,7 @@ CONST
   Name = "Main";
 
 PROCEDURE Module(c: M3Context.T): CuList;
-(* Returns a list of {\it main} modules in "c", that is, those that export
+(* Returns a list of <I>main</I> modules in "c", that is, those that export
 the interface "Main". *)
 
 END M3LMain.

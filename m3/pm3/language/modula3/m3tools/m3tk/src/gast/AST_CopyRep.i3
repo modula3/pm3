@@ -53,7 +53,7 @@ END AST_CopyRep.
 (* The "copy" method returns a copy of some part of the tree rooted at
 the node making the call. At this level of abstraction "copy" is very
 loosely defined. Precisely which attributes are copied, and whether
-attributes are {\em shallow-copied} or {\em deep-copied} is left to
+attributes are <EM>shallow-copied</EM> or <EM>deep-copied</EM> is left to
 specific AST interfaces to define.
 
 To aid in the creation of flexible copying interfaces, the "copy"

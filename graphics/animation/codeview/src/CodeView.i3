@@ -40,9 +40,9 @@ INTERFACE CodeView;
        @GCD
        int GCD (u, v)@
        int u, v;
-       {
+       
            @1 if (v = 0)@ @2 return u;@ else @3 return GCD (v, u % v);@
-       }
+       
        @GCD
 
    and this is the output from /Dump/ (see below):

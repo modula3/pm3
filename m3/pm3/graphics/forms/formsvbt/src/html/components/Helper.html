@@ -1,0 +1,50 @@
+<TITLE> Helper (leaf, event) </TITLE>
+<H1> Helper (leaf, event) </H1> 
+    
+<P>
+ A type-in field connected to a FileBrowser. A Helper is
+used for typing filenames, either to select a new file or to
+switch to another directory.
+
+<HR><DL>
+
+<DT>For<DD> (Symbol) <BR> The name of a FileBrowser. This property
+is required.
+
+<DT>FirstFocus<DD> (Boolean, <TT>FALSE</TT>) <BR> If this Helper is in a
+        subwindow or TSplit-child, then when that component appears,
+        the keyboard focus will go to this Helper, and its typein
+        field will be selected in replace-mode.
+
+<DT>TabTo<DD> (Symbol) <BR> If given, this is the name of the component to
+	which the keyboard focus wil be transferred when the user
+	types Tab.
+
+<DT>ExpandOnDemand<DD> (Boolean, <TT>FALSE</TT>)  <BR> 
+	If true, the text area will grow and shrink vertically, as required,
+	to contain the entire text.
+
+</DL><HR>
+
+<DL>
+
+<DT><B>Behavior</B><DD> The helper displays the pathname of the FileBrowser's
+current directory. The user can also type a name in the Helper;
+typing Return will then activate that file in the FileBrowser.
+<DT><DD> In a non-ReadOnly FileBrowser, a Helper is necessary in
+order to specify a file that does not yet exist (e.g., that
+the application should create), as in a "Save As ..." dialog.
+<DT><DD>
+We recommend using <TT>(Font "fixed")</TT> in the helper.
+
+<DT><B>Shape</B><DD> The width is zero with infinite stretchability, 
+        and the height is as high as one line in the current font.
+
+<DT><B>Notes</B><DD> A  Helper never generates 
+      events in its own name.  It can be accessed in its own name, 
+      but this is not recommended.
+
+<DT><B>See Also</B><DD> DirMenu and FileBrowser
+
+</DL>
+

@@ -9,10 +9,10 @@
 (* A "SurfaceGO.T" is a geometric objects which is composed of surfaces
    (as opposed to lines). Surfaces differ from non-surfaces in a number of 
    ways:
-   \begin{itemize}
-   \item Surfaces interact with light sources, non-surfaces don't
-   \item Surfaces can be transparent, non-surfaces are always opaque
-   \end{itemize}
+   <UL>
+   <LI>Surfaces interact with light sources, non-surfaces don't
+   <LI>Surfaces can be transparent, non-surfaces are always opaque
+   </UL>
 *)
 
 INTERFACE SurfaceGO;
@@ -21,7 +21,7 @@ IMPORT BooleanProp, Color, ColorProp, GO, LineTypeProp, RasterModeProp,
        RealProp, ShadingProp;
 
 TYPE T <: GO.T;
-(* A "SurfaceGO.T" is a subtype of \type{GO}{T}. No additional fields or 
+(* A "SurfaceGO.T" is a subtype of "GO.T". No additional fields or 
    methods are revealed to the user. *)
 
 VAR
@@ -42,16 +42,16 @@ VAR
   EdgeType                 : LineTypeProp.Name;
   EdgeWidth                : RealProp.Name;
 
-(* In addition to the properties observed by all \type{GO}{T}'s, there are 
+(* In addition to the properties observed by all "GO.T"'s, there are 
    various additional properties that are observed by "SurfaceGO.T"'s:
 
    "DistinguishFacets" is the name of a boolean property that decides whether 
    front- and back-faces of surfaces should be distinguished. If this property
    is not specified, front- and back-faces are not distinguished. 
 
-   {\em NOTE: In order for this property to make sense, I should introduce
+   <EM>NOTE: In order for this property to make sense, I should introduce
    other surface-related properties: All properties from "Colour" to
-   "Shading" could have backface analogs.}
+   "Shading" could have backface analogs.</EM>
 
    "Color" is the name of a color property that specifies the color of the 
    surface. If this property is not specified, the surface is drawn in white.

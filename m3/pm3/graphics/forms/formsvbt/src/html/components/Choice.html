@@ -1,0 +1,49 @@
+<TITLE> Choice (filter, event) </TITLE>
+<H1> Choice (filter, event) </H1> 
+    
+<P>
+ A choice button is one of a group of ``radio buttons.'' There 
+must be a Radio component somewhere in its ancestry. Choice
+components must be named.
+
+<HR><DL>
+
+<DT>Value <TT>GP</TT><DD> (Boolean, <TT>FALSE</TT>) <BR> Whether currently selected.
+
+<DT>MenuStyle<DD> (Boolean, <TT>FALSE</TT>) <BR>
+    When set, the interactor should be a child of a Menu, in which
+   case it will react on the upclick.  Otherwise, it reacts on the
+   downclick.
+
+</DL><HR><P> <I>Feedback choices (mutually exclusive):</I>
+
+<DL>
+<DT>CheckBox<DD> (Boolean, <TT>TRUE</TT>) <BR> Give feedback with a
+    ``check-box'' icon.
+      
+<DT>CheckMark<DD> (Boolean, <TT>FALSE</TT>) <BR> Give feedback with a
+``check-mark'' icon. 
+      
+<DT>Inverting<DD> (Boolean, <TT>FALSE</TT>) <BR>
+	Give feedback by drawing a border around the child <TT>VBT</TT>.
+
+</DL><HR>
+
+<DL>
+
+<DT><B>Behavior</B><DD> If <TT>CheckBox</TT> is <TT>TRUE</TT>, Choice adds a three-dimensional
+diamond to the left of its child.  The diamond is raised and
+empty for false, lowered and filled-in for true.  Any click
+on the diamond or on the child selects this ``button,'' unselects
+any other member of the group that might have been selected,
+and generates an event.  MenuStyle causes different reaction
+to the mouse clicks, as described above.
+
+<DT><B>Shape</B><DD> The shape of its child, plus 16 pixels wider on the west side 
+when not Inverting. When Inverting, the shape of the child plus the 
+border.
+
+<DT><B>See Also</B><DD> Boolean and Radio
+
+</DL>
+

@@ -1,0 +1,61 @@
+<TITLE> Numeric (leaf, event) </TITLE>
+<H1> Numeric (leaf, event) </H1> 
+    
+<P>
+ An interactor for integer values.  Numeric has an editable displayed 
+number, as well as ``increment'' and ``decrement'' buttons.
+  
+<HR><DL>
+
+<DT>Value <TT>GP</TT><DD> (Integer) <BR> 
+      The currently displayed number.
+
+<DT>AllowEmpty<DD> (Boolean, <TT>FALSE</TT>) <BR> 
+      If true, the component supports a distinct ``empty'' state. See Notes.
+
+<DT>Min <TT>GP</TT><DD> (Integer, <TT>FIRST(INTEGER)</TT>) <BR> 
+      The minimum allowed value.
+      
+<DT>Max <TT>GP</TT><DD> (Integer, <TT>LAST(INTEGER)</TT>) <BR> 
+      The minimum allowed value.
+
+<DT>HideButtons<DD> (Boolean, <TT>FALSE</TT>) <BR> 
+      If true, the numeric interactor appears without increment 
+      and decrement buttons.
+      
+<DT>TabTo<DD> (Symbol) <BR> If given, this is the name of the component to
+	which the keyboard focus wil be transferred when the user
+	types Tab.
+
+<DT>FirstFocus<DD> (Boolean, <TT>FALSE</TT>) <BR> If this Numeric is in a
+        subwindow or TSplit-child, then when that component appears,
+        the keyboard focus will go to this Numeric, and its number
+        field will be selected in replace-mode.
+
+</DL><HR>
+
+<DL>
+
+<DT><B>Behavior</B><DD> The increment button ($+$) increments the number, whereas
+	the decrement button ($-$) decrements it, up to the respective
+	limits.  The number field is editable as a single-line TypeIn.
+	Typing Return in the number field checks the number; if it
+	is out of range, it is forced to the nearest acceptable value.
+	Increment, decrement, and Return all generate an event.
+
+<DT><B>Shape</B><DD> The shape depends on the ShadowSize and Font in effect. When 
+the default shadow and font are used, the size of a Numeric is 76 by
+19 pixels.
+
+<DT><B>Notes</B><DD>  <TT>GetInteger</TT> can be used to retrieve the
+current value, and <TT>PutInteger</TT> can be used to
+set it.
+<DT><DD>
+  When AllowEmpty is true, emptiness is a special, out-of-band state 
+  for the interactor.  In this state the increment and decrement 
+  functions are disabled.  The value of an empty Numeric is reported 
+  as <TT>FIRST(INTEGER)</TT>.  <DT><DD> Emptiness can be tested explicitly by 
+  <TT>NumericVBT.IsEmpty</TT>, and can be set by <TT>NumericVBT.SetEmpty</TT>.
+
+</DL>
+

@@ -12,7 +12,7 @@
    maximum screen intensity.
 
    The set of all colors with RGB coordinates in the range
-   0.0--1.0 is the {\em unit RGB cube}.  The colors along the
+   0.0--1.0 is the <EM>unit RGB cube</EM>.  The colors along the
    main diagonal of the unit cube (from (0,0,0) to (1,1,1))
    contain equal amounts of all three primaries; they represent
    gray levels.  RGB triples outside the unit cube cannot be
@@ -51,9 +51,9 @@ PROCEDURE Brightness (READONLY rgb: T): REAL;
    Value) triple.  The HSV color model is somewhat more intuitive
    than the RGB color model.  It's based on mimicking the way
    that an artist mixes paint: ``He chooses a pure hue, or
-   pigment and lightens it to a {\it tint\/} of that hue by
-   adding white, or darkens it to a {\it shade\/} of that hue by
-   adding black, or in general obtains a {\it tone\/} of that hue
+   pigment and lightens it to a <I>tint</I> of that hue by
+   adding white, or darkens it to a <I>shade</I> of that hue by
+   adding black, or in general obtains a <I>tone</I> of that hue
    by adding some mixture of white and black.''
 
    So, varying hue corresponds to selecting a pure color along a

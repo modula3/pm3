@@ -276,6 +276,7 @@ end
 %
 
 readonly proc InstallNextVersion() is
+  ret = Exec(["rm", "-r", EXPORT_SRC & "/" & versionName],[],".")
   CheckExec(["mv", EXPORT_TMP_SRC & "/" & versionName,
       EXPORT_SRC],[],".","export source failed")
 
@@ -286,6 +287,8 @@ readonly proc InstallNextVersion() is
 
   foreach platform in Platforms
     if Platforms{platform}[3] 
+      ret = Exec(["rm", "-r", 
+          EXPORT_BOOTSTRAP & "/" & platform & "/" & versionName],[],".")
       CheckExec(["mv", 
           EXPORT_TMP_BOOTSTRAP & "/" & platform & "/" & versionName,
           EXPORT_BOOTSTRAP & "/" & platform],[],".","export bootstrap failed")
@@ -297,6 +300,8 @@ readonly proc InstallNextVersion() is
     end
   end
 
+  ret = Exec(["rm", "-r",
+      EXPORT_BINARIES & "/" & TARGET & "/" & versionName],[],".")
   CheckExec(["mv", 
       EXPORT_TMP_BINARIES & "/" & TARGET & "/" & versionName,
       EXPORT_BINARIES & "/" & TARGET],[],".","export binaries failed")
@@ -717,12 +722,11 @@ end
 proc InstallRPM() is
   local dir = EXPORT_TMP_ROOT & "/" & "rpm"
 
-  local ret = Exec(["rm","-r","RPMS.old"],[],EXPORT_ROOT)
-  ret = Exec(["rm","-r","SRPMS.old"],[],EXPORT_ROOT)
-  ret = Exec(["mv","RPMS","RPMS.old"],[],EXPORT_ROOT)
-  ret = Exec(["mv","SRPMS","SRPMS.old"],[],EXPORT_ROOT)
+  ret =Exec(["rm", "-r", EXPORT_BINARIES & "/" & TARGET & "/" & 
+      VersionName(version) & "-RPMS"],[],dir)
   CheckExec(["mv","RPMS",EXPORT_BINARIES & "/" & TARGET & "/" & 
       VersionName(version) & "-RPMS"],[],dir,"Moving RPMS")
+
   CheckExec(["mv","SRPMS" & "/" & VersionName(version) & "-1.src.rpm",
       EXPORT_ROOT & "/" & "SRPMS"],[],dir,"Moving SRPMS")
 end

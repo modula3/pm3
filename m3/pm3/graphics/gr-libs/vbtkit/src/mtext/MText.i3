@@ -44,7 +44,7 @@ TYPE
   Index = CARDINAL;             (* obsolete, but keep for
                                    compatibility *)
 
-(* \subsection {Creating MTexts} *)
+(* <H2> Creating MTexts </H2> *)
 
 PROCEDURE New (t := ""; bufMax: CARDINAL := 256): T;
 (* Returns a new "MText" containing the characters of "t".
@@ -60,7 +60,7 @@ PROCEDURE Close (m: T);
 | = MText.Replace(m, 0, MText.Length(m), "")
 *)
 
-(* \subsection {Examining MTexts and Extracting Characters} *)
+(* <H2> Examining MTexts and Extracting Characters </H2> *)
 
 (* Note that readers on MText are available (see the "MTextRd"
    interface).  It is often more appropriate to create a reader
@@ -82,7 +82,7 @@ PROCEDURE GetText (m    : T;
    "begin >= Length(m)"; otherwise the range of indexes of the
    subsequence is "[begin ..  MIN (end, Length (m)) -1]". *)
 
-(* \subsection {Modifying MTexts} *)
+(* <H2> Modifying MTexts </H2> *)
 
 (* See ``Efficiency considerations'' below for a discussion of
    the performance implications of the various ways of modifying
@@ -155,7 +155,7 @@ END MText.
    GetText(mtext,begin,end) is proportional to (log n + r) where
    n is the number of pieces in the MText and r is the number of
    pieces contributing characters to the result.  The fact that
-   this is linear in r is not wonderful.  <<Eventually we should
+   this is linear in r is not wonderful.  &lt;&lt;Eventually we should
    give the constant factors.>>
 
    When a reader is used as a text source, the MText

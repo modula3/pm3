@@ -6,12 +6,12 @@
 (*      modified on Tue Jun 16 21:55:40 PDT 1992 by muller     *)
 <* PRAGMA LL *>
 
-(* {\bf WARNING:} This interface is very tentative. It is likely
+(* <B>WARNING:</B> This interface is very tentative. It is likely
    to change quite soon. 
 
    A "FormsEditVBT" is a filter whose child is a "FormsVBT".  When
    you initialize a "FormsEditVBT" with a file or other
-   description, you get a second "FormsVBT", the {\it editor},
+   description, you get a second "FormsVBT", the <I>editor</I>,
    which can installed and used to edit the filter's child.
 
    The stand-alone application called "formsedit" is the

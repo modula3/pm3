@@ -17,7 +17,7 @@ PROCEDURE Read(
     : M3PathElemList.T
     RAISES {OSError.E, Rd.Failure};
 
-(* Reads the named {\it m3path} file in the named directory. An m3path
+(* Reads the named <I>m3path</I> file in the named directory. An m3path
 file has a system dependent format but always contains a list of
 directory names. This routine returns these names as a list of
 "M3PathElem.T"s.  The names are NOT transformed to be relative to the

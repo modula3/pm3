@@ -12,127 +12,77 @@
    the following names, based on those found in 
    "/usr/lib/X11/rgb.txt": 
 
-    \begin{center}
-    \begin{tt}
-    \begin{tabular}{llll}
+<TABLE>
+<TR><TD>AliceBlue <TD> ForestGreen <TD> MintCream  <TD> SandyBrown
+<TR><TD>AntiqueWhite *<TD> Gainsboro <TD> MistyRose *<TD> SeaGreen *
+<TR><TD>  Aquamarine *<TD> GhostWhite <TD> Moccasin <TD> Seashell *
+<TR><TD>  Azure *<TD> Gold *<TD> NavajoWhite *<TD> Sienna *
+<TR><TD>  Beige <TD> Goldenrod *<TD> Navy <TD> SkyBlue *
+<TR><TD>  Bisque <TD> GoldenrodYellow<TD> NavyBlue <TD> SlateBlue *
+<TR><TD>  Black <TD> Gray **<TD> OldLace <TD> SlateGray *
+<TR><TD>  BlanchedAlmond <TD> Green *<TD> OliveDrab *<TD> SlateGrey 
+<TR><TD>  Blue *<TD> GreenYellow    <TD> OliveGreen *<TD> Snow *
+<TR><TD>  BlueViolet <TD> Grey **<TD> Orange *<TD> SpringGreen*
+<TR><TD>  Brown *<TD> Honeydew *<TD> OrangeRed *<TD> SteelBlue *
+<TR><TD>  Burlywood *<TD> HotPink *<TD> Orchid *<TD> Tan *
+<TR><TD>  CadetBlue *<TD> IndianRed *<TD> PapayaWhip <TD> Thistle *
+<TR><TD>  Chartreuse *<TD> Ivory *<TD> PeachPuff *<TD> Tomato *
+<TR><TD>  Chocolate *<TD> Khaki *<TD> Peru <TD> Turquoise *
+<TR><TD>  Coral *<TD> Lavender <TD> Pink *<TD> Violet 
+<TR><TD>  CornflowerBlue <TD> LavenderBlush *<TD> Plum *<TD> VioletRed *
+<TR><TD>  Cornsilk *<TD> LawnGreen <TD> Powderblue <TD> Wheat *
+<TR><TD>  Cyan *<TD> LemonChiffon *<TD> Purple *<TD> White 
+<TR><TD>  DeepPink *<TD> LimeGreen <TD> Red *<TD> WhiteSmoke 
+<TR><TD>  DeepSkyBlue *<TD> Linen <TD> RosyBrown*<TD> Yellow *
+<TR><TD>  DodgerBlue *<TD> Magenta *<TD> Royalblue*<TD> YellowGreen 
+<TR><TD>  Firebrick *<TD> Maroon *<TD> SaddleBrown 
+<TR><TD>  FloralWhite <TD> MidnightBlue <TD> Salmon *
+</TABLE>
 
-    AliceBlue         & ForestGreen    & MintCream         & SandyBrown \\
-    AntiqueWhite \dag & Gainsboro      & MistyRose \dag    & SeaGreen \dag \\
-    Aquamarine \dag   & GhostWhite     & Moccasin          & Seashell \dag \\
-    Azure \dag        & Gold \dag      & NavajoWhite \dag  & Sienna \dag \\
-    Beige             & Goldenrod \dag & Navy              & SkyBlue \dag \\
-    Bisque            & GoldenrodYellow& NavyBlue          & SlateBlue \dag \\
-    Black             & Gray \ddag     & OldLace           & SlateGray \dag \\
-    BlanchedAlmond    & Green \dag     & OliveDrab \dag    & SlateGrey \\
-    Blue \dag         & GreenYellow    & OliveGreen \dag   & Snow \dag \\
-    BlueViolet        & Grey \ddag     & Orange \dag       & SpringGreen\dag \\
-    Brown \dag        & Honeydew \dag  & OrangeRed \dag    & SteelBlue \dag \\
-    Burlywood \dag    & HotPink \dag   & Orchid \dag       & Tan \dag \\
-    CadetBlue \dag    & IndianRed \dag & PapayaWhip        & Thistle \dag \\
-    Chartreuse \dag   & Ivory \dag     & PeachPuff \dag    & Tomato \dag \\
-    Chocolate \dag    & Khaki \dag     & Peru              & Turquoise \dag \\
-    Coral \dag        & Lavender       & Pink \dag         & Violet \\
-    CornflowerBlue    & LavenderBlush \dag & Plum \dag     & VioletRed \dag \\
-    Cornsilk \dag     & LawnGreen          & Powderblue    & Wheat \dag \\
-    Cyan \dag         & LemonChiffon \dag  & Purple \dag   & White \\
-    DeepPink \dag     & LimeGreen          & Red \dag      & WhiteSmoke \\
-    DeepSkyBlue \dag  & Linen              & RosyBrown\dag & Yellow \dag \\
-    DodgerBlue \dag   & Magenta \dag       & Royalblue\dag & YellowGreen \\
-    Firebrick \dag    & Maroon \dag        & SaddleBrown \\
-    FloralWhite       & MidnightBlue       & Salmon \dag \\
-
-    \end{tabular}
-    \end{tt}
-    \end{center}
-
-    The dagger (\dag) indicates that the implementation recognizes
-    a name along with the suffixes "1"--"4"; e.g., "Red", "Red1", "Red2",
+    The star ("*") indicates that the implementation recognizes
+    a name along with the suffixes "1"-"4"; e.g., "Red", "Red1", "Red2",
     "Red3", and "Red4".
     
-   The double dagger (\ddag) indicates that the 
+   The double star ("**") indicates that the 
    implementation also recognizes the names with the 
-   suffixes "0" through "100". That is, "Gray0", "Gray1", \dots,
-   "Gray100", as well as "Grey0", "Grey1", \dots, "Grey100".
+   suffixes "0" through "100". That is, "Gray0", "Gray1", ... ,
+   "Gray100", as well as "Grey0", "Grey1", ... , "Grey100".
    
-   In addition, the name of a color $C$ from this list
+   In addition, the name of a color "C" from this list
    can be prefixed by one or more of the following modifiers:
 
 
-\begin{center}
-\begin{tabular}{l|l}
-% 
-  \it Term & \it Meaning\\ \hline
+<TABLE><TR><TD><I>Term</I><TD><I>Meaning</I>
 
-  \strut\begin{tabular}[c]{l} 
-  "Light" \\ 
-  "Pale" 
-  \end{tabular} 
-    &  1/3 of the way from $C$ to white \\ \hline
+<TR><TD>"Light" or "Pale" <TD> 1/3 of the way from "C" to white
+<TR><TD>"Dim" or "Dark" <TD> 1/3 of the way from "C" to black
+<TR><TD>"Weak", "Drab", or "Dull" <TD> 1/3 of the way from "C" to 
+    the gray with the same brightness as "C"
+<TR><TD>"Strong", "Vivid" or "Bright" <TD> 
+    1/3 of the way from "C" to the purest color
+    with the same hue as "C"
+<TR><TD>"Reddish" <TD> 1/3 of the way from "C" to red
+<TR><TD>"Greenish" <TD> 1/3 of the way from "C" to green
+<TR><TD>"Bluish" <TD> 1/3 of the way from "C" to blue
+<TR><TD>"Yellowish" <TD> 1/3 of the way from "C" to yellow
+</TABLE>
 
-  \strut\begin{tabular}[c]{l} 
-  "Dark" \\ 
-  "Dim" 
-  \end{tabular} 
-    &  1/3 of the way from $C$ to black \\ \hline
+Each of these modifiers can be modified in turn by the following
+prefixes, which replace ``1/3 of the way'' by the indicated fraction:
 
-  \strut\begin{tabular}[c]{l} 
-  "Drab" \\ 
-  "Weak" \\ 
-  "Dull" 
-  \end{tabular} 
-    & $\vcenter{\hbox{ 1/3 of the way from $C$ to the gray\strut}
-               \hbox{with the same brightness as $C$\strut}}$ \\ \hline
+<TABLE><TR><TD><I>Term</I><TD> <I>Degree</I><TD> <I>% (approx.)
+<TR><TD>    "VeryVerySlightly"   <TD> 1/16 of the way   <TD>  6% 
+<TR><TD>    "VerySlightly"       <TD> 1/8 of the way    <TD> 13% 
+<TR><TD>    "Slightly"           <TD> 1/4 of the way    <TD> 25% 
+<TR><TD>    "Somewhat"           <TD> 3/8 of the way    <TD> 38% 
+<TR><TD>    "Rather"             <TD> 1/2 of the way    <TD> 50% 
+<TR><TD>    "Quite"              <TD> 5/8 of the way    <TD> 63% 
+<TR><TD>    "Very"               <TD> 3/4 of the way    <TD> 75% 
+<TR><TD>    "VeryVery"           <TD> 7/8 of the way    <TD> 88% 
+<TR><TD>    "VeryVeryVery"       <TD> 15/16 of the way  <TD> 94% 
+</TABLE>
 
-  \strut\begin{tabular}[c]{l} 
-  "Vivid" \\ 
-  "Strong" \\ 
-  "Bright" 
-  \end{tabular} 
-    & $\vcenter{\hbox{1/3 of the way from $C$ to the purest color\strut}
-               \hbox{with the same hue as $C$\strut}}$ \\ \hline
-
-  \strut\begin{tabular}[c]{l} 
-  "Reddish" 
-  \end{tabular}  
-     &  1/3 of the way from $C$ to red \\ \hline
-
-  \strut\begin{tabular}[c]{l} 
-  "Greenish" 
-  \end{tabular}  
-    &  1/3 of the way from $C$ to green \\ \hline
-
-  \strut\begin{tabular}[c]{l} 
-  "Bluish" 
-  \end{tabular}  
-    &  1/3 of the way from $C$ to blue \\ \hline
-
-  \strut\begin{tabular}[c]{l} 
-  "Yellowish" 
-  \end{tabular}  
-    &  1/3 of the way from $C$ to yellow \\
-%
-\end{tabular}
-\end{center}
-
-   Each of these modifiers can be modified in turn by the following
-   prefixes, which replace ``1/3 of the way'' by the indicated fraction:
-
-   \begin{center}
-   \begin{tabular}{l|l|l}
-      \it Term             & \it Degree        & \it\% (approx.) \\ \hline
-      "VeryVerySlightly"   & 1/16 of the way   &  6\% \\
-      "VerySlightly"       & 1/8 of the way    & 13\% \\
-      "Slightly"           & 1/4 of the way    & 25\% \\
-      "Somewhat"           & 3/8 of the way    & 38\% \\ 
-      "Rather"             & 1/2 of the way    & 50\% \\ 
-      "Quite"              & 5/8 of the way    & 63\% \\
-      "Very"               & 3/4 of the way    & 75\% \\
-      "VeryVery"           & 7/8 of the way    & 88\% \\
-      "VeryVeryVery"       & 15/16 of the way  & 94\% \\
-   \end{tabular}
-   \end{center}
-
-   \noindent The modifier "Medium" is also recognized as a
+   The modifier "Medium" is also recognized as a
    shorthand for "SlightlyDark". (But you cannot use "VeryMedium".)
 
 *)

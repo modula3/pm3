@@ -1,0 +1,37 @@
+<TITLE> Source (filter, event) </TITLE>
+<H1> Source (filter, event) </H1>  
+
+<P>
+ A Source component is a filter, used for drag-and-drop actions.
+	It generates an event on an uncancelled upclick. A typical
+	event-handler will then inquire the <TT>ActiveTarget</TT>
+        property to determine 
+	whether the Source is over a Target and take some action if it
+	is. For example, a source-icon representing a file might
+	delete the file when it is dragged and released over a
+	target-icon representing a ``trash can.'' A tiling window
+	manager might make every window both a Source and Target to
+	permit windows to be exchanged.
+
+<HR><DL>
+<DT>ActiveTarget <TT>G</TT><DD> (Text) The name of the component
+over which the Source is located. This property is ignored
+when the Source is defined; it only has a value while the 
+callback associated with the Source 
+is active. The call to <TT>FormsVBT.GetTextProperty</TT> raises
+an <TT>Error</TT> exception if the Source is not over a valid
+Target on an uncancelled upclick or if the Target does
+not have a name.
+</DL><HR>
+
+<DL>
+
+
+<DT><B>Behavior</B><DD> If the Source is located over a
+	Target when the mouse-button is down, the Source's <TT>hit</TT>
+	method is called.
+
+<DT><B>See Also</B><DD> Target
+
+</DL>
+

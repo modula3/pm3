@@ -8,8 +8,8 @@
 (*      modified on Mon Nov 2 12:45:44 PST 1992 by steveg                 *)
 <* PRAGMA LL *>
 
-(* An "Image.T" is a screen-independent specification of an {\it
-   image}.  An image is a pixmap that includes specifications for
+(* An "Image.T" is a screen-independent specification of an <I>
+   image</I>.  An image is a pixmap that includes specifications for
    both color and resolution. It is rendered consistently across
    screen types in terms of its colors and size. *)
 
@@ -69,14 +69,14 @@ TYPE
    Each subtype of "Raw" can interpret a ``pixel'' in whatever way it
    chooses. The three subtypes defined here do the following:
 
-   \begin{itemize}
+   <UL>
 
-   \item If "pm" is a "RawBitmap" pixmap, then it is guaranteed that
+   <LI>If "pm" is a "RawBitmap" pixmap, then it is guaranteed that
    the method "pm.get" will return a 0 or 1.  In the call
    "pm.set(h,v,pixel)", only the least significant bit of "pixel"
    is used.
 
-   \item
+   <LI>
    If "pm" is a "RawPixmap", the pixels in "pm" encode an RGB
    value each of whose components is 8 bits.  An "(r,g,b)" triple
    is stored as
@@ -89,12 +89,12 @@ TYPE
    value in the pixmap should be displayed on color-mapped
    display.  
 
-   \item
+   <LI>
    If "pm" is a "RawPixmapCMap", the pixels in "pm" are used as
    an index into the color table stored in the field
    "pm.colors".
 
-   \end{itemize}
+   </UL>
 
    The colors used to display a colored pixmap "pm" depends 
    on a number of factors. The "pm.colorMode" field is 
@@ -107,12 +107,12 @@ TYPE
    The current implementation does not perform any dithering, except
    on monochrome screens.  On monochrome screen, a very crude
    ``thresholding'' is performed: if the brightness of the color
-   is more than 50\% of the maximum brightness, the screen's
+   is more than 50% of the maximum brightness, the screen's
    foreground color is used.  Otherwise, the screen's background
    color is used. *)
 
 
-(* \subsubsection{Retrieving and storing ``raw'' pixmaps}
+(* <H3> Retrieving and storing ``raw'' pixmaps </H3>
 
    An "Image.Raw" can be built from a reader containing an image in
    Jef Poskanzer's ``portable anymap file'' (``pnm'') format, and a
@@ -123,15 +123,15 @@ TYPE
    between that format and other formats (e.g., GIF, X11,
    Macintosh PICT, HP PaintJet, and so on).
 
-   There are three types of ``pnm'' files: \begin{itemize}
+   There are three types of ``pnm'' files: <UL>
 
-   \item ``pbm'' -- portable bitmap file
+   <LI>``pbm'' -- portable bitmap file
 
-   \item ``pgm'' -- portable graymap file
+   <LI>``pgm'' -- portable graymap file
 
-   \item ``ppm'' -- portable pixmap file
+   <LI>``ppm'' -- portable pixmap file
 
-   \end{itemize} Each of these format has two variants: ``raw''
+   </UL> Each of these format has two variants: ``raw''
    and ``ASCII.''  In the ``ASCII'' version, pixel values are
    stored as ASCII decimal numbers.  In the ``raw'' version,
    pixel values must be less than 256 and are stored as plain
@@ -166,7 +166,7 @@ PROCEDURE ToWr (raw: Raw; wr: Wr.T)
    "RawPixmap"; "ToWr" simply ignores the resolution and color
    fields. *)
 
-(* \subsubsection{Creating ``raw'' pixmaps from a VBT}
+(* <H3> Creating ``raw'' pixmaps from a VBT </H3>
 
    "FromVBT" captures the information in an arbitrary VBT into an
    "Image.Raw" of particular dimensions: *)
@@ -202,7 +202,7 @@ PROCEDURE FromScrnPixmap (
    the "needsGamma" and the "colorMode" fields of pixmaps that are
    deeper than 1-bit. *)
 
-(* \subsubsection{Building an image from ``raw'' pixmaps}
+(* <H3> Building an image from ``raw'' pixmaps </H3>
 
    The remaining procedures in this interface create an "Image.T"
    from an "Image.Raw" pixmap: *)
@@ -240,8 +240,8 @@ PROCEDURE Scaled (raw: Raw): T;
    both 75.  On a 300 dpi screen, "pm" would appear 2 inches wide and
    2/3 inches high.  Each pixel in "pm" would appear as a block of 4x4
    screen pixels.  If the screen were 250 dpi horizontally and 175 dpi
-   vertically, then "pm" would appear $1\frac{1}{2}$ inches wide and
-   $1\frac{1}{3}$ inches high.  Each pixel in "pm" would appear as a
+   vertically, then "pm" would appear 1/12 inches wide and
+   1/13 inches high.  Each pixel in "pm" would appear as a
    block of 3x2 screen pixels.
 
    Procedure "ScaledN" allows you to provide a collection of
@@ -256,7 +256,7 @@ PROCEDURE ScaledN (READONLY raws: ARRAY OF Raw;
    "raws[i]", where "i" is chosen so that "raws[i]" has the ``most
    appropriate'' resolution. *)
 
-(* Specifically, "i" is chosen such to minimize the {\em scale factor}
+(* Specifically, "i" is chosen such to minimize the <EM>scale factor</EM>
    (the amount that a ``raw'' pixmap must be scaled) while remaining
    within the given error "tolerance".
 
@@ -281,31 +281,31 @@ PROCEDURE ScaledN (READONLY raws: ARRAY OF Raw;
    control over the interpretation of ``most appropriate'' when
    chosing the pixmap.
 
-   \begin{itemize}
+   <UL>
 
-   \item A small "tolerance" ensures a small error, which can
+   <LI>A small "tolerance" ensures a small error, which can
    mean a larger scale factor.
 
    For example, suppose the screen has a resolution of 300 dpi and
-   pixmaps that are 150 and 250 dpi.  When "tolerance" \verb|<| 1/6,
+   pixmaps that are 150 and 250 dpi.  When "tolerance" &lt; 1/6,
    then "ScaledN" chooses the 150 dpi pixmap with a scale factor equal
    to 2, rather than the 250 dpi pixmap with a scale factor equal to 1.
 
-   \item A small "maxScale" makes it less likely that a very
+   <LI>A small "maxScale" makes it less likely that a very
    low-resolution pixmap (which happens to give very small error)
    is chosen over a higher-resolution pixmap (which gives a
    larger error).
 
 
    For example, suppose the screen has a resolution of 300 dpi and
-   pixmaps that are 50 and 200 dpi.  If "tolerance" \verb|>| 1/3, then
+   pixmaps that are 50 and 200 dpi.  If "tolerance" > 1/3, then
    "ScaledN" always chooses the 200 dpi pixmap, because the error,
    (300 - 200)/300=1/3, is within the tolerance and the scale factor
    for 200 dpi is less than the scale factor for the 50 dpi pixmap.
-   However, when "tolerance" \verb|<| 1/3, the 50 dpi pixmap is chosen
-   unless "maxScale" \verb|<=| 4.
+   However, when "tolerance" &lt; 1/3, the 50 dpi pixmap is chosen
+   unless "maxScale" &lt;= 4.
 
-   \end{itemize}
+   </UL>
 
 *)
 

@@ -1,0 +1,65 @@
+<TITLE> TextEdit (leaf) </TITLE>
+<H1> TextEdit (leaf) </H1>  
+
+<P>
+ A multi-line, editable text with a scrollbar.
+
+<HR><DL>
+
+<DT><DD> <I>Contents (<TT>Value</TT> takes precedence):</I>
+
+<DT>Value<DD> (Text, <TT>""</TT>) <BR> The contents.
+
+<DT>From<DD> (Text) <BR> 
+      The name of a resource from which the text will be taken.
+
+<HR>
+<DT>ReadOnly <TT>GP</TT><DD> (Boolean, <TT>FALSE</TT>) <BR> If true, the text will not
+    be editable.
+
+<DT>Clip<DD> (Boolean, <TT>FALSE</TT>) <BR> If true, the long lines will
+	be clipped, not wrapped.
+
+<DT>TurnMargin<DD> (Real, <TT>2.0</TT>) <BR>
+	If long lines are wrapped, then a small grey bar will appear
+	at the end of the first line and the beginning of the next to
+	indicate that the line was wrapped.  TurnMargin specifies the
+	width of the grey bar.
+
+<DT>NoScrollbar<DD> (Boolean, <TT>FALSE</TT>) <BR> If true, there will be
+	no scrollbar or thin line to the left of the text area.
+
+<DT>FirstFocus<DD> (Boolean, <TT>FALSE</TT>) <BR> If true, and if this
+        TextEdit is in a subwindow or TSplit-child, then when that
+        component appears, this TextEdit will acquire the keyboard
+        focus.
+
+<DT>Position <TT>GP</TT><DD> (Cardinal, N/A) <BR> 
+   The position of the cursor. 
+
+<DT>Length <TT>GP</TT><DD> (Cardinal, N/A) <BR> 
+   The number of characters in the text.
+
+</DL><HR>
+
+<DL>
+
+<DT><B>Notes</B><DD> The Position and Length properties are unusual because
+  they cannot be specified in the s-expression; they may only be
+  accessed at runtime using <TT>FormsVBT.GetIntegerProperty</TT> and
+  <TT>FormsVBT.PutIntegerProperty</TT>.
+   
+<DT><B>Notes</B><DD> For details on the editing commands, see the description of
+      TextPort in the <I>VBTkit Reference Manual</I><A REL=REFENTRY HREF="../references.html#VBTkitRefman"> [VBTkitRefman] </A>.
+
+<DT><B>Notes</B><DD> This form produces an object that is a subtype of <TT>
+	TextEditVBT.T</TT>, which contains a <TT>TextPort.T</TT> and
+	(optionally) a <TT>TextPort.Scrollbar</TT>.  To override methods
+	such as <TT>filter</TT> on the textport, the client should use the
+	<TT>realize</TT> method of the <TT>FormsVBT.T</TT>; see
+	Section <A REL=REF HREF="../../FormsVBT.i3#realize"> [realize] </A>, page <A REL=REF HREF="../../FormsVBT.i3#realize"> [realize] </A> for an example.
+
+<DT><B>See Also</B><DD> TypeIn and Typescript
+
+</DL>
+

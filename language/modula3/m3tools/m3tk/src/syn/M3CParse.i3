@@ -76,27 +76,27 @@ which cannot be the start of another "whatever". e.g. a sequence of imports is
 definitely at an end if you encounter a token which can never be in an import,
 for example, the start of a declaration.
 
-\begin{itemize}
-\item
+<UL>
+<LI>
 Start of unit               parse a single unit, returning a "UNIT".
-\item
+<LI>
 Start of import statement   parse a list of "IMPORT" statements, returning a
                             "SeqM3AST_AS_IMPORTED.T".
-\item
+<LI>
 Start of statement          parse a sequence of statements, returning a
                             "SeqM3AST_AS_STM.T".
-\item
+<LI>
 Start of declaration        parse a sequence of declarations. If the sequence
                             is followed by "BEGIN" treat these declarations as
                             the start of a block statement - see the section on
                             statements. Otherwise return a
                             "SeqM3AST_AS_DECL_REVL.T".
-\item
+<LI>
 Start of type               parse a single type, returning an 
                             "M3AST_AS.TYPE_SPEC". Note that a named type cannot
                             be distinguished from an expression by the parser,
                             hence named types are parsed as expressions.
-\item
+<LI>
 Start of expression         parse a single expression. If the expression is
                             followed by ":=" treat it as the start of an
                             assignment - see the section on statements. If the
@@ -104,7 +104,7 @@ Start of expression         parse a single expression. If the expression is
                             as a procedure call statement - see the section on
                             statements. Otherwise return the expression as an
                             "M3AST_AS.EXP".
-\end(itemize}
+</UL>
 
 If the first symbol encountered is not the start of any of the items given
 above "any" returns "NIL". *)

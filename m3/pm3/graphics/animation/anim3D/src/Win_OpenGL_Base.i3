@@ -5,7 +5,7 @@
 (* Last modified on Tue Oct  3 16:31:28 PDT 1995 by najork                   *)
 (*       Created on Wed Feb 16 17:12:53 PST 1994 by najork                   *)
 
-(* "Win_OpenGL_Base.T" is a subtype of \type{GraphicsBase}{T}. 
+(* "Win_OpenGL_Base.T" is a subtype of "GraphicsBase.T". 
    An object of this type provides an abstract interface to 
    Microsoft Windows NT and OpenGL. *)
 

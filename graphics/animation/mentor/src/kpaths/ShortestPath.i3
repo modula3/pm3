@@ -21,8 +21,8 @@ TYPE
     END;
     
 
-(* The call "NEW(T).init(k)" returns a new empty graph with {\it rank
-   limit} "k".  The "ShortestPath.T" object is unmonitored.
+(* The call "NEW(T).init(k)" returns a new empty graph with <I>rank
+   limit</I> "k".  The "ShortestPath.T" object is unmonitored.
 
    The call "sp.addVertex(rl)" adds to "sp" a vertex whose name (as an
    atom) is the first element of "rl".  The second and third elements of

@@ -1,0 +1,1057 @@
+<TITLE> Tutorial </TITLE>
+<H1> Tutorial </H1>
+
+<!--SPOT CLASS=FORTOC ID="ftc_A gentle introduction to using FormsVBT for building some simple, but real, applications."-->
+<P>
+To use FormsVBT, you need a copy of SRC Modula-3 (Version 3.3 or later) and an
+X server for your system. If you have these, you may want to compile and run
+the example programs as you read this chapter. 
+
+<H2> Getting Started </H2>
+<P>
+The first example program is in the file <TT>Hello.m3</TT>:
+
+<PRE><TT>
+MODULE Hello EXPORTS Main;
+IMPORT FormsVBT, Trestle;
+VAR fv := FormsVBT.NewFromFile("Hello.fv"); BEGIN
+  Trestle.Install(fv);
+  Trestle.AwaitDelete(fv)
+END Hello.
+</TT></PRE>
+<P>
+The program builds a <EM>form</EM> (sometimes called a ``dialog
+box'' or a ``user interface'') whose description is contained
+in a file named <TT>Hello.fv</TT>.  It installs the form in a
+top-level window, and then waits until that window is
+deleted by the user.  The window installed by the program is
+shown in the left half of Fig. <A REL=REF HREF="#fig:hello"> [fig:hello] </A>.
+
+<P><IMG ID="fig:hello" SRC="figs/helloBoring.ps">
+<IMG SRC="figs/helloFancy.ps">
+The ``Hello FormsVBT!'' example program.
+  The initial version is on the left; the second version on the
+  right.
+<P>
+The file <EM>Hello.fv</EM> contains the following S-expression:
+
+<PRE><TT>
+(VBox  
+  (Text "Hello FormsVBT!")
+  (Bar)
+  (HBox (Text "Left") (Bar) (Text "Right")))
+</TT></PRE>
+<P>
+The top-level component is a <TT>VBox</TT>.  A <TT>VBox</TT> takes
+an arbitrary number of ``children'' (sub-components) and arranges them vertically
+from top to bottom.  This <TT>VBox</TT> has 3 children:
+<TT>Text</TT>, <TT>Bar</TT>, and <TT>HBox</TT>.  A <TT>Text</TT> displays
+a text string, a <TT>Bar</TT> draws a line orthogonal to the
+orientation of its parent, and an <TT>HBox</TT> arranges its
+children horizontally, from left to right.  The <TT>HBox</TT> has
+3 children, two <TT>Text</TT>s and one <TT>Bar</TT>.
+<P>
+The standard way that you 
+compile and link your programs is to use <TT>m3build</TT>.  The
+<TT>m3makefile</TT> for the ``Hello FormsVBT!'' application is as follows:
+
+<PRE><TT>
+import         (formsvbt)
+implementation (Hello)
+program        (Hello)
+</TT></PRE>
+<P>
+Then you can compile and link the <TT>Hello</TT> program by typing the
+shell-command <TT>m3build -S</TT> in the directory containing the source code.
+<P>
+Actually, most Modula-3 programmers follow the convention of storing all
+of the source files for an application in a directory called <TT>src</TT>. The 
+<TT>m3build</TT> command, when run from <TT>src</TT>'s parent directory, 
+stores all of its derived files (including the executable) in a
+subdirectory whose name depends on the platform on which you are
+running. For example, on DECstations, the derived directory is
+<TT>DS</TT>; on an Alpha running OSF, the directory is
+<TT>AOSF</TT>. When you follow this directory structure, you should
+invoke <TT>m3build</TT> without any arguments.
+<P>
+Here's a slightly fancier version of the interface (shown in the
+right half of
+Fig. <A REL=REF HREF="#fig:hello"> [fig:hello] </A>):
+
+<PRE><TT>
+(Rim (Pen 20)
+  (Border (Pen 1)
+    (Rim (Pen 2)
+      (Border (Pen 2)
+        (VTile
+          (Text "Hello FormsVBT!")
+          (HBox
+            (LabelFont (PointSize 240))
+            (Color "White")
+            (Text (BgColor "Pink") "Left")
+            (Bar)
+            (Text (BgColor "VividBlue") "Right")))))))
+</TT></PRE>
+<P>
+The top-level component is a <TT>Rim</TT> whose <TT>Pen</TT> property has a value
+of 20. A <TT>Rim</TT> must contain exactly one child (a
+<TT>Border</TT> in this case), and it surrounds its child with some background
+space. Here, the <TT>Rim</TT> provides 20 points of background space between each
+edge of the window manager's window frame and the rest of the interface. A
+<TT>Border</TT> is just like a <TT>Rim</TT>, but draws with the foreground color
+instead of the background color. We replaced the <TT>VBox</TT> with a
+<TT>VTile</TT>, and deleted its <TT>Bar</TT> child.  A <TT>VTile</TT> is like a
+<TT>VBox</TT>, but it also automatically inserts a dividing bar between
+its children; by dragging the dividing bar, the user can control the
+division of space among the children. In this example, the <TT>HBox</TT>
+has been given two properties,
+<TT>Color</TT> and <TT>LabelFont</TT>. These control the foreground color and font
+used by the <TT>HBox</TT> and all of its descendants.  Similarly, the
+<TT>BgColor</TT> property changes the background color used.
+<P>
+The fancy version of ``Hello FormsVBT!'' is in the file
+<TT>HelloFancy.fv</TT>. To run the application using
+this file, either modify the application to use <TT>HelloFancy.fv</TT>
+or rename the file <TT>HelloFancy.fv</TT> to be <TT>Hello.fv</TT>.
+Alternatively, you might find it enjoyable to run the FormsVBT
+interactive UI builder, <TT>formsedit</TT>.  Just type the shell-command
+
+<PRE><TT>
+    formsedit HelloFancy.fv
+</TT></PRE>
+<P>
+<HR>
+
+<P><B>Exercise 1</B> Write the FormsVBT S-expression for T^4, 
+a Trestle 
+Tiling Monster of Order 4. (See the <I>Trestle Tutorial</I>, Fig. 2 on page 5.)
+<HR>
+
+<H2>Resources</H2>
+<P>
+A resource is constant data needed by an application program
+at runtime; often it is ``loaded'' at startup time.  Almost all
+FormsVBT programs have resources, such as the <TT>.fv</TT> (pronounced
+``dot ef vee'') files that specify the user interface.  Other typical
+resources specific to an application include bitmaps,
+cursors, and help-texts.
+<P>
+When an application is built, its resources can be ``bundled'' with
+the executable image.  The primary benefit of this feature is
+that applications are self-contained with respect to the
+resources they need.  Thus, you can copy an executable to a
+remote site and you won't need to copy the resource files and
+install them in the same place as they were when the application
+was built.  Also, your application will be insulated against
+changes in library resources.
+<P>
+The easiest way	to do this is to name the resources and the bundle in
+the <TT>m3makefile</TT>, as in this example:
+
+<PRE><TT>
+import         (formsvbt)
+resource       (Hello.fv)
+bundle         (HelloBundle)
+implementation (Hello)
+program        (Hello)
+</TT></PRE>
+<P>
+The second line declares that there is a resource named <TT>Hello.fv</TT>.
+The third line has the effect of collecting all the named
+resources (only one in this case) 
+and creating an interface called <TT>HelloBundle</TT> that
+provides access to them. The program would then be modified to look like
+this:
+
+<PRE><TT>
+MODULE Hello EXPORTS Main;
+IMPORT FormsVBT, HelloBundle, Rsrc, Trestle;
+VAR 
+  path := Rsrc.BuildPath(HelloBundle.Get());
+  fv   := NEW (FormsVBT.T).initFromRsrc ("Hello.fv", path);
+BEGIN
+  Trestle.Install(fv);
+  Trestle.AwaitDelete(fv)
+END Hello.
+</TT></PRE>
+<P>
+The call to <TT>HelloBundle.Get</TT> returns a bundle that is used to
+create a resource-path, which is then searched by the <TT>initFromRsrc</TT> method.
+<P>
+But what if you <EM>want</EM> the application to use new resource
+files? For example, you might have changed some details of the
+<TT>.fv</TT> file that don't require any changes to the
+application code. Do you have to rebuild the entire application?
+<P>
+Fortunately, the answer is no. However, you do need to tell FormsVBT
+that you want it to look for those resources in the file system
+<I>before</I> it looks for them among the resources that were bundled into
+the application.  You do this by changing the resource-path so that it
+includes one or more directories before the bundle.
+<P>
+The convention is to use environment variables whose names are spelled
+by combining the program's name with the string <TT>"PATH"</TT>. This
+variable should be set to a list of directory-names, each separated by a
+colon.  So, if you want to run the <TT>Hello</TT> program using the
+<TT>Hello.fv</TT> file that's in Smith's home directory instead of the one
+that's bundled with the application, you would type something like this
+shell command:
+
+<PRE><TT>
+    setenv HelloPATH /user/smith
+</TT></PRE>
+<P>
+In the program, you would construct a resource-path that included this
+directory by adding the name <TT>HelloPATH</TT>, prefixed with a dollar
+sign:
+
+<PRE><TT>
+MODULE Hello EXPORTS Main;
+IMPORT FormsVBT, HelloBundle, Rsrc, Trestle;
+VAR 
+  path := Rsrc.BuildPath("$HelloPATH", HelloBundle.Get());
+  fv   := NEW (FormsVBT.T).initFromRsrc ("Hello.fv", path);
+BEGIN
+  Trestle.Install(fv);
+  Trestle.AwaitDelete(fv)
+END Hello.
+</TT></PRE>
+
+<H2> The FormsVBT Language </H2>
+<P>
+Syntactically, there are three types of components in FormsVBT:
+leaves, filters, and splits.  A <EM>leaf</EM> has no children; a
+<EM>filter</EM> has exactly one child; and a <EM>split</EM> has any number of
+children.
+<P>
+The FormsVBT <I>leaf</I> components include passive objects
+like  texts and pixmaps, as well as interactive objects like
+scrollbars and type-in fields.
+<P>
+A <I>filter</I> modifies its child's looks or behavior in some way.  We've
+seen how a <TT>Border</TT> draws a border around its child. Another common filter
+is <TT>Boolean</TT>. It adds a check box to the left of its child and makes the
+box and the child sensitive to mouse clicks. It's important to realize that the
+child may be any arbitrarily complex arrangement of components, although a
+<TT>Text</TT> component is the most common.
+<P>
+The purpose of most <I>splits</I> is to divide the display area among its
+component-children (sub-components).  In addition to the
+horizontal and vertical splits that we've seen, FormsVBT provides a temporal
+split (<TT>TSplit</TT>) to display exactly one child at any given time, and a
+z-axis split (<TT>ZSplit</TT>) to display children as overlapping subwindows.
+<P>
+Components are written as lists containing the component's type,
+followed by some number of properties, followed by some number
+of sub-components. Properties are written as lists containing a keyword
+and a value. For example, in the S-expression:
+
+<PRE><TT>
+  (HBox
+    (LabelFont (PointSize 240)) 
+    (Color "White")
+    (Text "Left") 
+    (Bar) 
+    (Text "Right")
+</TT></PRE>
+<P>
+the parent-component's type is <TT>HBox</TT>.  This component has two properties;
+the first property has the keyword
+<TT>LabelFont</TT> and the value <TT>(PointSize 240)</TT>; the second has
+the keyword <TT>Color</TT> and the value <TT>"White"</TT>.  It has three
+sub-components: <TT>(Text "Left")</TT>, <TT>(Bar)</TT>, and <TT>(Text
+"Right")</TT>.
+<P>
+The value of each property is type-checked when the description is
+parsed.  The possible types include strings, integers, and real
+numbers, as well as more complicated types like color and font
+specifications.
+<P>
+So far, we have seen two kinds of properties.  <EM>Class</EM> properties,
+like <TT>Pen</TT>, are defined in conjunction with specific
+components, and are allowed only on components of that class.
+<EM>Inherited</EM> properties, like <TT>Color</TT> and
+<TT>LabelFont</TT>, may be specified for any component, though
+they are not relevant to all component types.  The inherited properties
+have the feature that a value specified for one component becomes
+the default value for all descendants of that component.  Thus
+an inherited property applies not to one component, but to
+an entire subtree.
+<P>
+FormsVBT supports a third type of property, <EM>universal</EM>
+properties.  A universal property can be specified on any component,
+and its value applies only to that component.
+
+<--! %Thus, universal
+%properties are like class properties in the sense that their values
+%apply to the particular component on which the property is specified.
+%Universal properties are also like inherited properties in the sense
+%that they can be specified for all components. However, the value of a
+%universal property does not propagate; it applies only to the
+%component on which it is specified.
+
+% To summarize, the FormsVBT language offers a rich set of composition mechanisms
+% and a variety of predefined objects, allowing easy specification and
+% implementation of complex user interfaces. This philosophy is quite similar to
+% that of InterViews~\cite{interviews}, a popular C++ toolkit running on X.
+% Nearly all of the primitive objects found in the VBTkit and Trestle window
+% system, upon which FormsVBT is based, have counterparts in InterViews.
+-->
+<P>
+<HR>
+
+<P><B>Exercise 2:</B> In <TT>HelloFancy.fv</TT>, wrap a <TT>Scale</TT>
+component around the top-level <TT>Rim</TT>.
+The <TT>Scale</TT> has two class properties: <TT>HScale</TT> and
+<TT>VScale</TT>. What happens when the values of both of these properties are set
+to 1.75? What happens when you nest <TT>Scale</TT> filters?
+<HR>
+
+<H2> The Three-Cell Calculator Application </H2>
+<P>
+A more interesting application is a three-cell
+calculator. Readers may wish to compare the FormsVBT
+implementation of this example with that of SUIT
+<A REL=REFENTRY HREF="../references.html#suit"> [suit] </A>. The
+user can enter two numbers and an arithmetic operation to perform on
+the two numbers.  The result is computed and displayed whenever the
+user selects a new arithmetic operation or types a new number.
+Fig. <A REL=REF HREF="#fig:calc3cell"> [fig:calc3cell] </A> 
+shows the application in action.
+<P>
+The user interface is described by the following FormsVBT
+expression: 
+
+<PRE><TT>
+(Shape (Width 300 + 100 - 50) (Height + 25)
+  (Rim (Pen 20)
+    (VBox
+      (HBox
+        (VBox Fill (Numeric %num1 =5) Fill)
+        (Radio %functions =add
+          (VBox
+            (Choice %div "divide")
+            (Choice %mul "multiply")
+            (Choice %sub "subtract")
+            (Choice %add "add")))
+        (VBox Fill (Numeric %num2 =2) Fill)
+        (Text "=")
+        (Text %result LeftAlign ""))
+      (Glue 10)
+      (HBox Fill (Guard (Button %exit "QUIT")) Fill))))
+</TT></PRE> 
+<P>
+The tokens that
+start with percent signs are names assigned to components.  For
+example, the <TT>Text</TT> component where the application stores
+the result of each computation is named <TT>result</TT>. An
+application can access only named components at runtime.
+
+<P><IMG SRC="figs/calc3cell.ps" ID="fig:calc3cell">
+The three-cell calculator application.
+<P>
+This form contains the following components that we have not seen before:
+
+<UL>
+<LI>
+A <TT>Shape</TT> is used to give a component explicit size constraints, typically
+as a function of its child's size.  Here, the <TT>Shape</TT> declares that its
+acceptable width is between 250 and 400 points, and its preferred width is 300
+points.  The preferred and minimum height of the <TT>Shape</TT> are the same as
+those of its child; its maximum height is 25 points more than the maximum of
+its child.
+
+<LI> <TT>Fill</TT> and <TT>Glue</TT> are used as children of an
+<TT>HBox</TT> or <TT>VBox</TT>.  <TT>Fill</TT> displays as background
+space that will ``stretch'' as needed in the orientation of its
+parent.  It is used here to keep the <TT>Numeric</TT> component centered
+vertically between the top of the string <TT>divide</TT> and the
+bottom of the string <TT>add</TT>.  <TT>Glue</TT> displays as
+background space that doesn't stretch.  In this form, it provides
+10 points of space.  Judicious use of <TT>Fill</TT> and <TT>Glue</TT>
+will facilitate creating very regular and pleasing-looking user interfaces.
+
+<LI> <TT>Numeric</TT> components are numerical widgets; in our
+example, the one on the left has an initial value of 5, and the
+one on the right has an initial value of 2. A user can change
+the displayed number by clicking on the plus or minus
+buttons, or by typing in the type-in field located between the
+buttons.  To start typing, the user needs to move the <EM>keyboard
+focus</EM> to the type-in region by clicking there with the mouse.
+Also, nothing about the typing is reported to the application
+until a carriage return is typed.  At that point, the
+application is notified that the <TT>Numeric</TT> has a new value,
+but not what the user did to enter this new value.  (If the
+application really wants to find this out, it can inquire whether
+the user clicked on the plus or minus buttons, or entered a new
+number in the type-in region.)
+
+<LI>
+The <TT>Radio</TT> unites all of the <TT>Choice</TT> components which are among its
+descendants into <EM>radio buttons</EM>. A <TT>Choice</TT> adds a diamond to the
+left of its child and causes the diamond of the selected choice to appear dark
+and recessed. The application is notified whenever the user changes the
+selected item.  Note that a <TT>Radio</TT> does not impose any particular
+geometric arrangement on the layout of its radio buttons. 
+
+<LI>
+A <TT>Button</TT> adds the ``look-and-feel'' of a button to its child.  The
+application is notified when the user clicks on a button.  Again, keep in mind
+that the contents of a button can be any arbitrary arrangement; here, it's a
+simple text string.
+
+<LI>
+The <TT>Guard</TT> component requires that you click on it 
+<EM>twice in a row</EM> before the program``quits''.  The first click removes
+the ``guard'' (shown visibly by the diagonal lines) and allows
+subsequent mouse activity to be reported to its descendant,
+a <TT>Button</TT> in this case.  The second click causes the
+<TT>Button</TT> to be invoked, and the guard to be reinstated.
+A <TT>Guard</TT> is usually put around a <TT>Button</TT>, but it
+may also be put around any component.
+For example, if you wanted to protect the
+``divide'' radio button, you'd simply wrap a <TT>Guard</TT>
+component around the first <TT>Choice</TT> expression.
+</UL>
+<P>
+In FormsVBT, as in most GUI toolkits, an application is structured as
+an initialization routine, which runs in one thread, and a collection
+of event-handling procedures, which run in other threads.  When an
+application is run, it initializes dialogs and then transfers control
+to the toolkit. The main thread waits until the toolkit returns
+control, which it does when all the dialogs have been deleted.
+<P>
+Here is the complete application for the three-cell calculator (see
+the file <TT>Calc3Cell.m3</TT>):
+
+<PRE><TT>
+MODULE Calc3Cell EXPORTS Main;
+IMPORT Fmt, FormsVBT, Text, Trestle, VBT;
+
+PROCEDURE NewForm (): FormsVBT.T =
+  VAR
+    fv  := FormsVBT.NewFromFile ("Calc3Cell.fv");
+    qcl := NEW (FormsVBT.Closure, apply := Quit);
+    ccl := NEW (FormsVBT.Closure, apply := Compute);
+  BEGIN
+    FormsVBT.Attach (fv, "exit", qcl);
+    FormsVBT.Attach (fv, "num1", ccl);
+    FormsVBT.Attach (fv, "num2", ccl);
+    FormsVBT.Attach (fv, "functions", ccl);
+    RETURN fv
+  END NewForm;
+
+PROCEDURE Quit (cl  : FormsVBT.Closure;
+                fv  : FormsVBT.T;
+                name: TEXT;
+                time: VBT.TimeStamp) =
+  BEGIN
+    Trestle.Delete (fv)
+  END Quit;
+
+PROCEDURE Compute (cl  : FormsVBT.Closure;
+                   fv  : FormsVBT.T;
+                   name: TEXT;
+                   time: VBT.TimeStamp) =
+  VAR
+    answer: REAL;
+    first        := FLOAT (FormsVBT.GetInteger (fv, "num1"));
+    second       := FLOAT (FormsVBT.GetInteger (fv, "num2"));
+    fn           := FormsVBT.GetChoice (fv, "functions");
+  BEGIN
+    IF Text.Equal (fn, "add") THEN
+      answer := first + second
+    ELSIF Text.Equal (fn, "sub") THEN
+      answer := first - second
+    ELSIF Text.Equal (fn, "mul") THEN
+      answer := first * second
+    ELSIF Text.Equal (fn, "div") THEN
+      answer := first / second
+    END;
+    FormsVBT.PutText (fv, "result", Fmt.Real (answer))
+  END Compute;
+
+BEGIN 
+  VAR fv := NewForm(); BEGIN
+    Trestle.Install(fv);
+    Trestle.AwaitDelete(fv)
+  END
+END Calc3Cell.
+</TT></PRE>
+<P>
+The parameters to an event-handler (e.g., <TT>Quit</TT> and
+<TT>Compute</TT> in the <TT>Calc3Cell</TT> program) identify the dialog
+(<TT>fv</TT>) in which the event happened and the name of the interactor
+causing the event. 
+<P>
+The event-handler's first parameter, named <TT>cl</TT> in this example,
+is a <TT>FormsVBT.Closure</TT> that is specified when the event-handler
+is attached.  Its <TT>apply</TT> method <EM>is</EM> the event-handler. The
+standard way of passing additional information to the event-handler is
+to create a subtype of <TT>FormsVBT.Closure</TT>, with new fields, and
+possibly new methods, for handling the new information.  The
+<TT>time</TT> parameter is a timestamp associated with the user event
+that caused the event-handler to be invoked.  The timestamp is needed
+for certain operations, like acquiring the keyboard focus.
+<P>
+We say that a component ``generates an event'' when the user does something in
+a component that causes the event-handler to be invoked. The semantics of what
+causes an event to be generated is specific to each component.
+<P>
+The Three-Cell Calculator application creates a form and passes it to
+Trestle, the window manager, which ``installs'' it, just as the
+``Hello FormsVBT!'' application did.  Here, as part of building a form
+from the S-expression in file <TT>Calc3Cell.fv</TT>, we also attach
+event-handlers to the components to which the application will
+respond.  The <TT>Quit</TT> event-handler, which is attached to the
+component named <TT>exit</TT> (the button labeled ``QUIT''), deletes the
+window from Trestle.  The <TT>Compute</TT> event-handler, which is
+attached to both of the <TT>Numeric</TT> components as well as the radio
+buttons, retrieves the values stored in both <TT>Numeric</TT> components,
+determines which arithmetic function the user selected, performs the
+operation, and then displays the result.
+<P>
+<HR>
+
+<P><B> Exercise 3</B> Add your favorite operator to the application
+and to the user interface. (If you're undecided about which operator is your
+favorite, try GCD.)
+<HR>
+
+<H2> Improving Readability </H2>
+<P>
+The Three-cell Calculator S-expression illustrates a number of common
+abbreviations that help make the FormsVBT language more readable.
+<P>
+A percent sign is an abbreviation for the
+<TT>Name</TT> property.  That is, the FormsVBT parser reads
+<TT>%<I>xyz</I></TT> exactly as if it were <TT>(Name <I>xyz</I>)</TT>.
+<P>
+An equals sign is an abbreviation for the property called
+<TT>Value</TT>.  That is, the FormsVBT parser reads <TT>=<I>
+xyz</TT></I> exactly as if it were <TT>(Value <I>xyz</I>)</TT>.  By
+convention, any component whose value can be changed
+interactively by a user has a <TT>Value</TT> property.
+<P>
+Components that display some type of object, like a string
+or a pixmap, specify the object using a property called
+<TT>Main</TT>.  For example, to display a pixmap from a file named
+<TT>Trumpet</TT>, you'd say <TT>(Pixmap (Main "Trumpet"))</TT>.
+However, the <TT>Main</TT> property can be abbreviated by omitting the
+keyword <TT>Main</TT> and the associated parentheses, e.g.,
+<TT>(Pixmap "Trumpet")</TT>.
+<P>
+A <TT>Text</TT> component that has no properties other than
+<TT>Main</TT> can be further abbreviated simply by giving a string.
+For example, <TT>(Text (Main "QUIT"))</TT> can be reduced to
+<TT>(Text "QUIT")</TT> and then to <TT>"QUIT"</TT>.  Other examples
+of this are the children of the four <TT>Choice</TT> components
+in the last program.  If you want to specify any properties on
+a <TT>Text</TT> component (such as a name, font, color, or
+alignment), you can abbreviate <TT>Main</TT>, but you still need
+to write <TT>(Text ...)</TT>.
+<P>
+Boolean properties have a value of either <TT>TRUE</TT> or
+<TT>FALSE</TT>. The default value of <EM>all</EM> Boolean properties is
+<TT>FALSE</TT>.  Mentioning the name of a Boolean property is an abbreviation
+for specifying a true value. For example, in the Three-Cell
+Calculator, the token <TT>LeftAlign</TT> is an abbreviation for
+<TT>(LeftAlign TRUE)</TT>.
+<P>
+Finally, leaf components without any properties
+can be written without parentheses, e.g., <TT>Fill</TT>. 
+<P>
+The following chart summarizes these abbreviations:
+
+<TABLE COLSPEC="L L">
+<TR><TD><TT>(Text "t")</TT>        <TD> <TT>"t"</TT>
+<TR><TD><TT>(Name n)</TT>          <TD> <TT>%n</TT>
+<TR><TD><TT>(Value v)</TT>         <TD> <TT>=v</TT>
+<TR><TD><TT>(Main m)</TT>          <TD> <TT>m</TT>
+<TR><TD><TT>(boolprop TRUE)</TT>   <TD> <TT>boolprop</TT>
+<TR><TD><TT>(proplessleaf)</TT>    <TD> <TT>proplessleaf</TT>
+</TABLE>
+
+<HR>
+<P>
+<B>Exercise 4</B> The following interface contains
+a textual label, a type-in field, and a button:
+<FIG SRC="figs/etude.ps"></FIG>
+<P>
+The interface is 250x75 points,
+and it uses <TT>Button</TT>, <TT>Frame</TT>, <TT>Pixmap</TT>, <TT>Rim</TT>,
+<TT>Shape</TT>, <TT>Text</TT>, and
+<TT>TypeIn</TT> components, in addition to some <TT>HBox</TT>es,
+<TT>VBox</TT>es, <TT>Glue</TT>s, and <TT>Fill</TT>s. Appendix
+<A REL=REF HREF="longcatalog.html#ap:longcatalog"> [ap:longcatalog] </A>
+describes the class-specific properties for each component.  Write a
+concise FormsVBT expression for this form.
+<HR>
+<P>
+FormsVBT provides two additional ways to make S-expressions more
+readable.
+First, an S-expression can be split across multiple files (resources).
+To insert a file named <TT>HelpDialog.fv</TT>, just include the
+expression
+
+<PRE><TT>
+    (Insert "HelpDialog.fv")
+</TT></PRE>
+<P>
+wherever you want the file to be inserted. The <TT>Insert</TT>
+expression can appear anywhere in an S-expression;
+logically, it is replaced by the contents of the named file before
+the S-expression is parsed. 
+<P>
+The second way to make the form more readable is by using macros.
+Syntactically, a macro is an inherited property with the name <TT>Macro</TT>.
+For details on macros, see Section
+<A REL=REF HREF="language.html#sec:language-macros"> [sec:language-macros] </A>.
+
+<H2> Separating the UI from the Application </H2>
+<P>
+One of the ways that user interface toolkits like FormsVBT simplify the
+construction of interactive, graphical applications is by forcing a separation
+of the interaction-specific parts from the application-specific parts. This allows
+the <I>interface designer</I> to concentrate on the design of the interface
+and the <I>application programmer</I> on the implementation of the
+application-specific code.
+<P>
+In FormsVBT, the only UI components known to the application
+are those that are given names.  The application is insensitive
+to the layout of components and to the existence of all unnamed
+components.  There is even some insulation between the
+application and the UI for named components: one component may be
+replaced with another whose behavior with respect to the application is
+the same.
+<P>
+For instance, in the Three-Cell Calculator interface from
+Section
+<A REL=REF HREF="#sec:calcIntro"> [sec:calcIntro] </A>, we could replace the <TT>Text</TT>-component named
+<TT>result</TT> with any other component that can store text, such as a
+<TT>Typescript</TT>. A <TT>Typescript</TT> would capture a history of all
+values computed by the application. (We would also need to delete the
+<TT>LeftAlign</TT> and <TT>Main</TT> properties to make this change.)
+<P>
+We could also replace the radio buttons with items in a pulldown menu
+by replacing this expression
+
+<PRE><TT>
+  (Radio %functions
+    (VBox
+      (Choice %div "divide")
+      (Choice %mul "multiply")
+      (Choice %sub "subtract")
+      (Choice %add "add")))
+</TT></PRE>
+<P>
+with the following expression:
+
+<PRE><TT>
+  (Menu "?" (Radio %functions =add
+    (HBox
+      (VBox 
+        (Choice MenuStyle %div "divide")
+        (Choice MenuStyle %mul "multiply"))
+      (VBox 
+        (Choice MenuStyle %sub "subtract"))
+        (Choice MenuStyle %add "add")))))
+</TT></PRE>
+<P>
+See Fig. <A REL=REF HREF="#fig:calc3cell-menu"> [fig:calc3cell-menu] </A>.
+
+<P><IMG SRC="figs/calc3cell-menu.ps" ID="fig:calc3cell-menu">
+A modified UI for the three-cell calculator application.
+  The cursor (not visible in the figure) is over the string ``multiply.''
+<P>
+The first child of a <TT>Menu</TT>
+<SPOT CLASS=INDEX ID="idx_Menu_Menu"> is the ``anchor'' of a pulldown menu;
+click on it to get a menu displayed. The second child of a <TT>Menu</TT>
+is an arbitrary S-expression, displayed when the user clicks on the
+anchor. In the example above, the first child is a <TT>Text</TT>
+component displaying a question mark. The second child contains four
+radio buttons, arranged in a 2-by-2 matrix. The <TT>MenuStyle</TT>
+property causes a radio button to react when the mouse rolls into it
+rather than on a mouse click.
+<P>
+The contents of this menu emphasizes an earlier point about
+composition. A <TT>Menu</TT> does not impose any structure on the
+contents of the menu. One merely composes a <TT>Menu</TT> out of 2
+children: a child that is the anchor button, and a child that appears
+when the anchor button is activated. A ``traditional'' pulldown menu
+is a <TT>VBox</TT> whose children are <TT>MButton</TT>s.
+<P>
+<HR>
+
+<P> 
+<B>Exercise 5</B> Change the program so that a symbol for the
+current operator is displayed instead of the question mark.  Hint:
+Assign name to the quoted question mark, by using the expanded format
+<TT>(Text %op "?")</TT>, and call <TT>FormsVBT.PutText</TT>
+to change what is displayed in a <TT>Text</TT> component.
+<HR>
+
+
+<H2>Subwindows</H2>
+<P>
+The three-cell calculator will crash if we try to divide by 0.  Let's
+change the application to pop up a dialog box warning the user if
+there is an attempt to divide by 0. We need to modify the
+<TT>Compute</TT> event-handler by adding a test for a divisor equal to
+zero just before the division:
+
+<PRE><TT>
+    ...
+    ELSIF Text.Equal (fn, "div") THEN
+      IF second = 0.0 THEN
+        FormsVBT.PopUp (fv, "errorWindow");
+        RETURN
+      END;
+      answer := first / second
+    END;
+    ...
+</TT></PRE>
+<P>
+The call to <TT>FormsVBT.PopUp</TT> will cause the named dialog to appear.
+<P>
+It is easy to add a dialog named <TT>errorWindow</TT> to the
+calculator's S-expression that was given in Section
+<A REL=REF HREF="#sec:calcIntro"> [sec:calcIntro] </A>.
+The S-expression becomes the following:
+
+<PRE><TT>
+    (ZSplit 
+      (ZBackground (Shape ...))
+      (ZChassis %errorWindow 
+        (Title "Error Message")
+        (Rim (Pen 20) 
+          (Text %errorText "Can't divide by zero."))))
+</TT></PRE>
+<P>
+A <TT>ZSplit</TT> takes an arbitrary number of children and displays
+them as overlapping windows. The first child is the background; it is
+always visible.  The visibility and location of the other children are
+under program control.  The <TT>ZChassis</TT> wraps a ``banner'' around its
+child; the banner is responsive to mouse activity for the common
+window controls of closing, moving, and resizing.  A call to
+<TT>FormsVBT.PopUp</TT> will cause a specified child of a <TT>ZSplit</TT>
+to appear. By default, a <TT>ZChassis</TT> is not initially visible.
+<P>
+Another common use of subwindows is to allow a user to specify
+additional information for a command.  For example, the ``Save As...''
+button found in many applications pops up a dialog box, which is a
+subwindow, with a way to enter the name of a file.  A button like
+``About Bazinga...'' pops up a subwindow containing information about
+the application called Bazinga.
+<P>
+In situations like these, it's a burden on the programmer to
+write an event-handler that simply calls <TT>FormsVBT.PopUp</TT>.
+To simplify this common case, FormsVBT provides a
+<TT>PopButton</TT>.  This component is just like a <TT>Button</TT>,
+but before its event-handler is called, it causes a designated
+subwindow to appear.  In practice, applications often don't need
+to attach any event-handler to a <TT>PopButton</TT>.
+<P>
+For grins, we'll now change the original three-cell calculator
+user interface so that the radio buttons are in a subwindow that
+is completely controlled by the user.  Clicking on the <TT>"?"</TT> menu
+will cause the subwindow to appear.  The window can be closed
+and repositioned without any application code.  We need make
+two small changes to the original S-expression given in
+Section
+<A REL=REF HREF="#sec:calcIntro"> [sec:calcIntro] </A> 
+to add subwindows.  First, replace
+the radio buttons by a button that causes a subwindow to pop-up.
+That is, change
+
+<PRE><TT>
+  (Radio %functions ...)
+</TT></PRE>
+<P>
+to
+<PRE><TT>
+  (PopButton (For fnWindow) "?")
+</TT></PRE>
+<P>
+Second, move the <TT>Radio</TT> expression into a subwindow, by
+enclosing it in a <TT>ZChassis</TT>, and wrapping a <TT>ZSpit</TT>
+around the root. Now, <TT>Calc3Cell.fv</TT> looks like this:
+<PRE><TT>
+  (ZSplit
+    (ZBackground (Shape ...))
+    (ZChassis %errorWindow ...)
+    (ZChassis %fnWindow 
+      (Radio %functions ...)))
+</TT></PRE>
+<P>
+<P>
+
+<HR>
+
+<P>
+<B>Exercise 6</B> 
+Add an ``About Three-Cell Calculator...'' button. It should pop-up a
+subwindow with appropriate information. If you want to put the button
+inside of a pull-down menu, use <TT>PopMButton</TT>.
+<HR>
+
+<H2> Modal Dialogs </H2>
+<P>
+When a subwindow appears, the rest of the form and all other
+subwindows remain active. In the case of the operator-subwindow in
+Section
+<A REL=REF HREF="#sec:subwindows"> [sec:subwindows] </A>
+(i.e., the <TT>ZChassis</TT> named
+<TT>fnWindow</TT>), this behavior was desirable.  However, this behavior may not
+be desirable for the error-message subwindow. That is, some
+application writers would like to force the user to explicitly close
+the error message subwindow before continuing to interact in the
+application.  In the UI jargon, this is called a <EM>modal
+dialog</EM>.
+<P>
+A simple way to do this is to bring up the error subwindow
+as before, but also to ``deactivate'' the background---make it
+unresponsive to user actions---while the subwindow is displayed.
+When the dialog is finished, we ``re-activate'' the background.
+A FormsVBT component called <TT>Filter</TT> is used to set the
+<EM>reactivity</EM> of its child to be <EM>active</EM> (the default case),
+<EM>passive</EM> (mouse and keyboard events are not sent), <EM>dormant</EM> (like
+passive, but it also grays out the child and changes the cursor),
+or <EM>vanished</EM> (like passive, but also draws over the child in the
+background color, thereby making it invisible).
+<P>
+Changing the modeless subwindow in the calculator so that it
+is modal requires only a trivial change. First, add a
+<TT>Filter</TT> just inside the <TT>ZBackground</TT>.  Name this
+component <TT>zbg</TT>.  Second, in the application, add
+
+<PRE><TT>
+    FormsVBT.MakePassive(form, "zbg")
+</TT></PRE>
+<P>
+after the call to <TT>FormsVBT.PopUp</TT>.  Finally, you need to register an
+event-handler for the <TT>ZChassis</TT> named <TT>errorWindow</TT>.  
+The event handler will be invoked when
+the subwindow is closed; it contains the following line:
+<PRE><TT>
+    FormsVBT.MakeActive(form, "zbg")
+</TT></PRE>
+<P>
+<P>
+You might also wish to eliminate the banner on the subwindow.  To do so, change
+the <TT>ZChassis</TT> to be a
+<TT>ZChild</TT>, and add a <TT>CloseButton</TT> somewhere
+in the subwindow.  The <TT>CloseButton</TT> button will cause the
+subwindow in which it is contained to be taken down.
+Fig.
+<A REL=REF HREF="#fig:modal"> [fig:modal] </A>
+shows the modified application.
+
+<P><IMG SRC="figs/modal.ps" ID="fig:modal">
+The three-cell calculator application with a modal
+  dialog.
+<P>
+<HR>
+
+<P>
+<B>Exercise 7</B>
+Make the error window in the three-cell calculator modal in the
+manner suggested in this section: In the <TT>.fv</TT> file, add a
+<TT>Filter</TT> inside the <TT>ZBackground</TT>, change the error
+subwindow from a <TT>ZChassis</TT> to a <TT>ZChild</TT>, and add a
+<TT>CloseButton</TT> to the error window. In the <TT>.m3</TT> file, change
+the application code so that the background is made passive when the
+error window appears, and re-activated after error window disappears.
+<HR>
+<P>
+<HR>
+
+<P> 
+<B>Exercise 8</B>
+When the error dialog appears while the subwindow containing operators
+is visible, the operators are not deactivated, although the main form
+is deactivated.  Change the form so that <EM>everything</EM> except the
+error subwindow is made passive. Don't modify the application! (Hint:
+Use two <TT>ZSplit</TT>s, one the background child of the other.)
+<HR>
+<P>
+
+<H2> A File Viewer </H2>
+<P>
+It's easy to hook up the FormsVBT text-editing widget to an application to
+make a <I>bona fide</I> text editor. The file-viewer application, shown in
+Fig.
+<A REL=REF HREF="#fig:viewer"> [fig:viewer] </A>, 
+contains a type-in area on the top for entering the name
+of a file and a fully functional text editor that occupies the bulk of the
+window. The text editor is in read-only mode.
+<P>
+The S-expression for the application, in the file <TT>Viewer.fv</TT>, is quite
+simple:
+
+<PRE><TT>
+(Rim (Pen 10) (Font (WeightName "Bold"))
+  (VBox
+    (HBox 
+      (Frame Lowered (TypeIn %fileName))
+      (Glue 10) 
+      (Button %exit "QUIT"))
+    (Glue 10)
+    (Shape (Height 200 + inf) (Width 300 + inf)
+      (Frame Lowered (TextEdit ReadOnly %editor)))))
+</TT></PRE>
+<P>
+The application is structured as in the three-cell calculator 
+application in Section
+<A REL=REF HREF="#sec:calcIntro"> [sec:calcIntro] </A>. A <TT>NewForm</TT>
+procedure converts the S-expression into a runtime object and registers
+event-handlers. Only one event-handler is needed here; <TT>ReadFile</TT> is
+attached to the type-in field <TT>fileName</TT>. It is invoked whenever you type
+a carriage return in the type-in field. The code is straightforward:
+
+<PRE><TT>
+PROCEDURE ReadFile (cl  : FormsVBT.Closure;
+                    fv  : FormsVBT.T;
+                    name: TEXT;
+                    time: VBT.TimeStamp) =
+  VAR fname := FormsVBT.GetText (fv, "fileName");
+  BEGIN
+    TRY
+      FormsVBT.PutText (fv, "editor", GetFile (fname));
+    EXCEPT
+      Rd.Failure =>
+        FormsVBT.PutText (fv, "editor", "");
+        FormsVBT.PutText (fv, "fileName", "");
+    END;
+  END ReadFile;
+</TT></PRE>
+<P>
+The event-handler first retrieves the string you typed into the type-in field
+named <TT>fileName</TT>. It then calls an internal procedure <TT>GetFile</TT> to
+retrieve the contents of a file by that name, and finally stores the contents
+into the text-editor widget. If an error is encountered while trying to
+retrieve the contents of the file, <TT>ReadFile</TT> catches the exception that
+is raised and just erases the contents of the type-in field and the text
+editor. The application is shown in Fig.
+<A REL=REF HREF="#fig:viewer"> [fig:viewer] </A>.
+
+<P><IMG SRC="figs/viewer.ps" ID="fig:viewer">
+A simple file viewer application.
+
+<P><IMG SRC="figs/viewer2.ps" ID="fig:viewer2">
+The file viewer application again, but now, file names
+  can be specified in the type-in field at the top or using the file browser
+  at the left.
+<P>
+<HR>
+
+<P>
+<B>Exercise 9</B>
+Add a Reset button to the left of the Quit button.
+Clicking on this button should clear the contents of the type-in field.  For
+extra credit, interpret a double click to also clear the contents of the
+editor. To detect a double-click, you will need to examine the
+<TT>VBT.MouseRec</TT> that is available from <TT>FormsVBT.GetTheEvent</TT> to the
+Reset button's event-handler.
+<HR>
+<P>
+<HR>
+
+<P>
+<B>Exercise 10</B>
+Add a pop-up to signal when the file could not be opened,
+rather than clearing the type-in field.
+<HR>
+<P>
+If you substitute <TT>FileBrowser</TT> for <TT>TypeIn</TT>, you'll
+be able to traverse the file system by double-clicking on
+directories (those items ending with a slash) in a browser.  The
+file browser generates an event when you double-click on
+a file.  Note that the application does not need be changed at
+all!
+<P>
+While it's nice to be able to traverse the hierarchy by mousing
+around in the file browser, there are times when it is more
+desirable simply to type in a pathname.  No problem.  We'll just
+add a type-in field to the S-expression.  Here's the new
+S-expression (see Fig.
+<A REL=REF HREF="#fig:viewer2"> [fig:viewer2] </A>):
+
+<PRE><TT>
+(Rim (Pen 10) (ShadowSize -1)
+     (BgColor "White") (LightShadow "Black")
+     (DarkShadow "Black")
+  (VBox
+    (HBox 
+      (Frame Lowered (TypeIn %fileNameString))
+      (Glue 10) 
+      (Button %exit "QUIT"))
+    (Glue 10)
+    (HBox
+      (Shape (Width 100)
+        (Frame Lowered (FileBrowser %fileName)))
+      (Glue 10)
+      (Shape (Height 200 + inf) (Width 300 + inf)
+        (Frame Lowered (TextEdit ReadOnly %editor))))))
+</TT></PRE>
+<P>
+(A negative value for the inherited property <TT>ShadowSize</TT> is a
+convention for telling FormsVBT to give feedback using a flat, 2-d style
+rather than a Motif-like, 3-d style.)
+<P>
+We also need to change the
+application slightly to register the <TT>ReadFile</TT>
+event-handler with the type-in field (i.e.,
+<TT>fileNameString</TT>) <I>as well as</I> with the file browser
+(i.e., <TT>fileName</TT>).  In addition, procedure <TT>ReadFile</TT>
+itself needs to be changed trivially to initialize <TT>fname</TT>
+from the interactor that caused the event-handler to be invoked:
+<PRE><TT>
+    VAR fname := FormsVBT.GetText (fv, name);
+</TT></PRE>
+<P>
+<P>
+So far so good, but there's no tie between the file browser and the type-in field.
+<P>
+<HR>
+
+<P>
+<B>Exercise 11</B>
+Implement event-handler methods for the file browser
+(<TT>fileName</TT>) and the type-in field (<TT>fileNameString</TT>) to
+keep them synchronized. That is, typing a path into the type-in field
+should cause the browser to change the directory it is displaying.
+The directory displayed by the file browser is set by calling
+<TT>FormsVBT.PutText</TT>, passing in the name of the directory
+to be displayed. What happens if you specify a directory that doesn't exist? 
+<HR>
+<P>
+If you didn't do the last exercise, now is your last chance...
+<P>
+It turns out that FormsVBT already provides a component that ties
+a type-in field to a file browser. The component is called a
+<TT>Helper</TT>, and it has a class-specific property called <TT>For</TT> 
+that names the file browser to which
+it is tied. So, if you change the expression 
+<PRE><TT>
+    (TypeIn %fileNameString)
+</TT></PRE>
+<P>
+to
+<PRE><TT>
+    (Helper (For fileName))
+</TT></PRE>
+<P>
+and replace the initialization of variable <TT>fname</TT> in the original 
+program as described above, 
+then the type-in field and the file browser will stay synchronized,
+without any application-code intervention.
+<P>
+<HR>
+
+<P>
+<B>Exercise 12</B>
+What happens when you replace ``<TT>Helper</TT>'' 
+by ``<TT>DirMenu</TT>''?  What happens when you tie a file browser to both a
+<TT>Helper</TT> and <TT>DirMenu</TT>?
+<HR>

@@ -7,10 +7,10 @@
 
 
 (* In accordance with the terminology used by Trestle, we refer to mouse 
-   button transitions as to {\em mouse events}. A mouse event is represented
+   button transitions as to <EM>mouse events</EM>. A mouse event is represented
    by a record "MouseCB.Rec".
 
-   A {\em mouse event callback object} is an object which has one
+   A <EM>mouse event callback object</EM> is an object which has one
    method, "invoke". Each geometric object has a stack of mouse callback
    objects. When a mouse event "mr" is relayed to a particular geometric
    "o", the the message "cb.invoke(mr)" is sent to the top callback
@@ -49,8 +49,8 @@ TYPE
    "clickType" indicates whether the button went down or up, and whether 
    any other button was already or still down.
 
-   {\em NOTE: There is a fair chance that I will add other fields to "Rec",
+   <EM>NOTE: There is a fair chance that I will add other fields to "Rec",
    once we have gained more experience with event handling. So far, I pretty
-   much mimick (part of) what is there in "VBT.MouseRec".} *)
+   much mimick (part of) what is there in "VBT.MouseRec".</EM> *)
 
 END MouseCB.

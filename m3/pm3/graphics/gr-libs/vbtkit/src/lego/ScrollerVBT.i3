@@ -7,21 +7,21 @@
 (*      modified on Tue Jun 16 13:08:34 PDT 1992 by muller *)
 <* PRAGMA LL *>
 
-(* A "ScrollerVBT" is a scrollbar with an orientation along an {\em
-   axis}.  For the sake of brevity in this interface, we'll only talk
+(* A "ScrollerVBT" is a scrollbar with an orientation along an <EM>
+   axis</EM>.  For the sake of brevity in this interface, we'll only talk
    about vertical scrollers.  For horizontal scrollers, replace
-   phrases like {\it top and bottom edges} by {\it left and right
-   edges}, and so on.
+   phrases like <I>top and bottom edges</I> by <I>left and right
+   edges</I>, and so on.
 
-   Like a "NumericVBT", a "ScrollerVBT" provides a {\em
-   bounded-value\/} abstraction.  That is, a "ScrollerVBT" has a {\it
-   value\/} associated with it, and that value is guaranteed to stay
+   Like a "NumericVBT", a "ScrollerVBT" provides a <EM>
+   bounded-value</EM> abstraction.  That is, a "ScrollerVBT" has a <I>
+   value</I> associated with it, and that value is guaranteed to stay
    within some bounds.  Various user gestures change the value and
    invoke a "callback" method on the "ScrollerVBT".  The callback
    method can inquire the value of the scrollbar, and can change the
    value and bounds.
 
-   Visually, a scrollbar contains a {\em stripe} that spans some
+   Visually, a scrollbar contains a <EM>stripe</EM> that spans some
    fraction of the height of the scrollbar and is slightly
    narrower than the scrollbar.  The stripe represents the value
    of the scrollbar.  Various user-gestures cause the stripe to
@@ -33,15 +33,15 @@
    ..  max-thumb]".  Visually, the "value" is represented by the
    position (top edge) of a stripe in the scroller, and "thumb"
    by the length of the stripe.  The amount that "value" should
-   change when continuous scrolling is given by "step", the {\em
-   stepping} amount.
+   change when continuous scrolling is given by "step", the <EM>
+   stepping</EM> amount.
 
    Although each "VBT" class that uses a "ScrollerVBT" is free to
    associate any meaning with the length of the stripe, the
    following convention is suggested for using scrollbars to view
    an object:
 
-   \begin{quote}
+   <BQ>
 
    The ratio of the height of the stripe to the height of the
    scrollbar should be the same as the ratio of the amount of the
@@ -49,40 +49,49 @@
    of top of the stripe reflects the position of top of the view
    of the object within the entire object.
 
-   \end{quote}
+   </BQ>
 
    Here is some terminology and the user-interface provided by a
    "ScrollerVBT":
 
-   \begin{itemize} \item To {\em scroll}\index{scrolling} means
+   <UL> <LI>To <EM>scroll</EM><SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>scrolling</SPAN>
+</SPAN>
+ means
    to left-click or right-click in the scrollbar.
 
-   \item You need to release the button relatively quickly, or else
-   you'll start {\em continuous scrolling}.  You stop continuous
-   scrolling by releasing the button, by chord-cancelling\index{chord}
+   <LI>You need to release the button relatively quickly, or else
+   you'll start <EM>continuous scrolling</EM>.  You stop continuous
+   scrolling by releasing the button, by chord-cancelling<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>chord</SPAN>
+</SPAN>
+
    or by moving the mouse.
 
-   \item When you move the mouse, you are then using {\em proportional
-   scrolling}.  This means that the more that you move the mouse
+   <LI>When you move the mouse, you are then using <EM>proportional
+   scrolling</EM>.  This means that the more that you move the mouse
    vertically, the more the stripe will be moved in the direction of
    the mouse movement.  You stop proportional scrolling by upclicking
    or chord-cancelling.
 
-   \item The left and right buttons are inverses: the left button
+   <LI>The left and right buttons are inverses: the left button
    moves the stripe downward and the right button moves the stripe
    upward.
 
-   \item You {\em thumb}\index{thumb} with a middle-click.  The top of
+   <LI>You <EM>thumb</EM><SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>thumb</SPAN>
+</SPAN>
+ with a middle-click.  The top of
    the stripe moves to the position of the cursor.  Thus, middle-click
    above the top of the stripe moves the stripe up, and middle-click
    below the top moves the stripe down.
 
-   \item Middle-drag causes {\em continuous thumbing}.  As you drag to
+   <LI>Middle-drag causes <EM>continuous thumbing</EM>.  As you drag to
    a new position, the top of the stripe moves to match the current
    cursor position.  You stop continuous thumbing by middle-upclicking
    or chord-canceling.
 
-   \end{itemize}
+   </UL>
 
    If you want a different user interface, you need to subclass
    various methods (e.g., a "thumb", "scroll", "autoscroll") of the

@@ -1,0 +1,26 @@
+<TITLE> TrillButton (filter, event) </TITLE>
+<H1> TrillButton (filter, event) </H1> 
+    
+<P>
+ A button, generates an event on the down-click and continues 
+to generate events while the mouse is held down over the button.
+
+<DL>
+
+<DT><B>Behavior</B><DD> Highlights on down-click, and generates an event. If held 
+long enough, generates events repeatedly until 
+released, canceled (by chording), or moved outside the domain of 
+the button. When moved outside the button and still held, events 
+are suspended until the mouse is returned to the domain of the button. 
+At that point, the button is re-highlighted and event generation 
+is resumed. The button is unhighlighted when the button is released 
+or canceled.
+
+<DT><B>Notes</B><DD> The initial hold-period and the repeat-period should ultimately 
+be governed by an application-independent user profile.
+
+<DT><B>Shape</B><DD> The natural shape of its child (i.e., with no shrink
+or stretch), plus the border around the button.
+
+</DL>
+

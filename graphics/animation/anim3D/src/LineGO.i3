@@ -28,7 +28,7 @@ VAR
   Width  : RealProp.Name;
   Type   : LineTypeProp.Name;
 
-(* In addition to the properties observed by all \type{GO}{T}'s, there are 
+(* In addition to the properties observed by all "GO.T"'s, there are 
    some additional properties that are observed by "LineGO.T"'s:
 
    "Point1" and "Point2" are the names of two point properties that describe
@@ -48,10 +48,10 @@ VAR
 PROCEDURE New (p1, p2 : Point3.T) : T;
 (* "New(p1,p2)" creates a new line and returns it. It also attaches the 
    following properties to the new line:
-   \begin{verbatim}
+   <PRE>
      (Point1,PointProp.NewConst(p1))
      (Point2,PointProp.NewConst(p2))
-   \end{verbatim}
+   </PRE>
 *)
 
 (* The following five procedures provide sugaring to attach "Colour", "Width",

@@ -36,7 +36,7 @@ TYPE T = NetObj.T OBJECT
    information provided by the client and
    returns a reference to this object to the client.
    The cached client information includes the callback object and the
-   {\em scope} of the client:   
+   <EM>scope</EM> of the client:   
    a rectangular subset of the full area of the board that the client is
    interested in. The scope is initialized to be empty.
    In all subsequent calls, the client passes the "ClientInfo.T" as
@@ -58,7 +58,7 @@ TYPE T = NetObj.T OBJECT
    The client invokes "modifyItems" to provide the modified value of items.
    The client might have modified any or all of the attributes of an
    item. 
-   If "additive" is true, the modifications are {\em additive} in that the new
+   If "additive" is true, the modifications are <EM>additive</EM> in that the new
    image of the items can be simply painted over the old one.
    The board passes this information in notifications to other clients.
    Concurrent modifications to the same item by different clients are

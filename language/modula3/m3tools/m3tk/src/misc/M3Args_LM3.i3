@@ -4,7 +4,7 @@
 
 INTERFACE M3Args_LM3;
 
-(* \subsection{LM3 formal specification} *)
+(* <H2> LM3 formal specification </H2> *)
 
 <* TRAITS M3Args(TEXT FOR S), Text(TEXT FOR S) *>
 
@@ -20,7 +20,7 @@ is a global specification variable. The "keySet" specificationvariable
 contains the complete set of keys registered with all tools.  This is
 needed to specify the behaviour if the implementation does not permit
 duplicate keys, which is given by the specification variable
-"noDuplicates".  In addition the {\it master} tool is denoted by
+"noDuplicates".  In addition the <I>master</I> tool is denoted by
 "masterTool". *)
 
 <* 

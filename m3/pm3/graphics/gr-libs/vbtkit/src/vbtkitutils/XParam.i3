@@ -98,7 +98,7 @@ EXCEPTION Error(Info);
 
 END XParam.
 
-(* \subsubsection{An example}
+(* <H3> An example </H3>
 
    Here is an example of how to use this interface to install a VBT
    "v" as a top level window, obeying the display and geometry

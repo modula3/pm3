@@ -20,7 +20,7 @@ TYPE T <: Public;
      Private <: ROOT;
 
 (* The method "enq" inserts the given notify record at the tail of the
-   queue. However, the implementation may {\em merge} records for
+   queue. However, the implementation may <EM>merge</EM> records for
    efficiency such that the effect of the notifications is not
    altered. For example, if there already exists a "Create" or
    "Modify" record, there is no need to log another "Modify" record by

@@ -12,21 +12,17 @@
 
    The following chart summarizes the visual effects:
 
-             \begin{center}
-             \begin{tabular}{l|l|l}
+<TABLE>
+<TR><TD><EM>Style</EM> 
+    <TD> <EM>top (vertical)</EM><TD> <EM>bottom (vertical)</EM>
+<TR><TD> <TD> <EM>left (horizontal)</EM> <TD> <EM>right (horizontal)</EM>
+<TR><TD>Flat      <TD>   Background  <TD>  Background
+<TR><TD>Raised    <TD>   Light       <TD>  Dark
+<TR><TD>Lowered   <TD>   Dark        <TD>  Light
+<TR><TD>Ridged    <TD>   Light       <TD>  Dark
+<TR><TD>Chiseled  <TD>   Dark        <TD>  Light
+</TABLE>
 
-                               & {\em top (vertical)}    & {\em bottom (vertical)}\\
-                               & {\em left (horizontal)} & {\em right (horizontal)} \\
-             {\em Style}       &                         & \\
-             \hline
-                 Flat      &   Background  &  Background\\
-                 Raised    &   Light       &  Dark\\
-                 Lowered   &   Dark        &  Light\\
-                 Ridged    &   Light       &  Dark\\
-                 Chiseled  &   Dark        &  Light
-
-             \end{tabular}
-             \end{center}
 *)
 
 INTERFACE ShadowedBarVBT;

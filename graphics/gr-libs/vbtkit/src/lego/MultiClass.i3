@@ -45,7 +45,7 @@ TYPE
         index   (ch: VBT.T): CARDINAL;
       END;
 
-(* \subsubsection{The MultiSplit methods} *)
+(* <H3> The MultiSplit methods </H3> *)
 
 (* The methods implement the behavior in the "MultiSplit"
    interface.
@@ -110,7 +110,7 @@ TYPE
    efficient way to implement a "succ" method for any particular
    multi-split. *)
 
-(* \subsubsection{The MultiFilter methods} *)
+(* <H3> The MultiFilter methods </H3> *)
 
 TYPE
   Split <: T;
@@ -128,7 +128,7 @@ TYPE
    Also, the "move" method is never run; the generic code in
    "Split.Move" ensures this. *)
 
-(* \subsubsection{Procedures for creating multis} *)
+(* <H3> Procedures for creating multis </H3> *)
 
 PROCEDURE Be (v: VBT.T; mc: T);
 <* LL.sup <= VBT.mu *>

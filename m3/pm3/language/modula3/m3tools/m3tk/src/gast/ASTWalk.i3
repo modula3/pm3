@@ -64,11 +64,11 @@ END ASTWalk.
 
 (* The "ASTWalk" interface provides a way to visit every node in an
 AST, applying a user-supplied method at each node.  This process is
-often referred to a {\em tree walk} or an {\em AST walk}.
+often referred to a <EM>tree walk</EM> or an <EM>AST walk</EM>.
 
 The children of a node of some type "T" are visited in the order
 defined by the implementation of the "walk" method for "T". Typically
-this is defined to be the {\em natural} order, that is, corresponding
+this is defined to be the <EM>natural</EM> order, that is, corresponding
 to reading the program text.
 
 The caller can choose whether the callback method is applied on entry
@@ -86,7 +86,7 @@ walk, returning control to the caller. Any other exception
 also aborts the walk and is propagated to the caller.
 
 The "VisitNodes" procedure supports the most common type of walk,
-which is to vis to apply the callback method on {\em entry} to the
+which is to vis to apply the callback method on <EM>entry</EM> to the
 node, that is before the children are visited (pre-order).
 
 "ModeVisitNodes" takes a "VisitModeControl" argument that allows

@@ -25,10 +25,10 @@ TYPE
 PROCEDURE New (c : Color.T) : T;
 (* "New (c)" creates a new ambient light source "l" and returns it.
    It also attaches the following properties to "l":
-   \begin{verbatim}
+   <PRE>
       "(LightGO.Colour,ColorProp.NewConst(c))" 
       "(LightGO.Switch","BooleanProp.NewConst(TRUE))"
-   \end{verbatim} 
+   </PRE>
 *)
 
 END AmbientLightGO.

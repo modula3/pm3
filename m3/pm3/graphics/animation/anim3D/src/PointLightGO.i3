@@ -10,22 +10,22 @@
    light source which is emitting light uniformly into all directions. The
    amount of light that falls onto another geometric object depends on the 
    distance between this object and the light source. This phenomenon is 
-   referred to as {\em attenuation}. 
+   referred to as <EM>attenuation</EM>. 
 
    The underlying graphics system (PEX or OpenGL) uses the following formula
-   to compute the attenuation: Let\\
-   $L_p$ : Position of the light source \\
-   $O_p$ : position of (some part of) an object \\
-   $C_0$ : Constant attenuation coefficieny \\
-   $C_1$ : Linear attenuation coefficieny \\
+   to compute the attenuation: Let<BR>
+   $L_p$ : Position of the light source<BR>
+   $O_p$ : position of (some part of) an object<BR>
+   $C_0$ : Constant attenuation coefficieny<BR>
+   $C_1$ : Linear attenuation coefficieny<BR>
    Then the overall color attenuation factor $L_a$ for the light hitting the
    object at point $O_p$ is:
-   \[ \frac{1}{C_0 + C_1 | O_p - L_p | } \]
+    \frac1C_0 + C_1 | O_p - L_p |  
 
    This attenuation model is supported by both PEX and OpenGL (in hardware). 
    Note, however, that it does not capure real-world attenuation, which
    behaves like this:
-   \[ L_a = \frac{1}{| O_p - L_p |^2 } \]
+    L_a = \frac1| O_p - L_p |^2  
 
    OpenGL supports a third, quadratic, attenuation coefficient; PEX, however,
    does not. As lighting computation is (and, for efficiency reasons, must be)
@@ -48,13 +48,13 @@ TYPE
 PROCEDURE New (c : Color.T; origin : Point3.T; att0, att1 : REAL) : T;
 (* "New(c,origin,att0,att1)" initializes a new point light source "l" 
    and returns it. It also attaches the following properties to "l":
-   \begin{verbatim}
+   <PRE>
       (LightGO.Colour,ColourProp.NewConst(c)) 
       (LightGO.Switch,BooleanProp.NewConst(TRUE))
       (Origin,PointProp.NewConst(dir))
       (Attenuation0,RealProp.NewConst(att0))
       (Attenuation1,RealProp.NewConst(att1))
-   \end{verbatim}
+   </PRE>
 *)
 
 
@@ -62,18 +62,18 @@ VAR
   Origin       : PointProp.Name;
   Attenuation0 : RealProp.Name;
   Attenuation1 : RealProp.Name;
-(* In addition to the properties observed by all \type{GO}{T}'s and 
-   \type{LightGO}{T}'s, there are three additional properties that are 
+(* In addition to the properties observed by all <TT>GO.T</TT>'s and 
+   <TT>LightGO.T</TT>'s, there are three additional properties that are 
    observed by "PointLightGO.T"'s. 
    "Origin" is the name of a property that determines the origin 
    of the light emitted by the light sources; it associates with a property 
-   value of type \type{PointProp}{Val}. 
+   value of type <TT>PointProp.Val</TT>. 
    "Attenuation0" is the name of a property that determines the attenuation 
    coefficient $C_0$; it associates with a property value of type 
-   \type{RealProp}{Val}. 
+   <TT>RealProp.Val</TT>. 
    "Attenuation1" is the name of a property that determines the attenuation 
    coefficient $C_1$; it associates with a property value of type 
-   \type{RealProp}{Val}. 
+   <TT>RealProp.Val</TT>. 
 *)
 
 

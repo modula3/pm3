@@ -46,17 +46,17 @@ TYPE
   IdCreator = OBJECT METHODS new(text: TEXT): Id END;
 
 (* When creating a table the client specifies:
-\begin{itemize}
-\item The table size. It is a bucket and chain style hash table; "size" 
+<UL>
+<LI>The table size. It is a bucket and chain style hash table; "size" 
       specifies the number of buckets).
-\item An optional "IdCreator" object. If this is supplied its "new"
+<LI>An optional "IdCreator" object. If this is supplied its "new"
       method will be called whenever a text "n" is added to the table by
       the "enter(n)" method. The "id" returned by the "new" method (which 
       can be any subtype of "Id") will be the value that is associated with 
       "n". If no creation object is specified, a default subtype of "Id"
       will be associated. A different "id" value must be associated
       with each text that is entered in the table.
-\end{itemize}
+</UL>
 
 
 A call of "lookup(n, id)" returns "TRUE" if "n" has been entered in the
@@ -68,7 +68,7 @@ with the table, returning the previous value.
 
 The "toText" method returns the text with which "id" has been associated.
 
-\subsection{Incremental Hashing}
+<H2> Incremental Hashing </H2>
 
 The following routines expose more of the hashing mechanism. They allow a
 hash value to be built up incrementally and then specified when a text or

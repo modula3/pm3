@@ -9,12 +9,12 @@
 <* PRAGMA LL *>
 
 (* A "ReactivityVBT" is a filter that can make its child active,
-   passive, dormant, and invisible.  The {\em active\/} state does
-   nothing; mouse and keyboard events are relayed to child. The {\em
-   passive\/} state doesn't allow mouse or keyboard events to go to
+   passive, dormant, and invisible.  The <EM>active</EM> state does
+   nothing; mouse and keyboard events are relayed to child. The <EM>
+   passive</EM> state doesn't allow mouse or keyboard events to go to
    the child. 
-   The {\em dormant\/} state doesn't send mouse or keyboard events to
-   the child; it also grays out the child.  The {\em vanish\/} state
+   The <EM>dormant</EM> state doesn't send mouse or keyboard events to
+   the child; it also grays out the child.  The <EM>vanish</EM> state
    also doesn't send mouse or keyboard events to go to the child; in
    addition, it draws over the child in the background color, thereby
    making it invisible.

@@ -20,15 +20,13 @@
 
    Associated with each anchor VBT "v" is 
    
-   \medskip\bulletitem "v.help", the help window to be activated, 
-   
-   \medskip\bulletitem "v.hfudge" and "v.vfudge", dimensions in millimeters
+   <UL><LI>"v.help", the help window to be activated, 
+<LI>"v.hfudge" and "v.vfudge", dimensions in millimeters
    that control where the window is popped up,
-   
-   \medskip\bulletitem "v.n", a count of the number of "ZSplit" ancestors
+<LI>"v.n", a count of the number of "ZSplit" ancestors
    of "v" to skip when looking for the "ZSplit" to insert the
    help window into.
-
+</UL>
    When the help window is activated, it is inserted
    into the ("v.n")th "ZSplit" ancestor of
    "v" (counting the first "ZSplit" ancestor as zero), or as an

@@ -1,0 +1,61 @@
+<TITLE> Boolean (filter, event) </TITLE>
+<H1> Boolean (filter, event) </H1> 
+    
+<P>
+ A Boolean, on-off interactor.
+
+<HR><DL>
+
+<DT>Value <TT>GP</TT><DD> (Boolean, <TT>FALSE</TT>) <BR> The current state.
+
+<DT>MenuStyle<DD> (Boolean, <TT>FALSE</TT>) <BR> When set, the interactor
+      should be a child of a <TT>Menu</TT>, in which case it will react
+      on the upclick. Otherwise, it reacts on the downclick.
+      
+</DL><HR><P> <I>Feedback choices (mutually exclusive):</I>
+
+<DL>
+
+<DT>CheckBox<DD> (Boolean, <TT>TRUE</TT>) <BR> Give feedback with a
+    ``check-box'' icon.
+      
+<DT>CheckMark<DD> (Boolean, <TT>FALSE</TT>) <BR> Give feedback with a
+    ``check-mark'' icon.
+      
+<DT>Inverting<DD> (Boolean, <TT>FALSE</TT>) <BR> Give feedback by 
+    displaying a border around the child <TT>VBT</TT>.
+
+</DL><HR>
+
+<DL>
+
+<DT><B>Behavior</B><DD> If <TT>CheckBox</TT> (the default) is set, FormsVBT
+    adds a three-dimensional check-box icon to the left of its child.
+    To indicate a false value, the check-box is raised and empty; to
+    indicate a true value, the check-box is lowered and filled-in.
+    Any click on the check-box or on the child toggles state and
+    generates an event on the upclick.  <TT>CheckMark</TT> causes a
+    different set of bitmaps to be used to indicate state.
+    <TT>Inverting</TT> causes no bitmaps to be used.  Actually,
+    ``inverting'' is a (historical) misnomer: on a non-monochrome
+    display, a three-dimensional shadow is put around the child, and
+    the shadow is raised (when false) and lowered (when true).
+
+<DT><B>Shape</B><DD> When <TT>Inverting</TT> is false, the shape of this
+interactor is the shape of its child, plus 16 pixels wider on
+the west side.  When <TT>Inverting</TT> is true, the shape of the
+interactor is the shape of the child plus the shadow.
+
+<DT><B>Notes</B><DD> The <TT>CheckMark</TT> property, in conjunction with
+<TT>MenuStyle</TT>, can be used to implement the Macintosh-style
+``checks'' on menu items.  However, because the check-mark is
+put to the left of its child, menu elements will look misaligned
+if some elements are <TT>MButton</TT>s and others are
+<TT>Boolean</TT>s with check-marks.
+
+<DT><B>See Also</B><DD> Choice and Radio
+
+</DL>
+
+<P><IMG SRC="../figs-long/boolean.ps">
+

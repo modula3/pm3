@@ -56,7 +56,7 @@ PROCEDURE DotProduct (a, b : T) : REAL;
 PROCEDURE CrossProduct (a, b : T) : T;
 (* Returns the cross product of "a" and "b". See [Foley] p. 1104ff for an 
    explanation of the geometric significance of cross products. One important
-   property is that $a \times b$ is orthogonal to the plane described by the
+   property is that "a times b" is orthogonal to the plane described by the
    vectors "a" and "b". *)
 
 PROCEDURE OrthoVector (a : T) : T;

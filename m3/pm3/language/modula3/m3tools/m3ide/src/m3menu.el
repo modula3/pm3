@@ -65,11 +65,11 @@
 (defvar m3-menu
   '("Modula-3"
     ("Help"
-;      ["Modula-3 menu" m3-help-m3menu t]
+      ["PM3 introduction" m3-help-m3menu t]
       ["Language definition" m3-help-language t]
-      ["Libraries" m3-help-libraries t]
+;      ["Libraries" m3-help-libraries t]
       ["Compiler and tools" m3-help-srcm3 t]
-      ["Building distributed Apps with M3" m3-help-bdam3 t]
+;      ["Building distributed Apps with M3" m3-help-bdam3 t]
     )
     ("Browse"
       ["List programs" m3-list-programs t]
@@ -126,8 +126,13 @@
   "On unix the path separator is /, may be \ on some weird machines"
 )
 
-(defvar m3-www "file:/usr/local/pm3"
-  "Path where modula-3 packages are located"
+(if (file-exists-p "/usr/local/pm3/lib/m3/pkg")
+  (defvar m3-www "file:/usr/local/pm3"
+    "Path where modula-3 packages are located"
+  )
+  (defvar m3-www "file:/usr"
+    "Path where modula-3 packages are located"
+  )
 )
 
 (defvar m3-browser (concat "http://" (system-name) ":8000")
@@ -333,22 +338,22 @@
     
 (defun m3-help-m3menu () (interactive)
   "Show the m3menu documentation"
-  (m3-fetch-url (concat m3-www "/lib/m3/www/m3ide/src/index.html"))
+  (m3-fetch-url (concat m3-www "/intro/src/index.html"))
 )
 
 (defun m3-help-language () (interactive)
   "Show the language definition documentation"
-  (m3-fetch-url (concat m3-www "/lib/m3/www/modula3/src/index.html"))
+  (m3-fetch-url (concat m3-www "/modula3/src/m3defn/m3.html"))
 )
 
 (defun m3-help-libraries () (interactive)
   "Show the libraries documentation"
-  (m3-fetch-url (concat m3-www "/lib/m3/www/modula3/src/index.html"))
+  (m3-fetch-url (concat m3-www "/libs/src/index.html"))
 )
 
 (defun m3-help-srcm3 () (interactive)
   "Show the SRC Modula-3 documentation"
-  (m3-fetch-url (concat m3-www "/lib/m3/www/modula3/src/index.html"))
+  (m3-fetch-url (concat m3-www "/modula3/src/index.html"))
 )
 
 (defun m3-help-bdam3 () (interactive)

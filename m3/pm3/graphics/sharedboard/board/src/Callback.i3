@@ -32,7 +32,7 @@ TYPE T = NetObj.T OBJECT
 
    The call "itemsModified (its, additive)" notifies the client of the
    modified value "its" of items. 
-   If "additive" is true, the modification is {\em additive} in that the new
+   If "additive" is true, the modification is <EM>additive</EM> in that the new
    image of the items can be simply painted over the old one.
    For example, "additive" is true  when characters are added to a
    text item, or when its color changes, but false when its font changes.

@@ -73,7 +73,7 @@ TYPE
              inside     : BOOLEAN
            END;
 
-(* \subsubsection{Runs} *)
+(* <H3> Runs </H3> *)
 
 PROCEDURE RunExtent (         t            : T;
                               index        : INTEGER;
@@ -84,7 +84,7 @@ PROCEDURE StartOfRun (t    : T;
                       index: INTEGER;
                       READONLY includedChars := WordRun):
   INTEGER;
-(* Return the largest "i <= index" for which "IsStartOfRun(t, i,
+(* Return the largest "i &lt;= index" for which "IsStartOfRun(t, i,
    includedChars)" is "TRUE".  Return "-1" if there is no such
    "i". *)
 
@@ -116,12 +116,12 @@ PROCEDURE IsEndOfRun (t    : T;
 | IsStartOfRun(t, index, ISOChar.All - includedChars)
    *)
 
-(* \subsubsection{Lines} *)
+(* <H3> Lines </H3> *)
 
 TYPE LineOption = 
   {ExcludeBlanks, IncludeBlanks, IncludeNewline};
 
-(* A {\it line} is a sequence of characters delimited by newlines
+(* A <I>line</I> is a sequence of characters delimited by newlines
    (or the mtext boundaries).  The client may specify a
    subsequence of the line by passing left and right
    ``line options.''  If the left option is "ExcludeBlanks", then
@@ -211,7 +211,7 @@ PROCEDURE IsEndOfLine (t    : T;
   BOOLEAN;
 (* Return "index = EndOfLine (t, index, rightOption)" *)
 
-(* \subsubsection{Blank lines} *)
+(* <H3> Blank lines </H3> *)
 
 PROCEDURE IsBlankLine (t: T; index: INTEGER): BOOLEAN;
 (* Return "TRUE" if "index" is located on a line that consists
@@ -222,16 +222,16 @@ PROCEDURE BlankLinesExtent (t: T; ndex: INTEGER): Extent;
 (* Computes the extent of maximal sequence of blank lines
    surrounding "index". *)
 
-(* \subsubsection{Paragraphs} *)
+(* <H3> Paragraphs </H3> *)
 
-(* A {\it paragraph} is a maximal sequence of non-blank lines, in
+(* A <I>paragraph</I> is a maximal sequence of non-blank lines, in
    the sense of "LineExtent" where the left option is
    "IncludeBlanks" and the right option is "IncludeNewline". *)
 
 PROCEDURE ParagraphExtent (t: T; index: INTEGER): Extent;
 
 PROCEDURE StartOfParagraph (t: T; index: INTEGER): INTEGER;
-(* Return the largest "i <= index" for which
+(* Return the largest "i &lt;= index" for which
    "IsStartOfParagraph(t, i)" is "TRUE".  Return "-1" if there is
    no such "i". *)
 

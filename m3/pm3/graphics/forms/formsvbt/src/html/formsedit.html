@@ -1,0 +1,157 @@
+<TITLE> FormsEdit </TITLE>
+<H1 ID="ch:formsedit"> FormsEdit </H1>
+
+<!-- SPOT CLASS=FORTOC ID="Tells how to use &lt;TT&gt;formsedit&lt;/TT&gt;, the FormsVBT interface builder. Not necessary, but makes using FormsVBT a lot more fun."-->
+<P>
+FormsEdit is a stand-alone application that allows you
+to develop a FormsVBT user interface: the layout, the colors, the fonts,
+the text, the buttons, the pop-up windows, the
+shadows, ... everything except the
+application code that does whatever it is you're building
+a user interface to.
+<P>
+The shell-command <TT>formsedit</TT> takes an optional argument,
+the name of an <TT>.fv</TT> file you wish to edit.  It also
+takes optional X11 parameters for specifying the initial display
+and geometry; the manpage has the details.
+<P>
+The following sections describe the user interface.
+
+<H2>Getting started</H2>
+
+<P><IMG SRC="figs-formsedit/start.ps" ID="efig:start">
+The initial text-editor window shown by <TT>formsedit</TT>.
+
+<P>
+When you start the program, you'll see two windows: an editor
+and a result view (see Figure <A REL=REF HREF="#efig:start"> [efig:start] </A>).  The editor 
+has a simple FormsVBT S-expression in it:
+
+<PRE><TT>
+(Rim (Pen 10)
+  (Text (Name ignoreMe) "This space available for a small fee"))
+</TT></PRE>
+<P>
+The result view is simply a window that contains the text, surrounded
+by 10 points of whitespace, or in this case, ``greyspace'', since the
+default background color is light grey.
+
+<H2>The menubar</H2>
+<P>
+The menubar has four menus and a button.
+
+<H3>The quill-pen menu</H3>
+<P>
+This menu has four items:
+<P>
+<B>About FormsEdit ...</B> shows the copyright notice and other
+information.
+<P>
+<B>Help</B> pops up a window with an online
+help-file, containing a list of all the components and their
+properties.
+<P>
+<B>Editing Model</B> includes a choice of keybindings and selection
+controls; they also determine the keyboard equivalents that appear in
+the menu items.  The four choices, Ivy, Emacs, Mac, and Xterm, are
+documented in the <I>VBTkit Reference Manual</I><A REL=REFENTRY HREF="references.html#VBTkitRefman"> [VBTkitRefman] </A>.
+<P>
+<B>Quit</B> This terminates FormsEdit.
+
+<H3>The File menu</H3>
+
+<P><IMG SRC="figs-formsedit/fileMenu.ps" ID="fileMenu.e">
+The File menu.
+
+<P>
+This menu (see Figure <A REL=REF HREF="#fileMenu.e"> [fileMenu.e] </A>) contains
+a standard list of items:
+<P>
+<B>New</B> creates another pair of windows, using the same, simple
+S-expression.
+<P>
+<B>Open...</B>, which is selected in the figure, brings up a file
+browser.
+<P>
+<B>Close</B> closes the window. If you click <B>Close</B> or <B>Quit</B>
+while there are unsaved changes, you will be asked whether you want to
+save them.
+<P>
+<B>Save</B> and <B>Save As...</B> are self-explanatory.
+<P>
+<B>Revert to Saved</B> re-reads the expression from the disk file.
+<P>
+<B>PP setup...</B> brings up a window with a <TT>Numeric</TT> component
+that lets you establish the width that the pretty-printer should use;
+typing Return causes the S-expression to be pretty-printed at the new
+width.  The user-interface descriptions in <TT>.fv</TT> files tend to
+grow fairly quickly.  If you can afford the screen real-estate, you
+might try reshaping the editor window to be as wide as possible,
+setting the pretty-printer width to 150, and typing Return.
+<P>
+<B>PPrint</B> invokes the pretty-printer, and rewrites the S-expression
+in the window.
+
+<H3>The Edit menu</H3>
+<P>
+The <B>Edit</B> menu has buttons for <B>Undo</B> and 
+<B>Redo</B>; buttons for the standard editing commands <B>Cut</B>, <B>
+Copy</B>, <B>Paste</B>, <B>Clear</B>, and <B>Select All</B>; a <B>Find...</B>
+button that brings up a dialog box for specifying the string you wish
+to search for; and buttons for <B>Find Next</B> and <B>Find Prev</B>,
+which look for the current Source selection.
+
+<H3>The Misc menu</H3>
+<P>
+The <B>Misc</B> menu contains an item for examining
+the named components in the form you're editing---it shows their
+names, types, and shapes; an item for producing a snapshot (see Section
+<A REL=REF HREF="../FormsVBT.i3#sec:programming-snapshot"> [sec:programming-snapshot] </A>); and a button to bring up the
+error-message window, which normally disappears 5 seconds after it
+displays a message. This menu also contains items that allow you to
+move the editor and result windows from one screen to another.
+
+
+<H3>The ``Do It'' button</H3>
+<P>
+The space to the right of the <B>Misc</B> button contains the name of the file
+being edited (if the window is showing a file). When there are unsaved
+changes to the window, a ``note'' icon also appears here.
+<P>
+After you've edited the file describing your user interface,
+you'll want to see what it looks like.  Click the <B>Do It</B>
+button.  On some keyboards, there's a (big) key labeled <B>Do</B>;
+you can press that instead of clicking the button. The key labeled
+<B>Enter</B> may also be used.
+<P>
+Every time you click the <B>Do It</B> button (or press the <B>Do</B> key
+or the <B>Enter</B> key), FormsVBT parses the entire S-expression, and
+updates the result view accordingly.  The result-view window will
+change its shape, if necessary, to give the form its preferred shape.
+
+<H2>Errors</H2>
+
+<P><IMG SRC="figs-formsedit/error.ps" ID="efig:error.e">
+The error window.
+
+What if there's an error in your form?  The parser will detect
+it and highlight the nearest enclosing S-expression.  An error
+window will pop up, explaining what the error was.  If you click
+the <B>OK</B> button in the error window, the highlighting will
+disappear.
+<P>
+For example, suppose you wanted to change the font in the sample
+S-expression, and instead of writing <TT>Family</TT>, you misspelled
+it as <TT>Famly</TT>.  When you hit the <B>Do It</B> button, the error
+window pops up; see Figure~<A REL=REF HREF="#efig:error.e"> [efig:error.e] </A>.  The <TT>Text</TT>
+subexpression is highlighted, and the error message says: {\tt
+Bad font-spec: (Famly "new century schoolbook")}.
+<P>
+When an error has been detected, the result view is not changed.
+If you open a window onto a file that contains an erroneous
+S-expression, its result window will be in some undefined state.
+<P>
+If we correct the misspelling and click <B>Do It</B>, the error
+window will disappear.
+
+

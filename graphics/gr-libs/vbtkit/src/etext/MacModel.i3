@@ -17,15 +17,15 @@ END MacModel.
    an alias for either Source or Target. A Primary selection in a
    non-readonly textport is always in replace-mode.
 
-   The conventions for the Mac model are taken from Apple's {\it Human
-   Interface Guidelines} \cite[pages 106-114]{AppleUI}.
+   The conventions for the Mac model are taken from Apple's <I>Human
+   Interface Guidelines</I> [pages 106-114]AppleUI.
 
-   The first unmodified downclick establishes the {\it anchor point}.
-   If the user then drags the mouse, the upclick establishes the {\it
-   active end}; the range between the anchor point and the active end
+   The first unmodified downclick establishes the <I>anchor point</I>.
+   If the user then drags the mouse, the upclick establishes the <I>
+   active end</I>; the range between the anchor point and the active end
    is the Primary selection, and it is highlighted. If the user
-   releases the mouse without dragging, that establishes the {\it
-   type-in point}, and there is no selection or highlighting.
+   releases the mouse without dragging, that establishes the <I>
+   type-in point</I>, and there is no selection or highlighting.
 
    Shift-downclick extends (or reduces) the primary selection and
    establishes the new active end.
@@ -35,7 +35,7 @@ END MacModel.
 
    The Mac model implements the following Apple guidelines:
 
-   \begin{quote}
+   <BQ>
 
    When a Shift-arrow key combination is pressed, the active end of
    the selection moves and the range over which it moves becomes
@@ -77,13 +77,16 @@ END MacModel.
    selection is ... an insertion point immediately after the pasted
    text. [In either case, there is no highlighting.]
 
-   \end{quote}
+   </BQ>
 
    In documentation from Apple, Mac keybindings are typically
    described in terms of ``command'' and ``option'' modifiers. DEC
    keyboards and the X server do not use those terms, but a
    correspondence can be established. The Mac model uses the value of
-   environment variable "MacCommandModifier"\index{MacCommandModifier}
+   environment variable "MacCommandModifier"<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>MacCommandModifier</SPAN>
+</SPAN>
+
    to name the X-modifier that the user would like to behave as if it
    were the ``command'' key. The choices are:
 | lock, control, mod1, mod2, mod3, mod4, `and` mod5 
@@ -92,30 +95,31 @@ END MacModel.
    modifiers.
 
    Similarly, the Mac model uses the environment variable
-   "MacOptionModifier"\index{MacOptionModifier} to name the X-modifier
+   "MacOptionModifier"<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>MacOptionModifier</SPAN>
+</SPAN>
+ to name the X-modifier
    that the user would like to behave as if it were the ``option''
    key. The choices are the same as in the list above.  The default is
    "mod1".
 
    The following commands are implemented in the Mac model:
 
-\begin{center}
-\begin{tabbing}
-LongCommandKeyName \= This is just a tab-setting line. \kill
-command-c \> {\bf Copy} \\
-command-v \> {\bf Paste} \\
-command-x \> {\bf Cut} \\
-command-z \> {\bf Undo} \\
-command-shift-z \> {\bf Redo} \\
-\end{tabbing}
-\end{center}
+<PRE>
+LongCommandKeyName  This is just a tab-setting line.
+command-c  <B>Copy</B>
+command-v  <B>Paste</B>
+command-x  <B>Cut</B>
+command-z  <B>Undo</B>
+command-shift-z  <B>Redo</B>
+</PRE>
 
    The Mac model supports the Apple standards for typing extended
    characters, insofar as the resulting characters are defined for ISO
    Latin-1. For example, option-g produces the copyright symbol,
-   \copyright, but option-shift-7, which produces a double dagger,
-   \ddag, on the Macintosh, produces no key in the Mac model, since
+   &copy;, but option-shift-7, which produces a double dagger,
+   on the Macintosh, produces no key in the Mac model, since
    the double-dagger is not in ISO Latin-1. The Mac model supports all
    the two-character sequences, such as option-e followed by ``a'' to
-   produce ``a'' with an acute accent, \'{a}. The complete table appears
-   on page~\pageref{MacExtendedCharacters}. *)
+   produce ``a'' with an acute accent, a. The complete table appears
+   on page&nbsp;<A REL=REF.PAGE HREF="MacExtendedCharacters"> [MacExtendedCharacters] </A>. *)

@@ -9,9 +9,9 @@
 <* PRAGMA SUBTYPE *>
 
 (* An "AnchorSplit" is a multi-split version of "AnchorBtnVBT".
-   The first child is the {\em anchor} that is displayed (such
-   as a text string or an icon).  The second child is the {\em
-   menu} that is displayed when the anchor is activated.  Attempts
+   The first child is the <EM>anchor</EM> that is displayed (such
+   as a text string or an icon).  The second child is the <EM>
+   menu</EM> that is displayed when the anchor is activated.  Attempts
    to give an anchor-split more than two children cause the extra
    children to be lost.
 

@@ -9,8 +9,8 @@
 <* PRAGMA SUBTYPE *>
 
 (* A "SourceVBT" is used to implement a ``drag-and-drop'' paradigm.
-   The object being dragged is the {\em source} and an object into
-   which the source may be dropped is the {\em target}.
+   The object being dragged is the <EM>source</EM> and an object into
+   which the source may be dropped is the <EM>target</EM>.
 
    As a subclass of "ButtonVBT", a "SourceVBT" has "pre", "post", and
    "cancel" methods.  In addition, it has "during", "callback", and
@@ -29,7 +29,7 @@
    method: Recall that the "during" method is invoked each time the
    mouse moves while the button is down and not chord-cancelled.  The
    default "during" method looks to see if the mouse is over a VBT
-   marked as a {\em target}.  If so, then the "SourceVBT"'s "hit"
+   marked as a <EM>target</EM>.  If so, then the "SourceVBT"'s "hit"
    method is invoked to see if the target is acceptable for the
    source.  If so, an "excited" method on the target is invoked to
    give feedback, and eventually, a target's "normal" method is
@@ -41,7 +41,7 @@ INTERFACE SourceVBT;
 
 IMPORT ButtonVBT, FeedbackVBT, HighlightVBT, PaintOp, VBT;
 
-(* \subsubsection{Sources} *)
+(* <H3> Sources </H3> *)
 
 TYPE
   <* SUBTYPE T <: MultiFilter.T *>
@@ -81,7 +81,7 @@ PROCEDURE GetTarget (v: T): Target;
    otherwise return "target". This procedure is intended to be called
    by a "callback" method to find out the current target. *)
 
-(* \subsubsection{Targets} *)
+(* <H3> Targets </H3> *)
 
 TYPE Target = VBT.T;
 (* A target is a VBT on which "BeTarget" has been invoked. *)

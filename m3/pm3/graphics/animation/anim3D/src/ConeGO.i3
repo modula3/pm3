@@ -28,20 +28,20 @@ VAR
   Base   : PointProp.Name;
   Tip    : PointProp.Name;
   Radius : RealProp.Name;
-(* In addition to the properties observed by all \type{GO}{T}'s and
-   \type{SurfaceGO}{T}'s, there are three additional properties that 
+(* In addition to the properties observed by all "GO.T"'s and
+   "SurfaceGO.T"'s, there are three additional properties that 
    are observed by "ConeGO.T"'s:
 
    "Base" is the name of a property that describes the center of the base  
-   of the cone. It associates with a \type{PointProp}{Val}. If no "Base" 
+   of the cone. It associates with a "PointProp.Val". If no "Base" 
    property is specified, the base of the cone lies at the origin.
 
    "Tip" is the name of a property that describes the tip 
-   of the cone. It associates with a \type{PointProp}{Val}. If no "Tip" 
+   of the cone. It associates with a "PointProp.Val". If no "Tip" 
    property is specified, the tip of the cone is at point (1,0,0).
 
    "Radius" is the name of a property that describes the radius of the 
-   cone. It associates with a \type{RealProp}{Val}. If no "Radius" property
+   cone. It associates with a "RealProp.Val". If no "Radius" property
    is specified, the cone has a radius of 1.  
 
    Assume that in a given context and at a given point in time, the property 
@@ -50,11 +50,9 @@ VAR
    to "tip", and "Radius" maps to a real property value which evaluates to "r".
    "base", "tip", and "r" define the position and shape of the cone in this c
    ontext and at this time as shown below:
-   \begin{center}
-   \begin{tabular}{c}
-   \psfig{figure=images/ConeGO.ps,silent=}
-   \end{tabular}
-   \end{center}
+   <TABLE><TR><TD>
+   \psfigfigure=images/ConeGO.ps,silent=
+   </TABLE>
 *)
 
 
@@ -62,11 +60,11 @@ PROCEDURE New (base, tip : Point3.T; r : REAL; prec := 30) : T;
 (* "New(base,tip,r,prec)" creates a new cone, whose surface is composed of 
    "prec" triangles, and returns it. It also attaches the following properties
    to the new cone:
-   \begin{verbatim}
+   <PRE>
      (Base,PointProp.NewConst(base))
      (Tip,PointProp.NewConst(tip))
      (Radius,RealProp.NewConst(r))
-   \end{verbatim}
+   </PRE>
 *)
 
 (* The following three procedures provide sugaring to attach 

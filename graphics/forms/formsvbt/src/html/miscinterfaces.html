@@ -1,0 +1,33 @@
+<TITLE> Miscellaneous Interfaces </TITLE>
+<H1 ID="ch:interfaces"> Miscellaneous Interfaces </H1>
+
+<P>This appendix describes interfaces that are of interest to FormsVBT programmers.
+<P>
+The <TT>ColorName</TT> interface describes the names that are permitted
+in FormsVBT color-expressions, e.g., <TT>(BgColor "VividTomato")</TT>.
+While these names are useful to all FormsVBT programmers, the
+procedures in the interface will be useful primarily to VBTkit
+programmers.
+<P>
+The <TT>XTrestle</TT> interface provides utility procedures for handling
+the display and geometry command-line parameters that use the X
+server.
+<P>
+You should use use <TT>XParam</TT> interface instead of <TT>XTrestle</TT>
+if your application installs more than one top-level window.
+<P>
+The <TT>FVTypes</TT> interface provides the type definitions of
+the VBT classes implementing each FormsVBT component.  Clients that
+override the <TT>realize</TT> method will need to access this interface.
+<P>
+The <TT>Rsrc</TT> interface describes how constant data (texts, pixmaps,
+form-descriptions, etc.) can be combined with a program.
+<P>
+
+<UL>
+<LI> <A REL=SUBDOCUMENT HREF="../../../../gr-libs/vbtkit/src/color/ColorName.i3"> The ColorName Interface </A>
+<LI> <A REL=SUBDOCUMENT HREF="../../../../gr-libs/vbtkit/src/vbtkitutils/XTrestle.i3"> The XTrestle Interface </A>
+<LI> <A REL=SUBDOCUMENT HREF="../../../../gr-libs/vbtkit/src/vbtkitutils/XParam.i3"> The XParam Interface </A>
+<LI> <A REL=SUBDOCUMENT HREF="../FVTypes.i3"> The FVTypes Interface </A>
+<LI> <A REL=SUBDOCUMENT HREF="../../../../gr-libs/vbtkit/src/vbtkitutils/Rsrc.i3"> The Rsrc interface </A>
+</UL>

@@ -13,8 +13,8 @@
    inheritance. 
 
    Groups allow the user to organize individual geometric objects into 
-   a graph structure. A {\em scene} is described by a {\em root node} 
-   (a \type{RootGO}{T}, which is a subtype of "GroupGO.T"), and contains 
+   a graph structure. A <EM>scene</EM> is described by a <EM>root node</EM> 
+   (a <TT>RootGO.T</TT>, which is a subtype of "GroupGO.T"), and contains 
    all the geometric objects reacheable from the root. Usually, this 
    structure forms a tree. However, geometric objects may occur in more 
    than one group, so in general, the objects in a scene form a DAG 
@@ -22,36 +22,36 @@
 
    During rendering, the DAG is travered in a depth-first fashion. Whenever 
    a node "o" is visited, there is a unique traversal path between "o" and 
-   the root. We call the nodes on this path the {\em ancestors} of "o". 
+   the root. We call the nodes on this path the <EM>ancestors</EM> of "o". 
 
    Associated with each geometric object "o" is a property mapping $M_o$,
    a partial function from property names $n$ to property values $n$
-   (see the \interface{GO} interface for details). 
+   (see the "GO" interface for details). 
    When the scene is traversed, the property mappings of the nodes on the
    traversal path are composed together. Composition of property mappings 
    is defined as follows:
-   \[ (M_i \circ M_{i+1})(n) = 
-     \left\{
-      \begin{array}{ll}
-       M_i(n) & \mbox{if $M_{i+1}(n)$ is undefined} \\
-       M_{i+1}(n) & \mbox{if $M_i(n)$ is undefined} \\
-       M_i(n) \oplus M_{i+1}(n) & \mbox{otherwise}
-      \end{array}
+    (M_i \circM_i+1)(n) = 
+     \left\
+      \begin{array}ll
+       M_i(n) &amp; \mboxif $M_i+1(n)$ is undefined \\
+       M_i+1(n) &amp; \mboxif $M_i(n)$ is undefined \\
+       M_i(n) \oplusM_i+1(n) &amp; \mboxotherwise
+      \begin{array}
      \right.
-   \]
-   $\oplus$ is the {\em property value composition operator}. Its semantics
+   
+   $\oplus$ is the <EM>property value composition operator</EM>. Its semantics
    depends of the type of the property values. At the moment, for all 
-   properties except transformation properties, $v \oplus v' = v'$.
+   properties except transformation properties, $v \oplusv' = v'$.
    A transformation property value $v$ is internally described by a $4\times4$
    matrix $A_v$. For transformation property values, 
-   $v \oplus v' = v''$ where $A_{v''} = A_v A_{v'}$.
+   $v \oplusv' = v''$ where $A_v'' = A_v A_v'$.
    
    Here is an example of how this property inheritance mechanism works:
-   \begin{center}
-   \begin{tabular}{c}
-   \psfig{figure=images/PropInheritance.ps,width=4in,silent=} 
-   \end{tabular}
-   \end{center}
+
+   <TABLE><TR><TD>
+   \psfigfigure=images/PropInheritance.ps,width=4in,silent= 
+   </TABLE>
+
    The actual scene contains three objects, a sphere, a box, and a cone.
    The sphere and the box are red, while the cone is blue.
 

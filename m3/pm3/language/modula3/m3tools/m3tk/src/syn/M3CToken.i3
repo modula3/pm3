@@ -31,7 +31,7 @@ in the language, identifiers, literals and the special symbols.
 Subranges of this type, "ReservedWord" and "Literal" delimit the
 members in those categories.
 
-In order to support {\extension} of the basic token set, for example,
+In order to support extensions of the basic token set, for example,
 that might be used in an extension of the language via pragmas, the
 type "T" is defined as "[0..255]", and constants with the same names
 as the enumeration members are defined. The standard Modula-3 lexer

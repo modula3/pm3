@@ -24,11 +24,11 @@
    the reader.  The writer is not flushed at every newline.
 
    All input to the typescript, once it has been read, and all output,
-   become part of the {\em history} of the typescript, and is not
+   become part of the <EM>history</EM> of the typescript, and is not
    modifiable; it remains until the client deletes it by calling
    "ClearHistory".  Selections that lie fully or partially within the
    history region are never ``replace-mode'' selections (see
-   Section~\ref{ReplaceMode}, page~\pageref{ReplaceMode}).  Any
+   Section&nbsp;<A REL=REF.NUMBER HREF="ReplaceMode"> [ReplaceMode] </A>, page&nbsp;<A REL=REF.PAGE HREF="ReplaceMode"> [ReplaceMode] </A>).  Any
    attempt to type or insert text in the history region becomes an
    insertion at the end of the typescript instead.
 

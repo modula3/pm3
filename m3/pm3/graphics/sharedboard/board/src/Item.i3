@@ -16,7 +16,7 @@ TYPE T <: Public;
      
      ID = Word.T;
 
-(* An "Item.T",  or an {\em item}, is the smallest entity that
+(* An "Item.T",  or an <EM>item</EM>, is the smallest entity that
    can be stored in a board and displayed at the clients. 
 
    Each item in a board has a unique ID: "id". 

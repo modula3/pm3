@@ -1,0 +1,37 @@
+<TITLE> DirMenu (leaf, event) </TITLE>
+<H1> DirMenu (leaf, event) </H1> 
+    
+<P>
+ A ``directory menu'' is a button connected to a
+FileBrowser.  The button displays the name of the last (nearest)
+component of the FileBrowser's current directory.
+
+<HR><DL>
+
+<DT>For<DD> (Symbol) <BR> The name of a FileBrowser. This property
+is required.
+
+</DL><HR>
+
+<DL>
+
+<DT><B>Behavior</B><DD> The directory menu shows the FileBrowser's
+parent-directories, one parent per line, down to first component of
+the path, which is typically the root directory. Selecting an item in
+this menu makes that parent-directory be the FileBrowser's current
+directory.
+
+<DT><B>Shape</B><DD> The shape of a TextVBT containing the name of the parent,
+plus the shadow.
+
+<DT><B>Notes</B><DD> A DirMenu never generates 
+      events in its own name.  It can be accessed in its own name, 
+      but this is not recommended.
+<DT><DD> In a typical "Open File..." dialog, the DirMenu is
+      above the FileBrowser, and the Helper is below. See 
+	Figure <A REL=REF HREF="#FileBrowserFigure"> [FileBrowserFigure] </A>
+
+<DT><B>See Also</B><DD> FileBrowser and Helper
+
+</DL>
+

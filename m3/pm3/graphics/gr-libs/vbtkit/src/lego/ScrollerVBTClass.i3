@@ -64,7 +64,7 @@ TYPE
    scrolled.'' The "cd" field in proportional scrolling is fine,
    except it's really a position event, not a mouse event, that
    caused the action (this is a good use for an "AnyEvent", but
-   for historical reasons\dots).  For continuous scrolling, "cd"
+   for historical reasons...).  For continuous scrolling, "cd"
    is set to be the mouse record for the down-click that initiate
    the scrolling, but with "cd.time = 0".
 

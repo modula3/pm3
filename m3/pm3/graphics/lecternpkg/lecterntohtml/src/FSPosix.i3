@@ -10,7 +10,7 @@ INTERFACE FSPosix;
 IMPORT File, OSError, Pathname;
 
 VAR (*CONST*) SymbolicLinkFileType: File.Type;
-(* Equal to {\tt Atom.FromText(\char'42SymbolicLink\char'42)}. *)
+(* Equal to <TT>Atom.FromText(&#42;SymbolicLink&#42;)</TT>. *)
 
 PROCEDURE LinkStatus(p: Pathname.T): File.Status RAISES {OSError.E};
 (* Return information about the file, directory, or symbolic link named by "p". *)

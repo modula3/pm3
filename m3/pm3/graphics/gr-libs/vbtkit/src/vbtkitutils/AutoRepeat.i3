@@ -13,8 +13,8 @@
    mouse button is held down, although there is no direct relation
    between "AutoRepeat" and "VBT"s.
 
-   When an auto-repeat object "ar" is activated, it forks a {\it timer
-   thread\/} that calls "ar.repeat()" after "firstWait" milliseconds,
+   When an auto-repeat object "ar" is activated, it forks a <I>timer
+   thread</I> that calls "ar.repeat()" after "firstWait" milliseconds,
    and every "period" milliseconds thereafter.  However, there is a
    flow-control mechanism: if the call to "ar.repeat()" has not
    returned by the time the next repetition is scheduled to take

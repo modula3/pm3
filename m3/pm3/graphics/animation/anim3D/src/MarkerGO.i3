@@ -27,7 +27,7 @@ VAR
   Scale  : RealProp.Name;
   Type   : MarkerTypeProp.Name;
 
-(* In addition to the properties observed by all \type{GO}{T}'s, there are 
+(* In addition to the properties observed by all "GO.T"'s, there are 
    some additional properties that are observed by "MarkerGO.T"'s:
 
    "Center" is the name of a point property that describes the point indicated

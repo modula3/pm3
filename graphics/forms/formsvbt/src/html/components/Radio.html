@@ -1,0 +1,33 @@
+<TITLE> Radio (filter, event) </TITLE>
+<H1> Radio (filter, event) </H1> 
+    
+<P>
+ Unites those descendants that are Choice components into 
+``radio buttons.'' Within a Radio, at most one Choice component is 
+selected at any given time.
+
+<HR><DL>
+
+<DT>Value<DD> (Symbol, <TT>""</TT>) <BR> The name of the Choice 
+      element currently selected. Note that the application can clear 
+      the selection, so that no member of the group is selected, but 
+      the user cannot. The current selection can be accessed via
+      <TT>FormsVBT.GetChoice</TT> and <TT>FormsVBT.PutChoice</TT>.
+
+</DL><HR>
+
+<DL>
+
+<DT><B>Behavior</B><DD> An event is generated whenever the user changes which element 
+of the group is selected.  If the Choice element has an attached 
+event procedure, it will be called; otherwise, the event falls through 
+to the Radio group, which may also have an attached procedure.  Thus 
+an event can occur in the name of the Radio group, though the group 
+itself has no interactive behavior.
+
+<DT><B>Shape</B><DD> The shape of its child.
+
+<DT><B>See Also</B><DD> Boolean and Choice
+
+</DL>
+

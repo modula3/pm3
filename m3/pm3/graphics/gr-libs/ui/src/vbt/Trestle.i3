@@ -137,7 +137,7 @@ PROCEDURE GetDecoration(v: VBT.T;
   Otherwise, return "FALSE". *)
   
  
-(* <H2> Window placement </H2> *)
+(* &lt;H2> Window placement &lt;/H2> *)
 
 
 PROCEDURE Attach(v: VBT.T; trsl: T := NIL)
@@ -223,15 +223,15 @@ PROCEDURE ScreenOf(
 (* If "v" is an installed window, or a child of an installed window,
     then after "res := ScreenOf(v, p)" we have 
 
-<UL><LI>"res.id" is the "ID" of the screen currently
+&lt;UL>&lt;LI>"res.id" is the "ID" of the screen currently
 containing "v";
-<LI>"res.q" is the point in screen coordinates that
+&lt;LI>"res.q" is the point in screen coordinates that
  corresponds to the point "p" in window coordinates;
-<LI>"res.trsl" is the window system on which "v" is
+&lt;LI>"res.trsl" is the window system on which "v" is
 installed; and
-<LI>
+&lt;LI>
 "res.dom" is the domain of the screen "res.id".  
-</UL>
+&lt;/UL>
 The point "p" need not be in the domain of "v".  If "v" is
 not installed, then "res.trsl" will be "NIL", "res.id" will be
 "NoScreen", and the other fields will be arbitrary.  If the window
@@ -264,7 +264,7 @@ PROCEDURE GetScreens(trsl: T := NIL): ScreenArray
    root "VBT".  "GetScreens" returns "NIL" if the window system has
    no screens.  *)
 
-(* <H2> Reading pixels from a screen </H2> *)
+(* &lt;H2> Reading pixels from a screen &lt;/H2> *)
 
 
 PROCEDURE Capture(
@@ -281,7 +281,7 @@ PROCEDURE Capture(
    where "r" is the "VBT" at the root of screen "id" of the window 
    system "trsl".  *)
 
-(* <H2> Checking on recent input activity </H2> *)
+(* &lt;H2> Checking on recent input activity &lt;/H2> *)
 
 
 PROCEDURE AllCeded(trsl: T := NIL): BOOLEAN 
@@ -303,7 +303,7 @@ PROCEDURE TickTime(trsl: T := NIL): INTEGER;
 (* Return the number of microseconds per "VBT.TimeStamp", in events
    reported to "VBTs" connected to the window system "trsl".  *)
 
-(* <H2> Connecting to a window system </H2> *)
+(* &lt;H2> Connecting to a window system &lt;/H2> *)
 
 
 PROCEDURE Connect(inst: TEXT := NIL): T
@@ -325,8 +325,8 @@ PROCEDURE Connect(inst: TEXT := NIL): T
    where "&lt;machine name>" is an arbitrary string of characters (possibly
    empty) and "&lt;number>" is a non-negative decimal integer.  It denotes
    an X server according to the rules on page 27 of the second edition
-   of <I>X Window System</I>, by Scheifler et.  al., Digital Press, 1990
-   <A REL=BIB.ENTRY HREF="../html/references.html#XSpec"> [XSpec] </A>.
+   of &lt;I>X Window System&lt;/I>, by Scheifler et.  al., Digital Press, 1990
+   &lt;A REL=BIB.ENTRY HREF="../html/references.html#XSpec"> [XSpec] &lt;/A>.
 
    For example, "nemesia:0" denotes the first window system on the
    machine "nemesia", and ":0" denotes the first window system on

@@ -1,0 +1,64 @@
+<TITLE> TypeIn (leaf, event) </TITLE>
+<H1> TypeIn (leaf, event) </H1> 
+    
+<P>
+ A single-line editable text.
+
+<HR><DL>
+
+<DT><DD> <I>Contents (<TT>Value</TT> takes precedence):</I>
+
+<DT>Value <TT>GP</TT><DD> (Text, <TT>""</TT>)  <BR> The current text.
+      
+<DT>From<DD> (Text)  <BR> If present, names a resource from which the initial 
+      text will be taken.
+
+<HR>
+<DT>ReadOnly<DD> (Boolean, <TT>FALSE</TT>) <BR> If true, the text-area will not
+    be editable.
+
+<DT>ExpandOnDemand<DD> (Boolean, <TT>FALSE</TT>)  <BR> 
+	If true, the text area will grow and shrink vertically, as required,
+	to contain the entire text.
+
+<DT>FirstFocus<DD> (Boolean, <TT>FALSE</TT>) <BR> If true, and if this
+        TypeIn is in a subwindow or TSplit-child, then when that
+        component appears, this TypeIn will acquire the keyboard
+        focus, and its text will be selected in replace-mode.
+
+<DT>TabTo<DD> (Symbol) <BR> If given, this is the name of the component to
+	which the keyboard focus wil be transferred when the user
+	types Tab.
+
+<DT>TurnMargin<DD> (Real, <TT>2.0</TT>) <BR>
+	If long lines are wrapped, then a small grey bar will appear at the
+	end of the first line and the beginning of the next to indicate that
+	the line was wrapped.  TurnMargin specifies the width of the grey bar.
+
+</DL><HR>
+
+<DL>
+
+
+<DT><B>Behavior</B><DD> This is a text editor, normally used for small type-in
+	fields.  
+<DT><DD> Typing Return generates an event.
+<DT><DD> Extensive application control can be exercised by direct
+	calls on procedures in the <TT>TextPort</TT> interface. 
+
+<DT><B>Shape</B><DD> The width is initially 30 times the width of the widest
+	character in the font.  It has infinite shrinkability and
+	stretchability.  It is initially one line high.  If <TT>
+	ExpandOnDemand</TT> is false, then it always keeps that height;
+	otherwise, the height changes to accomodate the entire text,
+	but never less than one line. In any case, there is no
+	vertical stretch or shrink.
+
+<DT><B>Notes</B><DD> For details on the editing commands, see the description of
+       the TypeinVBT interface in the <I>VBTkit Reference
+	Manual</I><A REL=REFENTRY HREF="../references.html#VBTkitRefman"> [VBTkitRefman] </A>.
+
+<DT><B>See Also</B><DD> TextEdit and Typescript
+	
+</DL>
+

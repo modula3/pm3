@@ -6,13 +6,13 @@
 (*      modified on Fri Jun 11 23:03:17 PDT 1993 by meehan *)
 (* modified on Fri Mar 27 02:14:10 1992 by steveg *)
 
-(* {\em Resources\/} are arbitrary texts that are associated with
+(* <EM>Resources</EM> are arbitrary texts that are associated with
    applications.  Resources can be bundled into an application
    using the "m3bundle" facility.  They may also be found in the
    file system.
 
-   This interface supports retrieval of resources using a {\em search
-   path}.  A search path is a list of elements; each element is either
+   This interface supports retrieval of resources using a <EM>search
+   path</EM>.  A search path is a list of elements; each element is either
    a "Pathname.T" that refers to a directory, or a "Bundle.T",
    typically created by "m3bundle". *)
 

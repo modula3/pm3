@@ -14,7 +14,7 @@
    methods.  The "normal" method is intended for giving permanent
    feedback, whereas the "excited" method is used for displaying
    transitory feedback (e.g., while a button is pressed).  In
-   addition, a feedback maintains a {\it state} flag to
+   addition, a feedback maintains a <I>state</I> flag to
    distinguish between an ``on'' and ``off'' state (e.g., for use
    by a "BooleanVBT").
 

@@ -95,7 +95,7 @@ PROCEDURE Insert (v: VBT.T; pred, new: VBT.T)
 <* LL.sup = VBT.mu *>
 (* Add "new" as a child of "v" following "pred". *)
 
-(* \sloppy Some multi-splits can accommodate only a bounded number of
+(* Some multi-splits can accommodate only a bounded number of
    children.  Whenever "Insert(v,pred,new)" is applied to a multi-split
    "v" that cannot accommodate an additional child, then "pred"
    (or the original first child, if "pred=NIL") is deleted from

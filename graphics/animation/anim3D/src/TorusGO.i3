@@ -17,11 +17,11 @@
 
    The following picture tries to illustrate the roles of the various 
    parameters:
-   \begin{center}
-   \begin{tabular}{c}
-   \psfig{figure=images/TorusGO.ps,width=3in,silent=}
-   \end{tabular}
-   \end{center} *)
+
+   <TABLE><TR><TD>
+   \psfigfigure=images/TorusGO.ps,width=3in,silent=
+   </TABLE>
+*)
 
 INTERFACE TorusGO;
 
@@ -43,24 +43,24 @@ VAR
   Normal  : PointProp.Name;
   Radius1 : RealProp.Name;
   Radius2 : RealProp.Name;
-(* In addition to the properties observed by all \type{GO}{T}'s and
-   \type{SurfaceGO}{T}'s, there are four additional properties that 
+(* In addition to the properties observed by all "GO.T"'s and
+   "SurfaceGO.T"'s, there are four additional properties that 
    are observed by "TorusGO.T"'s:
 
    "Center" is the name of a property that describes the center 
-   of the torus. It associates with a \type{PointProp}{Val}. If no "Center" 
+   of the torus. It associates with a "PointProp.Val". If no "Center" 
    property is specified, the center of the torus lies at the origin.
 
    "Normal" is the name of a property that describes the normal vector of 
-   the torus. It associates with a \type{PointProp}{Val}. If no "Normal"
+   the torus. It associates with a "PointProp.Val". If no "Normal"
    property is specified, the normal vector is taken to be (0,0,1).
    
    "Radius1" is the name of a property that describes the radius of the 
-   major circle of the torus. It associates with a \type{RealProp}{Val}. 
+   major circle of the torus. It associates with a "RealProp.Val". 
    If no "Radius1" property is specified, the torus has a major radius of 1. 
 
    "Radius2" is the name of a property that describes the radius of the 
-   minor circle of the torus. It associates with a \type{RealProp}{Val}. 
+   minor circle of the torus. It associates with a "RealProp.Val". 
    If no "Radius2" property is specified, the torus has a minor radius 
    of 0.1. *)
 
@@ -71,12 +71,12 @@ PROCEDURE New (center, normal   : Point3.T;
    whose surface is composed of "prec" strips of "prec" trapezoids,
    and returns it. It also attaches the following properties
    to the new torus:
-   \begin{verbatim}
+   <PRE>
      (Center,PointProp.NewConst(center))
      (Normal,PointProp.NewConst(normal))
      (Radius1,RealProp.NewConst(rad1))
      (Radius2,RealProp.NewConst(rad2))
-   \end{verbatim} *)
+   </PRE> *)
 
 (* The following three procedures provide sugaring to attach "Center", 
    "Normal", "Radius1", and "Radius2" properties (where the property 

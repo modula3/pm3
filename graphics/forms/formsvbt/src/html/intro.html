@@ -1,0 +1,80 @@
+<TITLE> Introduction </TITLE>
+<H1> Introduction </H1>
+
+<!--SPOT CLASS=FORTOC ID="ftc0_Presents an overview to the system. &lt;EM&gt; Every user needs to read this chapter; read it first.&lt;/EM&gt;"-->
+<P>
+FormsVBT is a system for building graphical user interfaces
+(GUIs).  It consists of a language for describing an
+application's user interface, a stand-alone application
+for constructing the user interface, and a runtime library for
+communicating between an application's code and its user
+interface.
+<P>
+A user interface in FormsVBT is a hierarchical arrangement of <EM>
+components</EM>.  Components include passive visual elements, basic
+interactors, modifiers that add interactive behavior to other
+components, and layout operators that take groups of low-level
+components and organize them geometrically.  In the FormsVBT language,
+the arrangement is written as a symbolic expression (S-expression).
+The outermost expression is the <EM>form</EM> or top-level component, and
+subexpressions are either properties that modify a component or other,
+subordinate components.
+
+<P><IMG SRC="figs/formsedit.ps" ID="fig:formsedit">
+The FormsVBT interface builder, <TT>formsedit</TT>, in action. 
+The Text View is on the right and the Result View is on the left.
+<P>
+The FormsVBT interface builder, <EM>formsedit</EM>, provides a
+<EM>text editor</EM> and a <EM>result view</EM> of the user interface, 
+as shown in
+Fig. <A REL=REF HREF="#fig:formsedit"> [fig:formsedit] </A>.  
+The text editor displays the S-expression
+underlying the user interface, while the result view shows the user
+interface as it will look at runtime, with proper reaction to mouse
+and keyboard activity, as well as proper sizing and stretching.  Of
+course, the result view cannot reveal exactly how an application's
+user interface will look and behave, since there is no application
+code running, but it's usually pretty close.  The result view is
+updated as the user edits in the text view.  Interacting in the result
+view does not update the text view or change the underlying
+S-expression.
+<P>
+The runtime library provides the communication between an application
+and its user interface.  There are procedures to convert an
+S-expression into a window object, procedures to register
+<EM>event-handlers</EM> that will be invoked in response to user actions,
+procedures to retrieve and modify the values of the components,
+procedures to change the appearance (and even the hierarchy) of the
+components, and so on.
+<P>
+Each component in FormsVBT is implemented by a window class (i.e., a
+VBT) provided by VBTkit or Trestle.  Most of the things that you'd
+want to do with a component can be done via FormsVBT.  However, there
+may be occasions when you would like direct access to the underlying
+VBT.  FormsVBT provides such access.  (You'll probably find it helpful
+to have a copy of the reference manuals for VBTkit
+<A HREF="references.html#VBTkitRefman" REL=REFENTRY> [VBTkitRefman] </A>
+and Trestle
+<A HREF="references.html#TrestleRefman" REL=REFENTRY> [TrestleRefman] </A>, 
+as well as the Trestle Tutorial
+<A HREF="references.html#TrestleTutorial" REL=REFENTRY> [TrestleTutorial] </A>.)
+<P>
+The FormsVBT system is implemented in Modula-3
+<A HREF="references.html#M3" REL=REFENTRY> [M3] </A>
+<A HREF="references.html#SPwM3" REL=REFENTRY> [SPwM3] </A>.  
+It is based on an earlier system implemented in
+Modula-2+
+<A HREF="references.html#formsvbt:siggraph" REL=REFENTRY> [formsvbt:siggraph] </A>.
+That version was unique among user
+interface development environments for its multi-view editor, and
+noteworthy for its extensibility and simplicity.  In this
+implementation, the editor is not multi-view; there is no graphical,
+direct-manipulation editor integrated with the text view.
+Also, this implementation is not extensible by clients.
+<P>
+Indeed, one of the primary themes shaping the development of
+the system has been to deliver a ``95% solution.'' By that,
+we mean that 95% of what clients do should be trivial to do;
+of the remaining 5%, 95% of that should be pretty easy to do;
+and the remaining things should be possible and no harder to
+do than without FormsVBT.

@@ -1,0 +1,62 @@
+<TITLE> Browser (leaf, event) </TITLE>
+<H1> Browser (leaf, event) </H1> 
+    
+<P>
+ A browser on a collection of text strings.
+
+<HR>
+
+<P><I>Contents (<TT>Items</TT> takes precedence):</I>
+
+<DL>
+<DT>Items <TT>GP</TT><DD> (TextList)  <BR> The contents of the 
+      browser. <BR> Example: <TT>(Items "red" "blue")</TT>. When
+      this property is accessed at runtime, the TextList is
+      passed a single text string, with <TT>\n</TT> used
+      to separate entries. <TT>GetTextProperty</TT> replaces
+      the entire contents of the browser and sets the selection
+      to <TT>NIL</TT>. <TT>PutTextProperty</TT> returns the elements
+      in the browser, from top to bottom.
+
+<DT>From<DD> (Text)  <BR> If present, names a resource from which the initial 
+      browser contents will be taken.
+      
+</DL><HR><P> <I>Choices (<TT>Value</TT> takes precedence):</I>
+
+<DL>
+
+<DT>Value <TT>GP</TT><DD> (Integer, <TT>-1</TT>)  <BR> The position of the selected
+      item.  <TT>0</TT> means the first item; 
+      <TT>-1</TT> means no item is selected.
+      
+<DT>Select <TT>GP</TT><DD> (Text)  <BR> The text of the selected item.
+      <TT>PutTextProperty</TT> selects the first matching item if there
+      is one; otherwise it selects nothing. <TT>GetTextProperty</TT>
+      returns the text of the selected item, or <TT>NIL</TT> is there is
+      no selection.
+      
+<HR>
+<DT>Quick<DD> (Boolean, <TT>FALSE</TT>) <BR> If true, every selection action 
+      is reported as an event.  Otherwise, only 
+      double-click actions are reported.
+
+</DL><HR>
+
+<DL>
+
+<DT><B>Behavior</B><DD> Displays items vertically, with a scrollbar
+at the left.  Clicking selects the item under the mouse.
+Double-clicking on an item generates an event on the second
+up-click.  If <TT>Quick</TT> is true, single-clicking on an item generates
+an event on the up-click.
+
+<DT><B>Shape</B><DD> At minimum, large enough to hold its scrollbar plus the single 
+string <TT>"XXXX"</TT> in the font being used.  Infinitely stretchable in 
+both dimensions.
+
+<DT><B>See Also</B><DD> MultiBrowser
+
+</DL>
+
+<P><IMG SRC="../figs-long/browser.ps">
+

@@ -1,0 +1,42 @@
+<TITLE> TSplit (split) </TITLE>
+<H1> TSplit (split) </H1> 
+    
+<P>
+ Organizes its children temporally: exactly one child is visible 
+at any given time. 
+
+<HR><DL>
+
+<DT>Value <TT>GP</TT><DD> (Cardinal, 0) <BR> Which child is currently shown.  
+        The first child is numbered 0.
+
+<DT>Which<DD> (Symbol) <BR> The name of the currently visible child. 
+        If both Value and Which are specified, they must refer to the
+        same child.
+
+<DT>Circular<DD> (Boolean, <TT>FALSE</TT>) <BR> If true, makes the TSplit 
+        view its children as a circular rather than a linear list, 
+        thereby changing the behavior of PageButton.
+
+<DT>Flex<DD> (Boolean, <TT>FALSE</TT>) <BR> If true, the TSplit will change shape 
+        to fit the shape of the child on display at the moment. 
+        Otherwise switching the visible child never changes the 
+        TSplits's shape.  A change of shape can lead to resizing that 
+        cascades throughout the entire form, so use with care.
+
+</DL><HR>
+
+<DL>
+
+<DT><B>Behavior</B><DD> TSplit has no direct interactive behavior, but the user
+can change which child is shown by using PageButton and LinkButton.
+
+<DT><B>Shape</B><DD> If Flex is false, the natural width and height are separately computed 
+as the maximum of the natural widths and heights of the children.  If
+Flex is true, shape is identical to the shape of the currently
+displayed child.
+
+<DT><B>See Also</B><DD> LinkButton, LinkMButtonm, PageButton, and PageMButton
+
+</DL>
+
