@@ -23,6 +23,7 @@
 # spread out over the entire source repository.
 
 pm3		m3/pm3
+m3config	m3/pm3/m3config
 language	m3/pm3/language
 m3quake		m3/pm3/language/m3quake
 modula3		m3/pm3/language/modula3
