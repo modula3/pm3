@@ -105,6 +105,7 @@
    pointer must reference only one object.  Therefore, it is not
    possible to write the heap contents with a single write. */
 
+#define COMPAT_43
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -957,7 +958,7 @@ int readlink(path, buffer, buf_size)
     return result;
 }
 
-int readv(filedes, iov, iov_count)
+ssize_t readv(filedes, iov, iov_count)
   int filedes;
   struct iovec *iov;
   int iov_count;
@@ -1631,7 +1632,7 @@ ssize_t write(filedes, buffer, nbytes)
     return result;
 }
 
-int writev(filedes, iov, iov_count)
+ssize_t writev(filedes, iov, iov_count)
   int filedes;
   struct iovec *iov;
   int iov_count;
