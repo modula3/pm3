@@ -233,7 +233,7 @@ PROCEDURE IntermittentRead(
       ELSIF status = -1
          AND errno # Uerror.EWOULDBLOCK
          AND errno # Uerror.EAGAIN THEN
-        OSErrorPosix.Raise()
+        OSErrorPosix.Raise0(errno)
       ELSIF NOT mayBlock THEN
         RETURN -1
       END;
@@ -276,7 +276,7 @@ PROCEDURE IntermittentWrite(h: File.T; READONLY b: ARRAY OF File.Byte)
       ELSIF status = -1
          AND errno # Uerror.EWOULDBLOCK
          AND errno # Uerror.EAGAIN THEN
-        OSErrorPosix.Raise()
+        OSErrorPosix.Raise0(errno)
       END;
 
       EVAL SchedulerPosix.IOWait(h.fd, FALSE)
