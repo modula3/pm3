@@ -125,27 +125,15 @@ readonly proc emacs_compile (el) is
   if not equal(ret, 0) error("emacs failed with error code: ", ret) end
 end
 
-%-------------------------------------------------------------------- hooks ---
-% here are utilities used by the following hooks
-
-% _ifdef(a,b,c) == if defined(a) return b else return c
-readonly proc _ifdef (nm, a, b) is
-  if defined (nm)
-    return a
-  else
-    return b
-  end
-end
-
-VERBOSE = "@"
-% "@" ==> don't echo the commands executed by the hooks
-% ""  ==> echo the commands executed by the hooks
+VERBOSE = ""
+% ""    ==> don't echo the commands executed by the hooks
+% TRUE  ==> echo the commands executed by the hooks
 
 %--------------------------------------------------------------- C compiler ---
 
 % C compiler with flags for compiling a single ".c" file.
 % You can override this definition in your m3makefile by defining CC there.
-CC = _ifdef ("CC", CC, [ "gcc" ])
+CC = lookup ("CC", [ "gcc" ])
 
 % "m3_compile_c" is called to compile C source files.  Note that this function
 % is only called if your program or library explicitly includes C source
@@ -174,7 +162,7 @@ end
 
 % C compiler with flags for linking
 % You can override this definition in your m3makefile by defining LINK there.
-LINK = _ifdef ("LINK", LINK, "ld")
+LINK = lookup ("LINK", "ld")
 
 % "m3_link" is called to produce a final executable.
 %   prog: the name of the executable.
@@ -210,17 +198,17 @@ end
 % program to build library archives
 % You can override this definition in your m3makefile by defining MAKELIB 
 % there.
-MAKELIB = _ifdef ("MAKELIB", MAKELIB, [ "ar", "crus" ])
+MAKELIB = lookup ("MAKELIB", [ "ar", "crus" ])
 
 % program to build shared libraries
 % You can override this definition in your m3makefile by defining MAKESHLIB
 % there.
-MAKESHLIB = _ifdef ("MAKESHLIB", MAKESHLIB, "ld")
+MAKESHLIB = lookup ("MAKESHLIB", "ld")
 
 % program to index libraries
 % You can override this definition in your m3makefile by defining RANLIB
 % there.
-RANLIB = _ifdef ("RANLIB", RANLIB, [ "touch" ])
+RANLIB = lookup ("RANLIB", [ "touch" ])
 
 % "m3_make_lib" is called to combine a collection of object modules into
 % a library.
@@ -280,7 +268,7 @@ end
 % assembler
 % You can override this definition in your m3makefile by defining ASM
 % there.
-ASM = _ifdef ("ASM", ASM, [ "as" ])
+ASM = lookup ("ASM", [ "as" ])
 
 % "m3_assemble" is called to assemble files.  Note that this function
 % is only called if your program or library explicitly includes assembly source
@@ -303,7 +291,7 @@ end
 % the Modula-3 IL to assembly language pass
 % You can override this definition in your m3makefile by defining BACKEND
 % there.
-BACKEND = _ifdef ("BACKEND", BACKEND, [  LIB_USE & "/m3cgc1", "-fno-strength-reduce", "-quiet" ])
+BACKEND = lookup ("BACKEND", [  LIB_USE & "/m3cgc1", "-fno-strength-reduce", "-quiet" ])
 
 % For platforms without an integrated backend, "m3_backend" is called to
 % translate Modula-3 intermediate code to object code.
