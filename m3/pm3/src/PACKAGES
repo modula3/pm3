@@ -282,8 +282,8 @@ PkgInfo("gendb","database/persistence/OO7","","pm3",tProg,"T",3,[],["ALL"],[],
 PkgInfo("bench","database/persistence/OO7","","pm3",tProg,"T",3,[],["ALL"],[],
     "OO7 benchmark operations and driver")
 
-PkgInfo("multi","database/persistence/OO7","","pm3",tProg,"T",3,[],["ALL"],[],
-    "Multi-user OO7 benchmark operations and driver")
+%PkgInfo("multi","database/persistence/OO7","","pm3",tProg,"T",3,[],["ALL"],[],
+%    "Multi-user OO7 benchmark operations and driver")
 
 PkgInfo("stable","database/stableobjects","","stable",tLib,"T",3,[],["ALL"],
     [],"A library providing log-based persistent objects")
