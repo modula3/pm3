@@ -28,7 +28,7 @@ INSTALL_IMPLS = "TRUE"       % install .m3 source files to ease browsing/debug
 
 X11ROOT = "/usr/lib"
 OPENGLROOT = "/usr/lib"
-INSTALL_ROOT = "/usr/local/pm3-1.1"
+INSTALL_ROOT = "/usr/local/pm3"
 
 CC = ["gcc","-c"]         % C compiler
 LINK = ["gcc"]            % Linker

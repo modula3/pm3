@@ -89,56 +89,19 @@ readonly proc CreateMakefile(file,target,header,options) is
     WriteMakefileLine("m3config",target,options)
     WriteMakefileLine("m3build",target,options)
     WriteMakefileLine("m3ship",target,options)
-  end
-end
 
-%
-% Write the introduction and installation instructions
-
-readonly proc CreateReadme(file,target) is
-  > file in
-    write(
-"The Polytechnique Montreal Distribution of Modula-3",CR,
-"",CR,
-"This distribution is based on the DEC SRC Modula-3 release 3.6. Local",CR,
-"enhancements by Louis Dubeau, Jerome Collin and myself (Michel Dagenais)",CR,
-"were added, and several packages (libraries, programs, and documentation)",CR,
-"from other sources were added as well. The online documentation may be",CR,
-"accessed before the build by pointing your favourite WWW browser to",CR,
-"src/index.html.",CR,
-"",CR,
-"This file is normally part of a source code + bootstrap distribution.",CR,
-"To compile the bootstrap program, and compile and install the Modula-3",CR,
-"source, the following steps are required.",CR,
-"",CR,
-"- insure that you have the usual development tools (make, gcc, ar).",CR,
-"",CR,
-"- check, and modify if needed, the template for your platform. This",CR,
-"  template determines where the Modula-3 programs, libraries and ",CR,
-"  documentation will be installed and used, as well as default options",CR,
-"  for various needed tools. Typically you only need to change the",CR,
-"  INSTALL_ROOT variable if the default does not suit you.",CR,
-"  The template is located in m3config/src/" & target & ".",CR,
-"",CR,
-"- The file src/m3makefile is used in the following steps to build all the",CR,
-"  packages. By default, almost all the available packages are built.",CR,
-"  You may comment out some of these in src/m3makefile to save build time",CR,
-"  and disk space.",CR,
-"",CR,
-"- insure that the BIN_USE path specified in the template is on your path",CR,
-"  such that programs installed there will be available during the build.",CR,
-"",CR,
-"- run \"make\", which will execute the commands in Makefile. It will",CR,
-"  build bootstrap versions of \"m3build\" and \"m3ship\" and then use",CR, 
-"  these programs to rebuild and install all the libraries and programs in",CR,
-"  the distribution.",CR,
-"",CR,
-"  If you downloaded bootstraps for several platforms, the remaining ",CR,
-"  Makefile is the last one you downloaded. In that case, you can use ",CR,
-"  the correct platform specific Makefile as Makefile.PLATFORM ",CR,
-"  (e.g. Makefile." & target & 
-") and use it with \"make -f Makefile.PLATFORM\". ",CR,
-"  Similarly the correct README is found as README.PLATFORM.",CR)
+    write(CR, "boot-clean:", CR)
+    WriteMakefileLine("m3core",target, "clean " & options)
+    WriteMakefileLine("libm3",target, "clean " & options)
+    WriteMakefileLine("m3middle",target, "clean " & options)
+    WriteMakefileLine("m3front",target, "clean " & options)
+    WriteMakefileLine("m3linker",target, "clean " & options)
+    WriteMakefileLine("m3driver",target, "clean " & options)
+    WriteMakefileLine("m3quake",target, "clean " & options)
+    WriteMakefileLine("m3templates",target, "clean " & options)
+    WriteMakefileLine("m3config",target, "clean " & options)
+    WriteMakefileLine("m3build",target, "clean " & options)
+    WriteMakefileLine("m3ship",target, "clean " & options)
   end
 end
 
@@ -233,6 +196,7 @@ readonly proc BootstrapTarget(target) is
     write("option(\"debuginfo\",\"" & BOOTDEBUG & "\")",CR)
     write("HOST=\"" & host & "\"",CR)
     write("USE_M3DOC=\"\"",CR)
+    write("IBACK=\"\"",CR)
     write("setDefault(\"\",\"\")",CR)
     write("BACKEND=[\"" & path() & SL & ".." & SL & host & SL & "pm3-" & 
         target & SL & "m3cgc1-" & target & 
@@ -300,8 +264,6 @@ readonly proc BootstrapTarget(target) is
       header, options)
   CreateMakefile("pm3-" & target & SL & "Makefile",target,
       header, options)
-  CreateReadme("pm3-" & target & SL & "README." & target,target)
-  CreateReadme("pm3-" & target & SL & "README",target)
 
   ret = exec(["rm", "pm3-" & target & SL & "config.tmpl"])
   ret = exec(["rm", "pm3-" & target & SL & "m3cgc1-" & target])
