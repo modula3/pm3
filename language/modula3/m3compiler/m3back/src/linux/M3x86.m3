@@ -2982,9 +2982,8 @@ CONST MAXINLINECOPY = 8;
 CONST faketype = ARRAY [1 .. 4] OF MType
   { Type.Word_A, Type.Word_B, Type.Word, Type.Word };
 
-PROCEDURE inline_copy (u: U; n, size: INTEGER; forward: BOOLEAN) =
+PROCEDURE inline_copy (u: U; n, size: INTEGER; movereg: Regno; forward: BOOLEAN) =
   VAR start, end, step: INTEGER;
-      movereg: Regno;
   BEGIN
     IF forward THEN
       start := 0; end := n - 1; step := 1;
@@ -2992,15 +2991,14 @@ PROCEDURE inline_copy (u: U; n, size: INTEGER; forward: BOOLEAN) =
       start := n - 1; end := 0; step := -1;
     END;
 
-    movereg := u.vstack.freereg();
-
     WITH stop0 = u.vstack.op(u.vstack.pos(0, "inline_copy")),
          stop1 = u.vstack.op(u.vstack.pos(1, "inline_copy")) DO
       FOR i := start TO end BY step DO
         u.cg.fast_load_ind(movereg, stop0, i * size, size);
         u.cg.store_ind(u.cg.reg[movereg], stop1, i * size, faketype[size]);
       END
-    END
+    END; 
+
   END inline_copy;
 
 PROCEDURE string_copy (u: U; n, size: INTEGER; forward: BOOLEAN) =
@@ -3034,6 +3032,7 @@ PROCEDURE copy (u: U;  n: INTEGER;  t: MType;  overlap: BOOLEAN) =
   (* Mem[s1.A:sz] := Mem[s0.A:sz]; pop(2)*)
   VAR size := CG_Bytes[t];
       forward, end: Label;
+      movereg: Regno;
   BEGIN
     IF u.debug THEN
       u.wr.Cmd   ("copy");
@@ -3065,41 +3064,48 @@ PROCEDURE copy (u: U;  n: INTEGER;  t: MType;  overlap: BOOLEAN) =
         u.vstack.find(stack0, Force.regset, RegSet { Codex86.ESI } );
         u.vstack.find(stack1, Force.regset, RegSet { Codex86.EDI } );
       ELSE
-        u.vstack.find(stack0, Force.anyreg, RegSet {}, TRUE);
-        u.vstack.find(stack1, Force.anyreg, RegSet {}, TRUE);
-      END
-    END;
-
-    IF overlap AND n > 1 THEN
-      forward := u.cg.reserve_labels(1, TRUE);
-      end := u.cg.reserve_labels(1, TRUE);
-      u.cg.binOp(Op.oCMP, u.cg.reg[Codex86.ESI], u.cg.reg[Codex86.EDI]);
-      u.cg.brOp(Cond.GE, forward);
-
-      IF n <= MAXINLINECOPY THEN
-        inline_copy(u, n, size, FALSE);
-      ELSE
-        string_copy(u, n, size, FALSE);
+        u.vstack.find(stack0, Force.regset, RegSet {}, TRUE);
+        u.vstack.find(stack1, Force.regset, RegSet {}, TRUE); 
       END;
 
-      u.cg.brOp(Cond.Always, end);
-      u.cg.set_label(forward);
-    END;
+      IF n <= MAXINLINECOPY THEN
+        movereg 
+          := u.vstack.freereg 
+               ( RegSet { Codex86.EAX , Codex86.EBX , Codex86.ECX , Codex86.EDX } );
+      END;
 
-    IF n <= MAXINLINECOPY THEN
-      inline_copy(u, n, size, TRUE);
-    ELSE
-      string_copy(u, n, size, TRUE);
-    END;
 
-    IF overlap AND n > 1 THEN
-      u.cg.set_label(end);
-    END;
+      IF overlap AND n > 1 THEN
+        forward := u.cg.reserve_labels(1, TRUE);
+        end := u.cg.reserve_labels(1, TRUE);
+        u.cg.binOp(Op.oCMP, u.vstack.op(stack0), u.vstack.op(stack1));
+        u.cg.brOp(Cond.GE, forward);
 
-    IF n > MAXINLINECOPY THEN
-      u.vstack.newdest(u.cg.reg[Codex86.ESI]);
-      u.vstack.newdest(u.cg.reg[Codex86.EDI]);
-    END;
+        IF n <= MAXINLINECOPY THEN
+          inline_copy(u, n, size, movereg, FALSE);
+        ELSE
+          string_copy(u, n, size, FALSE);
+        END;
+
+        u.cg.brOp(Cond.Always, end);
+        u.cg.set_label(forward);
+      END;
+
+      IF n <= MAXINLINECOPY THEN
+        inline_copy(u, n, size, movereg, TRUE);
+      ELSE
+        string_copy(u, n, size, TRUE);
+      END;
+
+      IF overlap AND n > 1 THEN
+        u.cg.set_label(end);
+      END;
+
+      IF n > MAXINLINECOPY THEN
+        u.vstack.newdest(u.cg.reg[Codex86.ESI]);
+        u.vstack.newdest(u.cg.reg[Codex86.EDI]);
+      END;
+    END (* WITH stack0 ... *) ;
 
     u.vstack.discard(2);
   END copy;
