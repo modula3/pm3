@@ -22,9 +22,3 @@ coco_c("oberon")
 coco_c("pascal")
 coco_c("pimmod2")
 coco_c("umbriel1")
-
-% clang1 produced less output in clang1.lst
-% umbriel1 produced more output in umbriel1.lst
-% umbriel2 produced 2 character sets less than before (8->6) umbriel2.lst
-%   which can be also seen in umbriel2S.m3
-% mod2 producted 5 charecter sets less than before (14->9) mod2.lst
