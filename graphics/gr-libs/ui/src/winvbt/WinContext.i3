@@ -2,7 +2,7 @@
 (* Digital Internal Use Only                                                 *)
 (* All rights reserved.                                                      *)
 (*                                                                           *)
-(* Last modified on Tue Aug  6 11:22:56 PDT 1996 by najork                   *)
+(* Last modified on Fri Oct 18 15:12:47 PDT 1996 by najork                   *)
 (*       Created on Wed Feb 15 15:52:21 PST 1995 by najork                   *)
 
 
@@ -53,6 +53,15 @@ PROCEDURE PushTexture (hdc  : WinDef.HDC;
                        delta: Point.T): T;
 (* Modify "hdc" to be suitable for texture painting. This procedure 
    is the moral equivalent of "XGC.ResolveTextureGC" in xvbt. *)
+
+
+PROCEDURE PushPixmap (hdc  : WinDef.HDC;
+                      st   : WinScreenType.T;
+                      op   : PaintPrivate.PaintOp;
+                      pm   : PaintPrivate.Pixmap;
+                      delta: Point.T): T;
+(* Modify "hdc" to be suitable for pixmap painting. This procedure 
+   is the moral equivalent of "XGC.ResolvePixmapGC" in xvbt. *)
 
 
 PROCEDURE PushFill (hdc  : WinDef.HDC;

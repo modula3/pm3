@@ -2,7 +2,7 @@
 (* Digital Internal Use Only                                                 *)
 (* All rights reserved.                                                      *)
 (*                                                                           *)
-(* Last modified on Tue Aug  6 11:40:11 PDT 1996 by najork                   *)
+(* Last modified on Fri Oct 18 15:22:34 PDT 1996 by najork                   *)
 (*       Created on Tue Jan 17 16:51:19 PST 1995 by najork                   *)
 
 
@@ -508,6 +508,7 @@ PROCEDURE NewPixmap (         st    : WinScreenType.T;
       st.pmfree := st.pmtable[slot].domain.north;
     ELSE
       slot := st.pmcount;
+      INC(st.pmcount);
       IF (slot = NUMBER (st.pmtable^)) THEN ExpandPixmapTable (st); END;
     END;
     IF st.bits = st THEN
@@ -516,11 +517,7 @@ PROCEDURE NewPixmap (         st    : WinScreenType.T;
       id := slot;
     END;
     st.pmtable[slot] := PixmapRecord {hbmp, domain};
-    INC(st.pmcount);
-    RETURN NEW (T, st := st, id := id, depth := depth, 
-                bounds := Rect.Sub (domain, Rect.NorthWest (domain)));
-        (* Simply passing "domain" screws things up. 
-           This sounds like a bug somewhere in my code. *)
+    RETURN NEW (T, st := st, id := id, depth := depth, bounds := domain);
   END NewPixmap;
 
 PROCEDURE ExpandPixmapTable (st: WinScreenType.T) =
