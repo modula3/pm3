@@ -13,13 +13,14 @@ IMPORT Thread;
 VAR
   mutex := NEW(MUTEX);
   cond := NEW(Thread.Condition);
+  requestAvailable := FALSE;
 
 PROCEDURE AwaitRequest(): REF ARRAY OF TEXT RAISES {} =
 (* "Error" is only raised if something unrecoverable happens;
    otherwise "AwaitRequest" waits for another connection attempt. *)
   BEGIN
     LOCK mutex DO
-      WHILE FALSE DO Thread.Wait(mutex, cond) END
+      WHILE NOT requestAvailable DO Thread.Wait(mutex, cond) END
     END;
     RETURN NIL;
   END AwaitRequest;
