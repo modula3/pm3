@@ -188,9 +188,6 @@ VAR
   NoName := ARRAY [0..15] OF CHAR {'s','t','a','t','i','c',' ',
       'p','r','o','c','e','d','u','r','e'};
 
-  TopLevelName := ARRAY [0..11] OF CHAR {'R','u','n','M','a','i','n','B','o',
-      'd','y','\000'};
-
 PROCEDURE DumpStack () =
   VAR
     f := LOOPHOLE(RTThread.GetCurrentHandlers(), Frame);
@@ -216,12 +213,6 @@ PROCEDURE DumpStack () =
       WHILE (sf.pc # NIL) DO
 
         RTProcedureSRC.FromPC (sf.pc, proc, file, name);
-
-        (* Some stack walkers have trouble stopping. Moreover, anything
-           before the Modula-3 top level is probably not of interest *)
-        IF(name # NIL AND Cstring.strcmp(name,ADR(TopLevelName)) = 0) THEN
-          EXIT;
-        END;
 
         (* print the procedure's frame *)
         RTIO.PutAddr (sf.pc, 10);
