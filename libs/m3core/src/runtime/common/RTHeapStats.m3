@@ -251,6 +251,9 @@ PROCEDURE DataSize (h: RTHeapMap.ObjectPtr): CARDINAL =
     BEGIN
       res := 1;
       FOR i := 0 TO def.nDimensions - 1 DO
+        IF sizes^ < 0 THEN res := 0; END; 
+        (* We are not pointing to a real object *)
+
         res := res * sizes^;
         INC(sizes, ADRSIZE(sizes^));
       END;
@@ -452,12 +455,19 @@ PROCEDURE VisitPage (page: INTEGER) =
       DEC (page);
     END;
     start := heap_min + page * RTHeapRep.BytesPerPage;
+
+(*
     REPEAT
       INC (page);
     UNTIL (page >= RTHeapRep.p1-RTHeapRep.p0)
        OR (RTHeapRep.desc[page].space # RTHeapRep.Space.Current)
        OR (NOT RTHeapRep.desc[page].continued);
     stop := heap_min + page * RTHeapRep.BytesPerPage;
+
+    Multi-page objects are alone on their pages. No need to scan past
+    the first page.
+*)
+    stop := start + RTHeapRep.BytesPerPage;
 
     IF (start <= last_alloc) AND (last_alloc < stop) THEN
       (* we're on the allocator's partial page... *)
