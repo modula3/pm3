@@ -7,7 +7,7 @@
 
 MODULE Main;
 
-IMPORT Text, TextList, M3Config, Stdio, Wr, FS, OSError;
+IMPORT Text, TextList, TextSeq, M3Config, Stdio, Wr, FS, OSError;
 IMPORT Process, ASCII, Thread, Params, Pathname, Env;
 IMPORT Quake, M3File;
 
@@ -173,6 +173,7 @@ PROCEDURE MkDir (dir: TEXT) =
   END MkDir;
 
 PROCEDURE CheckTemplateDir() =
+  <*FATAL OSError.E*>
   VAR
     path, trial1, trial2: TEXT;
     trials: TextSeq.T;
@@ -206,28 +207,29 @@ PROCEDURE CheckTemplateDir() =
                 m3buildPaths.addhi(Text.Sub(path,0,pos));
                 path := Text.Sub(path,pos + 1);
               END;
-           END;
-         END;
+            END;
+          END;
+        END;
 
-         FOR i := 0 TO m3buildPaths.size() - 1 DO
-           trial1 := Pathname.Join(m3buildPaths.get(i),other_template_dir_1);
-           trial2 := Pathname.Join(m3buildPaths.get(i),other_template_dir_2);
-           trials.addhi(trial1); trials.addhi(trial2);
-           IF M3File.IsDirectory(trial1) THEN
-             template_dir := trial1; RETURN;
-           ELSIF M3File.IsDirectory(trial2) THEN
-             template_dir := trial2; RETURN;
-           END;
+        FOR i := 0 TO m3buildPaths.size() - 1 DO
+          trial1 := Pathname.Join(m3buildPaths.get(i),other_template_dir_1);
+          trial2 := Pathname.Join(m3buildPaths.get(i),other_template_dir_2);
+          trials.addhi(trial1); trials.addhi(trial2);
+          IF M3File.IsDirectory(trial1) THEN
+            template_dir := trial1; RETURN;
+          ELSIF M3File.IsDirectory(trial2) THEN
+            template_dir := trial2; RETURN;
+          END;
         END;
       END;
     END;
 
     IF template_dir = NIL THEN
       path := "";
-      FOR i := TO trials.size() - 1 DO
+      FOR i := 0 TO trials.size() - 1 DO
         path := path & "\n" & trials.get(i);
       END;
-      Err ("unable to find template directory", path);
+      Err("unable to find template directory", path);
     END;
   END CheckTemplateDir;
 

@@ -62,14 +62,21 @@ MODULE Main;
 
 *)
 
-IMPORT Wx, Buf, Markup;
+IMPORT Wx, Buf, MarkUp;
 
-IMPORT Stdio, Rd, Wr, Params, Text, Thread, OSError;
+IMPORT Stdio, Rd, Wr, Params, Text, Thread, Pathname;
+
+EXCEPTION
+  UsageError;
+
+<*FATAL Thread.Alerted*>
+<*FATAL Wr.Failure*>
 
 VAR
   buf: Buf.T;
   file, basename, extension: TEXT;
   wx := Wx.New();
+  wr := Stdio.stdout;
 
 BEGIN
   TRY
@@ -78,8 +85,8 @@ BEGIN
     basename := Pathname.LastBase(file);
     extension := Pathname.LastExt(file);
 
-    buf := Buf.FromFile (file, pad := 1);
-    IF buf = NIL THEN RAISE Rd.Failure; END;
+    buf := Buf.FromFile (file);
+    IF buf = NIL THEN RAISE Rd.Failure(NIL); END;
 
     MarkUp.Annotate(buf,wx,FALSE);
 
@@ -91,9 +98,9 @@ BEGIN
       Wr.PutText(wr,"<H1> The " & basename & " module </H1>\n");
     END;
 
-    Wr.PutString(Stdio.stdout,Wx.ToText(wx));
+    Wr.PutText(wr,Wx.ToText(wx));
   EXCEPT
-    Rd.Failure, OSError.E => 
+    Rd.Failure => 
       Wr.PutText(Stdio.stderr, "? can't read file " & file & " \n")
   | UsageError =>
       Wr.PutText(Stdio.stderr,"? usage: m3tohtmlf name.extension\n")
