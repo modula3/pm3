@@ -1464,7 +1464,8 @@ PROCEDURE CProgram(t: T; x: TEXT) RAISES {Error}=
     objects      := Arg.NewList();
     pgm          : TEXT;
     objseq       := NEW(TextSeq.T).init();
-    lib          : M3DriverRep.FileInfo;
+    libname      : TEXT;
+    lib          : M3Libs.T;
   BEGIN
     pgm := ProgramName(t, x);
     h_iterator := t.h_dirs.iterate();
@@ -1502,12 +1503,17 @@ PROCEDURE CProgram(t: T; x: TEXT) RAISES {Error}=
         link := QVal.ToText(t, arg);
         Arg.Append(objects, "-o");
         Arg.Append(objects, pgm);
-        lib := M3DriverRep.libraries;
-        WHILE lib # NIL DO
-          Arg.Append(objects, "-l" & lib.name.base);
-          Arg.Append(objects, "-L" & Pathname.Prefix(lib.library));
-          lib := lib.next;
+
+        FOR i := 0 TO t.other_libs_x.size() - 1 DO
+          libname := t.other_libs_x.get(i);
+          IF t.other_libs.get(M3ID.Add(libname), lib) THEN
+            Arg.Append(objects, "-l" & libname);
+            Arg.Append(objects, "-L" & lib.loc);
+          ELSE
+            RAISE Error("other_libs_x and other_libs are incoherent!");
+          END;
         END;
+
         TRY
           EVAL Utils.Execute(link, objects, NIL, TRUE);
         EXCEPT
