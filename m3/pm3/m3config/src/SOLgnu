@@ -27,6 +27,7 @@ CC = [ "gcc", "-Wa,-P", "-c" ]
 LINK = [ "gcc" ]
 MAKELIB = [ "/usr/ccs/bin/ar", "cru" ]
 MAKESHLIB = [ "/usr/ccs/bin/ld", "-dy", "-G", "-z", "text" ]
+SONAME_OPTION = ["-h"]
 ASM = [ "/usr/ccs/bin/as", "-s", "-o" ]
 
 STATIC_FLAG = [ "-Xlinker", "-dy", "-Xlinker", "-Bstatic" ]

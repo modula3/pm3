@@ -27,6 +27,7 @@ CC = [ "/opt/SUNWspro/bin/cc", "-Wa,-P", "-c" ]
 LINK = [ "/opt/SUNWspro/bin/cc", "-xildoff" ]
 MAKELIB = [ "/usr/ccs/bin/ar", "cru" ]
 MAKESHLIB = [ "/usr/ccs/bin/ld", "-dy", "-G", "-z", "text" ]
+SONAME_OPTION = ["-h"]
 ASM = [ "/usr/ccs/bin/as", "-s", "-o" ]
 
 OPT_FLAG = "-xO2"
