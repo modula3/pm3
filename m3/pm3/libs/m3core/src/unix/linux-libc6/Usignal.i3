@@ -87,7 +87,7 @@ TYPE
                              code: int);
 
   sigset_t = RECORD
-    val : ARRAY [0..SIGSET_NWORDS] OF INTEGER;
+    val : ARRAY [0 .. SIGSET_NWORDS - 1] OF INTEGER;
   END;
   sigset_t_star = UNTRACED REF sigset_t;
 

@@ -199,6 +199,7 @@ readonly proc BootstrapTarget(target) is
     write("option(\"bootstrap\",\"T\")",CR)
     write("option(\"shared_lib\",\"\")",CR)
     if equal(target,"HPPA") or equal(target,"DS3100") or equal(target,"IRIX5")
+        or equal(target,"NT386GNU")
       write("option(\"optimization\",\"\")",CR)
     else 
       write("option(\"optimization\",\"T\")",CR)

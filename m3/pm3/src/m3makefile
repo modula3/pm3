@@ -35,7 +35,12 @@ local firstPhase = ""
 local ret = 0
 
 > "config.tmpl" in
-  write("option(\"optimization\",\"T\")", CR)
+  if equal(target,"HPPA") or equal(target,"DS3100") or equal(target,"IRIX5")
+      or equal(target,"NT386GNU")
+    write("option(\"optimization\",\"\")",CR)
+  else 
+    write("option(\"optimization\",\"T\")",CR)
+  end
 end
 
 if defined("SETROOT")
