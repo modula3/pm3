@@ -38,7 +38,7 @@ PROCEDURE GetRounding(): RoundingMode;
 (* Return the rounding mode for the calling thread. *)
 
 TYPE Flag = {Invalid, Inexact, Overflow, Underflow,
-  DivByZero, IntOverflow, IntDivByZero};
+  DivByZero, IntOverflow, IntDivByZero, Subscript};
 
 (* Associated with each thread is a set of boolean status flags
    recording whether the condition represented by the flag has

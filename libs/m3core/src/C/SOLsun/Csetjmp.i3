@@ -9,14 +9,24 @@ INTERFACE Csetjmp;		(* for SOLsun *)
 
 FROM Ctypes IMPORT int;
 
-TYPE jmp_buf = ARRAY [0..18] OF int;
-(* large enough for a sigjmp_buf.  Apparently the BSD
-   compatibility library implements setjmp with sigsetjmp... *)
+CONST
+  SIGJBLEN = 19;
+  JB_FLAGS = 0;
+  JB_SP = 1;
+  JB_PC = 2;
+  JB_FP = 3;
+  JB_I7 = 4;
 
-<*EXTERNAL*> PROCEDURE setjmp (VAR env: jmp_buf): int;
-<*EXTERNAL*> PROCEDURE longjmp (VAR env: jmp_buf; val: int);
+TYPE jmp_buf = ARRAY [0..SIGJBLEN - 1] OF int;
 
-<*EXTERNAL "setjmp" *>  PROCEDURE usetjmp (VAR env: jmp_buf): int;
-<*EXTERNAL "longjmp" *> PROCEDURE ulongjmp (VAR env: jmp_buf; val: int);
+<*EXTERNAL "sigsetjmp" *>
+PROCEDURE setjmp (VAR env: jmp_buf; savemask := 1): int;
+<*EXTERNAL "siglongjmp" *>
+PROCEDURE longjmp (VAR env: jmp_buf; val: int);
+
+<*EXTERNAL "sigsetjmp" *>
+PROCEDURE usetjmp (VAR env: jmp_buf; savemask := 0): int;
+<*EXTERNAL "siglongjmp" *>
+PROCEDURE ulongjmp (VAR env: jmp_buf; val: int);
 
 END Csetjmp.

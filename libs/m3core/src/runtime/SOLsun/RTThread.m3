@@ -8,29 +8,49 @@
 
 UNSAFE MODULE RTThread;
 
-IMPORT Usignal;
-IMPORT Word;
-
-CONST 
-  SP_pos = 1;
-  FP_pos = 3;
+IMPORT Usignal, Unix, Umman, RTMisc, Word;
+FROM Uucontext IMPORT sigset_t;
+FROM Uframe IMPORT struct_frame_star;
 
 PROCEDURE SP (READONLY s: State): ADDRESS =
   BEGIN
-    RETURN LOOPHOLE (s [SP_pos], ADDRESS);
+    RETURN LOOPHOLE (s.uc_mcontext.gregs.sp, ADDRESS);
   END SP;
 
 (*--------------------------------------------------------- thread stacks ---*)
 
+VAR page_bytes : CARDINAL := 0;
+VAR stack_slop : CARDINAL;
+
 PROCEDURE NewStack (size: INTEGER;  VAR(*OUT*)s: Stack) =
+  VAR i: INTEGER;  start: ADDRESS;
   BEGIN
+    IF page_bytes = 0 THEN
+      page_bytes := Unix.getpagesize ();
+      stack_slop := 2 * (page_bytes DIV BYTESIZE (INTEGER));
+    END;
+
+    (* allocate enough so that we're guaranteed to get a full, aligned page *)
+    INC (size, stack_slop);
     s.words := NEW (StackSpace, size);
-    s.first := ADR (s.words[0]);
-    s.last  := s.first + size * ADRSIZE (s.words[0]);
+
+    (* find the aligned page and unmap it *)
+    start := RTMisc.Align (ADR (s.words[0]), page_bytes);
+    i := Umman.mprotect (start, page_bytes, Umman.PROT_NONE);
+    <* ASSERT i = 0 *>
+    (* finally, set the bounds of the usable region *)
+    s.first := start + page_bytes;
+    s.last  := ADR (s.words[0]) + size * ADRSIZE (s.words[0]);
   END NewStack;
 
 PROCEDURE DisposeStack (VAR s: Stack) =
+  VAR i: INTEGER;  start := RTMisc.Align (ADR (s.words[0]), page_bytes);
   BEGIN
+    (* find the aligned page and re-map it *)
+    i := Umman.mprotect (start, page_bytes, Umman.PROT_READ+Umman.PROT_WRITE);
+    <* ASSERT i = 0 *>
+
+    (* and finally, free the storage *)
     DISPOSE (s.words);
     s.words := NIL;
     s.first := NIL;
@@ -40,52 +60,60 @@ PROCEDURE DisposeStack (VAR s: Stack) =
 PROCEDURE FlushStackCache () =
   VAR d: State;
   BEGIN
-    Transfer (d, d);
+    EVAL Save(d);
   END FlushStackCache;
 
 (*-------------------------------------------------- modifying the models ---*)
 
 PROCEDURE UpdateStateForNewSP (VAR s: State; offset: INTEGER) =
   BEGIN
-    INC (s [SP_pos], offset);
-    INC (s [FP_pos], offset);
+    INC (s.uc_mcontext.gregs.sp, offset);
   END UpdateStateForNewSP;
 
-PROCEDURE UpdateFrameForNewSP (a: ADDRESS; <*UNUSED*> offset: INTEGER) =
+PROCEDURE UpdateFrameForNewSP (a: ADDRESS; offset: INTEGER) =
   BEGIN
-    (* saved FP *)
-    LOOPHOLE (a + 14 * ADRSIZE (Word.T), UNTRACED REF INTEGER)^ := 0;
-    (* saved PC *)
-    LOOPHOLE (a + 15 * ADRSIZE (Word.T), UNTRACED REF INTEGER)^ := 0;
+    INC(LOOPHOLE(a, struct_frame_star).fr_savfp, offset);
+    LOOPHOLE(a, struct_frame_star).fr_savpc := 0;
   END UpdateFrameForNewSP;
 
 (*------------------------------------ manipulating the SIGVTALRM handler ---*)
 
 VAR
-  ThreadSwitchSignal: Usignal.sigset_t;
+  ThreadSwitchSignal: sigset_t;
 
 PROCEDURE setup_sigvtalrm (handler: Usignal.SignalHandler) =
-  VAR sv, osv: Usignal.struct_sigaction;  i: INTEGER;
+  VAR sv, osv: Usignal.struct_sigaction;
   BEGIN
     sv.sa_handler := handler;
-    sv.sa_flags   := 0;
-    i := Usignal.sigaction (Usignal.SIGVTALRM, sv, osv);
+    sv.sa_flags   := Word.Or(Usignal.SA_RESTART, Usignal.SA_SIGINFO);
+    WITH i = Usignal.sigemptyset(sv.sa_mask) DO
     <* ASSERT i = 0 *>
+    END;
+    WITH i = Usignal.sigaction (Usignal.SIGVTALRM, sv, osv) DO
+      <* ASSERT i = 0 *>
+    END;
   END setup_sigvtalrm;
 
 PROCEDURE allow_sigvtalrm () =
-  VAR i : Usignal.sigset_t;
   BEGIN
-    EVAL Usignal.sigprocmask(Usignal.SIG_UNBLOCK, ThreadSwitchSignal, i)
+    WITH i = Usignal.sigprocmask(Usignal.SIG_UNBLOCK, ThreadSwitchSignal) DO
+      <* ASSERT i = 0 *>
+    END;
   END allow_sigvtalrm;
 
 PROCEDURE disallow_sigvtalrm () =
-  VAR i : Usignal.sigset_t;
   BEGIN
-    EVAL Usignal.sigprocmask(Usignal.SIG_BLOCK, ThreadSwitchSignal, i)
+    WITH i = Usignal.sigprocmask(Usignal.SIG_BLOCK, ThreadSwitchSignal) DO
+      <* ASSERT i = 0 *>
+    END;
   END disallow_sigvtalrm;
 
 BEGIN
-  (*mask_sigvtalrm(ThreadSwitchSignal); This was in the  from IBMR2 *)
+  WITH i = Usignal.sigemptyset(ThreadSwitchSignal) DO
+    <* ASSERT i = 0 *>
+  END;
+  WITH i = Usignal.sigaddset(ThreadSwitchSignal, Usignal.SIGVTALRM) DO
+    <* ASSERT i = 0 *>
+  END;
 END RTThread.
 

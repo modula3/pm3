@@ -8,6 +8,8 @@
 INTERFACE FPU;
 
 IMPORT Ctypes, FloatMode;
+FROM Usignal IMPORT siginfo_t_fault;
+FROM Uucontext IMPORT ucontext_t;
 
 <* EXTERNAL scalbn *> PROCEDURE scalb(x: LONGREAL; n: INTEGER): LONGREAL;
 <* EXTERNAL *> PROCEDURE ilogb(x: LONGREAL): INTEGER;
@@ -23,7 +25,9 @@ IMPORT Ctypes, FloatMode;
 				    VAR out: Ctypes.char_star): INTEGER;
 
 TYPE
-  SigFPEHandler = PROCEDURE(sig, code: INTEGER; scp, addr: ADDRESS)
+  SigFPEHandler = PROCEDURE (sig: Ctypes.int;
+                             sip: UNTRACED REF siginfo_t_fault;
+                             uap: UNTRACED REF ucontext_t)
 		      RAISES {FloatMode.Trap};
 
 <* EXTERNAL *> PROCEDURE ieee_handler(action, exception: Ctypes.char_star;

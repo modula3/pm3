@@ -930,8 +930,9 @@ TYPE
 
 
 (*** vfork - spawn new process in a virtual memory efficient way ***)
-
-<*EXTERNAL*> PROCEDURE vfork (): int;
+(* Avoid vfork. The way it is used in ProcessPosix breaks incremental GC:
+   RestoreHandlers in child is reflected in parent to break VM faulting *)
+<*EXTERNAL "fork1"*> PROCEDURE vfork (): int;
 
 (*** vhangup - virtually hang up the current control terminal ***)
 

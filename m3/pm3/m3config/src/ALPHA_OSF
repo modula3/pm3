@@ -22,6 +22,7 @@ ASM = ["/bin/as","-o"]         % Assembler
 FIXOBJ = [ LIB_USE & "/mips-tfile" ]
 
 OPT_FLAG = "-O"
+BOPT_FLAG = "-O"
 DEBUG_FLAG = "-g3"
 STATIC_FLAG = "-non_shared"
 LINK_suffix = ["-ldnet_stub", "-lm"]     % Tail of the link command

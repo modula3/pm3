@@ -211,7 +211,7 @@ end
 
 readonly proc BootstrapTarget(target) is
   local ret = 0
-  local host = "LINUXELF"
+  local host = TARGET
 
   ret = exec(["mkdir", "pm3-" & target])
 
@@ -283,10 +283,14 @@ readonly proc BootstrapTarget(target) is
     header = header & 
         "EXTRALIBS=-ladvapi32" & CR
   else
-    header = header & "EXTRALIBS=-lm" & CR
+    if equal(target,"SOLsun")
+      header = header & "EXTRALIBS=-lsunmath -lm" & CR
+    else
+      header = header & "EXTRALIBS=-lm" & CR
+    end
   end
 
-  if equal(target,"SOLgnu")
+  if equal(target,"SOLgnu") or equal(target,"SOLsun")
     header = header & "ASFLAGS=-s -P" & CR
   end
 

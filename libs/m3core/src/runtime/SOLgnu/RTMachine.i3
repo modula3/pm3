@@ -9,16 +9,16 @@
 
 INTERFACE RTMachine;
 
-IMPORT Csetjmp;
+IMPORT Uucontext;
 
 (*--------------------------------------------------------- thread state ---*)
 
 TYPE
-  State = Csetjmp.jmp_buf;
+  State = Uucontext.ucontext_t;
   (* The machine state is saved in a "State".  This type is really
      opaque to the client, i.e. it does not need to be an array. *)
 
-<*EXTERNAL "setjmp" *>
+<*EXTERNAL "getcontext" *>
 PROCEDURE SaveState (VAR s: State): INTEGER;
 (* Capture the currently running thread's state *)
 
@@ -48,7 +48,12 @@ CONST
    whose implementation you might use as a reference. *)
 
 CONST
-  VMHeap = FALSE;
+  VMHeap = TRUE;
+
+(*** hooks for the C wrapper functions ***)
+
+<*EXTERNAL*> VAR RTHeapRep_Fault: ADDRESS;  (* => RTHeapRep.Fault *)
+<*EXTERNAL*> VAR RTCSRC_FinishVM: ADDRESS;  (* => RTCollectorSRC.FinishVM *)
 
 (*--------------------------------------------------------- thread stacks ---*)
 
@@ -75,7 +80,12 @@ CONST
   (* Indicates whether this platform supports the stack walking functions
      defined in the "RTStack" interface. *)
 
-TYPE FrameInfo = RECORD pc, sp, fp: ADDRESS END;
+TYPE FrameInfo = RECORD
+  pc, sp, true_sp: ADDRESS;		 (* sp here is actually SPARC fp *)
+  ctxt: Uucontext.ucontext_t;
+  lock: INTEGER; (* to ensure that ctxt isn't overrun!! *)
+END;
 
 END RTMachine.
+
 

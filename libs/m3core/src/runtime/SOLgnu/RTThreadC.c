@@ -6,12 +6,14 @@
 
 /* This file implements the coroutine transfer: RTThread.Transfer */
 
-#include </usr/include/setjmp.h>
+#include <ucontext.h>
 
-RTThread__Transfer (from, to)
-jmp_buf *from, *to;
+void RTThread__Transfer (ucontext_t *from, ucontext_t *to)
 {
-  if (setjmp(*from) == 0) longjmp (*to, 1);
+  if (getcontext(from) == 0) {
+    to->uc_mcontext.gregs[REG_O0] = (greg_t)1; /* emulate longjmp return */
+    setcontext(to);		/* fire it up */
+  }
 }
 
 

@@ -32,7 +32,8 @@ ASM = [ "/usr/ccs/bin/as", "-s", "-o" ]
 STATIC_FLAG = [ "-Xlinker", "-dy", "-Xlinker", "-Bstatic" ]
 LINK_suffix = [ "-lsocket", "-lnsl", "-lm", "-lintl", "-Xlinker", "-Bdynamic",
     "-ldl" ]
-RPATH_FLAG = ""
+RPATH_FLAG = "-Xlinker"
+RPATH_prefix = "-R"
 
 setDefault("","")
 
@@ -44,3 +45,8 @@ proc m3_assemble (source, object) is
   return exec (cmd)
 end
 
+proc install_file (src, dest, mode) is
+  Note_install (src, dest)
+  local ret = exec (["/usr/ucb/install", "-c", "-m", mode, src, dest])
+  if not equal(ret, 0) error("install failed with error code: ", ret) end
+end

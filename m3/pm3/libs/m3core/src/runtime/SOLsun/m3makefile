@@ -6,18 +6,11 @@
 %      modified on Mon Dec 14 19:59:03 PST 1992 by jdd
 %      modified on Wed May 20 17:21:29 PDT 1992 by muller
 
-% Run the preprocessor for the assembly pass.
-m3_option ("-X1@-Wa,-P@")
-
-s_source       ("RTStackASM")
-
-m3_option("-X1@-traditional@")
-
-c_source       ("RTStackC")
-
 Interface      ("RTMachine")
 implementation ("RTHeapDep")
 implementation ("RTSignal")
 implementation ("RTThread")
 c_source       ("RTThreadC")
-
+c_source       ("RTStackC")
+c_source       ("RTHeapDepC")
+s_source       ("RTStackASM")

@@ -39,6 +39,7 @@ RANLIB = ["touch"]        % Library index creator
 ASM = ["as","-o"]         % Assembler
 
 OPT_FLAG = "-O2"          % optimisation
+BOPT_FLAG = "-O2"	  % optimisation for m3cgc1
 DEBUG_FLAG = "-g"         % debugging info
 BDEBUG_FLAG = "-g"         % debugging info
 LDEBUG_FLAG = "-g"
@@ -205,7 +206,7 @@ proc setCommands () is
 
   if Options{"optimization"}[0]
     CC_CMD += OPT_FLAG
-    BACKEND_CMD += OPT_FLAG
+    BACKEND_CMD += BOPT_FLAG
     INTERNAL_BACKEND = ""
   end
 
@@ -242,7 +243,11 @@ proc setCommands () is
     else
       if not empty(DYNAMIC_FLAG) LINK_CMD += DYNAMIC_FLAG end
       if defined("TARGET_LIB_USE") and RPATH_FLAG
-        LINK_CMD += [RPATH_FLAG, RPATH_prefix & TARGET_LIB_USE]
+        if RPATH_prefix
+          LINK_CMD += [RPATH_FLAG, RPATH_prefix & TARGET_LIB_USE]
+        else
+          LINK_CMD += RPATH_FLAG & TARGET_LIB_USE
+        end
       end
       LINK_libpath = RPATH_FLAG
     end
@@ -354,7 +359,11 @@ proc m3_link (prog, objects, imported_libs) is
     if not empty(i[0])
       cmd += "-L" & i[0]
       if LINK_libpath
-        cmd += [RPATH_FLAG, RPATH_prefix & i[0]]
+        if RPATH_prefix
+          cmd += [RPATH_FLAG, RPATH_prefix & i[0]]
+        else
+          cmd += RPATH_FLAG & i[0]
+        end
       end
     end
     cmd += "-l" & i[1]

@@ -766,10 +766,7 @@ PROCEDURE StartSwitching () =
     END;
   END StartSwitching;
 
-TYPE SignalData = UNTRACED REF Usignal.struct_sigcontext;
-
-PROCEDURE switch_thread (<*UNUSED*> sig, code: INTEGER; 
-                         <*UNUSED*> scp: SignalData) RAISES {Alerted} =
+PROCEDURE switch_thread () RAISES {Alerted} =
   BEGIN
     RTThread.allow_sigvtalrm ();
     IF RT0u.inCritical = 0 THEN InternalYield () END;

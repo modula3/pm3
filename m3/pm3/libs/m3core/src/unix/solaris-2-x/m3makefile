@@ -5,9 +5,10 @@
 % Last modified on Mon Oct 31 13:25:59 PST 1994 by kalsow
 %      modified on Tue Mar 24 21:36:54 PST 1992 by muller
 
-Module    ("Udir")
+Interface ("Udir")
 Module    ("Uerror")
 Interface ("Uexec")
+Interface ("Uframe")
 Interface ("Ugrp")
 Module    ("Uin")
 Interface ("Uipc")
@@ -25,6 +26,7 @@ Interface ("Usocket")
 Interface ("Ustat")
 Interface ("Utime")
 Module    ("Utypes")
+Interface ("Uucontext")
 Interface ("Uugid")
 Interface ("Uuio")
 Interface ("Uutmp")
