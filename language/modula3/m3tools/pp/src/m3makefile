@@ -21,12 +21,10 @@ else
   include_dir ("lex-yacc")
 end
 
-m3_option ("-X1@-I../src@") %-- so the C compiler can find hash.h & lex_help.h
-
 % source   ("Parse.lex")
 % source   ("Parse.yacc")
-% h_source ("hash")
-% h_source ("lex_help")
+h_source ("hash")
+h_source ("lex_help")
 
 interface      ("ExceptionArg")
 interface      ("FBE")
