@@ -3136,7 +3136,7 @@ PROCEDURE InitProcs(): REF ARRAY OF ProcRec =
     Procs[106].proc := NewProc("m3front_option", DoM3FrontOption, 1, FALSE);
     Procs[107].proc := NewProc("replacechar", DoReplaceChar, 3, TRUE);
     Procs[108].proc := NewProc("w2p", DoW2P, 1, TRUE);
-    Procs[109].proc := NewProc("derived_resource", DoDerivedResrouce, 1, FALSE);
+    Procs[109].proc := NewProc("derived_resource", DoDerivedResource, 1, FALSE);
     RETURN Procs;
   END InitProcs;
 
