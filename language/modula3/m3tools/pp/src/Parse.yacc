@@ -1318,13 +1318,13 @@ elem_list:
 
 elem:
       expr
-    | expr Z Dotdot A expr
+    | expr SP Dotdot A expr
     | expr SP Assign A expr
     ;
 
 elem_tail:
       /* empty */
-    | Z Comma A Dotdot
+    | Z Comma SP Dotdot
     ;
 
 opt_id_list:
