@@ -113,6 +113,7 @@ SYSTEM_LIBS = {
   "X11"        : [ "-Xlinker", "-Bdynamic", "-L/usr/openwin/lib",
                       "-lXaw", "-lXmu", "-lXext", "-lXt", "-lX11" ],
 %  "DB"         : [ "-R" & DB_ROOT & "lib", "-L" & DB_ROOT & "lib", "-ldb" ],
+  "RT"         : [ "-Xlinker", "-Bdynamic", "-lrt" ],
   "TCP"        : [ ]
 }
 
