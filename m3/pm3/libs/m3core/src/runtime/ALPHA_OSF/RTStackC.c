@@ -91,7 +91,7 @@ void RTStack__GetThreadFrame (Frame *f, char *start, int len)
   f->sp   = 0;
   if (len == sizeof (struct sigcontext)) {
     memcpy (&(f->cxt), start, sizeof (struct sigcontext));
-    f->pc = f->cxt.sc_pc;
+    f->pc = f->unwind = f->cxt.sc_pc;
     f->sp = f->cxt.sc_sp;
     if (f->lock != FrameLock) abort ();
   }
@@ -106,7 +106,7 @@ void RTStack__CurFrame (Frame *f)
   f->lock = FrameLock;
   setjmp (& f->cxt);
   __exc_virtual_unwind (0, &(f->cxt));
-  f->pc = f->cxt.sc_pc;
+  f->pc = f->unwind = f->cxt.sc_pc;
   f->sp = f->cxt.sc_sp;
   if (f->lock != FrameLock) abort ();
 }
@@ -117,26 +117,36 @@ void RTStack__CurFrame (Frame *f)
    "callee" is the first frame on the stack or its predecessor is ill-formed.
    */
 
+void (*RTHeapDep_Fault)();
+void (*RTProcedureSRC_FromPC) (void *pc, void **p, char **file, char **name);
+
 RTStack__PrevFrame (Frame* callee, Frame* caller)
 {
-  PRUNTIME_FUNCTION proc;
+  PRUNTIME_FUNCTION fun;
+  void *proc;
+  char *file, *name;
 
   if (callee->lock != FrameLock) abort ();
   *caller = *callee;
 
   /* see if the unwind has any chance of working... */
-  proc = (PRUNTIME_FUNCTION) __exc_lookup_function_entry (caller->cxt.sc_pc);
-  if (proc == 0) {
-    caller->pc = 0;
-    caller->sp = 0;
-    caller->unwind = 0;
+  fun = (PRUNTIME_FUNCTION) __exc_lookup_function_entry (callee->cxt.sc_pc);
+  if (fun == 0) {
+    caller->pc = caller->sp = caller->unwind = 0;
     return;
   }
 
-  __exc_virtual_unwind (proc, &(caller->cxt));
+  __exc_virtual_unwind (fun, &(caller->cxt));
   caller->pc = caller->cxt.sc_pc;
   caller->sp = caller->cxt.sc_sp;
-  caller->unwind = 0;		/* unwind directly to handler */
+
+  RTProcedureSRC_FromPC((void *)(callee->pc), &proc, &file, &name);
+  if (proc == RTHeapDep_Fault) {
+    /* SIGNAL HANDLER: previous frame before signal trampoline */
+    caller->unwind = 0;		/* unwind directly to handler */
+  } else if (caller->unwind) {
+    caller->unwind = caller->pc;
+  }
 
   if (caller->lock != FrameLock) abort ();
 }
@@ -151,6 +161,7 @@ RTStack__PrevFrame (Frame* callee, Frame* caller)
 void RTStack__Unwind (Frame *target)
 {
   if (target->lock != FrameLock) abort ();
+  target->unwind = target->pc;
   target->cxt.sc_pc = target->pc;
   exc_resume (& target->cxt);	/* longjmp doesn't unwind through signals */
 }
