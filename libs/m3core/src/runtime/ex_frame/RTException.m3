@@ -7,12 +7,12 @@
 
 UNSAFE MODULE RTException EXPORTS RTException, RTExRep;
 
-IMPORT RT0, RTMisc, RTIO, RTParams, RTOS;
-IMPORT Thread, ThreadF, M3toC, Ctypes, Csetjmp;
+IMPORT RT0, RTMisc, RTIO, RTParams, RTOS, RTStack, RTProcedureSRC;
+IMPORT Thread, ThreadF, M3toC, Cstring, Ctypes, Csetjmp, RTProcedure;
 
 VAR
   DEBUG := FALSE;
-  dump_enabled := FALSE;
+  dump_enabled := TRUE;
 
 TYPE
   FinallyProc = PROCEDURE () RAISES ANY;
@@ -210,12 +210,71 @@ PROCEDURE SanityCheck () =
     END;
   END SanityCheck;
 
+VAR 
+  NoName := ARRAY [0..15] OF CHAR {'s','t','a','t','i','c',' ',
+      'p','r','o','c','e','d','u','r','e'};
+
+  TopLevelName := ARRAY [0..15] OF CHAR {'_','I','N','I','T','M','_','R','T',
+      'L','i','n','k','e','r','\000'};
+
 PROCEDURE DumpStack () =
-  VAR f := LOOPHOLE(ThreadF.GetCurrentHandlers(), Frame);
+  VAR 
+    f := LOOPHOLE(ThreadF.GetCurrentHandlers(), Frame);
+    here, sf: RTStack.Frame;
+    name: RTProcedureSRC.Name;
+    file: RTProcedureSRC.Name;
+    proc: RTProcedure.Proc;
+    offset: INTEGER;
   BEGIN
     IF NOT DEBUG AND NOT dump_enabled THEN RETURN; END;
 
     RTOS.LockHeap (); (* disable thread switching... (you wish!) *)
+
+    IF RTStack.Has_walker THEN
+      RTIO.PutText ("------------------------- STACK DUMP ---------------------------\n");
+      RTIO.PutText ("----PC----  ----SP----  \n");
+      RTStack.CurrentFrame (here);
+      RTStack.PreviousFrame (here, sf); (* skip self *)
+
+      WHILE (sf.pc # NIL) DO
+
+        RTProcedureSRC.FromPC (sf.pc, proc, file, name);
+
+        (* Some stack walkers have trouble stopping. Moreover, anything
+           before the Modula-3 top level is probably not of interest *)
+        IF(name # NIL AND Cstring.strcmp(name,ADR(TopLevelName)) = 0) THEN
+          EXIT;
+        END;
+
+        (* print the procedure's frame *)
+        RTIO.PutAddr (sf.pc, 10);
+        RTIO.PutText ("  ");
+        RTIO.PutAddr (sf.sp, 10);
+
+        IF (name # NIL) THEN
+          offset := sf.pc - proc;
+          IF (0 <= offset) AND (offset < 2048) THEN
+            RTIO.PutText ("  ");  RTIO.PutString (name);
+            IF (offset # 0) THEN 
+              RTIO.PutText (" + "); RTIO.PutHex (offset); 
+            END;
+            IF (file # NIL) THEN 
+              RTIO.PutText(" in "); RTIO.PutString(file); 
+            END;
+          END;
+        END;
+        name := RTStack.ProcName (sf);
+        IF (name # NIL)
+          AND Cstring.memcmp (name, ADR(NoName), NUMBER(NoName)) # 0 THEN
+          RTIO.PutText ("  [");  RTIO.PutString (name);  RTIO.PutText ("]");
+        END;
+        RTIO.PutText ("\n");
+
+        (* try the previous frame *)
+        RTStack.PreviousFrame (sf, sf);
+      END;
+      RTIO.PutText ("----------------------------------------------------------------\n");
+    END;
 
     RTIO.PutText ("------------------ EXCEPTION HANDLER STACK ---------------------\n");
     WHILE (f # NIL) DO
@@ -283,7 +342,7 @@ PROCEDURE EName (en: ExceptionName): TEXT =
   END EName;
 
 BEGIN
-  dump_enabled := RTParams.IsPresent ("stackdump");
+  dump_enabled := dump_enabled OR RTParams.IsPresent ("stackdump");
   EVAL SanityCheck; (* avoid the unused warning *)
 END RTException.
 
