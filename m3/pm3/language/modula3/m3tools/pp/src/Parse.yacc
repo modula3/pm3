@@ -1601,10 +1601,12 @@ yyerror(s) char *s; {
   Reset();
   Flush();
   if (calledFromEmacs == 0) {
+        /* XEmacs requires that character counting starts with 1
+            - very poor programming */
         fprintf (stderr,
-            "%s:%d: (column %d, byte %d) %s while pretty-printing\n",
+            "%s:%d:%d: (byte %d) %s while pretty-printing\n",
             (infileName != NULL) ? infileName : "",
-            currentRow, currentCol, lexposition, s);
+            currentRow+1, currentCol+1, lexposition, s);
         fprintf(stderr, "Error flagged in output\n");
   }
   PR ("(* SYNTAX ERROR *) ");

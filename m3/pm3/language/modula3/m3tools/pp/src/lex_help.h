@@ -17,8 +17,9 @@
 /* It also tracks the current column the input is in for comment */
 /* processing. */
 
+
 int currentCol = 0;	/* current column of input */
-int currentRow = 1;	/* current row of input, only losers start counting with 1 ! */
+int currentRow = 0;	/* current row of input */
 
 AddLexLength ()
 {
