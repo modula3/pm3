@@ -306,7 +306,7 @@ generic_module:
 /* Good enough for both formals and actuals. */
 generic_params:
       /* empty */
-    | Z QSP Lparen AX B0 opt_id_list E Z Rparen
+    | Z QSP Lparen B0 opt_id_list E Z Rparen
     ;
 
 exports:
