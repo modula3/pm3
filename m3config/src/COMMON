@@ -160,6 +160,8 @@ proc setInstallRoot (opt,val) is
   LIB_USE   = LIB_INSTALL  %   used to install.
   PKG_USE   = PKG_INSTALL
 
+  LIB_TO_PKG_USE = ".." & SL & "pkg"
+
   M3_COVERAGE_LIB = LIB_USE & SL & "report_coverage.o"
   BACKEND = [LIB_USE & SL & "m3cgc1", "-fno-strength-reduce", "-quiet"]
 end
@@ -176,6 +178,9 @@ proc setCommands (opt,val) is
   RANLIB_CMD = RANLIB
   ASM_CMD = ASM
   BACKEND_CMD = BACKEND
+
+  if defined("COV") option("coverage","T") end
+  if defined("PROF") option("profiling","T") end
 
   if Options{"internal_backend"}[0] and PLATFORM_SUPPORTS_INTERNAL_BACKEND
     INTERNAL_BACKEND = "T"
@@ -201,7 +206,7 @@ proc setCommands (opt,val) is
     BACKEND_CMD += BDEBUG_FLAG
   end
 
-  if Options{"coverage"}[0]
+  if Options{"profiling"}[0]
     CC_CMD += PROF_FLAG
     LINK_CMD += PROF_FLAG
     BACKEND_CMD += BPROF_FLAG
@@ -225,7 +230,7 @@ proc setCommands (opt,val) is
       LINK_CMD += STATIC_FLAG
       LINK_libpath = ""
     else
-      if DYNAMIC_FLAG LINK_CMD += DYNAMIC_FLAG end
+      if not empty(DYNAMIC_FLAG) LINK_CMD += DYNAMIC_FLAG end
       if defined("TARGET_LIB_USE") and RPATH_FLAG
         LINK_CMD += [RPATH_FLAG, RPATH_prefix & TARGET_LIB_USE]
       end
@@ -392,7 +397,8 @@ proc m3_note_shlib(lib) is
   local lib_so   = format ("lib%s.so", lib)
   if defined ("_all")
     install_derived (lib_so)
-    install_link_to_derived (lib_so, LIB_INSTALL)
+    install_link(lib_so, LIB_TO_PKG_USE & SL & PACKAGE & SL & BUILD_DIR,
+        LIB_INSTALL)
   end
   deriveds (lib_so, [""])
 end

@@ -17,15 +17,15 @@ readonly proc BootstrapPkg(dir,pkg,target,host) is
   % Issue the m3build command for the package
 
   write("---------- Building " & pkg & " ----------" & CR)
-  ret = exec(["m3build", "-b", target,
+  ret = exec([BIN_USE & SL & "m3build", "-b", target,
       "-T", ".." & SL & ".." & SL & ".." & SL & 
       ".." & SL & ".." & SL & ".." & SL & 
       ".." & SL & ".." & SL & ".." & SL & 
       "m3config" & SL & "src" , 
       "-F", ".." & SL & ".." & SL & ".." & SL & "config.tmpl" ], 
       [], targetPkg)
-  if not equal(ret, 0) error ("m3build failed for " & pkg & " in " &
-      target & CR) end
+  if not equal(ret, 0) error (BIN_USE & SL & "m3build failed for " & pkg & 
+      " in " & target & CR) end
 
   >> "pm3-" & target & SL & "config.tmpl" in
     write("override(\"" & pkg & "\",\".." & SL & "..\")")
@@ -64,11 +64,11 @@ readonly proc CreateMakefile(file,target,header,options) is
 
     write("packages:", CR)
     write("\tboot-" & target & "/" & "m3build" & "/" & target & "/" &
-        "m3build -T ../m3config/src -DBOOTSTRAP=TRUE", CR, CR)
+        "m3build -T ../m3config/src -DRECURSIVE -DBOOTSTRAP=TRUE", CR, CR)
 
     write("exportpackages:", CR)
     write("\tboot-" & target & "/" & "m3build" & "/" & target & "/" &
-        "m3build -T ../m3config/src -DBOOTSTRAP=TRUE " &
+        "m3build -T ../m3config/src -DRECURSIVE -DBOOTSTRAP=TRUE " &
         "-DEXPORTRPATH=binaries/" & target , CR, CR)
 
     write("boot:", CR)
@@ -168,7 +168,7 @@ readonly proc CompileCrossCompiler(target,host) is
     return
   end
 
-  ret = exec(["m3build",  "-b", host, 
+  ret = exec([BIN_USE & SL & "m3build",  "-b", host, 
       "-T", ".." & SL & ".." & SL & 
       ".." & SL & ".." & SL & ".." & SL & 
       ".." & SL & ".." & SL & ".." & SL & 

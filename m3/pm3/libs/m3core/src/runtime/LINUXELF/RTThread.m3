@@ -7,7 +7,7 @@
 
 UNSAFE MODULE RTThread;
 
-IMPORT Usignal;
+IMPORT Usignal, Unix, Umman, RTMisc, Word;
 
 PROCEDURE SP (READONLY s: State): ADDRESS =
   BEGIN
@@ -16,15 +16,41 @@ PROCEDURE SP (READONLY s: State): ADDRESS =
 
 (*--------------------------------------------------------- thread stacks ---*)
 
+VAR page_bytes : CARDINAL := 0;
+VAR stack_slop : CARDINAL;
+
 PROCEDURE NewStack (size: INTEGER;  VAR(*OUT*)s: Stack) =
+  VAR i: INTEGER; start: ADDRESS;
   BEGIN
+    IF (page_bytes = 0) THEN
+      page_bytes := Unix.getpagesize ();
+      stack_slop := 2 * (page_bytes DIV BYTESIZE (INTEGER));
+    END;
+
+    (* allocate enough so that we're guaranteed to get a full, aligned page *)
+    INC (size, stack_slop);
     s.words := NEW (StackSpace, size);
-    s.first := ADR (s.words[0]);
-    s.last  := s.first + size * ADRSIZE (s.words[0]);
+
+    (* find the aligned page and unmap it *)
+    start := RTMisc.Align (ADR (s.words[0]), page_bytes);
+    i := Umman.mprotect (start, page_bytes, Umman.PROT_READ);
+    <* ASSERT i = 0 *>
+    (* The protection should be 0, but making the page read-only 
+       is good enough to prevent unchecked runtime errors *)
+
+    (* finally, set the bounds of the usable region *)
+    s.first := start + page_bytes;
+    s.last  := ADR (s.words[0]) + size * ADRSIZE (s.words[0]);
   END NewStack;
 
 PROCEDURE DisposeStack (VAR s: Stack) =
+  VAR i: INTEGER;  start := RTMisc.Align (ADR (s.words[0]), page_bytes);
   BEGIN
+    (* find the aligned page and re-map it *)
+    i := Umman.mprotect (start, page_bytes, Umman.PROT_READ+Umman.PROT_WRITE);
+    <* ASSERT i = 0 *>
+
+    (* and finally, free the storage *)
     DISPOSE (s.words);
     s.words := NIL;
     s.first := NIL;
@@ -45,9 +71,13 @@ PROCEDURE UpdateStateForNewSP (VAR s: State; offset: INTEGER) =
     INC (s.bp, offset);
   END UpdateStateForNewSP;
 
-PROCEDURE UpdateFrameForNewSP (<*UNUSED*> a: ADDRESS;
+PROCEDURE UpdateFrameForNewSP (a: ADDRESS;
                                <*UNUSED*> offset: INTEGER) =
   BEGIN
+    (* Zero the return address and previous frame pointer to mark the
+       thread stack end. *)
+    LOOPHOLE(a,UNTRACED REF Word.T)^ := 0;
+    LOOPHOLE(a + BYTESIZE(ADDRESS),UNTRACED REF Word.T)^ := 0;
   END UpdateFrameForNewSP;
 
 (*------------------------------------ manipulating the SIGVTALRM handler ---*)

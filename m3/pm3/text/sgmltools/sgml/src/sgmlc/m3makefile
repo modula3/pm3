@@ -12,7 +12,7 @@ end
 import("m3config")
 
 if USE_M3COCO
-  import("m3coco-0.04")
+  import("m3coco")
 
   derived_interface("SGMLC", HIDDEN)
   derived_implementation("SGMLCP")

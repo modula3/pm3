@@ -35,8 +35,8 @@ if BOOTSTRAP
       TARGET & SL & "m3ship","-T",path() & SL & ".." & SL & "m3config" & SL &
       "src"]
 else
-  m3build = ["m3build"]
-  m3ship = ["m3ship"]
+  m3build = [BIN_USE & SL & "m3build"]
+  m3ship = [BIN_USE & SL & "m3ship"]
 end
 
 m3build += "-F"
@@ -69,7 +69,7 @@ end
 
 readonly proc BuildChunk (dir,pkg) is
   local ret = 0
-  local cmd = m3build
+  local cmd = [m3build]
 
   if equal(OS_TYPE,"WIN32") dir = p2w(dir) end
 
@@ -149,10 +149,21 @@ BuildChunk("libs","m3core")
 % requires: m3core
 BuildChunk("libs","libm3")
 
+%--- m3bundle --- utility -------------------------------------------------
+% a program that captures binary data from files as Modula-3 source,
+%   needed to build the formsvbt library
+% requires: libm3
+BuildChunk("language/modula3/m3tools","m3bundle")
+
 %--- m3coco --- utility -------------------------------------------------
 % a parser generator
 % requires: libm3
 BuildChunk("language/parsing","m3coco")
+
+%--- tempfiles --- library -----------------------------------------------
+% a library to build tempfiles
+% requires: libm3
+BuildChunk("libs","tempfiles")
 
 %--- sgml --- library -------------------------------------------------
 % SGML/XML parsing library
@@ -185,7 +196,9 @@ firstPhase = ""
 BuildChunk("text/sgmltools","m3doc")
 BuildChunk("libs","m3core")
 BuildChunk("libs","libm3")
+BuildChunk("language/modula3/m3tools","m3bundle")
 BuildChunk("language/parsing","m3coco")
+BuildChunk("libs","tempfiles")
 BuildChunk("text/sgmltools","sgml")
 BuildChunk("text/sgmltools","m3tosgml")
 BuildChunk("text/sgmltools","sgmlconv")
@@ -323,12 +336,6 @@ if equal (OS_TYPE, "POSIX")
   BuildChunk("language/modula3/m3tools","pp")
 end
 
-%--- m3bundle --- utility -------------------------------------------------
-% a program that captures binary data from files as Modula-3 source,
-%   needed to build the formsvbt library
-% requires: libm3
-BuildChunk("language/modula3/m3tools","m3bundle")
-
 %--- m3totex --- utility -------------------------------------------------
 % a program that wraps Modula-3 source in enough TeX to make it printable
 % requires: libm3, m3bundle
@@ -364,11 +371,6 @@ BuildChunk("libs","parseparams")
 % a library containing a small Lisp interpreter
 % requires: libm3
 BuildChunk("language","slisp")
-
-%--- tempfiles --- library -----------------------------------------------
-% a library to build tempfiles
-% requires: libm3
-BuildChunk("libs","tempfiles")
 
 %--- m3where --- utility ------------------------------------------------
 % search for modula-3 packages and files

@@ -29,16 +29,16 @@ module("FRefRefTbl")
 
 implementation("Main")
 
-option("standalone","T")
+% Be extra careful with multiple versions
 
-Program("stubgen")
-
-if "TRUE"
+if ""
+  option("standalone","T")
   local stubgenv1 = "stubgenv1" & NAMING_CONVENTIONS[20]
   link_file ("stubgen" & NAMING_CONVENTIONS[20], stubgenv1)
-  install_derived (stubgenv1)
-  install_link_to_derived (stubgenv1, BIN_INSTALL)
+  BindExport(stubgenv1)
 end
 
 ManPage("stubgen","1")
+
+Program("stubgen")
 

@@ -18,7 +18,7 @@ TYPE
   (* The machine state is saved in a "State".  This type is really
      opaque to the client, i.e. it does not need to be an array. *)
 
-<*EXTERNAL "_setjmp" *>
+<*EXTERNAL "setjmp" *>
 PROCEDURE SaveState (VAR s: State): INTEGER;
 (* Capture the currently running thread's state *)
 

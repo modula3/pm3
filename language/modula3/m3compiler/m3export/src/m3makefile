@@ -300,7 +300,8 @@ CheckExec(["cp","-a",EXPORT_TMP_SRC & "/" & versionName,EXPORT_TMP_TMP],
 % Build the bootstraps
 %
 
-CheckExec(["m3build","-DCACHE_CROSS_COMPILERS=" & EXPORT_TMP_CROSS_COMPILERS],
+CheckExec([BIN_USE & SL & "m3build",
+    "-DCACHE_CROSS_COMPILERS=" & EXPORT_TMP_CROSS_COMPILERS],
     ["", EXPORT_TMP_TMP & "/" & versionName & "/" & "boot.stdout",
     EXPORT_TMP_TMP & "/" & versionName & "/" & "boot.stderr"],
     EXPORT_TMP_TMP & "/" & versionName & 

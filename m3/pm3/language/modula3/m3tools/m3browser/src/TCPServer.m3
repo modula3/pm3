@@ -20,6 +20,8 @@ REVEAL
     refresher : Refresher             := NIL;
     timeout   : Time.T                := 0.0d0;
     err_log   : ErrorLogger           := NIL;
+    address   : IP.Address;
+    maskBits  : [0 .. 32];
   OVERRIDES
     apply := Server;
   END;
@@ -38,7 +40,10 @@ PROCEDURE Fork (socket    : CARDINAL;
                 handler   : RequestHandler;
                 refresher : Refresher;
                 refresh_interval: Time.T;
-                err_log   : ErrorLogger): T =
+                err_log   : ErrorLogger;
+                address   : IP.Address := IP.NullAddress;
+                maskBits  : [0 .. 32] := 0): T =
+
   VAR t := NEW (T);
   BEGIN
     IF (err_log = NIL) THEN err_log := DumpErr; END;
@@ -47,6 +52,8 @@ PROCEDURE Fork (socket    : CARDINAL;
     t.refresher := refresher;
     t.timeout   := refresh_interval;
     t.err_log   := err_log;
+    t.address   := address;
+    t.maskBits  := maskBits;
 
     (* open a TCP connection *)
     TRY
@@ -109,13 +116,13 @@ PROCEDURE Server (closure: Thread.Closure): REFANY =
           channel := TCP.Accept (self.port);
           TRY
 
-            IF DomainOK (channel) THEN
+            IF DomainOK (channel,self.address,self.maskBits) THEN
               (* read a new-line terminated request *)
               REPEAT
                 len := channel.get (buf, 30.0d0 * Second);
                 j := 0;  WHILE (j < len) AND (buf[j] # '\n') DO INC (j) END;
                 request := request & Text.FromChars (SUBARRAY (buf, 0, j));
-              UNTIL (j < len);
+              UNTIL (j < len OR len = 0);
 
               (* process it *)
               request := self.handler (self, request);
@@ -157,18 +164,11 @@ PROCEDURE Server (closure: Thread.Closure): REFANY =
     RETURN NIL;
   END Server;
 
-PROCEDURE DomainOK (<*UNUSED*> channel: TCP.T): BOOLEAN =
+PROCEDURE DomainOK (channel: TCP.T; address: IP.Address; maskBits: [0 .. 32]):
+    BOOLEAN RAISES {IP.Error} =
   BEGIN
-    RETURN TRUE;
+    RETURN TCPPeer.Match (channel, address, maskBits);
   END DomainOK;
-
-(******* We don't know how to compute our own mask ****
-PROCEDURE DomainOK (channel: TCP.T): BOOLEAN RAISES {IP.Error} =
-  VAR mask : IP.Address := IP.NullAddress;
-  BEGIN
-    RETURN TCPPeer.Match (channel, mask, 0);
-  END DomainOK;
-*********************************************************)
 
 PROCEDURE FatalError (self: T;  ec: AtomList.T;  msg: TEXT): BOOLEAN =
   BEGIN

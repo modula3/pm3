@@ -32,7 +32,7 @@ readonly M3Config_body = [
   "  OS_TYPE   = \"" & escape(OS_TYPE) & "\";",
   "  WORD_SIZE = \"" & escape(WORD_SIZE) & "\";",
   "  BUILD_DIR = \"" & escape(DEFAULT_BUILD_DIR) & "\";",
-  "  PATH_SEP  = \"" & escape(SL) & "\";",
+  "  PATH_SEP  = \"" & escape(TARGET_NAMING_CONVENTIONS[23]) & "\";",
   "",
   "CONST (* installation directories *)",
   "  BIN_INSTALL   = \"" & escape(TARGET_BIN_INSTALL) & "\";",

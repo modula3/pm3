@@ -6,7 +6,7 @@
 
 INTERFACE TCPServer;
 
-IMPORT Thread, Time;
+IMPORT Thread, Time, IP;
 
 
 TYPE
@@ -27,7 +27,9 @@ PROCEDURE Fork (socket    : CARDINAL;
                 handler   : RequestHandler;
                 refresher : Refresher;
                 refresh_interval: Time.T;
-                err_log   : ErrorLogger): T;
+                err_log   : ErrorLogger;
+                address   : IP.Address := IP.NullAddress;
+                maskBits  : [0 .. 32] := 0): T;
 
 PROCEDURE Join (t: T);
 PROCEDURE Abort (t: T);

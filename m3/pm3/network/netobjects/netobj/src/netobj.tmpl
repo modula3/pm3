@@ -14,7 +14,6 @@ else
   _NETOBJ_STUBGEN = format ("%s%s%s", BIN_USE, SL, "stubgen")  %% - full path
   %% _NETOBJ_STUBGEN = "stubgen"
 end
-/* _NETOBJ_STUBGEN = format("/udir/wobber/m3/stubgen/%s/stubgen", BUILD_DIR) */
 
 readonly proc _v_netobjv1(intf, type, v, useintf) is
   local base_name = format ("%s_%s_v1", intf, type)

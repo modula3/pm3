@@ -31,10 +31,15 @@ VAR (* configuration *)
   package_root     := M3Config.PKG_USE;
   server_machine   :  TEXT; (* initialized in "ParseOptions" *)
   server_socket    := 3829;
+  server_address   := IP.GetHostAddr();
+  accept_address   := server_address;
+  accept_maskBits: [0 .. 32] := 0;
   derived_dirs     := IntList.List1 (ID.Add (M3Config.BUILD_DIR));
   n_workers        := 3;
   refresh_interval := 30.0d0; (* minutes *)
   start_time       := Time.Now ();
+  title_page := TRUE;
+  verbose := FALSE;
 
 TYPE
   TextVec = REF ARRAY OF TEXT;
@@ -208,6 +213,13 @@ PROCEDURE ParseOptions () =
         IF (first_dir) THEN derived_dirs := NIL; first_dir := FALSE; END;
         parm := Params.Get (i);  INC (i);
         derived_dirs := IntList.Cons (ID.Add (parm), derived_dirs);
+      ELSIF Text.Equal (parm, "-mask") THEN
+        parm := Params.Get (i);  INC (i);
+        accept_maskBits := MIN(32,MAX(0,GetCard (parm, "mask length")));
+      ELSIF Text.Equal (parm, "-notitle") THEN
+        title_page := FALSE;
+      ELSIF Text.Equal (parm, "-v") THEN
+        verbose := TRUE;
       ELSE
         ErrLog.Msg ("Unrecognized option: ", parm);
         Abort ();
@@ -301,7 +313,7 @@ PROCEDURE WriteTitlePage () =
 PROCEDURE Refresh (<*UNUSED*> service: TCPServer.T) =
   BEGIN
     ScanPackages ();
-    WriteTitlePage ();
+    IF title_page THEN WriteTitlePage (); END;
     RTCollector.Collect ();
   END Refresh;
 
@@ -321,7 +333,7 @@ TYPE
 PROCEDURE ScanPackages () =
   VAR iter: FS.Iterator;  s: ScanState;  now := Time.Now ();  nm: TEXT;
   BEGIN
-    ErrLog.Msg (" --- ", FmtTime.Long (now));
+    IF verbose THEN ErrLog.Msg (" --- ", FmtTime.Long (now)); END;
     last_update    := now;
     s.modified     := FALSE;
     InitDB (s.new);
@@ -431,7 +443,7 @@ PROCEDURE ScanDir (VAR s: ScanState): UnitSet =
       us.name := s.pkg_name;
     END;
 
-    ErrLog.Msg ("updated ", us.path);
+    IF verbose THEN ErrLog.Msg ("updated ", us.path); END;
 
     RETURN us;
   END ScanDir;
@@ -3260,7 +3272,7 @@ BEGIN
   LOOP
     server := TCPServer.Fork (server_socket, n_workers, ProcessRequest,
                               Refresh, refresh_interval * 60.0d0,
-                              ErrLog.Note );
+                              ErrLog.Note, accept_address, accept_maskBits );
     IF (server = NIL) THEN EXIT END;
     TCPServer.Join (server);
   END;

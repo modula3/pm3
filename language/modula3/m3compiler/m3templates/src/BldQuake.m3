@@ -1435,6 +1435,7 @@ PROCEDURE DoPROGRAM(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
 PROCEDURE CProgram(t: T; x: TEXT) RAISES {Error}=
   TYPE
     Exts2 = ARRAY [1..2] OF TEXT;
+    Exts1 = ARRAY [1..1] OF TEXT;
   BEGIN
     GenM3Exports(t, x, GenType.Pgm);
     IF t.all THEN
@@ -1448,7 +1449,7 @@ PROCEDURE CProgram(t: T; x: TEXT) RAISES {Error}=
       InstallSources(t);
     END;
     Deriveds(t, x, Exts2{ t.PGM_ext, ".m3x" });
-    Deriveds(t, "",Exts2{ M3WEB, M3TFILE });
+    Deriveds(t, "",Exts1{ M3TFILE });
   END CProgram;
 
 PROCEDURE DoCProgram(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
@@ -1540,17 +1541,16 @@ PROCEDURE DoInstallDerived(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
     InstallDerived(t, QVal.ToText(t, arg));
   END DoInstallDerived;
 
-PROCEDURE InstallLinkToDerived(t: T; src, dest: TEXT) RAISES {Error}=
+PROCEDURE InstallLink(t: T; src, target, dest: TEXT) RAISES {Error}=
   VAR
     val    : QValue.T;
-    target : TEXT;
     link   : TEXT;
     wr     : Wr.T;
   BEGIN
     IF t.get(M3ID.Add("HAVE_PKGTOOLS"), val) AND QVal.ToBool(t, val) THEN
       InstallFile(t, src, dest, "0755", TRUE);
     ELSE
-      target := t.PKG_USE & t.SL & t.build_package & t.SL & t.build_dir & t.SL & src;
+      target := target & t.SL & src;
       link := dest & t.SL & src;
 
       TRY
@@ -1564,16 +1564,18 @@ PROCEDURE InstallLinkToDerived(t: T; src, dest: TEXT) RAISES {Error}=
         Wr.Failure => FErr(M3SHIP_FILE);
       END;
     END;
-  END InstallLinkToDerived;
+  END InstallLink;
 
-PROCEDURE DoInstallLinkToDerived(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
-  VAR src, dest: QValue.T;
+PROCEDURE DoInstallLink(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
+  VAR src, target, dest: QValue.T;
   BEGIN
-    <* ASSERT n_args = 2 *>
+    <* ASSERT n_args = 3 *>
     t.pop(dest);
+    t.pop(target);
     t.pop(src);
-    InstallLinkToDerived(t, QVal.ToText(t, src), QVal.ToText(t, dest));
-  END DoInstallLinkToDerived;
+    InstallLink(t, QVal.ToText(t, src), QVal.ToText(t, target),
+        QVal.ToText(t, dest));
+  END DoInstallLink;
 
 
 (*--------------------------------------------------- exported interfaces ---*)
@@ -1794,7 +1796,8 @@ PROCEDURE M3 (t: T) RAISES {Error} =
     | M3Driver.M3Error => RAISE Error(NIL);
     END;
 
-    InstallDerived(t, M3WEB);
+    IF NOT t.no_m3main THEN InstallDerived(t, M3WEB); END;
+
     iterator := t.pkg_overrides.iterate();
     IF iterator.next(pkg, ov) THEN
       BldHooks.DeleteFile(t, M3SHIP_FILE);
@@ -2112,7 +2115,7 @@ PROCEDURE DoGnuemacs(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
   BEGIN
     <* ASSERT n_args = 1 *>
     t.pop(x);
-    EmacsExport(t, PathOf(t, QVal.ToText(t, x) & ".el"), FALSE);
+    EmacsExport(t, QVal.ToText(t, x) & ".el", FALSE);
   END DoGnuemacs;
  
 PROCEDURE DoCompiledGnuemacs(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
@@ -2126,9 +2129,9 @@ PROCEDURE DoCompiledGnuemacs(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
     <* ASSERT n_args = 1 *>
     t.pop(val);
     x := QVal.ToText(t, val);
-    src_file := PathOf(t, x & ".el");
     
     IF t.get(M3ID.Add("emacs_compile"), val) THEN
+      src_file := PathOf(t, x & ".el");
       el_file := x & ".el";
       elc_file := x & ".elc";
 
@@ -2146,7 +2149,7 @@ PROCEDURE DoCompiledGnuemacs(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
       EmacsExport(t, el_file, TRUE);
       EmacsExport(t, elc_file, TRUE);
     ELSE
-      EmacsExport(t, src_file, FALSE);
+      EmacsExport(t, x & ".el", FALSE);
     END;
   END DoCompiledGnuemacs;
 
@@ -3131,8 +3134,7 @@ PROCEDURE InitProcs(): REF ARRAY OF ProcRec =
     Procs[83].proc := NewProc("noweb_implementation", DoNowebImplementation,
                               3, FALSE);
     Procs[84].proc := NewProc("install_derived", DoInstallDerived, 1, FALSE);
-    Procs[85].proc := NewProc("install_link_to_derived",
-                              DoInstallLinkToDerived, 2, FALSE);
+    Procs[85].proc := NewProc("install_link", DoInstallLink, 3, FALSE);
     Procs[86].proc := NewProc("zume", DoZume, 1, FALSE);
     Procs[87].proc := NewProc("RegisterCleanUp", DoRegisterCleanUp, 1, FALSE);
     Procs[88].proc := NewProc("RunCleanUps", DoRunCleanUps, 0, FALSE);
