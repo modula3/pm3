@@ -2,20 +2,19 @@
 (* Digital Internal Use Only                                                 *)
 (* All rights reserved.                                                      *)
 (*                                                                           *)
-(* Last modified on Tue Aug  6 11:08:31 PDT 1996 by najork                   *)
+(* Last modified on Tue Nov  5 09:41:36 PST 1996 by najork                   *)
 (*       Created on Mon Jan 16 10:05:17 PST 1995 by najork                   *)
 
 
 UNSAFE MODULE WinTrestle;
 
-IMPORT Axis, Batch, Ctypes, Fmt, M3toC, Point,
-       ProperSplit, Rect, Region, RTCollectorSRC, RTHeapDep, RTHeapRep, 
-       RTParams, RTLinker, ScrnColorMap, ScrnCursor, ScrnPixmap, Split,
-       Text, Thread, 
+IMPORT Axis, Batch, Cstring, Ctypes, Fmt, M3toC, Point, ProperSplit, Rect, 
+       Region, RTCollectorSRC, RTHeapDep, RTHeapRep, RTParams, RTLinker, 
+       ScrnColorMap, ScrnCursor, ScrnPixmap, Split, Text, TextF, Thread,
        Trestle, TrestleClass, TrestleImpl, VBT, VBTClass, VBTRep, WinBase, 
        WinDef, WinGDI, WinKey, WinMsg, WinPaint, WinScreenType,
-       WinScreenTypePrivate, 
-       WinScrnColorMap, WinScrnCursor, WinScrnPixmap, WinUser, Word;
+       WinScreenTypePrivate, WinScrnColorMap, WinScrnCursor, WinScrnPixmap, 
+       WinUser, Word;
 
 IMPORT RTIO;
 
@@ -372,17 +371,48 @@ PROCEDURE Fmt_Selection (s: VBT.Selection): TEXT =
 
 
 PROCEDURE Acquire (<*UNUSED*> self: T; 
-                   <*UNUSED*> v   : VBT.T; 
+                              v   : VBT.T; 
                    <*UNUSED*> w   : VBT.T; 
                               s   : VBT.Selection; 
                               ts  : VBT.TimeStamp)
     (** RAISES {VBT.Error}**) =
+
+  PROCEDURE AcquireClipboard (v: VBT.T) =
+    VAR
+      ur    : Child := v.upRef;
+      status: WinDef.BOOL;
+      handle: WinDef.HANDLE;
+    BEGIN
+      IF ur = NIL OR ur.hwnd = NIL THEN
+        RETURN;
+      END;
+
+      IF WinUser.OpenClipboard (ur.hwnd) = False THEN
+        RETURN;
+      END;
+
+      TRY
+        status := WinUser.EmptyClipboard ();
+        <* ASSERT status # False *>
+
+        handle := WinUser.SetClipboardData (WinUser.CF_TEXT, NIL);
+        (* ASSERT handle # NIL *> *)
+
+      FINALLY
+        status := WinUser.CloseClipboard ();
+        <* ASSERT status # False *>
+      END;
+    END AcquireClipboard;
+
   BEGIN
-    DEBUG ("Called WinTrestle.Acquire:  s = " & Fmt_Selection (s) & 
+    IF s = VBT.Source THEN
+      AcquireClipboard (v);
+    ELSIF s = VBT.KBFocus THEN
+      (* do nothing *)
+    ELSE
+      DEBUG ("Called WinTrestle.Acquire:  s = " & Fmt_Selection (s) & 
             "  ts= " & Fmt.Int (ts) & "\n");
-(*
-    DEBUG ("WARNING: WinTrestle.Acquire is not yet implemented \n");
-*)
+    END;
   END Acquire;
 
 
@@ -424,14 +454,62 @@ PROCEDURE Forge (                    self  : T;
   END Forge;
 
 PROCEDURE ReadUp(<*UNUSED*> self: T;
-                 <*UNUSED*> ch  : VBT.T;
+                            ch  : VBT.T;
                  <*UNUSED*> w   : VBT.T;
-                 <*UNUSED*> s   : VBT.Selection;
+                            s   : VBT.Selection;
                  <*UNUSED*> ts  : VBT.TimeStamp;
-                 <*UNUSED*> tc  : CARDINAL): VBT.Value
-  (*** RAISES {VBT.Error} ***) =
+                 <*UNUSED*> tc  : CARDINAL): VBT.Value RAISES {VBT.Error} =
+
+  PROCEDURE GetClipboard (v: VBT.T): TEXT RAISES {VBT.Error} =
+    VAR
+      ur     : Child := v.upRef;
+      status : WinDef.BOOL;
+      hglb   : WinDef.HGLOBAL;
+      lptstr : Ctypes.char_star;
+      res    : TEXT;
+    BEGIN
+      (* If ch's window handle is NIL, raise an exception. *)
+      IF ur.hwnd = NIL THEN
+        RAISE VBT.Error (VBT.ErrorCode.Uninstalled);
+      END;
+
+      (* Open clipboard.  If this is not possible, raise an exception. *)
+      IF WinUser.OpenClipboard (ur.hwnd) = False THEN
+        RAISE VBT.Error (VBT.ErrorCode.Unreadable);
+      END;
+
+      TRY
+        (* Get the content of the clipboard, as an ANSI string. *)
+        IF WinUser.IsClipboardFormatAvailable(WinUser.CF_TEXT) = False THEN
+          RAISE VBT.Error (VBT.ErrorCode.WrongType);
+        END;
+        hglb := WinUser.GetClipboardData (WinUser.CF_TEXT);
+        IF hglb = NIL THEN
+          RAISE VBT.Error (VBT.ErrorCode.WrongType);
+        ELSE
+          (* Convert the ANSI C string into a VBT.Value. *)
+          lptstr := WinBase.GlobalLock(hglb); 
+          IF lptstr # NIL THEN
+            res := M3toC.CopyStoT (lptstr);
+            EVAL WinBase.GlobalUnlock(hglb); 
+            RETURN res;
+          ELSE
+            RAISE VBT.Error (VBT.ErrorCode.Unreadable);
+          END;
+        END;
+      FINALLY
+        (* Close the clipboard. *)
+        status := WinUser.CloseClipboard ();
+        <* ASSERT status # False *>
+      END;
+    END GetClipboard;
+
   BEGIN
-    <* ASSERT FALSE *> (* not yet implemented *)
+    IF s = VBT.Source THEN
+      RETURN VBT.FromRef(GetClipboard(ch));
+    ELSE 
+      RAISE VBT.Error (VBT.ErrorCode.Unreadable);
+    END;
   END ReadUp;
 
 
@@ -1072,6 +1150,16 @@ PROCEDURE WindowProc (hwnd   : WinDef.HWND;
 
     | WinUser.WM_TIMER =>
         TimerTick (hwnd);
+
+    | WinUser.WM_DESTROYCLIPBOARD =>
+        LostClipboard (hwnd);
+
+    | WinUser.WM_RENDERALLFORMATS =>
+        RealizeClipboard (hwnd);
+
+    | WinUser.WM_RENDERFORMAT =>
+        IF wParam # WinUser.CF_TEXT THEN RETURN 1 END;  
+        RealizeClipboard (hwnd);
 
     ELSE
         result := WinUser.DefWindowProc (hwnd, message, wParam, lParam);
@@ -1787,6 +1875,50 @@ PROCEDURE TimerTick (hwnd: WinDef.HWND) =
       DeliverMousePos (hwnd, lParam, 0);
     END;
   END TimerTick;
+
+PROCEDURE LostClipboard (hwnd: WinDef.HWND) =
+  VAR
+    v  := GetVBT (hwnd);
+    ts := WinBase.GetTickCount ();
+  BEGIN
+    LOCK VBT.mu DO
+      VBTClass.Misc (v, VBT.MiscRec{VBT.Lost, VBT.NullDetail, ts, VBT.Source});
+    END;
+  END LostClipboard;
+
+PROCEDURE RealizeClipboard (hwnd: WinDef.HWND) =
+  VAR
+    v     := GetVBT (hwnd);
+    tc    := TYPECODE (TEXT);
+    ts    := WinBase.GetTickCount ();
+    hglb  : WinDef.HGLOBAL;
+    lptstr: Ctypes.char_star;
+    handle: WinDef.HANDLE;
+  BEGIN
+    LOCK VBT.mu DO
+      TRY 
+        WITH t = NARROW (v.read (VBT.Source, tc).toRef(), TEXT) DO
+          hglb := WinBase.GlobalAlloc (WinBase.GMEM_DDESHARE, 
+                                       Text.Length (t) + 1);
+          <* ASSERT hglb # NIL *>
+
+          lptstr := WinBase.GlobalLock (hglb);
+          <* ASSERT lptstr # NIL *>
+
+          EVAL Cstring.strcpy (lptstr, M3toC.TtoS (t));
+
+          EVAL WinBase.GlobalUnlock(hglb);
+
+          handle := WinUser.SetClipboardData (WinUser.CF_TEXT, hglb);
+          <* ASSERT handle # NIL *>
+        END;
+        VBTClass.Misc (v, 
+                       VBT.MiscRec {VBT.Lost, VBT.NullDetail, ts, VBT.Source});
+      EXCEPT
+      | VBT.Error => (* things went bad ... ignore *)
+      END;
+    END;
+  END RealizeClipboard;
 
 PROCEDURE DeliverMousePos (hwnd  : WinDef.HWND;
                            lParam: WinDef.LPARAM;
