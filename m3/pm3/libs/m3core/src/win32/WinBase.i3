@@ -4,7 +4,8 @@
 (*                                                           *)
 (* by Stephen Harrison                                       *)
 (*                                                           *)
-(* Last modified on Mon Oct  9 10:03:11 PDT 1995 by najork   *)
+(* Last modified on Thu May 15 12:09:35 PDT 1997 by heydon   *)
+(*      modified on Mon Oct  9 10:03:11 PDT 1995 by najork   *)
 (*      modified on Wed Apr 12 14:38:08 PDT 1995 by kalsow   *)
 (*      modified on Thu Jul  1 15:56:26 PDT 1993 by mcjones  *)
 (*      modified on Wed Feb 10 19:52:26 PST 1993 by harrison *)
@@ -24,12 +25,14 @@ INTERFACE WinBase;
 IMPORT WinNT;
 
 FROM Word IMPORT Or, Shift;
-FROM WinDef IMPORT ULONG, DWORD, LPVOID, BOOL, WORD, BYTE, LPLONG, LONG,
-                   HGLOBAL, HINSTANCE, UINT, FARPROC, HLOCAL, PDWORD,
-                   LPDWORD, USHORT, LPHANDLE, HRSRC, ATOM, PLONG, LPWORD,
-                   HFILE, LPBYTE, MAX_PATH, LPBOOL, HMODULE, UCHAR, PUCHAR;
-FROM WinNT IMPORT WCHAR, LPSTR, LPCSTR, LPWSTR, LPCWSTR, LPTSTR, LPCTSTR,
-                  PSID, PACL, PVOID, PLUID, LARGE_INTEGER, HANDLE, PHANDLE;
+FROM WinDef IMPORT
+  ULONG, DWORD, LPVOID, BOOL, WORD, BYTE, LPLONG, LONG,
+  HGLOBAL, HINSTANCE, UINT, FARPROC, HLOCAL, PDWORD,
+  LPDWORD, USHORT, LPHANDLE, HRSRC, ATOM, PLONG, LPWORD,
+  HFILE, LPBYTE, MAX_PATH, LPBOOL, HMODULE, UCHAR, PUCHAR;
+FROM WinNT IMPORT
+  WCHAR, LPSTR, LPCSTR, LPWSTR, LPCWSTR, LPTSTR, LPCTSTR,
+  PSID, PACL, PVOID, PLUID, LARGE_INTEGER, HANDLE, PHANDLE;
 FROM Ctypes IMPORT char, int, void_star;
 
 (*
@@ -1613,11 +1616,8 @@ PROCEDURE GetThresholdStatus (): DWORD;
 PROCEDURE SetSoundNoise (nSource: DWORD; nDuration: DWORD): DWORD;
 
 <*EXTERNAL SetVoiceAccent:WINAPI*>
-PROCEDURE SetVoiceAccent (nVoice : DWORD;
-                          nTempo : DWORD;
-                          nVolume: DWORD;
-                          nMode  : DWORD;
-                          nPitch : DWORD  ): DWORD;
+PROCEDURE SetVoiceAccent (nVoice: DWORD; nTempo: DWORD;
+  nVolume: DWORD; nMode: DWORD; nPitch: DWORD): DWORD;
 
 <*EXTERNAL SetVoiceEnvelope:WINAPI*>
 PROCEDURE SetVoiceEnvelope (nVoice, nShape, nRepeat: DWORD): DWORD;
@@ -1678,6 +1678,14 @@ PROCEDURE SetTimeZoneInformation
 <*EXTERNAL SystemTimeToFileTime:WINAPI*>
 PROCEDURE SystemTimeToFileTime (lpSystemTime: LPSYSTEMTIME;
                                 lpFileTime  : LPFILETIME    ): BOOL;
+
+(* Note: As of 14-May-97, the following routine is implemented on
+   Windows/NT, but not on Windows 95. -CAH *)
+<*EXTERNAL SystemTimeToTzSpecificLocalTime:WINAPI*>
+PROCEDURE SystemTimeToTzSpecificLocalTime (
+            lpTimeZoneInformation: LPTIME_ZONE_INFORMATION;
+            lpUniversalTime      : LPSYSTEMTIME;
+            lpLocalTime          : LPSYSTEMTIME            ): BOOL;
 
 <*EXTERNAL FileTimeToLocalFileTime:WINAPI*>
 PROCEDURE FileTimeToLocalFileTime (lpFileTime     : LPFILETIME;
