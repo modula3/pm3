@@ -188,8 +188,8 @@ VAR
   NoName := ARRAY [0..15] OF CHAR {'s','t','a','t','i','c',' ',
       'p','r','o','c','e','d','u','r','e'};
 
-  TopLevelName := ARRAY [0..15] OF CHAR {'_','I','N','I','T','M','_','R','T',
-      'L','i','n','k','e','r','\000'};
+  TopLevelName := ARRAY [0..11] OF CHAR {'R','u','n','M','a','i','n','B','o',
+      'd','y','\000'};
 
 PROCEDURE DumpStack () =
   VAR
