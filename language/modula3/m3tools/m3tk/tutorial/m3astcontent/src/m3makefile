@@ -1,0 +1,6 @@
+
+import("m3tk")
+
+implementation("Main")
+
+Program("m3astcontent")

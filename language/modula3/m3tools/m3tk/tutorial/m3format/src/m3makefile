@@ -1,0 +1,7 @@
+
+import("m3tk")
+
+implementation("Main")
+module("M3Conv")
+
+Program("m3format")

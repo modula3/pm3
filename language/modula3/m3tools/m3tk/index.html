@@ -1,0 +1,59 @@
+<HTML>
+<HEAD>
+<TITLE>The Toolkit for Modula-3 code Parsing and Analysis</TITLE>
+</HEAD>
+<BODY>
+<H1>The Toolkit for Modula-3 code Parsing and Analysis</H1>
+<P>
+The Modula-3 toolkit offers a parser, import/export resolver, and
+semantic analyzer for Modula-3 units (Module, Interface, Generic Module...).
+It also contains a framework for adding tools which work on the abstract
+syntax trees (ast) produced by the parser and semantic analyzer. A few
+such tools are present in the library.
+<P>
+A few simple and documented demonstration applications are available
+in the tutorial subdirectory. Starting from these together with studying a few
+interfaces like M3AST_LX.i3 and M3AST_AS.i3 in subdirectory ast should
+be sufficient for helping most users to create new applications based on
+the toolkit.
+<P>
+The Modula-3 toolkit source code is divided in several subdirectories.
+The directories gast, ast, and astall respectively describe the generic
+data structures and access procedures for the abstract syntax trees,
+the Modula-3 specific data structures and access procedures, and the
+connection between the two.
+<P>
+The syn and sem subdirectories produce the parsing and semantic analysis
+information in the abstract trees. They are mostly internal to the library.
+In files are various interfaces to access files along paths. The misc
+subdirectory contains interfaces to manage command line arguments, sort,
+process text elements, monitor the elapsed time... In target, the
+backend specific constants are computed (anything related to address,
+integer, record... size).
+<P>
+Together toolframe and toolmisc contain the interfaces to register and
+call tools in sequence. Typically the front end tool, in subdirectory fe, 
+is called first and generates the abstract syntax trees for the
+specified files. Then other tools from the library or user supplied
+may be called upon to operate on the generated ast. The final output
+after executing the registered tools may be messages about the
+characteristics of the analyzed units (e.g. source code metrics,
+messages about unused variables...), or a modified ast to write out
+in binary form using astpickle or to write out as a source code text file
+using astdisplay.
+<P>
+Several tools are included in the library, each in a separate subdirectory.
+Asttrans converts non qualified identifier (x with IMPORT x FROM y) 
+to fully qualified identifiers (x.y with IMPORT y). Chartool detects any
+program section which relies on CHAR being a range of 256 characters
+(to see if the program can accept languages with many more characters).
+Chkusatool verifies the ast against any missing information, which is
+useful for debugging ast transforming tools.
+<P>
+Deptool performs dependency analysis among program units. Pl performs
+the pre-linker tasks such as verifying that the program is complete and
+all the opaque types revealed, and computing the initialization order.
+Warntool reports implicit NARROW, uncaught exceptions, missing RETURN and
+unused declarations.
+</BODY>
+</HTML>
