@@ -18,6 +18,7 @@ PROCEDURE M3Link(t: T; prog: TEXT; objs, libs: QVSeq.T; debug,
                  shared: BOOLEAN): INTEGER RAISES {Error};
 PROCEDURE M3MakeLib(t: T; name: TEXT; libs, imp: QVSeq.T;
                     static, shared: BOOLEAN): INTEGER RAISES {Error};
+PROCEDURE NoteShlib(t: T; name: TEXT): INTEGER RAISES {Error};
 PROCEDURE M3Assemble(t: T; src, obj: TEXT; optimize, debug, shared: BOOLEAN):
   INTEGER RAISES {Error};
 PROCEDURE M3Backend(t: T; src, obj: TEXT; optimize,

@@ -194,6 +194,16 @@ PROCEDURE M3MakeLib(t: T; name: TEXT; libs, imp: QVSeq.T; static,
     END;   
   END M3MakeLib;
 
+PROCEDURE NoteShlib(t: T; name: TEXT): INTEGER RAISES {Error} = 
+  VAR args := NEW(REF ARRAY OF QValue.T, 1);
+  BEGIN
+    args[1] := QValue.T{QValue.Kind.String, M3ID.Add(name), NIL};
+    IF NOT ExecHook(t, "m3_note_shlib", args, FALSE) THEN
+      RETURN -1;
+    END;
+    RETURN 0;
+  END NoteShlib;
+
 PROCEDURE M3Assemble(t: T; src, obj: TEXT; optimize, debug, shared: BOOLEAN):
   INTEGER RAISES {Error}=
   VAR args := NEW(REF ARRAY OF QValue.T, 5);
