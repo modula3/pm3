@@ -1358,6 +1358,7 @@ DoBreak (blank, breakpt, offs)
 #define PRODUCE(x) {fprintf (stderr, "%d ", x); return (x); }
 
 #include <stdio.h>
+#include <string.h>
 #include "hash.h"
 #include "lex.yy.c"
 #include "lex_help.h"
