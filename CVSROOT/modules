@@ -22,17 +22,18 @@
 # can be useful for creating a module that consists of many directories
 # spread out over the entire source repository.
 
-m3build2	m3/pkg/SRC-m3/m3build2
-m3driver	m3/pkg/SRC-m3/m3driver
-m3front		m3/pkg/SRC-m3/m3front
-m3linker	m3/pkg/SRC-m3/m3linker
-m3middle	m3/pkg/SRC-m3/m3middle
-m3quake		m3/pkg/SRC-m3/m3quake
-m3ship2		m3/pkg/SRC-m3/m3ship2
-m3templates	m3/pkg/SRC-m3/m3templates
-m3where2	m3/pkg/SRC-m3/m3where2
-m3core		m3/pkg/SRC-m3/m3core
-m3gdb		m3/pkg/gnu/m3gdb
-ui		m3/pkg/SRC-m3/ui
-libm3		m3/pkg/SRC-m3/libm3
-set		m3/pkg/SRC-m3/set
+pm3		m3/pm3
+#m3build2	m3/pkg/SRC-m3/m3build2
+#m3driver	m3/pkg/SRC-m3/m3driver
+m3front		m3/pm3/language/modula3/m3compiler/m3front
+#m3linker	m3/pkg/SRC-m3/m3linker
+#m3middle	m3/pkg/SRC-m3/m3middle
+#m3quake		m3/pkg/SRC-m3/m3quake
+#m3ship2		m3/pkg/SRC-m3/m3ship2
+#m3templates	m3/pkg/SRC-m3/m3templates
+#m3where2	m3/pkg/SRC-m3/m3where2
+#m3core		m3/pkg/SRC-m3/m3core
+#m3gdb		m3/pkg/gnu/m3gdb
+#ui		m3/pkg/SRC-m3/ui
+#libm3		m3/pkg/SRC-m3/libm3
+#set		m3/pkg/SRC-m3/set
