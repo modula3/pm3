@@ -1,0 +1,91 @@
+.TH BUILDSCHEME 1 "15 Dec 1997"
+.SH NAME
+buildscheme \- build up / extend a GRAS scheme from a textual description.
+.SH SYNOPSIS
+.HP
+.B 
+buildscheme
+.RI 
+<pool> <scheme> [-q] [-d <file>] [-extend]
+.br
+[-local] -root <path> [-agent <host>] [-id <server>] 
+.br
+[-cachesize <pages>]
+.IP
+.SH DESCRIPTION
+A graph schema of GRAS defines sets of node classes, node types, edge
+types, attributes, evaluation functions, and dependencies. It also
+defines relationships between these items, e.g. subtype relationships
+between node classes and instance relationships between node types and
+node classes. A graph of GRAS conforms to a schema, if it contains
+only elements defined in the schema. While schemata will usually
+be defined by an application, buildscheme makes it possible to define
+and extend GRAS schemata directly. For a description of the format of
+schema components buildscheme understands, see 
+.BR buildscheme (4).
+.SH OPTIONS
+.TP 3
+.B
+-q
+Be quiet. Do not echo all input read to stdout.
+.br
+.TP
+.B 
+-d <file>
+.br
+Use <file> as input file containing the schema definitions to parse.
+.br
+.TP
+.B 
+-extend
+.br
+Without this option, buildscheme deletes an existing scheme with the
+given name prior to applying the definitions supplied. When -extend is
+specified, buildscheme does not delete <pool>/<scheme> but extends it
+with the given definitions. Note that the definitions should not be
+already contained in the old scheme. If they are, an error message
+will state so.
+.br
+.TP
+.B 
+-local
+.br
+If -local is given as option to buildscheme, the scheme will be build
+in the client part of the specified pool.
+.br
+.TP
+.B 
+-root <path>
+.br
+Use <path> as client root path for database login.
+.br
+.TP
+.B 
+-cachesize <pages>
+.br
+Use <pages> as the number of pages in the page cache of the rule
+monitor as GRAS client.
+.br
+.TP
+.B 
+-id <server>
+.br
+Connect to a server with the id <server> instead of the default
+server. 
+.br
+.TP
+.B 
+-agent <host>
+.br
+Use <host> to locate netobjd. The default is 'localhost'. The network
+object demon is used to find the GRAS name-server 
+.BR g3ns (1).
+.br
+.SH SEE ALSO
+.BR GRAS (1),
+.BR buildscheme (4),
+.BR schemedump (1),
+.BR g3ns (1)
+.SH BUGS
+None known yet.
+

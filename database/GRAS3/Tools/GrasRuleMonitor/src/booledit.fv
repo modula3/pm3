@@ -1,0 +1,19 @@
+  (VBox
+    Chisel
+    (Rim (Pen 3)
+      (HBox 
+	(Boolean %@AttrName@Bool
+	         (Value @IsNoWildcard@) (Text "@AttrName@: BOOLEAN"))
+	Fill
+	(Filter %@AttrName@Filter (Dormant @FilterState@) 
+	  (Shape (Width 100) 
+	    (HBox 
+	      (Boolean %@AttrName@False (Value FALSE) (Text "FALSE"))
+	      (Boolean %@AttrName@True (Value FALSE) (Text "TRUE"))
+	      Fill
+	    )
+	  )
+	)
+      )
+    )
+  )

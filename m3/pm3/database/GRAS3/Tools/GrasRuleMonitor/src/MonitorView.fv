@@ -1,0 +1,43 @@
+(ZSplit (LabelFont "-*-helvetica-medium-r-normal--12-*")
+  (ZBackground
+    (Rim (Pen 10)
+      (VBox 
+        (Frame (Lowered TRUE)
+	  (Shape %viewshape (Width 470 + Inf - 300) (Height 300 + Inf - 200)
+	    (VBox %viewbox)
+	  )
+	)
+	(Glue 5)
+	(HBox 
+	  Fill 
+	  (PopButton %viewclose (For viewwarn) 
+		(Shape (Width 40) (Height 15) "Close")) 
+	  Fill
+	)
+      )
+    )
+  )
+  (ZChild %viewwarn
+    (Frame
+      (Shape (Width 150 + Inf) (Height 80 + Inf)
+	(VBox
+	  (Rim (Text (BgColor "LightYellow") "WARNING"))
+	  Chisel
+	  (Text "Closing this view will")
+	  (Text "stop rule monitoring.")
+	  Fill
+	  (HBox
+	    Fill
+	    (Button %viewok 
+	      (Shape (Height 15) (Rim (Text (BgColor "LightGreen") "OK, Close")))) 
+	    Fill
+	    (Button %viewabort
+	      (Shape (Height 15) (Rim (Text (BgColor "LightRed") "Don't Close"))))
+	    Fill
+	  )
+	  Fill
+	)
+      )
+    )
+  )
+)

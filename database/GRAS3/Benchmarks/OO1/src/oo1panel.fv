@@ -1,0 +1,154 @@
+(ZSplit
+  (ZBackground
+    (Rim (Pen 15)    
+      (VBox
+	(Filter Active %parameters
+	  (VBox	
+	    (LabelFont (PointSize 120) (Family "Helvetica"))
+	    (HBox
+	      (Shape (Width 60)
+		(Text RightAlign "Graphtype:"))
+	      (Radio %graphtype =persistent
+		(HBox 
+		  (Choice %persistent "Persistent")
+		  (Choice %chgmgmt    "ChangeMgmt")
+		  (Choice %typed      "Typed") Fill
+		)
+	      )
+	    )
+	    (HBox
+	      (Shape (Width 60)
+	        (Text RightAlign "Open as:")
+	      )
+	      (Radio %OpenMode =remote
+	        (HBox
+	          (Choice %remote "Remote")
+	          (Choice %local  "Local") Fill
+	        )
+	      )
+	    )
+	    (Glue 5)
+	    (HBox
+	      (Shape (Width 60)
+		(Text RightAlign "Nodes:"))
+	      (Shape (Width 100 + 0 - 0) 
+		(Numeric (Min 500) (Max 2000000) %nodes =2000)) Fill
+	    )
+	    (Glue 5)
+	    (HBox
+	      (Shape (Width 60)
+		(Text RightAlign "Connects:"))
+	      (Radio %connects =attributed
+		(HBox
+		  (Choice %attributed "Attributed")
+		  (Choice %simple "Simple") Fill
+		)
+	      )
+	    )
+	    (Glue 5)
+	    (HBox
+	      (Shape (Width 60)
+		(Text RightAlign "Transaction:"))
+	      (Radio %transactions =fewlarge
+		(HBox
+		  (Choice %fewlarge  "Few large")
+		  (Choice %manysmall "Many small") Fill
+		)
+	      )
+	    )
+	    (Glue 5)
+	    (VBox
+	      (HBox
+		(Shape (Width 60)
+		  (Text RightAlign "Perform:"))
+		  (Boolean %buildup =TRUE "Build-Up") 
+		  (Boolean %lookup =TRUE "Lookup")
+		  (Boolean %insert =TRUE "Insert") Fill
+	      )
+	      (HBox
+		(Shape (Width 60) (Text ""))
+		(Boolean %traversal =TRUE "Traversal")
+		(Boolean %reverse   =TRUE "Reverse Traversal") Fill
+	      )
+	    )
+	    (Glue 5)
+	    Chisel
+	    (Glue 5)
+	    Fill
+	    (HBox
+	      (Boolean %uselogfile =FALSE "Log output to file") Fill
+	    )
+	    (Glue 5)
+	    (Filter Dormant
+	      (HBox
+		(Shape (Width 60) (Text RightAlign "Logfile:"))
+		(Border (TypeIn (BgColor "White") %logfile))
+		(PopButton %browse (For filebrowser) "Browser") 
+		Fill
+	      )
+	    )
+	    (Glue 5)
+	    (Chisel)
+	    (Glue 5)
+	    (HBox
+	      (Boolean %perfmeter =TRUE "Start performance meter") Fill
+	    )
+	  )
+	)
+	(Glue 5)
+	Chisel
+	(Glue 5)
+	(HBox
+	  Fill
+	  (Filter Active
+	    (Button %start "Start"))
+	  Fill
+	  (Filter Dormant
+	    (Button %stop "Stop"))
+	  Fill
+	  (Filter Dormant
+	    (Button %continue "Continue"))
+	  Fill
+	  (Filter Active
+	    (Button %quit "Quit"))
+	  Fill
+	)
+      )
+    )
+  )
+  (ZChild %filebrowser
+    (Border (Pen 1)
+       (Rim (Pen 5)
+	(VBox
+	  (HBox
+	    (Shape (Width 150) (Height 150)
+	      (VBox (LabelFont "fixed")
+		(DirMenu (For fbrowser))
+		(Glue 6)
+		(Frame Lowered (BgColor "White")
+		  (FileBrowser %fbrowser (Value ".") (Suffixes ""))
+		)
+	      )
+	    )
+	    Fill
+	    (Shape (Width 100)
+	      (VBox 
+		Fill
+		(Button %open "Open")
+		(Glue 10)
+		(Button %cancel "Cancel")
+	      )
+	    )
+	  )
+	  (HBox
+	    (Shape (Width 30) (Height 16) "File:")
+	    (Frame Lowered (BgColor "White")
+	      (Helper %fbhelper (For fbrowser) (Font "fixed"))
+	    )
+	  )
+	)
+      )
+    )
+  )
+)
+

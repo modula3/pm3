@@ -1,0 +1,80 @@
+(ZSplit (LabelFont "-*-helvetica-medium-r-normal--12-*")
+  (ZBackground
+    (Rim %MainForm (Pen 10)
+      (Shape (Width 300 + Inf - 100)
+        (VBox 
+	  (HBox (Text "Event-Types"))
+	  (HBox (Text "Monitored") Fill (Text "Unmonitored"))
+	  (HBox
+	    (Shape (Height 170 + Inf)
+	      (Frame (Lowered TRUE) (MultiBrowser %MonitoredTypes)))
+	    (Shape (Height 170 + Inf)
+	      (VBox
+		(Button %MonitorAll 
+		  (Shape (Width 20) (Height 20) (Pixmap "bigleft.pbm")))
+		(Button %MonitorSel 
+		  (Shape (Width 20) (Height 20) (Pixmap "smallleft.pbm")))
+		(Button %ShowInfo 
+		  (Shape (Width 20) (Height 20) (Pixmap "info.pbm")))
+		(Button %UnmonitorSel 
+		  (Shape (Width 20) (Height 20) (Pixmap "smallright.pbm")))
+		(Button %UnmonitorAll 
+		  (Shape (Width 20) (Height 20) (Pixmap "bigright.pbm"))) Fill
+	      )
+	    )
+	    (Shape (Height 170 + Inf)
+	      (Frame (Lowered TRUE) (MultiBrowser %UnmonitoredTypes)))
+	  )
+	  (Glue 10)
+	  (HBox
+	    (Text "Show as: ") (Glue 10)
+	    (Boolean %textview (Value TRUE) "Text") (Glue 10)
+	    (Boolean %chartview "Charts") Fill
+	  )
+	  (Glue 10)
+	  (HBox
+	    (Filter (Shape (Height 15) (Width 40) (Button %start "Start"))) Fill
+	    (Shape (Height 15) (Width 40) (Button %stop "Stop")) Fill
+	    (Shape (Height 15) (Width 40) (Button %quit "Quit"))
+	  )
+	)
+      )
+    )
+  )
+  (ZChild %warning
+    (Frame
+      (Shape (Height 120 + Inf)
+	(VBox
+	  (Rim (Text (BgColor "LightYellow") "WARNING"))
+	  Chisel
+	  (Text "Really quit?")
+	  Fill
+	  (HBox
+	    (Rim (Pen 10)
+	    (Button %reallyquit
+	      (Rim 
+		(VBox (BgColor "LightGreen") 
+		  (Text  "Yes, why do you")
+		  (Text  "think I pressed")
+		  (Text  "that button?")
+		)
+	      )
+	    ))
+	    (Rim (Pen 10)
+	    (Button %dontquit
+	      (Rim 
+		(VBox (BgColor "LightRed") 
+		  (Text  "Oh no, silly me.")
+		  (Text  "I want to")
+		  (Text  "continue!")
+		)
+	      )
+	    ))
+	    (Glue 10)
+	  )
+	  Fill
+	)
+      )
+    )
+  )
+)          

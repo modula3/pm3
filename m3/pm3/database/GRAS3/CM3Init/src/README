@@ -1,0 +1,75 @@
+What is CM3Init?
+================
+
+This library bridges part of the gap between the Modula-3 runtime
+system and a C main program. It consists of the module RTLinkerPatch
+and the system depended runtime information and initialization of
+Modula-3 in the file m3init.c. This file will be generated during the 
+build process (see m3makefile).
+
+Basically m3init.c does the same as the Modula-3 RTS at startup time:
+it declares all Modula-3 modules and interfaces used for GRAS and
+collects them in an array. The function M3Initialize, which has to be
+called from the non Modula-3 main program before any Modula-3 resource
+is used, builds the global runtime structure of the Modula-3 runtime
+system and calls the body of the module RTLinkerPatch.
+
+The body of RTLinkerPatch in turn, loops through all modules stored in
+the rts link information of m3init.c and calls their bodies, so that
+the modules get initialized. This is exactly the same behaviour that
+the original RTLinker exhibits. The difference is that RTLinker, when
+done with the last module - which is the main program in Modula-3 -
+simply exits, so that the program terminates. Since we do not have a
+Modula-3 main program we do not want RTLinker to exit after
+initialization of the last module in the link information, but to
+return control to the C (or whatever) main program. This is the only
+difference between RTLinker and RTLinkerPatch.
+
+RTLinkerPatch needs the interfaces RT0u and RTThreadInit of m3core,
+which are normally hidden. The easisiest way to make them visible is
+to edit the file .M3EXPORTS under m3core/TARGET. There, delete the
+word 'hidden' from the two corresponding lines (MI_RT0u and
+MI_RTThreadInit). (The hard way would be to edit the makefiles of
+m3core and rebuild it.)
+
+HOW TO BUILD m3init.c
+=====================
+
+For different systems, the Modula-3 system uses slightly different
+modules. The shell script GenM3init should handle these differences.
+However, the script is only testet for SRC, Critical Mass and PM3
+compilers as well as Solaris and Linux platforms. So it might fail if
+you try to use is with a different compiler or on a different
+platform. If you want to rebuild the rgras C interface on such systems
+and the generation of m3init.c fails or the generated code does not
+work, you will have to build a m3init.c for your particular system. Of
+course it is impossible to derive all information needed by the RTS by
+hand. As already mentioned, the code is fortunately more or less
+identical to the startup code of Modula-3 programs. 
+
+The script GenM3Init, which resides in this directory, normally
+generates this code for you. For the rgras interface on a LINUXELF
+system with a PM3 compiler, you can call GenM3init like this
+
+GenM3init -i RGRASGraph -i RTCollector -i StringCopy \
+	-I rgras:$GRASHOME -T LINUXELF -C PM3
+
+The script, called like above, creates a small Modula-3 program which
+imports the interfaces RGRASGraph, RTCollector and StringCopy. These 
+interfaces are used by the RGRAS C interface, so they must be present.
+These are only the top-level dependencies. The rest is figured out by
+the compiler. The remaining parameters of the above call to GenM3init
+tell the script which Modula-3 libraries must be included in the 
+generated m3makefile and where to find it (overrides), what the name
+of the binary directory is (TARGET) and what compiler is used.
+
+After generating the code and the makefile, GenM3init calls the
+Modula-3 compiler (m3build or cm3), so this should be in your PATH
+variable. The compiler will generate the startup code in a file called
+LINUXELF/_m3main.c. This file is modified by GenM3init, so that it
+can be used to initialize the RTS from a C main program.
+
+If you have questions, problems or want to extend the script for
+different compilers, contact me (roland@i3.informatik.rwth-aachen.de). 
+I will try to help you as good as I can.
+

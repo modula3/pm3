@@ -1,0 +1,21 @@
+
+% *** resource system ***
+Module			("VirtualResourceSystem")
+
+% *** resource ***
+Module			("VirtualResource")
+interface		("InternalVirtualResource")
+stack			("ScheduledClientFileTbl","ScheduledClientFileTbl")
+
+% *** files ***
+Module			("VirtualFile")
+interface		("InternalVirtualFile")
+Module			("VirtualLocalFile")
+Module			("VirtualRemoteFile")
+table			("VirtualPage", "Cardinal", "VirtualPage")
+
+% *** pages ***
+Module			("VirtualPage")
+interface		("InternalVirtualPage")
+module			("VirtualLocalPage")
+module			("VirtualRemotePage")

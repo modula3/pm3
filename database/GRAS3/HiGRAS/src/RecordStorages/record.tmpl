@@ -1,0 +1,54 @@
+%
+%  Quake functions to instantiate genrics of Subsystem 
+%  RecordStorages
+%
+
+readonly proc StoragePageFrame (pf, recordparam) is
+  build_generic_intf (pf, "StoragePageFrame", [recordparam], VISIBLE)
+  build_generic_impl (pf, "StoragePageFrame", [recordparam])
+end
+
+readonly proc storagePageFrame (pf, recordparam) is
+  build_generic_intf (pf, "StoragePageFrame", [recordparam], HIDDEN)
+  build_generic_impl (pf, "StoragePageFrame", [recordparam])
+end
+
+readonly proc StoragePage (sp, recordparam, pageframe) is
+  build_generic_intf (sp, "StoragePage", [recordparam], VISIBLE)
+  build_generic_impl (sp, "StoragePage", [pageframe])
+end
+
+readonly proc storagePage (sp, recordparam, pageframe) is
+  build_generic_intf (sp, "StoragePage", [recordparam], HIDDEN)
+  build_generic_impl (sp, "StoragePage", [pageframe])
+end
+
+readonly proc RecordStorage (rs, storagepage, pageframe, recordparam, treeparam) is
+  build_generic_intf (rs, "RecordStorage", [recordparam], VISIBLE)
+  build_generic_impl (rs, "RecordStorage", [storagepage, pageframe, treeparam])
+end
+
+readonly proc recordStorage (rs, storagepage, pageframe, recordparam, treeparam) is
+  build_generic_intf (rs, "RecordStorage", [recordparam], HIDDEN)
+  build_generic_impl (rs, "RecordStorage", [storagepage, pageframe, treeparam])
+end
+
+readonly proc RecordStorageSystem (nm, recordparam, treeparam) is
+  local pf = nm & "PageFrame"
+  local sp = nm & "StoragePage"
+  local rs = nm & "RecordStorage"
+  StoragePageFrame(pf, recordparam)
+  StoragePage(sp, recordparam, pf)
+  RecordStorage(rs, sp, pf, recordparam, treeparam)
+end
+
+readonly proc recordStorageSystem (nm, recordparam, treeparam) is
+  local pf = nm & "PageFrame"
+  local sp = nm & "StoragePage"
+  local rs = nm & "RecordStorage"
+  storagePageFrame(pf, recordparam)
+  storagePage(sp, recordparam, pf)
+  recordStorage(rs, sp, pf, recordparam, treeparam)
+end
+
+

@@ -1,0 +1,6 @@
+
+Module("AttributeRecordParameter")
+module("AttributeTreeParameter")
+RecordStorageSystem("Attribute", "AttributeRecordParameter", 
+		    "AttributeTreeParameter")
+

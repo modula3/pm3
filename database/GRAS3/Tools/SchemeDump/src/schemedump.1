@@ -1,0 +1,77 @@
+.TH SCHEMEDUMP 1 "15 Dec 1997"
+.SH NAME
+schemedump \- Display the contents of a GRAS schema.
+.SH SYNOPSIS
+.HP
+.B 
+schemedump
+.RI 
+<pool> <schema> [-b] [-local] -root <path> 
+.br
+[-agent <host>] [-id <server>] [-cachesize <pages>]
+.br
+.br
+.SH DESCRIPTION
+A graph schema of GRAS defines sets of node classes, node types, edge
+types, attributes, evaluation functions, and dependencies. It also
+defines relationships between these items, e.g. subtype relationships
+between node classes and instance relationships between node types and
+node classes. All this information is displayed with schemedump in a
+more or less readable (and self explaining) textual format.
+
+When -b is specified, the output produced by schemedump can be used as
+input to buildscheme (1).
+.SH OPTIONS
+.TP 3
+.B
+-b
+Use an output format that is understood by 
+.BR buildscheme (1).
+.br
+.TP
+.B
+-local
+Search for the scheme in the client part of the specified pool.
+.br
+.TP
+.B 
+-root <path>
+.br
+Use <path> as client root path for database login.
+.br
+.TP
+.B 
+-cachesize <pages>
+.br
+Use <pages> as the number of pages in the page cache of the rule
+monitor as GRAS client.
+.br
+.TP
+.B 
+-id <server>
+.br
+Connect to a server with the id <server> instead of the default
+server. 
+.br
+.TP
+.B 
+-agent <host>
+.br
+Use <host> to locate netobjd. The default is 'localhost'. The network
+object demon is used to find the GRAS name-server 
+.BR g3ns (1).
+.br
+.SH SEE ALSO
+.BR GRAS (1),
+.BR buildscheme (1),
+.BR g3ns (1)
+.SH DIAGNOSTICS
+.B
+Scheme not existent!
+The specified schema does not exist.
+.br
+.B 
+Access denied: Resource not exists.
+The specified pool does not exist.
+.SH BUGS
+None known yet.

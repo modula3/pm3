@@ -1,0 +1,11 @@
+m3_option("-g")
+
+%import("GrasGraphs")
+import("HiGRAS")
+include_pkg("GrasParams")
+
+implementation("BuildScheme")
+Program("buildscheme")
+
+ManPage("buildscheme", "1")
+ManPage("buildscheme", "4")

@@ -1,0 +1,5 @@
+import("HiGRAS")
+
+implementation("Simple1")
+
+Program("Simple1")

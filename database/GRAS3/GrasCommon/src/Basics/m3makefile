@@ -1,0 +1,23 @@
+template("basics")
+
+Generic_module("CursorList")
+Generic_interface("InternCursorSet")
+Generic_module("CursorSet")
+Generic_module("RelationElement")
+Generic_module("Relation")
+Generic_module("PriorityQueue")
+
+Generic_module("Stack")
+Generic_module("NTree")
+
+% Cardinal instantiations for generics
+Module("Cardinal")
+Stack("Card", "Cardinal")
+Stack("CardStack", "CardStack")
+CursorList("Card", "Cardinal")
+CursorSet("Card", "Cardinal")
+Sequence("Card", "Cardinal")
+Relation("Card", "Cardinal", "Cardinal", "CardSet", "CardSet")
+
+Module ("Type")
+Module ("GRASConversions")

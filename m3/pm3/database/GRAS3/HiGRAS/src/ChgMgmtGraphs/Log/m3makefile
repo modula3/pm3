@@ -1,0 +1,16 @@
+
+Module("GraphCommand")
+stack("GraphCommand", "GraphCommand")
+
+Interface("Delta")
+module("DeltaGenParam")
+CursorList("Delta", "DeltaGenParam")
+interface("Checkpoint")
+interface("CheckpointTree")
+
+interface("LabelTable")
+interface("MetaOpStack")
+
+interface("Log")
+interface("InternalLog")
+implementation("Log")

@@ -1,0 +1,45 @@
+GRAS3 Example programs
+
+This directory contains some small example programs to demonstrate how
+to use the GRAS3 programming interface. 
+
+Simple1, Simple2, and Simple3 are three small programs to be executed
+one after the other. They use the PersistentGraphs subsystem (and its
+interfaces) to demonstrate basic access to pools and graphs. Simple2
+also uses the RuleEngine to implement some active triggers.
+Simple1 - Creates a graph pool, a graph inside this pool. Two nodes
+	  and one edge are created in the graph and a normal and an
+ 	  index attribute are written.
+Simple2 - Uses the graph and pool created by Simple1 to create a
+	  balanced binary tree. It demonstrates the use of triggers to
+	  delete the tree.
+Simple3 - Deletes the pool and graph created by Simple1.
+
+
+The SchemeTest programs use the rgras interface to show features of
+GRAS graph schemata.
+SchemeTest -  Creates a pool, a schema, and a graph conforming to the
+	      schema. It builds up a list of nodes of two different
+	      node types. These nodes have four attributes, two
+	      intrinsic (value explicitly set) and two derived (value
+	      computed from other attributes). Evaluation functions are
+	      used to initialize the intrinsic attributes and to
+	      evaluate the derived attributes whenever necessary. The
+	      program traverses the list with its attributes for
+	      initialization, then changes an attribute to demonstrate
+	      how dependent attributes are recomputed on
+	      access. Finally, the graph and pool are deleted.
+SchemeTest2 - A variation of SchemeTest that uses dummy attributes to
+ 	      propagate dependencies along multiple edges.
+SchemeTest3 - Another variation of SchemeTest demonstrating a schema
+	      extension. 
+SchemeTestCrash - Triggers a cycle during attribute evaluation.
+
+The program Tree demonstrates many GRAS features and also their
+interaction. It opens/creates a graph and allows the user to
+interactively modify its contents as a tree. Direct user commands are
+create leaf and delete subtree. The rest of the user commands are
+user-recovery commands: BeginTransaction, CommitTransaction,
+AbortTransaction, Undo, Redo, RedoPrev, RedoNext, RedoIth, Backstep,
+Forstep, SetCheckpointLabel, and GotoCheckpointLabel. The program uses
+derived attributes and triggers to update its display.

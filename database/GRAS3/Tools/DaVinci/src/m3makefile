@@ -1,0 +1,5 @@
+import("libm3")
+m3_option("-g")
+
+module("DaVinci")
+module("DaVinciMsg")

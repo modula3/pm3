@@ -1,0 +1,97 @@
+.TH SCHEMEVIEW 1 "14 Sep 1998"
+.SH NAME
+schemeview \- Graphically display the contents of a GRAS schema.
+.SH SYNOPSIS
+.HP
+.B 
+schemeview
+.RI 
+<pool> <schema>  
+.br
+{-hide <schemecomponent>} {-show <schemecomponent>} 
+.br
+[-local] -root <path> 
+.br
+[-agent <host>] [-id <server>] [-cachesize <pages>]
+.br
+.br
+.SH DESCRIPTION
+A graph schema of GRAS defines sets of node classes, node types, edge
+types, attributes, evaluation functions, and dependencies. It also
+defines relationships between these items, e.g. subtype relationships
+between node classes and instance relationships between node types and
+node classes. All this information is displayed with schemeview in
+graphically using the daVinci graph visulization software.
+
+.SH NOTE
+You must have daVinci graph visualization software installed and 
+environment variabel DAVINCIHOME properly set for schemeview to work. 
+You can obtain daVinci from
+http://www.informatik.uni-bremen.de/~davinci. 
+.SH OPTIONS
+.TP 3
+.B 
+-hide <schemecomponent>
+Do not display the scheme component. Scheme component is one of
+"classes", "types", "edges", "attributes", and
+"dependencies". Default is to show all scheme components.
+.br
+.TP
+.B 
+-show <schemecomponent>
+Display the scheme component. Scheme component is one of
+"classes", "types", "edges", "attributes", and  "dependencies".
+.br
+.TP
+.B
+-debug
+Print debugginf information. This includes all messages sent and
+received to/from the daVinci process.
+.br
+.TP
+.B
+-local
+Search for the scheme in the client part of the specified pool.
+.br
+.TP
+.B 
+-root <path>
+.br
+Use <path> as client root path for database login.
+.br
+.TP
+.B 
+-cachesize <pages>
+.br
+Use <pages> as the number of pages in the page cache of the rule
+monitor as GRAS client.
+.br
+.TP
+.B 
+-id <server>
+.br
+Connect to a server with the id <server> instead of the default
+server. 
+.br
+.TP
+.B 
+-agent <host>
+.br
+Use <host> to locate netobjd. The default is 'localhost'. The network
+object demon is used to find the GRAS name-server 
+.BR g3ns (1).
+.br
+.SH SEE ALSO
+.BR GRAS (1),
+.BR schemedump (1),
+.BR g3ns (1)
+.SH DIAGNOSTICS
+.B
+Scheme not existent!
+The specified schema does not exist.
+.br
+.B 
+Access denied: Resource not exists.
+The specified pool does not exist.
+.SH BUGS
+Dependencies are never displayed.

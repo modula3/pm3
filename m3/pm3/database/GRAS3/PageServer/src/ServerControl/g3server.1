@@ -1,0 +1,108 @@
+.TH G3SERVER 1 "17 Feb 1998"
+.SH NAME
+g3server \- Page-Server of the GRAS database management system.
+.SH SYNOPSIS
+.B 
+g3server 
+.RI 
+-root <path> { option }
+.br
+.br
+where option is one of
+.IP
+-cachesize <pages>
+.IP
+-agent <hostname>
+.IP
+-id <serverid>
+.IP
+-pingclients <secs>
+.IP
+.SH DESCRIPTION
+The page-server is the central component of the GRAS
+database management system. Every database client communicates with
+a server to retrieve pages of databases. The server implements
+concurrency control and locks on page level. It has to be started
+before any access to a GRAS database is possible.
+.SH OPTIONS
+.TP 3
+.B 
+-root <path>
+.br
+This is an obligate parameter. It determines which directory serves as
+the root directory of the databases administered by this server. All
+databases will reside below this directory and can be accessed by
+relative name, only.
+.br
+.TP
+.B 
+-cachesize <pages>
+.br
+The server holds a set of pages in memory to allow for faster access
+during normal operation. The default value for the size of this cache
+is 100 pages (pages have a size of 8 kBytes).
+.br
+.TP
+.B 
+-agent <hostname>
+.br
+The GRAS database system uses Modula-3 Network-Objects for
+client-server communication. Before clients are able to connect to a
+server, it has to register itself to a name-server called g3ns, which
+in turn is registered to the Modula-3 network object daemon
+netobjd. At startup, every g3server has to query a netobjd for g3ns
+and regster to it, if one is found. The option -agent specifies the
+host machine, on which netobjd is running (this need not be the
+machine g3ns is running on!). Clients whishing to access a certain
+g3server must make sure to use the same netobjd (and hence the same
+GRAS name-server) as the g3server. The default hostname for the
+netobjd is 'localhost'.
+.br
+.TP
+.B 
+-id <name>
+.br
+The page-server registers itself with a human readable name to the
+GRAS name-server. The default name is 'GRAS-3.<uid>' where <uid> is
+the numeric user id of the user who started the page-server. This
+however means, that every user runs his/her own page-server. If two or
+more users want to share a server (and its access rights to the
+database files), they have to select a name for the server different
+from its default name. This name can be given to the server with the
+-id option.
+.br
+.TP
+.B 
+-pingclients <secs>
+.br
+The server tries to access all its clients regularly to check if they
+are still alive. With this option the number of seconds between two
+successive checks can be given in seconds.
+.br
+.SH SEE ALSO
+.BR GRAS (1),
+.BR g3ns (1),
+.BR g3shutdown (1),
+.SH DIAGNOSTICS
+.B
+A server with this identification is already running!
+Attempt to start a second server with same id using the same gras
+name-server.
+.br
+.B
+No name server running!
+The page-server was able to connect to netobjd but did not find an
+entry for a gras name-server.
+.br
+.B
+*** Error: Unable to install communication entry.
+netobjd is not running on the
+specified agent machine (NetObj.CommFailure TCP.Refused).
+.br 
+.B
+*** Error: cannot connect to name server (netobjd)!
+The given agent machine does not exist or is unreachable.
+.br
+.SH BUGS
+Very heavy multi-user access triggers some weird error in the
+lock-protocol. 

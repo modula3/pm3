@@ -1,0 +1,3 @@
+override("GrasGraphs",$GRASHOME)
+override("HiGRAS",$GRASHOME)
+override("GrasParams",$GRASHOME & SL & "Tools")

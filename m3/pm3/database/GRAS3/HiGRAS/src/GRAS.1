@@ -1,0 +1,350 @@
+.TH GRAS 1 "09 Jan 1998"
+.SH NAME
+GRAS \- A database management system for directed, attributed, node-
+and edge labeled graphs.
+.SH DESCRIPTION
+GRAS is a client/server database management system for managing
+attributed graphs persistently. It was designed for use in engineering
+environments to support fine-grained integration of data. Its features
+are: a layered architecture, nested ACID transactions, navigational
+access to graphs, undo/redo and versioning, an extensible
+event-trigger mechanism, and graph schemata supporting inhertiance,
+edge cardinalities, and derived attributes.
+GRAS does not have a declarative data manipulation language, instead
+all access to databases and schemata are performed through its
+application programming interface.
+
+This manual page does not serve as a comprehensive user or reference
+manual. It only gives a short overview of the GRAS system,
+introducing its main features and tools. It also describes the system
+architecture and where in the source tree details about the GRAS
+programming interfaces can be found.
+.SH DATA MODEL
+A GRAS database is called a graph pool. Basically, a graph pool
+corresponds to a file-system directory maintained by the GRAS
+page-server 
+.BR g3server (1).
+The server directory contains files maintained by the server which
+clients of the server may access within transactions. Most files will
+be treated as GRAS graphs by the clients, though there are some
+exceptions here, too. A GRAS graph contains nodes and edges. Nodes
+have an identity which does not change while the node
+exists. Identities can and will be re-used by GRAS after a node is
+deleted. Nodes can also have an arbitrary number of attributes. Edges
+do not have an identity but a type or label. They are completely
+defined by source and target node identifier and their type/label.
+
+Depending on the architecture level which is used to access a GRAS
+graph, attributes of nodes can have a type or are treated as byte
+strings of arbitrary length (represented as TEXT in
+Modula-3). Attributes are accessed via node number and attribute
+number. Index-Attributes are a special case of attributes. They can
+only carry short values (250 bytes) but can be queried in an
+associative manner, i.e. it is possible to query GRAS for the set of
+nodes carrying an index attribute of a certain value.
+.SH ARCHITECTURE
+GRAS has a layerd architecture. We only list the client side here,
+since only the interfaces of the client side should be used to program
+with GRAS. 
+
+.SS VirtualPages
+The lowest level of the architecture is given by the VirtualPages
+subsystem. It offers transactional access to 8 kByte pages of files
+stored in pools (called resources at this architecture level). If you
+want to add some new basic functionality to GRAS, like B-Trees, direct
+access files etc., this is the place to start from. Normally, this
+will not be necessary, though.
+
+Next up in the architecture are subsytems IndexStorage and
+RecordStorages, which shouldn't be too interesting for anyone, since
+they realize only the basic access structures for the graph interfaces
+of the next higher layers. IndexStorage implementes a dynamic hashing
+strategy. RecordStorages uses IndexStorage to implement storages for
+entities (nodes), relations (edges), attributes, and names (used for
+index attributes). 
+
+.SS PersistentGraphs
+The subsytems PersistentGraphs, ChgMgmtGraphs, and TypedGraphs all
+provide access to GRAS graphs. Conceptually, they form an inheritance
+hierarchy with PersistentGraphs being the root, ChgMgmtGraphs
+inheriting from it, and TypedGraphs inheriting from
+ChgMgmtGraphs. PersistentGraphs is the first subsystem to introduce
+the notion of graph and pool. Before accessing a graph (opening), the
+pool in which it resides must be opened. Nodes are identified by a
+pair of numbers (gid, nid), with gid being the number of the graph
+containing the node and nid the node id within this graph. The graph
+number stems from an explicit directory maintained for every pool by
+GRAS in the file ".GRAS". It stores the contents of a pool
+independently from the server. Pool contents can be browsed with the
+tool 
+.BR poolbrowser (1).
+
+For PersistentGraphs, nodes are marked with a label (a cardinal
+number) and have completely arbitrary attributes, i.e. it is possible
+to access attributes without any declaration. Edges also have a label,
+and when more than one edge is drawn between the same pair of nodes,
+they either have opposite direction (eg. (n1, l, n2) vs. (n2, l, n1))
+or different label (eg. (n1, l1, n2) vs. (n1, l2, n2)).
+
+Identifying nodes with a (gid, nid) pair is necessary to provide
+unique node identifiers within a pool. This in turn is important,
+because nodes of arbitrary graphs can be connected by edges. While the
+common case are edges between nodes of the same graph (intra-graph
+edges), GRAS also provides edges between nodes of different graphs
+(inter-graph edges, graph boundary crossing edges).
+
+PersistentGraph already allows to build and query graphs. It has
+procedures to create/delete node/edges, write and read attributes,
+query for incoming and outgoing edges and index attributes.
+
+.SS ChgMgmtGraphs
+ChgMgmtGraphs does not change the data model or basic functionality of
+PersistentGraphs, but adds features like undo/redo and versioning to
+it. The new notion in this layer is the Delta. A Delta contains a
+sequence of graph changing commands and can be applied to a single
+graph. States of single graphs can be marked by a checkpoint. Between
+two checkpoints, all applied graph changing commands are logged in a
+forward-delta, their inverse commands in a backward-delta. An undo
+command restores the graph state as it was when the last checkpoint
+was issued by applying the corresponding backward-delta. The redo
+command applies the forward-delta to the next checkpoint, if any. Undo
+and redo implement linear user-recovery. GRAS also offers a tree-like
+recovery, storing all ever occurring deltas for a graph. This tree can
+then be traversed by undo, redo, reoIth, redoNext, redoPrev, backstep,
+and forstep commands, all offered by ChgMgmtGraphs.
+
+To efficiently store and retrieve versions, it is possible to connect
+two graphs with a version-delta. One of the two graphs is then only
+accessible by reconstructing it from the other (this might be done
+transitively). In this way, GRAS does not implement a fixed version
+concept, but offers means to realize a customized version concept
+space efficiently. 
+
+.SS TypedGraphs
+TypedGraphs offers the most sophisticated interface to GRAS graphs. It
+introduces graph schemata, which are used to define the node and edge
+types a graph may contain. In this way, a schema defines the type of a
+graph. Node types can also define attributes for their
+instances. These attributes might have a type, a fixed length, be
+derived from other attributes, or used as index attributes. Similar
+node types can be grouped with node classes and node classes in turn
+form an inheritance hierarchy. Attributes and allowed edge types are
+propagated along the inheritance relationship between node classes
+(and node classes and node types). Edge types define a source node
+class/type, a target node class/type and cardinalities for both.
+
+.SS RuleEngine
+The RuleEngine subsystem defines active functionality for GRAS. A rule
+in GRAS is called trigger and consists of an event pattern, specifying
+when a trigger fires, an action which is executed when an event
+matching the pattern occurs, and some other stuff which is discussed
+in detail in the interface files of the subsystem. GRAS defines and
+signals events for all graph changing commands and undo/redo commands.
+
+.SH INTERFACES
+In this section, we list the Modula-3 interfaces for GRAS. An
+interface is given by its filename, starting from its containing
+package root directory. We list the interfaces of subsystems from
+top-most (TypedGraphs) to bottom-most (VirtualPages) architecure
+layer. Note: for most purposes, the TypedGraphs interfaces will be
+sufficient.
+.TP 3
+.B 
+HiGRAS/src/TypedGraphs/TypedGraph.i3
+.br
+The graph interface of TypedGraph. Defines TypedGraph.T,
+which redefines almost all methods of PersitentGraph.T and
+ChgMgmtGraph.T to introduce schema identifiers to access node types,
+edge types, attributes.
+.br
+.TP
+.B 
+HiGRAS/src/TypedGraphs/Schema.i3
+.br
+Defines the type Schema.T, serving as schema for instances of
+TypedGraph.T. It offers methods to define and query schema
+components.
+.br
+.TP
+.B 
+HiGRAS/src/TypedGraphs/TypedGraphPool.i3
+.br
+Defines the type TypedGraphPool.T. It adds methods to query for
+schemata and their related graphs within a pool.
+.br
+.TP
+.B 
+HiGRAS/src/TypedGraphs/TypedGraphSystems.i3
+.br
+Operations to manage pools.
+.br
+.TP
+.B 
+HiGRAS/src/ChgMgmtGraphs/ChgMgmtGraph.i3
+.br
+Graph interface of subsystem ChgMgmtGraphs. It defines ChgMgmtGraph.T
+which adds all undo/redo commands to PersitentGraph.T and overrides
+all graph changing commands, so that they are logged in deltas.
+.br
+.TP
+.B 
+HiGRAS/src/ChgMgmtGraphs/ChgMgmtGraphPool.i3
+.br
+The type ChgMgmtGraphPool.T adds methods to PersistentGraphPool.T for
+managing graph versions and deltas.
+.br
+.TP
+.B 
+HiGRAS/src/ChgMgmtGraphs/ChgMgmtGraphSystem.i3
+.br
+Operations to manage pools.
+.br
+.TP
+.B 
+HiGRAS/src/PersistentGraphs/PersistentGraph.i3
+.br
+Graph interface of subsystem PersistentGraphs. It defines PersistentGraph.T
+which uses RecordStorages and IndexStorage to implement the first
+graph layer of GRAS. It provides methods for changing and quering a
+graph. 
+.br
+.TP
+.B 
+HiGRAS/src/PersistentGraphs/PersistentGraphPool.i3
+.br
+The type PersistentGraphPool.T inherits from VirtualResource.T. It
+introduces operations on graphs and the server independent pool
+directory.
+.br
+.TP
+.B 
+HiGRAS/src/PersistentGraphs/PersistentGraphSystem.i3
+.br
+Operations to manage pools.
+.br
+.TP
+.B 
+PageClient/src/VirtualPages/VirtualPage.i3
+.br
+The basic unit of access to a VirtualFile or page file is a page. It
+defines methods to read and write values of basic types from and to
+pages. 
+.br
+.TP
+.B 
+PageClient/src/VirtualPages/VirtualFile.i3
+.br
+The basic page file. It has sub-types for local and remote files which
+are managed by the client and server respectively.
+.br
+.TP
+.B 
+PageClient/src/VirtualPages/VirtualResource.i3
+.br
+VirtualResource.T is a collection of local and remote page files. It
+also defines methods to start, commit and abort (nested)
+transactions.
+.br
+.TP
+.B 
+PageClient/src/VirtualPages/VirtualResourceSystem.i3
+.br
+Operations to manage resources.
+.br
+.TP
+.B 
+RuleEngine/src/RuleEngine.i3
+.br
+The rule engine implements all active behavior in GRAS. It offers
+operations to define and remove triggers and to signal event
+occurrences. 
+.br
+.TP
+.B 
+RuleEngine/src/RuleTypes/*.i3
+.br
+Basic types of subsystem RuleEngine: Event, EventPattern, ContextSet,
+Trigger and Action.
+.br
+.TP
+.B 
+RuleEngine/src/RuleTypes/EventTypes/Event*.i3
+.br
+EventTypes.i3 defines EventType.T, which determines the attributes of
+events of a certain type. EventTypes.i3 is the global collection of
+all defined event types.
+.br
+.SH TOOLS
+We only list the available tools and their purposes. For details, have
+a look at the respective manual pages.
+.TP 3
+.B 
+g3server
+.br
+The GRAS page server. A page server must be started before any access
+to GRAS is possible.
+.br
+.TP
+.B 
+g3ns
+.br
+The GRAS name server. It manages a list of page servers and must run
+in order to connect to a page server.
+.br
+.TP
+.B 
+g3shutdown
+.br
+To shutdown a page server, either press Ctrl-C in the corresponding
+terminal window, kill it with 'kill', or choose the safe way and use
+g3shutdown. 
+.br
+.TP
+.B 
+graphdump
+.br
+Lists the contents of a graph.
+.br
+.TP
+.B 
+schemedump
+.br
+Lists the definitions in a graph schema.
+.br
+.TP
+.B 
+buildscheme
+.br
+Builds up a graph schema from a simple textual description.
+.br
+.TP
+.B 
+poolbrowser
+.br
+A tool to view the contents of a graph pool with a simple graphical
+user interface.
+.br
+.TP
+.B 
+g3monitor
+.br
+Traces and displays arbitrary event occurrences. It is also a good
+starting point to check what event types are defined by GRAS and what
+parameters they carry.
+.br
+
+.SH ENVIRONMENT
+The core GRAS system only uses $TMPGRAS to determine where to store
+temporary data. The default is /var/tmp/$USER.
+.SH SEE ALSO
+.BR g3server (1),
+.BR g3ns (1),
+.BR g3shutdown (1),
+.BR poolbrowser (1),
+.BR schemedump (1),
+.BR buildscheme (1),
+.BR graphdump (1),
+.BR g3monitor (1).
+.SH BUGS
+The local option for graphs does not work properly, yet. Better only
+use remote graphs.

@@ -1,0 +1,14 @@
+m3_option("-g")
+
+import("libm3")
+
+include_dir("EnvGras")
+include_dir("Basics")
+include_dir("Page")
+include_dir("PageFile")
+include_dir("PageCache")
+include_dir("BaseScheduler")
+include_dir("CommunicationPort")
+include_dir("RuleEngineComm")
+
+Library("GrasCommon")

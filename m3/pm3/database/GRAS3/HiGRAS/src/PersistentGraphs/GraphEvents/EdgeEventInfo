@@ -1,0 +1,15 @@
+SourceGraph	: graph number of source
+	      	  graph; Identical to graph 
+		  number for intra-graph edges
+SourceNode	: node number of source node
+TargetGraph	: graph number of target
+	      	  graph; Identical to graph 
+		  number for intra-graph edges
+TargetNode	: node number of target node
+EdgeLabel	: label of created/deleted edge
+SourceExists	: states whether the source node
+		  still exists on action
+		  execution 
+TargetExists	: states whether the target node
+		  still exists on action
+		  execution 

@@ -1,0 +1,430 @@
+#!/bin/sh
+
+# This script generates runtime initialization code which allows 
+# to call Modula-3 code from C code without a Modula-3 main program.
+# As input, it takes a list of Modula-3 interface names. These should
+# be the interfaces of the modules which need to be accessible from C.
+# The script works like this
+#
+# 1. It generates a small Modula-3 program source text. This source 
+#    text imports the interfaces given as parameters.
+# 2. The program is translated with a Modula-3 compiler.
+# 3. The compiler produces startup code for the program which we use
+#    as input to an sed script which transforms the C code so that
+#    it can be used to explicitly initialize the M3 runtine system
+#    from C.
+#
+# Parameters for this script are:
+# -i <interface> 
+#	declares an interface which must be imported by the generated 
+#	M3 program. This option can occur several times.
+# -I <package>[:override_path]
+#	declares a Modula-3 packages that must be imported by the 
+#	m3makefile to be able to translate the generated code. The
+#	optional path gives an override location for the package.
+# -T <TARGET>
+#	specifies the Modula-3 target name (SOLgnu, LINUXELF etc.)
+#	Default target is SOLgnu.
+# -M <flavour>
+#       Known flavours of make: MGEN or M3BUILD
+# -C <compiler>
+#       Known compiler types are SRC for DEC SRC and derivates and
+#	CM3 for the critical mass compiler
+# -o <file> 
+#	Print output to <file>. Default is ./m3init.c
+# 
+# For GRAS call
+# GenM3init -i RGRASGraph -i RTCollector -i StringCopy -I rgras:$GRASHOME
+
+IMPORTS=""
+OVERRIDES=""
+INTERFACES=""
+TARGET="SOLgnu"
+FLAVOUR="M3BUILD"
+COMPILER="SRC"
+oldDir=`pwd`
+OUTPUT=${oldDir}/m3init.c
+
+MyName=`basename $0`
+USAGE="$MyName {-i <interface>} {-I <package>[:override_path]} \n\
+[-T <TARGET>] [-M <FLAVOUR>] [-C <COMPILER>] [-o <outfile>]\n"
+# parse options
+
+while getopts i:I:T:M:C:o: arg
+do
+  case $arg in
+    i)  INTERFACES=${INTERFACES}' '${OPTARG};;
+    I)  package=`printf ${OPTARG} | awk -F: '{print $1}'`
+	IMPORTS=${IMPORTS}'\nimport("'${package}'")'
+	override=`printf ${OPTARG} | awk -F: '{print $2}'`
+	if [ ! -z "${override}" ]
+	then
+	  OVERRIDES=${OVERRIDES}'\noverride("'${package}'","'${override}'")'
+	fi;;
+    T)  TARGET=${OPTARG};;
+    M)  FLAVOUR=${OPTARG}
+	if [ ! \( "${FLAVOUR}" = "MGEN" \) -a ! \( "${FLAVOUR}" = "M3BUILD" \) ]
+ 	then
+	  printf "$MyName: Unknown flavour. Use one of M3BUILD and MGEN\n"
+	  exit 2
+        fi;;
+    C)  COMPILER=${OPTARG}
+	if [ ! \( "${COMPILER}" = "SRC" \) -a ! \( "${COMPILER}" = "CM3" \) -a ! \( "${COMPILER}" = "PM3" \) ]
+ 	then
+	  printf "$MyName: Unknown compiler type. Use one of SRC, PM3 and CM3\n"
+	  exit 2
+        fi;;
+    o)  OUTPUT=${OPTARG};;
+    \?) printf $USAGE
+        exit 2;;
+  esac
+done
+
+if [ "${INTERFACES}" = "" ]
+then
+  printf "$MyName: You must at least specify one interface\n"
+  printf "$USAGE"
+  exit 1
+fi
+
+if [ \( "${FLAVOUR}" = "MGEN" \) -a \( "${COMPILER}" = "CM3" \) ]
+then
+  printf "Compiler CM3 with flavour MGEN currently not supported!\n"
+  exit 2
+fi
+
+#printf "IMPORTS = ${IMPORTS}\n"
+#printf "OVERRIDES = ${OVERRIDES}\n"
+#printf "INTERFACES = ${INTERFACES}\n"
+#printf "COMPILER = ${COMPILER}\n"
+#printf "FLAVOUR = ${FLAVOUR}\n"
+
+# Generate Modula-3 source code and m3makefile
+newDir=/tmp/${MyName}.$$
+srcDir=${newDir}/src
+mkdir ${newDir}
+mkdir ${srcDir}
+
+printf "UNSAFE MODULE GenM3Init EXPORTS Main;\n" > ${srcDir}/GenM3Init.m3
+for i in ${INTERFACES}
+do
+  printf "IMPORT $i;\n" >> ${srcDir}/GenM3Init.m3
+done
+printf "BEGIN\nEND GenM3Init.\n" >> ${srcDir}/GenM3Init.m3
+
+# adapt to MGEN if necessary
+if [ "${FLAVOUR}" = "MGEN" ]
+then
+  OVERRIDES=`printf "${OVERRIDES}" | sed -e 's/override/mgen_override/g'`
+  IMPORTS=`printf "${IMPORTS}" | sed -e 's/import/mgen_import/g'`
+fi
+
+printf "${OVERRIDES}" > ${srcDir}/m3makefile
+printf "${IMPORTS}\n" >> ${srcDir}/m3makefile
+if [ "${COMPILER}" = "SRC" ]
+then
+  printf "m3_option(\"-keep\")\n" >> ${srcDir}/m3makefile
+else
+  if [ "${COMPILER}" = "PM3" ]
+  then
+    printf "option(\"m3main_in_C\",\"T\")\n" >>${srcDir}/m3makefile
+  else
+    printf "M3_MAIN_IN_C = TRUE\n" >> ${srcDir}/m3makefile
+  fi
+fi
+printf "implementation(\"GenM3Init\")\n" >> ${srcDir}/m3makefile
+printf "program(\"GenM3Init\")\n" >> ${srcDir}/m3makefile
+
+# call the Modula-3 compiler
+cd ${newDir}
+if [ "${FLAVOUR}" = "M3BUILD" ]
+then
+  if [ "${COMPILER}" = "SRC" -o "${COMPILER}" = "PM3" ]
+  then
+    m3build
+  else
+    cm3 -keep
+  fi
+else
+  OBJDIR=${newDir}/${TARGET}
+  SRCDIR=${srcDir}
+  LIBDIR=${OBJDIR}
+  #OPTIONDIR=""
+  MGENRUNFLAG=.MGENRUN
+  mkdir ${TARGET}
+  cd ${TARGET}
+  export OBJDIR SRCDIR LIBDIR OPTIONDIR MGENRUNFLAG
+  if [ "${COMPILER}" = "SRC" ]
+  then
+    printf "%s %s %s %s %s %s %s %s %s %s %s %s\n" ${QUAKE} -D_all \
+	  -DPACKAGE_DIR=${srcDir} \
+	  -DPACKAGE=GenM3Init \
+	  -DBUILD_DIR=${M3BUILDDIR} \
+	  -DCAPTURE_M3 \
+	  -DMGENOPTIONS="${OPTIONFLAGS}" \
+	  ${M3TEMPLATEDIR}/${M3BUILDDIR} \
+	  ${M3TEMPLATEDIR}/MGEN \
+	  ${PROJECTTEMPLATES}  \
+	  ${srcDir}/m3makefile \
+	  ${M3TEMPLATEDIR}/CLEANUP
+    ${QUAKE} -D_all \
+	  -DPACKAGE_DIR=${srcDir} \
+	  -DPACKAGE=GenM3Init \
+	  -DBUILD_DIR=${M3BUILDDIR} \
+	  -DPACKAGE_DIR=${srcDir} \
+	  -DPACKAGE=GenM3Init \
+	  -DBUILD_DIR=${M3BUILDDIR} \
+	  -DCAPTURE_M3 \
+	  -DMGENOPTIONS="${OPTIONFLAGS}" \
+	  ${M3TEMPLATEDIR}/${M3BUILDDIR} \
+	  ${M3TEMPLATEDIR}/MGEN \
+	  ${PROJECTTEMPLATES}  \
+	  ${srcDir}/m3makefile \
+	  ${M3TEMPLATEDIR}/CLEANUP
+  else
+    printf "%s %s %s %s %s %s %s %s %s %s %s %s\n" ${QUAKE} -D_all \
+          -DPACKAGE_DIR=${srcDir} \
+          -DPACKAGE=GenM3Init \
+          -DBUILD_DIR=${M3BUILDDIR} \
+          -DCAPTURE_M3 \
+          -DMGENOPTIONS="${OPTIONFLAGS}" \
+          -T ${M3TEMPLATEDIR} \
+          ${PROJECTTEMPLATES}  \
+          ${srcDir}/m3makefile
+    ${QUAKE} -D_all \
+          -DPACKAGE_DIR=${srcDir} \
+          -DPACKAGE=GenM3Init \
+          -DBUILD_DIR=${M3BUILDDIR} \
+          -DCAPTURE_M3 \
+          -DMGENOPTIONS="${OPTIONFLAGS}" \
+          -T ${M3TEMPLATEDIR} \
+          ${PROJECTTEMPLATES}  \
+          ${srcDir}/m3makefile
+  fi
+  cd ${newDir}
+fi
+
+# The compiler generated a file ${newDir}/${TARGET}/_m3main.c. This
+# file will be filtered by an sed script to produce ${oldDir}/m3init.c
+# The sed script is generated to include the calls to the imported
+# interfaces. The first part of the script depends on the compiler type.
+script=${newDir}/strip.sed
+
+if [ "${COMPILER}" = "SRC" -o "${COMPILER}" = "PM3" ]
+then
+cat >${script} <<SED1EOFSRC
+# remove all lines up to the first occurence of ^struct{ and
+# insert include directives
+1,/^struct {/ c\\
+\\
+typedef long  _INTEGER;\\
+typedef char* _ADDRESS;\\
+typedef char* _STRING;\\
+typedef void (*_PROC)();\\
+\\
+typedef struct ProcInfo {\\
+  _PROC    proc;\\
+  _STRING  name;\\
+  _ADDRESS export;\\
+} _PROCINFO;\\
+\\
+typedef struct module {\\
+  _ADDRESS  file;\\
+  _ADDRESS  type_cells;\\
+  _ADDRESS  type_cell_ptrs;\\
+  _ADDRESS  full_revelations;\\
+  _ADDRESS  partial_revelations;\\
+  _ADDRESS  proc_info;\\
+  _ADDRESS  try_scopes;\\
+  _ADDRESS  var_map;\\
+  _ADDRESS  gc_map;\\
+  _PROC     link;\\
+  _PROC     main;\\
+} _MODULE;\\
+\\
+typedef struct link_info {\\
+  _INTEGER n_modules;\\
+  _ADDRESS modules;\\
+  _INTEGER argc;\\
+  _ADDRESS argv;\\
+  _ADDRESS envp;\\
+  _ADDRESS instance;\\
+  _ADDRESS bottom_of_stack;\\
+  _ADDRESS top_of_stack;\\
+} _LINK_INFO;\\
+\\
+typedef struct {\\
+  _MODULE     module;\\
+  _ADDRESS    info_typecell[26];\\
+  _LINK_INFO *info;\\
+} _LINKER;\\
+\\
+\\
+_LINK_INFO *m3init(int argc, char *argv[], char **envp);\\
+\\
+\\
+struct {
+
+# remove all refernces to Main and GenM3Init
+/struct { int GenM3Init; } Main;/ d
+/extern _MODULE MM_GenM3Init/ d
+/extern _MODULE MI_Main/ d
+/&MM_GenM3Init/ d
+/&MI_Main/ d
+
+# replace MM_RTLinker with MM_RTLinkerPatch
+/extern _MODULE MM_RTLinker;/ s/Linker/LinkerPatch/
+/  &MM_RTLinker,/ s/Linker/LinkerPatch/
+
+# substract 2 from the number of modules (symbolically)
+/static _MODULE \*_modules/ s/] = {/-2] = {/
+/\/\* n_modules  \*\// s/,/-2,/
+
+# change function main to m3init. This has as return parameter
+# the link information which is used to build the
+# jump tables
+/int main (argc, argv, envp)/ c\\
+_LINK_INFO *m3init(argc, argv, envp)
+/  MM_RTLinker.main ();/ c\\
+  MM_RTLinkerPatch.main ();
+/  return 0;/ c\\
+  return &_m3_link_info;
+
+# append the function M3Initialize to the file
+$ a\\
+\\
+SED1EOFSRC
+else
+cat >${script} <<SED1EOFCM3
+# remove all lines up to the first occurence of ^struct{ and
+# insert include directives
+1,/^struct {/ c\\
+\\
+typedef long  _INTEGER;\\
+typedef char* _ADDRESS;\\
+typedef char* _STRING;\\
+typedef void (*_PROC)();\\
+\\
+typedef struct ProcInfo {\\
+  _PROC    proc;\\
+  _STRING  name;\\
+} _PROCINFO;\\
+\\
+typedef struct module {\\
+  _ADDRESS  file;\\
+  _ADDRESS  type_cells;\\
+  _ADDRESS  type_cell_ptrs;\\
+  _ADDRESS  full_revelations;\\
+  _ADDRESS  partial_revelations;\\
+  _ADDRESS  proc_info;\\
+  _ADDRESS  try_scopes;\\
+  _ADDRESS  var_map;\\
+  _ADDRESS  gc_map;\\
+  _ADDRESS  import_info;\\
+  _PROC     link;\\
+  _PROC     main;\\
+} _MODULE;\\
+\\
+typedef struct link_info {\\
+  _INTEGER n_modules;\\
+  _ADDRESS modules;\\
+  _INTEGER argc;\\
+  _ADDRESS argv;\\
+  _ADDRESS envp;\\
+  _ADDRESS instance;\\
+  _ADDRESS bottom_of_stack;\\
+  _ADDRESS top_of_stack;\\
+} _LINK_INFO;\\
+\\
+typedef struct {\\
+  _MODULE     module;\\
+  _ADDRESS    info_typecell[26];\\
+  _LINK_INFO *info;\\
+} _LINKER;\\
+\\
+\\
+_LINK_INFO *m3init(int argc, char *argv[], char **envp);\\
+\\
+\\
+typedef void* (*_BIND_PROC)();\\
+\\
+struct {
+
+# remove all refernces to Main and GenM3Init
+/struct { int GenM3Init; } Main;/ d
+/extern void* M_GenM3Init();/ d
+/extern void* I_Main();/ d
+/M_GenM3Init,/ d
+/I_Main,/ d
+
+# replace M/I_RTLinker with M/I_RTLinkerPatch
+/extern void\* M_RTLinker();/ s/Linker/LinkerPatch/
+/  M_RTLinker,/ s/Linker/LinkerPatch/
+/extern void\* I_RTLinker();/ s/Linker/LinkerPatch/
+/  I_RTLinker,/ s/Linker/LinkerPatch/
+
+# substract 2 from the number of modules (symbolically)
+/static _BIND_PROC _modules/ s/] = {/-2] = {/
+/\/\* n_modules  \*\// s/,/-2,/
+
+# change function main to m3init. This has as return parameter
+# the link information which is used to build the
+# jump tables
+/extern void RTLinker__RunProgram ();/ c\\
+extern void RTLinkerPatch__RunProgram ();
+
+/int main (argc, argv, envp)/ c\\
+_LINK_INFO *m3init(argc, argv, envp)
+
+/  RTLinker__RunProgram (&_m3_link_info);/ c\\
+  RTLinkerPatch__RunProgram (&_m3_link_info);
+
+/  return 0;/ c\\
+  return &_m3_link_info;
+
+# append the function M3Initialize to the file
+$ a\\
+\\
+SED1EOFCM3
+fi
+
+for i in ${INTERFACES}
+do
+  printf "extern ${i}_create_proc_address_table(_LINK_INFO *linfo);%s\n" "\\" >> ${script}
+done
+
+cat >> ${script} <<SED2EOF
+\\
+void\\
+M3Initialize(int argc, char **argv, char **envp);\\
+\\
+void\\
+M3Initialize(int argc, char **argv, char **envp)\\
+{\\
+    char *m3argv[argc];\\
+    int i;\\
+    _LINK_INFO *linfo;\\
+\\
+    /* make a copy of argv to avoid mismatch between argc and argv\\
+       after command line processing of m3init */\\
+    for(i=0;i<argc;i++) m3argv[i]=argv[i];\\
+\\
+    linfo = m3init(argc, m3argv, envp);\\
+\\
+    /* Initialize jump tables for Modula-3 routines. */\\
+    \\
+SED2EOF
+
+for i in ${INTERFACES}
+do
+  printf "    ${i}_create_proc_address_table(linfo);%s\n" "\\" >> ${script}
+done
+
+printf "}%s\n" "\\" >> ${script}
+
+# apply the generated sed script to _m3main.c
+printf "sed -f %s %s > %s\n" ${script} ${newDir}/${TARGET}/_m3main.c ${OUTPUT}
+sed -f ${script} ${newDir}/${TARGET}/_m3main.c > ${OUTPUT}
+
+cd ${oldDir}
+rm -r ${newDir}

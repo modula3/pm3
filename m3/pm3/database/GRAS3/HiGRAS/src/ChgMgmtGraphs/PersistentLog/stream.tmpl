@@ -1,0 +1,15 @@
+%
+%  Quake functions to instantiate a generic stream.
+%
+
+readonly proc Stream (nm, element) is
+  local str = nm & "Stream"
+  build_generic_intf (str, "Stream", [element], VISIBLE)
+  build_generic_impl (str, "Stream", [element])
+end
+
+readonly proc stream (nm, element) is
+  local str = nm & "Stream"
+  build_generic_intf (str, "Stream", [element], HIDDEN)
+  build_generic_impl (str, "Stream", [element])
+end

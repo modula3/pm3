@@ -1,0 +1,22 @@
+(Rim  (LabelFont "-*-helvetica-medium-r-normal--12-*") (Pen 10)
+  (VBox %attributes
+    (HBox (LabelFont "-*-helvetica-bold-r-normal--12-*")
+      (Text (LeftAlign TRUE) "Type ") 
+      (Text %type (LeftAlign TRUE) "") 
+      Fill
+    )
+    Chisel
+    (HBox
+      Fill
+      (Button %editok 
+        (Shape (Height 15) (Rim (Text (BgColor "LightGreen") "OK")))) 
+      Fill
+      (Button %editshowinfo
+        (Shape (Height 15) (Rim (Text (BgColor "LightBlue") "Info")))) 
+      Fill
+      (Button %editcancel
+        (Shape (Height 15) (Rim (Text (BgColor "LightRed") "Cancel"))))
+      Fill
+    )
+  )
+)

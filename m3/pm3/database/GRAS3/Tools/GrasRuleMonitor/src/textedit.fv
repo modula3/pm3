@@ -1,0 +1,13 @@
+  (VBox
+    Chisel
+    (Rim (Pen 3)
+      (HBox 
+	(Boolean %@AttrName@Bool
+	         (Value @IsNoWildcard@) (Text "@AttrName@: TEXT"))
+	Fill
+	(Filter %@AttrName@Filter (Dormant @FilterState@) 
+	  (Shape (Width 100) (Border 
+	    (TypeIn %@AttrName@Value (BgColor "white")))))
+      )
+    )
+  )

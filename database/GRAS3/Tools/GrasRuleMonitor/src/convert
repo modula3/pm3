@@ -1,0 +1,13 @@
+#!/usr/local/bin/tcsh
+if ($# == 0) then
+  foreach icon ( *icon )
+    echo icontopbm $icon
+    icontopbm $icon > $icon:r.pbm
+  end
+else
+  foreach icon ( $argv )
+    echo icontopbm $icon
+    icontopbm $icon > $icon:r.pbm
+  end
+endif
+

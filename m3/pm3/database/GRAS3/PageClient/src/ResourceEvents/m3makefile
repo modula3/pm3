@@ -1,0 +1,4 @@
+Interface("VirtualPageEvent")
+interface("PrivateVirtualPageEvent")
+implementation("VirtualPageEvent")
+Module("VirtualPageEventPattern")

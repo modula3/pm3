@@ -1,0 +1,8 @@
+m3_option("-g")
+
+import("GrasCommon")
+
+implementation("Main")
+Program("g3shutdown")
+
+ManPage("g3shutdown", "1")

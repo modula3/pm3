@@ -1,0 +1,122 @@
+(ZSplit
+  (Filter %Filter
+  (LabelFont "-*-helvetica-bold-r-normal--12-*")
+  (Rim
+    %MainForm
+    (Pen 10)
+    (Shape
+      (Height 400 + Inf - 100)
+      (Width 400 + Inf - 100)
+      (VBox
+        (HBox
+          (HBox
+            (Shape
+              (Width 40)
+              (Menu
+                "File"
+                (VBox
+                  (MButton
+                    %MenuOpenResource
+                    (Text (LeftAlign TRUE) "Open pool ..."))
+                  (PopMButton
+                    %MenuSetCollectionFilename
+                    (For SetFilenameForm)
+                    (Text (LeftAlign TRUE) "Contents file ..."))
+                  (Chisel)
+                  (MButton %MenuClose (Text (LeftAlign TRUE) "Quit"))))))
+          (HBox
+            (Shape
+              (Width 40)
+              (Menu
+                "Edit"
+                (VBox
+                  (MButton
+                    %MenuDeleteEntry
+                    (Text (LeftAlign TRUE) "Delete entry ..."))
+                  (MButton
+                    %MenuDeleteInRelation
+                    (Text (LeftAlign TRUE) "Delete incoming relation ..."))
+                  (MButton
+                    %MenuDeleteOutRelation
+                    (Text (LeftAlign TRUE) "Delete outgoing relation ..."))))))
+          (HBox (Glue)))
+        (Glue 5)
+        (HBox
+          (VBox
+            (HBox (Shape (Height 20) (Text Center "Entries")))
+            (Border (Shape (Width 200) (Browser %BrowserNames (Quick TRUE)))))
+          (VBox
+            (HBox (Shape (Height 20) (Text Center "Collections")))
+            (Border (Shape (Width 200) (Browser %BrowserCollections)))))
+        (Glue 5)
+        (HBox
+          (VBox
+            (HBox (Shape (Height 20) (Text Center "Attributes")))
+            (Border
+              (Shape (Width 200) (Browser %BrowserAttributes (Quick TRUE)))))
+          (VBox
+            (HBox (Shape (Height 20) (Text Center "Attribute value")))
+            (Border (Shape (Width 200) (Browser %BrowserAttributeValues)))))
+        (Glue 5)
+        (HBox
+          (VBox
+            (HBox (Shape (Height 20) (Text Center "Outgoing relations")))
+            (Border
+              (Shape
+                (Width 200)
+                (Browser %BrowserOutgoingRelations (Quick TRUE)))))
+          (VBox
+            (HBox (Shape (Height 20) (Text Center "Targets")))
+            (Border (Shape (Width 200) (Browser %BrowserRelationTargets)))))
+        (Glue 5)
+        (HBox
+          (VBox
+            (HBox (Shape (Height 20) (Text Center "Incoming relations")))
+            (Border
+              (Shape
+                (Width 200)
+                (Browser %BrowserIncomingRelations (Quick TRUE)))))
+          (VBox
+            (HBox (Shape (Height 20) (Text Center "Sources")))
+            (Border (Shape (Width 200) (Browser %BrowserRelationSources)))))))))
+  (ZChassis
+    %OpenResourceForm
+    (Title "Select pool")
+    (LabelFont "-*-helvetica-bold-r-normal--12-*")
+    (Shape
+      (Height 100)
+      (Width 200)
+      (VBox
+        (HBox (Browser %BrowserResources))
+        (Glue 5)
+        (HBox (Button %ButtonSelectResource "Select")))))
+  (ZChassis
+    %SetFilenameForm
+    (Title "Set contents filename")
+    (HBox
+      (Shape (Width 70) (Text RightAlign "Filename:"))
+      (Border (TypeIn (BgColor "White") %collfilename))
+      Fill))
+  (ZChassis
+    %ErrorForm
+    (Title "Error")
+    (Rim
+      (Pen 10)
+      (VBox (Text %ErrorMessage "") (Glue 5) (CloseButton (Button "OK")))))
+  (ZChassis
+    %DeleteForm
+    (Title (Text %DeleteFormTitle ""))
+    (Shape
+      (Height 80)
+      (Width 300)
+      (VBox
+        (Glue 10)
+        (Shape (Width 200) (Text Center %DeleteFormString ""))
+        (Shape (Width 200) (Text %EntryToDelete Center ""))
+        (HBox
+          (Glue 5)
+          (Shape (Width 35) (Button %ButtonOkDelete "Yes"))
+          Fill
+          (Shape (Width 35) (Button %ButtonCancelDelete "No"))
+          (Glue 5))
+        (Glue 10)))))

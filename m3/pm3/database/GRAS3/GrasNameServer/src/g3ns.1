@@ -1,0 +1,119 @@
+.TH G3NS 1 "12 Dec 1997"
+.SH NAME
+g3ns \- Name-Server of the GRAS database management system.
+.SH SYNOPSIS
+.TP 5
+.B 
+g3ns
+[-v] [[install] [-f|force]] [-l|list] [-c|cleanup]
+.br
+[-s|shutdown] [-h|help] [-agent <hostname>]
+.br
+.br
+.SH DESCRIPTION
+The name-server keeps a list of all currently active gras
+page-servers.  It is neccessary to use a name-server when more than
+one page-server at a time is running and accessible to potential
+clients.  Every page-server registers with the name-server at startup
+and adds its id and a handle to the list of servers held by the
+name-server.  A client trying to connect to a page-server has to query
+the name-server to get the page-servers address. It may also ask for a
+list of running page-servers from the name-server (this is the reason
+not to use netobjd as name-server). The client can then decide to
+which page-server it wants to connect to and get the appropriate
+handle from the name-server.  Whith this handle the client can now use
+all methods of the page-server.
+.br
+g3ns serves two purposes: it can be used to install a name-server for
+GRAS applications and it has options to control and query a running
+name-server. 
+.SH OPTIONS
+.TP 3
+.B 
+-v
+.br
+Start name-server in verbose mode. In this mode, the g3ns reports
+about the actions it performs. For example restistering of
+page-servers and removal of dead page-servers from the list are
+printed on the terminal.  When the -v parameter is missing no messages
+will be displayed on the screen.
+.br
+.TP
+.B 
+install [-f|force]
+.br
+This is the default action. The programm tries to install itself as a
+name-server. This might fail, if netobjd cannot be found, a
+name-server is already running (no force), or a running name server
+cannot be shut down, because it has page-servers registerd (force).
+The '-f' or 'force' option is used to force the startup of a new
+name-server even when another server is still running.  With force
+option enabled and if another server is registered with the network
+object demon, g3ns tests whether this name-server is still alive. If
+not, it will be removed from netobjd. If the registered name-server is
+alive, g3ns tries to shut it down. This can only be successful, if the
+list of page-servers held by the registered name-server is empty. If
+the shutdown or removal fails, no new name-server can be started.
+Without the force option no new server is started when an old server
+is registered with the network object demon.
+.br
+.TP
+.B 
+-l, list
+.br
+Tries to connect to a running name-server and receive the list of
+registered page servers. If successful, it prints this list to the
+terminal.
+.br
+.TP
+.B 
+-c, cleanup
+.br
+Tries to connect to a running name-server and asks it to ping all
+registered page-servers. If a page-server does not respond, it will be
+unregistered form the list. Note: The name-server issues this cleanup
+procedure every 60 mins. on its own. So normally it shouldn't be
+necessary to use this switch, except you instantly want to know what
+servers are registered.
+.br
+.TP
+.B 
+-s, shutdown
+.br
+If a name-server is running, g3ns tries to shut it down. This will
+fail, if the name-server found has page-servers registered to it.
+.br
+.TP
+.B 
+-agent <hostname>
+.br
+Use <hostname> to locate netobjd. The default is 'localhost'. There
+can only be more than one name-server for gras in a network, if these
+are registered to different netobjd processes.
+.br
+.br
+.TP
+.B 
+-h, help
+.br
+Print information about command line parameters to the terminal.
+.br
+.SH SEE ALSO
+.BR GRAS (1),
+.BR g3server (1),
+.BR netobjd (1)
+.SH DIAGNOSTICS
+.B
+Name server already runnig.
+g3ns failed to install itself as name-server.
+.br 
+.B
+NetObj Error.
+This message indicates that a communication error occured.
+.br
+.B
+NetObj invalid!
+An unknown host was specified as agent.
+.br
+.SH BUGS
+None known yet.

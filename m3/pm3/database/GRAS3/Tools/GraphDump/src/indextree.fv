@@ -1,0 +1,10 @@
+(Rim (Pen 10)    
+  (LabelFont "-*-helvetica-medium-r-normal--12-*")
+  (VBox
+    (VBox %tree)
+    (Glue 5)
+    (HBox Fill (Button %close "Close") Fill)
+    (Glue 5)
+  )
+)
+

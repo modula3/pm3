@@ -1,0 +1,24 @@
+GRAS uses the daVinci graph visualization software to graphically
+display the contents of GRAS3 schemata and pools. daVinci is available
+in binary format from http://www.informatik.uni-bremen.de/~davinci. 
+The current release, or better the release GRAS3 uses, is V2.1.
+
+This directory contains a rudimentary Modula-3 interface to daVincis
+API. It provides starting a daVinci process, sending and receiving
+messages to/from a daVinci process and also the first wrappers to hide
+daVincis API syntax. Currently, this is included into the directories
+PoolView and SchemeView. You can make this interface a library on its
+own by simply adding a 'Library("DaVinci")' line to the m3makefile
+(and change the makefiles for in SchemeView and PoolView
+accordingly). 
+
+If you want to implement more of daVincis API in this library feel
+encouraged to do so. It would be great however, if you could send me
+these changes, because we will also incorporate more of daVincis
+functionality here in the future.
+
+For comments, suggestions, questions about this interface contact
+roland@i3.informatik.rwth-aachen.de.
+
+For anything concerning daVinci, you should rather contact the daVinci
+developers (see URL above).

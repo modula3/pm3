@@ -1,0 +1,5 @@
+
+Module			("ServedClient")
+interface		("InternalServedClient")
+Table			("ServedClient", "Text", "ServedClient")
+Module			("ServedClientTable")

@@ -1,0 +1,7 @@
+Module("AttributeValue")
+Module("BooleanAttributeValue")
+Module("IntegerAttributeValue")
+Module("CardinalAttributeValue")
+Module("RealAttributeValue")
+Module("CharAttributeValue")
+Module("TextAttributeValue")

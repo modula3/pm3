@@ -1,0 +1,24 @@
+import("libm3")
+import("rgras")
+
+% CM3 or SRC ?
+CM3 = "cm3"
+SRC = "src"
+PM3 = "pm3"
+if not defined("COMPILER")
+  COMPILER = SRC
+end
+UCComp = { "cm3" : "CM3" , "src" : "SRC", "pm3" : "PM3" }
+
+m3_option("-g")
+template("genm3init")
+GenM3Init(["RGRASGraph", "StringCopy", "RTCollector"],
+	["rgras:" & $GRASHOME],
+	UCComp{COMPILER}, "M3BUILD")
+
+if equal(COMPILER,CM3)
+  m4_interface("RTLinkerPatch",HIDDEN)
+end
+m4_implementation("RTLinkerPatch")
+
+library		("CM3Init")

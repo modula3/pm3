@@ -1,0 +1,28 @@
+template("cache")
+
+Generic_module("Cache")
+Module("CardText")
+Module("NodeCard")
+Interface("BrandedNodeSet")
+
+table("CardTextToNode","CardText","Node")
+table("NodeCardToText","NodeCard","Text")
+table("NodeCard","Node","Cardinal")
+table("NodeCardToNodeSet", "NodeCard", "BrandedNodeSet")
+
+Module("NameCacheStorage")
+Module("IdCacheStorage")
+Module("LabelCacheStorage")
+Module("AttributeCacheStorage")
+Module("SourceCacheStorage")
+Module("TargetCacheStorage")
+
+Cache("Id","NodeCard","Text","NodeCardToTextTbl","IdCacheStorage")
+Cache("Name","CardText","Node","CardTextToNodeTbl","NameCacheStorage")
+Cache("Attribute","NodeCard","Text","NodeCardToTextTbl","AttributeCacheStorage")
+Cache("Label","Node","Cardinal","NodeCardTbl","LabelCacheStorage")
+Cache("Source", "NodeCard", "BrandedNodeSet", 
+      "NodeCardToNodeSetTbl", "SourceCacheStorage")
+Cache("Target", "NodeCard", "BrandedNodeSet", 
+      "NodeCardToNodeSetTbl", "TargetCacheStorage")
+

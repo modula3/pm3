@@ -1,0 +1,33 @@
+(ZSplit (LabelFont "-*-helvetica-medium-r-normal--12-*")
+  (ZBackground 
+    (Rim (Pen 10)
+      (HBox
+        (Filter 
+ 	(VBox %buttons
+	))
+        (Glue 10)
+        (VBox
+	  (HBox (Shape (Width 60) (Text (LeftAlign TRUE) "Root ")) 
+                (Shape (Width 50) (Text %rootnode (LeftAlign TRUE) "=")))
+	  (HBox (Shape (Width 60) (Text (LeftAlign TRUE) "Nodes ")) 
+	        (Shape (Width 50) (Text %nodes (LeftAlign TRUE) "=")))
+	  (HBox (Shape (Width 60) (Text (LeftAlign TRUE) "Height ")) 
+	        (Shape (Width 50) (Text %height (LeftAlign TRUE) "=")))
+	  (HBox (Shape (Width 60) (Text (LeftAlign TRUE) "max Degree ")) 
+	        (Shape (Width 50) (Text %maxdegree (LeftAlign TRUE) "=")))
+	  Fill
+        )
+      )
+    )
+  )
+  (ZChassis %paraminput
+    (Rim (Pen 10)
+      (VBox
+        (HBox (Text %paramtext "") (Numeric %param))
+	(HBox (Button %paramok "OK") Fill (Button %paramcancel "Cancel"))
+      )
+    )
+  )
+)
+
+      

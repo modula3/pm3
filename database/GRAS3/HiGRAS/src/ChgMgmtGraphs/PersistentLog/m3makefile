@@ -1,0 +1,23 @@
+Generic_module("Stream")
+
+template("stream")
+
+module("FilePos")
+stream("GraphCommand", "GraphCommand")
+
+module("DeltaInfo")
+Module("PersistentDelta")
+
+module("PersistentCheckpointInfo")
+stream("PCI","PersistentCheckpointInfo")
+module("PersistentCheckpointTree")
+
+module("LabelPathInfo")
+stream("LPI", "LabelPathInfo")
+module("PersistentLabelTable")
+
+module("PersCard")
+stream("Card", "PersCard")
+module("PersistentMetaOpStack")
+
+module("PersistentLog")

@@ -1,0 +1,10 @@
+m3_option		("-g")
+
+import("GrasCommon")
+
+include_dir("ServedClients")
+include_dir("ServerScheduler")
+include_dir("RuleServer")
+include_dir("ServerControl")
+
+Program("g3server")

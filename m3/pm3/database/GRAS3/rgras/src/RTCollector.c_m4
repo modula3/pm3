@@ -1,0 +1,90 @@
+/* Sprungtabellen + Aufrufe fuer RTCollector. */
+/* Automatisch generiert */
+#include <string.h>
+#include <stdio.h>
+#include <CTypesForM3.h>
+#include <RTCollector.h>
+
+#define RTCollectorProcCount 5
+
+enum RTCollectorProcs {
+	DISABLE,
+	ENABLE,
+	DISABLEMOTION,
+	ENABLEMOTION,
+	COLLECT};
+
+static char RTCollectorProcNames[RTCollectorProcCount][60] =
+	{"Disable",
+	"Enable",
+	"DisableMotion",
+	"EnableMotion",
+	"Collect"};
+
+static _PROC RTCollectorProcAddress[RTCollectorProcCount];
+
+static char RTCollector_module_name[31] = "/RTCollector.m3";
+
+void RTCollector_create_proc_address_table(_LINK_INFO *l_info)
+{
+  _INTEGER    mod, proc;
+  _MODULE   **module = (_MODULE **)l_info->modules;
+  _PROCINFO  *procedure_info;
+
+  mod = 0;
+  while(!((module[mod]->proc_info) 
+	&& (strstr(module[mod]->file, RTCollector_module_name))))
+      mod++;
+  for (proc=0; proc < RTCollectorProcCount; proc++){
+    procedure_info = (_PROCINFO *)module[mod]->proc_info;
+ifelse(COMPILER,`CM3',
+`    while (procedure_info->name != 0) {'
+,
+`    while (procedure_info->proc != 0) {'
+)
+      if (strcmp(procedure_info->name, RTCollectorProcNames[proc]) == 0) {
+          RTCollectorProcAddress[proc] = procedure_info->proc;
+          break;
+      }
+      else
+        ++procedure_info;
+    }
+ifelse(COMPILER,`CM3',
+`    if(!procedure_info->name)'
+,
+`    if(!procedure_info->proc)'
+)
+      printf("ERROR! Procedure %s not found\n", RTCollectorProcNames[proc]);
+  }
+}
+
+void
+Disable(void)
+{
+  (RTCollectorProcAddress[DISABLE])();
+}
+
+void
+Enable(void)
+{
+  (RTCollectorProcAddress[ENABLE])();
+}
+
+void
+DisableMotion(void)
+{
+  (RTCollectorProcAddress[DISABLEMOTION])();
+}
+
+void
+EnableMotion(void)
+{
+  (RTCollectorProcAddress[ENABLEMOTION])();
+}
+
+void
+Collect(void)
+{
+  (RTCollectorProcAddress[COLLECT])();
+}
+

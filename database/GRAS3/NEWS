@@ -1,0 +1,8 @@
+Changes from 1.0 to 1.1
+- The C interface to rgras is ready an is used in the SEB Benchmark 
+  (Benchmarks/SEB). It needs the CM3Init library to initialize the Modula-3
+  runtime system.
+- Each GRAS3 application can now use its local file area to create and access
+  graphs private to it.
+- DaVinci (http://www.informatik.uni-bremen.de/~davinci) is used to display
+  GRAS schemas and pool contents graphically.

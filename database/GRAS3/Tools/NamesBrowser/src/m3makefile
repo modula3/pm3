@@ -1,0 +1,18 @@
+m3_option("-g")
+
+import		("libm3")
+import		("ui")
+import		("formsvbt")
+import          ("HiGRAS")
+
+resource	("Browser.fv")
+resource	("GrasConfig")
+bundle		("ResourceBundle")
+
+include_pkg	("GrasParams")
+module		("BrowserConfiguration")
+implementation	("Main")
+
+Program		("poolbrowser")
+
+ManPage		("poolbrowser", "1")

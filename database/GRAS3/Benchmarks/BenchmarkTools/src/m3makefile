@@ -1,0 +1,8 @@
+import("libm3")
+
+Module("Perfmeter")
+Module("BenchmarkSupport")
+Module("BenchmarkLog")
+Module("BenchmarkAux")
+
+Library("BenchmarkTools")

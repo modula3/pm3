@@ -1,0 +1,10 @@
+m3_option("-g")
+
+%import("GrasGraphs")
+import("HiGRAS")
+include_pkg("GrasParams")
+
+implementation("DumpScheme")
+Program("schemedump")
+
+ManPage("schemedump", "1")

@@ -1,0 +1,74 @@
+(ZSplit
+  (LabelFont "-*-helvetica-bold-r-normal--12-*")
+  (Rim
+    %MainForm
+    (Pen 10)
+    (Shape
+      (Width 400 + Inf - 100)
+      (VBox
+        (HBox (Text "Collections"))
+        (HBox (Text "Displayed") Fill (Text "Hidden"))
+        (HBox
+          (Shape
+            (Height 170 + Inf)
+            (Frame (Lowered TRUE) (MultiBrowser %DisplayedCollections)))
+          (Shape
+            (Height 170 + Inf)
+            (VBox
+              (Button
+                %DisplayAllCollections
+                (Shape (Width 20) (Height 20) (Pixmap "bigleft.pbm")))
+              (Button
+                %CollectionSel
+                (Shape (Width 20) (Height 20) (Pixmap "smallleft.pbm")))
+              (Button
+                %HideCollection
+                (Shape (Width 20) (Height 20) (Pixmap "smallright.pbm")))
+              (Button
+                %HideAllCollections
+                (Shape (Width 20) (Height 20) (Pixmap "bigright.pbm")))
+              Fill))
+          (Shape
+            (Height 170 + Inf)
+            (Frame (Lowered TRUE) (MultiBrowser %HiddenCollections))))
+        (HBox (Shape (Height 20) Fill))
+        (HBox (Text "Relations"))
+        (HBox (Text "Displayed") Fill (Text "Hidden"))
+        (HBox
+          (Shape
+            (Height 170 + Inf)
+            (Frame (Lowered TRUE) (MultiBrowser %DisplayedRelations)))
+          (Shape
+            (Height 170 + Inf)
+            (VBox
+              (Button
+                %DisplayAllRelations
+                (Shape (Width 20) (Height 20) (Pixmap "bigleft.pbm")))
+              (Button
+                %RelationSel
+                (Shape (Width 20) (Height 20) (Pixmap "smallleft.pbm")))
+              (Button
+                %HideRelation
+                (Shape (Width 20) (Height 20) (Pixmap "smallright.pbm")))
+              (Button
+                %HideAllRelations
+                (Shape (Width 20) (Height 20) (Pixmap "bigright.pbm")))
+              Fill))
+          (Shape
+            (Height 170 + Inf)
+            (Frame (Lowered TRUE) (MultiBrowser %HiddenRelations))))
+        (HBox (Shape (Height 20) Fill))
+        (HBox
+          Fill
+          (Shape
+            (Width 100)
+            (HBox (Button %RefreshGraph (Text "Refresh Graph"))))
+          Fill
+          (Shape (Width 100) (HBox (Button %QuitPanel (Text "Quit"))))
+          Fill))))
+  (ZChassis
+    %ErrorForm
+    (Title "Error")
+    (Rim
+      (Pen 10)
+      (VBox (Text %ErrorMessage "") (Glue 5) (CloseButton (Button "OK"))))))

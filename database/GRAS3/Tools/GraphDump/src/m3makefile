@@ -1,0 +1,16 @@
+m3_option("-g")
+
+%import("GrasGraphs")
+import("mgkit")
+import("formsvbt")
+import("HiGRAS")
+include_pkg("GrasParams")
+
+resource("indextrees.fv")
+resource("indextree.fv")
+bundle("GDForms")
+
+implementation("GraphDump")
+Program("graphdump")
+
+ManPage("graphdump", "1")

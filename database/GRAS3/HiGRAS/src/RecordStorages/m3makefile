@@ -1,0 +1,14 @@
+template("record")
+
+Module("BitCompareWord")
+Interface("RecordBase")
+
+Generic_module("StoragePageFrame")
+Generic_module("StoragePage")
+Generic_module("RecordStorage")
+
+include_dir("Entity")
+include_dir("Attribute")
+include_dir("Relation")
+include_dir("Name")
+

@@ -1,0 +1,14 @@
+
+m3_option("-g")
+
+import("PageClient")
+
+include_dir("IndexTrees")
+include_dir("RecordStorages")
+include_dir("PersistentGraphs")
+include_dir("ChgMgmtGraphs")
+include_dir("TypedGraphs")
+
+ManPage("GRAS", "1")
+
+Library("HiGRAS")

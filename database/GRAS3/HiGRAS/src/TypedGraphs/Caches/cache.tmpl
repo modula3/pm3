@@ -1,0 +1,16 @@
+%
+%  Quake functions to instantiate generic lists and sets.
+%
+
+readonly proc Cache (nm, key, val, table, storage) is
+  local str = nm & "Cache"
+  build_generic_intf (str, "Cache", [key, val, storage], VISIBLE)
+  build_generic_impl (str, "Cache", [key, val, table, storage])
+end
+
+readonly proc cache (nm, key, val, table, storage) is
+  local str = nm & "Cache"
+  build_generic_intf (str, "Cache", [key, val, storage], HIDDEN)
+  build_generic_impl (str, "Cache", [key, val, table, storage])
+end
+

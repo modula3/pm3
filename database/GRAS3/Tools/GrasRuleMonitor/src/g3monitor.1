@@ -1,0 +1,87 @@
+.TH G3MONITOR 1 "15 Dec 1997"
+.SH NAME
+g3monitor \- Simple event monitor for the GRAS database management system.
+.SH SYNOPSIS
+.HP
+.B 
+g3monitor
+.RI 
+[-root <path>] [-agent <host>] [-id <server>]
+.br
+[-cachesize <pages>]
+.br
+.br
+.SH DESCRIPTION
+g3monitor provides a simple graphical user interface to monitor all
+kinds of events occurring in other GRAS clients. It allows to choose a
+subset of event-types known to it (which are the event types defined
+in the GRAS system) and to display occurring events textual and/or in
+a box chart (i.e. the number of events of this type occurred so far
+displayed as the length of a vertical bar). The subset is specified by
+moving selected event types from the 'unmonitored' list on the right
+hand side to the 'monitored' list on the left with the single arrow
+button pointing left. The left double arrow shifts all event types to
+the monitored list. Analogous, event types can be moved from monitored
+to unmonitored with the single and double arrows pointing right. The
+button marked 'i' displays information about selcted event types.
+
+Additionally to specifying the event types which should be monitored,
+g3monitor also allows to specify an event pattern per event type, so
+that only events matching the specified pattern are displayed. To see
+and modify an event pattern, double click on an event type in one of
+the two lists. A window displaying all attributes of the event type
+pops up. Shaded entries are treated as wildcards in the pattern
+otherwise the displayed value specifies the value which an events
+should have in order to be monitored.
+
+With the 'Start' and 'Stop' buttons of the main window, rule
+monitoring starts and stops, respectively. According to what display
+is selcted, one or more windows pop up when monitoring starts,
+displaying either a textual or graphical view of occurring
+events. Pressing 'Quit' terminates the g3monitor, possibly after
+another user inquiry.
+.SH OPTIONS
+.TP 3
+.B 
+-root <path>
+.br
+Use <path> as client root path for database login. This has no real
+effect for g3monitor, since it does not perform any database
+operations on its own.
+.br
+.TP
+.B 
+-cachesize <pages>
+.br
+Use <pages> as the number of pages in the page cache of the rule
+monitor as GRAS client.
+.br
+.TP
+.B 
+-id <server>
+.br
+Connect to a server with the id <server> instead of the default
+server. 
+.br
+.TP
+.B 
+-agent <host>
+.br
+Use <host> to locate netobjd. The default is 'localhost'. The network
+object demon is used to find the GRAS name-server 
+.BR g3ns (1).
+.br
+.SH SEE ALSO
+.BR GRAS (1),
+.BR g3ns (1)
+.SH DIAGNOSTICS
+.B
+root path not specified, supplying default '/tmp'.  
+g3monitor has to provide a root path at database login time. You may
+specify a path with the -root option. Effectively, this path is not
+used by g3monitor. Therefore, in contrast to other GRAS tools, it is
+possible to specify anything as root path for g3monitor. If nothing is
+specified by the user, g3monitor selects '/tmp'.
+.br 
+.SH BUGS
+None known yet.

@@ -1,0 +1,30 @@
+
+% *** page media ***
+module			("OriginalMedia")
+
+% *** client lock entry ***
+module			("ClientLockEntry")
+
+% *** scheduled client page ***
+sequence		("BaseClientLock", "ClientLockEntry")
+module			("ClientLockTable")
+Module			("ScheduledClientPage")
+interface		("InternalScheduledClientPage")
+
+% *** scheduled client file ***
+Module			("BaseScheduledClientFile")
+interface		("InternalBaseScheduledClientFile")
+table			("ScheduledClientPage", "Cardinal", "ScheduledClientPage")
+Module			("ScheduledClientFile")
+interface		("InternalScheduledClientFile")
+
+% *** callback client ***
+module			("CallbackClient")
+
+% *** scheduled client ressource ***
+Module			("BaseScheduledClientRessource")
+interface		("InternalBaseScheduledClientRessource")
+table			("ScheduledClientFile", "Text", "ScheduledClientFile")
+Module			("ScheduledClientRessource")
+interface		("InternalScheduledClientRessource")
+Module			("LocalResourceSystem")

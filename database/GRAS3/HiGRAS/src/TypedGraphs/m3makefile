@@ -1,0 +1,22 @@
+include_dir("AttributeValues")
+include_dir("Caches")
+
+Module("TypedNames")
+Interface("TypedGraphPool")
+Interface("InternTypedGraphPool")
+implementation("TypedGraphPool")
+
+Interface("Scheme")
+interface("InternScheme")
+implementation("Scheme")
+
+Relation("NodeType", "Node", "Node", "NodeSet", "NodeSet")
+stack("NodeTypeRelation", "NodeTypeRelation")
+
+table("NodeToText", "Node", "Text")
+module("TypeCache")
+
+Module("TypedGraph")
+Module("TypedGraphSystem")
+
+%Module("AttributeWr")

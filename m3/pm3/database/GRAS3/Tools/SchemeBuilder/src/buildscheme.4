@@ -1,0 +1,119 @@
+.TH BUILDSCHEME 4 "15 Dec 1997"
+.SH NAME
+buildscheme \- build up / extend a GRAS scheme from a textual description.
+.SH DESCRIPTION
+This section describes the format for scheme definitions the GRAS tool
+.BR buildscheme (1)
+understands. The definitions must be given as ASCII text conforming to
+the syntax described below as EBNF rules. A '#' begins a comment
+ranging to the next end-of-line.
+.SS Syntax
+.TP 10
+scheme ::= 
+{ declaration }
+.TP 10
+declaration ::= 
+class_decl | type_decl | edge_decl 
+| attribute_decl | subtype_decl | eval_decl 
+| dependency_decl
+.TP 10
+class_decl ::= 
+"class" class_name
+.TP 10
+type_decl ::= 
+"type" type_name
+.TP 10
+edge_decl ::= 
+"edge" edge_name cot_name cardinality cot_name cardinality
+.TP 10
+cardinality ::= 
+number (number | "n")
+.TP 10
+attribute_decl ::= 
+"attribute" cot_name attr_name attr_kind index_property 
+number cardinality boolean number
+.TP 10
+attr_kind ::= 
+"intrinsic" | "derived" | "dummy" | "meta"
+.TP 10
+index_property ::= 
+"normal" | "index" | "key"
+.TP 10
+boolean ::= 
+"FALSE" | "TRUE"
+.TP 10
+subtype_decl ::= 
+"append" cot_name cot_name
+.TP 10
+eval_decl ::= 
+"eval" cot_name attr_name function_name
+.TP 10
+dependency_decl ::= 
+"dependency" cot_name attr_name cot_name attr_name
+dependency_kind [edgetype_name]
+.TP 10
+dependency_kind ::=
+"self" | "incoming" | "outgoing"
+.TP 10
+number ::= 
+digit{digit}
+.TP 10
+name ::=
+letter{letter|digit|"_"}
+.br
+.SH EXAMPLES
+The following definitions declare four node classes and
+their inheritance relationships (TEST < SUB1, TEST < SUB2, SUB1 <
+SUPER, SUB2 < SUPER, where < denotes direct sub-type relationship or
+is_a relationship). They also declare a type Test as instance of class
+TEST. Class SUPER has an attribute id which is an intrinsic normal
+attribute with constant length 4, exactly once cardinalitiy and type
+number 2. Class SUB1 defines an attribute name as derived normal
+attribute of varying length with exactly once cardinalitiy and type
+number 6. 
+
+An edge type Edge and two dependencies and two evaluation functions
+are declared as well. The edge type edge connects an arbitrary number
+of instances of class SUPER with at least one other instance of class
+SUPER.
+
+.TP
+Example
+class SUPER
+.br
+attribute SUPER id intrinsic normal 2 1 1 TRUE 4
+.br
+class SUB1
+.br
+class SUB2
+.br
+class TEST
+.br
+type Test
+.br
+append SUB1 SUPER
+.br
+append SUB2 SUPER
+.br
+append TEST SUB1
+.br
+append TEST SUB2
+.br
+append Test TEST
+.br
+edge Edge SUPER 0 n SUPER 1 n
+.br
+attribute SUB1 name derived normal 6 1 1 FALSE 0
+.br
+dependency SUB1 name SUB1 id self
+.br
+dependency SUB2 id SUB2 id incoming Edge
+.br
+eval SUB1 name ComputeName
+.br
+eval SUB2 id ComputeId
+
+.SH SEE ALSO
+.BR GRAS (1),
+.BR buildscheme (1)
+

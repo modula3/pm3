@@ -1,0 +1,10 @@
+m3_option("-g")
+
+import("libm3")
+import("netobj")
+
+Interface("RuleEngineCallback")
+Module("RuleEngineServer")
+
+Netobj("RuleEngineCallback", "T")
+Netobj("RuleEngineServer", "T")

@@ -1,0 +1,62 @@
+.TH G3SHUTDOWN 1 "12 Dec 1997"
+.SH NAME
+g3shutdown \- Shut down an idle page server.
+.SH SYNOPSIS
+.B 
+g3shutdown
+.RI 
+[-l] [-h] [-id <server>] [-agent <hostname>]
+.br
+.br
+.SH DESCRIPTION
+The runtime of a GRAS page-server normally spans that of several GRAS
+applications. A server might well run hours or days without being
+used. Nevertheless, it might be necessary to stop a running
+server. This can be done in a safe way with g3shutdown. Safe, because
+the server has a chance to reject the shutdown request.
+.SH OPTIONS
+.TP 3
+.B 
+-l
+Print a listing of all running page-servers that are registered to
+the gras name-server
+.BR g3ns (1).
+.br
+.TP
+.B 
+-h
+Print a short help text explaining the command line parameters.
+.br
+.TP
+.B 
+-agent <hostname>
+.br
+Use <hostname> to locate netobjd. The default is 'localhost'. The
+netobjd found in turn is used to determine a running gras
+name-server. g3shutdown then uses this name-server to lookup the
+page-servers. 
+.br
+.TP
+.B 
+-id <server>
+.br
+Use <server> as identifier for the server to shutdown. The default
+server identifier is 'GRAS-3.<uid>' where <uid> is the numeric user id
+of the user. Note: the only user who is allowed to shut down a server
+is the one who started it. This is even true for page-servers with a
+non-default identifier, that are used as shared servers. 
+.br
+.SH SEE ALSO
+.BR GRAS (1),
+.BR g3server (1),
+.BR g3ns (1),
+.BR netobjd (1)
+.SH DIAGNOSTICS
+.B
+Server rejected shut down request.
+Only idle servers can be shut down with g3shutdown. A server is idle
+when it servers no clients. Non idle servers can stopped by sending
+them a kill or stop signal, with the risk of data losses.
+.br 
+.SH BUGS
+None known yet.

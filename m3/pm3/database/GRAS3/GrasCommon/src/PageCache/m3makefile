@@ -1,0 +1,23 @@
+% *** ObjectList ***
+interface		("BaseObjectList")
+Module			("ObjectListItem")
+interface		("InternalObjectListItem")
+Module			("ObjectList")
+
+% *** PageCache ***
+Module			("BasePageHandle")
+interface		("InternalBasePageHandle")
+
+Interface		("BasePageMedia")
+
+Module			("PageHandle")
+interface		("InternalPageHandle")
+
+Interface		("PageMedia")
+Module			("NullMedia")
+Module			("DumpMedia")
+Module			("SimpleMedia")
+Module			("ShadowMedia")
+
+Module			("PageCache")
+interface		("InternalPageCache")

@@ -1,0 +1,91 @@
+/* Sprungtabellen + Aufrufe fuer StringCopy. */
+/* Automatisch generiert */
+#include <ansi.h>
+#include <string.h>
+#include <stdio.h>
+#include <rgglobal.h>
+#include <CTypesForM3.h>
+#include <StringCopy.h>
+
+#define StringCopyProcCount 3
+
+enum StringCopyProcs {
+	COPYATTRIBUTESTOT,
+	COPYTTOS,
+	COPYSTOT};
+
+static char StringCopyProcNames[StringCopyProcCount][60] =
+	{"CopyAttributeStoT",
+	"CopyTtoS",
+	"CopyStoT"};
+
+static _PROC StringCopyProcAddress[StringCopyProcCount];
+
+static char StringCopy_module_name[31] = "/StringCopy.m3";
+
+void StringCopy_create_proc_address_table(_LINK_INFO *l_info)
+{
+  _INTEGER    mod, proc;
+  _MODULE   **module = (_MODULE **)l_info->modules;
+  _PROCINFO  *procedure_info;
+
+  mod = 0;
+  while(!((module[mod]->proc_info) 
+	&& (strstr(module[mod]->file, StringCopy_module_name))))
+      mod++;
+  for (proc=0; proc < StringCopyProcCount; proc++){
+    procedure_info = (_PROCINFO *)module[mod]->proc_info;
+ifelse(COMPILER,`CM3',
+`    while (procedure_info->name != 0) {'
+,
+`    while (procedure_info->proc != 0) {'
+)
+      if (strcmp(procedure_info->name, StringCopyProcNames[proc]) == 0) {
+          StringCopyProcAddress[proc] = procedure_info->proc;
+          break;
+      }
+      else
+        ++procedure_info;
+    }
+ifelse(COMPILER,`CM3',
+`    if(!procedure_info->name)'
+,
+`    if(!procedure_info->proc)'
+)
+      printf("ERROR! Procedure %s not found\n", StringCopyProcNames[proc]);
+  }
+}
+
+typedef void * (*_POINTER_PROC)();
+
+void *
+CopyAttributeStoT(char * s, CARDINAL len)
+{
+
+#ifdef DEBUG
+  printf("CopyAttributeStoT: %s\n", s);
+#endif
+
+  return ((_POINTER_PROC)(StringCopyProcAddress[COPYATTRIBUTESTOT]))(s, len);
+}
+
+void
+CopyTtoS(void * t, char * s)
+{
+#ifdef DEBUG
+  printf("CopyTtoS");
+#endif
+
+  (StringCopyProcAddress[COPYTTOS])(t,s);
+}
+
+void *
+CopyStoT(char * s)
+{
+#ifdef DEBUG
+  printf("CopyStoT: %s\n", s);
+#endif
+
+  return ((_POINTER_PROC)(StringCopyProcAddress[COPYSTOT]))(s);
+}
+

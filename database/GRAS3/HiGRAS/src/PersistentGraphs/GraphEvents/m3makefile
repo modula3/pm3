@@ -1,0 +1,20 @@
+resource("GraphEventInfo")
+resource("NodeEventInfo")
+resource("EdgeEventInfo")
+resource("AttrEventInfo")
+bundle("GraphEventInfos")
+
+Interface("GraphEvents")
+interface("PrivateGraphEvents")
+implementation("GraphEvents")
+Module("GraphEventPattern")
+
+module("GraphTriggerStorage")
+module("GraphActiveAction")
+priorityQueue("GraphActiveAction", "GraphActiveAction")
+module("DeletedNodes")
+module("GraphActivatedActions")
+module("GraphEventHandler")
+
+module("PersistentGraphEventHandler")
+

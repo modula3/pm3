@@ -1,0 +1,44 @@
+proc M4Source(name, ext) is
+  local target = name & ext
+  local source = "../src/" & name & ext & "_m4"
+  local tmp = "/tmp/" & target & ".jmptbl"
+  local cmd = ["m4"]
+  if equal(COMPILER,"cm3")
+    cmd += "-DCOMPILER=CM3"
+  else
+    cmd += "-DCOMPILER=SRC"
+  end
+  cmd += source
+  if not equal(COMPILER,"pm3")
+    cmd += ">"
+    cmd += tmp
+  end
+  if equal(COMPILER,"pm3")
+    local x = exec(cmd,["",tmp,""])
+  else
+    exec(cmd) 
+  end
+  cp_if(tmp, target)
+  local res = unlink_file(tmp)
+end
+
+proc m4_c_source(name) is
+  M4Source(name, ".c")
+  derived_c(name)
+end
+
+proc m4_h_source(name) is
+  M4Source(name, ".h")
+  derived_h(name)
+end
+
+proc m4_implementation(name) is
+  M4Source(name, ".m3")
+  derived_implementation(name)
+end
+
+proc m4_interface(name, vis) is
+  M4Source(name, ".i3")
+  derived_interface(name, vis)
+end
+

@@ -1,0 +1,102 @@
+.TH POOLBROWSER 1 "16 Dec 1997"
+.SH NAME
+poolbrowser \- Display the contents of a GRAS graph pool.
+.SH SYNOPSIS
+.HP
+.B 
+poolbrowser
+.RI 
+[-config <file>] [-root <path>] [-agent <host>] 
+.br
+[-id <server>] [-cachesize <pages>]
+.br
+.br
+.SH DESCRIPTION
+A pool is a GRAS database. Basically it is a collection of
+files. These files can be classified into different categories
+(graphs, deltas, schemata), have various attributes (version number, 
+reconstruction costs), and are related to one another (a graph
+conforms to a schema, etc.). All this information is stored in a special
+file in the pool. The contents of this file can be displayed with the
+poolbrowser. 
+
+To view the contents of a pool, you first have to open one with the
+"Open pool" entry from the "File" menu. This brings up a list of all
+known pools to select from. When a selection is made, poolbrowser
+opens this pool and reads the pool contents file.
+
+On the left side of the poolbrowser window, all found entries are
+displayed. When an entry is selcted, its categories (collections),
+attributes, and relations are displayed as well. Selecting an attribute
+or a relation will reveal the attribute value / the source or target
+of the relation, respectively.
+
+The file format of the pool contents file allows applications to
+declare their own collections (categories), attributes and
+relations. Therefore, the poolbrowser assumes nothing about what
+collections, attributes, relations are defined in a pool contents file
+and displays everything it finds. Even more, it is possible to specify
+a different file as the pool contents file with the "Contents file..."
+entry of the "File" menu.
+
+.SS Configuring poolbrowser
+To make attribute values more readable, it possible to give
+poolbrowser some hints how to interpret an attribute, which otherwise
+will be displayed as an array of bytes. This information can be given
+in a configuration file listing on every line the type and name of
+an attribute. Currently understood types are "INTEGER", "CARDINAL",
+"READABLE", and "NONREADABLE". An INTEGER or CARDINAL attribute is
+interpreted as 4 byte encoding of a signed or unsigned integer,
+respectively. READABLE and NONREADABLE are treated as text, the latter
+will receive special treatment to display non graphic characters as
+octal digits.
+
+Besides attribute formats, the configuration file can contain a line
+of the form "Collection <filename>" to specify the default file name
+for the pool contents file.
+.SH OPTIONS
+.TP 3
+.B 
+-config <file>
+.br
+Try to read configuration information from <file>. Everything in
+<file> will override the default configuration.
+.br
+.TP
+.B 
+-root <path>
+.br
+Use <path> as client root path for database login. This has no real
+effect for g3monitor, since it does not perform any database
+operations on its own.
+.br
+.TP
+.B 
+-cachesize <pages>
+.br
+Use <pages> as the number of pages in the page cache of the rule
+monitor as GRAS client.
+.br
+.TP
+.B 
+-id <server>
+.br
+Connect to a server with the id <server> instead of the default
+server. 
+.br
+.TP
+.B 
+-agent <host>
+.br
+Use <host> to locate netobjd. The default is 'localhost'. The network
+object demon is used to find the GRAS name-server 
+.BR g3ns (1).
+.br
+.SH FILES
+The default configuration for poolbrowser can be found in
+Tools/NamesBrowser/src/GrasConfig.
+.SH SEE ALSO
+.BR GRAS (1),
+.BR g3ns (1)
+.SH BUGS
+None known yet.

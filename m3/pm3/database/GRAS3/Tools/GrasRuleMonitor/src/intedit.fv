@@ -1,0 +1,12 @@
+  (VBox
+    Chisel
+    (Rim (Pen 3)
+      (HBox 
+	(Boolean %@AttrName@Bool
+	         (Value @IsNoWildcard@) (Text "@AttrName@: INTEGER"))
+	Fill
+	(Filter %@AttrName@Filter (Dormant @FilterState@) 
+	  (Shape (Width 100) (Numeric %@AttrName@Value)))
+      )
+    )
+  )

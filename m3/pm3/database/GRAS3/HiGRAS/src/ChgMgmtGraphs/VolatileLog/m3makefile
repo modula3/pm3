@@ -1,0 +1,19 @@
+
+sequence("GraphCommand", "GraphCommand")
+
+module("EdgeDelta")
+module("AttributeDelta")
+module("IndexAttributeDelta")
+table("AttributeDelta", "Cardinal", "AttributeDelta")
+table("IndexAttributeDelta", "Cardinal", "IndexAttributeDelta")
+interface("NodeDeltaInfo")
+table("NodeDeltaInfo", "Node", "NodeDeltaInfo")
+module("NodeDelta")
+
+module("VolatileDelta")
+ntree("CI", "Checkpoint")
+module("VolatileCheckpointTree")
+table("LabelPath", "Cardinal", "CardSeq")
+module("VolatileLabelTable")
+module("VolatileMetaOpStack")
+module("VolatileLog")

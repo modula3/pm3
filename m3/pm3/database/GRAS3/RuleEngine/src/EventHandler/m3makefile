@@ -1,0 +1,6 @@
+Module("TriggerStorage")
+Module("ActiveAction")
+priorityQueue("ActiveAction", "ActiveAction")
+Module("ActivatedActions")
+Interface("EventHandlerClass")
+Module("EventHandler")

@@ -1,0 +1,20 @@
+
+include_dir("Log")
+include_dir("PersistentLog")
+include_dir("VolatileLog")
+
+stack("Log", "Log")
+
+Module("VersionDelta")
+Module("ChgMgmtNames")
+module("ChgMgmtOpenGraphs")
+module("ExecuteDelta")
+Interface("ChgMgmtGraphPool")
+interface("InternChgMgmtGraphPool")
+implementation("ChgMgmtGraphPool")
+
+include_dir("LogEvents")
+
+Module("ChgMgmtGraph")
+Module("ChgMgmtGraphSystem")
+

@@ -1,0 +1,7 @@
+PoolName  : name of the affected pool
+Pool	  : affected pool
+GraphNo	  : number of the Graph on which the
+            operation was performed
+Graph	  : affected graph
+IsPre	  : signaled before or after operation
+Level	  : transaction level

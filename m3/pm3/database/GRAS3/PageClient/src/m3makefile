@@ -1,0 +1,11 @@
+m3_option("-g")
+
+import("set")
+import("GrasCommon")
+import("RuleEngine")
+
+include_dir("ResourceEvents")
+include_dir("ClientScheduler")
+include_dir("VirtualPages")
+
+Library("PageClient")

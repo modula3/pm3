@@ -1,0 +1,5 @@
+
+Module("RelationRecordParameter")
+module("RelationTreeParameter")
+RecordStorageSystem("Relation", "RelationRecordParameter", 
+		    "RelationTreeParameter")

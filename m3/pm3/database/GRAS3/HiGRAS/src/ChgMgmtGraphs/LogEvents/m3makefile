@@ -1,0 +1,7 @@
+Interface("LogEvents")
+interface("PrivateLogEvents")
+implementation("LogEvents")
+
+Module("LogEventPattern")
+Module("LogContexts")
+

@@ -1,0 +1,10 @@
+
+module("TriggerMap")
+module("EventTranslation")
+module("RemoteTriggerStorage")
+module("RemoteActiveAction")
+priorityQueue("RemoteActiveAction", "RemoteActiveAction")
+module("RemoteActivatedActions")
+module("RuleClientCallback")
+module("RuleClient")
+module("RemoteRuleHandler")

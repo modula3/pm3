@@ -1,0 +1,115 @@
+.TH POOLVIEW 1 "14 Sep 1998"
+.SH NAME
+poolview \- Graphically display the contents of a GRAS pool.
+.SH SYNOPSIS
+.HP
+.B 
+poolview
+.RI 
+<pool>  
+.br
+{-hc <collection>} {-sc <collection>} 
+.br
+{-hr <realtion>} {-sr <relation>} 
+.br
+[-local] -root <path> 
+.br
+[-agent <host>] [-id <server>] [-cachesize <pages>]
+.br
+.br
+.SH DESCRIPTION
+A pool is a GRAS database. Basically it is a collection of
+files. These files can be classified into different categories
+(graphs, deltas, schemata), have various attributes (version number,
+reconstruction costs), and are related to one another (a graph
+conforms to a schema, etc.). All this information is stored in a
+special file in the pool. The contents of this file can be graphically
+displayed with the poolbrowser.
+
+.SH NOTE
+You must have daVinci graph visualization software installed and 
+environment variabel DAVINCIHOME properly set for poolview to work. 
+You can obtain daVinci from
+http://www.informatik.uni-bremen.de/~davinci. 
+.SH OPTIONS
+.TP 3
+.B 
+-hc <collection>
+Do not display the files which belong to 'collection'. Collections are
+the categories a file can belong to. A list of all categories is shown
+when the icon on the left border of the daVinci window is pressed. A
+window pops up which shows all collections and relations. In the left
+part of this window, all displayed collections/relations are listed,
+whereas in the right part the hidden ones are listed. With the buttons
+in the middle of the window, it is possible to modify the lists. 
+
+A file can belong to more than one collection. The semantic of the
+"Displayed" list is that a file is displayed when it belongs to any
+of the displayed collections. Therefore, it is currently not possible
+to display the graphs of a pool without their schemes, because every
+scheme is also a graph.
+.br
+.TP
+.B 
+-sc <collection>
+Display the pool collection. See above.
+.br
+.TP
+.B 
+-hr <relation>
+Like -hc but for relations between pool entries.
+.br
+.TP
+.B 
+-sr <relation>
+Like -sc but for relations between pool entries.
+.br
+.TP
+.B
+-debug
+Print debugginf information. This includes all messages sent and
+received to/from the daVinci process.
+.br
+.TP
+.B
+-local
+Search for the pool in the client part of the specified pool.
+.br
+.TP
+.B 
+-root <path>
+.br
+Use <path> as client root path for database login.
+.br
+.TP
+.B 
+-cachesize <pages>
+.br
+Use <pages> as the number of pages in the page cache of the rule
+monitor as GRAS client.
+.br
+.TP
+.B 
+-id <server>
+.br
+Connect to a server with the id <server> instead of the default
+server. 
+.br
+.TP
+.B 
+-agent <host>
+.br
+Use <host> to locate netobjd. The default is 'localhost'. The network
+object demon is used to find the GRAS name-server 
+.BR g3ns (1).
+.br
+.SH SEE ALSO
+.BR GRAS (1),
+.BR poolbrowser (1),
+.BR g3ns (1)
+.SH DIAGNOSTICS
+.B 
+Access denied: Resource not exists.
+The specified pool does not exist.
+.SH BUGS
+None known yet.

@@ -1,0 +1,27 @@
+
+if defined("PROFILE")
+     M3_CONFIG += "-z2@-lDYNAMIC_LINKING_AFTER_THIS@-lsocket@-lnsl@-lm@-ldl@-lw@"
+end
+
+m3_option ("-g")
+
+import("HiGRAS")
+import("BenchmarkTools")
+import("formsvbt")
+
+resource("oo1panel.fv")
+resource("logview.fv")
+bundle("oo1Forms")
+
+interface("OO1Graph")
+module("PersistentOO1Graph")
+module("ChgMgmtOO1Graph")
+module("TypedOO1Graph")
+module("OO1")
+
+interface("OO1Params")
+module("LogView")
+module("PanelHandling")
+implementation("Main")
+Program("oo1")
+

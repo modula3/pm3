@@ -1,0 +1,39 @@
+m3_option("-g -keep")
+
+% CM3 or SRC ?
+CM3 = "cm3"
+SRC = "src"
+PM3 = "pm3"
+
+% Build options
+if not defined("COMPILER")
+  COMPILER = SRC
+end
+
+import("HiGRAS")
+import("RuleEngine")
+template("jmptbl")
+
+Interface("Types")
+Interface("RGGlobal")
+Module("StringCopy")
+Module("RGRASGraph")
+Module("PoolList")
+Module("SchemeList")
+Module("GraphList")
+Module("SetList")
+Module("RelSetList")
+Module("RGRASNames")
+Module("DaemonList")
+
+h_source("ansi")
+h_source("rgglobal")
+h_source("RTCollector")
+h_source("StringCopy")
+h_source("rgras")
+m4_c_source("rgras")
+m4_c_source("StringCopy")
+m4_c_source("RTCollector")
+m4_h_source("CTypesForM3")
+
+Library("RGRASGraphs")

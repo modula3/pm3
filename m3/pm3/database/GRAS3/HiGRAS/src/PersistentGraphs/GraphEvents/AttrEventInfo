@@ -1,0 +1,6 @@
+Node		: node number of source node
+AttributeNo	: number of affected attribute /
+		  index 
+NodeExists	: states whether the node
+		  still exists on action
+		  execution 

@@ -1,0 +1,3 @@
+
+table("IntCallback", "Integer", "RuleEngineCallback")
+module("RuleServer")

@@ -1,0 +1,1250 @@
+/* Sprungtabellen + Aufrufe fuer RGRASGraph. */
+/* Automatisch generiert */
+#include <ansi.h>
+#include <string.h>
+#include <stdio.h>
+#include <CTypesForM3.h>
+#include <rgras.h>
+#include <RTCollector.h>
+#include <StringCopy.h>
+
+#define RGRASGraphProcCount 126
+
+#define MAX_COLLECTION_COUNT 500
+
+int collectionCount;
+
+enum RGRASGraphProcs {
+	AGLOGIN,
+	AGLOGOUT,
+	AGOPENGRAPHPOOL,
+	AGCLOSEGRAPHPOOL,
+	AGDELETEGRAPHPOOL,
+	AGGETGRAPHSINGRAPHPOOL,
+	AGGIVENEXTGRAPHINGRAPHPOOL,
+	AGCOPYGRAPH,
+	AGDELTACOPYGRAPH,
+	AGGETINFOBYEXTNO,
+	AGGETINFOBYNAME,
+	AGOPENGRAPH,
+	AGCLOSEGRAPH,
+	AGDELETEGRAPH,
+	AGSTARTTRANSACTION,
+	AGCOMMITTOPLEVELTRANSACTION,
+	AGCOMMITTRANSACTION,
+	AGABORTTOPLEVELTRANSACTION,
+	AGABORTTRANSACTION,
+	AGCREATENODE,
+	AGCREATEEDGEANDNODE,
+	AGDELETENODEANDEDGES,
+	AGGETUNIQUENODEID,
+	AGSHOWALLNODESWITHINDEX,
+	AGSHOWNODEWITHKEY,
+	AGSHOWTYPEOFNODE,
+	AGCREATEEDGE,
+	AGDELETEEDGE,
+	AGEDGEEXISTS,
+	AGSHOWSOURCENODE,
+	AGTESTANDSHOWSOURCENODE,
+	AGSHOWALLSOURCENODES,
+	AGSHOWTARGETNODE,
+	AGSHOWALLTARGETNODES,
+	AGTESTANDSHOWTARGETNODE,
+	AGTESTINCOMINGEDGE,
+	AGTESTOUTGOINGEDGE,
+	AGGETINCONTEXTOFNODE,
+	AGGETOUTCONTEXTOFNODE,
+	AGPUTATTRIBUTESUBSTR,
+	AGDELETEATTRIBUTE,
+	AGGETATTRIBUTESUBSTR,
+	AGACTIVATEDAEMON,
+	AGKILLDAEMON,
+	AGRAISEEVENT,
+	AGDELAYACTIONEXECUTION,
+	AGRELEASEACTIONEXECUTION,
+	AGSETCREATE,
+	AGSETCLEAR,
+	AGSETKILL,
+	AGSETCOPY,
+	AGSETINSERTELEMENT,
+	AGSETDELETEELEMENT,
+	AGSETREMOVEANYELEMENT,
+	AGSETREMOVERNDELEMENT,
+	AGSETISELEMENT,
+	AGSETSIZE,
+	AGSETUNION,
+	AGSETINTERSECTION,
+	AGSETDIFFERENCE,
+	AGRELCREATE,
+	AGRELCLEAR,
+	AGRELKILL,
+	AGRELCOPY,
+	AGRELINSERTTUPLE,
+	AGRELDELETETUPLE,
+	AGRELREMOVEANYTUPLE,
+	AGRELREMOVERNDTUPLE,
+	AGRELISELEMENT,
+	AGRELSIZE,
+	AGRELUNION,
+	AGRELINTERSECTION,
+	AGRELDIFFERENCE,
+	AGCARTESIAN,
+	AGPROJECTIONFIRST,
+	AGPROJECTIONSECOND,
+	AGQUERYPROJECTION,
+	AGSINGLEQUERYPROJECTION,
+	AGCHANGE,
+	AGSETCHECKPOINT,
+	AGUNDO,
+	AGREDO,
+	AGDECLARESCHEME,
+	AGCOMMITSCHEME,
+	AGEXISTSSCHEME,
+	AGSHOWSCHEMENAME,
+	AGDECLARENODECLASS,
+	AGTESTANDSHOWNODECLASSNUMBER,
+	AGSHOWNODECLASSNAME,
+	AGSHOWALLNODETYPES,
+	AGAPPENDNODECLASS,
+	AGDECLARENODETYPE,
+	AGTESTANDSHOWNODETYPENUMBER,
+	AGSHOWNODETYPENAME,
+	AGAPPENDNODETYPE,
+	AGDECLAREEDGETYPE,
+	AGTESTANDSHOWEDGETYPENUMBER,
+	AGSHOWEDGETYPENAME,
+	AGSHOWEDGETYPEPROPS,
+	AGDECLAREATTRIBUTE,
+	AGTESTANDSHOWATTRIBUTENUMBER,
+	AGSHOWATTRIBUTENAME,
+	AGSHOWATTRIBUTEPROPS,
+	AGPUTMETAATTRIBUTE,
+	AGGETMETAATTRIBUTE,
+	AGSETEVALUATIONFUNCTION,
+	AGSHOWEVALUATIONFUNCTION,
+	AGBINDEVALUATIONFUNCTION,
+	AGDECLAREDEPENDENCY,
+	AGDELETEDEPENDENCIES,
+	AGSHOWALLATTRIBUTESOFNODETYPE,
+	AGGETALLNODESOFGRAPH,
+	AGGETALLNODECLASSES,
+	AGGETALLEDGETYPES,
+	AGGETALLNODESOFNODECLASS,
+	AGGETALLNODESOFNODETYPE,
+	AGGETCOMPLEMENTOFNODESET,
+	AGTESTISNODEOFNODECLASS,
+	AGSETERRORCHECKMODE,
+	AGFILESIZE,
+	AGPUTINDEXATTRIBUTE,
+	AGGETINDEXATTRIBUTE,
+	AGDELETEINDEXATTRIBUTE,
+	AGGETALLINDEXATTRIBUTES,
+	AGGETALLDEFINEDATTRIBUTES,
+	AGCHANGENODETYPE};
+
+static char RGRASGraphProcNames[RGRASGraphProcCount][60] =
+	{"AGLogin",
+	"AGLogout",
+	"AGOpenGraphPool",
+	"AGCloseGraphPool",
+	"AGDeleteGraphPool",
+	"AGGetGraphsInGraphPool",
+	"AGGiveNextGraphInGraphPool",
+	"AGCopyGraph",
+	"AGDeltaCopyGraph",
+	"AGGetInfoByExtNo",
+	"AGGetInfoByName",
+	"AGOpenGraph",
+	"AGCloseGraph",
+	"AGDeleteGraph",
+	"AGStartTransaction",
+	"AGCommitToplevelTransaction",
+	"AGCommitTransaction",
+	"AGAbortToplevelTransaction",
+	"AGAbortTransaction",
+	"AGCreateNode",
+	"AGCreateEdgeAndNode",
+	"AGDeleteNodeAndEdges",
+	"AGGetUniqueNodeId",
+	"AGShowAllNodesWithIndex",
+	"AGShowNodeWithKey",
+	"AGShowTypeOfNode",
+	"AGCreateEdge",
+	"AGDeleteEdge",
+	"AGEdgeExists",
+	"AGShowSourceNode",
+	"AGTestAndShowSourceNode",
+	"AGShowAllSourceNodes",
+	"AGShowTargetNode",
+	"AGShowAllTargetNodes",
+	"AGTestAndShowTargetNode",
+	"AGTestIncomingEdge",
+	"AGTestOutgoingEdge",
+	"AGGetInContextOfNode",
+	"AGGetOutContextOfNode",
+	"AGPutAttributeSubstr",
+	"AGDeleteAttribute",
+	"AGGetAttributeSubstr",
+	"AGActivateDaemon",
+	"AGKillDaemon",
+	"AGRaiseEvent",
+	"AGDelayActionExecution",
+	"AGReleaseActionExecution",
+	"AGSetCreate",
+	"AGSetClear",
+	"AGSetKill",
+	"AGSetCopy",
+	"AGSetInsertElement",
+	"AGSetDeleteElement",
+	"AGSetRemoveAnyElement",
+	"AGSetRemoveRndElement",
+	"AGSetIsElement",
+	"AGSetSize",
+	"AGSetUnion",
+	"AGSetIntersection",
+	"AGSetDifference",
+	"AGRelCreate",
+	"AGRelClear",
+	"AGRelKill",
+	"AGRelCopy",
+	"AGRelInsertTuple",
+	"AGRelDeleteTuple",
+	"AGRelRemoveAnyTuple",
+	"AGRelRemoveRndTuple",
+	"AGRelIsElement",
+	"AGRelSize",
+	"AGRelUnion",
+	"AGRelIntersection",
+	"AGRelDifference",
+	"AGCartesian",
+	"AGProjectionFirst",
+	"AGProjectionSecond",
+	"AGQueryProjection",
+	"AGSingleQueryProjection",
+	"AGChange",
+	"AGSetCheckpoint",
+	"AGUndo",
+	"AGRedo",
+	"AGDeclareScheme",
+	"AGCommitScheme",
+	"AGExistsScheme",
+	"AGShowSchemeName",
+	"AGDeclareNodeClass",
+	"AGTestAndShowNodeClassNumber",
+	"AGShowNodeClassName",
+	"AGShowAllNodeTypes",
+	"AGAppendNodeClass",
+	"AGDeclareNodeType",
+	"AGTestAndShowNodeTypeNumber",
+	"AGShowNodeTypeName",
+	"AGAppendNodeType",
+	"AGDeclareEdgeType",
+	"AGTestAndShowEdgeTypeNumber",
+	"AGShowEdgeTypeName",
+	"AGShowEdgeTypeProps",
+	"AGDeclareAttribute",
+	"AGTestAndShowAttributeNumber",
+	"AGShowAttributeName",
+	"AGShowAttributeProps",
+	"AGPutMetaAttribute",
+	"AGGetMetaAttribute",
+	"AGSetEvaluationFunction",
+	"AGShowEvaluationFunction",
+	"AGBindEvaluationFunction",
+	"AGDeclareDependency",
+	"AGDeleteDependencies",
+	"AGShowAllAttributesOfNodeType",
+	"AGGetAllNodesOfGraph",
+	"AGGetAllNodeclasses",
+	"AGGetAllEdgetypes",
+	"AGGetAllNodesOfNodeClass",
+	"AGGetAllNodesOfNodeType",
+	"AGGetComplementOfNodeSet",
+	"AGTestIsNodeOfNodeClass",
+	"AGSetErrorCheckMode",
+	"AGFileSize",
+	"AGPutIndexAttribute",
+	"AGGetIndexAttribute",
+	"AGDeleteIndexAttribute",
+	"AGGetAllIndexAttributes",
+	"AGGetAllDefinedAttributes",
+	"AGChangeNodeType"};
+
+static _PROC RGRASGraphProcAddress[RGRASGraphProcCount];
+
+static char RGRASGraph_module_name[31] = "/RGRASGraph.m3";
+
+BOOLEAN is_disabled;
+
+void RGRASGraph_create_proc_address_table(_LINK_INFO *l_info)
+{
+  _INTEGER    mod, proc;
+  _MODULE   **module = (_MODULE **)l_info->modules;
+  _PROCINFO  *procedure_info;
+
+  mod = 0;
+  while(!((module[mod]->proc_info) 
+	&& (strstr(module[mod]->file, RGRASGraph_module_name))))
+      mod++;
+  for (proc=0; proc < RGRASGraphProcCount; proc++){
+    procedure_info = (_PROCINFO *)module[mod]->proc_info;
+ifelse(COMPILER,`CM3',
+`    while (procedure_info->name != 0) {'
+,
+`    while (procedure_info->proc != 0) {'
+)
+      if (strcmp(procedure_info->name, RGRASGraphProcNames[proc]) == 0) {
+          RGRASGraphProcAddress[proc] = procedure_info->proc;
+          break;
+      }
+      else
+        ++procedure_info;
+    }
+ifelse(COMPILER,`CM3',
+`    if(!procedure_info->name)'
+,
+`    if(!procedure_info->proc)'
+)
+      printf("ERROR! Procedure %s not found\n", RGRASGraphProcNames[proc]);
+  }
+}
+
+void
+AGLogin(TEXT ClientRoot, CARDINAL CacheSize, TEXT ServerId, TEXT Agent)
+{
+/*  if (!is_disabled) { 
+    Disable();  
+    is_disabled = TRUE;
+    collectionCount = 0;
+  };  */
+  (RGRASGraphProcAddress[AGLOGIN])(CopyStoT(ClientRoot), CacheSize, CopyStoT(ServerId), CopyStoT(Agent));
+  CollectGarbage();
+}
+
+void
+AGLogout(void)
+{
+  (RGRASGraphProcAddress[AGLOGOUT])();
+  CollectGarbage();
+}
+
+void
+AGOpenGraphPool(PoolName poolName, GraphPoolMode mode, TStatus *status)
+{
+  (RGRASGraphProcAddress[AGOPENGRAPHPOOL])(CopyStoT(poolName), mode, status);
+  CollectGarbage();
+}
+
+void
+AGCloseGraphPool(PoolName poolName)
+{
+  (RGRASGraphProcAddress[AGCLOSEGRAPHPOOL])(CopyStoT(poolName));
+  CollectGarbage();
+}
+
+void
+AGDeleteGraphPool(PoolName poolName, TStatus *status, BOOLEAN force)
+{
+  (RGRASGraphProcAddress[AGDELETEGRAPHPOOL])(CopyStoT(poolName), status, force);
+  CollectGarbage();
+}
+
+void
+AGGetGraphsInGraphPool(PoolName poolName, BOOLEAN *existent)
+{  
+  (RGRASGraphProcAddress[AGGETGRAPHSINGRAPHPOOL])(CopyStoT(poolName), existent);
+  CollectGarbage();
+}
+
+void
+AGGiveNextGraphInGraphPool(ExternNumber *extNumber, BOOLEAN *existent)
+{
+  (RGRASGraphProcAddress[AGGIVENEXTGRAPHINGRAPHPOOL])(extNumber, existent);
+  CollectGarbage();
+}
+
+void
+AGCopyGraph(GraphNumber sourceGraph, PoolName targetPoolName, GraphName targetGrName, TStatus *status)
+{  
+  (RGRASGraphProcAddress[AGCOPYGRAPH])(sourceGraph, CopyStoT(targetPoolName), CopyStoT(targetGrName), status); 
+  CollectGarbage();
+}
+
+void
+AGDeltaCopyGraph(PoolName poolName, GraphName sourceGrName, GraphName targetGrName, BOOLEAN forward, TStatus *Status)
+{  
+  (RGRASGraphProcAddress[AGDELTACOPYGRAPH])(poolName, CopyStoT(sourceGrName), CopyStoT(targetGrName), forward, Status);
+  CollectGarbage();
+}
+
+void
+AGGetInfoByExtNo(PoolName poolName, ExternNumber extNumber, BOOLEAN *existent, GraphName grName, GraphType *grType, BOOLEAN *isOpen, GraphNumber *graph)
+{
+  void * text_grName;  
+  text_grName = CopyStoT(grName); 
+  (RGRASGraphProcAddress[AGGETINFOBYEXTNO])(CopyStoT(poolName), extNumber, existent, text_grName, grType, isOpen, graph);
+  CopyTtoS(text_grName, grName);
+  CollectGarbage();
+}
+
+void
+AGGetInfoByName(PoolName poolName, GraphName grName, BOOLEAN *existent, GraphType *grType, ExternNumber *extNumber, BOOLEAN *isOpen, GraphNumber *graphNumber)
+{  
+  (RGRASGraphProcAddress[AGGETINFOBYNAME])(CopyStoT(poolName), CopyStoT(grName), existent, grType, extNumber, isOpen, graphNumber);
+  CollectGarbage();
+}
+
+void
+AGOpenGraph(PoolName poolName, GraphName grName, GraphType *grType, GraphMode grMode, GroupName gpName, GroupType gpType, GroupMode gpMode, BOOLEAN oneGroup, BOOLEAN noWait, TStatus *status, ExternNumber *extNumber, GraphNumber *grNumber, SchemeName schemeName)
+{  
+  (RGRASGraphProcAddress[AGOPENGRAPH])(CopyStoT(poolName), CopyStoT(grName), grType, grMode, gpName, gpType, gpMode, oneGroup, noWait, status, extNumber, grNumber, CopyStoT(schemeName));
+  CollectGarbage();
+}
+
+void
+AGCloseGraph(GraphNumber graphNumber)
+{
+  (RGRASGraphProcAddress[AGCLOSEGRAPH])(graphNumber);
+  CollectGarbage();
+}
+
+void
+AGDeleteGraph(PoolName poolName, GraphName grName, BOOLEAN force, TStatus *status)
+{  
+  (RGRASGraphProcAddress[AGDELETEGRAPH])(CopyStoT(poolName), grName, force, status); 
+  CollectGarbage();
+}
+
+void
+AGStartTransaction(PoolName poolName)
+{  
+  (RGRASGraphProcAddress[AGSTARTTRANSACTION])(CopyStoT(poolName));
+  CollectGarbage();
+}
+
+void
+AGCommitToplevelTransaction(PoolName poolName)
+{  
+  (RGRASGraphProcAddress[AGCOMMITTOPLEVELTRANSACTION])(CopyStoT(poolName));
+  CollectGarbage();
+}
+
+void
+AGCommitTransaction(PoolName poolName)
+{  
+  (RGRASGraphProcAddress[AGCOMMITTRANSACTION])(CopyStoT(poolName));
+  CollectGarbage();
+}
+
+void
+AGAbortToplevelTransaction(PoolName poolName)
+{  
+  (RGRASGraphProcAddress[AGABORTTOPLEVELTRANSACTION])(CopyStoT(poolName));
+  CollectGarbage();
+}
+
+void
+AGAbortTransaction(PoolName poolName)
+{  
+  (RGRASGraphProcAddress[AGABORTTRANSACTION])(CopyStoT(poolName));
+  CollectGarbage();
+}
+
+void
+AGCreateNode(GraphNumber graphNumber, TypeNumber nType, NodeNumber environment, NodeNumber *nodeNr)
+{
+  (RGRASGraphProcAddress[AGCREATENODE])(graphNumber, nType, environment, nodeNr);
+  CollectGarbage();
+}
+
+void
+AGCreateEdgeAndNode(GraphNumber graphNumber, NodeNumber sourceNode, TypeNumber eType, TypeNumber nType, NodeNumber *nodeNr)
+{
+  (RGRASGraphProcAddress[AGCREATEEDGEANDNODE])(graphNumber, sourceNode, eType, nType, nodeNr);
+  CollectGarbage();
+}
+
+void
+AGDeleteNodeAndEdges(GraphNumber graphNumber, NodeNumber node)
+{
+  (RGRASGraphProcAddress[AGDELETENODEANDEDGES])(graphNumber, node);
+  CollectGarbage();
+}
+
+void
+AGGetUniqueNodeId(GraphNumber graphNumber, CARDINAL *uniqueID)
+{
+  (RGRASGraphProcAddress[AGGETUNIQUENODEID])(graphNumber, uniqueID);
+  CollectGarbage();
+}
+
+void
+AGShowAllNodesWithIndex(GraphNumber graphNumber, TypeNumber attNo, CARDINAL attLength, TEXT value, SimpleSet *setOfNodes)
+{  
+  (RGRASGraphProcAddress[AGSHOWALLNODESWITHINDEX])(graphNumber, attNo, attLength, CopyAttributeStoT(value,attLength), setOfNodes);  
+  CollectGarbage();
+}
+
+void
+AGShowNodeWithKey(GraphNumber graphNumber, TypeNumber attNo, CARDINAL attLength, TEXT value, BOOLEAN *exist, NodeNumber *node)
+{
+  (RGRASGraphProcAddress[AGSHOWNODEWITHKEY])(graphNumber, attNo, attLength, CopyAttributeStoT(value,attLength), exist, node); 
+  CollectGarbage();
+}
+
+void
+AGShowTypeOfNode(GraphNumber graphNumber, NodeNumber node, TypeNumber *nType)
+{
+  (RGRASGraphProcAddress[AGSHOWTYPEOFNODE])(graphNumber, node, nType);
+  CollectGarbage();
+}
+
+void
+AGCreateEdge(GraphNumber graphNumber, NodeNumber sourceNode, NodeNumber targetNode, TypeNumber eType)
+{
+  (RGRASGraphProcAddress[AGCREATEEDGE])(graphNumber, sourceNode, targetNode, eType);
+  CollectGarbage();
+}
+
+void
+AGDeleteEdge(GraphNumber graphNumber, NodeNumber sourceNode, NodeNumber targetNode, TypeNumber eType)
+{
+  (RGRASGraphProcAddress[AGDELETEEDGE])(graphNumber, sourceNode, targetNode, eType);
+  CollectGarbage();
+}
+
+BOOLEAN
+AGEdgeExists(GraphNumber graphNumber, NodeNumber sourceNode, NodeNumber targetNode, TypeNumber eType)
+{
+  BOOLEAN Result;
+  Result = (BOOLEAN)((_CARD_PROC)(RGRASGraphProcAddress[AGEDGEEXISTS]))(graphNumber, sourceNode, targetNode, eType);
+  return Result;
+  CollectGarbage();
+}
+
+void
+AGShowSourceNode(GraphNumber graphNumber, NodeNumber targetNode, TypeNumber eType, NodeNumber *sourceNode)
+{
+  (RGRASGraphProcAddress[AGSHOWSOURCENODE])(graphNumber, targetNode, eType, sourceNode);
+  CollectGarbage();
+}
+
+void
+AGTestAndShowSourceNode(GraphNumber graphNumber, NodeNumber targetNode, TypeNumber eType, CARDINAL *sourceNrs, NodeNumber *sourceNode)
+{
+  (RGRASGraphProcAddress[AGTESTANDSHOWSOURCENODE])(graphNumber, targetNode, eType, sourceNrs, sourceNode);
+  CollectGarbage();
+}
+
+void
+AGShowAllSourceNodes(GraphNumber graphNumber, NodeNumber targetNode, TypeNumber eType, SimpleSet *sourceNodeSet)
+{
+  (RGRASGraphProcAddress[AGSHOWALLSOURCENODES])(graphNumber, targetNode, eType, sourceNodeSet);
+  CollectGarbage();
+}
+
+void
+AGShowTargetNode(GraphNumber graphNumber, NodeNumber sourceNode, TypeNumber eType, NodeNumber *targetNode)
+{
+  (RGRASGraphProcAddress[AGSHOWTARGETNODE])(graphNumber, sourceNode, eType, targetNode);
+  CollectGarbage();
+}
+
+void
+AGShowAllTargetNodes(GraphNumber graphNumber, NodeNumber sourceNode, TypeNumber eType, SimpleSet *targetNodeSet)
+{
+  (RGRASGraphProcAddress[AGSHOWALLTARGETNODES])(graphNumber, sourceNode, eType, targetNodeSet);
+  CollectGarbage();
+}
+
+void
+AGTestAndShowTargetNode(GraphNumber graphNumber, NodeNumber sourceNode, TypeNumber eType, CARDINAL *targetNrs, NodeNumber *targetNode)
+{
+  (RGRASGraphProcAddress[AGTESTANDSHOWTARGETNODE])(graphNumber, sourceNode, eType, targetNrs, targetNode);
+  CollectGarbage();
+}
+
+BOOLEAN
+AGTestIncomingEdge(GraphNumber graphNumber, NodeNumber targetNode, TypeNumber eType)
+{
+  BOOLEAN Result;
+  Result = (BOOLEAN)((_CARD_PROC)(RGRASGraphProcAddress[AGTESTINCOMINGEDGE]))(graphNumber, targetNode, eType);
+  return Result;
+  CollectGarbage();
+}
+
+BOOLEAN
+AGTestOutgoingEdge(GraphNumber graphNumber, NodeNumber sourceNode, TypeNumber eType)
+{
+  BOOLEAN Result;
+  Result = (BOOLEAN)((_CARD_PROC)(RGRASGraphProcAddress[AGTESTOUTGOINGEDGE]))(graphNumber, sourceNode, eType);
+  return Result;
+  CollectGarbage();
+}
+
+void
+AGGetInContextOfNode(GraphNumber graphNumber, NodeNumber targetNode, RelSet *tupleSet)
+{
+  (RGRASGraphProcAddress[AGGETINCONTEXTOFNODE])(graphNumber, targetNode, tupleSet);
+  CollectGarbage();
+}
+
+void
+AGGetOutContextOfNode(GraphNumber graphNumber, NodeNumber sourceNode, RelSet *tupleSet)
+{
+  (RGRASGraphProcAddress[AGGETOUTCONTEXTOFNODE])(graphNumber, sourceNode, tupleSet);
+  CollectGarbage();
+}
+
+void
+AGPutAttributeSubstr(GraphNumber graphNumber, NodeNumber node, TypeNumber attNo, CARDINAL attBegin, CARDINAL attLength, TEXT attValue, BOOLEAN truncate)
+{  
+  (RGRASGraphProcAddress[AGPUTATTRIBUTESUBSTR])(graphNumber, node, attNo, attBegin, attLength, CopyAttributeStoT(attValue, attLength), truncate);
+  CollectGarbage();
+}
+
+void
+AGDeleteAttribute(GraphNumber graphNumber, NodeNumber node, AttributeNumber attNo)
+{
+  (RGRASGraphProcAddress[AGDELETEATTRIBUTE])(graphNumber, node, attNo);
+  CollectGarbage();
+}
+
+void
+AGGetAttributeSubstr(GraphNumber graphNumber, NodeNumber node, TypeNumber attNo, CARDINAL attBegin, CARDINAL attLength, TEXT attValue, CARDINAL *returnedLength)
+{
+  void * text_attValue;  
+  (RGRASGraphProcAddress[AGGETATTRIBUTESUBSTR])(graphNumber, node, attNo, attBegin, attLength, &text_attValue, returnedLength);
+  CopyTtoS(text_attValue, attValue);
+  CollectGarbage();
+}
+
+void
+AGActivateDaemon(GraphNumber Graph, GraphEvent Event, ActionPriority Priority, ActionProc Action)
+{
+  (RGRASGraphProcAddress[AGACTIVATEDAEMON])(Graph, Event, Priority, Action);
+}
+
+void
+AGKillDaemon(GraphNumber Graph, GraphEvent Event, ActionProc Action)
+{
+  (RGRASGraphProcAddress[AGKILLDAEMON])(Graph, Event, Action);
+}
+
+void
+AGRaiseEvent(GraphNumber Graph, CARDINAL p1, CARDINAL p2, CARDINAL p3)
+{
+  (RGRASGraphProcAddress[AGRAISEEVENT])(Graph, p1, p2, p3);
+}
+
+void
+AGDelayActionExecution(PoolName poolName)
+{
+  (RGRASGraphProcAddress[AGDELAYACTIONEXECUTION])(CopyStoT(poolName));
+}
+
+void
+AGReleaseActionExecution(PoolName poolName)
+{
+  (RGRASGraphProcAddress[AGRELEASEACTIONEXECUTION])(CopyStoT(poolName));
+}
+
+void
+AGSetCreate(GraphNumber graphNumber, SimpleSet *emptySet)
+{
+  (RGRASGraphProcAddress[AGSETCREATE])(graphNumber, emptySet);
+  CollectGarbage();
+}
+
+void
+AGSetClear(GraphNumber graphNumber, SimpleSet *clearSet)
+{
+  (RGRASGraphProcAddress[AGSETCLEAR])(graphNumber, clearSet);
+  CollectGarbage();
+}
+
+void
+AGSetKill(GraphNumber graphNumber, SimpleSet *set)
+{
+  (RGRASGraphProcAddress[AGSETKILL])(graphNumber, set);
+  CollectGarbage();
+}
+
+void
+AGSetCopy(GraphNumber graphNumber, SimpleSet sourceSet, SimpleSet *targetSet)
+{
+  (RGRASGraphProcAddress[AGSETCOPY])(graphNumber, sourceSet, targetSet);
+  CollectGarbage();
+}
+
+void
+AGSetInsertElement(GraphNumber graphNumber, SimpleElement element, SimpleSet set)
+{
+  (RGRASGraphProcAddress[AGSETINSERTELEMENT])(graphNumber, element, set);
+  CollectGarbage();
+}
+
+void
+AGSetDeleteElement(GraphNumber graphNumber, SimpleElement element, SimpleSet set)
+{
+  (RGRASGraphProcAddress[AGSETDELETEELEMENT])(graphNumber, element, set);
+  CollectGarbage();
+}
+
+void
+AGSetRemoveAnyElement(GraphNumber graphNumber, BOOLEAN *found, SimpleElement *element, SimpleSet set)
+{
+  (RGRASGraphProcAddress[AGSETREMOVEANYELEMENT])(graphNumber, found, element, set);
+  CollectGarbage();
+}
+
+void
+AGSetRemoveRndElement(GraphNumber graphNumber, BOOLEAN *found, SimpleElement *element, SimpleSet set)
+{
+  (RGRASGraphProcAddress[AGSETREMOVERNDELEMENT])(graphNumber, found, element, set);
+  CollectGarbage();
+}
+
+BOOLEAN
+AGSetIsElement(GraphNumber graphNumber, SimpleElement element, SimpleSet set)
+{
+  BOOLEAN Result;
+  Result = (BOOLEAN)((_CARD_PROC)(RGRASGraphProcAddress[AGSETISELEMENT]))(graphNumber, element, set);
+  return Result;
+  CollectGarbage();
+}
+
+CARDINAL
+AGSetSize(GraphNumber graphNumber, SimpleSet set)
+{
+  CARDINAL Result;  
+  Result = (CARDINAL) ((_CARD_PROC)(RGRASGraphProcAddress[AGSETSIZE]))(graphNumber, set);
+  return Result;
+  CollectGarbage();
+}
+
+void
+AGSetUnion(GraphNumber graphNumber, SimpleSet sourceSet, SimpleSet targetSet)
+{
+  (RGRASGraphProcAddress[AGSETUNION])(graphNumber, sourceSet, targetSet);
+  CollectGarbage();
+}
+
+void
+AGSetIntersection(GraphNumber graphNumber, SimpleSet sourceSet, SimpleSet targetSet)
+{
+  (RGRASGraphProcAddress[AGSETINTERSECTION])(graphNumber, sourceSet, targetSet);
+  CollectGarbage();
+}
+
+void
+AGSetDifference(GraphNumber graphNumber, SimpleSet sourceSet, SimpleSet targetSet)
+{
+  (RGRASGraphProcAddress[AGSETDIFFERENCE])(graphNumber, sourceSet, targetSet);
+  CollectGarbage();
+}
+
+void
+AGRelCreate(GraphNumber graphNumber, RelSet *emptySet)
+{
+  (RGRASGraphProcAddress[AGRELCREATE])(graphNumber, emptySet);
+  CollectGarbage();
+}
+
+void
+AGRelClear(GraphNumber graphNumber, RelSet *clearSet)
+{
+  (RGRASGraphProcAddress[AGRELCLEAR])(graphNumber, clearSet);
+  CollectGarbage();
+}
+
+void
+AGRelKill(GraphNumber graphNumber, RelSet *set)
+{
+  (RGRASGraphProcAddress[AGRELKILL])(graphNumber, set);
+  CollectGarbage();
+}
+
+void
+AGRelCopy(GraphNumber graphNumber, RelSet sourceSet, RelSet *targetSet)
+{
+  (RGRASGraphProcAddress[AGRELCOPY])(graphNumber, sourceSet, targetSet);
+  CollectGarbage();
+}
+
+void
+AGRelInsertTuple(GraphNumber graphNumber, TypeNumber surr1, TypeNumber surr2, RelSet set)
+{
+  (RGRASGraphProcAddress[AGRELINSERTTUPLE])(graphNumber, surr1, surr2, set);
+  CollectGarbage();
+}
+
+void
+AGRelDeleteTuple(GraphNumber graphNumber, TypeNumber surr1, TypeNumber surr2, RelSet set)
+{
+  (RGRASGraphProcAddress[AGRELDELETETUPLE])(graphNumber, surr1, surr2, set);
+  CollectGarbage();
+}
+
+void
+AGRelRemoveAnyTuple(GraphNumber graphNumber, BOOLEAN *found, TypeNumber *surr1, TypeNumber *surr2, RelSet set)
+{
+  (RGRASGraphProcAddress[AGRELREMOVEANYTUPLE])(graphNumber, found, surr1, surr2, set);
+  CollectGarbage();
+}
+
+void
+AGRelRemoveRndTuple(GraphNumber graphNumber, BOOLEAN *found, TypeNumber *surr1, TypeNumber *surr2, RelSet set)
+{
+  (RGRASGraphProcAddress[AGRELREMOVERNDTUPLE])(graphNumber, found, surr1, surr2, set);
+  CollectGarbage();
+}
+
+BOOLEAN
+AGRelIsElement(GraphNumber graphNumber, TypeNumber surr1, TypeNumber surr2, RelSet set)
+{
+  BOOLEAN Result;
+  Result = (BOOLEAN)((_CARD_PROC)(RGRASGraphProcAddress[AGRELISELEMENT]))(graphNumber, surr1, surr2, set);
+  return Result;
+  CollectGarbage();
+}
+
+CARDINAL
+AGRelSize(GraphNumber graphNumber, RelSet set)
+{
+  CARDINAL Result;  
+  Result = (CARDINAL) ((_CARD_PROC)(RGRASGraphProcAddress[AGRELSIZE]))(graphNumber, set);
+  return Result;
+  CollectGarbage();
+}
+
+void
+AGRelUnion(GraphNumber graphNumber, RelSet sourceSet, RelSet targetSet)
+{
+  (RGRASGraphProcAddress[AGRELUNION])(graphNumber, sourceSet, targetSet);
+  CollectGarbage();
+}
+
+void
+AGRelIntersection(GraphNumber graphNumber, RelSet sourceSet, RelSet targetSet)
+{
+  (RGRASGraphProcAddress[AGRELINTERSECTION])(graphNumber, sourceSet, targetSet);
+  CollectGarbage();
+}
+
+void
+AGRelDifference(GraphNumber graphNumber, RelSet sourceSet, RelSet targetSet)
+{
+  (RGRASGraphProcAddress[AGRELDIFFERENCE])(graphNumber, sourceSet, targetSet);
+  CollectGarbage();
+}
+
+void
+AGCartesian(GraphNumber graphNumber, SimpleSet sourceSet1, SimpleSet sourceSet2, RelSet *targetSet)
+{
+  (RGRASGraphProcAddress[AGCARTESIAN])(graphNumber, sourceSet1, sourceSet2, targetSet);
+  CollectGarbage();
+}
+
+void
+AGProjectionFirst(GraphNumber graphNumber, RelSet sourceSet, SimpleSet *targetSet)
+{
+  (RGRASGraphProcAddress[AGPROJECTIONFIRST])(graphNumber, sourceSet, targetSet);
+  CollectGarbage();
+}
+
+void
+AGProjectionSecond(GraphNumber graphNumber, RelSet sourceSet, SimpleSet *targetSet)
+{
+  (RGRASGraphProcAddress[AGPROJECTIONSECOND])(graphNumber, sourceSet, targetSet);
+  CollectGarbage();
+}
+
+void
+AGQueryProjection(GraphNumber graphNumber, RelSet sourceSet, TypeNumber surr, SimpleSet *targetSet)
+{
+  (RGRASGraphProcAddress[AGQUERYPROJECTION])(graphNumber, sourceSet, surr, targetSet);
+  CollectGarbage();
+}
+
+void
+AGSingleQueryProjection(GraphNumber graphNumber, RelSet set, TypeNumber surr1, TypeNumber *surr2, BOOLEAN *found)
+{
+  (RGRASGraphProcAddress[AGSINGLEQUERYPROJECTION])(graphNumber, set, surr1, surr2, found);
+  CollectGarbage();
+}
+
+void
+AGChange(GraphNumber graphNumber, RelSet *set)
+{
+  (RGRASGraphProcAddress[AGCHANGE])(graphNumber, set);
+  CollectGarbage();
+}
+
+void
+AGSetCheckpoint(GraphNumber graphNumber)
+{
+  (RGRASGraphProcAddress[AGSETCHECKPOINT])(graphNumber);
+  CollectGarbage();
+}
+
+void
+AGUndo(GraphNumber graphNumber, CARDINAL *n)
+{
+  (RGRASGraphProcAddress[AGUNDO])(graphNumber, n);
+  CollectGarbage();
+}
+
+void
+AGRedo(GraphNumber graphNumber, CARDINAL *n)
+{
+  (RGRASGraphProcAddress[AGREDO])(graphNumber, n);
+  CollectGarbage();
+}
+
+void
+AGDeclareScheme(SchemeName schemeName, SchemeNumber *schemeNumber, PoolName poolName)
+{  
+  (RGRASGraphProcAddress[AGDECLARESCHEME])(CopyStoT(schemeName), schemeNumber, CopyStoT(poolName));
+  CollectGarbage();
+}
+
+void
+AGCommitScheme(SchemeNumber schemeNumber)
+{
+  (RGRASGraphProcAddress[AGCOMMITSCHEME])(schemeNumber);
+  CollectGarbage();
+}
+
+BOOLEAN
+AGExistsScheme(PoolName poolName, SchemeName schemeName)
+{
+  BOOLEAN Result;  
+  Result = (BOOLEAN)((_CARD_PROC)(RGRASGraphProcAddress[AGEXISTSSCHEME]))(CopyStoT(poolName), schemeName);  
+  return Result;
+  CollectGarbage();
+}
+
+void
+AGShowSchemeName(SchemeNumber schemeNumber, SchemeName name)
+{
+  void * text_name;    
+  text_name = CopyStoT(name);  
+  (RGRASGraphProcAddress[AGSHOWSCHEMENAME])(schemeNumber, text_name);
+  CopyTtoS(text_name, name);
+  CollectGarbage();
+}
+
+void
+AGDeclareNodeClass(SchemeNumber schemeNumber, TEXT name, TypeNumber *nodeClass)
+{  
+  (RGRASGraphProcAddress[AGDECLARENODECLASS])(schemeNumber, CopyStoT(name), nodeClass);
+  CollectGarbage();
+}
+
+void
+AGTestAndShowNodeClassNumber(GraphNumber graphOrSchemeNumber, TEXT className, BOOLEAN *existent, TypeNumber *nodeClass, BOOLEAN isGraphNumber)
+{  
+  (RGRASGraphProcAddress[AGTESTANDSHOWNODECLASSNUMBER])(graphOrSchemeNumber, CopyStoT(className), existent, nodeClass, isGraphNumber);  
+  CollectGarbage();
+}
+
+void
+AGShowNodeClassName(GraphNumber graphOrSchemeNumber, TypeNumber nodeClass, TEXT className, BOOLEAN *existent, BOOLEAN isGraphNumber)
+{
+  void * text_className;  
+  (RGRASGraphProcAddress[AGSHOWNODECLASSNAME])(graphOrSchemeNumber, nodeClass, text_className, existent, isGraphNumber);
+  CopyTtoS(text_className, className);
+  CollectGarbage();
+}
+
+void
+AGShowAllNodeTypes(GraphNumber graphOrSchemeNumber, TypeNumber nodeClass, SimpleSet *setOfTypes, BOOLEAN isGraphNumber)
+{
+  (RGRASGraphProcAddress[AGSHOWALLNODETYPES])(graphOrSchemeNumber, nodeClass, setOfTypes, isGraphNumber);
+  CollectGarbage();
+}
+
+void
+AGAppendNodeClass(SchemeNumber schemeNumber, TEXT nodeClassName, TEXT superClassName)
+{  
+  (RGRASGraphProcAddress[AGAPPENDNODECLASS])(schemeNumber, CopyStoT(nodeClassName), CopyStoT(superClassName));
+  CollectGarbage();
+}
+
+void
+AGDeclareNodeType(SchemeNumber schemeNumber, TEXT name, TypeNumber *nType)
+{  
+  (RGRASGraphProcAddress[AGDECLARENODETYPE])(schemeNumber, CopyStoT(name), nType);
+  CollectGarbage();
+}
+
+void
+AGTestAndShowNodeTypeNumber(CARDINAL graphOrSchemeNumber, TEXT name, BOOLEAN *existent, TypeNumber *nType, BOOLEAN isGraphNumber)
+{  
+  (RGRASGraphProcAddress[AGTESTANDSHOWNODETYPENUMBER])(graphOrSchemeNumber, CopyStoT(name), existent, nType, isGraphNumber);
+  CollectGarbage();
+}
+
+void
+AGShowNodeTypeName(CARDINAL graphOrSchemeNumber, TypeNumber nType, TEXT name, BOOLEAN *existent, BOOLEAN isGraphNumber)
+{
+  void * text_name;  
+  (RGRASGraphProcAddress[AGSHOWNODETYPENAME])(graphOrSchemeNumber, nType, text_name, existent, isGraphNumber);
+  CopyTtoS(text_name, name);
+  CollectGarbage();
+}
+
+void
+AGAppendNodeType(CARDINAL graphOrSchemeNumber, TEXT nType, TEXT nodeClass)
+{  
+  (RGRASGraphProcAddress[AGAPPENDNODETYPE])(graphOrSchemeNumber, CopyStoT(nType), CopyStoT(nodeClass));
+  CollectGarbage();
+}
+
+void
+AGDeclareEdgeType(SchemeNumber schemeNumber, TEXT name, TEXT sourceNodeClassOrType, Cardinality sourceCardinality, TEXT targetNodeClassOrType, Cardinality targetCardinality, TypeNumber *edge)
+{  
+  (RGRASGraphProcAddress[AGDECLAREEDGETYPE])(schemeNumber, CopyStoT(name), CopyStoT(sourceNodeClassOrType), sourceCardinality, CopyStoT(targetNodeClassOrType), targetCardinality, edge);
+  CollectGarbage();
+}
+
+void
+AGTestAndShowEdgeTypeNumber(CARDINAL graphOrSchemeNumber, TEXT name, BOOLEAN *existent, TypeNumber *edge, BOOLEAN isGraphNumber)
+{  
+  (RGRASGraphProcAddress[AGTESTANDSHOWEDGETYPENUMBER])(graphOrSchemeNumber, CopyStoT(name), existent, edge, isGraphNumber);  
+  CollectGarbage();
+}
+
+void
+AGShowEdgeTypeName(CARDINAL graphOrSchemeNumber, TypeNumber edge, TEXT name, BOOLEAN *existent, BOOLEAN isGraphNumber)
+{
+  void * text_name;  
+  (RGRASGraphProcAddress[AGSHOWEDGETYPENAME])(graphOrSchemeNumber, edge, text_name, existent, isGraphNumber);
+  CopyTtoS(text_name,name);
+  CollectGarbage();
+}
+
+void
+AGShowEdgeTypeProps(CARDINAL graphOrSchemeNumber, TypeNumber edge, TypeNumber *sourceCT, Cardinality *sourceCardinality, TypeNumber *targetCT, Cardinality *targetCardinality, BOOLEAN *existent, BOOLEAN isGraphNumber)
+{
+  (RGRASGraphProcAddress[AGSHOWEDGETYPEPROPS])(graphOrSchemeNumber, edge, sourceCT, sourceCardinality, targetCT, targetCardinality, existent, isGraphNumber);
+  CollectGarbage();
+}
+
+void
+AGDeclareAttribute(SchemeNumber schemeNumber, TEXT classOrType, TEXT name, AttributeKind kind, IndexProperties props, ValueTypeNumber valueType, Cardinality valueCardinality, BOOLEAN constantLength, CARDINAL length, AttributeNumber *attNo)
+{  
+  (RGRASGraphProcAddress[AGDECLAREATTRIBUTE])(schemeNumber, CopyStoT(classOrType), CopyStoT(name), kind, props, valueType, valueCardinality, constantLength, length, attNo);
+  CollectGarbage();
+}
+
+void
+AGTestAndShowAttributeNumber(GraphNumber graphOrSchemeNumber, TEXT name, TypeNumber classOrType, BOOLEAN *existent, AttributeNumber *attNo, BOOLEAN isGraphNumber)
+{  
+  (RGRASGraphProcAddress[AGTESTANDSHOWATTRIBUTENUMBER])(graphOrSchemeNumber, CopyStoT(name), classOrType, existent, attNo, isGraphNumber);
+  CollectGarbage();
+}
+
+void
+AGShowAttributeName(GraphNumber graphOrSchemeNumber, AttributeNumber attNo, TEXT name, BOOLEAN *existent, BOOLEAN isGraphNumber)
+{
+  void * text_name;  
+  (RGRASGraphProcAddress[AGSHOWATTRIBUTENAME])(graphOrSchemeNumber, attNo, text_name, existent, isGraphNumber);
+  CopyTtoS(text_name, name);
+  CollectGarbage();
+}
+
+void
+AGShowAttributeProps(GraphNumber graphOrSchemeNumber, AttributeNumber attNo, AttributeKind *kind, IndexProperties *props, ValueTypeNumber *valueType, Cardinality *attCard, BOOLEAN *constLength, CARDINAL *length, BOOLEAN *existent, BOOLEAN isGraphNumber)
+{
+  (RGRASGraphProcAddress[AGSHOWATTRIBUTEPROPS])(graphOrSchemeNumber, attNo, kind, props, valueType, attCard, constLength, length, existent, isGraphNumber);
+  CollectGarbage();
+}
+
+void
+AGPutMetaAttribute(GraphNumber schemeNumber, TypeNumber nType, AttributeNumber attNo, CARDINAL attBegin, CARDINAL attLength, TEXT attValue, BOOLEAN truncate)
+{  
+  (RGRASGraphProcAddress[AGPUTMETAATTRIBUTE])(schemeNumber, nType, attNo, attBegin, attLength, CopyAttributeStoT(attValue,attLength), truncate);
+  CollectGarbage();  
+}
+
+void
+AGGetMetaAttribute(GraphNumber graphOrSchemeNumber, TypeNumber nType, AttributeNumber attNo, CARDINAL attBegin, CARDINAL attLength, TEXT attValue, CARDINAL *returnedLength, BOOLEAN isGraphNumber)
+{
+  void * text_attValue;  
+  text_attValue = CopyAttributeStoT(attValue, attLength);
+  (RGRASGraphProcAddress[AGGETMETAATTRIBUTE])(graphOrSchemeNumber, nType, attNo, attBegin, attLength, text_attValue, returnedLength, isGraphNumber);
+  CopyTtoS(text_attValue,attValue);
+  CollectGarbage();
+}
+
+void
+AGSetEvaluationFunction(SchemeNumber schemeNumber, TEXT nodeClassOrType, TEXT attribute, TEXT name)
+{  
+  (RGRASGraphProcAddress[AGSETEVALUATIONFUNCTION])(schemeNumber, CopyStoT(nodeClassOrType), CopyStoT(attribute), CopyStoT(name));  
+  CollectGarbage();
+}
+
+void
+AGShowEvaluationFunction(GraphNumber graphOrSchemeNumber, AttributeNumber attNo, TypeNumber nodeClassOrType, TEXT name, BOOLEAN *existent, BOOLEAN isGraphNumber)
+{
+  void * text_name;  
+  (RGRASGraphProcAddress[AGSHOWEVALUATIONFUNCTION])(graphOrSchemeNumber, attNo, nodeClassOrType, text_name, existent, isGraphNumber);
+  CopyTtoS(text_name, name);
+  CollectGarbage();
+}
+
+void
+AGBindEvaluationFunction(GraphNumber graphNumber, TEXT name, EvalFunction function)
+{  
+  (RGRASGraphProcAddress[AGBINDEVALUATIONFUNCTION])(graphNumber, CopyStoT(name), function);
+  CollectGarbage();
+}
+
+void
+AGDeclareDependency(SchemeNumber schemeNumber, TEXT nodeClassOrType, TEXT dependent, TEXT dependsOn, TEXT nameOfEdge, DependencyKind kindOfDependency)
+{  
+  (RGRASGraphProcAddress[AGDECLAREDEPENDENCY])(schemeNumber, CopyStoT(nodeClassOrType), CopyStoT(dependent), CopyStoT(dependsOn), CopyStoT(nameOfEdge), kindOfDependency);
+  CollectGarbage();
+}
+
+void
+AGDeleteDependencies(GraphNumber graphOrSchemeNumber, TEXT nodeClassOrType, TEXT dependent, BOOLEAN restoreInheritance, BOOLEAN isGraphNumber)
+{  
+  (RGRASGraphProcAddress[AGDELETEDEPENDENCIES])(graphOrSchemeNumber, CopyStoT(nodeClassOrType), CopyStoT(dependent), restoreInheritance, isGraphNumber);
+  CollectGarbage();
+}
+
+void
+AGShowAllAttributesOfNodeType(GraphNumber graphOrSchemeNumber, TypeNumber nType, SimpleSet *attributes, BOOLEAN isGraphNumber)
+{
+  (RGRASGraphProcAddress[AGSHOWALLATTRIBUTESOFNODETYPE])(graphOrSchemeNumber, nType, attributes, isGraphNumber);
+  CollectGarbage();
+}
+
+void
+AGGetAllNodesOfGraph(GraphNumber graphNumber, SimpleSet *setOfNodes)
+{
+  (RGRASGraphProcAddress[AGGETALLNODESOFGRAPH])(graphNumber, setOfNodes);
+  CollectGarbage();
+}
+
+void
+AGGetAllNodeclasses(GraphNumber graphOrSchemeNumber, SimpleSet *setOfClasses, BOOLEAN isGraphNumber)
+{
+  (RGRASGraphProcAddress[AGGETALLNODECLASSES])(graphOrSchemeNumber, setOfClasses, isGraphNumber);
+  CollectGarbage();
+}
+
+void
+AGGetAllEdgetypes(GraphNumber graphOrSchemeNumber, SimpleSet *setOfEdgetypes, BOOLEAN isGraphNumber)
+{
+  (RGRASGraphProcAddress[AGGETALLEDGETYPES])(graphOrSchemeNumber, setOfEdgetypes, isGraphNumber);
+  CollectGarbage();
+}
+
+void
+AGGetAllNodesOfNodeClass(GraphNumber graphOrSchemeNumber, TypeNumber nodeClass, SimpleSet *setOfNodes)
+{
+  (RGRASGraphProcAddress[AGGETALLNODESOFNODECLASS])(graphOrSchemeNumber, nodeClass, setOfNodes);
+  CollectGarbage();
+}
+
+void
+AGGetAllNodesOfNodeType(GraphNumber graphNumber, TypeNumber nType, SimpleSet *setOfNodes)
+{
+  (RGRASGraphProcAddress[AGGETALLNODESOFNODETYPE])(graphNumber, nType, setOfNodes);
+  CollectGarbage();
+}
+
+void
+AGGetComplementOfNodeSet(GraphNumber graphNumber, SimpleSet *setOfNodes)
+{
+  (RGRASGraphProcAddress[AGGETCOMPLEMENTOFNODESET])(graphNumber, setOfNodes);
+  CollectGarbage();
+}
+
+BOOLEAN
+AGTestIsNodeOfNodeClass(GraphNumber graphNumber, TypeNumber nodeClass, TypeNumber node)
+{
+  BOOLEAN Result;
+  Result = (BOOLEAN)((_CARD_PROC)(RGRASGraphProcAddress[AGTESTISNODEOFNODECLASS]))(graphNumber, nodeClass, node);
+  return Result;
+  CollectGarbage();
+}
+
+CARDINAL
+AGFileSize(PoolName poolName, TEXT fileName)
+{
+  CARDINAL Result;  
+  Result = (CARDINAL) ((_CARD_PROC)(RGRASGraphProcAddress[AGFILESIZE]))(CopyStoT(poolName),CopyStoT(fileName));  
+  return Result;
+  CollectGarbage();
+}
+
+void
+AGSetErrorCheckMode(GraphNumber graphNumber, BOOLEAN errorcheckOn)
+{
+  (RGRASGraphProcAddress[AGSETERRORCHECKMODE])(graphNumber, errorcheckOn);
+  CollectGarbage();
+}
+
+void
+AGPutIndexAttribute(GraphNumber graphNumber, NodeNumber node, AttributeNumber attNo, CARDINAL attLength, TEXT attValue)
+{  
+  (RGRASGraphProcAddress[AGPUTINDEXATTRIBUTE])(graphNumber, node, attNo, attLength, CopyAttributeStoT(attValue, attLength));  
+  CollectGarbage();
+}
+
+void
+AGGetIndexAttribute(GraphNumber graphNumber, NodeNumber node, AttributeNumber attNo, TEXT attValue, CARDINAL *attLength)
+{
+  void * text_attValue;  
+  text_attValue = CopyAttributeStoT(attValue, *attLength);
+  (RGRASGraphProcAddress[AGGETINDEXATTRIBUTE])(graphNumber, node, attNo, text_attValue, attLength);
+  CopyTtoS(text_attValue, attValue);
+  CollectGarbage();
+}
+
+void
+AGDeleteIndexAttribute(GraphNumber graphNumber, NodeNumber node, AttributeNumber attNo)
+{
+  (RGRASGraphProcAddress[AGDELETEINDEXATTRIBUTE])(graphNumber, node, attNo);
+  CollectGarbage();
+}
+
+void
+AGGetAllIndexAttributes(GraphNumber graphNumber, NodeNumber node, SimpleSet *indexSet)
+{
+  (RGRASGraphProcAddress[AGGETALLINDEXATTRIBUTES])(graphNumber, node, indexSet);
+  CollectGarbage();
+}
+
+void
+AGGetAllDefinedAttributes(GraphNumber graphNumber, NodeNumber node, SimpleSet *attSet)
+{
+  (RGRASGraphProcAddress[AGGETALLDEFINEDATTRIBUTES])(graphNumber, node, attSet);
+  CollectGarbage();
+}
+
+void
+AGChangeNodeType(GraphNumber graphNumber, NodeNumber node, TypeNumber newType)
+{
+  (RGRASGraphProcAddress[AGCHANGENODETYPE])(graphNumber, node, newType);
+  CollectGarbage();
+}
+
+void
+CollectGarbage()
+{
+/* if (collectionCount == MAX_COLLECTION_COUNT) 
+   { 
+     Enable();    
+     Disable();
+     collectionCount = 0;
+   } else
+   {
+     collectionCount++;
+   } */
+}

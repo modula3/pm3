@@ -1,0 +1,23 @@
+import("HiGRAS")
+import("formsvbt")
+import("tempfiles")
+
+include_pkg("DaVinci")
+include_pkg("GrasParams")
+
+resource("SelectionPanel.fv")
+resource("Selection.xbm")
+resource("smallleft.pbm")
+resource("smallright.pbm")
+resource("bigleft.pbm")
+resource("bigright.pbm")
+bundle("ResourceBundle")
+
+module("Globals")
+module("DaVinciGraph")
+module("Panel")
+
+implementation("PoolView")
+program("poolview")
+
+ManPage("poolview", "1")

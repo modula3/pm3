@@ -1,0 +1,167 @@
+% Makefile for all of GRAS_3. This makefile recursively calls m3build
+% for the relevant GRAS_3 subdirectories. Use it like this:
+%
+% m3build -S [-DPROFILE | -DCOVERAGE] {-D<group>}
+%
+% <group> is one of Gras, Benchmarks, Tools, and all. It determines what
+% should be built:
+%
+% Gras:       packages GrasCommon, PageServer, PageClient, HiGRAS, 
+%                      ServerShutdown
+% RGRAS:      packages rgras, CM3Init
+% Tools:      packages Tools/SchemeBuilder, Tools/SchemeDump,
+%                      Tools/NamesBrowser, Tools/GraphDump,
+%		       Tools/GrasRuleMonitor
+% VTools:     packages Tools/DaVinci, Tools/SchemeView, Tools/PoolView
+% Benchmarks: packages Benchmarks/BenchmarkTools Benchmarks/OO1
+% all       : groups   Gras, RGRAS, Tools, Benchmarks, VTools
+%
+% If no groups are defined, Gras is the default
+%
+
+% Basic unix resources
+RBIN = "/usr/local/public/rbin"
+LN = RBIN & SL & "ln"
+MKDIR = RBIN & SL & "mkdir"
+
+% CM3, SRC or PM3?
+CM3 = "cm3"
+SRC = "src"
+PM3 = "pm3"
+
+% Build options
+if not defined("COMPILER")
+  COMPILER = SRC
+end
+
+if equal(COMPILER, CM3)
+  DEBUG = "-g"
+  OVERRIDE = "-override"
+  M3BUILD = "/home/systems/reactor/reactor/bin/cm3"
+else
+  DEBUG = ""
+  OVERRIDE = "-O"
+  M3BUILD = "m3build"
+end
+
+% Gras directories
+GRAS_3 = $GRASHOME
+BenchmarkDir = GRAS_3 & SL & "Benchmarks"
+ToolDir = GRAS_3 & SL & "Tools"
+BinDir = GRAS_3 & SL & TARGET
+ManDir = GRAS_3 & SL & "man" & SL & "man1"
+Man4Dir = GRAS_3 & SL & "man" & SL & "man4"
+
+proc pexec(cmd, args, show) is
+  if equal(COMPILER,PM3)
+    if not equal(show,"")
+      write(cmd, " ", args, CR)
+    end
+    local command = [cmd]
+    foreach a in args
+      % take care of pm3's m3build
+      if not equal(a,"")
+        command += a
+      end
+    end
+%    foreach c in command
+%      write("\"", c, "\"", CR)
+%    end
+    local ret = exec(command)
+  else
+    if equal(show,"")
+      exec("@" & cmd, args)
+    else
+      exec(cmd, args)
+    end
+  end
+end  
+
+proc BuildPackage(dir, pkg, opt) is
+  local buildin = dir & SL & pkg
+  local options = opt
+  local pwd = path()
+  if defined("PROFILE")
+    options += "-DPROFILE"
+  end
+  if defined("COVERAGE")
+    options += "-DCOVERAGE"
+  end
+  write("Trying to build package ", pkg, CR)
+  if equal(COMPILER, CM3)
+    pexec("cd", [buildin, ";", M3BUILD, options, "-DCOMPILER=" & COMPILER, ";", "cd", pwd],"T")
+  else
+    pexec(M3BUILD, ["-d", buildin, options, "-DCOMPILER=" & COMPILER],"T")
+  end
+end
+
+proc BuildLibraryPackage(dir, pkg, opt) is
+  BuildPackage(dir, pkg, opt)
+end
+
+proc BuildProgramPackage(name, dir, pkg, opt) is
+  local prog = dir & SL & pkg & SL & TARGET & SL & name
+  local man1 = dir & SL & pkg & SL & TARGET & SL & name & ".1"
+  local man4 = dir & SL & pkg & SL & TARGET & SL & name & ".4"
+  BuildPackage(dir, pkg, opt)
+  pexec(LN, ["-s", "-f", prog, BinDir & SL & name],"T")
+  if not stale(man1, man1)
+    cp_if(man1, ManDir & SL & name & ".1")
+  end
+  if not stale(man4, man4)
+    cp_if(man4, Man4Dir & SL & name & ".4")
+  end
+end
+
+pexec(MKDIR, ["-p", TARGET],"")
+pexec(MKDIR, ["-p", ManDir],"")
+pexec(MKDIR, ["-p", Man4Dir],"")
+
+if defined("all")
+  Gras = "TRUE"
+  Benchmarks = "TRUE"
+  Tools = "TRUE"
+  VTools = "TRUE"
+  RGRAS = "TRUE"
+end
+
+if not defined("Gras") and not defined ("Benchmarks") and not defined ("Tools") and not defined ("VTools") and not defined ("RGRAS")
+  Gras = "TRUE"
+end
+
+if defined ("Gras")
+  BuildLibraryPackage(GRAS_3, "GrasCommon", [DEBUG])
+  BuildProgramPackage("g3server", GRAS_3, "PageServer", [DEBUG, OVERRIDE])
+  BuildLibraryPackage(GRAS_3, "RuleEngine", [DEBUG, OVERRIDE])
+  BuildLibraryPackage(GRAS_3, "PageClient", [DEBUG, OVERRIDE])
+  BuildLibraryPackage(GRAS_3, "HiGRAS", [DEBUG, OVERRIDE])
+  % special treatment for GRAS man-page
+  local man1 = GRAS_3 & SL & "HiGRAS" & SL & TARGET & SL & "GRAS.1"
+  cp_if(man1 , ManDir & SL & "GRAS" & ".1")
+  BuildProgramPackage("g3shutdown", GRAS_3, "ServerShutdown", [DEBUG, OVERRIDE])
+  BuildProgramPackage("g3ns", GRAS_3, "GrasNameServer", [DEBUG, OVERRIDE])
+end
+
+if defined ("Tools")
+  BuildProgramPackage("buildscheme", ToolDir, "SchemeBuilder", [DEBUG, OVERRIDE])
+  BuildProgramPackage("schemedump", ToolDir, "SchemeDump", [DEBUG, OVERRIDE])
+  BuildProgramPackage("poolbrowser", ToolDir, "NamesBrowser", [DEBUG, OVERRIDE])
+  BuildProgramPackage("graphdump", ToolDir, "GraphDump", [DEBUG, OVERRIDE])
+  BuildProgramPackage("g3monitor", ToolDir, "GrasRuleMonitor", [DEBUG, OVERRIDE])
+end
+
+if defined ("VTools")
+  BuildLibraryPackage(ToolDir, "DaVinci", [DEBUG, OVERRIDE])
+  BuildProgramPackage("schemeview", ToolDir, "SchemeView", [DEBUG, OVERRIDE])
+  BuildProgramPackage("poolview", ToolDir, "PoolView", [DEBUG, OVERRIDE])
+end
+ 
+if defined("RGRAS")
+  BuildLibraryPackage(GRAS_3, "rgras", [DEBUG, OVERRIDE])
+  BuildLibraryPackage(GRAS_3, "CM3Init", [DEBUG, OVERRIDE])
+end
+ 
+if defined("Benchmarks")
+  BuildLibraryPackage(BenchmarkDir, "BenchmarkTools", [DEBUG, OVERRIDE])
+  BuildProgramPackage("oo1", BenchmarkDir, "OO1", [DEBUG, OVERRIDE])
+end

@@ -1,0 +1,118 @@
+.TH GRAPHDUMP 1 "15 Dec 1997"
+.SH NAME
+graphdump \- Display the contents of a GRAS graph.
+.SH SYNOPSIS
+.HP
+.B 
+graphdump
+.RI 
+<pool> <graph>  [-local] 
+.br
+[-s| -p [-g [all]] ] -root <path> 
+.br
+[-agent <host>] [-id <server>] [-cachesize <pages>]
+.br
+.br
+.SH DESCRIPTION
+GRAS databases (pools) are collections of graphs. If a graph 
+conforms to a schema, i.e. if it is a typed graph (cf. 
+.BR GRAS (1))
+its contents can be dumped with graphdump. Without additional options,
+graphdump prints for every node it finds in the graph all its
+attribute values and all incoming and outgoing edges. It tries to print
+attributes according to their type information stored in the graph
+scheme.
+
+ With the help of an awk or other script, it should be possible to
+convert this output to a format a graphical display tool
+understands. If listing every node is too much, -s can be specified,
+thereby telling graphdump to only count the number of nodes of each
+type and the mean length of their attributes as well as the mean
+number of incident edges of each type.
+
+For graphs with or without schema, graphdump also provides a much deeper
+insight into the database internals. Specifying -p tells graphdump to
+print information on the index and data pages of the graph file. This
+shouldn't be too interesting for the average GRAS user, so the output
+will not be explained here. On the other hand, if -g is also
+specified, graphdump opens a window to graphically display its index
+structures for the four storages (nodes, names, edges, and
+attributes).
+.SH OPTIONS
+.TP 3
+.B
+-local
+Search the graph in the client part of the specified pool.
+.br
+.TP
+.B
+-s
+Print statistical information only, i.e. do not list every node and
+edge, but only the number of node for each type, the mean number of
+edges emanating and incoming to nodes of each types a.s.o.
+.br
+.TP
+.B 
+-p [-g [all]]
+.br
+Display information about data pages of the physical graph file. This
+includes a traversal of the index trees of all four graph storages and
+a listing of the page usage in percent. With -g, the index trees are
+displayed graphically either one at a time or, if 'all' is specified
+all four trees in one window. The colors of the nodes in the tree have
+the following meaning:
+.RS 10
+.br
+.B
+red: 
+a split along key 1
+.br
+.B
+blue: 
+a split along key 2
+.br
+.B
+black: 
+a page reference
+.br
+.RE
+.TP
+.B 
+-root <path>
+.br
+Use <path> as client root path for database login.
+.br
+.TP
+.B 
+-cachesize <pages>
+.br
+Use <pages> as the number of pages in the page cache of the rule
+monitor as GRAS client.
+.br
+.TP
+.B 
+-id <server>
+.br
+Connect to a server with the id <server> instead of the default
+server. 
+.br
+.TP
+.B 
+-agent <host>
+.br
+Use <host> to locate netobjd. The default is 'localhost'. The network
+object demon is used to find the GRAS name-server 
+.BR g3ns (1).
+.br
+.SH SEE ALSO
+.BR GRAS (1),
+.BR g3ns (1)
+.SH DIAGNOSTICS
+.B
+Graph has no scheme!
+Graphdump without options or with -s option only runs on graphs
+conforming to a schema.
+.br
+.SH BUGS
+The graphical display doesn't redisplay its contents properly. You
+might have to resize the window to view the complete tree(s).

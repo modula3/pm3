@@ -1,0 +1,28 @@
+proc GenM3Init(intfs, imports, compiler, flavour) is
+  local param = [$GRASHOME & "/CM3Init/src/GenM3init"]
+  foreach intf in intfs
+    param += "-i"
+    param += intf
+  end
+  foreach imp in imports
+    param += "-I"
+    param += imp
+  end
+  param += "-C"
+  param += compiler
+  param += "-T" 
+  param += TARGET
+  param += "-M" 
+  param += flavour
+  param += "-o" 
+  param += "/tmp/m3init.c"
+  write(param) write(CR)
+  if equal(COMPILER,"pm3")
+    local bla = exec(param)
+  else
+    exec(param)
+  end
+  cp_if("/tmp/m3init.c", "m3init.c")
+  local x = unlink_file("/tmp/m3init.c")
+  derived_c("m3init")
+end

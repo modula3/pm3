@@ -1,0 +1,8 @@
+m3_option("-g")
+
+import 		("GrasCommon")
+include_pkg     ("daemon")
+
+implementation	("Main")
+Program		("g3ns")
+ManPage         ("g3ns", "1")

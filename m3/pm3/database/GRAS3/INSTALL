@@ -1,0 +1,46 @@
+This file describes how to install GRAS3 from the GRAS3 source code 
+distribution.
+
+To install GRAS3 on your system, just unpack the source archive (gzip
+-c -d gras3-1.1.tar.gz | tar xfv -) in a directory of your choice, say
+<unpack_dir>. This will create a directory <unpack_dir>/GRAS3
+containing all of GRAS' packages, tools and examples. To compile, edit
+the top-level m3makefile to suit your system, i.e. set RBIN to a
+sensible value (path to mkdir and ln), and edit the COMPILER settings
+appropriately. Then, set the environment variable GRASHOME to
+<unpack_dir>/GRAS3, cd $GRASHOME and type 'm3build -S -Dall'. This
+will build all libraries and tools. If you are not using SRC Modula-3
+but the Critical Mass system, type in 'cm3 -Dall' (and make sure
+to set cm3 as the default compiler in the top-level m3makefile).
+
+The top-level makefile creates a directory $GRASHOME/TARGET (SOLgnu,
+LINUXELF etc.) and creates links for all executables inside this
+directory. It also copies the GRAS man pages to $GRASHOME/man. 
+
+If you do not want to fuss around with a top-level makefile, you can
+also translate all packages by hand in the following order:
+GrasCommon, PageServer, RuleEngine, PageClient, HiGRAS,
+ServerShutdown, GrasNameServer, Tools/GrasRuleMonitor,
+Tools/SchemeBuilder, Tools/GraphDump, Tools/NamesBrowser,
+Tools/SchemeDump, rgras, CM3Init.
+
+We assume, that you do not want to install GRAS in the main Modula-3
+source tree, hence the top-level m3makefile does not ship anything and
+all packages use m3override files when necessary (the main reason for
+the $GRASHOME variable). If you prefer to install GRAS together with
+the standard Modula-3 libs, you might edit the top-level m3makefile
+accordingly or compile and ship by hand, as indicated above. 
+
+At the moment, shipping is not quite as easy as it should be. The
+packages Tools/Daemon and Tools/GrasParams are included into other
+packages (GrasNameServer and all tools) with 'include_pkg' in their
+m3makefiles. Here, shipping simply does not work. To get things
+shipped, you basically have three alternatives:
+1) Copy the sources of the included packages into all packages using
+them and merge the m3makefiles. 2) Modify the packages GrasParams and
+Daemon so that they build separate libraries. Ship these packages
+before translating any other package using them. Change the
+'include_pkg' statements to 'import' statements in the importing
+m3makefiles. 3) Copy the package sources and the m3makefiles of
+Tools/Daemon and Tools/GrasParams to your system Modula-3 package
+location by hand.

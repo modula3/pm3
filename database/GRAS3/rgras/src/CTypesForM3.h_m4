@@ -1,0 +1,61 @@
+/*
+ * Typdefinition fuer M3-Typen.
+ *
+ * Bei Record-Definitionen: "typedef struct <M3-Typ> { ... } <C-Typ>;"
+ */
+
+#ifndef CTYPESFORM3_H
+#define CTYPESFORM3_H
+#include <rgglobal.h>
+
+typedef long  _INTEGER;
+typedef char* _ADDRESS;
+typedef char* _STRING;
+typedef void (*_PROC)();
+
+typedef BOOLEAN (*_BOOL_PROC)();
+typedef CARDINAL (*_CARD_PROC)();
+
+typedef struct ProcInfo {
+  _PROC    proc;
+  _STRING  name;
+ifelse(COMPILER,`SRC',`  _ADDRESS export;',)
+} _PROCINFO;
+
+typedef struct module {
+  _ADDRESS  file;
+  _ADDRESS  type_cells;
+  _ADDRESS  type_cell_ptrs;
+  _ADDRESS  full_revelations;
+  _ADDRESS  partial_revelations;
+  _ADDRESS  proc_info;
+  _ADDRESS  try_scopes;
+  _ADDRESS  var_map;
+  _ADDRESS  gc_map;
+ifelse(COMPILER,`CM3',`  _ADDRESS  import_info;',)
+  _PROC     link;
+  _PROC     main;
+} _MODULE;
+
+typedef struct link_info {
+  _INTEGER n_modules;
+  _ADDRESS modules;
+  _INTEGER argc;
+  _ADDRESS argv;
+  _ADDRESS envp;
+  _ADDRESS instance;
+  _ADDRESS bottom_of_stack;
+  _ADDRESS top_of_stack;
+} _LINK_INFO;
+
+typedef struct {
+  _MODULE     module;
+  _ADDRESS    info_typecell[26];
+  _LINK_INFO *info;
+} _LINKER;
+
+
+_LINK_INFO *m3init(int argc, char *argv[], char **envp);
+
+#endif
+

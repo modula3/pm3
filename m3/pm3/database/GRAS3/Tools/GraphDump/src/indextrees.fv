@@ -1,0 +1,29 @@
+(Rim (Pen 10)    
+  (LabelFont "-*-helvetica-medium-r-normal--12-*")
+  (VBox
+    (HBox
+      (Glue 5)
+      (VBox %entities)  	      
+      (Glue 5)
+      Chisel
+      (Glue 5)
+      (VBox %names)
+      (Glue 5)
+    )
+    (Glue 5)
+    Chisel
+    (Glue 5)
+    (HBox
+      (Glue 5)
+      (VBox %relations)  	      
+      (Glue 5)
+      Chisel
+      (Glue 5)
+      (VBox %attributes)
+      (Glue 5)
+    )
+    (Glue 5)
+    (HBox Fill (Button %close "Close") Fill)
+    (Glue 5)
+  )
+)

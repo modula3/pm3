@@ -1,0 +1,268 @@
+**********************************************************************
+			 GRAS3: GRAph Storage 3
+                        Version 1.1b1, 28.5.1998
+ 
+          Roland Baumann <roland@i3.informatik.rwth-aachen.de>
+**********************************************************************
+ 
+What is GRAS?
+
+GRAS is a set of libraries and programs that together implement a
+structure-oriented client/server database management system. In
+general, structure-oriented DBMS offer a richer set of data types and
+constructors than e.g. relational DBMS. The data model of GRAS is the
+directed, attributed, node and edge labelled graph. GRAS is not
+intended as a stand-alone system, but must be accessed via its
+application programming interface.
+
+GRAS features include
+* nested transactions supporting the ACID paradigm
+* multi-user capable client/server architecture (page-server)
+* sophisticated undo/redo mechanism
+* support for versioning
+* graph schemata with inheritance and derived attributes
+* extensible event-trigger mechanism
+
+GRAS was developed to serve as repository for fine-grained documents
+in software engineering environments. Such documents can be abstract
+syntax graphs, task nets, architecture graphs, etc. Tools working with
+and editing such documents use GRAS graphs to store and query their
+contents. 
+
+News in version 1.1
+
+Besides some bugfixes, GRAS3 1.1 has the following new features
+- a C interface to the rgras package
+- full support for (private) local data in pools.
+- visualization of pool and schema contents with daVinci graph 
+  visualization (http://www.informatik.uni-bremen.de/~davinci)
+
+Data Model
+
+As already mentioned, GRAS graphs are directed, attributed, node and
+edge labelled graphs. Nodes are first-order objects with an identity,
+whereas edges are only defined by source and target node and a label
+specifying their type. When using graph schemata, nodes also have a
+type determining their attributes. Similar node types can be derived
+from a common node class, and node classes can be organized in an
+inheritance hierarchy. Edge types in a schema determine the source and
+target node types (or classes) of their instances and the source and
+target cardinality, very similar to binary relations in an ER
+diagram. Attributes defined for node types/classes can also have
+various properties, have a look at HiGRAS/src/TypedGraphs/Scheme.i3
+for further details.
+
+Graphs are organized in pools. A graph pool contains graphs, schemata,
+version information, etc. Pools are the units for transactions,
+i.e. all operations affecting the same pool can be coordinated with
+transactions. A pool basically corresponds to a directory maintained
+by the GRAS server. The graphs in a pool can be connected by graph
+boundary crossing edges, simply by specifying a node in a different
+graph when drawing an edge (nodes are identified by a pair (graph
+number, entity number)). The idea behind pools is to use them as
+repositories for the documents of a (sub-)project in e.g. software
+development. 
+
+System Requirements
+
+The system is entirely written in Modula-3 using the Critical Mass cm3
+compiler under Solaris 2.5. It is also tested on Linux with the SRC
+3.6 compiler and kernel 2.0.30, as well as pm3-1.1.8 and kernel
+2.0.35, but I guess any kernel above 2.0 should work. Porting to
+different unix platforms shouldn't be to hard. There are two places
+which might need adaption: 'PageFile.m3' and the 'daemon' package.
+The first uses getrlimit/setrlimit to increase the number of open file
+descriptors per process, the latter uses setsid to make a process a
+daemon process.
+
+The current release is a source code distribution, so you will need a
+Modula-3 compiler to install it. GRAS has a C interface so that is
+possible to build GRAS applications without a Modula-3 compiler. But
+this interface depends on the compiler and platform used and I don't
+have enough resources to provide one for every platform/compiler
+combination.  To learn more about Modula-3, have a look at
+http://www.m3.org,
+http://www.research.digital.com/SRC/modula-3/html/home.html, or
+http://m3.polymtl.ca/m3/. 
+You can also find links to public domain compilers there (even
+precompiled ones).
+
+For installation instructions, read the file INSTALL.
+
+Getting started
+
+Before any GRAS application can be started, you have to make sure a
+GRAS page server process (g3server) is running. To start a server,
+first make sure netobjd is running on the local machine. Then start
+'$GRASHOME/SOLgnu/g3ns', which is the GRAS3 name server. We use our
+own name server process to allow applications to query for running
+GRAS servers. Finally, you can start '$GRASHOME/SOLgnu/g3server -root
+<serverdir>'. This starts a page-server which will use <serverdir> as
+root directory for all its files and directories. <serverdir> must
+exist before accessing any files with the page-server. The server
+process will print out some messages and then wait for clients to
+access it until it is explicitly shut down.
+
+To test the system, you can run the OO1 benchmark program, which will
+be compiled when using the top-level m3makefile. It has a graphical
+user interface and should be easy to use (better start with a smaller
+database size than 20,000, e.g. 5,000). Start the program with
+'$GRASHOME/SOLgnu/oo1 -root <clientdir>'. <clientdir> should be
+different form <serverdir>. It is the place to store local data.
+
+A server can be stopped in two ways:
+1) The safe method is to use the program 'g3shutdown'. It will try to
+   contact a server and requests a shut-down. This will fail if the
+   server is not idle.
+2) The unsafe method is to press Ctrl-C in the server terminal window
+   or simply send a kill signal. This can violate data integrity,
+   since the server might not be able to save all data to disk.
+
+Note: All GRAS programs support a command-line switch -agent which
+overrides the default 'localhost' for searching the netobjd. Also, all
+applications have a man page, which detail their command line options
+and purpose.
+
+Writing GRAS applications
+
+To write your own GRAS applications, you have to be familiar with some
+of GRAS' interfaces. Have a look at the GRAS man page for a listing of
+the programming interfaces. Some example programs can be found in
+$GRASHOME/Examples. See the README file there. You can also have a
+look at the various GRAS tools in the $GRASHOME/Tools directory, to
+gain an impression on how to program GRAS. The OO1 benchmark can also
+serve as an example, though it encapsulates the GRAS graph interfaces
+to get an appropriate interface for its purposes.
+
+The rgras package supplied with this release tries to mimmick as much
+of the original rgras interface (see History) as possible. It may be
+easier to use for a first attempt to write GRAS applications, because
+all operations are collected in one interface. It does not offer all
+of GRAS features, though.
+
+Here are some hints, to help you manage the first steps.
+- Before accessing a graph or a graph-pool, every application must
+  login to the system. The login procedure supplies GRAS with some
+  parameters (e.g. cache-size, root directory). It can be found in the
+  XXGraphSystem interfaces, where XX is one of Typed, ChgMgmt, or
+  Persistent. To be on the safe side, use TypedGraphSystem.Login, this
+  will also call the two other.
+- The XXSystem interfaces can be used to handle pools. Pools are
+  collections of graphs and can be created/opened with
+  pool := NEW(XXGraphPool.T).open(name, access, new).
+  Name is the name of the pool, access gives the access mode in which
+  you wish open the pool (read-only, read-write exclusive, or
+  read-write shared), and new states, whether the pool should be
+  created or an old pool opened.
+- A graph can be opened/created within a pool in a similar way:
+  graph := NEW(XXGraph.T).open(pool, name, access, new, errorchecks,
+                               local) 
+  Here, pool is the handle to an open pool, name the name of the graph
+  (relative to the pool), access an access mode which is compatible to
+  the pool access mode. The new parameter again determines whether an
+  old graph should be opened or a new one created. The errorchecks
+  variable determines if and what kind of errors GRAS should check,
+  and local is used to distinguish between graphs in the <serverdir> and
+  the <clientdir>. The first are accessible by all applications
+  connecting to the same server, the latter is a private graph.
+- After a graph has been opened, you can use its handle to create
+  nodes and edges, write attributes, perform queries and the
+  like. When you are done, close the graph and then the pool.
+- All accesses to an open pool should be done within
+  transactions. There are some exceptions: 
+    * Undo/Redo, SetCheckpoint & Co also work (and have to) outside of
+      transactions. (They do start transactions internally).
+    * Opening and closing graphs also works outside of
+      transactions. There is one trap here: When you close a graph
+      inside a transaction, you should commit this transaction before
+      doing anything else with this graph (especially trying to open
+      it again). This is because the database client can write back
+      changed data only at transaction commit. Hence, the close
+      operation is not really completed until after transaction
+      commit. Therefore, it is common to open and close graphs outside
+      transactions.
+    * Copying graphs between two pools has to be done outside of
+      transactions. 
+As a final note, I highly recommend to use m3browser (or reactor) to
+learn more about GRAS' interfaces and types.
+
+For information on the C interface, reaf the file README.C
+
+Documentation
+
+Man pages for GRAS and the GRAS tools (g3server, g3shutdown,
+poolbrowser, g3ns, graphdump, schemedump, buildscheme, and g3monitor)
+can be found in $GRASHOME/man (or the corresponding package
+directories). Information about the GRAS operations and types can be
+found in GRAS' Modula-3 interface files.
+
+The new tools poolview and schemeview also have man pages. For some
+info on DaVinci, have a look at Tools/DaVinci/src/README. For real info
+go to the URL given above.
+
+Recovery
+
+When a database client crashes, this will normally not affect the
+server. So all data that was written in already committed top-level
+transactions is accessible after a crash. Nevertheless, you might have
+to be careful about assumptions concerning existence/non-existence of
+certain graphs. In the worst case, you should shutdown the server,
+delete the inconsistent pool in the server root directory, and then
+restart the server. When the server crashes, data might be lost and if
+you can reproduce the error, please consider to send us a bug-report.
+
+History
+
+GRAS' development started in the mid 80's in Pascal on IBM PCs. The
+system evolved over the years with more and more functionality being
+added (undo/redo, versioning, schema handling, client/server
+distribution). The implementation language changed from Pascal to
+Modula-2 and finally to Modula-3 and C. The result of this line of
+development is called rgras. The latest rgras version can be
+obtained via ftp (ftp://ftp-i3.informatik.rwth-aachen.de/pub/GRAS). 
+
+GRAS3 is closely related to rgras, sharing many features and the coarse
+architecture. However, GRAS3 was implemented new from scratch in
+Modula-3 to clean-up the code and experiment with new features. It
+also follows a different approach to distribution (page-server instead
+of a query-server). It allows graphs with more nodes than rgras and
+has better multi-user support.
+
+Future
+
+In the long run, the data model of GRAS will change to hierarchical
+graphs, i.e. graphs containing other graphs. This will affect the
+graph schema implementation, but the current implementation will still
+coexist in a separate subsystem.
+
+This release of GRAS was issued to support the release of ADT, an
+analysis and development tool for Modula-3 sources. ADT makes extensive
+use of GRAS and is a good example for the kind of applications the
+system is intended for (although ADT's graphs are rather small).
+
+Since our computer infrastructure will include some Windows NT
+machines, we will work on a port of GRAS to this platform, soon.
+
+Contact
+
+Your problems, suggestions, and remarks are welcome. Please send
+e-mail to the address above. If you want to improve the demos, or even
+write new applications for GRAS, I would be glad to include them in
+the distribution.
+
+Copyright
+
+GRAS, its demo applications, and its utilities are free software;
+you can redistribute and/or modify them under the terms of the GNU
+Library General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any
+later version.
+
+This software is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Library General Public License for more details.
+
+You should have received a copy of the GNU Library General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.

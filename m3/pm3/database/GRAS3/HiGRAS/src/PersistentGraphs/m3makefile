@@ -1,0 +1,34 @@
+Module("TaggedName")
+CursorSet("TaggedName","TaggedName")
+Module("AttributeDescription")
+CursorSet("AttributeDescription","AttributeDescription")
+
+module("EntityStorage")
+module("NameStorage")
+module("RelationStorage")
+module("AttributeStorage")
+
+module("ConnectorStorage")
+module("MultiNameStorage")
+module("LongAttributeStorage")
+module("LongAttributeCache")
+
+module("Database")
+include_dir("GraphEvents")
+
+CursorSet("TextCursor", "Text")
+Module("TextId")
+CursorSet("TextId", "TextId")
+Module("Names")
+Module("PersistentNames")
+
+Module("Node")
+CursorSet("Node", "Node")
+Relation("NodeLabel", "Node", "Cardinal", "NodeSet", "CardSet")
+module("ExtConnectorStorage")
+
+Interface("PersistentGraphPool")
+interface("InternPersistentGraphPool")
+implementation("PersistentGraphPool")
+Module("PersistentGraph")
+Module("PersistentGraphSystem")

@@ -1,0 +1,20 @@
+m3_option("-g")
+
+import("libm3")
+import("GrasCommon")
+
+include_dir("RuleTypes")
+include_dir("EventHandler")
+
+sequence("EventHandler", "EventHandler")
+table("CardEventHandler", "Cardinal", "EventHandler")
+
+Module("EventDetector")
+sequence("EventDetector", "EventDetector")
+table("CardEventDetectorSeq", "Cardinal", "EventDetectorSeq")
+
+module("LocalRuleHandler")
+include_dir("RemoteRuleHandler")
+Module("RuleEngine")
+
+Library("RuleEngine")
