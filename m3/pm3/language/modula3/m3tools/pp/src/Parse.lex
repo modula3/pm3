@@ -35,10 +35,10 @@
 "<*"[ \t\f\n\r]*"LINE"          {BufferLexeme(1); return(PR_LINE);}
 "<*"[ \t\f\n\r]*"CALLBACK"      {BufferLexeme(1); return(PR_CALLBACK);}
 "<*"[ \t\f\n\r]*"EXPORTED"      {BufferLexeme(1); return(PR_EXPORTED);}
+"<*"[ \t\f\n\r]*"PRAGMA"        {BufferLexeme(1); return(PR_PRAGMA);}
 %{
 /*
 "<*"		{BufferLexeme(1); return(LPRAGMA);}
-"<*"[ \t\f\n\r]*"PRAGMA"        {BufferLexeme(1); return(PR_PRAGMA);}
 "<*"[ \t\f\n\r]*"LL"            {BufferLexeme(1); return(PR_LL);}
 "<*"[ \t\f\n\r]*"SPEC"          {BufferLexeme(1); return(PR_SPEC);}
 "<*"[ \t\f\n\r]*"NOWARN"        {BufferLexeme(1); return(PR_NOWARN);}

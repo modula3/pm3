@@ -358,7 +358,7 @@ decl_pragma:
     | decl_pragma obsolete_pragma NL
     | decl_pragma unused_pragma NL
     | decl_pragma fatal_pragma NL
-    | decl_pragma pragma_pragma NL
+    /*| decl_pragma pragma_pragma NL*/
     | decl_pragma exported_pragma NL
     ;
 
@@ -867,13 +867,24 @@ assert_pragma:
       Pr_Assert     SP expr                SP Rpragma
     | Pr_Assert     SP expr Comma Str_expr SP Rpragma
     ;
+
+/* an anypragma can appear anywhere */
+anypragma:
+      pragma_pragma
+    ;
+
+/* these pragmas can appear anywhere,
+   thus they are handled by the NPS non-terminal,
+   thus they must not have a terminating NPS,
+   as it is contained in Rpragma */
+pragma_pragma:     Pr_Pragma     SP id_list        SP Rpragma1 ;
+
 /*
 ll_pragma:         Pr_LL         SP expr           SP Rpragma ;
 spec_pragma:       Pr_Spec       SP expr           SP Rpragma ;
 nowarn_pragma:     Pr_Nowarn     SP Rpragma ;
 */
 fatal_pragma:      Pr_Fatal      SP fatal_exc_list SP Rpragma ;
-pragma_pragma:     Pr_Pragma     SP id_list        SP Rpragma ;
 
 fatal_exc_list:
       qid_list
@@ -1074,6 +1085,7 @@ Rbrace:        RBRACE { PR ("}");} NPS ;
 Rbracket:      RBRACKET { PR ("]");} NPS ;
 Rparen:        RPAREN { PR (")");} NPS ;
 Rpragma:       RPRAGMA { PR ("*>");} NPS ;
+Rpragma1:      RPRAGMA { PR ("*>");} ;
 Semi:          SEMICOLON { PR (";");} NPS ;
 Semi1:         SEMICOLON { PR (";");} ;
 Slash:         SLASH { PR ("/");} NPS ;
@@ -1189,17 +1201,42 @@ With:          WITH { PK ("WITH");} NPS ;
 /*--------------------- comments ------------------------*/
 
 InitialNPS:
-      NPSPure { blanklinep = 0; PrintNPS(1); }
+      space_list { blanklinep = 0; PrintNPS(1); }
+    | space_list { blanklinep = 0; PrintNPS(1); } anypragma_space_list
     ;
 
 NPS:
       /* empty */ { blanklinep = 0; }
-    | NPSPure { blanklinep = 0; PrintNPS(0); }
+    | space_anypragma_list
+    | anypragma_space_list
     ;
 
-NPSPure:
+/* We use the unefficient right recursion to assert
+   that anypragma_space_list always start with any_pragma_list
+   as required by InitialNPS. */
+space_anypragma_list:
+      space_list_emit
+    | space_list_emit anypragma_space_list
+    ;
+
+anypragma_space_list:
+      anypragma_list
+    | anypragma_list space_anypragma_list
+    ;
+
+anypragma_list:
+      anypragma
+    | anypragma_list anypragma
+    ;
+
+space_list_emit:
+      space_list { blanklinep = 0; PrintNPS(0); }
+    ;
+
+/* We consider comments and unknown pragmas as spaces as well */
+space_list:
       WHITESPACE
-    | NPSPure WHITESPACE
+    | space_list WHITESPACE
     ;
 
 /*----------------- formatting semantic routines -----------------------*/
