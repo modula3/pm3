@@ -1,0 +1,2064 @@
+2.1 High level syntax
+
+     High level syntax[1]==
+
+          % R201
+          xExecutableProgram:
+            xProgramUnit / xExecutableProgram xProgramUnit .
+
+          % R202
+          xProgramUnit:
+            xMainProgram /
+            xFunctionSubprogram /
+            xSubroutineSubprogram /
+            xModule /
+            xBlockDataSubprogram .
+
+          % R203 chain rule eliminated
+
+          % R1101 desn't ensure ordering as the standard requires.
+          xMainProgram:
+            xMainRange /
+            xProgramStmt xMainRange .
+
+          xMainRange:
+            xBody xEndProgramStmt /
+            xBodyPlusInternals xEndProgramStmt /
+            xEndProgramStmt .
+
+          xBody:
+            xBodyConstruct / xBody xBodyConstruct .
+
+          xBodyConstruct:
+            xSpecificationPartConstruct / xExecutableConstruct .
+
+          % R203 chain rule omitted
+
+          %R1216
+          xFunctionSubprogram:
+            xFunctionStmt xFunctionRange .
+
+          xFunctionRange:
+            xBody xEndFunctionStmt /
+            xEndFunctionStmt /
+            xBodyPlusInternals xEndFunctionStmt .
+
+          % R1221
+          xSubroutineSubprogram:
+            xSubroutineStmt xSubroutineRange .
+
+          xSubroutineRange:
+            xBody xEndSubroutineStmt /
+            xEndSubroutineStmt /
+            xBodyPlusInternals xEndSubroutineStmt .
+
+          % R1104
+          xModule:
+            xModuleStmt xModuleBlock .
+          xModuleBlock:
+            xModuleBody xEndModuleStmt /
+            xEndModuleStmt .
+          xModuleBody:
+            xSpecificationPartConstruct /
+            xModuleSubprogramPartConstruct /
+            xModuleBody xSpecificationPartConstruct /
+            xModuleBody xModuleSubprogramPartConstruct .
+
+          % R1112
+          xBlockDataSubprogram:
+            xBlockDataStmt xBlockDataBody xEndBlockDataStmt /
+            xBlockDataStmt xEndBlockDataStmt .
+
+          xBlockDataBody:
+            xBlockDataBodyConstruct / xBlockDataBody xBlockDataBodyConstruct .
+          xBlockDataBodyConstruct:
+            xSpecificationPartConstruct .
+
+          % R204 doesn't ensure ordering as the standard requires
+          xSpecificationPartConstruct:
+            xUseStmt / xImplicitStmt / xParameterStmt / xFormatStmt / xEntryStmt /
+            xDeclarationConstruct .
+
+          % R205 see R204
+
+          % R206 see R204
+
+          % R207 also see R204
+          xDeclarationConstruct:
+            xDerivedTypeDef / xInterfaceBlock /
+            xTypeDeclarationStmt / xSpecificationStmt .
+
+          % R208
+
+          % R209
+          xExecutionPartConstruct:
+            xObsoleteExecutionPartConstruct /
+            xExecutableConstruct / xFormatStmt / xEntryStmt .
+          xObsoleteExecutionPartConstruct: xDataStmt .
+          % R210
+          xBodyPlusInternals:
+            xBody xContainsStmt xInternalSubprogram /
+            xContainsStmt xInternalSubprogram /
+            xBodyPlusInternals xInternalSubprogram .
+
+          % R211
+          xInternalSubprogram:
+            xFunctionSubprogram / xSubroutineSubprogram .
+
+          % R212 doesn't ensure ordering as standard requires
+          xModuleSubprogramPartConstruct:
+            xContainsStmt / xModuleSubprogram .
+
+          % R213
+          xModuleSubprogram:
+            xFunctionSubprogram / xSubroutineSubprogram .
+
+          % R214
+          xSpecificationStmt:
+            xAccessStmt /
+            xAllocatableStmt /
+            xCommonStmt /
+            xDataStmt /
+            xDimensionStmt /
+            xEquivalenceStmt /
+            xExternalStmt /
+            xIntentStmt /
+            xIntrinsicStmt /
+            xNamelistStmt /
+            xOptionalStmt /
+            xPointerStmt /
+            xSaveStmt /
+            xTargetStmt .
+
+          % R215
+          xExecutableConstruct:
+            xActionStmt /
+            xCaseConstruct /
+            xDoConstruct /
+            xForallConstruct /
+            xIfConstruct /
+            xWhereConstruct /
+            xEndDoStmt .          /* see the note on R818 */
+
+          % R216
+          xActionStmt:
+            xObsoleteActionStmt /
+            xAllocateStmt /
+            xAssignmentStmt /
+            xBackspaceStmt /
+            xCallStmt /
+            xCloseStmt /
+            xContinueStmt /
+            xCycleStmt /
+            xDeallocateStmt /
+            xEndfileStmt /
+            xExitStmt /
+            xForallStmt /
+            xGotoStmt /
+            xIfStmt /
+            xInquireStmt /
+            xNullifyStmt /
+            xOpenStmt /
+            xPointerAssignmentStmt /
+            xPrintStmt /
+            xReadStmt /
+            xReturnStmt /
+            xRewindStmt /
+            xStopStmt /
+            xWhereStmt /
+            xWriteStmt .
+          xObsoleteActionStmt:
+            xStmtFunctionStmt /
+            xArithmeticIfStmt /
+            xComputedGotoStmt .
+
+     This macro is invoked in definition 28.
+
+2.2 Source form
+
+     Source form[2]==
+
+          % R301-R303 are components of symbols recognized by the lexical analyzer
+
+          % R304 recognized by the lexical analyzer as xIcon? is this different in F90
+          xName: xIdent .
+
+          % R305
+          xConstant:
+            xNamedConstantUse /
+            xUnsignedArithmeticConstant /
+            '+' xUnsignedArithmeticConstant /
+            '-' xUnsignedArithmeticConstant /
+            xScon /
+            xIcon '_' xScon / xNamedConstantUse '_' xScon /
+            xLogicalConstant /
+            xStructureConstructor /
+            xBozLiteralConstant .
+
+          % R306 chain rule deleted
+
+          % R307
+          xNamedConstant: xIdent .
+          xNamedConstantUse: xIdent .
+
+          % R308 chain rule deleted
+
+          % R309 chain rule deleted
+
+          % R310 recognized semantically
+
+          % R708
+          xPowerOp: '**' .
+
+          % R709
+          xMultOp: '*' / '/' .
+
+          % R710
+          xAddOp: '+' / '-' .
+          xSign: '+' / '-' .
+
+          % R712
+          xConcatOp: '//' .
+
+          % R714
+          xRelOp: '.eq.' / '.ne.' / '.lt.' / '.le.' / '.gt.' / '.ge.' /
+            '==' / '/=' / '<' / '<=' / '>' / '>=' .
+
+          % R719
+          xNotOp: '.not.' .
+
+          % R720
+          xAndOp: '.and.' .
+
+          % R721
+          xOrOp: '.or.' .
+
+          % R722
+          xEquivOp: '.eqv.' / '.neqv.' .
+
+          % R311
+          xDefinedOperator:
+            xDop / xConcatOp /
+            xPowerOp / xMultOp / xAddOp / xRelOp / xNotOp / xAndOp / xOrOp / xEquivOp .
+
+          % R704
+          xDefinedUnaryOp: xDop .
+
+          % R724
+          xDefinedBinaryOp: xDop .
+
+          % R312 recognized semantically
+
+          % R313 recognized by the lexical analyzer as xIcon
+          xLabel: xIcon .
+
+     This macro is invoked in definition 28.
+
+2.3 Intrinsic and derived data types
+
+     Intrinsic and derived data types[3]==
+
+          % R401 recognized by the lexical analyzer in the context of R413
+
+          % R402 recognized by the lexical analyzer in the context of R413, xIcon
+
+          % R403 chain rule deleted see R305
+
+          % R404
+          xUnsignedArithmeticConstant:
+            xIcon / xRcon / xDcon / xComplexConst /
+            xIcon '_' xKindParam /
+            xRcon '_' xKindParam / xDcon '_' xKindParam .
+
+          % R405
+          xKindParam: xIcon / xNamedConstantUse .
+
+          % R406 see R305
+
+          % R407
+          xBozLiteralConstant: xBcon / xOcon / xZcon .
+
+          % R408 recognized by the lexical analyzer as xBcon
+
+          % R409 recognized by the lexical analyzer as xOcon
+
+          % R410 recognized by the lexical analyzer as xZcon
+
+          % R411 component of a symbol recognized by the lexical analyzer
+
+          % R412 see R404
+
+          % R413 see R404
+
+          % R414-R416 components of symbols recognized by the lexical analyzer
+
+          % R417
+          xComplexConst: '(' xExpr ',' xExpr ')' .
+
+          % R418 chain rule deleted
+
+          % R419 chain rule deleted
+
+          % R420 chain rule deleted see R305
+
+          % R421
+          xLogicalConstant:
+            '.true.' / '.false.' /
+            '.true.' '_' xKindParam / '.false.' '_' xKindParam .
+
+          % R422 This does not enforce the required sequence
+          xDerivedTypeDef:
+            xDerivedTypeStmt xDerivedTypeBody xEndTypeStmt .
+          xDerivedTypeBody:
+            xDerivedTypeBodyConstruct / xDerivedTypeBody xDerivedTypeBodyConstruct .
+          xDerivedTypeBodyConstruct: xPrivateSequenceStmt / xComponentDefStmt .
+
+          % R423
+          xDerivedTypeStmt:
+            xLblDef 'type' xTypeName xEOS /
+            xLblDef 'type' ':' ':' xTypeName xEOS /
+            xLblDef 'type' ',' xAccessSpec ':' ':' xTypeName xEOS .
+
+          % R424
+          xPrivateSequenceStmt:
+            xLblDef 'private' xEOS /
+            xLblDef 'sequence' xEOS .
+
+          % R425
+          xComponentDefStmt:
+            xLblDef xTypeSpec ',' xComponentAttrSpecList ':' ':' xComponentDeclList xEOS /
+            xLblDef xTypeSpec ':' ':' xComponentDeclList xEOS /
+            xLblDef xTypeSpec xComponentDeclList xEOS .
+
+          % R426
+          xComponentAttrSpecList:
+            xComponentAttrSpec / xComponentAttrSpecList ',' xComponentAttrSpec .
+          xComponentAttrSpec:
+            'pointer' / 'dimension' '(' xComponentArraySpec ')' .
+
+          % R427
+          xComponentArraySpec: xExplicitShapeSpecList / xDeferredShapeSpecList .
+
+          % R428
+          xComponentDeclList:
+            xComponentDecl / xComponentDeclList ',' xComponentDecl .
+          xComponentDecl:
+            xComponentName '(' xComponentArraySpec ')' '*' xCharLength
+              xComponentInitialization /
+            xComponentName '(' xComponentArraySpec ')' xComponentInitialization /
+            xComponentName '*' xCharLength xComponentInitialization /
+            xComponentName xComponentInitialization /
+            xComponentName '(' xComponentArraySpec ')' '*' xCharLength /
+            xComponentName '(' xComponentArraySpec ')' /
+            xComponentName '*' xCharLength /
+            xComponentName .
+
+          % R429
+          xComponentInitialization:
+            '=' xExpr /
+            '=>' 'null' '(' ')' .
+
+          % R430
+          xEndTypeStmt:
+            xLblDef 'endtype' [ xTypeName ] xEOS /
+            xLblDef 'end' 'type' [ xTypeName ] xEOS .
+
+          % R431
+          xStructureConstructor: xTypeName '(' xExprList ')' .
+          xExprList: xExpr / xExprList ',' xExpr .
+
+          % R432
+          xArrayConstructor: '(/' xAcValueList '/)' .
+
+          % R433 Why xAcValueList1?
+          xAcValueList: xExpr / xAcValueList1 .
+          xAcValueList1:
+            xExpr ',' xExpr /
+            xExpr ',' xAcImpliedDo /
+            xAcImpliedDo /
+            xAcValueList1 ',' xExpr /
+            xAcValueList1 ',' xAcImpliedDo .
+
+          % R434
+          xAcImpliedDo:
+            '(' xExpr ',' xImpliedDoVariable '=' xExpr ',' xExpr ')' /
+            '(' xExpr ',' xImpliedDoVariable '=' xExpr ',' xExpr ',' xExpr ')' /
+            '(' xAcImpliedDo ',' xImpliedDoVariable '=' xExpr ',' xExpr ')' /
+            '(' xAcImpliedDo ',' xImpliedDoVariable '=' xExpr ',' xExpr ',' xExpr ')' .
+
+          % R435 chain rule deleted
+
+          % R436 chain rule deleted
+
+     This macro is invoked in definition 28.
+
+2.4 Data object declarations and definitions
+
+     Data object declarations and definitions[4]==
+
+          % R501
+          xTypeDeclarationStmt:
+            xLblDef xTypeSpec xAttrSpecSeq ':' ':' xEntityDeclList xEOS /
+            xLblDef xTypeSpec ':' ':' xEntityDeclList xEOS /
+            xLblDef xTypeSpec xEntityDeclList xEOS .
+          xAttrSpecSeq: ',' xAttrSpec / xAttrSpecSeq ',' xAttrSpec .
+
+          % R502
+          xTypeSpec:
+            'integer' /
+            'real' /
+            'doubleprecision' /
+            'complex' /
+            'logical' /
+            'character' /
+            'integer' xKindSelector /
+            'real' xKindSelector /
+            'double' 'precision' /
+            'complex' xKindSelector /
+            'character' xCharSelector /
+            'logical' xKindSelector /
+            'type' '(' xTypeName ')' .
+
+          % R503
+          xAttrSpec:
+            'parameter' /
+            xAccessSpec /
+            'allocatable' /
+            'dimension' '(' xArraySpec ')' /
+            'external' /
+            'intent' '(' xIntentSpec ')' /
+            'intrinsic' /
+            'optional' /
+            'pointer' /
+            'save' /
+            'target' .
+
+          % R504
+          xEntityDeclList: xEntityDecl / xEntityDeclList ',' xEntityDecl .
+          xEntityDecl:
+            xObjectName [ '(' xArraySpec ')' ] [ '*' xCharLength ]
+                        [ xInitialization ] /
+            xInvalidEntityDecl .
+          xInvalidEntityDecl:
+            xObjectName '*' xCharLength '(' xArraySpec ')' [ xInitialization ] .
+
+          % R505
+          xInitialization:
+            '=' xExpr /
+            '=>' 'null' '(' ')' .
+
+          % R506 Should this be 'kind=' or 'kind' '='?
+          xKindSelector:
+            '(' 'kind=' xExpr ')' /
+            '(' xExpr ')' .
+
+          % R507
+          xCharSelector:
+            xLengthSelector /
+            '(' 'len=' xCharLenParamValue ',' 'kind=' xExpr ')' /
+            '(' 'len=' xCharLenParamValue ',' xExpr ')' /
+            '(' 'kind=' xExpr ')' /
+            '(' 'len=' xCharLenParamValue ')' /
+            '(' xCharLenParamValue ')' .
+
+          % R508 chain rule deleted
+          xLengthSelector:
+            '*' xCharLength .
+
+          % R509
+          xCharLength: '(' xCharLenParamValue ')' / Scalar Integer Literal Constant[18] .
+
+          % R510 xCharLenParamValue was xTypeParamValue
+          xCharLenParamValue: Specification Expression[15] / '*' .
+
+          % R511
+          xAccessSpec:
+            'public' / 'private' .
+
+          % R512
+          xIntentSpec:
+            'in' / 'out' / 'inout' / 'in' 'out' .
+
+          % R513 see 16
+          xArraySpec:
+            xExplicitShapeSpecList / xAssumedSizeSpec /
+            xAssumedShapeSpecList / xDeferredShapeSpecList .
+          xAssumedShapeSpecList:
+            xLowerBound ':' /
+            xDeferredShapeSpecList ',' xLowerBound ':' /
+            xAssumedShapeSpecList ',' xAssumedShapeSpec .
+
+          % R514
+          xExplicitShapeSpecList:
+            xExplicitShapeSpec / xExplicitShapeSpecList ',' xExplicitShapeSpec .
+          xExplicitShapeSpec: xLowerBound ':' xUpperBound / xUpperBound .
+
+          % R515
+          xLowerBound: Specification Expression[15] .
+
+          % R516
+          xUpperBound: Specification Expression[15] .
+
+          % R517
+          xAssumedShapeSpec:
+            xLowerBound ':' / ':' .
+
+          % R518
+          xDeferredShapeSpecList:
+            xDeferredShapeSpec / xDeferredShapeSpecList ',' xDeferredShapeSpec .
+          xDeferredShapeSpec: ':' .
+
+          % R519
+          xAssumedSizeSpec:
+            '*' /
+            xLowerBound ':' '*' /
+            xExplicitShapeSpecList ',' '*' /
+            xExplicitShapeSpecList ',' xLowerBound ':' '*' .
+
+          % R520
+          xIntentStmt:
+            xLblDef 'intent' '(' xIntentSpec ')' [ ':' ':' ] xIntentParList xEOS .
+          xIntentParList: xIntentPar / xIntentParList ',' xIntentPar .
+          xIntentPar: xDummyArgName .
+
+          % R521
+          xOptionalStmt:
+            xLblDef 'optional' [ ':' ':' ] xOptionalParList xEOS .
+          xOptionalParList: xOptionalPar / xOptionalParList ',' xOptionalPar .
+          xOptionalPar: xDummyArgName .
+
+          % R522
+          xAccessStmt:
+            xLblDef xAccessSpec [ ':' ':' ] xAccessIdList xEOS /
+            xLblDef xAccessSpec xEOS .
+
+          % R523
+          xAccessIdList: xAccessId / xAccessIdList ',' xAccessId .
+          xAccessId: xGenericName / xGenericSpec .
+
+          % R524
+          xSaveStmt:
+            xLblDef 'save' xEOS /
+            xLblDef 'save' [ ':' ':' ] xSavedEntityList xEOS .
+
+          % R525
+          xSavedEntityList: xSavedEntity / xSavedEntityList ',' xSavedEntity .
+          xSavedEntity: xVariableName / xSavedCommonBlock .
+          xSavedCommonBlock: '/' xCommonBlockName '/' .
+
+          % R526
+          xDimensionStmt:
+            xLblDef 'dimension' [ ':' ':' ] xArrayDeclaratorList xEOS .
+          xArrayDeclaratorList:
+            xArrayDeclarator / xArrayDeclaratorList ',' xArrayDeclarator .
+          xArrayDeclarator: xVariableName '(' xArraySpec ')' .
+
+          % R527
+          xAllocatableStmt:
+            xLblDef 'allocatable' [ ':' ':' ] xArrayAllocationList xEOS .
+          xArrayAllocationList:
+            xArrayAllocation / xArrayAllocationList ',' xArrayAllocation .
+          xArrayAllocation:
+            xArrayName / xArrayName '(' xDeferredShapeSpecList ')' .
+
+          % R528 /* xObjectName renamed to xPointerName to simplify Sem. Anal. */
+          xPointerStmt:
+            xLblDef 'pointer' [ ':' ':' ] xPointerStmtObjectList xEOS .
+          xPointerStmtObjectList:
+            xPointerStmtObject / xPointerStmtObjectList ',' xPointerStmtObject .
+          xPointerStmtObject:
+            xPointerName / xPointerName '(' xDeferredShapeSpecList ')' .
+          xPointerName: xIdent .
+
+          % R529 /* xObjectName renamed to xTargetName to simplify Sem. Anal. */
+          xTargetStmt:
+            xLblDef 'target' [ ':' ':' ] xTargetObjectList xEOS .
+          xTargetObjectList:
+            xTargetObject / xTargetObjectList ',' xTargetObject .
+          xTargetObject: xTargetName / xTargetName '(' xArraySpec ')' .
+          xTargetName: xIdent .
+
+          % R530
+          xParameterStmt:
+            xLblDef 'parameter' '(' xNamedConstantDefList ')' xEOS .
+
+          % R531
+          xNamedConstantDefList:
+            xNamedConstantDef / xNamedConstantDefList ',' xNamedConstantDef .
+          xNamedConstantDef: xNamedConstant '=' Constant Expression[19] .
+
+          % R532
+          xDataStmt:
+            xLblDef 'data' xDatalist xEOS .
+          xDatalist: xDataStmtSet / xDatalist xDataStmtSet / xDatalist ',' xDataStmtSet .
+
+          % R533
+          xDataStmtSet: xDataStmtObjectList '/' xDataStmtValueList '/' .
+
+          % R534
+          xDataStmtObjectList: xDataStmtObject / xDataStmtObjectList ',' xDataStmtObject .
+          xDataStmtObject: xVariable / xDataImpliedDo .
+
+          % R535 xExpr must be scalar-int-expr
+          xDataImpliedDo:
+            '(' xDataIDoObjectList ',' xImpliedDoVariable '=' xExpr ',' xExpr ')' /
+            '(' xDataIDoObjectList ',' xImpliedDoVariable '=' xExpr ',' xExpr
+              ',' xExpr ')' .
+
+          % R536 xStructureComponent must be xScalarStructureComponent
+          xDataIDoObjectList: xDataIDoObject / xDataIDoObjectList ',' xDataIDoObject .
+          xDataIDoObject: xArrayElement / xDataImpliedDo / xStructureComponent .
+
+          % R537 chain rule deleted
+
+          % R538
+          xDataStmtValueList: xDataStmtValue / xDataStmtValueList ',' xDataStmtValue .
+          xDataStmtValue:
+            xDataStmtConstant /
+            Scalar Integer Literal Constant[18] '*' xDataStmtConstant /
+            xNamedConstantUse '*' xDataStmtConstant .
+
+          % 539 chain rule deleted
+
+          % R540 only a subset of xconstant is allowed
+          xDataStmtConstant:
+            xConstant / 'null' '(' ')' .
+
+          % R541
+          xImplicitStmt:
+            xLblDef 'implicit' xImplicitSpecList xEOS /
+            xLblDef 'implicit' 'none' xEOS .
+
+          % R542
+          xImplicitSpecList: xImplicitSpec / xImplicitSpecList ',' xImplicitSpec .
+          xImplicitSpec: xTypeSpec Letter Specifications[17] .
+
+          % R543 chain rule deleted
+
+          % R544
+          xNamelistStmt:
+            xLblDef 'namelist' xNamelistGroups xEOS .
+          xNamelistGroups:
+            '/' xNamelistGroupName '/' xNamelistGroupObject /
+            xNamelistGroups '/' xNamelistGroupName '/' xNamelistGroupObject /
+            xNamelistGroups ',' '/' xNamelistGroupName '/' xNamelistGroupObject /
+            xNamelistGroups ',' xNamelistGroupObject .
+
+          % R545
+          xNamelistGroupObject: xVariableName .
+
+          % R546
+          xEquivalenceStmt:
+            xLblDef 'equivalence' xEquivalenceSetList xEOS .
+
+          % R547
+          xEquivalenceSetList:
+            xEquivalenceSet / xEquivalenceSetList ',' xEquivalenceSet .
+          xEquivalenceSet: '(' xEquivalenceObject ',' xEquivalenceObjectList ')' .
+
+          % R548
+          xEquivalenceObjectList:
+            xEquivalenceObject / xEquivalenceObjectList ',' xEquivalenceObject .
+          xEquivalenceObject: Equivalence Entity[16] .
+
+          % R549
+          xCommonStmt:
+            xLblDef 'common' xComlist xEOS .
+          xComlist:
+            xCommonBlockObject /
+            xComblock xCommonBlockObject /
+            xComlist ',' xCommonBlockObject /
+            xComlist xComblock xCommonBlockObject /
+            xComlist ',' xComblock xCommonBlockObject .
+          xComblock: '/' '/' / '/' xCommonBlockName '/' .
+
+          % R550
+          xCommonBlockObject: xVariableName / xArrayDeclarator .
+
+     This macro is invoked in definition 28.
+
+2.5 Data object use
+
+     Data object use[5]==
+
+          % R601 The various forms of variables have to be recognized semantically.
+          xVariable:
+            xDataRef [ '(' xSectionSubscriptList ')' [ xSubstringRange ] ] .
+          xVariableName: xIdent .
+          xScalarVariable: xVariableName / xArrayElement .
+
+          % R603-R608 chain rules deleted
+
+          % R609 see 601
+
+          % R610 see 601
+
+          % R611
+          xSubstringRange: '(' xSubscriptTriplet ')' .
+
+          % R612
+          xDataRef:
+            xName /
+            xDataRef [ '(' xSectionSubscriptList ')' ] '%' xName .
+          xSFDataRef:
+            xName '%' xName /
+            xName '(' xSectionSubscriptList ')' /
+            xSFDataRef [ '(' xSectionSubscriptList ')' ] '%' xName .
+
+          % R613 chain rule deleted.
+
+          % R614
+          xStructureComponent:
+            xVariableName xFieldSelector / xStructureComponent xFieldSelector .
+          xFieldSelector: '(' xSectionSubscriptList ')' '%' xName / '%' xName .
+
+          % R615
+          xArrayElement:
+            xVariableName '(' xSectionSubscriptList ')' /
+            xStructureComponent '(' xSectionSubscriptList ')' .
+
+          % R616 Recognized semantically?
+
+          % R617 Recognized semantically
+          xSubscript: xExpr .
+
+          % R618 Recognized semantically?
+          xSectionSubscriptList:
+            xSectionSubscript / xSectionSubscriptList ',' xSectionSubscript .
+          xSectionSubscript: xExpr / xSubscriptTriplet .
+
+          % R619
+          xSubscriptTriplet:
+            ':' /
+            ':' xExpr /
+            xExpr ':' /
+            xExpr ':' xExpr /
+            xExpr ':' xExpr ':' xExpr /
+            xExpr ':' ':' xExpr /
+            ':' xExpr ':' xExpr /
+            ':' ':' xExpr .
+
+          % R620 chain rule deleted
+
+          % R621 recognized semantically?
+
+          % R622
+          xAllocateStmt:
+            xLblDef 'allocate' '(' xAllocationList ',' 'stat=' xVariable ')' xEOS /
+            xLblDef 'allocate' '(' xAllocationList ')' xEOS .
+
+          % R623 chain rule deleted
+
+          % R624
+          xAllocationList: xAllocation / xAllocationList ',' xAllocation .
+          xAllocation: xAllocateObject / xAllocateObject xAllocatedShape .
+          xAllocatedShape: '(' xSectionSubscriptList ')' .
+          /* Need to use xSectionSubscriptList here to solve an LALR(1) conflict with the
+           * xFieldSelector in R625.  (Can't tell which we have until the character
+           * following the right paren, but we must reduce WITHIN the parens.)
+           */
+
+          % R625
+          xAllocateObjectList:
+            xAllocateObject / xAllocateObjectList ',' xAllocateObject .
+          xAllocateObject:
+            xVariableName / xAllocateObject xFieldSelector .
+
+          % R626
+          /* Omitted to solve LALR(1) conflict.  see R624
+           *
+           * xAllocateShapeSpec: xExpr / xExpr ':' xExpr .
+           */
+
+          % R627 chain rule deleted
+
+          % R628 chain rule deleted
+
+          % R629
+          xNullifyStmt:
+            xLblDef 'nullify' '(' xPointerObjectList ')' xEOS .
+          xPointerObjectList:
+            xPointerObject / xPointerObjectList ',' xPointerObject .
+
+          % R630
+          xPointerObject: xName / xPointerField .
+          xPointerField:
+            xName '(' xSFExprList ')' '%' xName /
+            xName '(' xSFDummyArgNameList ')' '%' xName /
+            xName '%' xName /
+            xPointerField xFieldSelector .
+
+          % R631
+          xDeallocateStmt:
+            xLblDef 'deallocate' '(' xAllocateObjectList',' 'stat=' xVariable ')' xEOS /
+            xLblDef 'deallocate' '(' xAllocateObjectList ')' xEOS .
+
+          /* It is not clear to me whether some of the subcategories of Primary
+          *  are complete
+          */
+
+     This macro is invoked in definition 28.
+
+2.6 Expressions
+
+     Expressions[6]==
+
+          % R701
+          xPrimary:
+            xLogicalConstant /
+            xScon /
+            xUnsignedArithmeticConstant /
+            xArrayConstructor /
+            xName  [ '(' xSectionSubscriptList ')' [ xSubstringRange ] ] /
+            xName '%' xDataRef [ '(' xSectionSubscriptList ')' [ xSubstringRange ] ] /
+            xName '(' xSectionSubscriptList ')' '%'
+              xDataRef [ '(' xSectionSubscriptList ')' [ xSubstringRange ] ] /
+            xFunctionReference [ xSubstringRange ] /
+            xFunctionReference '%'
+              xDataRef [ '(' xSectionSubscriptList ')' [ xSubstringRange ] ] /
+            '(' xExpr ')' .
+
+          xCPrimary: xCOperand / '(' xCExpr ')' .
+          xCOperand:
+            xScon /
+            xName [ '(' xSectionSubscriptList ')' ] /
+            xName [ '(' xSectionSubscriptList ')' ] '%'
+              xDataRef [ '(' xSectionSubscriptList ')' ] /
+            xFunctionReference .
+
+          xUFPrimary:
+            xIcon /
+            xScon /
+            xFunctionReference /
+            xName [ '(' xSectionSubscriptList ')' ] /
+            xName [ '(' xSectionSubscriptList ')' ] '%'
+              xDataRef [ '(' xSectionSubscriptList ')' ] /
+            '(' xUFExpr ')' .
+
+          % R702 chain rule deleted
+
+          % R703
+          xLevel1Expr: xPrimary / xDefinedUnaryOp xPrimary .
+
+          % R704 defined in source form
+
+          % R705
+          xMultOperand: xLevel1Expr [ xPowerOp xMultOperand ] .
+          xUFFactor: xUFPrimary [ xPowerOp xUFFactor ] .
+
+          % R706
+          xAddOperand:
+            [ xAddOperand xMultOp ] xMultOperand .
+          xUFTerm: xUFFactor / xUFTerm xMultOp xUFFactor / xUFTerm xConcatOp xUFPrimary .
+
+          % R707
+          xLevel2Expr:
+            [ xLevel2Expr xAddOp ] xAddOperand /
+            xSign xAddOperand .   % We need to distinguish unary operators
+          xUFExpr: xUFTerm / xSign xUFTerm / xUFExpr xAddOp xUFTerm .
+
+          % R708-710 defined in source form
+
+          % R711
+          xLevel3Expr: [ xLevel3Expr xConcatOp ] xLevel2Expr .
+          xCExpr: [ xCExpr xConcatOp ] xCPrimary .
+
+          % R712 defined in source form
+
+          % R713
+          xLevel4Expr: [xLevel3Expr xRelOp] xLevel3Expr .
+
+          % R714 defined in source form
+
+          % R715
+          xAndOperand: [xNotOp] xLevel4Expr .
+
+          % R716
+          xOrOperand: [xOrOperand xAndOp] xAndOperand .
+
+          % R717
+          xEquivOperand: [xEquivOperand xOrOp] xOrOperand .
+
+          % R718
+          xLevel5Expr: [xLevel5Expr xEquivOp] xEquivOperand .
+
+          % R719-722 defined in source form
+
+          % R723
+          xExpr: xLevel5Expr /
+            xExpr xDefinedBinaryOp xLevel5Expr .
+          xSFExprList:
+            xSFExpr ':' xExpr ':' xExpr /
+            xSFExpr ':' ':' xExpr /
+            ':' xExpr ':' xExpr /
+            ':' ':' xExpr .
+
+          % R724 defined in source form
+
+          % R725-R734 chain rule deleted
+
+          % R735
+          Assignment Statement[23]
+          xAssignmentStmt:
+            xLblDef xName '%' xDataRef
+              [ '(' xSectionSubscriptList ')' [ xSubstringRange ] ]
+              '=' xExpr xEOS /
+            xLblDef xName '(' xSFExprList ')' '%' xDataRef
+              [ '(' xSectionSubscriptList ')' [ xSubstringRange ] ]
+              '=' xExpr xEOS /
+            xLblDef xName '(' xSFDummyArgNameList ')' '%' xDataRef
+              [ '(' xSectionSubscriptList ')' [ xSubstringRange ] ] '='
+                  xExpr xEOS .
+
+          % R736
+          xPointerAssignmentStmt:
+            xLblDef xName '=>' xTarget xEOS /
+            xLblDef xName '%' xDataRef '=>' xTarget xEOS /
+            xLblDef xName '(' xSFExprList ')' '%' xDataRef '=>' xTarget xEOS /
+            xLblDef xName '(' xSFDummyArgNameList ')' '%' xDataRef '=>'
+              xTarget xEOS .
+
+          % R737
+          xTarget: xExpr .
+
+          % R738
+          xWhereStmt:
+            xLblDef 'where' '(' xMaskExpr ')' xAssignmentStmt .
+
+          % R739 parallels if ... then ...elseif... else ... endif construct
+          xWhereConstruct:
+            xWhereConstructStmt xWhereRange .
+          xWhereRange:
+            xEndWhereStmt /
+            xWhereBodyConstructBlock xEndWhereStmt /
+            xMaskedElsewhereConstruct /
+            xWhereBodyConstructBlock xMaskedElsewhereConstruct /
+            xElsewhereConstruct /
+            xWhereBodyConstructBlock xElsewhereConstruct .
+
+          xMaskedElsewhereConstruct:
+            xMaskedElsewhereStmt xWhereRange .
+
+          xElsewhereConstruct:
+            xElsewhereStmt xElsewherePart .
+
+          xElsewherePart:
+            xEndWhereStmt /
+            xWhereBodyConstructBlock xEndWhereStmt .
+
+          xWhereBodyConstructBlock:
+            xWhereBodyConstruct /
+            xWhereBodyConstructBlock xWhereBodyConstruct .
+
+          % R740
+          xWhereConstructStmt:
+            xLblDef xName ':' 'where' '(' xMaskExpr ')' xEOS /
+            xLblDef 'where' '(' xMaskExpr ')' xEOS .
+
+          % R741
+          xWhereBodyConstruct: xAssignmentStmt / xWhereStmt / xWhereConstruct .
+
+          % R742 chain rule deleted
+
+          % R743
+          xMaskExpr: xExpr .
+
+          % R744
+          xMaskedElsewhereStmt:
+            xLblDef 'elsewhere' '(' xMaskExpr ')' [ xEndName ] xEOS .
+
+          % R745
+          xElsewhereStmt:
+            xLblDef 'elsewhere' [ xEndName ] xEOS .
+
+          % R746
+          xEndWhereStmt:
+            xLblDef 'endwhere' [ xEndName ] xEOS /
+            xLblDef 'end' 'where' [ xEndName ] xEOS .
+
+          % R747
+          xForallConstruct:
+            xForallConstructStmt xEndForallStmt /
+            xForallConstructStmt xForallBody xEndForallStmt .
+          xForallBody: xForallBodyConstruct / xForallBody xForallBodyConstruct .
+
+          % R748
+          xForallConstructStmt:
+            xLblDef 'forall' xForallHeader xEOS /
+            xLblDef xName ':' 'forall' xForallHeader xEOS .
+
+          % R749
+          xForallHeader:
+           '(' xForallTripletSpecList ')' /
+           '(' xForallTripletSpecList ',' xScalarMaskExpr ')' .
+          xScalarMaskExpr: xMaskExpr .
+
+          % R750
+          xForallTripletSpecList:
+            xName '=' xSubscript ':' xSubscript /
+            xName '=' xSubscript ':' xSubscript ':' xExpr .
+
+          % R751
+          xForallBodyConstruct:
+            xAssignmentStmt /
+            xPointerAssignmentStmt /
+            xWhereStmt /
+            xWhereConstruct /
+            xForallConstruct /
+            xForallStmt .
+
+          % R752 chain rule eliminated
+
+          % R753
+          xEndForallStmt:
+           xLblDef 'end' 'forall' [ xEndName ] xEOS /
+           xLblDef 'endforall' [ xEndName ] xEOS .
+
+          % R754
+          xForallStmt:
+            xLblDef 'forall' xForallHeader xAssignmentStmt xEOS /
+            xLblDef 'forall' xForallHeader xPointerAssignmentStmt xEOS .
+
+     This macro is invoked in definition 28.
+
+2.7 Execution control
+
+     Execution control[7]==
+
+          % R801 see the note on R818
+
+          % R802
+          xIfConstruct:
+            xIfThenStmt xThenPart .
+          xThenPart:
+            xEndIfStmt / xConditionalBody xEndIfStmt /
+            xElseIfConstruct / xConditionalBody xElseIfConstruct /
+            xElseConstruct / xConditionalBody xElseConstruct .
+
+          xElseIfConstruct:
+            xElseIfStmt xThenPart .
+
+          xElseConstruct:
+            xElseStmt xElsePart .
+          xElsePart:
+            xEndIfStmt /
+            xConditionalBody xEndIfStmt .
+
+          xConditionalBody:
+            xExecutionPartConstruct / xConditionalBody xExecutionPartConstruct .
+
+          % R803
+          xIfThenStmt:
+            xLblDef 'if' '(' Scalar Logical Expression[22] ')' 'then' xEOS /
+            xLblDef xName ':' 'if' '(' Scalar Logical Expression[22] ')' 'then' xEOS .
+
+          % R804
+          xElseIfStmt:
+            xLblDef 'elseif' '(' Scalar Logical Expression[22] ')' 'then' xEOS /
+            xLblDef 'elseif' '(' Scalar Logical Expression[22] ')' 'then'
+              xEndName xEOS /
+            xLblDef 'else' 'if' '(' xExpr ')' 'then' xEOS /
+            xLblDef 'else' 'if' '(' xExpr ')' 'then' xEndName xEOS .
+
+          % R805
+          xElseStmt:
+            xLblDef 'else' xEOS /
+            xLblDef 'else' xEndName xEOS .
+
+          % R806
+          xEndIfStmt:
+            xLblDef 'endif' [ xEndName ] xEOS /
+            xLblDef 'end' 'if' [ xEndName ] xEOS .
+
+          % R807
+          xIfStmt:
+            xLblDef 'if' '(' Scalar Logical Expression[22] ')' xActionStmt .
+
+          % R808
+          xCaseConstruct:
+            xSelectCaseStmt xSelectCaseRange .
+          xSelectCaseRange:
+            xSelectCaseBody xEndSelectStmt /
+            xEndSelectStmt .
+
+          xSelectCaseBody:
+            xCaseStmt / xSelectCaseBody xCaseBodyConstruct .
+          xCaseBodyConstruct:
+            xCaseStmt / xExecutionPartConstruct .
+
+          % R809 chain rule eliminated
+          xSelectCaseStmt:
+            xLblDef xName ':' 'selectcase' '(' xExpr ')' xEOS /
+            xLblDef 'selectcase' '(' xExpr ')' xEOS /
+            xLblDef xName ':' 'select' 'case' '(' xExpr ')' xEOS /
+            xLblDef 'select' 'case' '(' xExpr ')' xEOS .
+
+          % R810
+          xCaseStmt:
+            xLblDef 'case' xCaseSelector xEOS /
+            xLblDef 'case' xCaseSelector xName xEOS .
+
+          % R811
+          xEndSelectStmt:
+            xLblDef 'endselect' [ xEndName ] xEOS /
+            xLblDef 'end' 'select' [ xEndName ] xEOS .
+
+          % R812 chain rules deleted
+
+          % R813
+          xCaseSelector: '(' xCaseValueRangeList ')' / 'default' .
+          xCaseValueRangeList:
+            xCaseValueRange / xCaseValueRangeList ',' xCaseValueRange .
+
+          % R814
+          xCaseValueRange:
+             xExpr / xExpr ':' / ':' xExpr / xExpr ':' xExpr .
+
+          % R815 chain rules deleted
+
+          % R816
+          xDoConstruct: xBlockDoConstruct .
+
+          % R817
+          /* Block DO constructs cannot be recognized syntactically because there is
+           * no requirement that there be an end do statement.
+           *
+           * xBlockDoConstruct:
+           *   xDoStmt xBlock xEndDoStmt /
+           *   xDoStmt xBlock .
+           */
+          xBlockDoConstruct: xLabelDoStmt .
+
+          % R818
+          xLabelDoStmt:
+            xLblDef 'do' xLblRef xCommaLoopControl xEOS /
+            xLblDef 'do' xLblRef xEOS /
+            xLblDef 'do' xCommaLoopControl xEOS /
+            xLblDef 'do' xEOS /
+            xLblDef xName ':' 'do' xLblRef xCommaLoopControl xEOS /
+            xLblDef xName ':' 'do' xLblRef xEOS /
+            xLblDef xName ':' 'do' xCommaLoopControl xEOS /
+            xLblDef xName ':' 'do' xEOS .
+
+          % R819 chain rule deleted
+
+          % R820 chain rule deleted
+
+          % R821 see 40
+          xCommaLoopControl: ',' xLoopControl / xLoopControl .
+          xLoopControl:
+            xVariableName '='
+              Int-Real-Dp Expression[21] ',' Int-Real-Dp Expression[21] /
+            xVariableName '='
+              Int-Real-Dp Expression[21] ',' Int-Real-Dp Expression[21] ','
+              Int-Real-Dp Expression[21] /
+            'while' '(' xExpr ')' .
+
+          % R822 chain rule deleted
+
+          % R823 chain rule deleted
+
+          % R824 see note on R817
+
+          % R825
+          xEndDoStmt:
+            xLblDef 'enddo' [ xEndName ] xEOS /
+            xLblDef 'end' 'do' [ xEndName ] xEOS .
+
+          % R826-R833 enforced semantically
+
+          % R834
+          xCycleStmt:
+            xLblDef 'cycle' [ xName ] xEOS .
+
+          % R835
+          xExitStmt:
+            xLblDef 'exit' [ xName ] xEOS .
+
+          % R836
+          xGotoStmt:
+            xLblDef GoToKw xLblRef xEOS .
+
+          GoToKw: 'goto' / 'go' 'to' .
+
+          % R837
+          xComputedGotoStmt:
+            xLblDef GoToKw '(' xLblRefList ')' Integer Expression[20] xEOS /
+            xLblDef GoToKw '(' xLblRefList ')' xCommaExp xEOS .
+          xCommaExp: ',' Integer Expression[20] .
+          xLblRefList: xLblRef / xLblRefList ',' xLblRef .
+          xLblRef: xLabel .
+
+          % R838
+          xArithmeticIfStmt:
+            xLblDef 'if' '(' Int-Real-Dp Expression[21] ')'
+                   xLblRef ',' xLblRef ',' xLblRef xEOS .
+
+          % R839
+          xContinueStmt:
+            xLblDef 'continue' xEOS .
+
+          % R840
+          xStopStmt:
+            xLblDef 'stop' xEOS /
+            xLblDef 'stop' xIcon xEOS /
+            xLblDef 'stop' xScon xEOS .
+
+          % R841 chain rule deleted
+
+     This macro is invoked in definition 28.
+
+2.8 I/O statements
+
+     I/O statements[8]==
+
+          % R901
+          xUnitIdentifier: xUFExpr / '*' .
+
+          % R902 chain rule deleted
+
+          % R903 chain rule deleted
+
+          % R904
+          xOpenStmt:
+            xLblDef 'open' '(' xConnectSpecList ')' xEOS .
+
+          % R905
+          xConnectSpecList:
+            xUnitIdentifier /
+            xConnectSpec / xConnectSpecList ',' xConnectSpec .
+          xConnectSpec:
+            'unit=' xUnitIdentifier /
+            'err=' xLblRef /
+            'file=' xCExpr /
+            'status=' xCExpr /
+            'access=' xCExpr /
+            'form=' xCExpr /
+            'recl=' xExpr /
+            'blank=' xCExpr /
+            'iostat=' xScalarVariable /
+            'position=' xCExpr /
+            'action=' xCExpr /
+            'delim=' xCExpr /
+            'pad=' xCExpr .
+
+          % R906 chain rule deleted
+
+          % R907
+          xCloseStmt:
+            xLblDef 'close' '(' xCloseSpecList ')' xEOS .
+
+          % R908
+          xCloseSpecList:
+            xUnitIdentifier /
+            xCloseSpec / xCloseSpecList ',' xCloseSpec .
+          xCloseSpec:
+            'unit=' xUnitIdentifier /
+            'err=' xLblRef /
+            'status=' xCExpr /
+            'iostat=' xScalarVariable .
+
+          % R909
+          xReadStmt:
+            xLblDef 'read' xRdCtlSpec xInputItemList xEOS /
+            xLblDef 'read' xRdCtlSpec xEOS /
+            xLblDef 'read' xRdFmtId ',' xInputItemList xEOS /
+            xLblDef 'read' xRdFmtId xEOS .
+          xRdCtlSpec: xRdUnitId / '(' xRdIoCtlSpecList ')' .
+          xRdUnitId: '(' xUFExpr ')' / '(' '*' ')' .
+          xRdIoCtlSpecList:
+            xUnitIdentifier ',' xIoControlSpec /
+            xUnitIdentifier ',' xFormatIdentifier /
+            xIoControlSpec /
+            xRdIoCtlSpecList ',' xIoControlSpec .
+          xRdFmtId:
+            xLblRef / '*' / xCOperand /
+            xCOperand xConcatOp xCPrimary /
+            xRdFmtIdExpr xConcatOp xCPrimary .
+          xRdFmtIdExpr: '(' xUFExpr ')' .
+
+          % R910
+          xWriteStmt:
+            xLblDef 'write' '(' xIoControlSpecList ')' xOutputItemList xEOS /
+            xLblDef 'write' '(' xIoControlSpecList ')' xEOS .
+
+          % R911
+          xPrintStmt:
+            xLblDef 'print' xFormatIdentifier ',' xOutputItemList xEOS /
+            xLblDef 'print' xFormatIdentifier xEOS .
+
+          % R912
+          xIoControlSpecList:
+            xUnitIdentifier $',' /
+            xUnitIdentifier ',' xFormatIdentifier /
+            xUnitIdentifier ',' xIoControlSpec /
+            xIoControlSpec /
+            xIoControlSpecList ',' xIoControlSpec .
+          xIoControlSpec:
+            'fmt=' xFormatIdentifier /
+            'unit=' xUnitIdentifier /
+            'rec=' xExpr /
+            'end=' xLblRef /
+            'err=' xLblRef /
+            'iostat=' xScalarVariable /
+            'nml=' xNamelistGroupName /
+            'advance=' xCExpr /
+            'size=' xVariable /
+            'eor=' xLblRef .
+
+          % R913
+          xFormatIdentifier: xLblRef / xCExpr / '*' .
+
+          % R914
+          xInputItemList: xInputItem / xInputItemList ',' xInputItem .
+          xInputItem: xVariable / xInputImpliedDo .
+
+          % 915
+          xOutputItemList: xExpr / xOutputItemList1 .
+          xOutputItemList1:
+            xExpr ',' xExpr /
+            xExpr ',' xOutputImpliedDo /
+            xOutputImpliedDo /
+            xOutputItemList1 ',' xExpr /
+            xOutputItemList1 ',' xOutputImpliedDo .
+
+          % R916
+          xInputImpliedDo:
+            '(' xInputItemList ',' xImpliedDoVariable '=' xExpr ',' xExpr ')' /
+            '(' xInputItemList ',' xImpliedDoVariable '=' xExpr ',' xExpr ',' xExpr ')' .
+
+          xOutputImpliedDo:
+            '(' xExpr ',' xImpliedDoVariable '=' xExpr ',' xExpr ')' /
+            '(' xExpr ',' xImpliedDoVariable '=' xExpr ',' xExpr ',' xExpr ')' /
+            '(' xOutputItemList1 ',' xImpliedDoVariable '=' xExpr ',' xExpr ')' /
+            '(' xOutputItemList1 ',' xImpliedDoVariable '=' xExpr ',' xExpr
+              ',' xExpr ')' .
+
+          % R917 chain rule deleted
+
+          % R918 chain rule deleted
+
+          % R919
+          xBackspaceStmt:
+            xLblDef 'backspace' xUnitIdentifier xEOS /
+            xLblDef 'backspace' '(' xPositionSpecList ')' xEOS .
+
+          % R920
+          xEndfileStmt:
+            xLblDef 'endfile' xUnitIdentifier xEOS /
+            xLblDef 'endfile' '(' xPositionSpecList ')' xEOS /
+            xLblDef 'end' 'file' xUnitIdentifier xEOS /
+            xLblDef 'end' 'file' '(' xPositionSpecList ')' xEOS .
+
+          % R921
+          xRewindStmt:
+            xLblDef 'rewind' xUnitIdentifier xEOS /
+            xLblDef 'rewind' '(' xPositionSpecList ')' xEOS .
+
+          % R922
+          xPositionSpecList:
+            xUnitIdentifier ',' xPositionSpec / xPositionSpec /
+            xPositionSpecList ',' xPositionSpec .
+          xPositionSpec:
+            'unit=' xUnitIdentifier /
+            'err=' xLblRef /
+            'iostat=' xScalarVariable .
+
+          % R923
+          xInquireStmt:
+            xLblDef 'inquire' '(' xInquireSpecList ')' xEOS /
+            xLblDef 'inquire' '(' 'iolength=' xScalarVariable ')' xOutputItemList xEOS .
+
+          % R924
+          xInquireSpecList:
+            xUnitIdentifier /
+            xInquireSpec / xInquireSpecList ',' xInquireSpec .
+          xInquireSpec:
+            'unit=' xUnitIdentifier /
+            'file=' xCExpr /
+            'err=' xLblRef /
+            'iostat=' xScalarVariable /
+            'exist=' xScalarVariable /
+            'opened=' xScalarVariable /
+            'number=' xScalarVariable /
+            'named=' xScalarVariable /
+            'name=' xScalarVariable /
+            'access=' xScalarVariable /
+            'sequential=' xScalarVariable /
+            'direct=' xScalarVariable /
+            'form=' xScalarVariable /
+            'formatted=' xScalarVariable /
+            'unformatted=' xScalarVariable /
+            'recl=' xExpr /
+            'nextrec=' xScalarVariable /
+            'blank=' xScalarVariable /
+            'position=' xScalarVariable /
+            'action=' xScalarVariable /
+            'read=' xScalarVariable /
+            'write=' xScalarVariable /
+            'readwrite=' xScalarVariable /
+            'delim=' xScalarVariable /
+            'pad=' xScalarVariable .
+
+     This macro is invoked in definition 28.
+
+2.9 I/O editing
+
+     I/O editing[9]==
+
+          /* I have trouble verifying this section because of its reliance on
+          *  lexical analysis */
+          % R1001
+          xFormatStmt:
+            xLblDef 'format' '(' [ xFmtSpec ] ')' xEOS .
+
+          % R1002
+          xFmtSpec:
+            xFormatedit / xFormatsep / xFormatsep xFormatedit /
+            xFmtSpec xFormatsep /
+            xFmtSpec xFormatsep xFormatedit /
+            xFmtSpec ',' xFormatedit /
+            xFmtSpec ',' xFormatsep /
+            xFmtSpec ',' xFormatsep xFormatedit .
+
+          % R1003
+          xFormatedit:
+            xEditElement / xIcon xEditElement / xXcon /
+            xPcon / xPcon xEditElement / xPcon xIcon xEditElement .
+          xEditElement:
+            xFcon / xScon / xIdent / '(' xFmtSpec ')' .
+
+          % R1004 chain rule deleted
+
+          % R1005 chain rule deleted as lexically recognized elements
+
+          % R1010
+          xFormatsep: '/' / ':' .
+
+     This macro is invoked in definition 28.
+
+2.10 Program units
+
+     Program units[10]==
+
+          % R1101 see high level syntax
+
+          % R1102
+          xProgramStmt:
+            xLblDef 'program' xProgramName xEOS .
+
+          % R1103
+          xEndProgramStmt:
+            xLblDef 'end' xEOS /
+            xLblDef 'endprogram' [ xEndName ] xEOS /
+            xLblDef 'end' 'program' [ xEndName ] xEOS .
+
+          % R1104 see high level syntax
+
+          % R1105
+          xModuleStmt:
+            xLblDef 'module' xModuleName xEOS .
+
+          % R1106
+          xEndModuleStmt:
+            xLblDef 'end' xEOS /
+            xLblDef 'endmodule' [ xEndName ] xEOS /
+            xLblDef 'end' 'module' [ xEndName ] xEOS .
+
+          % R1107
+          xUseStmt:
+            xLblDef 'use' xName xEOS /
+            xLblDef 'use' xName ',' xRenameList xEOS /
+            xLblDef 'use' xName ',' 'only' ':' [ xOnlyList ] xEOS .
+          xRenameList: xRename / xRenameList ',' xRename .
+          xOnlyList: xOnly / xOnlyList ',' xOnly .
+
+          % R1108
+          xRename: xIdent '=>' xUseName .
+
+          % R1109
+          xOnly: xGenericSpec / xIdent '=>' xUseName / xUseName .
+
+          % R1110 chain rule deleted
+
+          % R111 chain rule deleted
+
+          % R1112 see high level syntax
+
+          % R1113
+          xBlockDataStmt:
+            xLblDef 'blockdata' xBlockDataName xEOS /
+            xLblDef 'blockdata' xEOS .
+
+          % R1114
+          xEndBlockDataStmt:
+            xLblDef 'end' xEOS /
+            xLblDef 'endblockdata' [ xEndName ] xEOS /
+            xLblDef 'end' 'blockdata' [ xEndName ] xEOS /
+            xLblDef 'endblock' 'data' [ xEndName ] xEOS /
+            xLblDef 'end' 'block' 'data' [ xEndName ] xEOS .
+
+     This macro is invoked in definition 28.
+
+2.11 Procedures
+
+     Procedures[11]==
+
+          % R1201
+          xInterfaceBlock:
+            xInterfaceStmt xInterfaceRange .
+          xInterfaceRange:
+            xInterfaceBlockBody xEndInterfaceStmt .
+          xInterfaceBlockBody:
+            xInterfaceSpecification /
+            xInterfaceBlockBody xInterfaceSpecification .
+
+          % R1202
+          xInterfaceSpecification: xInterfaceBody / xModuleProcedureStmt .
+
+          % R1203
+          xInterfaceStmt:
+            xLblDef 'interface' xGenericName xEOS /
+            xLblDef 'interface' xGenericSpec xEOS /
+            xLblDef 'interface' xEOS .
+
+          % R1204
+          xEndInterfaceStmt:
+            xLblDef 'endinterface' [xEndName] xEOS /
+            xLblDef 'end' 'interface' [xEndName] xEOS .
+
+          % R1205
+          xInterfaceBody:
+            xFunctionStmt xFunctionInterfaceRange /
+            xSubroutineStmt xSubroutineInterfaceRange .
+          xFunctionInterfaceRange:
+            xSubprogramInterfaceBody xEndFunctionStmt /
+            xEndFunctionStmt .
+          xSubroutineInterfaceRange:
+            xSubprogramInterfaceBody xEndSubroutineStmt /
+            xEndSubroutineStmt .
+          xSubprogramInterfaceBody:
+            xSpecificationPartConstruct /
+            xSubprogramInterfaceBody xSpecificationPartConstruct .
+
+          % R1206
+          xModuleProcedureStmt:
+            xLblDef 'module' 'procedure' xProcedureNameList xEOS .
+          xProcedureNameList:
+            xProcedureName / xProcedureNameList ',' xProcedureName .
+          xProcedureName: xIdent .
+
+          % R1207
+          xGenericSpec:
+            'operator' '(' xDefinedOperator ')' /
+            'assignment' '(' '=' ')' .
+
+          % R1208
+          xExternalStmt:
+            xLblDef 'external' xExternalNameList xEOS /
+            xLblDef 'external' ':' ':' xExternalNameList xEOS .
+          xExternalNameList: xExternalName / xExternalNameList ',' xExternalName .
+
+          % R1209
+          xIntrinsicStmt:
+            xLblDef 'intrinsic' xIntrinsicList xEOS /
+            xLblDef 'intrinsic' ':' ':' xIntrinsicList xEOS .
+          xIntrinsicList:
+            xIntrinsicProcedureName / xIntrinsicList ',' xIntrinsicProcedureName .
+
+          % R1210
+          xFunctionReference:
+            xName '(' ')' /
+            xName '(' xFunctionArgList ')' .
+
+          % R1211
+          xCallStmt:
+            xLblDef 'call' xSubroutineNameUse xEOS /
+            xLblDef 'call' xSubroutineNameUse '(' xSubroutineArgList ')' xEOS .
+          xSubroutineArgList: / xSubroutineArg / xSubroutineArgList ',' xSubroutineArg .
+
+          % R1212
+          /* Functions initially recognized as arrays resolved semantically */
+          xFunctionArgList:
+            xFunctionArg /
+            xFunctionArgList ',' xFunctionArg /
+            xSectionSubscriptList ',' xFunctionArg .
+          xFunctionArg: xName '=' xExpr .
+          xSubroutineArg:
+            xExpr / '*' xLblRef /
+            xName '=' xExpr / xName '=' '*' xLblRef .
+
+          % R1213 chain rule deleted
+
+          % R1214 chain rule deleted
+
+          % R1215 chain rule deleted
+
+          % R1216 see high level syntax
+
+          % R1217 chain rule deleted
+          xFunctionStmt:
+            xLblDef xFunctionPrefix xFunctionName
+                '(' xFunctionPars ')' [ 'result' '(' xName ')' ]  xEOS .
+
+          xFunctionPars: / xFunctionPar / xFunctionPars ',' xFunctionPar .
+          xFunctionPar: xDummyArgName .
+
+          % R1218
+          xFunctionPrefix:
+            'function' / xPrefixSpecList 'function' .
+          xPrefixSpecList:
+            xPrefixSpec / xPrefixSpecList xPrefixSpec .
+
+          % R1219
+          xPrefixSpec:
+            xTypeSpec  /
+            'recursive' /
+            'pure' /
+            'elemental' .
+
+          % R1220
+          xEndFunctionStmt:
+            xLblDef 'end' xEOS /
+            xLblDef 'endfunction' [ xEndName ] xEOS /
+            xLblDef 'end' 'function' [ xEndName ] xEOS .
+
+          % R1221 see high level syntax
+
+          % R1222
+          xSubroutineStmt:
+            xLblDef xSubroutinePrefix xSubroutineName
+              [ '(' xSubroutinePars ')' ] xEOS .
+          xSubroutinePrefix:
+            'subroutine' / xPrefixSpecList 'subroutine' .
+          xSubroutinePars: / xSubroutinePar / xSubroutinePars ',' xSubroutinePar .
+
+          % R1223
+          xSubroutinePar: xDummyArgName / '*' .
+
+          % R1224
+          xEndSubroutineStmt:
+            xLblDef 'end' xEOS /
+            xLblDef 'endsubroutine' [ xEndName ] xEOS /
+            xLblDef 'end' 'subroutine' [ xEndName ] xEOS .
+
+          % R1225
+          Entry Statement[14]
+          xEntryStmt:
+            xLblDef 'entry' xEntryName '(' xSubroutinePars ')'
+              'result' '(' xName ')' xEOS .
+
+          % R1226
+          xReturnStmt:
+            xLblDef 'return' xEOS /
+            xLblDef 'return' xExpr xEOS .
+
+          % R1227
+          xContainsStmt:
+            xLblDef 'contains' xEOS.
+
+          % R1228
+          /* This may turn out to be an assignment statement, but the form given here
+           * allows for name analysis in the case that it actually IS a statement
+           * function definition.
+           */
+          xStmtFunctionStmt: xLblDef xName xStmtFunctionRange .
+          xStmtFunctionRange: '(' ')' '=' xExpr xEOS .
+          xStmtFunctionRange: '(' xSFDummyArgNameList ')' '=' xExpr xEOS .
+          xSFDummyArgNameList:
+            xSFDummyArgName / xSFDummyArgNameList ',' xSFDummyArgName .
+
+     This macro is invoked in definition 28.
+
+2.12 Additional Nonterminals
+
+     Additional Nonterminals[12]==
+
+          /* Nonterminal symbols that are not defined in the standard
+           */
+          xArrayName: xIdent .
+          xBlockDataName: xIdent .
+          xCommonBlockName: xIdent .
+          xComponentName: xIdent .
+          xDummyArgName: xIdent .
+          xEndName: xIdent .
+          xEntryName: xIdent .
+          xExternalName: xIdent .
+          xFunctionName: xIdent .
+          xGenericName: xIdent .
+          xImpliedDoVariable: xIdent .
+          xIntrinsicProcedureName: xIdent .
+          xModuleName: xIdent .
+          xNamelistGroupName: xIdent .
+          xObjectName: xIdent .
+          xProgramName: xIdent .
+          xSFDummyArgName: xIdent .
+          xSFVarName: xIdent $',' $')' .
+          xSubroutineName: xIdent .
+          xSubroutineNameUse: xIdent .
+          xTypeName: xIdent .
+          xUseName: xIdent .
+
+          xLblDef: / xLabel .
+
+     This macro is invoked in definition 28.
+
+2.13 Deleted Features
+
+     Deleted Features[13]==
+
+          /* Real and double precision do variables */
+
+          % R821
+          /* Punt on this as it involves introducing more complicated
+          * conditional compilation features in main standard
+          */
+
+          % R822
+          /* Punt on this as it involves introducing more complicated
+          * conditional compilation features in main standard
+          */
+
+          % R921
+          /* Punt on this as it involves introducing more complicated
+          * conditional compilation features in main standard
+          */
+
+          % R216
+          xActionStmt:
+            xAssignStmt /
+            xAssignedGotoStmt /
+            xPauseStmt .
+
+          /* Pause statement */
+          xPauseStmt:
+            xLblDef 'pause' xEOS /
+            xLblDef 'pause' xIcon xEOS /
+            xLblDef 'pause' xScon xEOS .
+
+          /* Assign Statement */
+          xAssignStmt:
+            xLblDef 'assign' xLblRef 'to' xVariableName xEOS .
+
+          /* Assigned GOTO Statement */
+          xAssignedGotoStmt:
+            xLblDef GoToKw xVariableName xEOS /
+            xLblDef GoToKw xVariableName '(' xLblRefList ')' xEOS /
+            xLblDef GoToKw xVariableComma '(' xLblRefList ')' xEOS .
+          xVariableComma: xVariableName ',' .
+
+          /* H edit descriptor */
+
+          % R305
+          xConstant:
+            xHcon .
+
+          % R1003
+          xEditElement:
+            xHcon .
+
+          % R1212
+          xSubroutineArg:
+            xHcon /
+            xName '=' xHcon .
+
+     This macro is invoked in definition 28.
+
+3 Changes Due to LALR(1) Conflicts
+
+3.1 Entry Statement
+
+     Entry Statement[14]==
+
+          xEntryStmt:
+            xLblDef 'entry' xEntryName [ '(' xSubroutinePars ')' ] xEOS .
+
+     This macro is invoked in definition 11.
+
+3.2 Specification Expression
+
+     Specification Expression[15]==
+
+          xExpr
+
+     This macro is invoked in definition 4.
+
+3.3 Equivalence Entity
+
+     Equivalence Entity[16]==
+
+          xVariable
+
+     This macro is invoked in definition 4.
+
+3.4 Letter Specifications
+
+     Letter Specifications[17]==
+
+          xImpl
+
+     This macro is invoked in definition 4.
+
+3.5 Scalar Integer Literal Constant
+
+     Scalar Integer Literal Constant[18]==
+
+          xIcon
+
+     This macro is invoked in definition 4.
+
+3.6 Constant Expression
+
+     Constant Expression[19]==
+
+          xExpr
+
+     This macro is invoked in definition 4.
+
+3.7 Integer Expression
+
+     Integer Expression[20]==
+
+          xExpr
+
+     This macro is invoked in definition 7.
+
+3.8 Int-Real-Dp Expression
+
+     Int-Real-Dp Expression[21]==
+
+          xExpr
+
+     This macro is invoked in definition 7.
+
+3.9 Scalar Logical Expression
+
+     Scalar Logical Expression[22]==
+
+          xExpr
+
+     This macro is invoked in definition 7.
+
+3.10 Assignment Statement
+
+     Assignment Statement[23]==
+
+          xAssignmentStmt:
+            xLblDef xName '=' xExpr xEOS /
+            xLblDef xName '(' xSFExprList ')' '=' xExpr xEOS /
+            xLblDef xName '(' xSFExprList ')' xSubstringRange '=' xExpr xEOS /
+            xLblDef xName '(' xSFDummyArgNameList ')' xSubstringRange '=' xExpr xEOS .
+
+          xSFExprList:
+            ':' /
+            ':' xExpr /
+            xSFExpr /
+            xSFExpr ':' /
+            xSFExpr ':' xExpr /
+            xSFExprList ',' xSectionSubscript /
+            xSFDummyArgNameList ',' ':' /
+            xSFDummyArgNameList ',' ':' xExpr /
+            xSFDummyArgNameList ',' xSFExpr /
+            xSFDummyArgNameList ',' xSFExpr ':' /
+            xSFDummyArgNameList ',' xSFExpr ':' xExpr .
+          xSFExpr: xSFTerm / xSign xAddOperand / xSFExpr xAddOp xAddOperand .
+          xSFTerm: xSFFactor / xSFTerm xMultOp xMultOperand .
+          xSFFactor: xSFPrimary / xSFPrimary xPowerOp xMultOperand .
+          xSFPrimary:
+            xArrayConstructor /
+            xIcon /
+            xSFVarName /
+            xSFDataRef /
+            xFunctionReference /
+            '(' xExpr ')' .
+
+     This macro is invoked in definition 6.
+
+4 Semantically-Equivalent Grammar Symbols
+
+Many of the symbols used in the context-free grammar represent
+semantically-equivalent phrases. Some are used to make the prose of the
+standard clearer, others avoid ambiguities. There is no reason to
+distinguish them once the abstract syntax tree is built, and so we replace
+all of the symbols in an equivalence class by a single member of that class.
+
+4.1 Fortran 95 Equivalence Classes
+
+     Fortran 95 Equivalence Classes[24]==
+
+          xProgramUnit ::=
+                 xMainProgram xSubroutineSubprogram xFunctionSubprogram
+                 xBlockDataSubprogram .
+
+          xSubprogramRange ::=
+                 xFunctionRange xSubroutineRange
+                 xFunctionInterfaceRange xSubroutineInterfaceRange .
+
+          xComblock ::=
+                 xSavedCommonBlock .
+
+          xFormalParameter ::=
+                 xFunctionPar xSubroutinePar.
+
+          xFormatIdentifier ::=
+                 xRdFmtId.
+
+          xFormalParameterList ::=
+                 xFunctionPars xSubroutinePars.
+
+          xBody ::=
+                 xConditionalBody xBlockDataBody
+                 xBlockDoConstruct xSubprogramInterfaceBody
+                 xInterfaceBody xInterfaceBlockBody
+                 xSelectCaseBody xWhereRange
+                 xMaskedElsewhereConstruct xElsewhereConstruct xWhereBodyConstructBlock
+                 xForallBody
+                 xBodyPlusInternals .
+
+          xBodyConstruct ::=
+                 xModuleSubprogramPartConstruct
+                 xSpecificationPartConstruct xDeclarationConstruct
+                 xExecutionPartConstruct xExecutableConstruct
+                 xBlockDataBodyConstruct .
+
+          xLoopControl ::=
+                 xCommaLoopControl.
+
+          xCharSelector ::=
+                 xLengthSelector.
+
+          xArg ::=
+                 xSubroutineArg
+                 xFunctionArg .
+
+          xArgList ::=
+                 xSubroutineArgList
+                 xFunctionArgList .
+
+          xExpr ::=
+                 xPrimary xLevel1Expr xLevel2Expr xLevel3Expr xLevel4Expr xLevel5Expr
+                 xFunctionReference
+                 xAddOperand xMultOperand xEquivOperand xOrOperand xAndOperand
+                 xSFPrimary xSFTerm xSFFactor xSFExpr
+                 xUFPrimary xUFExpr xUFTerm xUFFactor
+                 xCPrimary xCExpr xCOperand
+                 xRdFmtIdExpr xCommaExp xAcImpliedDo
+                 xArrayConstructor xTarget xMaskExpr .
+
+          xExprList ::=
+                 xSFExprList .
+
+     This macro is defined in definitions 24 and 25.
+     This macro is invoked in definition 30.
+
+xStmt is the minimal set of statements necessary to ensure that a program's
+constructs satisfy the ordering requirements of Table 2.1 of the Fortran
+standard. xDTBodyStmt is the minimal set of statements necessary to ensure
+that a the derived type body constructs satisfy their ordering requirement.
+
+     Fortran 95 Equivalence Classes[25]==
+
+          xStmt ::=
+                 xSpecificationStmt xActionStmt
+                 xImplicitStmt
+                 xIfThenStmt xElseIfStmt xElseStmt
+                 xParameterStmt xFormatStmt xEntryStmt xTypeDeclarationStmt
+                 xCommonStmt xDataStmt xDimensionStmt
+                 xEquivalenceStmt xExternalStmt xIntrinsicStmt xSaveStmt
+                 xArithmeticIfStmt
+                 xAssignmentStmt xAssignStmt xBackspaceStmt xCallStmt xCloseStmt
+                 xContinueStmt xEndfileStmt xGotoStmt xComputedGotoStmt
+                 xAssignedGotoStmt xIfStmt xInquireStmt xOpenStmt xPauseStmt
+                 xPrintStmt xReadStmt xReturnStmt xRewindStmt xStmtFunctionStmt
+                 xStopStmt xWriteStmt xLabelDoStmt
+                 xUseStmt
+                 /* xDerivedTypeStmt */
+                 xContainsStmt
+                 xAccessStmt xAllocatableStmt
+                 xIntentStmt xNamelistStmt xOptionalStmt xPointerStmt xTargetStmt
+                 xEndDoStmt
+                 xAllocateStmt xCycleStmt xDeallocateStmt xExitStmt
+                 xNullifyStmt xPointerAssignmentStmt
+                 xSelectCaseStmt
+                 xWhereStmt xElsewhereStmt xMaskedElsewhereStmt xWhereConstructStmt
+                 xCaseStmt
+                 xModuleProcedureStmt
+                 xObsoleteActionStmt.
+
+          xDerivedTypeBodyConstruct ::=
+                 xPrivateSequenceStmt xComponentDefStmt.
+
+          xBinOp ::=
+                 xConcatOp xPowerOp xMultOp xAddOp xRelOp xAndOp xOrOp xEquivOp.
+
+          xUnOp ::=
+                 xNotOp xSign .
+
+          xVariableName ::=
+                 xVariableComma .
+
+          xIoControlSpec ::=
+                 xCloseSpec xRdCtlSpec xConnectSpec xInquireSpec xPositionSpec .
+
+          xIoControlSpecList ::=
+                 xCloseSpecList xRdIoCtlSpecList xPositionSpecList xConnectSpecList
+                 xInquireSpecList .
+
+          xArraySpec ::=
+                 xExplicitShapeSpecList xAssumedSizeSpec
+                 /* xComponentArraySpec */
+                 xExplicitShapeSpecList xDeferredShapeSpecList
+                 xAssumedShapeSpecList xAssumedSizeSpec.
+
+          xDataStmtObject ::=
+                 xDataIDoObject.
+
+          xOutputItemList ::=
+                 xOutputItemList1 .
+
+          xFmtSpec ::=
+                 xFormatedit xFormatsep xEditElement.
+
+          xHeader ::=
+            xModuleStmt
+            .
+
+          xPointerObject ::=
+                 xPointerField.
+
+          xAcValueList ::=
+                 xAcValueList1.
+
+     This macro is defined in definitions 24 and 25.
+     This macro is invoked in definition 30.
+
+5 Literal Terminals Recognized by special means
+
+Under normal circumstances, Eli uses a finite-state machine to recognize all
+of the literal terminal symbols of a context-free grammar. Fortran keywords
+and operators like .EQ., however, are recognized specially by the scanner.
+Thus they must not be included in the finite-state machine.
+
+We prevent them from being included by providing a specification to
+recognize their appearance in the grammar. This specification is written
+using GLA regular expressions:
+
+     Literal Terminals Recognized by special means[26]==
+
+          Keyword:        $[a-zA-Z][a-zA-Z]*=?
+          xDefop: $\.[a-zA-Z]*\.
+
+     This macro is invoked in definition 29.
+
+Keyword recognizes keywords, including I/O controls followed by =; xDefop
+recognizes operators delimited by dots.
+
+The specification is output as a file not belonging directly to the
+specification set, but information is derived from it:
+
+     Derivation of a terminal symbol extractor[27]==
+
+          grammar.gla :kwd
+
+     This macro is invoked in definition 31.
+

@@ -1,0 +1,56 @@
+(* Grammar for Fortran that cares about the procedure prototypes only *)
+
+COMPILER FortranPrototype
+
+CHARACTERS
+  letter  = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+          + "abcdefghijklmnopqrstuvwxyz" .
+  octal   = "01234567" .
+  digit   = "0123456789" .
+  hex     = "0123456789abcdefABCDEF" .
+  other   = " !#$%&()*+,-./:;<=>?@[]^_'{|}" + CHR(128) .. CHR(255) .
+  exp     = "EeDdXx" .
+  esc     = "ntrf\'" + '"' .
+  print   = letter + digit + other .
+  eol     = CHR(10) .
+
+TOKENS
+  id      = letter {letter | digit | "_"} .
+  number  = digit {digit} ["_" hex {hex} |
+                           "." digit {digit} exp ["+"|"-"] digit {digit}] .
+  charlit = "'" (print | "\" (esc | octal octal octal) | '"') "'" .
+  textlit = '"' {print | "\" (esc | octal octal octal) | "'"} '"' .
+  symbol  = "<" | ">" | "=" | ">=" | "<=" .
+
+COMMENTS FROM "*" TO eol
+
+PRODUCTIONS
+
+(* Compilation unit productions *)
+
+FortranPrototype = Subroutine .
+
+Subroutine       = SubroutineHead Declarations SubroutineBody .
+
+SubroutineHead   = ("SUBROUTINE" | Type "FUNCTION") id Signature .
+
+Declarations     = id .
+
+SubroutineBody   = Assignment Trash .
+
+Signature     = "(" Formals ")" .
+Formals       = [Formal {"," Formal}] .
+Formal        = id .
+
+Type          = BuiltinType .
+
+BuiltinType   = "LOGICAL"
+              | "CHARACTER"
+              | "INTEGER"
+              | ("DOUBLE" | "SINGLE") "PRECISION" .
+
+Assignment    = id "=" id .
+
+Trash         = {id | symbol} .
+
+END FortranPrototype.

@@ -1,0 +1,8 @@
+import("m3coco")
+
+%include("coco.tmpl")
+
+coco("FortranPrototype")
+
+implementation("Main")
+program("f2i3")
