@@ -67,24 +67,20 @@ readonly NEED_OBJECTS = "TRUE"
 %    => don't bother
 
 %---------------------------------------------------------------------- X11 ---
-% If you have X11R4 installed and would like the X11R4 binding interfaces
-% to be built, define the procedure "import_X11R4" to import the libraries
-% that are needed.  Otherwise, define "import_X11R4" to be an empty procedure.
+% If you have X11 installed and would like the X11 binding interfaces
+% to be built, define the procedure "import_X11" to import the libraries
+% that are needed.  Otherwise, define "import_X11" to be an empty procedure.
 %
 % If you use the MIT server with DECnet support, you need X11 and dnet,
 % otherwise X11 should be enough.
 % 
-% Since X11R5 is an extension of X11R4, you can use the X11R5 libraries
-% instead of X11R4.  However, the Modula-3 binding interfaces have not
-% yet been upgraded to X11R5.
-%
-% "import_X11R4" is called from the X11R4 package.
+% "import_X11" is called from the X11 package.
 % "import_Motif" is called from the motif package.
 % "import_DECPEX" is called from the PEX package.
 % "import_OpenGL" is called from the opengl package.
 % "import_TCP" is called from the tcp package.
 
-readonly proc import_X11R4() is
+readonly proc import_X11() is
   import_lib("Xaw",  "/usr/openwin/lib")
   import_lib("Xmu",  "/usr/openwin/lib")
   import_lib("Xext", "/usr/openwin/lib")
