@@ -13,8 +13,9 @@ else
   include_dir ("lex-yacc")
 end
 
-source    ("parse.lex")
-source    ("parse.yacc")
+% source    ("parse.lex")
+% source    ("parse.yacc")
+import_lib("c", "/lib")
 c_source  ("m3tags")
 h_source  ("hash")
 C_program ("m3tags")
