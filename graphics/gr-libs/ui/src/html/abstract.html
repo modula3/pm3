@@ -1,0 +1,34 @@
+<TITLE> Abstract </TITLE>
+<H1> Abstract </H1>
+<P>
+This is a reference manual for Trestle, a Modula-3 toolkit for the X
+window system.  Trestle is a collection of interfaces structured
+around a central abstract type: a "virtual bitmap terminal" or VBT,
+which represents a share of the workstation's screen, keyboard, and
+mouse---a thing comparable to the viewers, windows, or widgets of
+other systems.
+<P>
+Trestle is included in SRC Modula-3 version 2.0, which is available
+via public ftp.
+<P>
+Trestle includes a fairly standard set of interactors, including
+menus, buttons, "container" classes that provide overlapping or tiled
+subwindows, and "leaf" windows that display text or other data. This
+reference manual also specifies the interfaces that allow you to
+create your own window classes. Knowledge of X is not required.
+<P>
+A Trestle window is an object whose behavior is determined by its
+methods. For example, a window's response to a mouse click is
+determined by calling its mouse method. This is fast becoming the
+standard architecture for toolkits, but Trestle carries it further
+than most. For example, you can change the way a Trestle window paints
+by overriding its paint method; this is useful for sophisticated
+effects like groupware.
+<P>
+Trestle provides a novel strategy for writing applications that are
+independent of the type of display screen they are running on. For
+example, it is easy to write a Trestle application that can be moved
+back and forth between a color display and a monochrome display where
+the application will look good on both.
+
+
