@@ -10,7 +10,7 @@ MODULE QMachine EXPORTS QMachine, QMachRep;
 IMPORT Atom, AtomList, IntRefTbl, Env, Fmt, Text, FileWr;
 IMPORT Wr, Thread, OSError, TextSeq, TextF, Pipe;
 IMPORT Pathname, Process, File, FS, RTParams, FileRd, Rd;
-IMPORT M3ID, M3Buf, M3File;
+IMPORT M3ID, M3Buf, M3File, RegularFile;
 IMPORT QValue, QVal, QCode, QCompiler, QVTbl, QVSeq, QScanner;
 FROM Quake IMPORT Error;
 
@@ -1189,6 +1189,8 @@ PROCEDURE Exec (t: T;  cmd: TEXT; args: REF ARRAY OF TEXT;
         IF (Text.GetChar(stdout, 0) = '>') 
           AND (Text.GetChar(stdout, 1) = '>') THEN
           stdout_file := FS.OpenFile(Text.Sub(stdout, 2), FALSE);
+          EVAL NARROW(stdout_file, RegularFile.T).seek(RegularFile.Origin.End, 
+                                                     0);
         ELSE
           stdout_file := FS.OpenFile(stdout);
         END;
@@ -1197,6 +1199,8 @@ PROCEDURE Exec (t: T;  cmd: TEXT; args: REF ARRAY OF TEXT;
         IF (Text.GetChar(stderr, 0) = '>') 
           AND (Text.GetChar(stderr, 1) = '>') THEN
           stderr_file := FS.OpenFile(Text.Sub(stderr, 2), FALSE);
+          EVAL NARROW(stderr_file, RegularFile.T).seek(RegularFile.Origin.End,
+                                                      0);
         ELSE
           stderr_file := FS.OpenFile(stderr);
         END;
