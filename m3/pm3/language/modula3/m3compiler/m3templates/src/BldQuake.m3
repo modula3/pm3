@@ -1649,7 +1649,7 @@ PROCEDURE InstallSources(t: T) RAISES {Error}=
           val := NIL;
           EVAL install_dirs.get(u.loc, val);
           new := NEW(List, name := M3ID.ToText(m), next := val);
-          EVAL install_dirs.put(u.loc, val);
+          EVAL install_dirs.put(u.loc, new);
         END;
       END;
     END WalkUnits;
@@ -1702,6 +1702,7 @@ PROCEDURE InstallSources(t: T) RAISES {Error}=
         WHILE list # NIL DO
           Wr.PutText(wr, "install_file(\"" & Escape(d & t.SL & list.name) &
             "\", \"" & Escape(dest) & "\", \"0644\")" & t.CR);
+          list := list.next;
         END;
       END;
       Utils.CloseWriter(wr, M3SHIP_FILE);
@@ -1716,18 +1717,16 @@ PROCEDURE InstallSources(t: T) RAISES {Error}=
 PROCEDURE U_InstallDir(t: T; dest: TEXT; wr: Wr.T) RAISES {Error}=
   VAR val: QValue.T; dest_val: REFANY;
   BEGIN
-    IF t.get(M3ID.Add("HAVE_PKGTOOLS"), val) THEN
-      IF QVal.ToBool(t, val) THEN 
-        IF NOT Text.Equal(dest, t.last_ship_dir) THEN
-          t.last_ship_dir := dest;
-          Wr.PutText(wr, "-l " & dest & t.CRship); <* NOWARN *>
-        END;
-      ELSE
-        IF NOT t.all_ship_dirs.get(dest, dest_val) THEN
-          EVAL t.all_ship_dirs.put(dest, NIL);
-          Wr.PutText(wr, "make_dir(\""& Escape(dest) & "\")" & t.CR); <* NOWARN *>
-        END
+    IF t.get(M3ID.Add("HAVE_PKGTOOLS"), val) AND QVal.ToBool(t, val) THEN 
+      IF NOT Text.Equal(dest, t.last_ship_dir) THEN
+        t.last_ship_dir := dest;
+        Wr.PutText(wr, "-l " & dest & t.CRship); <* NOWARN *>
       END;
+    ELSE
+      IF NOT t.all_ship_dirs.get(dest, dest_val) THEN
+        EVAL t.all_ship_dirs.put(dest, NIL);
+        Wr.PutText(wr, "make_dir(\""& Escape(dest) & "\")" & t.CR); <* NOWARN *>
+      END
     END;
   END U_InstallDir;
 
@@ -2778,6 +2777,44 @@ PROCEDURE ReplaceChar(string: TEXT; old: CHAR; new: CHAR): TEXT=
     RETURN Text.FromChars(chars^);
   END ReplaceChar;
 
+PROCEDURE DoW2P (t: QMachine.T;  n_args: INTEGER) RAISES {Error} =
+  VAR
+    string: QValue.T;
+    ret: TEXT;
+  BEGIN
+    <* ASSERT n_args = 1 *>
+    t.pop(string);
+    ret := W2P(QVal.ToText(t, string));
+    string.int := M3ID.Add(ret);
+    t.push(string);
+  END DoW2P;
+
+PROCEDURE W2P(string: TEXT): TEXT=
+  VAR 
+    chars: REF ARRAY OF CHAR;
+    i := 0;
+    j := 0;
+    len := Text.Length(string);
+    car: CHAR;
+  BEGIN
+    IF len >= 2 AND Text.GetChar(string,1) = ':' THEN
+      chars := NEW(REF ARRAY OF CHAR, len + 1);
+      chars[0] := '/'; chars[1] := '/';
+      chars[2] := Text.GetChar(string,0);
+      INC(i,2);
+      INC(j,3);
+    ELSE
+      chars := NEW(REF ARRAY OF CHAR, len);
+    END;
+    WHILE i < len DO
+      car := Text.GetChar(string,i);
+      IF car = '\\' THEN car := '/'; END;
+      chars[j] := car;
+      INC(i); INC(j);
+    END;
+    RETURN Text.FromChars(chars^);
+  END W2P;
+
 (*-------------------------------------------------------------- dummy ------*)
 
 PROCEDURE DoDummy(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
@@ -2937,7 +2974,7 @@ PROCEDURE NewProc (nm      : TEXT;
 
 PROCEDURE InitProcs(): REF ARRAY OF ProcRec =
   VAR
-    Procs := NEW(REF ARRAY OF ProcRec, 108);
+    Procs := NEW(REF ARRAY OF ProcRec, 109);
   BEGIN
     Procs[0].proc := NewProc ("reset_cache", DoResetCache, 0, FALSE);
     Procs[1].proc := NewProc ("m3", DoM3, -1, FALSE);
@@ -3064,6 +3101,7 @@ PROCEDURE InitProcs(): REF ARRAY OF ProcRec =
     Procs[105].proc := NewProc("_define_lib", DoDummy, 1, FALSE);
     Procs[106].proc := NewProc("m3front_option", DoM3FrontOption, 1, FALSE);
     Procs[107].proc := NewProc("replacechar", DoReplaceChar, 3, TRUE);
+    Procs[108].proc := NewProc("w2p", DoW2P, 1, TRUE);
     RETURN Procs;
   END InitProcs;
 
@@ -3112,6 +3150,13 @@ PROCEDURE Setup(t: T) RAISES {Error}=
       t.MO_ext  := ".mo";
       t.LIB_pre := "";
       t.LIB_ext := ".lib";
+      t.PGM_ext := ".exe";
+    | 3 =>
+      t.OBJ_ext := ".o";
+      t.IO_ext  := ".io";
+      t.MO_ext  := ".mo";
+      t.LIB_pre := "lib";
+      t.LIB_ext := ".a";
       t.PGM_ext := ".exe";
     ELSE
       RAISE Error("unknown naming convention: \"" & Fmt.Int(convention) & "\"." & t.CR);
@@ -3215,12 +3260,10 @@ PROCEDURE Setup(t: T) RAISES {Error}=
       BldHooks.DeleteFile(t, M3OVERRIDES);
       TRY
         wr := Utils.OpenWriter(M3SHIP_FILE, TRUE);
-        IF t.get(M3ID.Add("HAVE_PKGTOOLS"), val) THEN
-          IF QVal.ToBool(t, val) THEN
-            Wr.PutText(wr, t.CRship);
-          ELSE
-            Wr.PutText(wr, t.CR);
-          END;
+        IF t.get(M3ID.Add("HAVE_PKGTOOLS"), val) AND QVal.ToBool(t, val) THEN
+          Wr.PutText(wr, t.CRship);
+        ELSE
+          Wr.PutText(wr, t.CR);
         END;
       EXCEPT
         M3Driver.Error, Thread.Alerted, Wr.Failure => FErr(M3SHIP_FILE);
