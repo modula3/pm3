@@ -257,10 +257,10 @@ proc m3_make_lib (lib, objects, imported_libs, static, shared) is
 end
 
 proc m3_note_shlib(lib) is
+  local lib_so   = format ("lib%s.so", lib)
+  local lib_sox  = format ("lib%s.so.3", lib)
+  local lib_soxx = format ("lib%s.so.3.5", lib)
   if defined ("_all")
-    local lib_so   = format ("lib%s.so", lib)
-    local lib_sox  = format ("lib%s.so.3", lib)
-    local lib_soxx = format ("lib%s.so.3.5", lib)
     link_file(lib_soxx, lib_sox)
     link_file(lib_soxx, lib_so)
     install_derived (lib_soxx)
@@ -341,7 +341,9 @@ m3_option("-w1")
 m3_option("-why")
 m3_option("-g")
 
-m3front_option("-unfold_nested_procs")
+if not M3_BACKEND_EXTERNAL
+  m3front_option("-unfold_nested_procs")
+end
 
 M3_COVERAGE_LIB = LIB_USE & "/report_coverage.o"
 % --- library linked in programs compiled with "-Z" coverage option
