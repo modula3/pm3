@@ -23,6 +23,7 @@ TOKENS
   charlit = "'" (print | "\" (esc | octal octal octal) | '"') "'" .
   textlit = '"' {print | "\" (esc | octal octal octal) | "'"} '"' .
   symbol  = "<" | ">" | "=" | ">=" | "<=" .
+  newline = eol .
 
 COMMENTS FROM "*" TO eol
 
@@ -35,14 +36,21 @@ FortranPrototype = Procedure .
 Procedure      = (SubroutineHead | FunctionHead) Declarations ProcedureBody .
 
 SubroutineHead      (. VAR name,sig : TEXT; .)
-   = "SUBROUTINE" Ident<name> Signature<sig>
+   = "SUBROUTINE" Ident<name> Signature<sig> {newline}
 	(. IO.Put("PROCEDURE "&name&sig&";\n") .) .
 
 FunctionHead        (. VAR name,sig,rettype : TEXT; .)
-   = Type<rettype> "FUNCTION" Ident<name> Signature<sig>
+   = Type<rettype> "FUNCTION" Ident<name> Signature<sig> {newline}
 	(. IO.Put("PROCEDURE "&name&sig&":"&rettype&";\n") .) .
 
-Declarations  = id .
+Declarations                   (. VAR type,var : TEXT; .)
+   = {
+       Type<type>
+       Ident<var>              (. IO.Put(var) .)
+       {"," Ident<var>         (. IO.Put(", "&var) .)
+       }                       (. IO.Put(": "&type&";\n") .)
+       {newline}
+     } .
 
 ProcedureBody = Assignment Trash .
 
