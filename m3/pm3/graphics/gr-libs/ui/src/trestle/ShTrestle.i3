@@ -10,7 +10,7 @@ INTERFACE ShTrestle;
 IMPORT Filter, VBT;
 
 (* A "ShTrestle.T" implements the shared Trestle instance above every
-   VBT, supporting attachment
+   VBT, supporting attachment *)
 
 TYPE
   T <: Public;

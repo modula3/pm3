@@ -16,8 +16,8 @@ TYPE
   GrandChild = HighlightVBT.T OBJECT
     proc: DeleteProc
   METHODS
-    rescreen := Rescreen;
-    misc := Misc;
+    rescreen(READONLY cd: VBT.RescreenRec) := Rescreen;
+    misc(READONLY cd: VBT.MiscRec) := Misc;
   END;
 
 REVEAL Child = ETAgent.T BRANDED OBJECT END;

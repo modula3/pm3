@@ -7,8 +7,11 @@
 
 MODULE ShTrestle;
 
+(*
              screenOf  := ScreenOf;
+*)
              (* Trestle stuff *)
+(*
              attach    := Attach;
              delete    := Delete;
              decorate  := Decorate;
@@ -16,11 +19,14 @@ MODULE ShTrestle;
              overlap   := Overlap;
              moveNear  := MoveNear;
              installOffscreen := InstallOffscreen;
+*)
 (*           setColorMap := SetColorMap; *)
+(*
              getScreens := GetScreens;
              captureScreen := CaptureScreen;
              allCeded := AllCeded;
              tickTime := TickTime;
+*)
              (* some day:
              swap := Swap;
              getName := GetName;
@@ -35,10 +41,12 @@ MODULE ShTrestle;
              addParent := AddParent;
              remParent := RemParent;
              warpCursor := WarpCursor; *)
+(*
              lastCeded := LastCeded;
              trestleId := TrestleID;
              windowId := WindowID;
              updateBuddies := UpdateBuddies;
+*)
 
 PROCEDURE ScreenOf (v: ChildT; ch: VBT.T; READONLY pt: Point.T):
   Trestle.ScreenOfRec =
