@@ -2006,6 +2006,14 @@ PROCEDURE DerivedResource(t: T; x: TEXT) RAISES {Error} =
     Deriveds(t, "", Arr{x});
   END DerivedResource;
 
+PROCEDURE DoDerivedResource(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
+  VAR arg: QValue.T;
+  BEGIN
+    <* ASSERT n_args = 1 *>
+    t.pop(arg);
+    DerivedResource(t, QVal.ToText(t, arg));
+  END DoDerivedResource;
+
 PROCEDURE Bundle(t: T; m: TEXT) RAISES {Error}=
   VAR
     intf     := m & ".i3";
@@ -3000,7 +3008,7 @@ PROCEDURE NewProc (nm      : TEXT;
 
 PROCEDURE InitProcs(): REF ARRAY OF ProcRec =
   VAR
-    Procs := NEW(REF ARRAY OF ProcRec, 109);
+    Procs := NEW(REF ARRAY OF ProcRec, 110);
   BEGIN
     Procs[0].proc := NewProc ("reset_cache", DoResetCache, 0, FALSE);
     Procs[1].proc := NewProc ("m3", DoM3, -1, FALSE);
@@ -3128,6 +3136,7 @@ PROCEDURE InitProcs(): REF ARRAY OF ProcRec =
     Procs[106].proc := NewProc("m3front_option", DoM3FrontOption, 1, FALSE);
     Procs[107].proc := NewProc("replacechar", DoReplaceChar, 3, TRUE);
     Procs[108].proc := NewProc("w2p", DoW2P, 1, TRUE);
+    Procs[109].proc := NewProc("derived_resource", DoDerivedResrouce, 1, FALSE);
     RETURN Procs;
   END InitProcs;
 
