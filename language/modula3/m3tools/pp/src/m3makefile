@@ -43,8 +43,8 @@ module         ("Parse")
 module         ("NewFormatter")
 implementation ("Main")
 
-import("m3doc")
-HtmlFile("index")
+%import("m3doc")
+%HtmlFile("index")
 
 generate_tfile()
 Program ("m3pp")
