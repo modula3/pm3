@@ -421,8 +421,8 @@ exception_decl_list:
 
 exception_decl:
       /* Moved break inside LParen. -DN */
-      Inc id_list                         Z Dec Semi
-    | Inc id_list Lparen AX type Z Rparen Z Dec Semi
+      Inc Ident                         Z Dec Semi
+    | Inc Ident Lparen AX type Z Rparen Z Dec Semi
     ;
 
 procedure_head:
@@ -930,7 +930,7 @@ line_pragma:
     | Pr_Line     SP Card_const SP Str_const SP Rpragma1
     ;
 
-spec_pragma:       Pr_Spec SP B esc_spec E SP Rpragma1 NL ;
+spec_pragma:       Pr_Spec SP B esc_spec E A Rpragma1 ;
 
 
 /*------ specifications for ESC (extended static checker) ------*/
@@ -1092,8 +1092,8 @@ spec_prim_term:
     | qqidp
     ;
 
-/* For my (Lemming's) taste the list should be separated
-   with semicolons for consistency reasons */
+/* For my taste the list should be separated
+   with semicolons for consistency reasons -Lemming */
 spec_typed_id_list:
       Z spec_typed_id
     | spec_typed_id_list Z Comma A spec_typed_id
