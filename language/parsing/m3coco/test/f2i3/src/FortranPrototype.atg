@@ -2,7 +2,7 @@
 
 COMPILER FortranPrototype
 
-IMPORT Scan, Fmt, Wr, IO ;
+IMPORT IO;
 
 CHARACTERS
   letter  = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -10,7 +10,8 @@ CHARACTERS
   octal   = "01234567" .
   digit   = "0123456789" .
   hex     = "0123456789abcdefABCDEF" .
-  other   = " !#$%&()*+,-./:;<=>?@[]^_'{|}" + CHR(128) .. CHR(255) .
+  space   = " " + CHR(9) + CHR(10) + CHR(13) .
+  other   = "!#$%&()*+,-./:;<=>?@[]^_{|}" + CHR(128) .. CHR(255) .
   exp     = "EeDdXx" .
   esc     = "ntrf\'" + '"' .
   print   = letter + digit + other .
@@ -18,39 +19,68 @@ CHARACTERS
 
 TOKENS
   id      = letter {letter | digit | "_"} .
-  number  = digit {digit} ["_" hex {hex} |
-                           "." digit {digit} exp ["+"|"-"] digit {digit}] .
+  number  = digit {digit} ["." {digit} [exp ["+"|"-"] digit {digit}] ] .
   charlit = "'" (print | "\" (esc | octal octal octal) | '"') "'" .
   textlit = '"' {print | "\" (esc | octal octal octal) | "'"} '"' .
-  symbol  = "<" | ">" | "=" | ">=" | "<=" .
+  trash   = other .
+(*  symbol  = "<" | ">" | "=" | ">=" | "<=" . *)
   newline = eol .
 
+(* comments may only start at the beginning of a line
 COMMENTS FROM "*" TO eol
+*)
 
 PRODUCTIONS
 
 (* Compilation unit productions *)
 
-FortranPrototype = Procedure .
+FortranPrototype = Comment Procedure .
 
-Procedure      = (SubroutineHead | FunctionHead) Declarations ProcedureBody .
+(* Unfortunately we have to parse comments,
+   and sometimes the parser will complain about strings it can't classify.
+   "(" | ")" | "," can't be integrated in  the definition of 'trash'
+   probably because e.g. "(" is used as special string somewhere. *)
+Comment = {"*" {id | number | trash | "(" | ")" | "," | "=" | "*"} newline} .
+
+LineSep = newline {newline} Comment .
+
+Procedure = (SubroutineHead | FunctionHead) Declarations ProcedureBody .
 
 SubroutineHead      (. VAR name,sig : TEXT; .)
-   = "SUBROUTINE" Ident<name> Signature<sig> {newline}
+   = "SUBROUTINE" Ident<name> Signature<sig> LineSep
 	(. IO.Put("PROCEDURE "&name&sig&";\n") .) .
 
 FunctionHead        (. VAR name,sig,rettype : TEXT; .)
-   = Type<rettype> "FUNCTION" Ident<name> Signature<sig> {newline}
+   = Type<rettype> "FUNCTION" Ident<name> Signature<sig> LineSep
 	(. IO.Put("PROCEDURE "&name&sig&":"&rettype&";\n") .) .
 
 Declarations                   (. VAR type,var : TEXT; .)
-   = {
-       Type<type>
-       Ident<var>              (. IO.Put(var) .)
-       {"," Ident<var>         (. IO.Put(", "&var) .)
-       }                       (. IO.Put(": "&type&";\n") .)
-       {newline}
+   = { (
+         "EXTERNAL"
+         Ident<var>            (. IO.Put("(* Procedure "&var&" *)\n") .)
+         {"," Ident<var>       (. IO.Put("(* Procedure "&var&" *)\n") .)
+         }
+       |
+         Type<type>
+         VarDecl<var>          (. IO.Put(var&type&";\n") .)
+         {"," VarDecl<var>     (. IO.Put(var&type&";\n") .)
+         }
+       )
+       LineSep
      } .
+
+VarDecl<VAR var:TEXT>          (. VAR name, dim : TEXT; typecons:=""; .)
+   = Ident<name>
+     ["(" ArrDim<dim>          (. typecons := "ARRAY "&dim&"OF " .)
+      {"," ArrDim<dim>         (. typecons := "ARRAY "&dim&"OF "&typecons .)
+      }                        (. typecons := "(* "&typecons&"*) " .)
+      ")"]                     (. var := name&": "&typecons .)
+     .
+
+ArrDim<VAR dim:TEXT>           (. VAR id : TEXT; .)
+   = "*"                       (. dim:="" .)
+   | Ident<id>                 (. dim:="[0.."&id&"-1] " .)
+   .
 
 ProcedureBody = Assignment Trash .
 
@@ -61,18 +91,21 @@ Signature<VAR sig:TEXT>        (. VAR formal:TEXT; .)
        }]                      (. sig:=sig&")" .)
      ")" .
 
-Type<VAR type : TEXT;>
-              = BuiltinType (. type := p.string() .) .
+Type<VAR type : TEXT;> = BuiltinType<type> .
 
-BuiltinType   = "LOGICAL"
-              | "CHARACTER"
-              | "INTEGER"
-              | ("DOUBLE" | "SINGLE") "PRECISION" .
+BuiltinType<VAR type : TEXT;>
+   = "LOGICAL"      (. type := "BOOLEAN" .)
+   | "CHARACTER"    (. type := "CHAR" .)
+   | "INTEGER"      (. type := "INTEGER" .)
+   | ("DOUBLE"      (. type := "LONGREAL" .)
+     |"SINGLE"      (. type := "REAL" .)
+     ) "PRECISION"
+   .
 
 Ident <VAR t:TEXT;> = id (. t := p.string() .).
 
 Assignment    = id "=" id .
 
-Trash         = {id | symbol} .
+Trash         = {trash} .
 
 END FortranPrototype.
