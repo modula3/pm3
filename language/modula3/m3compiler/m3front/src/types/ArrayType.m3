@@ -286,7 +286,9 @@ PROCEDURE Subtyper (a: P;  tb: Type.T): BOOLEAN =
       a := Reduce (ta);  b := Reduce (tb);
       IF (a = NIL) OR (b = NIL) THEN EXIT END;
       IF (a.index # b.index) THEN
-        IF Type.Number (a.index) # Type.Number (b.index) THEN RETURN FALSE END;
+        IF NOT TInt.EQ (Type.Number (a.index), Type.Number (b.index)) THEN
+          RETURN FALSE
+        END;
       END;
       ta := a.element;
       tb := b.element;

@@ -188,7 +188,9 @@ PROCEDURE Subtyper (a: P;  tb: Type.T): BOOLEAN =
 
     (* peel off the fixed dimensions as long as the sizes are equal *)
     WHILE ArrayType.Split (ta, ia, ea) AND ArrayType.Split (tb, ib, eb) DO
-      IF Type.Number (ia) # Type.Number (ib) THEN RETURN FALSE END;
+      IF NOT TInt.EQ (Type.Number (ia), Type.Number (ib)) THEN
+        RETURN FALSE
+      END;
       ta := ea;
       tb := eb;
     END;
