@@ -664,7 +664,7 @@ __dbenv_refresh(dbenv, orig_flags)
 }
 
 #define	DB_ADDSTR(add) {						\
-	if ((add) != NULL) {						\
+	if ((add) != NULL && strlen(add) != 0) {			\
 		/* If leading slash, start over. */			\
 		if (__os_abspath(add)) {				\
 			p = str;					\
