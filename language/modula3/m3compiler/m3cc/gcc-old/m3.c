@@ -1001,7 +1001,7 @@ static void debug_field (name)
   TREE_CHAIN (f) = debug_fields;
   debug_fields = f;
 
-  DECL_NAME (f) = get_identifier (name);
+  DECL_ASSEMBLER_NAME(f) = DECL_NAME (f) = get_identifier (name);
   DECL_FIELD_BITPOS (f) = v_zero;
 
   TREE_TYPE (f) = t_int;
@@ -1911,6 +1911,26 @@ tree signed_or_unsigned_type (unsignedp, typ)
      int unsignedp;
      tree typ;
 {
+  if (unsignedp) {
+    if (typ == t_int_8)
+      return t_word_8;
+    if (typ == t_int_16)
+      return t_word_16;
+    if (typ == t_int_32)
+      return t_word_32;
+    if (typ == t_int_32d)
+      return t_word_32d;
+  } else {
+    if (typ == t_word_8)
+      return t_int_8;
+    if (typ == t_word_16)
+      return t_int_16;
+    if (typ == t_word_32)
+      return t_int_32;
+    if (typ == t_word_32d)
+      return t_int_32d;
+  }    
+
   fatal ("********* language-dependent function called: signed_or_unsigned_type");
   /*NOTREACHED*/
 }
@@ -2801,7 +2821,13 @@ yyparse ()
       if (DECL_CONTEXT (p)) {
 	push_function_context (); } 
       else {
-	compiling_body = 1; }
+	compiling_body = 1;
+	/* make sure there is a difference between saveable_obstack and
+	   current_obstack: the back-end optimizers rely on this (e.g.,
+	   varasm) */
+	push_obstacks_nochange();
+	temporary_allocation();
+      }
       
       current_function_decl = p;
       current_function_name = IDENTIFIER_POINTER (DECL_NAME (p));
@@ -2836,7 +2862,12 @@ yyparse ()
       if (DECL_CONTEXT (p)) {
 	pop_function_context (); } 
       else {
-	compiling_body = 0; }
+	compiling_body = 0;
+	/* Go back to permanent allocation, but without freeing objects
+           created in the interim, since M3 holds on to some nested
+           allocations until the end of the module */
+	pop_obstacks ();
+      }
       break; }
 
     case M3_BEGIN_BLOCK: {
