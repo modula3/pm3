@@ -3181,6 +3181,19 @@ PROCEDURE Setup(t: T) RAISES {Error}=
       END;
       RETURN QVal.ToText(t, val);
     END GetIt;
+  PROCEDURE ArrayToSeq(READONLY arr: ARRAY OF TEXT): QVSeq.T = 
+    VAR 
+      seq := NEW(QVSeq.T).init(NUMBER(arr));
+      val: QValue.T;
+    BEGIN
+      val.kind := QValue.Kind.String;
+      val.ref  := NIL;
+      FOR i:= FIRST(arr) TO LAST(arr) DO
+        val.int := M3ID.Add(arr[i]);
+        seq.addhi(val);
+      END;
+      RETURN seq;
+    END ArrayToSeq;
   VAR 
     convention: INTEGER;
     conv_val: QValue.T;
@@ -3260,18 +3273,28 @@ PROCEDURE Setup(t: T) RAISES {Error}=
     t.intf_extensions[1] := ".ic";
     t.intf_extensions[2] := ".is";
     t.intf_extensions[3] := t.IO_ext;
+    val:= QValue.T{QValue.Kind.Array, 0, ArrayToSeq(t.intf_extensions)};
+    t.put(M3ID.Add("intf_extensions"), val);
 
     t.impl_extensions[0] := ".mx";
     t.impl_extensions[1] := ".mc";
     t.impl_extensions[2] := ".ms";
     t.impl_extensions[3] := t.MO_ext;
+    val := QValue.T{QValue.Kind.Array, 0, ArrayToSeq(t.impl_extensions)};
+    t.put(M3ID.Add("impl_extensions"), val);
 
     t.c_extensions[0]    := ".s";
     t.c_extensions[1]    := t.OBJ_ext;
+    val := QValue.T{QValue.Kind.Array, 0, ArrayToSeq(t.c_extensions)};
+    t.put(M3ID.Add("c_extensions"), val);
 
     t.s_extensions[0]    := t.OBJ_ext;
+    val := QValue.T{QValue.Kind.Array, 0, ArrayToSeq(t.s_extensions)};
+    t.put(M3ID.Add("s_extensions"), val);
 
     t.no_extension[0]    := "";
+    val := QValue.T{QValue.Kind.Array, 0, ArrayToSeq(t.no_extension)};
+    t.put(M3ID.Add("no_extension"), val);
 
     t.rsrc_extensions[0] := ".i3";
     t.rsrc_extensions[1] := ".m3";
@@ -3281,6 +3304,8 @@ PROCEDURE Setup(t: T) RAISES {Error}=
     FOR i := 0 TO LAST(t.impl_extensions) DO
       t.rsrc_extensions[i+2+LAST(t.intf_extensions)+1] := t.impl_extensions[i];
     END;
+    val := QValue.T{QValue.Kind.Array, 0, ArrayToSeq(t.rsrc_extensions)};
+    t.put(M3ID.Add("rsrc_extensions"), val);
 
     IF NOT t.get(M3ID.Add("OS_TYPE"), val) THEN
       Msg.FatalError(NIL, "couldn't get OS_TYPE"); <* NOWARN *>
