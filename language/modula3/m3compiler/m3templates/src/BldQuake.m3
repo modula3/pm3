@@ -2998,11 +2998,14 @@ PROCEDURE DoMakeDir(t: QMachine.T; n_args: INTEGER) RAISES {Error}=
 
 PROCEDURE MakeDir(t: T; dir: TEXT) RAISES {Error} =
   VAR
-    val: QValue.T;
-    dirs := NEW(TextSeq.T).init();
+    val    : QValue.T;
+    dirs   := NEW(TextSeq.T).init();
   BEGIN
     IF t.get(M3ID.Add("_quiet"), val) THEN
       Wr.PutText(t.cur_wr(), "m3mkdir" & dir & t.CR) END; <* NOWARN *>
+    IF NOT Pathname.Absolute(dir) THEN
+      dir := Pathname.Join(Process.GetWorkingDirectory(), dir);
+    END;
     LOOP
       TRY
         EVAL FS.Status(dir);
