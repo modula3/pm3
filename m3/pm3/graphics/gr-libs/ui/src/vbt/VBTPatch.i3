@@ -6,6 +6,8 @@
 
 (* \subsection{Texturing irregular patches} *)
 
+INTERFACE VBTPatch;
+
 TYPE
   DeltaPair = RECORD dl, dr: BITS 8 FOR [-128 .. 127] END;
 
@@ -53,3 +55,4 @@ PROCEDURE PaintPatch(
    The patch is clipped vertically to exclude any rows for which "DL" and
    "DR" are undefined due to exhaustion of "deltaArray". *)
 
+END VBTPatch.

@@ -8,7 +8,7 @@ INTERFACE TrestleAux;
 
 IMPORT Trestle, VBT, TrestleComm, Rect, Point;
 
-FROM Trestle IMPORT ScreenID, Unimplemented, 
+FROM Trestle IMPORT ScreenID, Unimplemented; 
 
 EXCEPTION Unimplemented;
 
