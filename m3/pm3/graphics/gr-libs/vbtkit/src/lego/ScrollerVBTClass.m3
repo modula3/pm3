@@ -598,6 +598,7 @@ PROCEDURE InitGraphics () =
   BEGIN
     LOCK globalLock DO
       IF graphicsInited THEN RETURN END;
+      graphicsInited := TRUE;
 
       WITH a = Axis.T.Hor DO
         XCLoad(State.ThumbState, a, "XC_sb_up_arrow");
