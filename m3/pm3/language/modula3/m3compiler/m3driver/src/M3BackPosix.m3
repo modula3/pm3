@@ -10,6 +10,7 @@ IMPORT Wr, M3CG, M3CG_Wr;
 FROM M3Driver IMPORT Error, Interface;
 
 PROCEDURE Open (target: Wr.T;  <*UNUSED*> target_name: TEXT;
+                <* UNUSED *> optimize, debug, shared: BOOLEAN;
                 <* UNUSED *> interface: Interface): M3CG.T
   RAISES {Error} = <* NOWARN *>
   BEGIN
