@@ -15,6 +15,7 @@ extern const char *const sys_errlist[];
 
 #include <stdio.h>
 #include <varargs.h>
+#include <errno.h>
 #include "SRCstdlib.h"
 #include "err.h"
 
