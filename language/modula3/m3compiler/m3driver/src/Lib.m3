@@ -1,0 +1,4 @@
+MODULE Lib;
+
+BEGIN
+END Lib.

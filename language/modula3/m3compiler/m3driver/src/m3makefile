@@ -1,0 +1,47 @@
+% Copyright (C) 1992, Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+%
+% File: m3makefile
+% Last modified on Tue Jan 24 13:10:54 PST 1995 by kalsow
+%      modified on Wed Jun  2 12:06:33 PDT 1993 by muller
+
+remove_m3_option ("-gui")
+%m3_option ("-times")
+
+import ("libm3")
+import ("m3middle")
+import ("m3linker")
+import ("m3front")
+
+interface ("M3Backend")
+
+% For LINUX with Jerome Collin's libraries:
+override("m3back", "../../gpl")
+override("m3objfile", "../../gpl")
+import ("m3back")
+import ("m3objfile")
+implementation ("M3BackLinux")
+
+% For NT:
+% import ("m3back")
+% import ("m3objfile")
+% implementation ("M3BackWin32")
+
+% otherwise:
+% implementation ("M3BackPosix")
+
+Module ("Arg")
+Module ("Msg")
+Module ("M3Path")
+Module ("Unit")
+Module ("Utils")
+module ("WebFile")
+Interface("M3DriverRep")
+Module ("Lib")
+Sequence ("Lib", "Lib")
+Module ("M3Driver")
+
+library ("m3driver")
+
+
