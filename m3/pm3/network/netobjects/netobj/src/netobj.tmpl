@@ -35,7 +35,7 @@ readonly proc _v_netobjv1(intf, type, v, useintf) is
     generate_tfile()
     local cmd = [ _NETOBJ_STUBGEN, "-sno", intf & "." & type, netobjuse, 
                   useintf, M3SEARCH_TABLES ]
-    write(cmd)
+    write(cmd, CR)
     local ret = exec(cmd)
     if not equal(ret, 0) error("command failed with error code: ", ret) end
   end
