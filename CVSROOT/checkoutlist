@@ -11,3 +11,6 @@
 #	[<whitespace>]<filename><whitespace><error message><end-of-line>
 #
 # comment lines begin with '#'
+log_accum	cannot checkout log_accum
+commit_prep	cannot checkout commit_prep
+log-pm3.sh	cannot checkout log-pm3.sh

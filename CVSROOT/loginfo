@@ -18,6 +18,7 @@
 #
 # For example:
 #DEFAULT		(echo ""; who am i; date; cat) >> $CVSROOT/CVSROOT/commitlog
-pm3     $CVSROOT/CVSROOT/log-pm3.sh %s
+#pm3     $CVSROOT/CVSROOT/log-pm3.sh %s
+pm3     $CVSROOT/CVSROOT/log_accum -m m3commit@elegosoft.com -M pm3 -s -f $CVSROOT/CVSROOT/commitlog-pm3 %s
 DEFAULT (echo ""; id; echo %s; date; cat) >> $CVSROOT/CVSROOT/commitlog-default
 
