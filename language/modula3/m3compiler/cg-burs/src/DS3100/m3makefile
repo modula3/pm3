@@ -25,14 +25,15 @@ if defined("_all")
   if stale("md.brg", ["md", "pp"])
     write ("executing pp\n")
     ret = exec(["pp"], [ "md", "md.brg"])
-    if not equal(ret, 0) error("pp failed in m3makefile with code, ret) end
+    if not equal(ret, 0) error("pp failed in m3makefile with code: ", ret) end
   end
 
   % build burm.c
   if stale("burm.c", "md.brg")
     write ("execuging iburg\n")
     ret = exec([ "iburg", "-I", "-T" ], [ "md.brg", "burm.c" ])
-    if not equal(ret, 0) error("iburg failed in m3makefile with code, ret) end
+    if not equal(ret, 0)
+      error("iburg failed in m3makefile with code: ", ret) end
   end
 
   % extract the reducer cases
@@ -40,7 +41,8 @@ if defined("_all")
     if stale("reduce" & i, "md")
       write ("executing pp\n")
       ret = exec([ "pp", "-" & i ], [ "md", "reduce" & i ])
-      if not equal(ret, 0) error("pp failed in m3makefile with code, ret) end
+      if not equal(ret, 0)
+        error("pp failed in m3makefile with code: ", ret) end
     end
   end
 
@@ -50,7 +52,7 @@ if defined("_all")
     ret = exec([ "notangle", "-L<*LINE %L \"%F\" *>%N", "-Rimplementation",
 	  md_nw, "reduce1", "reduce2" ], [ ".MD.m3" ])
     if not equal(ret, 0)
-      error("notangle failed in m3makefile with code, ret) end
+      error("notangle failed in m3makefile with code: ", ret) end
   end
   cp_if (".MD.m3", "MD.m3")
 
