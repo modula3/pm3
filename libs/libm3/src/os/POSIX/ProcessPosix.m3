@@ -82,11 +82,11 @@ PROCEDURE Create(
     execResult := 0;
     forkResult := Unix.vfork();
     IF forkResult = 0 THEN (* in the child *)
-      ExecChild(argx, envp, wdstr, stdin_fd, stdout_fd, stderr_fd);
+      execResult := ExecChild(argx, envp, wdstr, stdin_fd, stdout_fd, 
+          stderr_fd);
       (* If ExecChild returns, the execve failed. Let's try to leave
      	 a note for our parent, in case we're still sharing their
      	 address space. *)
-      execResult := -1;
       execErrno := Uerror.errno;
       Unix.underscore_exit(99)
     END;
@@ -227,7 +227,7 @@ PROCEDURE ExecChild(
     argx: ArrCStr; (* see "AllocArgs" for layout *)
     envp: Ctypes.char_star_star;
     wdstr: Ctypes.char_star;
-    stdin, stdout, stderr: INTEGER)
+    stdin, stdout, stderr: INTEGER): INTEGER
   RAISES {} =
 (* Modify Unix state using "stdin", ..., and invoke execve using
    "argx" and "envp".  Do not invoke scheduler, allocator, or
@@ -249,10 +249,10 @@ PROCEDURE ExecChild(
 
   VAR res := 0; t: Ctypes.char_star; BEGIN
     IF wdstr # NIL THEN
-      IF Unix.chdir(wdstr) < 0 THEN RETURN END
+      IF Unix.chdir(wdstr) < 0 THEN RETURN -1; END
     END;
     IF NOT (SetFd(0, stdin) AND SetFd(1, stdout) AND SetFd(2, stderr)) THEN
-      RETURN
+      RETURN -1;
     END;
     FOR fd := 3 TO Unix.getdtablesize() - 1 DO
       EVAL Unix.close(fd) (* ignore errors *)
@@ -265,30 +265,34 @@ PROCEDURE ExecChild(
       t := argx[0]; argx[0] := argx[2]; argx[2] := t;
       res := Unix.execve(BinSh, ADR(argx[1]), envp);
       <* ASSERT res < 0 *>
-    END
+    END;
+    RETURN res;
   END ExecChild;
 
 EXCEPTION WaitAlreadyCalled;
 
 PROCEDURE Wait(p: T): ExitCode = <* FATAL WaitAlreadyCalled *> 
-  VAR result: Ctypes.int;  status: Uexec.w_A;
-  CONST Delay = 0.2D0;
+  VAR 
+    result: Ctypes.int;
+    statusT: Uexec.w_T;
+    statusM3: Uexec.w_M3;
+  CONST Delay = 0.1D0;
   BEGIN
     IF NOT p.waitOk THEN RAISE WaitAlreadyCalled END;
     p.waitOk := FALSE;
     (* By rights, the SchedulerPosix interface should have a WaitPID
        procedure that is integrated with the thread scheduler. *)
     LOOP
-      result := Uexec.waitpid(p.pid, ADR(status), Uexec.WNOHANG);
+      result := Uexec.waitpid(p.pid, ADR(statusT), Uexec.WNOHANG);
       IF result # 0 THEN EXIT END;
       Thread.Pause(Delay)
     END;
     <* ASSERT result > 0 *>
-    IF Word.And(status, LAST(ExitCode)) = status THEN
-      RETURN status
-    ELSE
-      RETURN LAST(ExitCode)
-    END
+    statusM3.w_Filler := 0;
+    statusM3.w_Coredump := statusT.w_Coredump;
+    statusM3.w_Termsig := statusT.w_Termsig;
+    statusM3.w_Retcode := statusT.w_Retcode;
+    RETURN MIN(LAST(ExitCode),LOOPHOLE(statusM3,Uexec.w_A));
   END Wait;
 
 PROCEDURE Exit(n: ExitCode) =

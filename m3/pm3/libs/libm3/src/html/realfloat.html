@@ -1,0 +1,21 @@
+<TITLE>RealFloat, LongRealFloat, and ExtendedFloat</TITLE>
+<H1>RealFloat, LongRealFloat, and ExtendedFloat</H1>
+<P>
+The interfaces <TT>RealFloat</TT>, <TT>LongRealFloat</TT>, and <TT>ExtendedFloat</TT>
+define operations that depend on the floating-point representation.
+Each one is an instance of a generic interface <TT>Float</TT>:
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>floating-point</SPAN>
+  <SPAN CLASS=INDEX.KEY>operations</SPAN>
+</SPAN>
+
+<PRE><TT>
+INTERFACE RealFloat = Float(Real) END RealFloat.
+INTERFACE LongFloat = Float(LongReal) END LongFloat.
+INTERFACE ExtendedFloat = Float(Extended) END ExtendedFloat.
+</TT></PRE>
+
+<UL CLASS=MD.SKIP>
+<LI><A REL=SUBDOCUMENT HREF="../../../m3core/src/float/Common/Float.ig"> The Float interface</A>
+</UL>
+

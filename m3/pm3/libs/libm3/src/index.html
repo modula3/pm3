@@ -1,0 +1,122 @@
+<HTML><HEAD>
+<TITLE>The Modula-3 Standard Library</TITLE>
+</HEAD>
+<BODY>
+<DIV CLASS=HEAD>
+<SPAN CLASS=AUTHOR>Michel Dagenais</SPAN>
+<SPAN CLASS=COPYRIGHT>Michel Dagenais, GNU General Public License, 1998</SPAN>
+<ADDRESS>
+michel.dagenais@polymtl.ca<BR>
+Ecole Polytechnique<BR>
+C.P. 6079, Succ. Centre-Ville<BR>
+Montreal, Quebec, H3C 3A7</ADDRESS>
+<SPAN CLASS=DATE>17 January 1998</SPAN>
+<SPAN CLASS=KEYWORD>Modula-3</SPAN>
+<SPAN CLASS=KEYWORD>library</SPAN>
+<SPAN CLASS=KEYWORD>wide audience</SPAN>
+</DIV>
+<H1>The Modula-3 Standard Library</H1>
+
+<DIV CLASS=ABSTRACT>
+<P>This library complements the Core library with
+a base set of data structures, algorithms,
+input/output, operating system access, and runtime support modules.
+</DIV>
+
+<H2>Some Useful Modula-3 Interfaces</H2>
+
+<P>A subset of the interfaces implemented in the <TT>m3core</TT> and 
+<TT>libm3</TT> libraries was carefully selected, reviewed and
+documented by the <I>interface police</I> in the technical
+report <A HREF="html/useful.html">Some Useful Modula-3 Interfaces</A>.
+
+<H2>Data Structures</H2>
+
+<UL>
+<LI><A HREF="types">types</A> contains interfaces for the primitive types,
+to be used as arguments for generic modules.
+
+<LI><A HREF="sequence">sequence</A> is a generic module for sequences,
+which subsume extensible vectors, stacks and queues.
+
+<LI><A HREF="atom">atom</A> implements TEXT sharing for efficiently
+storing and comparing identifiers or other text strings.
+
+<LI><A HREF="list">list</A> is a generic linked list module.
+
+<LI><A HREF="sx">sx</A> implements lists of lists, with parsing and
+formatting procedures, useful to represent symbolic expressions such as
+lisp like data or programs.
+
+<LI><A HREF="table">table</A> is a generic key/value mapping implemented as
+a hash table.
+
+<LI><A HREF="sortedtable">sortedtable</A> is a sorted generic key/value
+mapping implemented as a tree.
+
+<LI><A HREF="bundleintf">bundleintf</A> is used to access bundled resources
+(files needed at runtime such as bitmaps which were packaged with m3bundle).
+
+<LI><A HREF="pqueue">pqueue</A> is a generic priority queue.
+</UL>
+
+<H2>Algorithms</H2>
+
+<UL>
+<LI><A HREF="sort">sort</A> implements a generic sorting procedure.
+<LI><A HREF="random">random</A> number generator.
+</UL>
+
+<H2>Input/Output and Operating System Access</H2>
+
+<UL>
+<LI><A HREF="rw">rw</A> contains input output operations on files and
+devices.
+
+<LI><A HREF="fmtlex">fmtlex</A> implements conversions between TEXT and
+the other primitive types (integer, float, boolean...).
+
+<LI><A HREF="os">os</A> interfaces to operating system services such as
+processes and files manipulations.
+
+<LI><A HREF="params">params</A> accesses command line parameters and
+environment variables.
+
+<LI><A HREF="pickle">pickle</A> offers automated binary storage and retrieval
+of graphs of objects and records in memory.
+
+</UL>
+
+<H2>Numerical Support</H2>
+
+<UL>
+<LI><A HREF="arith">arith</A> interfaces to the logarithmic functions.
+<LI><A HREF="sqrt">sqrt</A> implements square roots.
+<LI><A HREF="statistics">statistics</A> computes simple statistics such
+as mean and variance.
+</UL>
+
+<H2>Miscellaneous</H2>
+
+<UL>
+<LI><A HREF="etimer">etimer</A> may be used to measure the elapsed time within
+various sections of a program.
+
+<LI><A HREF="geometry">geometry</A> implements basic integer 2 dimensional
+geometry objects and transformations.
+
+<LI><A HREF="formatter">formatter</A> implements a pretty printing Writer.
+
+<LI><A HREF="perftool">perftool</A> is used by runtime performance monitoring
+tools such as shownew.
+
+<LI><A HREF="property">property</A> implements property lists. Generic Tables
+are more flexible and should be used instead.
+
+<LI><A HREF="uid">uid</A> provides unique identifiers and unique
+timestamps.
+</UL>
+
+</BODY>
+</HTML>
+

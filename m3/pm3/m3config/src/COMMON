@@ -79,13 +79,20 @@ GNU_WIN32_CONVENTIONS = [".i3", ".ic", ".is", ".io", ".m3", ".mc", ".ms",
     ".ix", ".mx", ".exe", "NONAME.EXE","lib","\\","\r\n",":",":","","T"]
 
 %
-% This procedure is called just before programs or libraries are built.
-% It is the appropriate place to compute the compilation commands and other
-% variables used by the compilation.
+% Provide for "hooks" to be called at the end of the m3makefile,
+% after all the information is set and before the real processing starts.
 %
 
+m3_hooks = []
+
+proc add_m3_hook(p) is
+  m3_hooks += p
+end
+
 proc before_do_m3_hooks() is
-  setCommands("","")
+  foreach p in m3_hooks
+    p()
+  end
 end
 
 %
@@ -171,7 +178,7 @@ end
 % This is called once all the options affecting the commands are entered.
 %
 
-proc setCommands (opt,val) is
+proc setCommands () is
   CC_CMD = CC
   LINK_CMD = LINK
   MAKELIB_CMD = MAKELIB
@@ -221,6 +228,8 @@ proc setCommands (opt,val) is
     M3_BACKEND_OUTPUT = "ASM"
   end
 
+  LINK_libpath = ""
+
   if PLATFORM_SUPPORTS_SHARED_LIB
     if Options{"shared_lib"}[0]
       CC_CMD += PIC_FLAG
@@ -229,7 +238,6 @@ proc setCommands (opt,val) is
 
     if Options{"standalone"}[0]
       LINK_CMD += STATIC_FLAG
-      LINK_libpath = ""
     else
       if not empty(DYNAMIC_FLAG) LINK_CMD += DYNAMIC_FLAG end
       if defined("TARGET_LIB_USE") and RPATH_FLAG
@@ -239,6 +247,13 @@ proc setCommands (opt,val) is
     end
   end
 end
+
+%
+% Get setCommands called just before the compilation starts, once all the
+% options are set.
+%
+
+add_m3_hook(setCommands)
 
 %
 % The following procedures are useful to centralize the customization about
@@ -395,13 +410,15 @@ end
 %
 
 proc m3_note_shlib(lib) is
-  local lib_so   = format ("lib%s.so", lib)
-  if defined ("_all")
-    install_derived (lib_so)
-    install_link(lib_so, LIB_TO_PKG_USE & SL & PACKAGE & SL & BUILD_DIR,
-        LIB_INSTALL)
+  if Options{"shared_lib"}[0] and PLATFORM_SUPPORTS_SHARED_LIB
+    local lib_so   = format ("lib%s.so", lib)
+    if defined ("_all")
+      install_derived (lib_so)
+      install_link(lib_so, LIB_TO_PKG_USE & SL & PACKAGE & SL & BUILD_DIR,
+          LIB_INSTALL)
+    end
+    deriveds (lib_so, [""])
   end
-  deriveds (lib_so, [""])
 end
 
 %
@@ -481,12 +498,12 @@ end
 %
 
 readonly proc SrcExport (nm) is
-  local dest = PKG_INSTALL & SLship & PACKAGE & SLship & pkg_subdir()
+  local dest = PKG_INSTALL & SL & PACKAGE & SL & pkg_subdir()
   _install_file(nm,dest,"0644","")
 end
 
 readonly proc SrcdExport (nm) is
-  local dest = PKG_INSTALL & SLship & PACKAGE & SLship & pkg_subdir()
+  local dest = PKG_INSTALL & SL & PACKAGE & SL & pkg_subdir()
   deriveds(nm,no_extension)
   _install_file(nm,dest,"0644","T")
 end

@@ -1,0 +1,48 @@
+<TITLE>Standard interfaces</TITLE>
+<H1>Standard interfaces</H1>
+<P>
+This section presents the interfaces required by every Modula-3
+implementation.  The versions included here have some minor changes
+and additions to the versions in <A REL=BIB.ENTRY HREF="references.html#SPwM3"> [SPwM3] </A>.
+<BLOCKQUOTE>
+<P>
+    <TT>Text</TT> provides operations on text strings.
+<P>
+    <TT>Thread</TT> provides synchronization primitives for multiple
+    threads of control.
+<P>
+    <TT>Word</TT> provides operations on unsigned words.
+<P>
+    <TT>Real</TT>, <TT>LongReal</TT>, and <TT>ExtendedReal</TT> define the
+    properties of the three floating-point types; for example, their
+    bases and ranges.
+<P>
+    <TT>RealFloat</TT>, <TT>LongRealFloat</TT>, and <TT>ExtendedFloat</TT>
+    provide numerical operations related to the floating-point
+    representation; for example, extracting the exponent of a number.
+<P>
+    <TT>FloatMode</TT> provides operations for testing (and possibly
+    setting) the behavior of the implementation in response to numeric
+    conditions; for example, overflow.
+</BLOCKQUOTE>
+<P>
+This section also presents two related interfaces provided by SRC
+Modula-3 and recommended to other implementers, but not required:
+<BLOCKQUOTE>
+<P>
+    <TT>Lex</TT> provides for parsing numbers and other data from an
+    input stream.
+<P>
+    <TT>Fmt</TT> provides for textual formatting of numbers and other data.
+</BLOCKQUOTE>
+
+<UL CLASS=MD.SKIP>
+<LI><A REL=SUBDOCUMENT HREF="../../../m3core/src/text/Text.i3"> The Text interface</A>
+<LI><A REL=SUBDOCUMENT HREF="../../../m3core/src/thread/Common/Thread.i3"> The Thread interface</A>
+<LI><A REL=SUBDOCUMENT HREF="../../../m3core/src/word/Word.i3"> The Word interface</A>
+<LI><A REL=SUBDOCUMENT HREF="float.html"> Real, LongReal, and Extended</A>
+<LI><A REL=SUBDOCUMENT HREF="realfloat.html"> RealFloat, LongRealFloat, and ExtendedFloat</A>
+<LI><A REL=SUBDOCUMENT HREF="FloatMode.i3"> The FloatMode interface</A>
+<LI><A REL=SUBDOCUMENT HREF="../fmtlex/Lex.i3"> The Lex interface</A>
+<LI><A REL=SUBDOCUMENT HREF="../fmtlex/Fmt.i3"> The Fmt interface</A>
+</UL>

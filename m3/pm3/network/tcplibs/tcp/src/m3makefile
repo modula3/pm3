@@ -10,11 +10,6 @@
 import("libm3")
 import_TCP()
 
-%m3_option ("-Y6@/udir/kalsow/pkg/m3/m3staloneback/DS/m3back@-NTObj@")
-%m3_option ("-X0@-unfold_nested_procs@")
-%m3_option ("-Y7@@")
-%m3_option ("-zINT386")
-
 include_dir(OS_TYPE)
 
 include_dir("common")

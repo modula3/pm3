@@ -1,5 +1,7 @@
 
-HtmlFile("index.html")
+import("m3doc")
+
+HtmlFile("index")
 
 OtherPackage("graphics")
 

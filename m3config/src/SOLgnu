@@ -13,7 +13,7 @@ X11ROOT = "/usr/openwin/lib"
 PLATFORM_SUPPORTS_MOTIF  = "TRUE"
 PLATFORM_SUPPORTS_SHARED_LIB = "TRUE"
 
-CC = [ "gcc", "-Wa,P", "-c" ]
+CC = [ "gcc", "-Wa,-P", "-c" ]
 LINK = [ "gcc" ]
 MAKELIB = [ "/usr/ccs/bin/ar", "cru" ]
 MAKESHLIB = [ "/usr/ccs/bin/ld", "-dy", "-G", "-z", "text" ]

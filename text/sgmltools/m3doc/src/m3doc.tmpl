@@ -54,7 +54,7 @@ readonly proc HtmlTextFile (nm) is
     if defined("_all")
       htmlFiles += src_file
     end
-    _install_src(src_file,dest,"0644")
+    _install_file(nm,dest,"0644","")
   end
 end
 
@@ -92,13 +92,12 @@ readonly proc HtmlUnit(nm,ext) is
   end
 end
 
-m3docOldM3Hooks = before_do_m3_hooks
-
-proc before_do_m3_hooks() is
-  m3docOldM3Hooks()
+proc m3doc_hook() is
   if callSgmlConv checkExec(sgmlConvCmd,[],"") end
   if callM3Sgml checkExec(m3SgmlCmd,[],"") end
 end
+
+add_m3_hook(m3doc_hook)
 
 readonly proc HtmlRoot (nm) is
   if USE_M3DOC

@@ -23,6 +23,6 @@ readonly proc simple_c_program(nm) is
   deriveds(pgm, [NAMING_CONVENTIONS[17]])
 end
 
-setCommands("","")
+setCommands()
 simple_c_program("LecternClient")
 BindExport("LecternClient")

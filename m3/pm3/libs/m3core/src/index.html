@@ -1,0 +1,94 @@
+<HTML><HEAD>
+<TITLE>The Modula-3 Core Library</TITLE>
+</HEAD>
+<BODY>
+<DIV CLASS=HEAD>
+<SPAN CLASS=AUTHOR>Michel Dagenais</SPAN>
+<SPAN CLASS=COPYRIGHT>Michel Dagenais, GNU General Public License, 1998</SPAN>
+<ADDRESS>
+michel.dagenais@polymtl.ca<BR>
+Ecole Polytechnique<BR>
+C.P. 6079, Succ. Centre-Ville<BR>
+Montreal, Quebec, H3C 3A7</ADDRESS>
+<SPAN CLASS=DATE>17 January 1998</SPAN>
+<SPAN CLASS=KEYWORD>Modula-3</SPAN>
+<SPAN CLASS=KEYWORD>library</SPAN>
+<SPAN CLASS=KEYWORD>wide audience</SPAN>
+</DIV>
+<H1>The Modula-3 Core Library</H1>
+
+<DIV CLASS=ABSTRACT>
+<P>This library contains the Modula-3 required interfaces, 
+core runtime services (garbage collection,
+threads, runtime checking) and supporting modules. It encapsulates almost 
+all the platform specific code.
+</DIV>
+
+<H2>Required Interfaces</H2>
+
+<UL>
+<LI><A REL="SUBDOCUMENT" HREF="float">float</A> implements the required 
+interfaces for REAL, LONGREAL, and EXTENDED numbers, as well as supporting
+functions.
+
+<LI><A REL="SUBDOCUMENT" HREF="text">text</A> implements the required
+TEXT interface.
+
+<LI><A REL="SUBDOCUMENT" HREF="thread">thread</A> implements the required
+Thread interface.
+
+<LI><A REL="SUBDOCUMENT" HREF="word">word</A> implements the required
+Word interface.
+
+</UL>
+
+<H2>Useful Interfaces</H2>
+
+<P>A few mature and commonly used interfaces also belong to m3core.
+
+<UL>
+<LI><A REL="SUBDOCUMENT" HREF="time">time</A> implements the Date, Time,
+and Tick interface, serving all time related functions.
+
+<LI><A REL="SUBDOCUMENT" HREF="weakref">weakref</A> provides weaker references
+which do not prevent objects from being garbage collected, and hooks to
+have cleanup procedures to be called before an object will be
+collected.
+
+<LI><A REL="SUBDOCUMENT" HREF="fingerprint">fingerprint</A> computes a
+signature for a string and is used to <I>fingerprint</I> the type declarations
+to verify their structural equivalence.
+
+<LI><A REL="SUBDOCUMENT" HREF="runtime">runtime</A> implements the garbage
+collector, and other runtime support functions including the runtime type
+information.
+</UL>
+
+<H2>Low level and platform dependent support functions</H2>
+
+<UL>
+<LI><A REL="SUBDOCUMENT" HREF="unix">unix</A> interfaces to all the
+POSIX system calls, accounting for platforms differences.
+
+<LI><A REL="SUBDOCUMENT" HREF="win32">win32</A> interfaces to all
+the Win32 system calls.
+
+<LI><A HREF="C">C</A> defines the correspondance 
+between C basic types and Modula-3 types, and interfaces to low level
+C functions (string, signal handling, setjmp...). Module M3toC offers
+conversions between char * and TEXT.
+
+<LI><A HREF="Csupport">Csupport</A> provides support functions in C,
+mostly a more consistent (across all platforms) dtoa, and bit vectors
+for implementing SETs.
+
+<LI><A REL="SUBDOCUMENT" HREF="main">main</A> contains the empty <TT>Main</TT>
+interface which must be exported by any program <I>main</I> module.
+
+<LI><A REL="SUBDOCUMENT" HREF="convert">convert</A> is now replaced by
+the newer Lex/Fmt modules for reading/writing numbers.
+
+</UL>
+
+</BODY>
+</HTML>

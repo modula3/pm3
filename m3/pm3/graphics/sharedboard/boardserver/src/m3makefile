@@ -2,9 +2,9 @@
 % All rights reserved.
 % See the file COPYRIGHT for a full description.
 %
-override 	("board", "/udir/umesh/m3/board/3")
+override 	("board", path_of(".." & SL & ".."))
 import		("board")
-import		("m3tk-misc.3.1")
+import		("m3tk")
 import		("smalldb")
 
 interface ("AtomicItemTbl")

@@ -23,7 +23,7 @@ MODULE Main;
 
 IMPORT SGML, SGMLPrint, Stdio, Params, Text, Wr, Rd, Thread, TextIntTbl, 
     TextWr, TextRd, Fmt, Lex, OSError, FileRd, FileWr, TextSeq, IntSeq, 
-    Pathname;
+    Pathname, Process, FS, File, RegularFile;
 
 TYPE
   Translate = SGML.Application OBJECT
@@ -92,6 +92,7 @@ TYPE
       markedSectionEnd := MarkedSectionEndF;
       ignoredChars := IgnoredCharsF;
       generalEntity := GeneralEntityF;
+      error := ErrorProc;
       openEntityChange:= OpenEntityChangeF;
     END;
 
@@ -212,11 +213,19 @@ PROCEDURE GeneralEntity(<*UNUSED*>self: Translate;
   BEGIN
   END GeneralEntity;
 
-PROCEDURE ErrorProc(self: Translate; READONLY e: SGML.ErrorEvent) =
+PROCEDURE ErrorProc(self: SGML.Application; READONLY e: SGML.ErrorEvent) =
   VAR
     position := self.getDetailedLocation(e.pos);
+    msg: TEXT;
   BEGIN
-    Wr.PutText(Stdio.stderr,"ERROR: " & e.message & " in file " &
+    IF e.type <= SGML.ErrorType.Warning THEN
+      msg := "WARNING";
+    ELSE
+      msg := "ERROR";
+      INC(nbErrors);
+    END;
+
+    Wr.PutText(Stdio.stderr,msg & ": " & e.message & " in file " &
         position.filename & " line " & Fmt.Int(position.lineNumber) &
         " column " & Fmt.Int(position.columnNumber));
     IF position.entityName # NIL THEN
@@ -260,6 +269,14 @@ PROCEDURE StartElement(self: Translate; READONLY e: SGML.StartElementEvent) =
     valid, plus, found: BOOLEAN;
     action: Special;
   BEGIN
+    IF verbose >= 2 THEN
+      WITH position = self.getDetailedLocation(e.pos) DO
+        Wr.PutText(Stdio.stdout,"In file " & position.filename & " line " & 
+            Fmt.Int(position.lineNumber) & " column " & 
+            Fmt.Int(position.columnNumber) & "\n");
+      END;
+    END;
+
     IF self.math AND (NOT self.skip) AND
         HTMLtoTeXtbl[self.tagStack.gethi()].action = Special.MathArgs THEN
       Wr.PutText(self.wr,"{");
@@ -1634,6 +1651,14 @@ PROCEDURE StartElementF(self: HTMLtoHTML;
     action: SpecialF;
     n: INTEGER;
   BEGIN
+    IF verbose >= 2 THEN
+      WITH position = self.getDetailedLocation(e.pos) DO
+        Wr.PutText(Stdio.stdout,"In file " & position.filename & " line " & 
+            Fmt.Int(position.lineNumber) & " column " & 
+            Fmt.Int(position.columnNumber) & "\n");
+      END;
+    END;
+
     INC(self.depth);
 
     name := e.gi;
@@ -1707,21 +1732,75 @@ PROCEDURE EndElementF(self: Filter; READONLY e: SGML.EndElementEvent) =
     DEC(self.depth);
   END EndElementF;
 
-(* Two adjustments are required for hypertext references: links to other
+(* Three adjustments are required for hypertext references: links to other
    packages must account for the hierarchy being flattened upon installation,
    some files are translated upon translation and their extension changes
-   accordingly. The updated value of the hypertext reference is changed
+   accordingly, and links to directories may need to point to the index.html
+   file within. The updated value of the hypertext reference is changed
    in place within "e". *)
 
-PROCEDURE AdjustHref(<*UNUSED*>self: HTMLtoHTML; 
-    READONLY e: SGML.StartElementEvent) =
+VAR error: TEXT; (* The optimizer does not see exceptions and tries to
+                    be smart with local variables... *)
+
+PROCEDURE AdjustHref(self: HTMLtoHTML; READONLY e: SGML.StartElementEvent) =
   VAR
-    href: TEXT;
+    href, newref: TEXT;
     hrefLen, extLen: CARDINAL;
     pathseq, hrefseq, newseq: TextSeq.T;
-    pkgNamePos := -1;
+    pkgNamePos, dashPos := -1;
+    status: File.Status;
   BEGIN
     IF NOT GetAttributeValue(e.attributes,"HREF",href) THEN RETURN; END;
+
+    IF Text.FindChar(href,'#') = 0 THEN RETURN; END; (* internal link *)
+
+    (* Local links (without a ':') are checked to see if they are valid and 
+       if they refer to a directory. *)
+
+    IF Text.FindChar(href,':') < 0 THEN
+      TRY
+        (* Local links must be relative *)
+
+        error := "incorrect HREF (non relative link) ";
+        IF Pathname.Absolute(href) THEN RAISE OSError.E(NIL); END;
+
+        (* Extract the file name (up to '#') and check if it exists relative
+           to the prefix of the input file name (inPrefix). *)
+
+        error := "incorrect HREF ";
+
+        dashPos := Text.FindChar(href,'#');
+        IF dashPos >= 0 THEN
+          status :=FS.Status(Pathname.Join(inPrefix,Text.Sub(href,0,dashPos)));
+        ELSE
+          status := FS.Status(Pathname.Join(inPrefix,href));
+        END;
+
+        (* The file exists but is a directory. In that case, a tag address
+           ('#') is not acceptable. Perhaps the directory contains an
+           index.html file to which we should point. *)
+
+        IF status.type = FS.DirectoryFileType THEN
+          IF dashPos >= 0 THEN RAISE OSError.E(NIL); END;
+
+          newref := Pathname.Join(href,"index",".html");
+          error := NIL;
+          status := FS.Status(Pathname.Join(inPrefix,newref));
+
+          (* If there is an index.html, check that it is a regular file *)
+
+          error := "invalid HREF (not a regular file) ";
+          IF status.type # RegularFile.FileType THEN RAISE OSError.E(NIL);END;
+          href := newref;
+        END;
+      EXCEPT
+      | OSError.E =>
+          IF error # NIL THEN
+            self.error(SGML.ErrorEvent{0,SGML.ErrorType.Warning,error
+                & href});
+          END;
+      END;
+    END;
 
     (* The package hierarchy gets flattened in the installation. Links
        must be redirected appropriately when the -path option is set and
@@ -1750,7 +1829,7 @@ PROCEDURE AdjustHref(<*UNUSED*>self: HTMLtoHTML;
            added to get out of the current package. *)
 
         IF newseq # NIL THEN
-          newseq.addhi(hrefseq.getlo()); (* initial NIL arc *)
+          newseq.addhi(hrefseq.remlo()); (* initial NIL arc *)
           newseq.addhi(Pathname.Parent); (* get out of the package dir *)
           FOR i := 1 TO pathseq.size() - 1 DO
             IF NOT Text.Equal(hrefseq.get(i),Pathname.Parent) THEN
@@ -1895,6 +1974,7 @@ PROCEDURE ParseOptions(): BOOLEAN RAISES {UsageError} =
           IF file = 0 THEN 
             in := FileRd.Open(arg);
             inName := arg;
+            inPrefix := Pathname.Prefix(inName);
           ELSIF file = 1 THEN 
             out := FileWr.Open(arg);
             outName := arg;
@@ -1913,9 +1993,16 @@ PROCEDURE ParseOptions(): BOOLEAN RAISES {UsageError} =
         options.defaultDoctype := "HTML";
       ELSIF Text.Equal (arg, "-report") THEN 
         report := TRUE;
+      ELSIF Text.Equal (arg, "-keep") THEN 
+        discard := FALSE;
       ELSIF Text.Equal (arg, "-v") THEN 
         options.enableWarning := NEW(REF ARRAY OF TEXT,1);
         options.enableWarning[0] := "all";
+        verbose := 1;
+      ELSIF Text.Equal (arg, "-vv") THEN 
+        options.enableWarning := NEW(REF ARRAY OF TEXT,1);
+        options.enableWarning[0] := "all";
+        verbose := 2;
       ELSIF Text.Equal (arg, "-r") THEN
         IF currentParam + 1 >= Params.Count THEN 
           RAISE UsageError("Missing argument for -r");
@@ -1962,11 +2049,12 @@ TYPE
     END;
 
 VAR
+  verbose := 0;
   replacements := NEW(TextSeq.T).init();
   dtdDirs := NEW(TextSeq.T).init();
   in: Rd.T;
   out: Wr.T;
-  inName, outName: TEXT;
+  inName, outName, inPrefix: TEXT;
   patterns: REF ARRAY OF Pattern;
   options: SGML.ParserOptions;
   firstParser, parser: SGML.Parser := NIL;
@@ -1976,12 +2064,17 @@ VAR
   rds := NEW(REF ARRAY OF Rd.T,1);
   path: TEXT;
   report := FALSE;
+  nbErrors: CARDINAL;
+  discard, noErrors := TRUE;
 
 BEGIN
   TRY
     WHILE ParseOptions() DO
       files[0] := inName;
       rds[0] := in;
+      IF verbose > 0 THEN 
+        Wr.PutText(Stdio.stdout,"sgmlconv: " & inName & " -> " &outName& "\n");
+      END;
 
       IF parser = NIL THEN 
         parser := NEW(SGML.Parser);
@@ -1996,16 +2089,35 @@ BEGIN
       ELSIF Text.Equal(conversion,"htmlhtml") THEN
         converter := NEW(HTMLtoHTML, wr := out).init();
       END;
+
+      nbErrors := 0;
       EVAL parser.run(converter);
       Rd.Close(in);
       Wr.Close(out);
+
+      IF nbErrors # 0 THEN
+        noErrors := FALSE;
+        IF discard AND out # Stdio.stdout THEN
+          FS.DeleteFile(outName);
+        END;
+      END;
     END;
   EXCEPT
   | UsageError(t) =>
       Wr.PutText(Stdio.stderr,
           t & "\n? usage: sgmlconv [-htmltex|-htmlhtml] [-r old new] [-path p]... " & 
-          "[-dtd dtdSearchPath] [-report] [infile] [outfile]\n");
+          "[-dtd dtdSearchPath] [-report] [-v] [-vv] [-keep] [infile]" &
+          " [outfile]\n");
   | Rd.Failure =>
       Wr.PutText(Stdio.stderr,"? Unable to read file\n");
+  | OSError.E =>
+      Wr.PutText(Stdio.stderr,"Error while processing " & inName & " to " &
+          outName & "\n");
   END;
+  IF noErrors = FALSE THEN Process.Exit(1); END;
 END Main.
+
+
+
+
+

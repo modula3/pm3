@@ -1,13 +1,12 @@
 
-readonly TARGET            = "NT386GNU"
+readonly TARGET = "NT386GNU"
 
 include("COMMON")
 
 PLATFORM_SUPPORTS_LATEX = ""
 
 INSTALL_ROOT = "\\usr\\pm3"
-LINK_suffix = [ "-lkernel32", "-luser32", "-lgdi32", "-ladvapi32", 
-    "-lnetapi32", "-lm" ]
+LINK_suffix = [ "-luser32", "-lgdi32", "-ladvapi32", "-lnetapi32", "-lm" ]
 
 setDefault("","")
 
@@ -20,59 +19,8 @@ readonly proc import_TCP() is
   import_lib("wsock32", "/usr/local/lib/i386-cygwin32")
 end
 
-proc m3_compile_c (source, object, includes) is
-  local cmd = [ CC_CMD, w2p(source)]
-  foreach i in includes
-    cmd += "-I" & w2p(i)
-  end
-  if object  cmd += [ "-o", w2p(object) ] end
-  if VERBOSE write(cmd, CR) end
-  return exec(cmd)
-end
-
-proc m3_link (prog, objects, imported_libs) is
-  local cmd = [ LINK_CMD, "-o", w2p(prog), objects ]
-  foreach i in imported_libs
-    if not empty(i[0])
-      cmd += "-L" & w2p(i[0])
-    end
-    cmd += "-l" & w2p(i[1])
-  end
-
-  cmd += LINK_suffix
-
-  if VERBOSE write(cmd, CR) end
-  return exec (cmd)
-end
-
-proc m3_make_lib (lib, objects, imported_libs) is
-  local ret = 0
-  local lib_a = format ("lib%s.a", lib)
-  local cmd = [ MAKELIB_CMD, w2p(lib_a), objects, imported_libs ]
-  if VERBOSE write(cmd, CR) end
-  ret = exec (cmd)
-  if not equal(ret, 0) return ret end
-  cmd = [ RANLIB_CMD, lib_a ]
-  if VERBOSE write(cmd, CR) end
-  ret = exec (cmd)
-  return ret
-end
-
-proc m3_assemble (source, object) is
-  local cmd = [ ASM_CMD, w2p(object), w2p(source) ]
-
-  if VERBOSE write(cmd, CR) end
-  return exec (cmd)
-end
-
-proc m3_backend (source, object) is
-  local cmd = [ BACKEND_CMD, "-o", w2p(object), w2p(source) ]
-  
-  if VERBOSE write(cmd, CR) end
-  return exec(cmd)
-end
-
 proc install_file (src, dest, mode) is
   Note_install (src, dest)
-  local ret = exec ([ "cp", "-a", w2p(src), w2p(dest) ])
+  local ret = exec (["install", "-c", "-m", mode, w2p(src), w2p(dest)])
+  if not equal(ret, 0) error("install failed with error code: ", ret) end
 end

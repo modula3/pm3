@@ -1,0 +1,86 @@
+<TITLE>Real, LongReal, and Extended</TITLE>
+<H1>Real, LongReal, and Extended</H1>
+<P>
+For definitions of the terms used in the floating-point interfaces,
+see the ANSI/IEEE Standard 754-1985, IEEE Standard for Binary
+Floating-Point Arithmetic.
+<SPAN CLASS=INDEX.MARK><SPAN CLASS=INDEX.KEY>floating-point</SPAN></SPAN>
+<SPAN CLASS=INDEX.MARK><SPAN CLASS=INDEX.KEY>IEEE floating-point</SPAN></SPAN>
+<P>
+The interfaces <TT>Real</TT>, <TT>LongReal</TT>, and <TT>Extended</TT> 
+define constant
+attributes of the three built-in floating-point types:
+<SPAN CLASS=INDEX.MARK>
+<SPAN CLASS=INDEX.KEY>floating-point</SPAN>
+<SPAN CLASS=INDEX.KEY>representation</SPAN>
+</SPAN>
+
+<PRE><TT>
+INTERFACE Real; TYPE T = REAL;
+CONST
+  Base: INTEGER = ...;
+  Precision: INTEGER = ...;
+  MaxFinite: T = ...;
+  MinPos: T = ...;
+  MinPosNormal: T = ...;
+  MaxExpDigits: INTEGER = ...;
+  MaxSignifDigits: INTEGER = ...;
+END Real.
+
+INTERFACE LongReal; TYPE T = LONGREAL;
+CONST
+  Base: INTEGER = ...;
+  Precision: INTEGER = ...;
+  MaxFinite: T = ...;
+  MinPos: T = ...;
+  MinPosNormal: T = ...;
+  MaxExpDigits: INTEGER = ...;
+  MaxSignifDigits: INTEGER = ...;
+END LongReal.
+
+INTERFACE Extended; TYPE T = EXTENDED;
+CONST
+  Base: INTEGER = ...;
+  Precision: INTEGER = ...;
+  MaxFinite: T = ...;
+  MinPos: T = ...;
+  MinPosNormal: T = ...;
+  MaxExpDigits: INTEGER = ...;
+  MaxSignifDigits: INTEGER = ...;
+END Extended.
+</TT></PRE>
+<P>
+The specification is the same for all three interfaces:
+
+<BLOCKQUOTE>
+<P>
+<TT>Base</TT> is the base of the floating-point representation for <TT>T</TT>.
+<P>
+<TT>Precision</TT> is the number of base-<TT>Base</TT> digits of precision for <TT>T</TT>.
+<P>
+<TT>MaxFinite</TT> is the maximum finite value in <TT>T</TT>.  For non-IEEE
+implementations, this is the same as <TT>LAST(T)</TT>.
+<P>
+<TT>MinPos</TT> is the minimum positive value in <TT>T</TT>.
+<P>
+<TT>MinPosNormal</TT> is the minimum positive normal value in <TT>T</TT>; it
+differs from <TT>MinPos</TT> only for implementations (like IEEE) with
+denormalized numbers.
+<P>
+<TT>MaxExpDigits</TT> is the smallest integer with the property that
+every finite number of type <TT>T</TT> can be written in base-10
+scientific notation using an exponent with at most <TT>MaxExpDigits</TT>.
+<P>
+<TT>MaxSignifDigits</TT> is the smallest integer with the property that
+for every point <TT>x</TT> along the number line, the two
+floating-decimal numbers with <TT>MaxSignifDigits</TT> closest to <TT>x</TT> are
+closer to each other than are the two closest numbers of type <TT>T</TT>.
+</BLOCKQUOTE>
+
+<P>
+Typically,
+
+<PRE><TT>
+MaxExpDigits    = CEILING(LOG_10(LOG_10(MaxFinite)))
+MaxSignifDigits = CEILING(LOG_10(Base EXP Precision)) + 1.
+</TT></PRE>

@@ -1,0 +1,52 @@
+<TITLE>Data Structures</TITLE>
+<H1>Data Structures</H1>
+
+<UL CLASS=MD.SKIP>
+<LI><A REL=SUBDOCUMENT HREF="../sequence/Sequence.ig"> The Sequence interface</A>
+</UL>
+
+<P>
+The standard instances are named <TT>AtomSeq</TT>, <TT>IntSeq</TT>, 
+<TT>RefSeq</TT>, and <TT>TextSeq</TT>.
+
+<UL CLASS=MD.SKIP>
+<LI><A REL=SUBDOCUMENT HREF="../atom/Atom.i3"> The Atom interface</A>
+<LI><A REL=SUBDOCUMENT HREF="../list/List.ig"> The List interface</A>
+</UL>
+<P>
+The standard instances are named <TT>AtomList</TT>, <TT>IntList</TT>,
+<TT>RefList</TT>, and <TT>TextList</TT>.
+
+<UL CLASS=MD.SKIP>
+<LI><A REL=SUBDOCUMENT HREF="../list/ListSort.ig"> The ListSort interface</A>
+</UL>
+<P>
+The standard instances are named <TT>AtomListSort</TT>,
+<TT>IntListSort</TT>, <TT>RefListSort</TT>, and <TT>TextListSort</TT>.
+<TT>AtomListSort</TT> and <TT>RefListSort</TT> are useful only if you supply a
+non-default comparison procedure.
+
+<UL CLASS=MD.SKIP>
+<LI><A REL=SUBDOCUMENT HREF="../sx/Sx.i3"> The Sx interface</A>
+<LI><A REL=SUBDOCUMENT HREF="../table/Table.ig"> The Table interface</A>
+</UL>
+<P>
+The standard instances are named <TT>xyTbl</TT>, for all combinations of
+<TT>x</TT> and <TT>y</TT> in the set <TT>{Atom, Int, Ref, Text}</TT>.  The
+instances with <TT>x = Ref</TT> are useful only if you define a subtype
+overriding the <TT>keyHash</TT> and <TT>keyEqual</TT> methods.
+
+<UL CLASS=MD.SKIP>
+<LI><A REL=SUBDOCUMENT HREF="../sortedtable/SortedTable.ig"> The SortedTable interface</A>
+</UL>
+<P>
+The standard instances are named <TT>SortedxyTbl</TT>, for all
+combinations of <TT>x</TT> and <TT>y</TT> in the set <TT>{Atom, Int, Ref,
+Text}</TT>.  The instances with <TT>x = Atom</TT> and <TT>x = Ref</TT> are
+useful only if you define a subtype overriding the <TT>keyCompare</TT>
+method.
+
+<UL CLASS=MD.SKIP>
+<LI><A REL=SUBDOCUMENT HREF="Bundle.i3"> The Bundle interface</A>
+</UL>
+

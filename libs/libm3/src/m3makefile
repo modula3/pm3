@@ -43,7 +43,9 @@ include_dir ("perftool")
 include_dir ("pqueue")
 include_dir ("sqrt")
 
-m3_option ("-times")
+import("m3doc")
+HtmlFile("index")
+include_dir("html")
 
 Library ("m3")
 

@@ -4,7 +4,7 @@
 %
 % Last modified on Wed Mar  2 08:30:57 PST 1994 by kalsow
 
-override ("sqrt", "../../..")
+override ("sqrt", path_of(".." & SL & ".." & SL & ".."))
 import ("sqrt")
 
 build_standalone ()

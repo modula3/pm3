@@ -1,0 +1,349 @@
+<TITLE> Introduction </TITLE>
+<H1> Introduction </H1>
+<P>
+Modula-3 invites you to structure your program as a set of modules
+interconnected via interfaces.  Each interface typically corresponds
+to an abstract data type.  Some of these abstractions are particular
+to the program at hand, but others are more general. This manual
+describes a collection of interfaces defining abstractions that SRC's
+programmers have found useful over a number of years of experience
+with Modula-3 and its precursors.
+<SPAN CLASS=INDEX.MARK><SPAN CLASS=INDEX.KEY>abstraction</SPAN></SPAN>
+<P>
+This manual concentrates on basic abstractions such as the standard
+interfaces required or recommended by the Modula-3 language
+definition, various data structures, portable operating-system
+functions, and control of the Modula-3 runtime.  For building
+distributed systems, see 
+<A REL=BIB.ENTRY HREF="references.html#NetObj"> [NetObj] </A>.
+For building user interfaces,
+see
+<A REL=BIB.ENTRY HREF="references.html#Trestle"> [Trestle] </A>, 
+<A REL=BIB.ENTRY HREF="references.html#VBTkit"> [VBTkit] </A>, 
+and <A REL=BIB.ENTRY HREF="references.html#FormsVBT"> [FormsVBT] </A>.
+
+<H2> Naming conventions for types. </H2>
+<P>
+We generally give the name <TT>T</TT> to the main type in an interface.  For
+example, the main type in the <TT>Date</TT> interface is <TT>Date.T</TT>.
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>type</SPAN>
+  <SPAN CLASS=INDEX.KEY>naming conventions for</SPAN>
+</SPAN>
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>naming conventions</SPAN>
+  <SPAN CLASS=INDEX.KEY>types</SPAN>
+</SPAN>
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>T type</SPAN>
+  <SPAN CLASS=INDEX.TEXT><TT>T</TT> type</SPAN>
+</SPAN>
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>type</SPAN>
+  <SPAN CLASS=INDEX.KEY>T</SPAN>
+  <SPAN CLASS=INDEX.TEXT><TT>T</TT></SPAN>
+</SPAN>
+<P>
+Most object types have a method that is responsible for initializing
+the object.  By convention, this method is named <TT>init</TT>, and returns
+the object after initializing it, so that the object can be
+initialized and used in an expression at the same time: for example,
+</P>
+
+<PRE><TT>
+VAR s := NEW(Sequence.T).init();
+</TT></PRE>
+
+<P>
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>initializing an object</SPAN>
+</SPAN>
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>init method</SPAN>
+  <SPAN CLASS=INDEX.TEXT><TT>init</TT>method</SPAN>
+</SPAN>
+If there are several different ways to initialize the object, there
+will be several methods.  The most basic will be named <TT>init</TT> and the
+others will receive descriptive names.  For example, <TT>Sequence.T.init</TT>
+initializes an empty sequence; <TT>Sequence.T.fromArray</TT> initializes a
+sequence from an array.
+<P>
+Many of our types are ``abstract'' in the sense that they define the
+methods of a type, but not their implementations.  Various subtypes of
+the abstract type define different methods corresponding to different
+instances of the abstract type.  For example, the type <TT>Rd.T</TT> is a
+abstract reader (a stream of input characters).  Its subtype
+<TT>FileRd.T</TT> is a reader whose source is a file; its subtype <TT>TextRd.T</TT>
+is a reader whose source is a text string.
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>abstract type</SPAN>
+</SPAN>
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>subtype</SPAN>
+</SPAN>
+<P>
+If you allocate an object of an abstract type and attempt to use it,
+you will almost certainly get a checked runtime error, since its
+methods will be <TT>NIL</TT>.  Therefore, you must read the interfaces to
+find out which types are abstract and which are concrete.  The typical
+pattern is that an abstract type does not have an <TT>init</TT> method, but
+each of its concrete instances does.  This allows different subtypes
+to be initialized differently.  For example, <TT>FileRd.T</TT> has an <TT>init</TT>
+method that takes a file; <TT>TextRd.T</TT> has an <TT>init</TT> method that takes a
+text; and <TT>Rd.T</TT> has no <TT>init</TT> method at all.
+<P>
+For some abstract types we choose to honor one of its subtypes as a
+``default implementation''.  For example, we provide a hash table
+implementation as the default for the abstract type <TT>Table.T</TT>.  In
+this case we vary the naming convention: instead of a separate
+interface <TT>HashTable</TT> defining the concrete type <TT>HashTable.T</TT> as a
+subtype of <TT>Table.T</TT>, we declare the default concrete type in the same
+interface with the abstract type and give it the name <TT>Default</TT>.  Thus
+<TT>Table.T</TT> and <TT>Table.Default</TT> are respectively the abstract table type
+and its default implementation via hash tables.  If you want to
+allocate a table you must allocate a <TT>Table.Default</TT>, not a <TT>Table.T</TT>.
+On the other hand, if you are defining a procedure that requires a
+table as a parameter, you probably want to declare the parameter as a
+<TT>Table.T</TT>, not a <TT>Table.Default</TT>, to avoid excluding other table
+implementations.
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>Default type</SPAN>
+  <SPAN CLASS=INDEX.TEXT><TT>Default</TT> type</SPAN>
+</SPAN>
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>type</SPAN>
+  <SPAN CLASS=INDEX.KEY>Default</SPAN>
+  <SPAN CLASS=INDEX.TEXT><TT>Default</TT></SPAN>
+</SPAN>
+<P>
+We use abstract types only when they seem advantageous.  Thus the type
+<TT>Sequence.T</TT>, which represents an extensible sequence, could have been
+an abstract type, since different implementations are easy to imagine.
+But engineering considerations argue against multiple implementations,
+so we declared <TT>Sequence.T</TT> as a concrete type.
+
+<H2> Concurrency. </H2>
+<P>
+The specification of a Modula-3 interface must explain how to use the
+interface in a multithreaded program.  When not otherwise specified,
+each procedure or method is <EM>atomic</EM>: it transforms an initial
+state to a final state with no intermediate states that can be
+observed by other threads.
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>concurrency</SPAN>
+</SPAN>
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>atomic execution</SPAN>
+  <SPAN CLASS=INDEX.KEY>of procedures and methods</SPAN>
+</SPAN>
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>monitored data structure</SPAN>
+</SPAN>
+<P>
+Alternatively, a data structure (the state of an entire interface, or
+of a particular instance of an object type) can be specified as <EM>
+unmonitored</EM>, in which case the procedures and methods operating on it
+are not necessarily atomic.  In this case it is the client's
+responsibility to ensure that multiple threads are not accessing the
+data structure at the same time---or more precisely, that this happens
+only if all the concurrent accesses are read-only operations. Thus for
+an unmonitored data structure, the specification must state which
+procedures or methods are read-only.
+<P>
+If all operations are read-only, there is no difference between
+monitored and unmonitored data structures.
+
+<H2> Aliasing. </H2> 
+<P>
+The procedures and methods defined in this manual are not guaranteed
+to work with aliased <TT>VAR</TT> parameters.
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>aliasing of VAR parameters</SPAN>
+  <SPAN CLASS=INDEX.TEXT>aliasing of <TT>VAR</TT> parameters</SPAN>
+</SPAN>
+
+<H2> Exception parameters for abstract types. </H2>
+<P>
+It is often useful for an exception to include a parameter providing
+debugging information of use to the programmer, especially when the
+exception signals abstraction failure.  Different implementations of
+an abstract type may wish to supply different debugging information.
+By convention, we use the type <TT>AtomList.T</TT> for this purpose.  The
+first element of the list is an error code; the specification of the
+subsequent elements is deferred to the subtypes.  Portable modules
+should treat the entire parameter as an opaque type.
+<P>
+An implementation module can minimize the probability of collision by
+prefixing its module name to each atom that it includes in the list.
+
+<H2> Standard generic instances. </H2>
+<P>
+Several of the interfaces in this manual are generic.  Unless
+otherwise specified, standard instances of these interfaces are
+provided for all meaningful combinations of the formal imports ranging
+over <TT>Atom</TT>, <TT>Integer</TT>, <TT>Refany</TT>, and <TT>Text</TT>.
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>standard instances of generic interfaces</SPAN>
+</SPAN>
+<P>
+For each interface that is likely to be used as a generic parameter,
+we define procedures <TT>Equal</TT>, <TT>Compare</TT>, and <TT>Hash</TT>.
+<P>
+The procedure <TT>Equal</TT> must compute an equivalence relation on the
+values of the type; for example, <TT>Text.Equal(t, s)</TT> tests whether <TT>t</TT>
+and <TT>s</TT> represent the same string.  (This is different from <TT>t = s</TT>,
+which tests whether <TT>t</TT> and <TT>s</TT> are the same reference.)
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>Equal procedure</SPAN>
+  <SPAN CLASS=INDEX.TEXT><TT>Equal</TT> procedure</SPAN>
+</SPAN>
+<P>
+If there is a natural total order on a type, then we define a
+<TT>Compare</TT> procedure to compute it, as follows:
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>Compare procedure</SPAN>
+  <SPAN CLASS=INDEX.TEXT><TT>Compare</TT> procedure</SPAN>
+</SPAN>
+
+<PRE><TT>
+PROCEDURE Compare(x, y: X): [-1..1];
+(* Return 
+| -1 `if` x R y `and not` Equal(x, y)`,` 
+|  0 `if` Equal(x, y)`, and`
+|  1 `if` y R x `and not` Equal(x, y)`.` 
+*)
+</TT></PRE>
+<P>
+(Technically, <TT>Compare</TT> represents a total order on the equivalence
+classes of the type with respect to <TT>Equal</TT>.)  If there is no natural
+order, we define a <TT>Compare</TT> procedure that causes a checked runtime
+error.  This allows you to instantiate generic routines that require
+an order (such as sorting routines), but requires you to pass a
+compare procedure as an explicit argument when calling the generic
+routine.
+<P>
+The function <TT>Hash</TT> is a hash function mapping values of a type <TT>T</TT> to
+values of type <TT>Word.T</TT>.  This means that (1) it is time-invariant,
+(2) if <TT>t1</TT> and <TT>t2</TT> are values of type <TT>T</TT> such that <TT>Equal(t1, t2)</TT>,
+then <TT>Hash(t1) = Hash(t2)</TT>, and (3) its range is distributed uniformly
+throughout <TT>Word.T</TT>.
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>Hash procedure</SPAN>
+  <SPAN CLASS=INDEX.TEXT><TT>Hash</TT> procedure</SPAN>
+</SPAN>
+<P>
+Note that it is not valid to use <TT>LOOPHOLE(r, INTEGER)</TT> as a hash
+function for a reference <TT>r</TT>, since this is not time-invariant on
+implementations that use copying garbage collectors.
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>hashing references</SPAN>
+</SPAN>
+
+<H2> Sets and relations. </H2>
+<P>
+The specifications in this manual are written informally but
+precisely, using basic mathematical concepts.  For completeness, here
+are definitions of these concepts.
+<P>
+A <EM>set</EM> is a collection of elements, without consideration of
+ordering or duplication: two sets are equal if and only if they
+contain the same elements.
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>set</SPAN>
+</SPAN>
+<P>
+If <TT>X</TT> and <TT>Y</TT> are sets, a <EM>map</EM> <TT>m</TT> from <TT>X</TT> to <TT>Y</TT> uniquely
+determines for each <TT>x</TT> in <TT>X</TT> an element <TT>y</TT> in <TT>Y</TT>; we write <TT>y =
+m(x)</TT>.  We refer to the set <TT>X</TT> as the <EM>domain</EM> of <TT>m</TT>, or
+<TT>dom(m)</TT> for short, and the set <TT>Y</TT> as the <EM>range</EM> of <TT>m</TT>.  A <EM>
+partial</EM> map from <TT>X</TT> to <TT>Y</TT> is a map from some subset of <TT>X</TT> to <TT>Y</TT>.
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>map</SPAN>
+</SPAN>
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>function: map</SPAN>
+</SPAN>
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>domain</SPAN>
+</SPAN>
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>range</SPAN>
+</SPAN>
+<P>
+If <TT>X</TT> is a set, a <EM>relation</EM> <TT>R</TT> on <TT>X</TT> is a set of ordered pairs
+<TT>(x, y)</TT> with <TT>x</TT> and <TT>y</TT> elements of <TT>X</TT>.  We write <TT>x R y</TT> if
+<TT>(x, y)</TT> is an element of <TT>R</TT>.
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>relation</SPAN>
+</SPAN>
+<P>
+A relation <TT>R</TT> on <TT>X</TT> is <EM>reflexive</EM> if <TT>x R x</TT> for every <TT>x</TT> in
+<TT>X</TT>; it is <EM>symmetric</EM> if <TT>x R y</TT> implies that <TT>y R x</TT> for every
+<TT>x</TT>, <TT>y</TT> in <TT>X</TT>; it is <EM>transitive</EM> if <TT>x R y</TT> and <TT>y R z</TT> imply
+<TT>x R z</TT> for every <TT>x</TT>, <TT>y</TT>, <TT>z</TT> in <TT>X</TT>; and it is an <EM>equivalence
+relation</EM> if it is reflexive, symmetric, and transitive.
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>equivalence relation</SPAN>
+</SPAN>
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>relation</SPAN>
+  <SPAN CLASS=INDEX.KEY>equivalence</SPAN>
+</SPAN>
+<P>
+A relation <TT>R</TT> on <TT>X</TT> is <EM>antisymmetric</EM> if for every <TT>x</TT> and <TT>y</TT>
+in <TT>X</TT>, <TT>x = y</TT> whenever both <TT>x R y</TT> and <TT>y R x</TT>; <TT>R</TT> is a <EM>total
+order</EM> if it is reflexive, antisymmetric, transitive, and if, for
+every <TT>x</TT> and <TT>y</TT> in <TT>X</TT>, either <TT>x R y</TT> or <TT>y R x</TT>.
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>total order</SPAN>
+</SPAN>
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>relation</SPAN>
+  <SPAN CLASS=INDEX.KEY>total order</SPAN>
+</SPAN>
+<P>
+If <TT>x</TT> and <TT>y</TT> are elements of a set <TT>X</TT> that is totally ordered by a
+relation <TT>R</TT>, we define the <EM>interval</EM> <TT>[x..y]</TT> as the set of all
+<TT>z</TT> in <TT>X</TT> such that <TT>x R z</TT> and <TT>z R y</TT>.  Note that the notation
+doesn't mention <TT>R</TT>, which is usually clear from the context (e.g.,
+lower or equal for numbers).  We say <TT>[x..y]</TT> is <EM>closed</EM> at its upper and
+lower endpoints because it includes <TT>x</TT> and <TT>y</TT>.  Half-open and open
+intervals exclude one or both endpoints; notationally we substitute a
+parenthesis for the corresponding bracket, for example <TT>[x..y)</TT> or
+<TT>(x..y)</TT>.
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>interval</SPAN>
+</SPAN>
+<P>
+A <EM>sequence</EM> <TT>s</TT> is a map whose domain is a set of consecutive
+integers.  In other words, if <TT>dom(s)</TT> is not empty, there are
+integers <TT>l</TT> and <TT>u</TT>, with <TT>l&lt;=u</TT>, such that <TT>dom(s)</TT> is <TT>[l..u]</TT>.  We
+often write <TT>s[i]</TT> instead of <TT>s(i)</TT>, to emphasize the similarity to a
+Modula-3 array.  If the range of <TT>s</TT> is <TT>Y</TT>, we refer to <TT>s</TT> as a
+sequence of <TT>Y</TT>'s.  The <EM>length</EM> of a sequence <TT>s</TT>, or <TT>len(s)</TT>,
+is the number of elements in <TT>dom(s)</TT>.
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>sequence</SPAN>
+</SPAN>
+<P>
+In the specifications, we often speak of assigning to an element of a
+sequence or map, which is really a shorthand for replacing the
+sequence or map with a suitable new one.  That is, assigning <TT>m(i) :=
+x</TT> is like assigning <TT>m := m'</TT>, where <TT>dom(m')</TT> is the union of
+<TT>dom(m)</TT> and <TT>{i}</TT>, where <TT>m'(i) = x</TT>, and where <TT>m'(j) = m(j)</TT> for
+all <TT>j</TT> different from <TT>i</TT> and in <TT>dom(m)</TT>.
+<P>
+If <TT>s</TT> is a finite sequence, and <TT>R</TT> is a total order on the range of
+<TT>s</TT>, then <EM>sorting</EM> <TT>s</TT> means to reorder its elements so that for
+every pair of indexes <TT>i</TT> and <TT>j</TT> in <TT>dom(s)</TT>, <TT>s[i] R s[j]</TT> whenever
+<TT>i &lt;= j</TT>.  We say that a particular sorting algorithm is <EM>stable</EM>
+if it preserves the original order of elements that are equivalent
+under <TT>R</TT>.
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>sorting</SPAN>
+</SPAN>
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>stability of sorting algorithm</SPAN>
+</SPAN>
+
+

@@ -45,7 +45,12 @@ m3build += path() & SL & ".." & SL & TARGET & SL & "config.tmpl"
 EXPORTPATH = lookup("EXPORTPATH","")
 EXPORTRPATH = lookup("EXPORTRPATH","")
 
+if EXPORTPATH
+  if equal(OS_TYPE,"WIN32") EXPORTPATH = p2w(EXPORTPATH) end
+end
+
 if EXPORTRPATH
+  if equal(OS_TYPE,"WIN32") EXPORTRPATH = p2w(EXPORTRPATH) end
   EXPORTPATH = path() & SL & ".." & SL & EXPORTRPATH
 end
 
@@ -62,7 +67,7 @@ if EXPORTPATH
     write("TARGET_LIB_USE = LIB_USE", CR)
     write("TARGET_PKG_USE = PKG_USE", CR)
 
-    write("INSTALL_ROOT = \"" & EXPORTPATH & "\" & INSTALL_ROOT",CR)
+    write("INSTALL_ROOT = \"" & escape(EXPORTPATH) & "\" & INSTALL_ROOT",CR)
     write("setInstallRoot(\"\",\"\")",CR)
   end
 end
@@ -211,6 +216,11 @@ BuildChunk("text/sgmltools","m3tosgml")
 BuildChunk("text/sgmltools","sgmlconv")
 BuildChunk("text/sgmltools","sgmllinear")
 
+%--- sgmltools --- doc -------------------------------------------------
+% SGML related tools
+% requires: libm3
+BuildChunk("text","sgmltools")
+
 %--- m3textohtml --- utility -------------------------------------------------
 % Convert Modula-3 units from LaTeX markup to HTML markup
 % requires: libm3
@@ -236,7 +246,7 @@ BuildChunk("text/sgmltools","sgmltom3")
 % in the distribution as a sample of native Windows programming in Modula-3.
 % requires: libm3
 if equal (OS_TYPE, "WIN32")
- BuildChunk("graphics","sil")
+% BuildChunk("graphics","sil")
 end
 
 %--- m3middle --- library -------------------------------------------------
@@ -519,6 +529,11 @@ BuildChunk("language/modula3/m3tools","m3tohtmlf")
 if equal (OS_TYPE, "POSIX")
   BuildChunk("language/modula3/m3tools","m3browser")
 end
+
+%--- m3ide --- utility -------------------------------------------------
+% simple integrated development environment based on emacs
+% requires: libm3
+BuildChunk("language/modula3/m3tools","m3ide")
 
 %--- tcl --- library -------------------------------------------------
 % a thin Modula-3 veneer on the TCL library (version 6.2).

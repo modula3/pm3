@@ -1,0 +1,36 @@
+<TITLE>I/O Streams</TITLE>
+<H1 ID="IOStream">I/O Streams</H1>
+<P>
+The interfaces <TT>Wr</TT> and <TT>Rd</TT> provide object-oriented output
+and input streams, called <EM>writers</EM> and <EM>readers</EM>.  These were
+invented by Stoy and Strachey in 1972 
+<A REL=BIB.ENTRY HREF="references.html#OS6part2"> [OS6part2] </A>.  
+The versions
+presented here are slight modifications of the versions in the first
+Modula-3 book <A REL=BIB.ENTRY HREF="references.html#SPwM3"> [SPwM3] </A>.  
+We also present related interfaces for
+obtaining writers and readers connected to texts or files (<TT>
+TextWr</TT>, <TT>TextRd</TT>, <TT>FileWr</TT>, and <TT>FileRd</TT>), for accessing
+standard streams (<TT>Stdio</TT>), and for performing I/O in simple
+programs (<TT>IO</TT>).  The interfaces <TT>FileWr</TT> and <TT>FileRd</TT>
+supersede the interface <TT>FileStream</TT> in 
+<A REL=BIB.ENTRY HREF="references.html#SPwM3"> [SPwM3] </A>.
+
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>I/O</SPAN>
+  <SPAN CLASS=INDEX.KEY>buffered streams</SPAN>
+</SPAN>
+<SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>stream</SPAN>
+</SPAN>
+
+<UL CLASS=MD.SKIP>
+<LI><A REL=SUBDOCUMENT HREF="../rw/Common/IO.i3"> The IO interface</A>
+<LI><A REL=SUBDOCUMENT HREF="../rw/Common/Wr.i3"> The Wr interface</A>
+<LI><A REL=SUBDOCUMENT HREF="../rw/Common/Rd.i3"> The Rd interface</A>
+<LI><A REL=SUBDOCUMENT HREF="../rw/Common/TextWr.i3"> The TextWr interface</A>
+<LI><A REL=SUBDOCUMENT HREF="../rw/Common/TextRd.i3"> The TextRd interface</A>
+<LI><A REL=SUBDOCUMENT HREF="../rw/Common/Stdio.i3"> The Stdio interface</A>
+<LI><A REL=SUBDOCUMENT HREF="../rw/Common/FileWr.i3"> The FileWr interface</A>
+<LI><A REL=SUBDOCUMENT HREF="../rw/Common/FileRd.i3"> The FileRd interface</A>
+</UL>

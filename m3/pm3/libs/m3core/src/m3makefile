@@ -38,7 +38,8 @@ include_dir ("main")
 include_dir ("weakref")
 include_dir ("word")
 
-m3_option ("-times")
+import("m3doc")
+HtmlFile("index")
 
 Library ("m3core")
 

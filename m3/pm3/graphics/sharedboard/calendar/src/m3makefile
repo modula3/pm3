@@ -4,7 +4,7 @@
 %
 import ("ui")
 import ("netobj")
-override ("board", "/udir/umesh/m3/board/3")
+override ("board", path_of(".." & SL & ".."))
 import ("board")
 
 sequence ("Item", "Item")
