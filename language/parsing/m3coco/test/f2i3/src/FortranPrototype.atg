@@ -1,5 +1,24 @@
 (* Grammar for Fortran that cares about the procedure prototypes only *)
 
+(*
+  I cannot see how one can handle multi-lines and comments
+  with this Grammar.
+  I suggest preprocessing the files with regular expression search&replace.
+  Unfortunately 'sed','perl' & co. have their problems with regular expressions
+  that matches patterns across line breaks.
+  With Nedit there is no problem:
+
+   Turn Multi-lines into single ones:
+     replace: \n *\$
+     by: (nothing)
+
+   Remove all comments that carry no interesting information
+     replace: (\* +\w+ +\(.*?(input|output|workspace).*?\)).*(\n)|(\*.*\n)|(.*\n)
+     by:      \1\3\5
+
+   perl -p -e "s/(\* +\w+ +\(.*?(input|output|workspace).*?\)).*(\n)|(\*.*\n)|(.*\n)/\1\3\5/"
+*)
+
 COMPILER FortranPrototype
 
 IMPORT IO;
@@ -34,17 +53,18 @@ PRODUCTIONS
 
 (* Compilation unit productions *)
 
-FortranPrototype = Comment Procedure .
+FortranPrototype = Procedure .
 
 (* Unfortunately we have to parse comments,
    and sometimes the parser will complain about strings it can't classify.
    "(" | ")" | "," can't be integrated in  the definition of 'trash'
-   probably because e.g. "(" is used as special string somewhere. *)
+   probably because e.g. "(" is used as special string somewhere.
 Comment = {"*" {id | number | trash | "(" | ")" | "," | "=" | "*"} newline} .
+*)
 
-LineSep = newline {newline} Comment .
+LineSep = newline .
 
-Procedure = (SubroutineHead | FunctionHead) Declarations ProcedureBody .
+Procedure = (SubroutineHead | FunctionHead) Declarations TypeComments .
 
 SubroutineHead      (. VAR name,sig : TEXT; .)
    = "SUBROUTINE" Ident<name> Signature<sig> LineSep
@@ -82,8 +102,6 @@ ArrDim<VAR dim:TEXT>           (. VAR id : TEXT; .)
    | Ident<id>                 (. dim:="[0.."&id&"-1] " .)
    .
 
-ProcedureBody = Assignment Trash .
-
 Signature<VAR sig:TEXT>        (. VAR formal:TEXT; .)
    = "("                       (. sig:="(" .)
        [Ident<formal>          (. sig:="("&formal .)
@@ -102,10 +120,27 @@ BuiltinType<VAR type : TEXT;>
      ) "PRECISION"
    .
 
+TypeComments        (. VAR writeable :BOOLEAN; id:TEXT; .)
+   = {"*" Ident<id>
+              (. writeable:=FALSE .)
+          "(" ParamMode<writeable> | {"/" ParamMode<writeable>} ")"
+              (. IO.Put(ARRAY BOOLEAN OF TEXT{"READONLY","VAR"}[writeable] & " " & id & "\n") .)
+     LineSep } .
+
+ParamMode<VAR writeable:BOOLEAN>
+   = "input"
+   | "output"     (. writeable:=TRUE .)
+   | "workspace"  (. writeable:=TRUE .)
+   .
+
 Ident <VAR t:TEXT;> = id (. t := p.string() .).
+
+(*
+ProcedureBody = Assignment Trash .
 
 Assignment    = id "=" id .
 
 Trash         = {trash} .
+*)
 
 END FortranPrototype.
