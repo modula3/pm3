@@ -7,7 +7,7 @@
 %
 
 %
-% When BOOTSTRAP is true, cm3 is taken from the "boot" directory.
+% When BOOTSTRAP is true, pm3 is taken from the "boot" directory.
 %
 % If BUILD_ALL is set, all the packages are built without being shipped.
 %
@@ -27,15 +27,15 @@ local firstPhase = ""
 local ret = 0
 
 if defined ("BOOTSTRAP")
-  cm3 = [path() & SL & ".." & SL & "boot-" & TARGET & SL &"cm3" & SL &
-      TARGET & SL & "cm3"]
+  pm3 = [path() & SL & ".." & SL & "boot-" & TARGET & SL &"pm3" & SL &
+      TARGET & SL & "pm3"]
 else
-  cm3 = [BIN_USE & SL & "cm3"]
+  pm3 = [BIN_USE & SL & "pm3"]
 end
 
 if not (equal(TARGET,"HPPA") or equal(TARGET,"DS3100") or equal(TARGET,"IRIX5")
     or equal(TARGET,"NT386GNU"))
-  cm3 += "-O"
+  pm3 += "-O"
 end
 
 if defined("BUILD_ALL") or defined("SHIP_ALL") or defined("CLEAN_ALL")
@@ -61,8 +61,8 @@ if defined("CLEAN_ALL")
 end
 
 readonly proc BuildChunk (dir,pkg,bundle) is
-  local build = [cm3]
-  local ship = [cm3]
+  local build = [pm3]
+  local ship = [pm3]
 
   ship += "-ship"
 
