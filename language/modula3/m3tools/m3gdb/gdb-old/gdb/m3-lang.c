@@ -1337,6 +1337,7 @@ find_m3_type_name (t)
   struct symbol *sym;
 
   if (TYPE_NAME (t) == 0) {
+    if (uid == NULL) return NULL;
     sprintf (struct_name, "G$%s", uid);
     if (sym = lookup_symbol (struct_name, 0, STRUCT_NAMESPACE, 0, 0)) {
       TYPE_NAME (t) = TYPE_FIELD_NAME (SYMBOL_TYPE (sym), 0);
