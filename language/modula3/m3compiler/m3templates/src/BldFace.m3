@@ -116,7 +116,7 @@ PROCEDURE CompileC(t: T; source, object: TEXT; includes: TextSeq.T;
     TRY
       val.kind := QValue.Kind.String;
       FOR I := 0 TO includes.size() - 1 DO
-        val.int := M3ID.Add(includes.remlo());
+        val.int := M3ID.Add(includes.get(I));
         seq.addhi(val);
       END;
       IF BldHooks.CompileC(t.machine, source, object, seq, optimize, debug, shared) # 0 THEN
@@ -164,12 +164,12 @@ PROCEDURE Link(t: T; prog: TEXT; objs: TextSeq.T; libs: LibSeq.T; debug,
     TRY
       val.kind := QValue.Kind.String;
       FOR I := 0 TO objs.size() - 1 DO
-        val.int := M3ID.Add(objs.remlo());
+        val.int := M3ID.Add(objs.get(I));
         objseq.addhi(val);
       END;
 
       FOR I := 0 TO libs.size() - 1 DO
-        lib := libs.remlo();
+        lib := libs.get(I);
         seq := NEW(QVSeq.T).init(2);
         val.kind := QValue.Kind.String;
         IF lib.dir # NIL THEN

@@ -3150,6 +3150,21 @@ PROCEDURE Setup(t: T) RAISES {Error}=
     ELSE
       Err("OS_TYPE unknown: " & QVal.ToText(t, val));
     END;
+   
+    (* add the OS dependent variable to the global scope *)
+
+    val.kind := QValue.Kind.String;
+    val.ref := NIL;
+    val.int := M3ID.Add(t.CR);
+    t.put(M3ID.Add("CR"), val);
+    val.int := M3ID.Add(t.SL);
+    t.put(M3ID.Add("SL"), val);
+    val.int := M3ID.Add(t.CRship);
+    t.put(M3ID.Add("CRship"), val);
+    val.int := M3ID.Add(t.SLship);
+    t.put(M3ID.Add("SLship"), val);
+    val.int := M3ID.Add(t.QRPCR);
+    t.put(M3ID.Add("QRPCR"), val);
 
     IF t.get(all, val) THEN
       t.all := TRUE;
