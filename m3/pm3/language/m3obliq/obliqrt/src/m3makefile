@@ -6,10 +6,6 @@
 %      modified on Tue Mar 22 01:01:48 PST 1994 by luca
 %      modified on Wed Dec 22 14:52:17 PST 1993 by kalsow
 
-if defined("AT_SRC") m3_option("-O") end
-remove_m3_option("-w1")
-m3_option("-w2")
-
 import("netobj")
 import("synloc")
 

@@ -70,19 +70,19 @@ readonly proc CreateMakefile(file,target,header,options) is
 
     write("packages:", CR)
     write("\tboot-" & target & "/" & "m3build" & "/" & target & "/" &
-        "m3build -T ../m3config/src -DRECURSIVE -DBOOTSTRAP=TRUE", 
+        "m3build -T ../m3config/src -DBOOTSTRAP=TRUE", 
         " ${M3OPTIONS}",CR, CR)
 
     write("exportpackages:", CR)
     write("\tboot-" & target & "/" & "m3build" & "/" & target & "/" &
-        "m3build -T ../m3config/src -DRECURSIVE -DBOOTSTRAP=TRUE " &
+        "m3build -T ../m3config/src -DBOOTSTRAP=TRUE " &
         "${M3OPTIONS} ",exportrpath, CR, CR)
 
     write("clean: pkg-clean boot-clean",CR, CR)
 
     write("pkg-clean:", CR)
     write("\tboot-" & target & "/" & "m3build" & "/" & target & "/" &
-        "m3build -T ../m3config/src -DRECURSIVE -DBOOTSTRAP=TRUE -DCLEAN_ALL", 
+        "m3build -T ../m3config/src -DBOOTSTRAP=TRUE -DCLEAN_ALL", 
         " ${M3OPTIONS}",CR, CR)
 
     write("nothing:",CR,CR)

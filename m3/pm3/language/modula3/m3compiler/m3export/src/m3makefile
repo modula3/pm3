@@ -76,40 +76,41 @@ end
 readonly proc CleanTmpDirs(v1Exists,v1,v2Exists,v2) is
   if v2Exists
     if v1Exists
-      ret = Exec(["rm", EXPORT_TMP_SRC & "/" & DiffName(v1,v2)],[],"")
+      ret = Exec(["rm", EXPORT_TMP_SRC & "/" & DiffName(v1,v2)],[],".")
     end
 
     ret = Exec(["rm", "-r", EXPORT_TMP_TMP & "/" & VersionName(v2),
-        EXPORT_TMP_SRC & "/" & VersionName(v2)],[],"")
+        EXPORT_TMP_SRC & "/" & VersionName(v2)],[],".")
 
     foreach platform in Platforms
       if Platforms{platform}[3] 
         ret = Exec(["rm", "-r", 
             EXPORT_TMP_BOOTSTRAP & "/" & platform & "/" & VersionName(v2),
-            EXPORT_TMP_BINARIES & "/" & platform & "/" & VersionName(v2)],[],"")
+            EXPORT_TMP_BINARIES & "/" & platform & "/" & VersionName(v2)],[],
+            ".")
       end
     end
   end
 end
 
 readonly proc BuildDirectories() is
-  ret = Exec(["mkdir","-p",EXPORT_TMP_TMP],[],"")
-  ret = Exec(["mkdir","-p",EXPORT_TMP_SRC],[],"")
-  ret = Exec(["mkdir","-p",EXPORT_TMP_BOOTSTRAP],[],"")
-  ret = Exec(["mkdir","-p",EXPORT_TMP_BINARIES],[],"")
-  ret = Exec(["mkdir","-p",EXPORT_TMP_CROSS_COMPILERS],[],"")
-  ret = Exec(["mkdir","-p",EXPORT_SRC],[],"")
-  ret = Exec(["mkdir","-p",EXPORT_BOOTSTRAP],[],"")
-  ret = Exec(["mkdir","-p",EXPORT_BINARIES],[],"")
-  ret = Exec(["mkdir","-p",STORE_ROOT],[],"")
-  ret = Exec(["mkdir","-p",STORE_VERSION],[],"")
+  ret = Exec(["mkdir","-p",EXPORT_TMP_TMP],[],".")
+  ret = Exec(["mkdir","-p",EXPORT_TMP_SRC],[],".")
+  ret = Exec(["mkdir","-p",EXPORT_TMP_BOOTSTRAP],[],".")
+  ret = Exec(["mkdir","-p",EXPORT_TMP_BINARIES],[],".")
+  ret = Exec(["mkdir","-p",EXPORT_TMP_CROSS_COMPILERS],[],".")
+  ret = Exec(["mkdir","-p",EXPORT_SRC],[],".")
+  ret = Exec(["mkdir","-p",EXPORT_BOOTSTRAP],[],".")
+  ret = Exec(["mkdir","-p",EXPORT_BINARIES],[],".")
+  ret = Exec(["mkdir","-p",STORE_ROOT],[],".")
+  ret = Exec(["mkdir","-p",STORE_VERSION],[],".")
 
   foreach platform in Platforms
     if Platforms{platform}[3] 
-      ret = Exec(["mkdir",EXPORT_TMP_BOOTSTRAP & "/" & platform],[],"")
-      ret = Exec(["mkdir",EXPORT_TMP_BINARIES & "/" & platform],[],"")
-      ret = Exec(["mkdir",EXPORT_BOOTSTRAP & "/" & platform],[],"")
-      ret = Exec(["mkdir",EXPORT_BINARIES & "/" & platform],[],"")
+      ret = Exec(["mkdir",EXPORT_TMP_BOOTSTRAP & "/" & platform],[],".")
+      ret = Exec(["mkdir",EXPORT_TMP_BINARIES & "/" & platform],[],".")
+      ret = Exec(["mkdir",EXPORT_BOOTSTRAP & "/" & platform],[],".")
+      ret = Exec(["mkdir",EXPORT_BINARIES & "/" & platform],[],".")
     end
   end
 end
@@ -226,7 +227,7 @@ readonly proc MoveBootstraps() is
           "/language/modula3/m3compiler/m3bootstrap" & "/" & TARGET &
           "/pm3-" & platform,
           EXPORT_TMP_BOOTSTRAP & "/" & platform & "/" & versionName],
-          [], "", "moving the bootstraps failed")
+          [], ".", "moving the bootstraps failed")
     end
   end
 end
@@ -240,9 +241,10 @@ end
 readonly proc RemovePreviousVersion() is
   if previousVersionExists
     if not previousVersion[4]
-      ret = Exec(["rm", "-r", EXPORT_SRC & "/" & VersionName(previousVersion)],[],"")
+      ret = Exec(["rm", "-r", EXPORT_SRC & "/" & VersionName(previousVersion)],
+          [],".")
       ret = Exec(["rm", EXPORT_DOWNLOAD & "/" & VersionName(previousVersion) &
-          ".html"],[],"")
+          ".html"],[],".")
     end
 
     foreach platform in Platforms
@@ -251,7 +253,7 @@ readonly proc RemovePreviousVersion() is
             EXPORT_BOOTSTRAP & "/" & platform & "/" & 
             VersionName(previousVersion),
             EXPORT_BINARIES & "/" & platform & "/" & 
-            VersionName(previousVersion)],[],"")
+            VersionName(previousVersion)],[],".")
       end
     end
   end
@@ -263,18 +265,18 @@ end
 
 readonly proc InstallNextVersion() is
   CheckExec(["mv", EXPORT_TMP_SRC & "/" & versionName,
-      EXPORT_SRC],[],"","export source failed")
+      EXPORT_SRC],[],".","export source failed")
 
   if currentVersionExists
     CheckExec(["mv", EXPORT_TMP_SRC & "/" & DiffName(currentVersion,version), 
-        EXPORT_SRC],[],"","export diff failed")
+        EXPORT_SRC],[],".","export diff failed")
   end
 
   foreach platform in Platforms
     if Platforms{platform}[3] 
       CheckExec(["mv", 
           EXPORT_TMP_BOOTSTRAP & "/" & platform & "/" & versionName,
-          EXPORT_BOOTSTRAP & "/" & platform],[],"","export bootstrap failed")
+          EXPORT_BOOTSTRAP & "/" & platform],[],".","export bootstrap failed")
       if not(NOEXEC)
         > EXPORT_TMP_BOOTSTRAP & "/" & platform & "/" & "TODO" in
           write(versionName,CR)
@@ -285,17 +287,17 @@ readonly proc InstallNextVersion() is
 
   CheckExec(["mv", 
       EXPORT_TMP_BINARIES & "/" & TARGET & "/" & versionName,
-      EXPORT_BINARIES & "/" & TARGET],[],"","export binaries failed")
+      EXPORT_BINARIES & "/" & TARGET],[],".","export binaries failed")
 
-  CheckExec(["rm", EXPORT_TMP_BOOTSTRAP & "/" & TARGET & "/" & "TODO"],[],"",
+  CheckExec(["rm", EXPORT_TMP_BOOTSTRAP & "/" & TARGET & "/" & "TODO"],[],".",
       "remove TODO failed")
 
-  ret = Exec(["rm", EXPORT_ROOT & "/" & "pkgf" & "/" & "pm3"],[],"")
+  ret = Exec(["rm", EXPORT_ROOT & "/" & "pkgf" & "/" & "pm3"],[],".")
   CheckExec(["ln","-s","../pkg/" & versionName,
-      EXPORT_ROOT & "/" & "pkgf" & "/" & "pm3"],[],"","link in pkgf failed")
-  ret = Exec(["rm", EXPORT_ROOT & "/" & "pkg" & "/" & "pm3"],[],"")
+      EXPORT_ROOT & "/" & "pkgf" & "/" & "pm3"],[],".","link in pkgf failed")
+  ret = Exec(["rm", EXPORT_ROOT & "/" & "pkg" & "/" & "pm3"],[],".")
   CheckExec(["ln","-s",versionName,
-      EXPORT_ROOT & "/" & "pkg" & "/" & "pm3"],[],"","link in pkg failed")
+      EXPORT_ROOT & "/" & "pkg" & "/" & "pm3"],[],".","link in pkg failed")
 end
 
 %
@@ -410,7 +412,7 @@ end
 
 readonly proc BuildFAQ() is
   local dir = EXPORT_TMP_TMP & "/" & versionName & "/" & "intro"
-  local ret = Exec(["mkdir",dir & "/" & TARGET],[],"")
+  local ret = Exec(["mkdir",dir & "/" & TARGET],[],".")
 
   > dir & "/" & TARGET & "/" & "config.tmpl" in
     write("M3DOC_PREFIX=[\"" & EXPORT_TMP_TMP & "/" & versionName & 
@@ -478,14 +480,30 @@ end
 %
 
 readonly proc BuildCvsup() is
-  local ret = Exec(["mkdir","sup"],[],"")
+  local ret = Exec(["mkdir","sup"],[],".")
+
+  % define the whole package
+
+  ret = Exec(["mkdir","sup/pm3"],[],".")
+
+  > "sup/pm3" & "/files" in
+    write("upgrade pm3",CR,"omitany *~",CR,"omitany *.bak",CR,
+        "omitany *.tar",CR,"omitany *.Z",CR,"omitany *.gz",CR,
+        "omitany *.tgz",CR,"omitany *.zip",CR)
+  end
+
+  > "sup/pm3" & "/releases" in
+    write("cvs	list=files prefix=/home/cvsroot/m3/" & 
+        subdirectory," keywordprefix=/home/cvsroot/m3/" & 
+        subdirectory & " norsync",CR)
+  end
 
   % define a procedure to be called for each package. This procedure
   % writes the cvsup file for the package.
 
   proc PkgInfo(name,subdirectory,subtree,bundle,type,bundleHead,buildPhase,
       dependency,buildPlatforms,buildReq,description) is
-    local ret = Exec(["mkdir","sup/" & name],[],"")
+    local ret = Exec(["mkdir","sup/" & name],[],".")
     local fname = name
 
     if equal(subdirectory,".") subdirectory = ""
@@ -514,6 +532,10 @@ readonly proc BuildCvsup() is
   % file.
 
   include("../../../../../src/PACKAGES")
+
+  ret = Exec(["rm","-r","/etc/cvsup/sup.old"],[],".")
+  ret = Exec(["mv","/etc/cvsup/sup","/etc/cvsup/sup.old"],[],".")
+  CheckExec(["mv","sup","/etc/cvsup/sup"],[],".","Moving sup")
 end
 
 %
@@ -521,19 +543,34 @@ end
 %
 
 readonly proc BuildSpec() is
-  local ret = Exec(["rm","-r","files"],[],"")
-  ret = Exec(["mkdir","files"],[],"")
+  local spec = EXPORT_TMP_ROOT & "/" & "rpm" & "/" & "SPECS" & "/" & 
+      versionName & ".spec"
+
+  local ret = Exec(["rm","-r","files"],[],".")
+  CheckExec(["mkdir","files"],[],".","Creating files lists directory")
+  ret = Exec(["rm","-r","rpm"],[],EXPORT_TMP_ROOT)
+  CheckExec(["mkdir","rpm"],[],EXPORT_TMP_ROOT,"Creating rpm directory")
+  CheckExec(["mkdir","BUILD","RPMS","SOURCES","SPECS","SRPMS","tmp"],[],
+      EXPORT_TMP_ROOT & "/" & rpm,"Creating rpm subdirectories")
+
   local bundles = {}
 
-  > "spec" in
+  > spec in
     write(
 "Name: pm3",CR,
 "Version: " & VersionNumber(version),CR,
 "Release: 1",CR,
 "Group: Development/Languages/Modula3",CR,
 "Source: ",versionName,".tgz",CR,
+"BuildRoot: /tmp/pm3",CR,
 "CopyRight: Open Source, mostly BSD like, some LGPL/GPL",CR,
 "Summary: The Polytechnique Montreal Modula-3 distribution",CR,
+"URL: http://m3.polymtl.ca/m3",CR,
+"Packager: Michel Dagenais <michel.dagenais@polymtl.ca>",CR,
+"# PM3 runs on several platforms but for Linux only on i386.",CR,
+"# Since RPM is mostly popular on Linux... let's stick to i386/Linux",CR,
+"ExclusiveArch: i386",CR,
+"ExclusiveOS: linux",CR,
 "%description",CR,
 "The Polytechnique Montreal Modula-3 distribution is based on the DEC SRC",CR,
 "Modula-3 programming environment.",CR,
@@ -572,7 +609,7 @@ CR,
     % for each bundle (subpackage), write a section in the spec file
 
     if bundleHead
-      >> "spec" in
+      >> spec in
         write("%package ",bundle,CR,"Summary: ",bundle,CR,
             "Group: ",subdirectory,
             CR,"%description ",bundle,CR,description,CR)
@@ -589,27 +626,29 @@ CR,
     CheckExec(["../src/listfiles.sh", m3shipFile,
         EXPORT_TMP_TMP & "/" & versionName & 
         "/src/../binaries/" & TARGET &
-        "/" & "usr/local/pm3","/usr"], ["",">>files/"& bundle,""],"",
-        "failed to list files")
+        "/" & "usr/local/pm3","%attr(-,root,root) /usr"], 
+        ["",">>files/"& bundle,""],".", "failed to list files")
   end
 
   include("../../../../../src/PACKAGES")
 
-  >> "spec" in
+  >> spec in
     write(
 "%prep",CR,
 "%setup",CR,
 "%build",CR,
-"make M3OPTIONS=\"-DSETROOT=/usr\"",CR,
+"make M3OPTIONS=\"-DSETROOT=/usr -DEXPORTPATH=${RPM_BUILD_ROOT}\"",CR,
 "%install",CR,
 "make nothing",CR)
   end
 
   foreach i in bundles
-    >> "spec" in
+    >> spec in
       write("%files ",i,CR)
+      write("%docdir /usr/lib/m3/www",CR)
     end
-    CheckExec(["cat","files/" & i],["",">>spec",""],"",
+
+    CheckExec(["cat","files/" & i],["",">>" & spec,""],".",
         "failed to cat list")
   end
 end
@@ -619,20 +658,28 @@ end
 %
 
 proc BuildRPM() is
-  local dir = EXPORT_TMP_TMP & "/" & versionName & "/" & "rpm"
-  local ret = Exec(["rm","-r",dir],[],"")
-  CheckExec(["mkdir",dir],[],"","mkdir failed")
-  CheckExec(["webcat", "-noProxy", "m3.polymtl.ca",
-      "http://m3.polymtl.ca/m3htbin/pm3download/" &
-      versionName & "-src-LINUXELF-boot.tgz?version=" &
-      versionName & "&platform=" & TARGET & "&pkg=on&bootstrap=on&" &
-      "binaries=off"],
-      ["","/usr/src/redhat/SOURCES" & "/" & versionName & ".tgz",""],
-      dir,"download pm3 failed")
-  CheckExec(["cp","spec",dir & "/" & versionName & ".spec"],[],"",
-      "copy spec failed")
-  CheckExec(["rpm","-ba",versionName & ".spec"],
-      ["",dir & "/out.tmp",dir & "/err.tmp"],dir, "building rpm failed")
+  local dir = EXPORT_TMP_ROOT & "/" & "rpm"
+
+  > dir & "/" & "rpmrc" in
+    write("topdir: " & dir,CR)
+  end
+
+  CheckExec(["tar","zcf",dir & "/" & "SOURCES" & "/" & versionName & ".tgz",
+      "--directory",EXPORT_TMP_SRC,versionName,
+      "--directory",EXPORT_TMP_BOOTSTRAP & "/" & TARGET,versionName],[],".",
+      "Preparing source tar file for rpm")
+
+  CheckExec(["rpm","-ba","--buildroot",dir & "/" & "tmp",
+      "--rcfile",dir & "/" & "rpmrc",
+      versionName & ".spec"], ["","rpm.out","rpm.err"],
+      dir & "/" & "SPECS", "building rpm failed")
+
+  local ret = Exec(["rm","-r","RPMS.old"],[],EXPORT_ROOT)
+  ret = Exec(["rm","-r","SRPMS.old"],[],EXPORT_ROOT)
+  ret = Exec(["mv","RPMS","RPMS.old"],[],EXPORT_ROOT)
+  ret = Exec(["mv","SRPMS","SRPMS.old"],[],EXPORT_ROOT)
+  CheckExec(["mv","RPMS",EXPORT_ROOT],[],".",dir,"Moving RPMS")
+  CheckExec(["mv","SRPMS",EXPORT_ROOT],[],".",dir,"Moving SRPMS")
 end
 
 %
@@ -768,7 +815,7 @@ end
 
 if DoStep("mvBinaries")
   CheckExec(["mv", EXPORT_TMP_TMP & "/" & versionName & "/" & "binaries" & "/"
-      & TARGET, EXPORT_TMP_BINARIES & "/" & TARGET & "/" & versionName],[],"",
+      & TARGET, EXPORT_TMP_BINARIES & "/" & TARGET & "/" & versionName],[],".",
       "move binaries failed")
 end
 
@@ -780,6 +827,10 @@ if DoStep("done")
   end
 end
 
+if DoStep("BuildRPM")
+  BuildRPM()
+end
+
 if DoStep("RemovePreviousVersion")
   RemovePreviousVersion()
 end
@@ -788,20 +839,16 @@ if DoStep("InstallNextVersion")
   InstallNextVersion()
 end
 
+if DoStep("BuildCvsup")
+  BuildCvsup()
+end
+
 if DoStep("DownloadMenu")
   DownloadMenu()
 end
 
 if DoStep("BuildFAQ")
   BuildFAQ()
-end
-
-if DoStep("BuildCvsup")
-  BuildCvsup()
-end
-
-if DoStep("BuildRPM")
-  BuildRPM()
 end
 
 if DoStep("UpdateVersionNumbers")

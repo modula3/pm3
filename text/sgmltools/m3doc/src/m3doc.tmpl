@@ -32,7 +32,7 @@ end
 
 readonly proc HtmlFile (nm) is
   if USE_M3DOC
-    local dest = HTML_INSTALL & SLship & PACKAGE & SLship & pkg_subdir()
+    local dest = HTML_INSTALL & SL & PACKAGE & SL & pkg_subdir()
     local fn = nm & ".html"
     local src_file = path_of(fn)
     if defined("_all")
@@ -50,7 +50,7 @@ end
 
 readonly proc HtmlTextFile (nm) is
   if USE_M3DOC
-    local dest = HTML_INSTALL & SLship & PACKAGE & SLship & pkg_subdir()
+    local dest = HTML_INSTALL & SL & PACKAGE & SL & pkg_subdir()
     local src_file = path_of(nm)
     if defined("_all")
       htmlFiles += src_file
@@ -77,7 +77,7 @@ end
 
 readonly proc HtmlUnit(nm,ext) is
   if USE_M3DOC
-    local dest = HTML_INSTALL & SLship & PACKAGE & SLship & pkg_subdir()
+    local dest = HTML_INSTALL & SL & PACKAGE & SL & pkg_subdir()
     local fn = nm & "_" & ext & ".html"
     local src_file = path_of(nm & "." & ext)  
     if defined("_all")
@@ -94,15 +94,15 @@ readonly proc HtmlUnit(nm,ext) is
 end
 
 proc m3doc_hook() is
-  if callSgmlConv checkExec(sgmlConvCmd,[],"") end
-  if callM3Sgml checkExec(m3SgmlCmd,[],"") end
+  if callSgmlConv checkExec(sgmlConvCmd,[],".") end
+  if callM3Sgml checkExec(m3SgmlCmd,[],".") end
 end
 
 add_m3_hook(m3doc_hook)
 
 readonly proc HtmlRoot (nm) is
   if USE_M3DOC
-    local dest = HTML_INSTALL & SLship & PACKAGE & SLship & pkg_subdir()
+    local dest = HTML_INSTALL & SL & PACKAGE & SL & pkg_subdir()
     local fn = nm & docExt
     local src_file = path_of(nm & ".html")  
 
@@ -123,16 +123,16 @@ readonly proc HtmlRoot (nm) is
 
         if defined("M3DOC_PREFIX") linearCmd += ["-prefix",M3DOC_PREFIX] end
 
-        checkExec(linearCmd,[],"")
+        checkExec(linearCmd,[],".")
 
         if PLATFORM_SUPPORTS_LATEX
           checkExec([BIN_USE & SL & "sgmlconv", "-report", "-htmltex", 
-              "-dtd", dtdDir, tmp1,tmp2], [],"")
-          checkExec(["latex", tmp2],[],"")
-          checkExec(["makeindex", nm],[],"")
-          checkExec(["latex", tmp2],[],"")
-          checkExec(["latex", tmp2],[],"")
-          checkExec(["dvips", "-o", fn, tmp3],[],"")
+              "-dtd", dtdDir, tmp1,tmp2], [],".")
+          checkExec(["latex", tmp2],[],".")
+          checkExec(["makeindex", nm],[],".")
+          checkExec(["latex", tmp2],[],".")
+          checkExec(["latex", tmp2],[],".")
+          checkExec(["dvips", "-o", fn, tmp3],[],".")
           delete_file(tmp1)
           delete_file(tmp2)
           delete_file(tmp3)

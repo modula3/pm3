@@ -1,6 +1,6 @@
 
 readonly proc SourceFile (nm) is
-  local dest = PKG_INSTALL & SLship & PACKAGE & SLship & pkg_subdir()
+  local dest = PKG_INSTALL & SL & PACKAGE & SL & pkg_subdir()
   local src_file = path_of(nm)
   _install_file(nm,dest,"0644","")
 end

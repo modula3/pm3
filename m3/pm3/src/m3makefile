@@ -38,6 +38,13 @@ local ret = 0
   write("option(\"optimization\",\"T\")", CR)
 end
 
+if defined("SETROOT")
+  >> "config.tmpl" in
+    write("INSTALL_ROOT = \"" & escape(SETROOT) & "\"",CR)
+    write("setInstallRoot(\"\",\"\")",CR)
+  end
+end
+
 BOOTSTRAP = lookup("BOOTSTRAP","")
 
 if BOOTSTRAP
@@ -81,13 +88,6 @@ if EXPORTPATH
     write("TARGET_PKG_USE = PKG_USE", CR)
 
     write("INSTALL_ROOT = \"" & escape(EXPORTPATH) & "\" & INSTALL_ROOT",CR)
-    write("setInstallRoot(\"\",\"\")",CR)
-  end
-end
-
-if defined("SETROOT")
-  >> "config.tmpl" in
-    write("INSTALL_ROOT = \"" & escape(SETROOT) & "\"",CR)
     write("setInstallRoot(\"\",\"\")",CR)
   end
 end

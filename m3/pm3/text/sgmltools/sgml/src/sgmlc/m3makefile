@@ -19,7 +19,7 @@ if USE_M3COCO
 
   if defined("_all")
     if stale("SGMLC.i3", "SGMLC.atg")
-      checkExec([BIN_USE & SL & "m3coco", path_of("SGMLC.atg")],[],"")
+      checkExec([BIN_USE & SL & "m3coco", path_of("SGMLC.atg")],[],".")
     end
   end
 else

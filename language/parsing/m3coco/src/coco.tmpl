@@ -12,7 +12,7 @@ readonly proc coco(atg) is
 
   if defined("_all")
     if stale(scan & ".i3", inf)
-      checkExec([BIN_USE & SL & "m3coco", path_of(inf)],[],"")
+      checkExec([BIN_USE & SL & "m3coco", path_of(inf)],[],".")
     end
   end
 end
@@ -30,7 +30,7 @@ readonly proc coco_c(atg) is
 
   if defined("_all")
     if stale(scan & ".i3", inf)
-      checkExec([BIN_USE & SL & "m3coco", "-c", path_of(inf)],[],"")
+      checkExec([BIN_USE & SL & "m3coco", "-c", path_of(inf)],[],".")
     end
   end
 end
