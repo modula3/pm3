@@ -29,6 +29,7 @@ with Solaris.
 </P>
 <P>
 The issues that arose are:
+</P>
 <UL>
 <LI>Paths needed to be set to find tools such as <B>make</B>.
 
@@ -44,10 +45,9 @@ The issues that arose are:
 
 <LI>The <B>gnuemacs</B> package failed to build.  
 </UL>
-</P>
 
 <H2>Initial Problems</H2>
-<P>
+
 <DL>
 <DT>Paths</DT>
 <DD>
@@ -61,7 +61,7 @@ The issues that arose are:
   This is in addition to <TT>/usr/local/pm3/bin</TT>, as mentioned by 
   the PM3 installation instructions.
 </DD>
-<BR><BR>
+
 <DT><TT>byacc/yacc</TT></DT>
 <DD>
   The build required <B>byacc</B>.  <B>yacc</B> is installed in 
@@ -71,7 +71,7 @@ The issues that arose are:
   </PRE>
   solved this problem.  
 </DD>
-<BR><BR>
+
 <DT>Library Paths</DT>
 <DD>
   In addition to <TT>/usr/local/pm3/lib/m3</TT> as mentioned by the
@@ -79,7 +79,7 @@ The issues that arose are:
   <TT>/usr/local/lib</TT> so that <B>libstdc++</B> (part of the <B>gcc</B> 
   distribution) can be found.  
 </DD>
-<BR><BR>
+
 <DT>CC</DT>
 <DD>
   In addition I found that the environment variable CC needed to be
@@ -87,7 +87,6 @@ The issues that arose are:
   the PM3 installation instructions.  
 </DD>
 </DL>
-</P>
 
 
 <!---------------------------------------------------------------------------->
