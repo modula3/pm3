@@ -7,4 +7,5 @@
 implementation ("M3LoaderRd")
 implementation ("M3LoaderAccess")
 implementation ("M3LoaderUnsafe")
+implementation ("M3LoaderProcess")
 
