@@ -490,6 +490,7 @@ init_thread_constants ()
   find_m3_rec_field (thread__t__context_type, "buf",
 		     &thread__t__buf_size, &thread__t__buf_offset, 0);
 
+  /* skip past the method pointer to the data */
 #if defined(sparc)
   /* deal with sparc realignment */
   dataOffset += TARGET_PTR_BIT;
