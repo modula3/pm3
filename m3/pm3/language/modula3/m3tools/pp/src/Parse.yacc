@@ -184,7 +184,7 @@ typedef enum {NonOptimal, OptimalBreak, OptimalNoBreak} Formatter_BreakType;
 %token PR_EXTERNAL PR_INLINE PR_OBSOLETE PR_UNUSED
 %token PR_FATAL PR_NOWARN PR_ASSERT PR_TRACE
 %token PR_LINE PR_PRAGMA PR_CALLBACK
-%token PR_LL PR_EXPORTED PR_SPEC
+%token PR_LL PR_LLsup PR_EXPORTED PR_SPEC
 
 /* reserved words */ 
 %token AND ANY ARRAY AS BGN BITS BRANDED BY CASE CONST 
@@ -358,7 +358,6 @@ decl_pragma:
     | decl_pragma obsolete_pragma NL
     | decl_pragma unused_pragma NL
     | decl_pragma fatal_pragma NL
-    /*| decl_pragma pragma_pragma NL*/
     | decl_pragma exported_pragma NL
     ;
 
@@ -536,7 +535,6 @@ stmt:
 
 stmt_pragma:
       assert_pragma
-    | line_pragma
     ;
 
 assignment_stmt:
@@ -845,11 +843,6 @@ external_pragma:
     | Pr_External SP Str_expr Colon Ident SP Rpragma
     ;
 
-line_pragma:
-      Pr_Line     SP Card_const Rpragma
-    | Pr_Line     SP Card_const SP Str_const Rpragma
-    ;
-
 vtrace_pragma:       Pr_Trace SP expr SP Rpragma ;
 strace_pragma:     B Pr_Trace stmts E SP Rpragma ;
 
@@ -871,6 +864,9 @@ assert_pragma:
 /* an anypragma can appear anywhere */
 anypragma:
       pragma_pragma
+    | nowarn_pragma
+    | line_pragma
+    | ll_pragma
     ;
 
 /* these pragmas can appear anywhere,
@@ -878,12 +874,27 @@ anypragma:
    thus they must not have a terminating NPS,
    as it is contained in Rpragma */
 pragma_pragma:     Pr_Pragma     SP id_list        SP Rpragma1 ;
+nowarn_pragma:     Pr_Nowarn     SP Rpragma1 ;
+ll_pragma:
+      Pr_LL       SP relop SP ll_set SP Rpragma1
+    | Pr_LLsup    SP relop SP ll_set SP Rpragma1
+    ;
+
+ll_set:
+      expr
+    | Lbrace Rbrace
+    | Lbrace expr_list Rbrace
+    ;
+
+line_pragma:
+      Pr_Line     SP Card_const SP Rpragma1
+    | Pr_Line     SP Card_const SP Str_const SP Rpragma1
+    ;
 
 /*
-ll_pragma:         Pr_LL         SP expr           SP Rpragma ;
-spec_pragma:       Pr_Spec       SP expr           SP Rpragma ;
-nowarn_pragma:     Pr_Nowarn     SP Rpragma ;
+spec_pragma:       Pr_Spec       SP expr           SP Rpragma1 ;
 */
+
 fatal_pragma:      Pr_Fatal      SP fatal_exc_list SP Rpragma ;
 
 fatal_exc_list:
@@ -1116,14 +1127,15 @@ Pr_Trace:      PR_TRACE    { PF ("<* TRACE",    fonts->fixedComment);} NPS ;
 Pr_Fatal:      PR_FATAL    { PF ("<* FATAL",    fonts->fixedComment);} NPS ;
 Pr_Unused:     PR_UNUSED   { PF ("<* UNUSED",   fonts->fixedComment);} NPS ;
 Pr_Obsolete:   PR_OBSOLETE { PF ("<* OBSOLETE", fonts->fixedComment);} NPS ;
-Pr_Line:       PR_LINE     { PF ("<* LINE",     fonts->fixedComment);} NPS ;
 Pr_Callback:   PR_CALLBACK { PF ("<* CALLBACK", fonts->fixedComment);} NPS ;
+Pr_Exported:   PR_EXPORTED { PF ("<* EXPORTED", fonts->fixedComment);} NPS ;
 
 Pr_Pragma:     PR_PRAGMA   { PF ("<* PRAGMA",   fonts->fixedComment);} NPS ;
-Pr_Exported:   PR_EXPORTED { PF ("<* EXPORTED", fonts->fixedComment);} NPS ;
-/*
 Pr_Nowarn:     PR_NOWARN   { PF ("<* NOWARN",   fonts->fixedComment);} NPS ;
+Pr_Line:       PR_LINE     { PF ("<* LINE",     fonts->fixedComment);} NPS ;
 Pr_LL:         PR_LL       { PF ("<* LL",       fonts->fixedComment);} NPS ;
+Pr_LLsup:      PR_LLsup    { PF ("<* LL.sup",   fonts->fixedComment);} NPS ;
+/*
 Pr_Spec:       PR_EXPORTED { PF ("<* SPEC",     fonts->fixedComment);} NPS ;
 */
 
@@ -1225,8 +1237,8 @@ anypragma_space_list:
     ;
 
 anypragma_list:
-      anypragma
-    | anypragma_list anypragma
+      SP anypragma
+    | anypragma_list SP anypragma
     ;
 
 space_list_emit:
