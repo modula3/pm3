@@ -871,8 +871,8 @@ begin_trace:
     ;
 
 assert_pragma:
-      Pr_Assert     SP expr                SP Rpragma
-    | Pr_Assert     SP expr Comma Str_expr SP Rpragma
+      Pr_Assert     SP B expr                    E SP Rpragma
+    | Pr_Assert     SP B expr Z Comma A Str_expr E SP Rpragma
     ;
 
 loopinv:
