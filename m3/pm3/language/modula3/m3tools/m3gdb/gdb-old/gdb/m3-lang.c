@@ -460,6 +460,7 @@ init_thread_constants ()
 {
   int thread__t__context_size, thread__t__context_offset;
   struct type * thread__t__context_type;
+  int dataOffset = TARGET_PTR_BIT;
 
   if (thread__t) return;
 
@@ -489,14 +490,18 @@ init_thread_constants ()
   find_m3_rec_field (thread__t__context_type, "buf",
 		     &thread__t__buf_size, &thread__t__buf_offset, 0);
 
-  /* skip past the method pointer */
-  thread__t__id_offset    += TARGET_PTR_BIT;
-  thread__t__state_offset += TARGET_PTR_BIT;
-  thread__t__next_offset  += TARGET_PTR_BIT;
-  thread__t__cond_offset  += TARGET_PTR_BIT;
-  thread__t__mutex_offset += TARGET_PTR_BIT;
-  thread__t__time_offset  += TARGET_PTR_BIT;
-  thread__t__buf_offset   += TARGET_PTR_BIT + thread__t__context_offset;
+#if defined(sparc)
+  /* deal with sparc realignment */
+  dataOffset += TARGET_PTR_BIT;
+#endif
+
+  thread__t__id_offset    += dataOffset;
+  thread__t__state_offset += dataOffset;
+  thread__t__next_offset  += dataOffset;
+  thread__t__cond_offset  += dataOffset;
+  thread__t__mutex_offset += dataOffset;
+  thread__t__time_offset  += dataOffset;
+  thread__t__buf_offset   += dataOffset + thread__t__context_offset;
 }
 
 /*--------------------------------------------------------- jmpbuf layout ---*/
@@ -1421,11 +1426,7 @@ find_m3_heap_tc_addr (addr)
 		      TARGET_PTR_BIT / TARGET_CHAR_BIT);
 
   /* the typecode is in Modula-3 bits 1..21 */
-#if TARGET_BYTE_ORDER == BIG_ENDIAN
-  typecode = (typecode >> 11) & 0xfffff;
-#else
-  typecode = (typecode >> 1) & 0xfffff;
-#endif
+  typecode = m3_unpack_ord((char *)&typecode, 1, 20, 0);
 
   target_read_memory (rt0u_types_value 
 		      + typecode * TARGET_PTR_BIT / TARGET_CHAR_BIT,
