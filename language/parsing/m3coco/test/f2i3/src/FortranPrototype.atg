@@ -65,7 +65,7 @@ Procedure
    = (SubroutineHead<name> | FunctionHead<name,rettype>)
      Signature<params> newline
      Declarations<paramInfo>
-     TypeComments
+     TypeComments<paramInfo>
      (.
        IO.Put("PROCEDURE "&name&" (");
        params := TextList.ReverseD(params);
@@ -75,11 +75,12 @@ Procedure
        BEGIN
          WHILE p#NIL DO
            <*ASSERT paramInfo.get(p.head,pi)*>
-           IO.Put(p.head&": "&pi.type&"; ");
+           IO.Put(ARRAY BOOLEAN OF TEXT{"READONLY","VAR"}[pi.writeable] &
+                  " " & p.head&": "&pi.type&"; ");
            p:=p.tail;
          END;
        END;
-       IO.Put(")"&rettype&"\n")
+       IO.Put(")"&rettype&";\n")
      .)
    .
 
@@ -138,11 +139,11 @@ BuiltinType<VAR type : TEXT;>
      ) "PRECISION"
    .
 
-TypeComments        (. VAR writeable :BOOLEAN; id:TEXT; .)
-   = {"*" Ident<id>
-              (. writeable:=FALSE .)
-          "(" ParamMode<writeable> | {"/" ParamMode<writeable>} ")"
-              (. IO.Put(ARRAY BOOLEAN OF TEXT{"READONLY","VAR"}[writeable] & " " & id & "\n") .)
+TypeComments<paramInfo:ParamTbl.T>        (. VAR name:TEXT; pi :Parameter.T; known:BOOLEAN; .)
+   = {"*" Ident<name>
+              (. known := paramInfo.get(name,pi); pi.writeable:=FALSE .)
+          "(" ParamMode<pi.writeable> | {"/" ParamMode<pi.writeable>} ")"
+              (. <*ASSERT NOT known OR paramInfo.put(name,pi) *> EVAL FALSE .)
      newline } .
 
 ParamMode<VAR writeable:BOOLEAN>
