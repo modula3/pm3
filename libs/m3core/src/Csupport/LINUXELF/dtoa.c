@@ -12,4 +12,6 @@
 #define IEEE_8087
 #endif
 
+#define strtod m3_strtod
+
 #include "dtoa.h"
