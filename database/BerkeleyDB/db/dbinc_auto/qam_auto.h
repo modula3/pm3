@@ -49,6 +49,7 @@ typedef struct ___qam_add_args {
 	db_pgno_t	pgno;
 	u_int32_t	indx;
 	db_recno_t	recno;
+	u_int32_t	off;
 	DBT	data;
 	u_int32_t	vflag;
 	DBT	olddata;

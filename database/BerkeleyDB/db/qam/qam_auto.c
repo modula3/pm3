@@ -780,12 +780,12 @@ __qam_del_read(dbenv, recbuf, argpp)
 
 /*
  * PUBLIC: int __qam_add_log __P((DB *, DB_TXN *, DB_LSN *,
- * PUBLIC:     u_int32_t, DB_LSN *, db_pgno_t, u_int32_t, db_recno_t,
+ * PUBLIC:     u_int32_t, DB_LSN *, db_pgno_t, u_int32_t, db_recno_t, u_int32_t,
  * PUBLIC:     const DBT *, u_int32_t, const DBT *));
  */
 int
-__qam_add_log(dbp, txnid, ret_lsnp, flags, lsn, pgno, indx, recno, data,
-    vflag, olddata)
+__qam_add_log(dbp, txnid, ret_lsnp, flags, lsn, pgno, indx, recno, off,
+    data, vflag, olddata)
 	DB *dbp;
 	DB_TXN *txnid;
 	DB_LSN *ret_lsnp;
@@ -794,6 +794,7 @@ __qam_add_log(dbp, txnid, ret_lsnp, flags, lsn, pgno, indx, recno, data,
 	db_pgno_t pgno;
 	u_int32_t indx;
 	db_recno_t recno;
+	u_int32_t off;
 	const DBT *data;
 	u_int32_t vflag;
 	const DBT *olddata;
@@ -827,6 +828,7 @@ __qam_add_log(dbp, txnid, ret_lsnp, flags, lsn, pgno, indx, recno, data,
 	logrec.size = sizeof(rectype) + sizeof(txn_num) + sizeof(DB_LSN)
 	    + sizeof(u_int32_t)
 	    + sizeof(*lsn)
+	    + sizeof(u_int32_t)
 	    + sizeof(u_int32_t)
 	    + sizeof(u_int32_t)
 	    + sizeof(u_int32_t)
@@ -881,6 +883,10 @@ __qam_add_log(dbp, txnid, ret_lsnp, flags, lsn, pgno, indx, recno, data,
 	bp += sizeof(uinttmp);
 
 	uinttmp = (u_int32_t)recno;
+	memcpy(bp, &uinttmp, sizeof(uinttmp));
+	bp += sizeof(uinttmp);
+
+	uinttmp = (u_int32_t)off;
 	memcpy(bp, &uinttmp, sizeof(uinttmp));
 	bp += sizeof(uinttmp);
 
@@ -1006,6 +1012,7 @@ __qam_add_print(dbenv, dbtp, lsnp, notused2, notused3)
 	(void)printf("\tpgno: %lu\n", (u_long)argp->pgno);
 	(void)printf("\tindx: %lu\n", (u_long)argp->indx);
 	(void)printf("\trecno: %lu\n", (u_long)argp->recno);
+	(void)printf("\toff: %lu\n", (u_long)argp->off);
 	(void)printf("\tdata: ");
 	for (i = 0; i < argp->data.size; i++) {
 		ch = ((u_int8_t *)argp->data.data)[i];
@@ -1071,6 +1078,10 @@ __qam_add_read(dbenv, recbuf, argpp)
 
 	memcpy(&uinttmp, bp, sizeof(uinttmp));
 	argp->recno = (db_recno_t)uinttmp;
+	bp += sizeof(uinttmp);
+
+	memcpy(&uinttmp, bp, sizeof(uinttmp));
+	argp->off = (u_int32_t)uinttmp;
 	bp += sizeof(uinttmp);
 
 	memset(&argp->data, 0, sizeof(argp->data));

@@ -24,7 +24,7 @@ int __qam_del_log __P((DB *, DB_TXN *, DB_LSN *, u_int32_t, DB_LSN *, db_pgno_t,
 int __qam_del_getpgnos __P((DB_ENV *, DBT *, DB_LSN *, db_recops, void *));
 int __qam_del_print __P((DB_ENV *, DBT *, DB_LSN *, db_recops, void *));
 int __qam_del_read __P((DB_ENV *, void *, __qam_del_args **));
-int __qam_add_log __P((DB *, DB_TXN *, DB_LSN *, u_int32_t, DB_LSN *, db_pgno_t, u_int32_t, db_recno_t, const DBT *, u_int32_t, const DBT *));
+int __qam_add_log __P((DB *, DB_TXN *, DB_LSN *, u_int32_t, DB_LSN *, db_pgno_t, u_int32_t, db_recno_t, u_int32_t, const DBT *, u_int32_t, const DBT *));
 int __qam_add_getpgnos __P((DB_ENV *, DBT *, DB_LSN *, db_recops, void *));
 int __qam_add_print __P((DB_ENV *, DBT *, DB_LSN *, db_recops, void *));
 int __qam_add_read __P((DB_ENV *, void *, __qam_add_args **));

@@ -157,7 +157,7 @@ len_err:		__db_err(dbp->dbenv,
 		 * to log so that both this and the recovery code is simpler.
 		 */
 
-		if (DBC_LOGGING(dbc) || !F_ISSET(qp, QAM_VALID)) {
+		if (!F_ISSET(qp, QAM_VALID)) {
 			datap = &pdata;
 			memset(datap, 0, sizeof(*datap));
 
@@ -168,14 +168,10 @@ len_err:		__db_err(dbp->dbenv,
 			datap->size = t->re_len;
 
 			/*
-			 * Construct the record if it's valid, otherwise set it
-			 * all to the pad character.
+			 * Construct the record, padding first.
 			 */
 			dest = datap->data;
-			if (F_ISSET(qp, QAM_VALID))
-				memcpy(dest, p, t->re_len);
-			else
-				memset(dest, t->re_pad, t->re_len);
+			memset(dest, t->re_pad, t->re_len);
 
 			dest += data->doff;
 			memcpy(dest, data->data, data->size);
@@ -189,12 +185,12 @@ no_partial:
 	if (DBC_LOGGING(dbc)) {
 		olddata.size = 0;
 		if (F_ISSET(qp, QAM_SET)) {
-			olddata.data = qp->data;
-			olddata.size = t->re_len;
+			olddata.data = p;
+			olddata.size = datap->size;
 		}
 		if ((ret = __qam_add_log(dbp, dbc->txn, &LSN(pagep),
 		    0, &LSN(pagep), pagep->pgno,
-		    indx, recno, datap, qp->flags,
+		    indx, recno, datap->doff, datap, qp->flags,
 		    olddata.size == 0 ? NULL : &olddata)) != 0)
 			goto err;
 	}

@@ -81,6 +81,7 @@ POINTER	lsn		DB_LSN *	lu
 WRLOCK	pgno		db_pgno_t	lu
 ARG	indx		u_int32_t	lu
 ARG	recno		db_recno_t	lu
+ARG	off		u_int32_t	lu
 DBT	data		DBT		s
 ARG	vflag		u_int32_t	lu
 DBT	olddata		DBT		s
