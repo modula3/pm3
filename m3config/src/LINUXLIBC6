@@ -10,6 +10,7 @@ PLATFORM_SUPPORTS_SHARED_LIB = "T"
 X11ROOT = "/usr/X11R6/lib"
 OPENGLROOT = "/usr/lib"
 LINK_suffix += GCWRAPFLAGS
+MAKESHLIB += GCWRAPFLAGS
 %INSTALL_ROOT = "/usr/local"
 
 setDefault("","")
