@@ -5,7 +5,7 @@ coco_c("Fortran95")
 
 coco_c("FortranPrototype")
 
-module("Parameter")
+Module("Parameter")
 table("Param", "Text","Parameter")
 
 BinExport("f2i3.sh")
