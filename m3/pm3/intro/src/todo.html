@@ -33,8 +33,7 @@ too large needlessly.
 <LI>Progressively document all the packages using m3doc. For some packages
 a small introductory <TT>index.html</TT> file linking to public interfaces
 is sufficient. For some other packages, the m3totex documentation may be
-reused (libm3/m3core, trestle, vbtkit, formsvbt, netobj, stable, anim3D,
-m3tk).
+reused (vbtkit, netobj, stable, anim3D, m3tk).
 
 <LI> For Windows NT, get someone to look for native versions of gcc, gdb and 
 binutils (avoiding the complexity of cygwin32.dll in the gnu-win32 chain 
@@ -46,6 +45,10 @@ m3browser and removed. Some similar modules still exist and should be
 merged, see <A HREF="dupl.txt">[duplicates]</A>. A few duplicated procedures
 do exist, most notably a few Quicksort.
 
+<LI>M3pp has problems with pragma EXTERNAL with flex/bison. It looks
+related to function BufferLexeme in lex_help.h which may depend on
+lex/yacc internals.
+
 <LI>Detect reusable components hidden in libraries and programs.
 Candidates include FSM, MText. Find a <I>category specialist</I>
 for each category to drive this effort and enhance the reusable components.
@@ -56,9 +59,18 @@ Similarly, geometry could benefit from generics based on Integer.T, Float.T,
 Point = ARRAY Axis OF Unit, where Axis is {x,y} for 2D and {x,y,z} for 3D.
 This could perhaps lead to anim2D versus anim3D.
 
-<LI>Provide tools to support diagrams in M3doc
-(write <I>xfig to HTML</I> and support diagram tags in the conversion to
-LaTeX/Postscript).
+<LI>Track the evolution of HTML/XML and extensions for vector graphics. 
+Evolve m3doc towards using these native features in XML as they appear.
+
+<LI>Document how Modula-3 can be used for real time programming, by using
+as little runtime support as possible.
+
+<LI>Check the gamma correction performed by Trestle and Image. If indeed
+gamma correction is useful (i.e. X windows does none while Mac and Windows
+do some and would thus display different colors for the same RGB values and
+bitmaps), find a way to let Image tell Trestle if
+something does not need to be gamma corrected instead of doing the work twice.
+The gamma correction overhead is indeed only a problem for large bitmaps.
 
 <LI>Build a library for browsing and analysing Modula-3 code, probably
 based on m3tk and m3browser. It could be used for computing metrics
@@ -79,6 +91,8 @@ a student-friendly development environment.
 
 <LI>Rework the HTML kit and the web packages to provide a single
 package for accessing WWW documents.
+
+<LI>Provide a serial port access package.
 
 <LI>Provide a high level Database interface, for both PostgresSQL and
 ODBC. Eventually provide a native implementation based on persistent objects

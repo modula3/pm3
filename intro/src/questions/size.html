@@ -1,14 +1,12 @@
-<TITLE> Why is Hello World so large?</TITLE>
-<H1> Why is Hello World so large?</H1>
+<TITLE> Why is Hello World larger in Modula-3 than in C?</TITLE>
+<H1> Why is Hello World larger in Modula-3 than in C?</H1>
 <P>
-Modula-3 programs are larger than C programs for the following reasons:
+Modula-3 programs are slightly larger than C programs because the
+generated code includes runtime type information, 
+and runtime checks for out-of-bound array references and NIL pointers.
+Many of these checks could be removed by a more sophisticated compiler.
 <P>
-<OL><LI>   The fixed runtime is substantially larger.  It contains a
-garbage collector, a thread runtime, and exception support.
-Note that Hello World is virtually all runtime.  For
-larger programs the runtime is not an issue.
-<LI>   The generated code includes runtime checks for out-of-bound
-array references and NIL pointer.  Many of these checks could
-be removed by a more sophisticated compiler.
-</OL>
-<P>
+The fixed runtime is substantially larger (there is no runtime support in C). 
+It contains a garbage collector, a thread runtime, and exception support.
+It is typically placed in a dynamically linked library, shared on disk
+and in memory between all the Modula-3 programs.
