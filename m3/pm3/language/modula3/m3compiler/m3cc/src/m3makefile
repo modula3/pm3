@@ -5,6 +5,8 @@
 % Last modified on Fri Feb 10 13:16:06 PST 1995 by kalsow
 %
 
+local ret = 0
+
 readonly m3cc_config = {
 
   "HPPA"  : "--with-gnu-as",
@@ -54,15 +56,16 @@ end
 
 % make sure the derived directory exists
 if stale (build_dir, build_dir)
-  exec ("mkdir", build_dir)
+  ret = exec (["mkdir", build_dir])
 end
 
 if not defined ("no_config")
   % configure the sources
-  exec ("cd", build_dir, "; ../gcc/configure", M3CC_CONFIG, "--srcdir=../gcc",
+  ret = exec (["../gcc/configure", M3CC_CONFIG, "--srcdir=../gcc",
            "--host=" & gnu_platform (M3CC_HOST),
            "--build=" & gnu_platform (M3CC_BUILD),
-           "--target=" & gnu_platform (M3CC_TARGET))
+           "--target=" & gnu_platform (M3CC_TARGET)],[],build_dir)
+  if not equal(ret,0) error("Failed to configure m3cc") end
 end
 
 % misc fixups & ship commands
@@ -80,6 +83,7 @@ ARG0 = get_overrides ("CC", M3CC_CC)
 ARG1 = get_overrides ("CFLAGS", M3CC_CFLAGS)
 
 % finally, compile it
-exec ("cd", build_dir, ";", M3CC_MAKE, ARG0, ARG1, pgms)
+ret = exec ([M3CC_MAKE, ARG0, ARG1, pgms],[], build_dir)
+if not equal(ret,0) error("Failed to build m3cc") end
 
 

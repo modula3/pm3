@@ -98,22 +98,22 @@ end
 %--- m3middle --- library -------------------------------------------------
 % the Modula-3 compiler's IL definition
 % requires: libm3
-BuildChunk ("m3middle")  %-- built as part of the bootstrap process
+%BuildChunk ("m3middle")  %-- built as part of the bootstrap process
 
 %--- m3linker --- library -------------------------------------------------
 % the Modula-3 prelinker
 % requires: m3middle
-BuildChunk ("m3linker")  %-- built as part of the bootstrap process
+%BuildChunk ("m3linker")  %-- built as part of the bootstrap process
 
 %--- m3objfile --- library -------------------------------------------------
 % the Modula-3 object file writers
 % requires: m3middle
-BuildChunk ("m3objfile")  %-- built as part of the bootstrap process
+%BuildChunk ("m3objfile")  %-- built as part of the bootstrap process
 
 %--- m3front --- library -------------------------------------------------
 % the Modula-3 compiler front-end
 % requires: m3middle
-BuildChunk ("m3front")  %-- built as part of the bootstrap process
+%BuildChunk ("m3front")  %-- built as part of the bootstrap process
 
 %--- m3back --- library -------------------------------------------------
 % the Windows/NT x86 back-end
@@ -128,7 +128,7 @@ BuildChunk ("m3front")  %-- built as part of the bootstrap process
 %--- m3 --- utility -------------------------------------------------
 % the Modula-3 compiler (main program)
 % requires: m3linker, m3front, m3middle, libm3
-BuildChunk ("m3")  %-- built as part of the bootstrap process
+%BuildChunk ("m3")  %-- built as part of the bootstrap process
 
 %--- m3loader --- utility -------------------------------------------------
 % an experimental dynamic loader for Windows/NT
@@ -140,22 +140,17 @@ BuildChunk ("m3")  %-- built as part of the bootstrap process
 %--- m3quake --- library --------------------------------------------------
 % an experimental callable version of quake
 % requires: libm3, m3middle
-BuildChunk ("m3quake")
+%BuildChunk ("m3quake")
 
 %--- m3build2 --- utility ------------------------------------------------
 % an experimental Modula-3 version of m3build
 % requires: libm3, m3quake
-BuildChunk ("m3build2")
+%BuildChunk ("m3build2")
  
 %--- m3ship2 --- utility ------------------------------------------------
 % an experimental Modula-3 version of m3ship
 % requires: libm3, m3quake
-BuildChunk ("m3ship2")
- 
-%--- m3where2 --- utility ------------------------------------------------
-% an experimental Modula-3 version of m3where
-% requires: libm3, m3quake
-BuildChunk ("m3where2")
+%BuildChunk ("m3ship2")
  
 %--- cg-burs --- utility -------------------------------------------------
 % an experimental Modula-3 back-end that uses BURS
@@ -223,6 +218,11 @@ BuildChunk ("slisp")
 % requires: libm3
 BuildChunk ("tempfiles")
 
+%--- m3where2 --- utility ------------------------------------------------
+% an experimental Modula-3 version of m3where
+% requires: libm3, m3quake, tempfiles
+BuildChunk ("m3where2")
+ 
 %--- tcp --- library -------------------------------------------------
 % tcp implements a Modula-3 interface to TCP sockets.  It is used
 %   by the Trestle window system and network objects.
