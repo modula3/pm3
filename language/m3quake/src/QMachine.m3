@@ -1206,7 +1206,10 @@ PROCEDURE Exec (t: T;  cmd: TEXT; args: REF ARRAY OF TEXT;
       END;
       IF stdout_file = NIL OR stderr_file = NIL THEN
         IF t.writer = Stdio.stdout THEN
-          Process.GetStandardFileHandles(dumb, stdout_file, stdout_file);
+          VAR dumb: File.T; 
+          BEGIN
+            Process.GetStandardFileHandles(dumb, stdout_file, stderr_file);
+          END;
         ELSE
           Pipe.Open (hr := hrSelf,  hw := hwChildOut);
           IF stdout_file = NIL THEN
