@@ -1004,7 +1004,7 @@ ssize_t read(int fildes, void *buf, size_t nbyte)
   return result;
 }
 
-int readlink(const char *path, void *buf, int bufsiz)
+int readlink(const char *path, char *buf, size_t bufsiz)
 {
   int result;
 
@@ -1016,7 +1016,7 @@ int readlink(const char *path, void *buf, int bufsiz)
   return result;
 }
 
-ssize_t readv(int fildes, struct iovec *iov, int iovcnt)
+ssize_t readv(int fildes, const struct iovec *iov, int iovcnt)
 {
   ssize_t result;
 
@@ -1143,8 +1143,7 @@ int setgroups(int ngroups, const gid_t *grouplist)
   return result;
 }
 
-int setitimer(int which, const struct itimerval *value,
-	      struct itimerval *ovalue)
+int setitimer(int which, struct itimerval *value, struct itimerval *ovalue)
 {
   int result;
 
