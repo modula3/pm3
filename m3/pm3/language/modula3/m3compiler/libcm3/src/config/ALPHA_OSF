@@ -96,6 +96,8 @@ readonly INSTALL_IMPLS = TRUE
 % If SYSTEM_LIBS{x} is not defined, the Modula-3 system will assume
 % that the library is not available.
 
+DB_ROOT=INSTALL_ROOT
+
 SYSTEM_LIBS = {
   "LIBC"       : [ "-ldnet_stub", "-lm", "-lexc" ],
 %  "LEX-YACC"   : [ "-L/usr/lib", "-ll" ],
@@ -106,13 +108,14 @@ SYSTEM_LIBS = {
   "MOTIF"      : [ "-L/usr/lib", "-lXm" ],
   "X11"        : [ "-L/usr/lib", "-lXaw", "-lXmu",
                    "-lXext", "-lXt", "-lSM", "-lICE", "-lX11" ],
+%  "DB"         : [ "-L" & DB_ROOT & "lib", "-ldb" ],
   "TCP"        : [ ]
 }
 
 % SYSTEM_LIBORDER defines the order in which SYSTEM_LIBS should be
 % scanned by the linker.
 
-SYSTEM_LIBORDER = [ "OPENGL", "DECPEX", "MOTIF", "X11", "TCP",
+SYSTEM_LIBORDER = [ "DB", "OPENGL", "DECPEX", "MOTIF", "X11", "TCP",
                     "POSTGRES95", "FLEX-BISON", "LEX-YACC", "LIBC" ]
 
 %--------------------------------------------------------- shared libraries ---
@@ -150,8 +153,10 @@ M3_BACKEND_MODE = "3"
 % is only called if your program or library explicitly includes C source
 % code, the system distributed by Critical Mass does not.
 
+c_includes = []
+
 proc compile_c (source, object, options, optimize, debug) is
-  local args = [ "-ieee_with_no_inexact", options ]
+  local args = [ "-ieee_with_no_inexact", c_includes, options ]
   if optimize  args += "-O1"  end
   if debug     args += "-g3"  end
   if M3_PROFILING args += "-p" end
@@ -243,8 +248,8 @@ proc m3_link (prog, options, objects, imported_libs, shared) is
   local args = [ "-o", prog, options, objects, imported_libs ]
   if M3_PROFILING args += "-p" end
   if shared
-    %ZZZ return try_exec (linker, "-call_shared", "-rpath", LIB_USE, args)
-    return try_exec (linker, "-noso", args, "-so_archive")
+    return try_exec (linker, "-call_shared", "-rpath", LIB_USE, args)
+    %ZZZ return try_exec (linker, "-noso", args, "-so_archive")
   else
     return try_exec (linker, "-noso", args, "-so_archive")
   end

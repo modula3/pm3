@@ -88,6 +88,8 @@ readonly INSTALL_IMPLS = TRUE
 % If SYSTEM_LIBS{x} is not defined, the Modula-3 system will assume
 % that the library is not available.
 
+DB_ROOT=INSTALL_ROOT
+
 SYSTEM_LIBS = {
 %%  "LIBC"       : [ "-Bdynamic", "-L/usr/ucblib", "-R/usr/ucblib",
   "LIBC"       : [ "-Bdynamic",
@@ -102,13 +104,14 @@ SYSTEM_LIBS = {
   "MOTIF"      : [ "-Bdynamic", "-L/usr/dt/lib", "-lXm" ],
   "X11"        : [ "-Bdynamic", "-L/usr/openwin/lib",
                      "-lXaw", "-lXmu", "-lXext", "-lXt", "-lX11" ],
+%  "DB"         : [ "-R" & DB_ROOT & "lib", "-L" & DB_ROOT & "lib", "-ldb" ],
   "TCP"        : [ ]
 }
 
 % SYSTEM_LIBORDER defines the order in which SYSTEM_LIBS should be
 % scanned by the linker.
 
-SYSTEM_LIBORDER = [ "OPENGL", "DECPEX", "MOTIF", "X11", "TCP",
+SYSTEM_LIBORDER = [ "DB", "OPENGL", "DECPEX", "MOTIF", "X11", "TCP",
                     "POSTGRES95", "FLEX-BISON", "LEX-YACC", "LIBC" ]
 
 %--------------------------------------------------------- Modula-3 backend ---
@@ -146,8 +149,10 @@ M3_BACKEND_MODE = "3"
 
 SYSTEM_CC = "/opt/SUNWspro/bin/cc"
 
+c_includes = []
+
 proc compile_c (source, object, options, optimize, debug) is
-  local args = [ "-w", "-KPIC", options ]
+  local args = [ "-w", "-KPIC", c_includes, options ]
   if optimize  args += "-O"  end
   if debug     args += "-g"  end
   return try_exec ("@" & SYSTEM_CC, args, "-c", source)

@@ -21,12 +21,37 @@ INTERFACE Target;
     boundary (i.e. (size + align - 1) DIV align * align).
 *)
 
+TYPE
+  Systems = {
+    AIX386, ALPHA_OSF, AP3000, ARM, DS3100,
+    FreeBSD, FreeBSD2, HP300, HPPA, IBMR2,
+    IBMRT, IRIX5, LINUX, LINUXELF, NEXT,
+    NT386, OKI, OS2, SEQUENT, SOLgnu, SOLsun,
+    SPARC, SUN3, SUN386, UMAX, VAX, FreeBSD3,
+    FreeBSD4, FBSD_ALPHA, LINUXLIBC6, I386_DARWIN,
+    PPC_DARWIN, BSDI4, NT386GNU, PPC_LINUX, Undefined
+  };
+
+CONST
+  SystemNames = ARRAY OF TEXT {
+    "AIX386", "ALPHA_OSF", "AP3000", "ARM", "DS3100",
+    "FreeBSD", "FreeBSD2", "HP300", "HPPA", "IBMR2",
+    "IBMRT", "IRIX5", "LINUX", "LINUXELF", "NEXT",
+    "NT386", "OKI", "OS2", "SEQUENT", "SOLgnu", "SOLsun",
+    "SPARC", "SUN3", "SUN386", "UMAX", "VAX", "FreeBSD3",
+    "FreeBSD4", "FBSD_ALPHA", "LINUXLIBC6", "I386_DARWIN",
+    "PPC_DARWIN", "BSDI4", "NT386GNU", "PPC_LINUX"
+  };
+
 (*-------------------------------------------------------- initialization ---*)
 
 PROCEDURE Init (system: TEXT; back_integrated: BOOLEAN): BOOLEAN;
 (* Initialize the variables of this interface to reflect the architecture
    of "system".  Returns TRUE iff the "system" was known and the initialization
    was successful.  *)
+
+VAR (*CONST*)
+  System: Systems := Systems.Undefined; (* initialized by "Init" *)
 
 VAR (*CONST*)
   System_name: TEXT := NIL; (* initialized by "Init" *)

@@ -259,10 +259,10 @@ PROCEDURE GetConfigInt (s: State;  symbol: TEXT): INTEGER =
     RETURN 0;
   END GetConfigInt;
 
-PROCEDURE GetConfigBool (s: State;  symbol: TEXT): BOOLEAN =
+PROCEDURE GetConfigBool (s: State;  symbol: TEXT; default := FALSE): BOOLEAN =
   VAR bind := GetDefn (s, symbol);
   BEGIN
-    IF (bind = NIL) THEN RETURN FALSE; END;
+    IF (bind = NIL) THEN RETURN default; END;
     TRY
       RETURN QVal.ToBool (s.machine, bind.value);
     EXCEPT Quake.Error (msg) =>
@@ -1994,9 +1994,9 @@ PROCEDURE BuildCProgram (s: State;  shared: BOOLEAN) =
     END;
 
     IF s.skip_link
-      THEN import_libs := GetLibraries (s, pgmTime, pgmValid, NIL, NIL, FALSE);
+      THEN import_libs := GetLibraries (s, pgmTime, pgmValid, NIL, NIL, FALSE, shared);
       ELSE import_libs := GetLibraries (s, pgmTime, pgmValid, "linking ", pgm_file,
-                                        NOT shared AND s.broken_linker);
+                                        NOT shared AND s.broken_linker, shared);
     END;
 
     IF pgmValid OR s.skip_link THEN
@@ -2055,9 +2055,9 @@ PROCEDURE BuildProgram (s: State;  shared: BOOLEAN) =
     END;
 
     IF s.skip_link
-      THEN import_libs := GetLibraries (s, pgmTime, pgmValid, NIL, NIL, FALSE);
+      THEN import_libs := GetLibraries (s, pgmTime, pgmValid, NIL, NIL, FALSE, shared);
       ELSE import_libs := GetLibraries (s, pgmTime, pgmValid, "linking ", pgm_file,
-                                        NOT shared AND s.broken_linker);
+                                        NOT shared AND s.broken_linker, shared);
     END;
 
     IF pgmValid THEN
@@ -2127,7 +2127,7 @@ PROCEDURE GetObjects (s: State;  result_time: INTEGER;
 
 PROCEDURE GetLibraries (s: State;  result_time: INTEGER;
                          VAR valid: BOOLEAN;  verb, result: TEXT;
-                         use_links: BOOLEAN): Arg.List =
+                         use_links: BOOLEAN; shared: BOOLEAN): Arg.List =
   VAR
     u := s.units.head;
     libs := Arg.NewList ();
@@ -2160,7 +2160,7 @@ PROCEDURE GetLibraries (s: State;  result_time: INTEGER;
             Utils.LinkFile (lib_file, lib_link);
           END;
           Arg.Prepend (libs, "-l" & M3ID.ToText (u.name));
-        ELSIF (s.keep_resolved) THEN
+        ELSIF (NOT shared OR s.keep_resolved) THEN
           Arg.Prepend (libs, lib_file);
         ELSE
           Arg.Prepend (libs, "-l" & M3ID.ToText (u.name));
@@ -2312,7 +2312,7 @@ PROCEDURE BuildBootProgram (s: State) =
       Wr.PutText (wr, "\t" & Main_O & Target.EOL);
       Wr.PutText (wr, Target.EOL);
 
-      import_libs := GetLibraries (s, Utils.NO_TIME, valid, NIL, NIL, FALSE);
+      import_libs := GetLibraries (s, Utils.NO_TIME, valid, NIL, NIL, FALSE, FALSE);
       Wr.PutText (wr, "LIBS=");
       x := import_libs.head;
       WHILE x # NIL DO
@@ -2485,7 +2485,7 @@ PROCEDURE BuildLibrary (s: State;  shared: BOOLEAN) =
 
     lib_objects := GetObjects   (s, lib_time, libValid, "archiving ", lib_file);
     import_libs := GetLibraries (s, lib_time, libValid, "archiving ", lib_file,
-                                 FALSE);
+                                 FALSE, shared);
 
     IF libValid THEN
       DontBuildLibrary (s, name.base, shared);

@@ -39,7 +39,8 @@ readonly Platform_info = {
   "UMAX"      : "encore-bsd",
   "VAX"       : "vax-dec-ultrix",
   "I386_DARWIN" : "i486-unknown-bsd",
-  "PPC_DARWIN"  : "powerpc-apple-linux-gnu"
+  "PPC_DARWIN"  : "powerpc-apple-darwin6.3",
+  "PPC_LINUX"   : "powerpc-apple-linuxelf"
 }
 
 if not defined("SL")
@@ -49,6 +50,16 @@ if not defined("SL")
   else
     SL = "/"
   end
+end
+
+if equal(TARGET, "PPC_DARWIN")
+  write(EOL)
+  write("  Please note that you need a bootstrapped gcc 3.2.1 in order to" &
+        EOL)
+  write("  compile this package. All attempts to build cm3cg with Apple's" &
+        EOL)
+  write("  native version of gcc 3.1 have failed so far." & EOL)
+  write(EOL)
 end
 
 readonly proc GNU_platform (x) is
@@ -100,6 +111,9 @@ if not defined ("M3CC_CFLAGS")  M3CC_CFLAGS = GNU_CFLAGS end
 if not defined ("M3CC_MAKE")    M3CC_MAKE   = GNU_MAKE   end
 if not defined ("M3CC_CONFIG")  M3CC_CONFIG = get_config (M3CC_TARGET) end
 
+% HACK: avoid the use of DW_FORM_strp debugging information for the time being
+M3CC_CFLAGS = M3CC_CFLAGS & " -DAVOID_DW_FORM_STRP"
+
 % figure out where we're going to build the beast
 local build_dir = "."  % let m3build set the build directory
 if not equal (M3CC_HOST, M3CC_TARGET)
@@ -113,6 +127,12 @@ end
 
 done  = ".configure-done"
 donep = build_dir & SL & done
+if defined ("FORCE")
+  exec("-cd " & build_dir & " && test -f Makefile && " & M3CC_MAKE & " distclean")
+  exec("-cd " & build_dir & " && rm -f cm3cg")
+  exec("-rm -f " & donep)
+end
+
 if not defined ("no_config")
   % configure the sources
   if stale(donep, donep)

@@ -10,43 +10,19 @@ MODULE Target;
 
 IMPORT Text, TargetMap, M3RT;
 
-(* Keep these two arrays in sync... *)
-
-TYPE
-  Systems = {
-    AIX386, ALPHA_OSF, AP3000, ARM, DS3100,
-    FreeBSD, FreeBSD2, HP300, HPPA, IBMR2,
-    IBMRT, IRIX5, LINUX, LINUXELF, NEXT,
-    NT386, OKI, OS2, SEQUENT, SOLgnu, SOLsun,
-    SPARC, SUN3, SUN386, UMAX, VAX, FreeBSD3,
-    FreeBSD4, FBSD_ALPHA, LINUXLIBC6, I386_DARWIN,
-    PPC_DARWIN, BSDI4, NT386GNU, Tru64v5
-  };
-
-CONST
-  SystemNames = ARRAY Systems OF TEXT {
-    "AIX386", "ALPHA_OSF", "AP3000", "ARM", "DS3100",
-    "FreeBSD", "FreeBSD2", "HP300", "HPPA", "IBMR2",
-    "IBMRT", "IRIX5", "LINUX", "LINUXELF", "NEXT",
-    "NT386", "OKI", "OS2", "SEQUENT", "SOLgnu", "SOLsun",
-    "SPARC", "SUN3", "SUN386", "UMAX", "VAX", "FreeBSD3",
-    "FreeBSD4", "FBSD_ALPHA", "LINUXLIBC6", "I386_DARWIN",
-    "PPC_DARWIN", "BSDI4", "NT386GNU", "Tru64v5"
-  };
-
 VAR (*CONST*)
   CCs : REF ARRAY OF CallingConvention;
 
 PROCEDURE Init (system: TEXT; back_integrated: BOOLEAN): BOOLEAN =
   CONST FF = 16_ffff;
-  VAR sys := FIRST(Systems);  max_align := 64;
+  VAR sys := 0;  max_align := 64;
   BEGIN
     (* lookup the system *)
     IF (system = NIL) THEN RETURN FALSE END;
     WHILE NOT Text.Equal (system, SystemNames[sys]) DO
-      IF (sys = LAST(Systems)) THEN RETURN FALSE END;
-      INC (sys);
+      INC (sys);  IF (sys >= NUMBER (SystemNames)) THEN RETURN FALSE END;
     END;
+    System := VAL(sys, Systems);
     System_name := SystemNames[sys];
 
     (* build a generic 32-bit/IEEE system description *)
@@ -139,7 +115,7 @@ PROCEDURE Init (system: TEXT; back_integrated: BOOLEAN): BOOLEAN =
     CCs := NIL;
 
     (* add the system-specific customization *)
-    CASE sys OF
+    CASE System OF
     | Systems.AIX386 =>
                  max_align                 := 32;
                  Little_endian             := TRUE;
@@ -159,7 +135,7 @@ PROCEDURE Init (system: TEXT; back_integrated: BOOLEAN): BOOLEAN =
                  Aligned_procedures        := TRUE;
                  EOL                       := "\n";
 
-    | Systems.ALPHA_OSF, Systems.Tru64v5 =>
+    | Systems.ALPHA_OSF =>
                  Integer := Int64;
                  Word    := Word64;
                  Address := Word64;   Address.cg_type := CGType.Addr;
@@ -179,7 +155,7 @@ PROCEDURE Init (system: TEXT; back_integrated: BOOLEAN): BOOLEAN =
                  Setjmp                    := "_setjmp";
                  Checks_integer_ops        := TRUE;
                  Global_handler_stack      := TRUE;
-                 Aligned_procedures        := TRUE;
+                 Aligned_procedures        := FALSE;
                  EOL                       := "\n";
 
     | Systems.AP3000 =>
@@ -629,8 +605,8 @@ PROCEDURE Init (system: TEXT; back_integrated: BOOLEAN): BOOLEAN =
                    LINUXELFCall (0, "C", 0);
                  END;
 
-    |  Systems.I386_DARWIN =>
-      (* FIXME: please carefully check all the values *)
+    | Systems.I386_DARWIN =>
+      (* FIXME: please carefully check all the values; not active yet *)
                  max_align                 := 32;
                  Little_endian             := TRUE;
                  PCC_bitfield_type_matters := TRUE;
@@ -649,20 +625,37 @@ PROCEDURE Init (system: TEXT; back_integrated: BOOLEAN): BOOLEAN =
                  Aligned_procedures        := TRUE;
                  EOL                       := "\n";
 
-    |  Systems.PPC_DARWIN =>
-      (* FIXME: please carefully check all the values *)
+    | Systems.PPC_DARWIN =>
                  max_align                 := 64;
                  Little_endian             := FALSE;
                  PCC_bitfield_type_matters := TRUE;
                  Structure_size_boundary   := 8;
                  Bitfield_can_overlap      := FALSE;
                  First_readable_addr       := 4096 * Char.size;
-                 Jumpbuf_size              := (26 + 36 + 129 + 1) * 
+                 Jumpbuf_size              := (26 + 36 + 129 + 1 + 1) * 
                                               Address.size;
                  Jumpbuf_align             := Word64.align;
                  Fixed_frame_size          := 8 * Address.size;
-                                           (* + 244 bytes for registers? *)
                  Guard_page_size           := 0 * Char.size;
+                 All_floats_legal          := TRUE;
+                 Has_stack_walker          := FALSE;
+                 Setjmp                    := "setjmp";
+                 Checks_integer_ops        := FALSE;
+                 Global_handler_stack      := TRUE;
+                 Aligned_procedures        := TRUE;
+                 EOL                       := "\n";
+
+    | Systems.BSDI4 =>
+                 max_align                 := 32;
+                 Little_endian             := TRUE;
+                 PCC_bitfield_type_matters := TRUE;
+                 Structure_size_boundary   := 8;
+                 Bitfield_can_overlap      := FALSE;
+                 First_readable_addr       := 4096;
+                 Jumpbuf_size              := 10 * Address.size;
+                 Jumpbuf_align             := Address.align;
+                 Fixed_frame_size          := 4 * Address.size;
+                 Guard_page_size           := 4096 * Char.size;
                  All_floats_legal          := TRUE;
                  Has_stack_walker          := FALSE;
                  Setjmp                    := "_setjmp";
@@ -704,17 +697,19 @@ PROCEDURE Init (system: TEXT; back_integrated: BOOLEAN): BOOLEAN =
                  NTCall (7, "__cdecl",    0, TRUE); (* __cdecl *)
                  NTCall (8, "__stdcall",  1, TRUE); (* __stdcall *)
 
-    | Systems.BSDI4 =>
-                 max_align                 := 32;
-                 Little_endian             := TRUE;
+    |  Systems.PPC_LINUX => 
+      (* FIXME: preliminary assumptions bound to change *)
+                 max_align                 := 64;
+                 Little_endian             := FALSE;
                  PCC_bitfield_type_matters := TRUE;
                  Structure_size_boundary   := 8;
                  Bitfield_can_overlap      := FALSE;
-                 First_readable_addr       := 4096;
-                 Jumpbuf_size              := 10 * Address.size;
-                 Jumpbuf_align             := Address.align;
-                 Fixed_frame_size          := 4 * Address.size;
-                 Guard_page_size           := 4096 * Char.size;
+                 First_readable_addr       := 4096 * Char.size;
+                 Jumpbuf_size              := 58 * Address.size + 
+                                              32 * Address.size + 4;
+                 Jumpbuf_align             := Word64.align;
+                 Fixed_frame_size          := 8 * Address.size;
+                 Guard_page_size           := 0 * Char.size;
                  All_floats_legal          := TRUE;
                  Has_stack_walker          := FALSE;
                  Setjmp                    := "_setjmp";
@@ -745,8 +740,6 @@ PROCEDURE Init (system: TEXT; back_integrated: BOOLEAN): BOOLEAN =
                  Global_handler_stack      := TRUE;
                  Aligned_procedures        := TRUE;
                  EOL                       := "\n";
-
-
 
     ELSE RETURN FALSE;
     END;

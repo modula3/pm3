@@ -238,7 +238,7 @@ PROCEDURE Gen (ce: CallExpr.T) =
   BEGIN
     VAR b := TypeExpr.Split (ce.args[0], t); BEGIN <* ASSERT b *> END;
     Type.Compile (t);
-    IF (RefType.Split (t, r)) THEN GenRef (t, Type.Strip (r), ce);
+    IF (RefType.Split (t, r)) THEN GenRef (Type.Strip(t), Type.Strip (r), ce);
     ELSIF (ObjectType.Is (t)) THEN GenObject (t, ce);
     ELSIF (OpaqueType.Is (t)) THEN GenOpaque (t, ce);
     ELSE Error.Msg ("NEW must be applied to a variable of a reference type");
@@ -261,13 +261,13 @@ PROCEDURE GenRef (t, r: Type.T;  ce: CallExpr.T) =
     r := Type.CheckInfo (r, r_info);
 
     IF (r_info.class = Type.Class.OpenArray) THEN
-      GenOpenArray (t, t_info.isTraced, t_info.isTransient, r_info, ce);
+      GenOpenArray (t, t_info.isTraced, RefType.IsTransient(t), r_info, ce);
 
     ELSIF RecordType.Split (base, fields) THEN
-      GenRecord (t, base, t_info.isTraced, t_info.isTransient, r_info, ce);
+      GenRecord (t, base, t_info.isTraced, RefType.IsTransient(t), r_info, ce);
 
     ELSE
-      proc := RunTyme.LookUpProc (PHook [t_info.isTraced, t_info.isTransient]);
+      proc := RunTyme.LookUpProc (PHook [t_info.isTraced, RefType.IsTransient(t)]);
       Procedure.StartCall (proc);
       Type.LoadInfo (t, -1);
       CG.Pop_param (CG.Type.Addr);
@@ -379,7 +379,7 @@ PROCEDURE GenObject (t: Type.T;  ce: CallExpr.T) =
     b: BOOLEAN;
   BEGIN
     t := Type.CheckInfo (t, info);
-    proc := RunTyme.LookUpProc (PHook [info.isTraced, info.isTransient]);
+    proc := RunTyme.LookUpProc (PHook [info.isTraced, ObjectType.IsTransient(t)]);
 
     (* allocate the object's storage *)
     Procedure.StartCall (proc);

@@ -9,7 +9,7 @@
 
 INTERFACE ThreadF;
 
-IMPORT FloatMode, Thread, RTTxn;
+IMPORT FloatMode, Thread;
 
 (*--------------------------------------------- garbage collector support ---*)
 
@@ -69,13 +69,12 @@ VAR
   myId: Id;
   (* The id of the currently running thread *)
 
-VAR (* READONLY *)
-  myTxn: RTTxn.T;
-  (* The txn of the currently running thread *)
+(*--------------------------------------------------- transaction support ---*)
 
-PROCEDURE TxnBegin(txn: RTTxn.T);
+PROCEDURE TxnBegin();
 PROCEDURE TxnCommit();
 PROCEDURE TxnAbort();
+PROCEDURE InvalidateTxnPages();
 
 (*------------------------------------------------------------ preemption ---*)
 

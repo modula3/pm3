@@ -16,7 +16,7 @@ UNSAFE MODULE ThreadPosix EXPORTS Thread, ThreadF, Scheduler, SchedulerPosix,
 IMPORT Cerrno, Cstring, FloatMode, MutexRep,
        RT0u, RTError, RTMisc, RTParams, RTPerfTool, RTProcedureSRC, RTProcess, 
        RTThread, RTIO, ThreadEvent, Time, TimePosix,
-       Unix, Usignal, Utime, Word, RTTxn, RTHeapDB;
+       Unix, Usignal, Utime, Word, RTHeapDB;
 
 REVEAL
   (* Remember, the report (p 43-44) says that MUTEX is predeclared and <: ROOT;
@@ -120,7 +120,7 @@ REVEAL
         floatState : FloatMode.ThreadState;
 
         (* transaction support *)
-        txn: RTTxn.T;
+        txn: RTHeapDB.Txn;
       END;
 
 TYPE
@@ -927,7 +927,6 @@ BEGIN
             (* remove this guy from the ring *)
             IF perfOn THEN PerfDeleted (t.id); END;
       	    IF hooks # NIL THEN hooks.die (t) END;
-            t.txn := NIL;
             VAR tmp := t.previous; BEGIN
               IF (t = from) THEN from := tmp END;
               t.next.previous := tmp;
@@ -1213,12 +1212,11 @@ PROCEDURE Transfer (VAR from, to: Context;  new_self: T) =
       RTThread.disallow_sigvtalrm ();
       from.handlers := RTThread.handlerStack;
       from.errno := Cerrno.GetErrno();
-      IF new_self.txn # NIL AND self.txn # new_self.txn THEN
+      IF self.txn # new_self.txn THEN
         RTHeapDB.Transfer(self.txn, new_self.txn);
       END;
       self := new_self;
       myId := new_self.id;
-      myTxn := new_self.txn;
       RTThread.Transfer (from.buf, to.buf);
       RTThread.handlerStack := from.handlers;
       Cerrno.SetErrno(from.errno);
@@ -1476,15 +1474,12 @@ PROCEDURE MyId(): Id RAISES {}=
 
 (*------------------------------------------------------------- Txn hooks ---*)
 
-PROCEDURE TxnBegin(txn: RTTxn.T) =
+PROCEDURE TxnBegin() =
   BEGIN
     INC (RT0u.inCritical);
     BEGIN
-      txn.parent := self.txn;
-      self.txn := txn;
-      myTxn := self.txn;
+      self.txn := RTHeapDB.myTxn;
     END;
-    RTHeapDB.Transfer(txn.parent, txn);
     DEC (RT0u.inCritical);
   END TxnBegin;
 
@@ -1493,15 +1488,22 @@ PROCEDURE TxnCommit() =
   BEGIN
     INC (RT0u.inCritical);
     BEGIN
+      <* ASSERT self.txn = RTHeapDB.myTxn *>
       t := self.next;
       WHILE t # self DO
-        IF t.txn = self.txn THEN
-          t.txn := t.txn.parent;
+        VAR txn := t.txn;
+        BEGIN
+          WHILE txn # NIL DO
+            IF txn = self.txn THEN
+              t.txn := txn.parent;
+              EXIT;
+            END;
+            txn := txn.parent;
+          END;
         END;
         t := t.next;
       END;
       self.txn := self.txn.parent;
-      myTxn := self.txn;
     END;
     DEC (RT0u.inCritical);
   END TxnCommit;
@@ -1511,6 +1513,7 @@ PROCEDURE TxnAbort() =
   BEGIN
     INC (RT0u.inCritical);
     BEGIN
+      <* ASSERT self.txn = RTHeapDB.myTxn *>
       t := self.next;
       WHILE t # self DO
         VAR txn := t.txn;
@@ -1527,10 +1530,30 @@ PROCEDURE TxnAbort() =
         t := t.next;
       END;
       self.txn := self.txn.parent;
-      myTxn := self.txn;
     END;
     DEC (RT0u.inCritical);
   END TxnAbort;
+
+PROCEDURE InvalidateTxnPages() =
+  VAR t: T;
+  BEGIN
+    INC (RT0u.inCritical);
+    BEGIN
+      <* ASSERT self.txn = RTHeapDB.myTxn *>
+      t := self;
+      REPEAT
+        VAR txn := t.txn;
+        BEGIN
+          <* ASSERT txn # NIL *>
+          txn.page  := 0;
+          txn.next  := NIL;
+          txn.limit := NIL;
+        END;
+        t := t.next;
+      UNTIL t = self;
+    END;
+    DEC (RT0u.inCritical);
+  END InvalidateTxnPages;
 
 (*-------------------------------------------------------- initialization ---*)
 
@@ -1547,7 +1570,7 @@ PROCEDURE Init()=
       InitTopContext (topThread.context, ADR(xx));
       self := topThread;
       myId := self.id;
-      myTxn := self.txn;
+      self.txn := RTHeapDB.myTxn;
 
       pausedThreads := NIL;
 

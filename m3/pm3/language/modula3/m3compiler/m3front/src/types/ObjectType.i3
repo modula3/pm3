@@ -21,6 +21,8 @@ PROCEDURE Is (t: Type.T): BOOLEAN;
 
 PROCEDURE IsBranded (t: Type.T): BOOLEAN;
 
+PROCEDURE IsTransient (t: Type.T): BOOLEAN;
+
 PROCEDURE LookUp (t: Type.T;  id: M3ID.T;
                       VAR value: Value.T;  VAR visible: Type.T): BOOLEAN;
 

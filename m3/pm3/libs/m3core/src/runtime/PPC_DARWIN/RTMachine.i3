@@ -1,5 +1,4 @@
 (* Copyright according to COPYRIGHT-CMASS. *)
-(* FIXME: copied from FreeBSD3 target. Probably needs to be changed. *)
 
 (* This interface defines platform (machine + OS) dependent
    types and constants. *)
@@ -11,16 +10,16 @@ IMPORT Csetjmp;
 (*--------------------------------------------------------- thread state ---*)
 
 TYPE
-  State = Csetjmp.fpjmp_buf;
+  State = Csetjmp.jmp_buf;
   (* The machine state is saved in a "State".  This type is really
      opaque to the client, i.e. it does not need to be an array. *)
 
-<*EXTERNAL "_fpsetjmp" *>
+<*EXTERNAL "_setjmp" *>
 PROCEDURE SaveState (VAR s: State): INTEGER;
 (* Capture the currently running thread's state *)
 
 CONST
-  FramePadBottom = 2;
+  FramePadBottom = 14;
   FramePadTop    = 0;
   (* Additional padding words from above and below an existing
      thread's stack pointer to copy when creating a new thread *)
@@ -32,15 +31,27 @@ CONST
    reasonable page size.  The page size must be a power of two. *)
 
 CONST
-  BytesPerHeapPage    = 4096;        (* bytes per page *)
-  LogBytesPerHeapPage = 12;
-  AdrPerHeapPage      = 4096;        (* addresses per page *)
-  LogAdrPerHeapPage   = 12;
+  BytesPerHeapPage    = 8192;        (* bytes per page *)
+  LogBytesPerHeapPage = 13;
+  AdrPerHeapPage      = 8192;        (* addresses per page *)
+  LogAdrPerHeapPage   = 13;
 
-(*** hooks for the C wrapper functions ***)
+(* The collector supports the use of VM protection to achieve incremental,
+   generational collection.  This is not possible on all architectures, and
+   it may not be implemented in all cases where it is possible.  The
+   boolean constant "VMHeap" is "TRUE" iff all necessary support is
+   present for this architecture.  "VMHeap" is "TRUE" for the DS3100,
+   whose implementation you might use as a reference. *)
 
-<*EXTERNAL *> VAR RTHeapRep_Fault: ADDRESS;  (* => RTHeapRep.Fault *)
-<*EXTERNAL *> VAR RTCSRC_FinishVM: ADDRESS;  (* => RTCollectorSRC.FinishVM *)
+CONST
+  VMHeap = TRUE;
+
+(* If "VMHeap" is true, "AtomicWrappers" indicates whether the wrappers
+   that validate parameters passed to system calls are atomic with
+   respect to the collector.  *)
+
+CONST
+  AtomicWrappers = TRUE;
 
 (*--------------------------------------------------------- thread stacks ---*)
 
@@ -70,4 +81,3 @@ CONST
 TYPE FrameInfo = RECORD pc, sp: ADDRESS END;
 
 END RTMachine.
-

@@ -29,22 +29,23 @@ CONST
 
 TYPE
   struct_rusage = RECORD
-             ru_utime: Utime.struct_timeval;  (* user time used *)
-             ru_stime: Utime.struct_timeval;  (* system time used *)
-             ru_maxrss: long;		 (* XXX: 0 *)
-             ru_ixrss: long;            (* XXX: 0 *)
-             ru_idrss: long;            (* XXX: sum of rm_asrss *)
-             ru_isrss: long;            (* XXX: 0 *)
-             ru_minflt: long;           (* any page faults not requiring I/O *)
-             ru_majflt: long;           (* any page faults requiring I/O *)
-             ru_nswap: long;            (* swaps *)
-             ru_inblock: long;          (* block input operations *)
-             ru_oublock: long;          (* block output operations *)
-             ru_msgsnd: long;           (* messages sent *)
-             ru_msgrcv: long;           (* messages received *)
-             ru_nsignals: long;         (* signals received *)
-             ru_nvcsw: long;            (* voluntary context switches *)
-             ru_nivcsw: long;           (* involuntary " *) END;
+    ru_utime    : Utime.struct_timeval;  (* user time used *)
+    ru_stime    : Utime.struct_timeval;  (* system time used *)
+    ru_maxrss   : long;            (* XXX: 0 *)
+    ru_ixrss    : long;            (* XXX: 0 *)
+    ru_idrss    : long;            (* XXX: sum of rm_asrss *)
+    ru_isrss    : long;            (* XXX: 0 *)
+    ru_minflt   : long;            (* any page faults not requiring I/O *)
+    ru_majflt   : long;            (* any page faults requiring I/O *)
+    ru_nswap    : long;            (* swaps *)
+    ru_inblock  : long;            (* block input operations *)
+    ru_oublock  : long;            (* block output operations *)
+    ru_msgsnd   : long;            (* messages sent *)
+    ru_msgrcv   : long;            (* messages received *)
+    ru_nsignals : long;            (* signals received *)
+    ru_nvcsw    : long;            (* voluntary context switches *)
+    ru_nivcsw   : long;            (* involuntary " *)
+  END;
   struct_rusage_star = UNTRACED REF struct_rusage;
 
 

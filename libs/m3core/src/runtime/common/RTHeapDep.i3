@@ -22,10 +22,7 @@ CONST
   AdrPerPage      = RTMachine.AdrPerHeapPage;      (* addresses per page *)
   LogAdrPerPage   = RTMachine.LogAdrPerHeapPage;
 
-TYPE
-  Page = [0 .. Word.Divide(-1, AdrPerPage)];
-  Byte = BITS 8 FOR [0..16_FF];
-  PageData = ARRAY [0..BytesPerPage-1] OF Byte;
+TYPE Page = [0 .. Word.Divide(-1, AdrPerPage)];
 
 (* The collector supports the use of VM protection to achieve incremental,
    generational collection.  This is not possible on all architectures, and

@@ -24,6 +24,8 @@ FROM Cstddef IMPORT size_t;
 
 <*EXTERNAL*> PROCEDURE malloc (size: size_t): void_star;
 
+<*EXTERNAL*> PROCEDURE realloc (ptr: void_star; size: size_t): void_star;
+
 <*EXTERNAL*> PROCEDURE free (ptr: void_star);
 
 <*EXTERNAL*> PROCEDURE strtod (str: const_char_star;

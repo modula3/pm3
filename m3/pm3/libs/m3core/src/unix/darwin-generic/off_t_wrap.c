@@ -10,25 +10,52 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 
-caddr_t m3_mmap(caddr_t addr, size_t len, int prot, int flags, int fd, long offset)
+long
+m3_asLong (off_t val)
 {
-  off_t off = (off_t) offset;
+  long v = (off_t)val;
+  if (v != val) return -1;
+  return v;
+}
+
+void *
+m3_mmap(caddr_t addr, size_t len, int prot, int flags, int fd, int offset)
+{
+  off_t off = (off_t)offset;
   return mmap(addr, len, prot, flags, fd, off);
 }
 
-long m3_lseek(int fildes, long offset, int whence)
+int m3_lseek(int fildes, int offset, int whence)
 {
-  off_t off = (off_t) offset;
-  return (long) lseek(fildes, off, whence);
+  off_t off = (off_t)offset;
+  return m3_asLong(lseek(fildes, off, whence));
 }
 
-int m3_truncate(const char *path, long length)
+int m3_pread(int d, void *buf, size_t nbytes, int offset)
+{
+  off_t off = (off_t)offset;
+  return pread(d, buf, nbytes, offset);
+}
+
+int m3_profil(char *samples, size_t size, u_long offset, u_int scale)
+{
+  off_t off = (off_t)offset;
+  return profil(samples, size, offset, scale);
+}
+
+int m3_pwrite(int d, const void *buf, size_t nbytes, int offset)
+{
+  off_t off = (off_t)offset;
+  return pwrite(d, buf, nbytes, offset);
+}
+
+int m3_truncate(const char *path, int length)
 {
   off_t len = (off_t) length;
   return truncate(path, len);
 }
 
-int m3_ftruncate(int fd, long length)
+int m3_ftruncate(int fd, int length)
 {
   off_t len = (off_t) length;
   return ftruncate(fd, length);

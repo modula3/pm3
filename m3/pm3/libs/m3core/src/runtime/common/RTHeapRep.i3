@@ -21,7 +21,7 @@ UNSAFE INTERFACE RTHeapRep;
    garbage collector.  Some items here should be made private or moved
    elsewhere. *)
 
-IMPORT RT0, RTHeapDep, RTDB;
+IMPORT RT0, RTHeapDep, RTHeapDB;
 FROM RT0 IMPORT Typecode;
 
 (* The allocator and collector maintain two heaps of objects.  One heap is
@@ -60,12 +60,14 @@ CONST
 VAR p0, p1: Page := Nil;
 
 VAR
-  desc: UNTRACED REF ARRAY OF Desc;
-  map : UNTRACED REF ARRAY OF RTDB.Page;
+  desc  : UNTRACED REF ARRAY OF Desc;
+  writer: UNTRACED REF ARRAY OF RTHeapDB.Txn;
+  reader: UNTRACED REF ARRAY OF RTHeapDB.Txn;
+  map   : UNTRACED REF ARRAY OF RTHeapDB.DBPage;
 
-VAR max_heap_size: INTEGER := -1;
-(** If "max_heap_size" is non-negative, the traced heap will not be
-    extended beyond "max_heap_size" bytes.  If "max_heap_size" is
+VAR max_heap: INTEGER := -1;
+(** If "max_heap" is non-negative, the traced heap will not be
+    extended beyond "max_heap" bytes.  If "max_heap" is
     negative, the traced heap will be allowed to grow until the
     underlying OS refuses to provide more memory.  *)
 
@@ -83,10 +85,10 @@ TYPE
            link: BITS BITSIZE(ADDRESS) - LogAdrPerPage FOR Page := Nil;
          END;
 
-TYPE Mode = { ReadWrite, ReadOnly, NoAccess };
+TYPE Mode = { NoAccess, ReadOnly, ReadWrite };
 CONST
-  Readable = ARRAY Mode OF BOOLEAN { TRUE, TRUE, FALSE };
-  Writable = ARRAY Mode OF BOOLEAN { TRUE, FALSE, FALSE };
+  Readable = ARRAY Mode OF BOOLEAN { FALSE, TRUE, TRUE };
+  Writable = ARRAY Mode OF BOOLEAN { FALSE, FALSE, TRUE };
 
 TYPE Space = {Unallocated, Free, Previous, Current};
 
@@ -160,11 +162,11 @@ CONST
    pointer to the first data element, then N integers that hold the
    dimensions. *)
 
-TYPE ArrayShape = UNTRACED REF ARRAY [0 .. (*N-1*) 999] OF INTEGER;
+TYPE UnsafeArrayShape = UNTRACED REF ARRAY [0 .. (*N-1*) 999] OF INTEGER;
 
 PROCEDURE UnsafeGetShape (    r          : REFANY;
                           VAR nDimensions: INTEGER;
-                          VAR s          : ArrayShape);
+                          VAR s          : UnsafeArrayShape);
 (* if r is a reference to an open array, the number of open dimensions,
    nDimensions, and size of each dimension, s, is returned.  The array's
    shape vector is valid as long as r exists.  If r is not a reference to
@@ -201,7 +203,8 @@ TYPE
     limit      : ADDRESS := NIL; (* address of first unavailable byte *)
     n_small    : INTEGER := 0;   (* # of "small" pages allocated via this pool *)
     n_big      : INTEGER := 0;   (* # of "big" and "continued" pages allocated *)
-    db: RTDB.T := NIL;
+    txn: RTHeapDB.Txn := NIL;
+    db: RTHeapDB.DB := NIL;
   END;
 
 VAR (* LL >= RTOS.HeapLock *)
@@ -267,6 +270,8 @@ VAR (* LL >= RTOS.HeapLock *)
                   mode := Mode.ReadWrite, continued := FALSE,
                   resident := TRUE, dirty := TRUE },
     notAfter := Notes {Note.Allocated} };
+
+PROCEDURE GetTraced (defn: ADDRESS; VAR pool: AllocPool): REFANY;
 
 (****** MODULE OBJECTS ******)
 

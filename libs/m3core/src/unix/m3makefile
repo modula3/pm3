@@ -31,10 +31,10 @@ readonly _UnixPieces = {
   "IRIX5"      : [ "irix-5.2" ],
   "LINUX"      : [ "linux" ],
   "LINUXELF"   : [ "linux" ],
-  "LINUXLIBC6" : [ "linux-libc6" ],
+  "LINUXLIBC6" : [ "linux-libc6", "linux-libc6-le" ],
   "NEXT"       : [ "ultrix-3-1.generic", "ultrix-3-1.NEXT" ],
   "NT386"      : [ ], % doesn't define a "Unix" interface
-  "NT386GNU"   : [ ], % doesn't define a "Unix" interface
+  "NT386GNU"   : [ "cygwin" ],
   "OKI"        : [ "sysv-4.0" ],
   "OS2"        : [ "os2" ],
   "SEQUENT"    : [ "ultrix-3-1.generic", "ultrix-3-1.SEQUENT" ],
@@ -43,11 +43,11 @@ readonly _UnixPieces = {
   "SPARC"      : [ "sunos-4-x" ],
   "SUN3"       : [ "ultrix-3-1.generic", "ultrix-3-1.SUN3" ],
   "SUN386"     : [ "ultrix-3-1.generic", "ultrix-3-1.SUN386" ],
-  "Tru64v5"    : [ "osf-1.generic", "osf-1.Tru64v5" ],
   "UMAX"       : [ "ultrix-3-1.generic", "ultrix-3-1.UMAX" ],
   "VAX"        : [ "ultrix-3-1.generic", "ultrix-3-1.VAX" ],
   "I386_DARWIN": [ "darwin-generic", "darwin-i386" ],
-  "PPC_DARWIN" : [ "darwin-generic", "darwin-ppc" ]
+  "PPC_DARWIN" : [ "darwin-generic", "darwin-ppc" ],
+  "PPC_LINUX"  : [ "linux-libc6", "linux-libc6-be" ]
 }
 
 if _UnixPieces contains TARGET

@@ -18,6 +18,8 @@ PROCEDURE Is (t: Type.T): BOOLEAN;
 
 PROCEDURE IsBranded (t: Type.T): BOOLEAN;
 
+PROCEDURE IsTransient (t: Type.T): BOOLEAN;
+
 PROCEDURE Split (t: Type.T;  VAR target: Type.T): BOOLEAN;
 
 PROCEDURE NoteRefName (t: Type.T;  name: TEXT);

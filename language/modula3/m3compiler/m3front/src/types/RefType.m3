@@ -134,6 +134,12 @@ PROCEDURE Is (t: Type.T): BOOLEAN =
     RETURN (Reduce (t) # NIL);
   END Is;
 
+PROCEDURE IsTransient (t: Type.T): BOOLEAN =
+  VAR p := Reduce (t);
+  BEGIN
+    RETURN (p # NIL) AND (p.isTransient);
+  END IsTransient;
+
 PROCEDURE IsBranded (t: Type.T): BOOLEAN =
   VAR p := Reduce (t);
   BEGIN

@@ -1,5 +1,4 @@
 /* Copyright according to COPYRIGHT-CMASS. */
-/* FIXME: copied from FreeBSD3 target. Probably needs to be changed. */
 
 /* This file implements the coroutine transfer: RTThread.Transfer */
 
@@ -9,7 +8,7 @@
 RTThread__Transfer (from, to)
 jmp_buf *from, *to;
 {
-  if (_fpsetjmp(*from) == 0) _fplongjmp (*to, 1);
+  if (setjmp(*from) == 0) longjmp (*to, 1);
 }
 
 

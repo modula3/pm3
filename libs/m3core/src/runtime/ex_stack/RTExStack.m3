@@ -152,7 +152,9 @@ PROCEDURE ResumeRaise (VAR a: RaiseActivation) RAISES ANY =
 
 PROCEDURE InvokeHandler (s: Scope;  VAR f: RTStack.Frame;
                          READONLY prev: RaiseActivation) RAISES ANY =
-  VAR next: RT0.ActivationPtr := f.sp + s.offset;
+  VAR
+    unwind := f.unwind;
+    next: RT0.ActivationPtr := f.sp + s.offset;
   BEGIN
     IF DEBUG THEN
       PutExcept ("INVOKE HANLDER", prev);
@@ -161,7 +163,7 @@ PROCEDURE InvokeHandler (s: Scope;  VAR f: RTStack.Frame;
       RTIO.Flush ();
     END;
     next^ := prev;
-    IF (f.unwind = NIL) THEN f.pc := s.stop ELSE f.pc := f.unwind END;
+    IF unwind # NIL THEN f.pc := unwind ELSE f.pc := s.stop END;
     RTStack.Unwind (f);
     RTError.MsgPC (LOOPHOLE (f.pc, INTEGER), "Unwind returned!");
     RAISE OUCH;
@@ -564,6 +566,7 @@ PROCEDURE PutFrame (READONLY f: RTStack.Frame;  info: ADDRESS) =
   BEGIN
     RTIO.PutText ("  pc=");    RTIO.PutAddr (f.pc);
     RTIO.PutText ("  sp=");    RTIO.PutAddr (f.sp);
+    RTIO.PutText ("  unwind=");RTIO.PutAddr (f.unwind);
     RTIO.PutText ("  info=");  RTIO.PutAddr (info);
   END PutFrame;
 

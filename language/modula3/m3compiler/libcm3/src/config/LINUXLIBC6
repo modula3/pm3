@@ -56,7 +56,6 @@ INITIAL_REACTOR_EDITOR = "emacsclient"
 % the installation will fail, but can be restarted after you have 
 % fixed the permissions.
 
-%INSTALL_ROOT = "/proj/cmass/install.2/LINUXELF/"
 INSTALL_ROOT = "/usr/local/cm3/"
 %-- handy for installations that keep all M3 stuff together
 
@@ -97,6 +96,8 @@ readonly INSTALL_IMPLS = TRUE
 % If SYSTEM_LIBS{x} is not defined, the Modula-3 system will assume
 % that the library is not available.
 
+DB_ROOT=INSTALL_ROOT
+
 SYSTEM_LIBS = {
   "LIBC"       : [ "-ldl",   % dynamic loader support
 		   "-lm" ],
@@ -107,13 +108,14 @@ SYSTEM_LIBS = {
   "MOTIF"      : [ "-L/usr/X11R6/lib", "-lXm" ],
   "X11"        : [ "-L/usr/X11R6/lib", "-lXaw", "-lXmu", "-lXext",
                         "-lXt", "-lSM", "-lICE", "-lX11" ],
+%  "DB"         : [ "-Wl,-R" & DB_ROOT & "lib", "-L" & DB_ROOT & "lib", "-ldb" ],
   "TCP"        : [ ]
 }
 
 % SYSTEM_LIBORDER defines the order in which SYSTEM_LIBS should be
 % scanned by the linker.
 
-SYSTEM_LIBORDER = [ "OPENGL", "DECPEX", "MOTIF", "X11", "TCP", "ODBC",
+SYSTEM_LIBORDER = [ "DB", "OPENGL", "DECPEX", "MOTIF", "X11", "TCP", "ODBC",
                     "POSTGRES95", "FLEX-BISON", "LEX-YACC", "LIBC" ]
 
 %--------------------------------------------------------- Modula-3 backend ---
@@ -142,8 +144,10 @@ M3_BACKEND_MODE = "3"
 % is only called if your program or library explicitly includes C source
 % code, the system distributed by Critical Mass does not.
 
+c_includes = []
+
 proc compile_c (source, object, options, optimize, debug) is
-  local args = [ "-fPIC", options ]
+  local args = [ "-fPIC", c_includes, options ]
   if optimize  args += "-O"  end
   if debug     args += "-g"  end
   if M3_PROFILING args += "-pg" end
