@@ -55,7 +55,6 @@ TYPE
     locations       :  TextLocTbl.T;
     pkg_dirs        :  IntMapTbl.T;
     m3libs          :  IntM3LibsTbl.T;
-    m3libs_x        :  TextSeq.T;
     other_libs      :  IntM3LibsTbl.T;
     other_libs_x    :  TextSeq.T;
     compile_objects :  QVSeq.T;
