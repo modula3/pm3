@@ -273,7 +273,7 @@ end
 % PEX implements a Modula-3 interface to the PEX 3D graphics library.
 %   It is used by all graphical 3D applications
 % requires: X11R4 and a host PEX implementation
-if PLATFORM_SUPPORTS_PEX
+if PLATFORM_SUPPORTS_DECPEX
   BuildChunk ("PEX")
 end
 

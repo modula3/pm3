@@ -75,7 +75,8 @@ PROCEDURE GetText(
     EVAL Skip(s, skip);
     REPEAT
       len := GetUntil(s, chars, terminate, unget);
-      result := result & Text.FromChars(SUBARRAY(chars, 0, len));
+      result := result &
+        Text.FromChars(SUBARRAY(chars, 0, MIN(len, NUMBER(chars))));
     UNTIL len <= NUMBER(chars);
     RETURN result;
   END GetText;
