@@ -3,4 +3,7 @@ import("m3coco")
 
 coco_c("FortranPrototype")
 
+module("Parameter")
+table("Param", "Text","Parameter")
+
 program("f2i3")

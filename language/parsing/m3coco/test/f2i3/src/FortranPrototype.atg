@@ -21,7 +21,7 @@
 
 COMPILER FortranPrototype
 
-IMPORT IO;
+IMPORT IO, ParamTbl, TextList;
 
 CHARACTERS
   letter  = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -55,24 +55,43 @@ PRODUCTIONS
 
 FortranPrototype = Procedure .
 
-(* Unfortunately we have to parse comments,
-   and sometimes the parser will complain about strings it can't classify.
-   "(" | ")" | "," can't be integrated in  the definition of 'trash'
-   probably because e.g. "(" is used as special string somewhere.
-Comment = {"*" {id | number | trash | "(" | ")" | "," | "=" | "*"} newline} .
-*)
+Procedure
+(. VAR
+     params    : TextList.T := NIL;
+     paramInfo := NEW(ParamTbl.Default).init(10);
+     name      : TEXT;
+     rettype   := "";
+.)
+   = (SubroutineHead<name> | FunctionHead<name,rettype>)
+     Signature<params> newline
+     Declarations
+     TypeComments
+     (.
+       IO.Put("PROCEDURE "&name&" (");
+       params := TextList.ReverseD(params);
+       VAR p:=params;
+       BEGIN
+         WHILE p#NIL DO
+           IO.Put(p.head&": "&"; ");
+           p:=p.tail;
+         END;
+       END;
+       IO.Put(")"&rettype&"\n")
+     .)
+   .
 
-LineSep = newline .
+SubroutineHead<VAR name : TEXT;>
+   = "SUBROUTINE" Ident<name> .
 
-Procedure = (SubroutineHead | FunctionHead) Declarations TypeComments .
+FunctionHead<VAR name,rettype : TEXT;>
+   = Type<rettype> "FUNCTION" Ident<name> .
 
-SubroutineHead      (. VAR name,sig : TEXT; .)
-   = "SUBROUTINE" Ident<name> Signature<sig> LineSep
-	(. IO.Put("PROCEDURE "&name&sig&";\n") .) .
-
-FunctionHead        (. VAR name,sig,rettype : TEXT; .)
-   = Type<rettype> "FUNCTION" Ident<name> Signature<sig> LineSep
-	(. IO.Put("PROCEDURE "&name&sig&":"&rettype&";\n") .) .
+Signature<VAR params : TextList.T>   (. VAR formal:TEXT; .)
+   = "("
+       [Ident<formal>          (. params:=TextList.Cons(formal,params) .)
+       {"," Ident<formal>      (. params:=TextList.Cons(formal,params) .)
+       }]
+     ")" .
 
 Declarations                   (. VAR type,var : TEXT; .)
    = { (
@@ -86,7 +105,7 @@ Declarations                   (. VAR type,var : TEXT; .)
          {"," VarDecl<var>     (. IO.Put(var&type&";\n") .)
          }
        )
-       LineSep
+       newline
      } .
 
 VarDecl<VAR var:TEXT>          (. VAR name, dim : TEXT; typecons:=""; .)
@@ -101,13 +120,6 @@ ArrDim<VAR dim:TEXT>           (. VAR id : TEXT; .)
    = "*"                       (. dim:="" .)
    | Ident<id>                 (. dim:="[0.."&id&"-1] " .)
    .
-
-Signature<VAR sig:TEXT>        (. VAR formal:TEXT; .)
-   = "("                       (. sig:="(" .)
-       [Ident<formal>          (. sig:="("&formal .)
-       {"," Ident<formal>      (. sig:=sig&"; "&formal .)
-       }]                      (. sig:=sig&")" .)
-     ")" .
 
 Type<VAR type : TEXT;> = BuiltinType<type> .
 
@@ -125,7 +137,7 @@ TypeComments        (. VAR writeable :BOOLEAN; id:TEXT; .)
               (. writeable:=FALSE .)
           "(" ParamMode<writeable> | {"/" ParamMode<writeable>} ")"
               (. IO.Put(ARRAY BOOLEAN OF TEXT{"READONLY","VAR"}[writeable] & " " & id & "\n") .)
-     LineSep } .
+     newline } .
 
 ParamMode<VAR writeable:BOOLEAN>
    = "input"
@@ -134,13 +146,5 @@ ParamMode<VAR writeable:BOOLEAN>
    .
 
 Ident <VAR t:TEXT;> = id (. t := p.string() .).
-
-(*
-ProcedureBody = Assignment Trash .
-
-Assignment    = id "=" id .
-
-Trash         = {trash} .
-*)
 
 END FortranPrototype.
