@@ -43,8 +43,7 @@ end
 
 readonly proc SrcExport (nm) is
   local dest = PKG_INSTALL & SLship & PACKAGE & SLship & pkg_subdir()
-  local src_file = path_of(nm)
-  _install_file(src_file,dest,"0644","")
+  _install_file(nm,dest,"0644","")
 end
 
 readonly proc SrcdExport (nm) is
