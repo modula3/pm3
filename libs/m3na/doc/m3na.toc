@@ -1,0 +1,45 @@
+\contentsline {section}{\numberline {1}Project Architecture}{4}
+\contentsline {subsection}{\numberline {1.1}Team Structure}{4}
+\contentsline {subsection}{\numberline {1.2}Communications}{4}
+\contentsline {subsection}{\numberline {1.3}Work Breakdown Structure (WBS)}{4}
+\contentsline {section}{\numberline {2}Library Architecture}{5}
+\contentsline {subsection}{\numberline {2.1}Packaging}{5}
+\contentsline {subsection}{\numberline {2.2}Module Templates}{6}
+\contentsline {subsection}{\numberline {2.3}Group Structure}{6}
+\contentsline {subsection}{\numberline {2.4}Naming}{7}
+\contentsline {subsection}{\numberline {2.5}Arrays}{8}
+\contentsline {subsection}{\numberline {2.6}Matrices}{9}
+\contentsline {section}{\numberline {3}Concepts}{11}
+\contentsline {subsection}{\numberline {3.1}Overview}{11}
+\contentsline {subsection}{\numberline {3.2}Arithmetic Logic Unit (ALU)}{11}
+\contentsline {subsection}{\numberline {3.3}Floating Point Unit (FPU)}{12}
+\contentsline {subsection}{\numberline {3.4}32-bit vs 64-bit}{14}
+\contentsline {subsection}{\numberline {3.5}Timing}{14}
+\contentsline {subsection}{\numberline {3.6}Development Approach}{15}
+\contentsline {section}{\numberline {4}xUtils: Utilities}{17}
+\contentsline {section}{\numberline {5}xWordEx: Extensions to Word}{18}
+\contentsline {section}{\numberline {6}xInteger: Integers}{19}
+\contentsline {section}{\numberline {7}xReal32: 32-bit IEEE Reals}{24}
+\contentsline {section}{\numberline {8}xReal64: 64-bit IEEE Reals}{25}
+\contentsline {subsection}{\numberline {8.1}Types}{25}
+\contentsline {subsection}{\numberline {8.2}Constants}{25}
+\contentsline {subsection}{\numberline {8.3}Math.i3 Functions}{25}
+\contentsline {subsection}{\numberline {8.4}Other Functions}{25}
+\contentsline {subsection}{\numberline {8.5}Special Functions}{25}
+\contentsline {section}{\numberline {9}xCmplx: Complex Numbers}{33}
+\contentsline {section}{\numberline {10}xPoly: Polynomials}{38}
+\contentsline {section}{\numberline {11}xVect: Vectors}{44}
+\contentsline {section}{\numberline {12}xMat: Matrices}{45}
+\contentsline {section}{\numberline {13}xRoot: Roots of Functions}{46}
+\contentsline {subsection}{\numberline {13.1}Quadratics}{46}
+\contentsline {subsection}{\numberline {13.2}Nonlinear Functions}{46}
+\contentsline {section}{\numberline {14}xInterp: Interpolation}{50}
+\contentsline {section}{\numberline {15}xSLE: Simultaneous Linear Equations}{52}
+\contentsline {subsection}{\numberline {15.1}Tridiagonal Form}{52}
+\contentsline {section}{\numberline {16}xRand: Random Numbers}{53}
+\contentsline {subsection}{\numberline {16.1}Object Structure}{53}
+\contentsline {subsection}{\numberline {16.2}Deviate Generators}{53}
+\contentsline {section}{\numberline {17}xRGN01: Random Number Generators -- 01}{55}
+\contentsline {section}{\numberline {18}xRNG02: Random Number Generators -- 02}{57}
+\contentsline {section}{\numberline {19}xStat: Statistics}{63}
+\contentsline {section}{\numberline {20}xFFT: Fast Fourier Transforms}{65}
