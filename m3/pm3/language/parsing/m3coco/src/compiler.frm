@@ -4,7 +4,7 @@ MODULE -->Grammar EXPORTS Main ;
 
 IMPORT -->Grammar ;
 
-IMPORT Text, Rd, Wr, Fmt, Params, Stdio, FileRd, Process, Thread, Pathname ;
+IMPORT Text, Rd, Wr, Fmt, Params, Stdio, FileRd, Process, Thread (*, Pathname*);
 
 <* FATAL Rd.Failure, Wr.Failure, Thread.Alerted *>
 
@@ -30,33 +30,43 @@ VAR rd         : Rd.T ;
     e          : Err ;
     s          : -->Grammar.Scanner ;
     p          : -->Grammar.Parser ;
-    scanOnly   : BOOLEAN ;
+    scanOnly   := FALSE ;
     sourceFile : TEXT ;
     ss         : -->Grammar.ScanSymbol ;
+    useStdin   : BOOLEAN;
+    paramPos   : CARDINAL := 1;
 
 BEGIN
 
 (* check on correct parameter usage *)
 
-  IF ((Params.Count = 3) AND Text.Equal(Params.Get(1), "-scan")) THEN
-    scanOnly   := TRUE ;
-    sourceFile := Params.Get(2)
-  ELSIF (Params.Count = 2) THEN
-    scanOnly   := FALSE ;
-    sourceFile := Params.Get(1)
+  IF paramPos < Params.Count AND Text.Equal(Params.Get(paramPos), "-scan") THEN
+    scanOnly   := TRUE;
+    INC(paramPos);
+  END;
+
+  IF paramPos < Params.Count THEN
+    sourceFile := Params.Get(paramPos);
   ELSE
+    useStdin := TRUE;
+(*
     Wr.PutText(Stdio.stderr, "Usage: " & Pathname.Base(Params.Get(0))
                                        & " [-scan] source-file\n") ;
     Process.Exit(1)
-  END ;
+*)
+  END;
 
-  TRY
-    rd := FileRd.Open(sourceFile)
-  EXCEPT
+  IF useStdin THEN
+    rd := Stdio.stdin;
   ELSE
-    Wr.PutText(Stdio.stderr, "cannot open '" & sourceFile & "'\n") ;
-    Process.Exit(1)
-  END ;
+    TRY
+      rd := FileRd.Open(sourceFile)
+    EXCEPT
+    ELSE
+      Wr.PutText(Stdio.stderr, "cannot open '" & sourceFile & "'\n") ;
+      Process.Exit(1)
+    END;
+  END;
 
   e := NEW(Err) ;
   s := NEW(-->Grammar.Scanner).init(rd, e) ;
@@ -76,8 +86,8 @@ BEGIN
   ELSE
     p := NEW(-->Grammar.Parser).init(s, e) ;
 
-    Wr.PutText(Stdio.stdout, "Parsing...\n") ;
-    Wr.Flush(Stdio.stdout) ;
+    Wr.PutText(Stdio.stderr, "Parsing...\n") ;
+    Wr.Flush(Stdio.stderr) ;
 
     p.parse() ;
 
@@ -86,8 +96,10 @@ BEGIN
       Process.Exit(1)
     END ;
 
-    Wr.PutText(Stdio.stdout, "Parsed Correctly\n")
+    Wr.PutText(Stdio.stderr, "Parsed Correctly\n")
   END ;
 
-  Rd.Close(rd)
+  IF NOT useStdin THEN
+    Rd.Close(rd)
+  END;
 END -->Grammar.
