@@ -2101,7 +2101,8 @@ PROCEDURE Template(t: T; x: TEXT) RAISES {Error}=
     fn      := x & ".tmpl";
     full_fn := Pathname.Prefix(M3ID.ToText(t.includes[t.reg.ip-1].file.source_file)) & t.SL & fn;
   BEGIN
-    EVAL t.templates.put(M3ID.Add(fn), NEW(M3Libs.T, hidden := VISIBLE));
+    EVAL t.templates.put(M3ID.Add(fn), NEW(M3Libs.T, hidden := VISIBLE,
+                                           local := TRUE));
 
     M3Buf.PutText(t.tfile_args, "_import_template(\"" & fn & "\", \"" & 
       t.package & "\", \"" & PkgSubdir(t) & t.QRPCR);
@@ -3225,6 +3226,21 @@ PROCEDURE Setup(t: T) RAISES {Error}=
     ELSE
       RAISE Error("unknown naming convention: \"" & Fmt.Int(convention) & "\"." & t.CR);
     END;
+
+    val.kind := QValue.Kind.String;
+    val.int := M3ID.Add(t.OBJ_ext);
+    t.put(M3ID.Add("OBJ_ext"), val);
+    val.int := M3ID.Add(t.IO_ext);
+    t.put(M3ID.Add("IO_ext"), val);
+    val.int := M3ID.Add(t.MO_ext);
+    t.put(M3ID.Add("MO_ext"), val);
+    val.int := M3ID.Add(t.LIB_pre);
+    t.put(M3ID.Add("LIB_pre"), val);
+    val.int := M3ID.Add(t.LIB_ext);
+    t.put(M3ID.Add("LIB_ext"), val);
+    val.int := M3ID.Add(t.PGM_ext);
+    t.put(M3ID.Add("PGM_ext"), val);
+
 
     (* get all install and use directories *)
     t.PKG_USE       := GetIt("PKG_USE", "use directory");
