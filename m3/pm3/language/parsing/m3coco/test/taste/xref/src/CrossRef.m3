@@ -9,18 +9,15 @@ IMPORT Text, Wr, Fmt, Thread, IntList ;
 
 <* FATAL Wr.Failure, Thread.Alerted *>
 
-TYPE
-  Node = BRANDED OBJECT
-           text      : TEXT ;
-           leftTree  : Table ;
-           rightTree : Table ;
-           definedBy : CARDINAL ;
-           okay      : BOOLEAN ;
-           refList   : IntList.T
-         END ;
-
 REVEAL
-  Table = Node ;
+  Table = BRANDED OBJECT
+            text      : TEXT ;
+            leftTree  : Table ;
+            rightTree : Table ;
+            definedBy : CARDINAL ;
+            okay      : BOOLEAN ;
+            refList   : IntList.T
+          END ;
 
 PROCEDURE Create(VAR table : Table) =
 BEGIN

@@ -57,11 +57,11 @@ BEGIN
   CRA.MatchDFA(p, sn.name, sp, matchedSp) ;
   IF (matchedSp # CRT.noSym) THEN
     CRT.GetSym(matchedSp, sn1) ;
-    sn1.struct := CRT.classLitToken ;
+    sn1.struct := ORD(CRT.TokenKind.classLitToken) ;
     CRT.PutSym(matchedSp, sn1) ;
-    sn.struct := CRT.litToken
+    sn.struct := ORD(CRT.TokenKind.litToken) ;
   ELSE
-    sn.struct := CRT.classToken ;
+    sn.struct := ORD(CRT.TokenKind.classToken) ;
   END ;
   CRT.PutSym(sp, sn)
 END MatchLiteral ;
@@ -73,12 +73,12 @@ VAR
 BEGIN
   WHILE (gp > 0) DO
     CRT.GetNode(gp, gn) ;
-    IF ((gn.typ = CRT.char) OR (gn.typ = CRT.class)) THEN
+    IF ((gn.typ = CRT.NodeType.char) OR (gn.typ = CRT.NodeType.class)) THEN
       gn.p2 := CRT.contextTrans ;
       CRT.PutNode(gp, gn)
-    ELSIF ((gn.typ = CRT.opt) OR (gn.typ = CRT.iter)) THEN
+    ELSIF ((gn.typ = CRT.NodeType.opt) OR (gn.typ = CRT.NodeType.iter)) THEN
       SetCtx(gn.p1)
-    ELSIF (gn.typ = CRT.alt) THEN
+    ELSIF (gn.typ = CRT.NodeType.alt) THEN
       SetCtx(gn.p1) ;
       SetCtx(gn.p2)
     END ;
@@ -277,7 +277,7 @@ BEGIN
   END
 END Expect ;
 
-PROCEDURE ExpectWeak(p : Parser ; sym : Symbol ; follow : SymSetRange) =
+<*NOWARN*>PROCEDURE ExpectWeak(p : Parser ; sym : Symbol ; follow : SymSetRange) =
 BEGIN
   IF (p.next.sym = sym) THEN
     Get(p)
@@ -290,7 +290,7 @@ BEGIN
   END
 END ExpectWeak ;
 
-PROCEDURE WeakSeparator(p : Parser ; sym : Symbol ;
+<*NOWARN*>PROCEDURE WeakSeparator(p : Parser ; sym : Symbol ;
                         syFol, repFol : SymSetRange) : BOOLEAN =
 VAR
   s : SymbolSet ;
@@ -329,7 +329,7 @@ BEGIN
         set := CRT.Set{} ;
         c := CRT.NewClass(name, set)
       END ;
-      gL := CRT.NewNode(CRT.class, c, 0) ;
+      gL := CRT.NewNode(CRT.NodeType.class, c, 0) ;
       gR := gL
     ELSE (*string*)
       CRT.StrToGraph(name, gL, gR)
@@ -398,19 +398,19 @@ BEGIN
       undef := (sp = CRT.noSym) ;
       IF (undef) THEN
         IF (kind = ident) THEN  (*forward nt*)
-          sp := CRT.NewSym(CRT.nt, name, 0)
+          sp := CRT.NewSym(CRT.NodeType.nt, name, 0)
         ELSE  (*undefined string in production*)
-          sp := CRT.NewSym(CRT.t, name, p.line()) ;
+          sp := CRT.NewSym(CRT.NodeType.t, name, p.line()) ;
           MatchLiteral(p, sp)
         END
       END ;
       CRT.GetSym(sp, sn) ;
-      IF ((sn.typ # CRT.t) AND (sn.typ # CRT.nt)) THEN
+      IF ((sn.typ # CRT.NodeType.t) AND (sn.typ # CRT.NodeType.nt)) THEN
         p.error("this symbol kind not allowed in production")
       END ;
       IF (weak) THEN
-        IF (sn.typ = CRT.t) THEN
-          sn.typ := CRT.wt
+        IF (sn.typ = CRT.NodeType.t) THEN
+          sn.typ := CRT.NodeType.wt
         ELSE
           p.error("only terminals may be weak")
         END
@@ -455,7 +455,7 @@ BEGIN
       CRT.MakeIteration(gL, gR) ;
   | Symbol.sLbrDot =>
       ParseSemText(p, pos) ;
-      gL := CRT.NewNode(CRT.sem, 0, 0) ;
+      gL := CRT.NewNode(CRT.NodeType.sem, 0, 0) ;
       gR := gL ;
       CRT.GetNode(gL, gn) ;
       gn.pos := pos ;
@@ -463,11 +463,11 @@ BEGIN
   | Symbol.sANY =>
       Get(p) ;
       set := CRT.Set{0 .. CRT.maxTerminals} - CRT.Set{CRT.eofSy} ;
-      gL := CRT.NewNode(CRT.any, CRT.NewSet(set), 0) ;
+      gL := CRT.NewNode(CRT.NodeType.any, CRT.NewSet(set), 0) ;
       gR := gL ;
   | Symbol.sSYNC =>
       Get(p) ;
-      gL := CRT.NewNode(CRT.sync, 0, 0) ;
+      gL := CRT.NewNode(CRT.NodeType.sync, 0, 0) ;
       gR := gL ;
   ELSE SynError(p, "unexpected '" & SymbolName[p.next.sym] & "' in Factor") ;
   END ;
@@ -489,7 +489,7 @@ BEGIN
         (p.next.sym = Symbol.Bar) OR
         (p.next.sym = Symbol.Rsqu) OR
         (p.next.sym = Symbol.Rcurl) THEN
-    gL := CRT.NewNode(CRT.eps, 0, 0) ;
+    gL := CRT.NewNode(CRT.NodeType.eps, 0, 0) ;
     gR := gL ;
   ELSE SynError(p, "unexpected '" & SymbolName[p.next.sym] & "' in Term") ;
   END ;
@@ -630,13 +630,13 @@ BEGIN
   Expect(p, Symbol.Dot) ;
 END ParseNameDecl ;
 
-PROCEDURE ParseTokenDecl(p : Parser ; typ: INTEGER) =
+PROCEDURE ParseTokenDecl(p : Parser ; typ: CRT.NodeType) =
   VAR
-    kind:       INTEGER;
-    name:       TEXT;
-    pos:        CRT.Position;
-    sp, gL, gR: INTEGER;
-    sn:         CRT.SymbolNode;
+   kind:       INTEGER;
+   name:       TEXT;
+   pos:        CRT.Position;
+   sp, gL, gR: INTEGER;
+   sn:         CRT.SymbolNode;
 BEGIN
   ParseSymbol(p, name, kind) ;
   IF (CRT.FindSym(name) # CRT.noSym) THEN
@@ -644,7 +644,7 @@ BEGIN
   ELSE
     sp := CRT.NewSym(typ, name, p.line()) ;
     CRT.GetSym(sp, sn) ;
-    sn.struct := CRT.classToken ;
+    sn.struct := ORD(CRT.TokenKind.classToken) ;
     CRT.PutSym(sp, sn)
   END ;
   WHILE (NOT ( (p.next.sym IN SymSet[5]))) DO
@@ -670,7 +670,7 @@ BEGIN
   END ;
   IF (p.next.sym = Symbol.sLbrDot) THEN
     ParseSemText(p, pos) ;
-    IF (typ = CRT.t) THEN
+    IF (typ = CRT.NodeType.t) THEN
       p.error("semantic action not allowed here")
     END ;
     CRT.GetSym(sp, sn) ;
@@ -751,7 +751,7 @@ BEGIN
       Get(p) ;
       WHILE (p.next.sym = Symbol.ident) OR
             (p.next.sym = Symbol.string) DO
-        ParseTokenDecl(p, CRT.t) ;
+        ParseTokenDecl(p, CRT.NodeType.t) ;
       END ;
   | Symbol.sNAMES =>
       Get(p) ;
@@ -762,7 +762,7 @@ BEGIN
       Get(p) ;
       WHILE (p.next.sym = Symbol.ident) OR
             (p.next.sym = Symbol.string) DO
-        ParseTokenDecl(p, CRT.pr) ;
+        ParseTokenDecl(p, CRT.NodeType.pr) ;
       END ;
   | Symbol.sCOMMENTS =>
       Get(p) ;
@@ -811,7 +811,7 @@ PROCEDURE ParseCR(p : Parser) =
 BEGIN
   Expect(p, Symbol.sCOMPILER) ;
   gramLine := p.line() ;
-  eofSy := CRT.NewSym(CRT.t, "EOF", 0) ;
+  eofSy := CRT.NewSym(CRT.NodeType.t, "EOF", 0) ;
   CRT.genScanner := TRUE ;
   CRT.ignoreCase := FALSE ;
   ok := TRUE ;
@@ -844,11 +844,11 @@ BEGIN
     sp := CRT.FindSym(name) ;
     undef := (sp = CRT.noSym) ;
     IF (undef) THEN
-      sp := CRT.NewSym(CRT.nt, name, p.line()) ;
+      sp := CRT.NewSym(CRT.NodeType.nt, name, p.line()) ;
       CRT.GetSym(sp, sn)
     ELSE
       CRT.GetSym(sp, sn) ;
-      IF (sn.typ = CRT.nt) THEN
+      IF (sn.typ = CRT.NodeType.nt) THEN
         IF (sn.struct > 0) THEN
           p.error("'" & name & "' declared twice")
         END
@@ -888,7 +888,7 @@ BEGIN
     IF (sn.attrPos.beg >= 0) THEN
       p.error("grammar symbol must not have attributes")
     END ;
-    CRT.root := CRT.NewNode(CRT.nt, sp, gramLine) ;
+    CRT.root := CRT.NewNode(CRT.NodeType.nt, sp, gramLine) ;
   END ;
   Expect(p, Symbol.sEND) ;
   ParseIdent(p, name) ;
@@ -896,7 +896,7 @@ BEGIN
     p.error("name does not match name in heading")
   END ;
   Expect(p, Symbol.Dot) ;
-  unknownSy := CRT.NewSym(CRT.t, "*Undef*", 0) ;
+  unknownSy := CRT.NewSym(CRT.NodeType.t, "*Undef*", 0) ;
 END ParseCR ;
 
 

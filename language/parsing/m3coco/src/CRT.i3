@@ -13,29 +13,37 @@ CONST
   normTrans    =    0; (* DFA transition during normal scanning *)
   contextTrans =    1; (* DFA transition during scanning of right context *)
 
+TYPE
   (* node types *)
-  unknown =  0;
-  t     =  1; (* terminal symbol *)
-  pr    =  2; (* pragma *)
-  nt    =  3; (* nonterminal symbol *)
-  class =  4; (* character class *)
-  char  =  5; (* single character *)
-  wt    =  6; (* weak terminal symbol *)
-  any   =  7; (* symbol ANY *)
-  eps   =  8; (* empty alternative *)
-  sync  =  9; (* symbol SYNC *)
-  sem   = 10; (* semantic action *)
-  alt   = 11; (* alternative *)
-  iter  = 12; (* iteration *)
-  opt   = 13; (* option *)
+  NodeType = {
+    uninitialized,
+    unknown,
+    t,      (* terminal symbol *)
+    pr,     (* pragma *)
+    nt,     (* nonterminal symbol *)
+    class,  (* character class *)
+    char,   (* single character *)
+    wt,     (* weak terminal symbol *)
+    any,    (* symbol ANY *)
+    eps,    (* empty alternative *)
+    sync,   (* symbol SYNC *)
+    sem,    (* semantic action *)
+    alt,    (* alternative *)
+    iter,   (* iteration *)
+    opt     (* option *)
+  };
 
+CONST
   noSym = -1;
   eofSy =  0;
 
+TYPE
   (* token kinds *)
-  classToken    = 0;  (* token class *)
-  litToken      = 1;  (* literal (e.g. keyword) not recognized by DFA *)
-  classLitToken = 2;  (* token class that can also match a literal *)
+  TokenKind = {
+    classToken,      (* token class *)
+    litToken,        (* literal (e.g. keyword) not recognized by DFA *)
+    classLitToken    (* token class that can also match a literal *)
+  };
 
 TYPE
   Position   = RECORD  (* position of stretch of source text *)
@@ -45,7 +53,7 @@ TYPE
   END;
 
   SymbolNode = RECORD    (* node of symbol table *)
-    typ:       INTEGER;  (* nt, t, pr, unknown *)
+    typ:       NodeType; (* nt, t, pr, unknown *)
     name,                (* symbol name *)
     constant:  TEXT;     (* named constant of symbol *)
     struct:    INTEGER;  (* typ = nt: index of first node of syntax graph *)
@@ -58,7 +66,7 @@ TYPE
   END;
 
   GraphNode = RECORD     (* node of top-down graph *)
-    typ : INTEGER;       (* nt,sts,wts,char,class,any,eps,sem,sync,alt,
+    typ : NodeType;      (* nt,sts,wts,char,class,any,eps,sem,sync,alt,
                             iter,opt*)
     next: INTEGER;       (* to successor node *)
                          (* next < 0: to successor of enclosing structure *)
@@ -104,7 +112,7 @@ VAR
 PROCEDURE NewName (n: TEXT; s: TEXT);
 (* Inserts the pair (n, s) in the token symbol name table *)
 
-PROCEDURE NewSym (t: INTEGER; n: TEXT; line: INTEGER): INTEGER;
+PROCEDURE NewSym (t: NodeType; n: TEXT; line: INTEGER): INTEGER;
 (* Generates a new symbol with type t and name n and returns its index *)
 
 PROCEDURE GetSym (sp: INTEGER; VAR sn: SymbolNode);
@@ -155,7 +163,7 @@ PROCEDURE GetClassName (n: INTEGER; VAR name: TEXT);
 PROCEDURE GetSet (nr: INTEGER; VAR set: Set);
 (* Gives access to precomputed symbol sets *)
 
-PROCEDURE NewNode (typ, p1, line: INTEGER): INTEGER;
+PROCEDURE NewNode (typ: NodeType; p1, line: INTEGER): INTEGER;
 (* Generates a new graph node with typ, p1, and source line number
    line and returns its index. *)
 

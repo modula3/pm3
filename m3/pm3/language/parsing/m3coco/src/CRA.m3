@@ -29,7 +29,7 @@ TYPE
     ctx:         BOOLEAN; (* TRUE: state reached by contextTrans *)
   END;
   ActionNode = RECORD     (* action of finite automaton *)
-    typ:    INTEGER;      (* type of action symbol: char, class *)
+    typ:    CRT.NodeType; (* type of action symbol: char, class *)
     sym:    INTEGER;      (* action symbol *)
     tc:     INTEGER;      (* transition code: normTrans, contextTrans *)
     target: Target;       (* states after transition with input symbol *)
@@ -155,10 +155,10 @@ END PutRange ;
 
 (* PrintSymbol          Print a symbol for tracing
 -------------------------------------------------------------------------*)
-PROCEDURE PrintSymbol(wr : Wr.T ; typ, val, width: INTEGER) =
+PROCEDURE PrintSymbol(wr : Wr.T ; typ: CRT.NodeType; val, width: INTEGER) =
 VAR name : TEXT ;
 BEGIN
-  IF (typ = CRT.class) THEN
+  IF (typ = CRT.NodeType.class) THEN
     CRT.GetClassName(val, name) ;
   ELSE
     name := CharConst(VAL(val, CHAR))
@@ -282,9 +282,9 @@ PROCEDURE TheAction (state: State; ch: CHAR): Action =
   BEGIN
     a := state.firstAction;
     WHILE a # NIL DO
-      IF a^.typ = CRT.char THEN
+      IF a^.typ = CRT.NodeType.char THEN
         IF VAL( ORD(ch),INTEGER) = a^.sym THEN RETURN a END
-      ELSIF a^.typ = CRT.class THEN
+      ELSIF a^.typ = CRT.NodeType.class THEN
         CRT.GetClass(a^.sym, set);
         IF (ORD(ch) IN set) THEN RETURN a END
       END;
@@ -380,9 +380,9 @@ PROCEDURE NewComment (p : CR.Parser ; from, to: INTEGER; nested: BOOLEAN) =
       i := 0;
       WHILE gp # 0 DO
         CRT.GetNode(gp, gn);
-        IF gn.typ = CRT.char THEN
+        IF gn.typ = CRT.NodeType.char THEN
           IF i < 2 THEN s[i] := VAL(gn.p1,CHAR) END; INC(i)
-        ELSIF gn.typ = CRT.class THEN
+        ELSIF gn.typ = CRT.NodeType.class THEN
           CRT.GetClass(gn.p1, set);
           n := -1 ;
           FOR e := 0 TO CRT.maxTerminals DO
@@ -437,7 +437,7 @@ PROCEDURE DeleteActionList (action: Action) =
 -------------------------------------------------------------------------*)
 PROCEDURE MakeSet (p: Action; VAR set: CRT.Set) =
   BEGIN
-    IF p^.typ = CRT.class THEN
+    IF p^.typ = CRT.NodeType.class THEN
     CRT.GetClass(p^.sym, set)
     ELSE set := CRT.Set{p^.sym}
     END
@@ -456,11 +456,11 @@ PROCEDURE ChangeAction (a: Action; READONLY set: CRT.Set) =
         INC(count)
       END
     END ;
-    IF count = 1 THEN a^.typ := CRT.char; a^.sym := nr
+    IF count = 1 THEN a^.typ := CRT.NodeType.char; a^.sym := nr
     ELSE
       nr := CRT.ClassWithSet(set);
       IF nr < 0 THEN nr := CRT.NewClass("##", set) END;
-      a^.typ := CRT.class; a^.sym := nr
+      a^.typ := CRT.NodeType.class; a^.sym := nr
     END
   END ChangeAction;
 
@@ -598,11 +598,11 @@ PROCEDURE ConvertToStates (p : CR.Parser ; gp, sp: INTEGER) =
       IF gp = 0 THEN RETURN END;
       CRT.GetNode(gp, gn);
       CASE gn.typ OF
-        CRT.class, CRT.char=>
+        CRT.NodeType.class, CRT.NodeType.char=>
           NewTransition(p, from, gn, TheState(ABS(gn.next)))
-      | CRT.alt=>
+      | CRT.NodeType.alt=>
           Step(from, gn.p1); Step(from, gn.p2)
-      | CRT.opt, CRT.iter=>
+      | CRT.NodeType.opt, CRT.NodeType.iter=>
           Step(from, ABS(gn.next)); Step(from, gn.p1)
       ELSE
         Wr.PutText(Stdio.stderr, "fatal error in CRA.Step()!\n") ;
@@ -624,13 +624,13 @@ PROCEDURE ConvertToStates (p : CR.Parser ; gp, sp: INTEGER) =
       IF CRT.DelGraph(p) THEN state[snr].endOf := sp END;
       (*snr is end state*)
       CASE gn.typ OF
-        CRT.class, CRT.char=>
+        CRT.NodeType.class, CRT.NodeType.char=>
           FindTrans(ABS(gn.next), rootState - 1);
-      | CRT.opt=>
+      | CRT.NodeType.opt=>
           FindTrans(ABS(gn.next), rootState - 1); FindTrans(gn.p1, snr)
-      | CRT.iter=>
+      | CRT.NodeType.iter=>
           FindTrans(ABS(gn.next), snr); FindTrans(gn.p1, snr)
-      | CRT.alt=>
+      | CRT.NodeType.alt=>
           FindTrans(gn.p1, snr); FindTrans(gn.p2, snr)
       ELSE
         Wr.PutText(Stdio.stderr, "fatal error in CRA.FindTrans()!\n") ;
@@ -674,9 +674,9 @@ PROCEDURE MatchesDFA (str: ARRAY OF CHAR; VAR matchedSp: INTEGER): BOOLEAN;
       a := state[s].firstAction; ch := str[p];
       WHILE a # NIL DO
         CASE a^.typ OF
-          CRT.char:
+          CRT.NodeType.char:
             equal := VAL(INTEGER, ORD(ch)) = a^.sym
-        | CRT.class:
+        | CRT.NodeType.class:
             CRT.GetClass(a^.sym, set); equal := (ORD(ch) IN set)
         END;
         IF equal THEN RETURN Match(p + 1, a^.target^.state) END;
@@ -708,7 +708,7 @@ PROCEDURE MatchesDFA (str: ARRAY OF CHAR; VAR matchedSp: INTEGER): BOOLEAN;
       END;
       WHILE i < len DO (* make new DFA for str[i..len-1] *)
         to := NewState();
-        gn.typ := CRT.char; gn.p1 := ORD(Text.GetChar(str, i)); gn.p2 := CRT.normTrans;
+        gn.typ := CRT.NodeType.char; gn.p1 := ORD(Text.GetChar(str, i)); gn.p2 := CRT.normTrans;
         NewTransition(p, s, gn, to); (* PDT Tue  01-11-94 *)
         s := to; INC(i)
       END;
@@ -772,14 +772,14 @@ PROCEDURE MakeUnique (s: INTEGER; VAR changed: BOOLEAN) =
     VAR
       seta, setb: CRT.Set;
     BEGIN
-      IF a^.typ = CRT.char THEN
-        IF b^.typ = CRT.char
+      IF a^.typ = CRT.NodeType.char THEN
+        IF b^.typ = CRT.NodeType.char
           THEN RETURN a^.sym = b^.sym
           ELSE CRT.GetClass(b^.sym, setb); RETURN (a^.sym IN setb)
         END
       ELSE
         CRT.GetClass(a^.sym, seta);
-        IF b^.typ = CRT.char
+        IF b^.typ = CRT.NodeType.char
           THEN RETURN (b^.sym IN seta)
           ELSE CRT.GetClass(b^.sym, setb);
                RETURN (NOT ((seta * setb) = CRT.Set{}))
@@ -1047,7 +1047,7 @@ BEGIN
   k := 0 ;
   WHILE (i <= CRT.maxT) DO
     CRT.GetSym(i, sn) ;
-    IF (sn.struct = CRT.litToken) THEN
+    IF (VAL(sn.struct,CRT.TokenKind) = CRT.TokenKind.litToken) THEN
       width := MAX(width, Text.Length(sn.name) - 2) ;
       j := k - 1 ;
       WHILE ((j >= 0) AND (Text.Compare(sn.name, key[j]) < 0)) DO
@@ -1132,7 +1132,7 @@ BEGIN
     ELSE
       Wr.PutText(wr, "         ELSIF ")
     END ;
-    IF (action.typ = CRT.char) THEN
+    IF (action.typ = CRT.NodeType.char) THEN
       Wr.PutText(wr, "(s.ch = " & CharConst(VAL(action.sym, CHAR)) & ")")
     ELSE
       CRT.GetClass(action.sym, set) ;
@@ -1165,7 +1165,7 @@ BEGIN
       Wr.PutText(wr, "           NextCh(s) ;\n") ;
       Wr.PutText(wr, "           ")
     END ;
-    IF (sn.struct = CRT.classLitToken) THEN
+    IF (VAL(sn.struct,CRT.TokenKind) = CRT.TokenKind.classLitToken) THEN
       Wr.PutText(wr, "RETURN CheckLiteral(") ;
       Wr.PutText(wr, SymbolName(endOf)) ;
       Wr.PutText(wr, ")\n")
@@ -1204,7 +1204,7 @@ VAR startTab : ARRAY [0 .. 255] OF INTEGER ;
     action := state[rootState].firstAction ;
     WHILE (action # NIL) DO
       targetState := action.target.state ;
-      IF action.typ = CRT.char THEN
+      IF action.typ = CRT.NodeType.char THEN
         startTab[action.sym] := targetState
       ELSE
         CRT.GetClass(action.sym, class) ;

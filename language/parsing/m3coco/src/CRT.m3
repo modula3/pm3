@@ -6,7 +6,7 @@ MODULE CRT;
   (1) handles a symbol table for terminals, pragmas and nonterminals
   (2) handles a table for character classes (for scanner generation)
   (3) handles a top-down graph for productions
-  (4) computes various sets (start symbols, followers, any sets)
+  (4) computes various sets (start symbols, followers, NodeType.any sets)
   (5) contains procedures for grammar tests
 
   --------------------------------------------------------------------*)
@@ -31,8 +31,8 @@ TYPE
     nts: Set;        (* nts whose start set is to be included in ts *)
   END;
   CharClass   = RECORD
-    name: TEXT;      (* class name *)
-    set:  INTEGER    (* ptr to set representing the class *)
+    name: TEXT;      (* NodeType.class name *)
+    set:  INTEGER    (* ptr to set representing the NodeType.class *)
   END;
   SymbolTable = ARRAY [0 .. maxSymbols] OF SymbolNode;
   ClassTable  = ARRAY [0 .. maxClasses] OF CharClass;
@@ -131,16 +131,16 @@ PROCEDURE NewName (n: TEXT; s: TEXT) =
 
 (* NewSym               Generate a new symbol and return its index
 ----------------------------------------------------------------------*)
-PROCEDURE NewSym (typ: INTEGER; name: TEXT; line: INTEGER): INTEGER =
+PROCEDURE NewSym (typ: NodeType; name: TEXT; line: INTEGER): INTEGER =
   VAR
     i: INTEGER;
   BEGIN
     IF (maxT + 1) = firstNt THEN Restriction(2, maxSymbols)
     ELSE
       CASE typ OF
-        t=>  INC(maxT); i := maxT;
-      | pr=> DEC(maxP); DEC(firstNt); DEC(lastNt); i := maxP;
-      | nt, unknown=> DEC(firstNt); i := firstNt;
+        NodeType.t=>  INC(maxT); i := maxT;
+      | NodeType.pr=> DEC(maxP); DEC(firstNt); DEC(lastNt); i := maxP;
+      | NodeType.nt, NodeType.unknown=> DEC(firstNt); i := firstNt;
       ELSE
         Restriction(-1, 0)
       END;
@@ -219,7 +219,7 @@ PROCEDURE PrintSet (wr: Wr.T; VAR s: Set; indent: INTEGER) =
 (* NewSet               Stores s as a new set and return its index
 ----------------------------------------------------------------------*)
 PROCEDURE NewSet (READONLY s: Set): INTEGER =
-(*any-set computation requires not to search if s is already in set*)
+(*NodeType.any-set computation requires not to search if s is already in set*)
   BEGIN
     INC(maxSet); IF maxSet > maxSetNr THEN Restriction(3, maxSetNr) END;
     set[maxSet] := s; RETURN maxSet
@@ -241,7 +241,7 @@ PROCEDURE CompFirstSet (gp: INTEGER; VAR fs: Set) =
       WHILE (gp # 0) AND (NOT (gp IN visited)) DO
         GetNode(gp, gn); visited := visited + MarkList{gp} ;
         CASE gn.typ OF
-          nt=>
+          NodeType.nt=>
             IF first[gn.p1 - firstNt].ready THEN
               fs := fs + first[gn.p1 - firstNt].ts ;
             ELSE
@@ -249,18 +249,18 @@ PROCEDURE CompFirstSet (gp: INTEGER; VAR fs: Set) =
               CompFirst(sn.struct, s);
               fs := fs + s ;
             END;
-        | t, wt=>
+        | NodeType.t, NodeType.wt=>
             fs := fs + Set{gn.p1}
-        | any=>
+        | NodeType.any=>
             fs := fs + set[gn.p1]
-        | alt, iter, opt=>
+        | NodeType.alt, NodeType.iter, NodeType.opt=>
             CompFirst(gn.p1, s);
             fs := fs + s ;
-            IF gn.typ = alt THEN
+            IF gn.typ = NodeType.alt THEN
               CompFirst(gn.p2, s);
               fs := fs + s
             END
-        ELSE (* eps, sem, sync, ind: nothing *)
+        ELSE (* NodeType.eps, NodeType.sem, NodeType.sync, ind: nothing *)
         END;
         IF NOT  DelNode(gn) THEN RETURN END;
         gp := ABS(gn.next)
@@ -319,15 +319,15 @@ PROCEDURE CompFollowSets() =
       WHILE (gp > 0) AND (NOT (gp IN visited)) DO
         GetNode(gp, gn);
         visited := visited + MarkList{gp} ;
-        IF gn.typ = nt THEN
+        IF gn.typ = NodeType.nt THEN
           CompFirstSet(ABS(gn.next), s);
           follow[gn.p1 - firstNt].ts := follow[gn.p1 - firstNt].ts + s ;
           IF DelGraph(ABS(gn.next)) THEN
             follow[gn.p1 - firstNt].nts := follow[gn.p1 - firstNt].nts
                                                          + Set{curSy - firstNt}
           END
-        ELSIF (gn.typ=opt) OR (gn.typ=iter) THEN CompFol(gn.p1)
-        ELSIF gn.typ = alt THEN CompFol(gn.p1); CompFol(gn.p2)
+        ELSIF (gn.typ=NodeType.opt) OR (gn.typ=NodeType.iter) THEN CompFol(gn.p1)
+        ELSIF gn.typ = NodeType.alt THEN CompFol(gn.p1); CompFol(gn.p2)
         END;
         gp := gn.next
       END
@@ -352,7 +352,7 @@ PROCEDURE CompFollowSets() =
 
   BEGIN (* GetFollowSets *)
     curSy := firstNt;
-    WHILE curSy <= (lastNt + 1) DO (* also for dummy root nt*)
+    WHILE curSy <= (lastNt + 1) DO (* also for dummy root NodeType.nt*)
       follow[curSy - firstNt].ts := Set{} ;
       follow[curSy - firstNt].nts := Set{} ;
       INC(curSy)
@@ -372,7 +372,7 @@ PROCEDURE CompFollowSets() =
     END;
   END CompFollowSets;
 
-(* CompAnySets          Compute all any-sets
+(* CompAnySets          Compute all NodeType.any-sets
 ----------------------------------------------------------------------*)
 PROCEDURE CompAnySets() =
   VAR
@@ -385,11 +385,11 @@ PROCEDURE CompAnySets() =
     BEGIN
       IF gp <= 0 THEN RETURN FALSE END;
       GetNode(gp, gn);
-      IF (gn.typ = any) THEN a := gn; RETURN TRUE
+      IF (gn.typ = NodeType.any) THEN a := gn; RETURN TRUE
       ELSE
-        RETURN ((gn.typ = alt) AND (LeadingAny(gn.p1, a)
+        RETURN ((gn.typ = NodeType.alt) AND (LeadingAny(gn.p1, a)
                OR LeadingAny(gn.p2, a)))
-               OR (((gn.typ=opt) OR (gn.typ=iter)) AND LeadingAny(gn.p1, a))
+               OR (((gn.typ=NodeType.opt) OR (gn.typ=NodeType.iter)) AND LeadingAny(gn.p1, a))
                OR (DelNode(gn) AND LeadingAny(gn.next, a))
       END
     END LeadingAny;
@@ -402,13 +402,13 @@ PROCEDURE CompAnySets() =
     BEGIN
       WHILE gp > 0 DO
         GetNode(gp, gn);
-        IF (gn.typ=opt) OR (gn.typ=iter) THEN
+        IF (gn.typ=NodeType.opt) OR (gn.typ=NodeType.iter) THEN
           FindAS(gn.p1);
           IF LeadingAny(gn.p1, a) THEN
             CompExpected(ABS(gn.next), curSy, s1);
             set[a.p1] := set[a.p1] - s1 ;
           END
-        ELSIF gn.typ = alt THEN
+        ELSIF gn.typ = NodeType.alt THEN
           p := gp; s1 := Set{} ;
           WHILE p # 0 DO
             GetNode(p, gn2); FindAS(gn2.p1);
@@ -435,7 +435,7 @@ PROCEDURE CompAnySets() =
     END
   END CompAnySets;
 
-(* CompSyncSets         Compute follow symbols of sync-nodes
+(* CompSyncSets         Compute follow symbols of NodeType.sync-nodes
 ----------------------------------------------------------------------*)
 PROCEDURE CompSyncSets() =
   VAR
@@ -451,13 +451,13 @@ PROCEDURE CompSyncSets() =
       WHILE (gp > 0) AND NOT (gp IN visited) DO
         GetNode(gp, gn);
         visited := visited + MarkList{gp} ;
-        IF gn.typ = sync THEN
+        IF gn.typ = NodeType.sync THEN
           CompExpected(ABS(gn.next), curSy, s);
           s := s + Set{eofSy} ;
           set[0] := set[0] + s ;
           gn.p1 := NewSet(s); PutNode(gp, gn)
-        ELSIF gn.typ = alt THEN CompSync(gn.p1); CompSync(gn.p2)
-        ELSIF (gn.typ=opt) OR (gn.typ=iter) THEN CompSync(gn.p1)
+        ELSIF gn.typ = NodeType.alt THEN CompSync(gn.p1); CompSync(gn.p2)
+        ELSIF (gn.typ=NodeType.opt) OR (gn.typ=NodeType.iter) THEN CompSync(gn.p1)
         END;
         gp := gn.next
       END
@@ -505,7 +505,7 @@ PROCEDURE CompDeletableSymbols(wr : Wr.T) =
     Wr.PutChar(wr, '\n');
   END CompDeletableSymbols;
 
-(* CompSymbolSets       Get first-sets, follow-sets, and sync-set
+(* CompSymbolSets       Get first-sets, follow-sets, and NodeType.sync-set
 ----------------------------------------------------------------------*)
 PROCEDURE CompSymbolSets(wr : Wr.T) =
   VAR
@@ -594,10 +594,10 @@ PROCEDURE PrintSymbolTable(wr : Wr.T) =
         END;
       END;
       CASE (st^[i].typ) OF
-        unknown => Wr.PutText(wr, " unknown")
-      | t       => Wr.PutText(wr, " t      ")
-      | pr      => Wr.PutText(wr, " pr     ")
-      | nt      => Wr.PutText(wr, " nt     ")
+        NodeType.unknown => Wr.PutText(wr, " NodeType.unknown")
+      | NodeType.t       => Wr.PutText(wr, " NodeType.t      ")
+      | NodeType.pr      => Wr.PutText(wr, " NodeType.pr     ")
+      | NodeType.nt      => Wr.PutText(wr, " NodeType.nt     ")
       ELSE
         Wr.PutText(wr, " ???????")
       END ;
@@ -611,7 +611,7 @@ PROCEDURE PrintSymbolTable(wr : Wr.T) =
     Wr.PutText(wr, "\n\n")
   END PrintSymbolTable;
 
-(* NewClass             Define a new character class
+(* NewClass             Define a new character NodeType.class
 ----------------------------------------------------------------------*)
 PROCEDURE NewClass (name: TEXT; READONLY set: Set): INTEGER =
   BEGIN
@@ -623,7 +623,7 @@ PROCEDURE NewClass (name: TEXT; READONLY set: Set): INTEGER =
     RETURN maxC
   END NewClass;
 
-(* ClassWithName        Return index of class with name n
+(* ClassWithName        Return index of NodeType.class with name n
 ----------------------------------------------------------------------*)
 PROCEDURE ClassWithName (n: TEXT): INTEGER =
   VAR
@@ -636,7 +636,7 @@ PROCEDURE ClassWithName (n: TEXT): INTEGER =
     RETURN i
   END ClassWithName;
 
-(* ClassWithSet        Return index of class with the specified set
+(* ClassWithSet        Return index of NodeType.class with the specified set
 ----------------------------------------------------------------------*)
 PROCEDURE ClassWithSet (READONLY s: Set): INTEGER =
   VAR
@@ -647,14 +647,14 @@ PROCEDURE ClassWithSet (READONLY s: Set): INTEGER =
     RETURN i
   END ClassWithSet;
 
-(* GetClass             Return character class n
+(* GetClass             Return character NodeType.class n
 ----------------------------------------------------------------------*)
 PROCEDURE GetClass (n: INTEGER; VAR s: Set) =
   BEGIN
     GetSet(chClass[n].set, s);
   END GetClass;
 
-(* GetClassName         Get the name of class n
+(* GetClassName         Get the name of NodeType.class n
 ----------------------------------------------------------------------*)
 PROCEDURE GetClassName (n: INTEGER; VAR name: TEXT) =
   BEGIN
@@ -697,7 +697,7 @@ PROCEDURE XRef(wr : Wr.T) =
     i := 1;
     WHILE i <= nNodes DO (* for all graph nodes *)
       GetNode(i, gn);
-      IF (gn.typ = t) OR (gn.typ = wt) OR (gn.typ = nt) THEN
+      IF (gn.typ = NodeType.t) OR (gn.typ = NodeType.wt) OR (gn.typ = NodeType.nt) THEN
         l := NEW(ListPtr) ;
         l^.next := xList[gn.p1].lptr; l^.line := gn.line;
         xList[gn.p1].lptr := l
@@ -752,7 +752,7 @@ PROCEDURE XRef(wr : Wr.T) =
 
 (* NewNode              Generate a new graph node and return its index gp
 ----------------------------------------------------------------------*)
-PROCEDURE NewNode (typ, p1, line: INTEGER): INTEGER =
+PROCEDURE NewNode (typ: NodeType; p1, line: INTEGER): INTEGER =
   BEGIN
     INC(nNodes); IF nNodes > maxNodes THEN Restriction(1, maxNodes) END;
     gn^[nNodes].typ     := typ;    gn^[nNodes].next     := 0;
@@ -780,7 +780,7 @@ PROCEDURE ConcatAlt (VAR gL1, gR1: INTEGER; gL2, gR2: INTEGER) =
   VAR
     p: INTEGER;
   BEGIN
-    gL2 := NewNode(alt, gL2, 0); p := gL1;
+    gL2 := NewNode(NodeType.alt, gL2, 0); p := gL1;
     WHILE gn^[p].p2 # 0 DO p := gn^[p].p2 END;
     gn^[p].p2 := gL2; p := gR1;
     WHILE gn^[p].next # 0 DO p := gn^[p].next END;
@@ -800,11 +800,11 @@ PROCEDURE ConcatSeq (<*UNUSED*> VAR gL1 : INTEGER; VAR gR1: INTEGER; gL2, gR2: I
     gR1 := gR2
   END ConcatSeq;
 
-(* MakeFirstAlt         Generate alt-node with (gL,gR) as only alternative
+(* MakeFirstAlt         Generate NodeType.alt-node with (gL,gR) as only alternative
 ----------------------------------------------------------------------*)
 PROCEDURE MakeFirstAlt (VAR gL, gR: INTEGER) =
   BEGIN
-    gL := NewNode(alt, gL, 0); gn^[gL].next := gR; gR := gL
+    gL := NewNode(NodeType.alt, gL, 0); gn^[gL].next := gR; gR := gL
   END MakeFirstAlt;
 
 (* MakeIteration        Enclose (gL, gR) into iteration node
@@ -813,7 +813,7 @@ PROCEDURE MakeIteration (VAR gL, gR: INTEGER) =
   VAR
     p, q: INTEGER;
   BEGIN
-    gL := NewNode(iter, gL, 0); p := gR; gR := gL;
+    gL := NewNode(NodeType.iter, gL, 0); p := gR; gR := gL;
     WHILE p # 0 DO
       q := gn^[p].next; gn^[p].next := - gL; p := q
     END
@@ -823,7 +823,7 @@ PROCEDURE MakeIteration (VAR gL, gR: INTEGER) =
 ----------------------------------------------------------------------*)
 PROCEDURE MakeOption (VAR gL, gR: INTEGER) =
   BEGIN
-    gL := NewNode(opt, gL, 0); gn^[gL].next := gR; gR := gL
+    gL := NewNode(NodeType.opt, gL, 0); gn^[gL].next := gR; gR := gL
   END MakeOption;
 
 (* StrToGraph           Generate node chain from characters in s
@@ -834,7 +834,7 @@ PROCEDURE StrToGraph (s: TEXT; VAR gL, gR: INTEGER) =
   BEGIN
     gR := 0; i := 1; len := Text.Length(s) - 1; (*strip quotes*)
     WHILE i < len DO
-      gn^[gR].next := NewNode(char, ORD(Text.GetChar(s, i)), 0); gR := gn^[gR].next;
+      gn^[gR].next := NewNode(NodeType.char, ORD(Text.GetChar(s, i)), 0); gR := gn^[gR].next;
       INC(i)
     END;
     gL := gn^[0].next; gn^[0].next := 0
@@ -867,11 +867,11 @@ PROCEDURE DelNode (gn: GraphNode): BOOLEAN =
     END DelAlt;
 
   BEGIN
-    IF gn.typ = nt THEN GetSym(gn.p1, sn); RETURN sn.deletable
-    ELSIF gn.typ = alt THEN
+    IF gn.typ = NodeType.nt THEN GetSym(gn.p1, sn); RETURN sn.deletable
+    ELSIF gn.typ = NodeType.alt THEN
       RETURN DelAlt(gn.p1) OR ((gn.p2 # 0) AND DelAlt(gn.p2))
-    ELSE RETURN (gn.typ = eps) OR (gn.typ = iter)
-                OR (gn.typ = opt) OR (gn.typ = sem) OR (gn.typ = sync)
+    ELSE RETURN (gn.typ = NodeType.eps) OR (gn.typ = NodeType.iter)
+                OR (gn.typ = NodeType.opt) OR (gn.typ = NodeType.sem) OR (gn.typ = NodeType.sync)
     END
   END DelNode;
 
@@ -889,16 +889,16 @@ PROCEDURE PrintGraph(wr : Wr.T) =
     WHILE i <= nNodes DO
       Wr.PutText(wr, Fmt.F("%3s  ", Fmt.Int(i))) ;
       CASE (gn^[i].typ) OF
-        nt   => Wr.PutText(wr, "nt  ")
-      | t    => Wr.PutText(wr, "t   ")
-      | wt   => Wr.PutText(wr, "wt  ")
-      | any  => Wr.PutText(wr, "any ")
-      | eps  => Wr.PutText(wr, "eps ")
-      | sem  => Wr.PutText(wr, "sem ")
-      | sync => Wr.PutText(wr, "sync")
-      | alt  => Wr.PutText(wr, "alt ")
-      | iter => Wr.PutText(wr, "iter")
-      | opt  => Wr.PutText(wr, "opt ")
+        NodeType.nt   => Wr.PutText(wr, "NodeType.nt  ")
+      | NodeType.t    => Wr.PutText(wr, "NodeType.t   ")
+      | NodeType.wt   => Wr.PutText(wr, "NodeType.wt  ")
+      | NodeType.any  => Wr.PutText(wr, "NodeType.any ")
+      | NodeType.eps  => Wr.PutText(wr, "NodeType.eps ")
+      | NodeType.sem  => Wr.PutText(wr, "NodeType.sem ")
+      | NodeType.sync => Wr.PutText(wr, "NodeType.sync")
+      | NodeType.alt  => Wr.PutText(wr, "NodeType.alt ")
+      | NodeType.iter => Wr.PutText(wr, "NodeType.iter")
+      | NodeType.opt  => Wr.PutText(wr, "NodeType.opt ")
       ELSE
         Wr.PutText(wr, "--- ")
       END ;
@@ -941,12 +941,12 @@ PROCEDURE FindCircularProductions(wr : Wr.T ; VAR ok: BOOLEAN) =
     BEGIN
       IF gp <= 0 THEN RETURN END; (* end of graph found *)
       GetNode (gp, gn);
-      IF gn.typ = nt THEN
+      IF gn.typ = NodeType.nt THEN
         IF DelGraph(ABS(gn.next)) THEN singles := singles + MarkList{gn.p1} END
-      ELSIF (gn.typ = alt) OR (gn.typ = iter) OR (gn.typ = opt) THEN
+      ELSIF (gn.typ = NodeType.alt) OR (gn.typ = NodeType.iter) OR (gn.typ = NodeType.opt) THEN
         IF DelGraph(ABS(gn.next)) THEN
           GetSingles(gn.p1, singles);
-          IF gn.typ = alt THEN GetSingles(gn.p2, singles) END
+          IF gn.typ = NodeType.alt THEN GetSingles(gn.p2, singles) END
         END
       END;
       IF DelNode(gn) THEN GetSingles(gn.next, singles) END
@@ -956,7 +956,7 @@ PROCEDURE FindCircularProductions(wr : Wr.T ; VAR ok: BOOLEAN) =
     i := firstNt; listLength := 0;
     WHILE i <= lastNt DO (* for all nonterminals i *)
       ClearMarkList(singles); GetSym(i, sn);
-      GetSingles(sn.struct, singles); (* get nt's j such that i-->j *)
+      GetSingles(sn.struct, singles); (* get NodeType.nt's j such that i-->j *)
       j := firstNt;
       WHILE j <= lastNt DO (* for all nonterminals j *)
         IF (j IN singles) THEN
@@ -1051,7 +1051,7 @@ PROCEDURE LL1Test (wr : Wr.T ; VAR ll1: BOOLEAN) =
     BEGIN
       WHILE gp > 0 DO
         GetNode(gp, gn);
-        IF gn.typ = alt THEN
+        IF gn.typ = NodeType.alt THEN
           p := gp; s1 := Set{};
           WHILE p # 0 DO (*for all alternatives*)
             GetNode(p, gn1); CompExpected(gn1.p1, curSy, s2);
@@ -1060,12 +1060,12 @@ PROCEDURE LL1Test (wr : Wr.T ; VAR ll1: BOOLEAN) =
             CheckAlternatives(gn1.p1);
             p := gn1.p2
           END
-        ELSIF (gn.typ = opt) OR (gn.typ = iter) THEN
+        ELSIF (gn.typ = NodeType.opt) OR (gn.typ = NodeType.iter) THEN
           CompExpected(gn.p1, curSy, s1);
           CompExpected(ABS(gn.next), curSy, s2);
           Check(2, s1, s2);
           CheckAlternatives(gn.p1)
-        ELSIF gn.typ = any THEN
+        ELSIF gn.typ = NodeType.any THEN
           GetSet(gn.p1, s1);
           IF (s1 = Set{}) THEN LL1Error(3, 0) END
           (*e.g. {ANY} ANY or [ANY] ANY*)
@@ -1122,14 +1122,14 @@ PROCEDURE TestIfAllNtReached (wr : Wr.T ; VAR ok: BOOLEAN) =
     BEGIN
       WHILE gp > 0 DO
         GetNode(gp, gn);
-        IF gn.typ = nt THEN
-          IF NOT  (gn.p1 IN reached) THEN (*new nt reached*)
+        IF gn.typ = NodeType.nt THEN
+          IF NOT  (gn.p1 IN reached) THEN (*new NodeType.nt reached*)
             reached := reached + MarkList{gn.p1} ;
             GetSym(gn.p1, sn); MarkReachedNts(sn.struct)
           END
-        ELSIF (gn.typ = alt) OR (gn.typ = iter) OR (gn.typ = opt) THEN
+        ELSIF (gn.typ = NodeType.alt) OR (gn.typ = NodeType.iter) OR (gn.typ = NodeType.opt) THEN
           MarkReachedNts(gn.p1);
-          IF gn.typ = alt THEN MarkReachedNts(gn.p2) END
+          IF gn.typ = NodeType.alt THEN MarkReachedNts(gn.p2) END
         END;
         gp := gn.next
       END
@@ -1169,8 +1169,8 @@ PROCEDURE TestIfNtToTerm(wr : Wr.T ; VAR ok: BOOLEAN) =
     BEGIN
       WHILE gp > 0 DO
         GetNode(gp, gn);
-        IF ((gn.typ = nt) AND NOT (gn.p1 IN termList))
-           OR ((gn.typ = alt) AND NOT ( IsTerm(gn.p1)) AND NOT ( IsTerm(gn.p2))) THEN
+        IF ((gn.typ = NodeType.nt) AND NOT (gn.p1 IN termList))
+           OR ((gn.typ = NodeType.alt) AND NOT ( IsTerm(gn.p1)) AND NOT ( IsTerm(gn.p2))) THEN
              RETURN FALSE
         END;
         gp := gn.next
@@ -1328,7 +1328,7 @@ BEGIN (* CRT *)
   gn := NEW(REF GraphList) ;
   st := NEW(REF SymbolTable) ;
   nNodes := 0;
-  gn^[0].typ := -1; gn^[0].p1 := 0; gn^[0].p2 := 0;
+  gn^[0].typ := NodeType.uninitialized; gn^[0].p1 := 0; gn^[0].p2 := 0;
   gn^[0].next := 0; gn^[0].line := 0;
   gn^[0].pos.beg := -1 ;
   gn^[0].pos.len := 0; gn^[0].pos.col := 0;

@@ -56,11 +56,11 @@ BEGIN
   CRA.MatchDFA(p, sn.name, sp, matchedSp) ;
   IF (matchedSp # CRT.noSym) THEN
     CRT.GetSym(matchedSp, sn1) ;
-    sn1.struct := CRT.classLitToken ;
+    sn1.struct := ORD(CRT.TokenKind.classLitToken) ;
     CRT.PutSym(matchedSp, sn1) ;
-    sn.struct := CRT.litToken
+    sn.struct := ORD(CRT.TokenKind.litToken) ;
   ELSE
-    sn.struct := CRT.classToken ;
+    sn.struct := ORD(CRT.TokenKind.classToken) ;
   END ;
   CRT.PutSym(sp, sn)
 END MatchLiteral ;
@@ -72,12 +72,12 @@ VAR
 BEGIN
   WHILE (gp > 0) DO
     CRT.GetNode(gp, gn) ;
-    IF ((gn.typ = CRT.char) OR (gn.typ = CRT.class)) THEN
+    IF ((gn.typ = CRT.NodeType.char) OR (gn.typ = CRT.NodeType.class)) THEN
       gn.p2 := CRT.contextTrans ;
       CRT.PutNode(gp, gn)
-    ELSIF ((gn.typ = CRT.opt) OR (gn.typ = CRT.iter)) THEN
+    ELSIF ((gn.typ = CRT.NodeType.opt) OR (gn.typ = CRT.NodeType.iter)) THEN
       SetCtx(gn.p1)
-    ELSIF (gn.typ = CRT.alt) THEN
+    ELSIF (gn.typ = CRT.NodeType.alt) THEN
       SetCtx(gn.p1) ;
       SetCtx(gn.p2)
     END ;
@@ -137,7 +137,7 @@ CR                           (.VAR
 =
 "COMPILER" 
                              (.gramLine := p.line() ;
-                               eofSy := CRT.NewSym(CRT.t, "EOF", 0) ;
+                               eofSy := CRT.NewSym(CRT.NodeType.t, "EOF", 0) ;
                                CRT.genScanner := TRUE ;
                                CRT.ignoreCase := FALSE ;
                                ok := TRUE ;
@@ -157,11 +157,11 @@ SYNC
 { Ident <name>               (.sp := CRT.FindSym(name) ;
                                undef := (sp = CRT.noSym) ;
                                IF (undef) THEN
-                                 sp := CRT.NewSym(CRT.nt, name, p.line()) ;
+                                 sp := CRT.NewSym(CRT.NodeType.nt, name, p.line()) ;
                                  CRT.GetSym(sp, sn)
                                ELSE
                                  CRT.GetSym(sp, sn) ;
-                                 IF (sn.typ = CRT.nt) THEN
+                                 IF (sn.typ = CRT.NodeType.nt) THEN
                                    IF (sn.struct > 0) THEN
                                      p.error("'" & name & "' declared twice")
                                    END
@@ -192,12 +192,12 @@ SYNC
                                  IF (sn.attrPos.beg >= 0) THEN
                                    p.error("grammar symbol must not have attributes")
                                  END ;
-                                 CRT.root := CRT.NewNode(CRT.nt, sp, gramLine) ;
+                                 CRT.root := CRT.NewNode(CRT.NodeType.nt, sp, gramLine) ;
                                END.)
 "END" Ident <name>           (.IF (NOT Text.Equal(name, gramName)) THEN
                                  p.error("name does not match name in heading")
                                END.)
-"."                          (.unknownSy := CRT.NewSym(CRT.t, "*Undef*", 0).)
+"."                          (.unknownSy := CRT.NewSym(CRT.NodeType.t, "*Undef*", 0).)
 
 .
 
@@ -207,9 +207,9 @@ Declaration                  (.VAR
                                  gL1, gR1, gL2, gR2: INTEGER;
                                  nested:             BOOLEAN;.)
 = "CHARACTERS" { SetDecl }
-| "TOKENS"     { TokenDecl <CRT.t> }
+| "TOKENS"     { TokenDecl <CRT.NodeType.t> }
 | "NAMES"      { NameDecl }
-| "PRAGMAS"    { TokenDecl <CRT.pr> }
+| "PRAGMAS"    { TokenDecl <CRT.NodeType.pr> }
 | "COMMENTS"
   "FROM" TokenExpr <gL1, gR1>
   "TO" TokenExpr <gL2, gR2>
@@ -303,7 +303,7 @@ SingleChar <VAR n: CARDINAL> (.VAR i : CARDINAL ;
 
 (*----------------------------------------------------------------------*)
 
-TokenDecl <typ: INTEGER>     (.VAR
+TokenDecl <typ: CRT.NodeType> (.VAR
                                  kind:       INTEGER;
                                  name:       TEXT;
                                  pos:        CRT.Position;
@@ -314,7 +314,7 @@ TokenDecl <typ: INTEGER>     (.VAR
                                ELSE
                                  sp := CRT.NewSym(typ, name, p.line()) ;
                                  CRT.GetSym(sp, sn) ;
-                                 sn.struct := CRT.classToken ;
+                                 sn.struct := ORD(CRT.TokenKind.classToken) ;
                                  CRT.PutSym(sp, sn)
                                END.)
   SYNC
@@ -331,7 +331,7 @@ TokenDecl <typ: INTEGER>     (.VAR
                                  MatchLiteral(p, sp)
                                END.)
   )
-  [ SemText <pos>            (.IF (typ = CRT.t) THEN
+  [ SemText <pos>            (.IF (typ = CRT.NodeType.t) THEN
                                  p.error("semantic action not allowed here")
                                END ;
                                CRT.GetSym(sp, sn) ;
@@ -361,7 +361,7 @@ Term<VAR gL, gR: INTEGER>    (.VAR gL2, gR2: INTEGER;.)
 ( Factor <gL, gR>
     { Factor <gL2, gR2>      (.CRT.ConcatSeq(gL, gR, gL2, gR2).)
     }
-  |                          (.gL := CRT.NewNode(CRT.eps, 0, 0) ;
+  |                          (.gL := CRT.NewNode(CRT.NodeType.eps, 0, 0) ;
                                gR := gL.)
   ).
 
@@ -384,19 +384,19 @@ Factor <VAR gL, gR: INTEGER> (.VAR
                                undef := (sp = CRT.noSym) ;
                                IF (undef) THEN
                                  IF (kind = ident) THEN  (*forward nt*)
-                                   sp := CRT.NewSym(CRT.nt, name, 0)
+                                   sp := CRT.NewSym(CRT.NodeType.nt, name, 0)
                                  ELSE  (*undefined string in production*)
-                                   sp := CRT.NewSym(CRT.t, name, p.line()) ;
+                                   sp := CRT.NewSym(CRT.NodeType.t, name, p.line()) ;
                                    MatchLiteral(p, sp)
                                  END
                                END ;
                                CRT.GetSym(sp, sn) ;
-                               IF ((sn.typ # CRT.t) AND (sn.typ # CRT.nt)) THEN
+                               IF ((sn.typ # CRT.NodeType.t) AND (sn.typ # CRT.NodeType.nt)) THEN
                                  p.error("this symbol kind not allowed in production")
                                END ;
                                IF (weak) THEN
-                                 IF (sn.typ = CRT.t) THEN
-                                   sn.typ := CRT.wt
+                                 IF (sn.typ = CRT.NodeType.t) THEN
+                                   sn.typ := CRT.NodeType.wt
                                  ELSE
                                    p.error("only terminals may be weak")
                                  END
@@ -425,15 +425,15 @@ Factor <VAR gL, gR: INTEGER> (.VAR
 | "[" Expression <gL, gR> "]" (.CRT.MakeOption(gL, gR).)
 | "{" Expression <gL, gR> "}" (.CRT.MakeIteration(gL, gR).)
 
-| SemText <pos>              (.gL := CRT.NewNode(CRT.sem, 0, 0) ;
+| SemText <pos>              (.gL := CRT.NewNode(CRT.NodeType.sem, 0, 0) ;
                                gR := gL ;
                                CRT.GetNode(gL, gn) ;
                                gn.pos := pos ;
                                CRT.PutNode(gL, gn).)
 | "ANY"                      (.set := CRT.Set{0 .. CRT.maxTerminals} - CRT.Set{CRT.eofSy} ;
-                               gL := CRT.NewNode(CRT.any, CRT.NewSet(set), 0) ;
+                               gL := CRT.NewNode(CRT.NodeType.any, CRT.NewSet(set), 0) ;
                                gR := gL.)
-| "SYNC"                     (.gL := CRT.NewNode(CRT.sync, 0, 0) ;
+| "SYNC"                     (.gL := CRT.NewNode(CRT.NodeType.sync, 0, 0) ;
                                gR := gL.)
 ).
 
@@ -478,7 +478,7 @@ TokenFactor <VAR gL, gR: INTEGER> (.VAR
                                    set := CRT.Set{} ;
                                    c := CRT.NewClass(name, set)
                                  END ;
-                                 gL := CRT.NewNode(CRT.class, c, 0) ;
+                                 gL := CRT.NewNode(CRT.NodeType.class, c, 0) ;
                                  gR := gL
                                ELSE (*string*)
                                  CRT.StrToGraph(name, gL, gR)

@@ -320,7 +320,7 @@ BEGIN
     CRT.GetNode(gp, gn) ;
     CASE (gn.typ) OF
 
-      CRT.nt =>
+      CRT.NodeType.nt =>
 
         CRT.GetSym(gn.p1, sn) ;
         Wr.PutText(wr, pad & "Parse" & sn.name & "(p") ;
@@ -332,7 +332,7 @@ BEGIN
         END ;
         Wr.PutText(wr, ") ;\n")
 
-    | CRT.t =>
+    | CRT.NodeType.t =>
 
         CRT.GetSym(gn.p1, sn) ;
         IF (gn.p1 IN checked) THEN
@@ -341,7 +341,7 @@ BEGIN
           Wr.PutText(wr, pad & "Expect(p, " & SymbolName(gn.p1) & ") ;\n")
         END
 
-    | CRT.wt =>
+    | CRT.NodeType.wt =>
 
         CRT.CompExpected(ABS(gn.next), curSy, s1) ;
         CRT.GetSet(0, s2) ;
@@ -350,18 +350,18 @@ BEGIN
         Wr.PutText(wr, pad & "ExpectWeak(p, " & SymbolName(gn.p1) & ", ") ;
         Wr.PutText(wr, Fmt.Int(NewCondSet(s1)) & ") ;\n")
 
-    | CRT.any =>
+    | CRT.NodeType.any =>
 
         Wr.PutText(wr, pad & "Get(p) ;\n")
 
-    | CRT.eps => (* nothing *)
+    | CRT.NodeType.eps => (* nothing *)
 
-    | CRT.sem =>
+    | CRT.NodeType.sem =>
 
         CopySourcePart(wr, gn.pos, indent, TRUE) ;
         Wr.PutText(wr, " ;\n") ;
 
-    | CRT.sync =>
+    | CRT.NodeType.sync =>
 
         CRT.GetSet(gn.p1, s1) ;
         Wr.PutText(wr, pad & "WHILE (NOT (") ;
@@ -373,7 +373,7 @@ BEGIN
         Wr.PutText(wr, pad & "  Get(p)\n") ;
         Wr.PutText(wr, pad & "END ;\n")
 
-    | CRT.alt =>
+    | CRT.NodeType.alt =>
 
         CRT.CompFirstSet(gp, s1) ;
         equal := (s1 = checked) ;
@@ -426,11 +426,11 @@ BEGIN
         END ;
         Wr.PutText(wr, pad & "END ;\n")
 
-    | CRT.iter =>
+    | CRT.NodeType.iter =>
 
         CRT.GetNode(gn.p1, gn2) ;
         Wr.PutText(wr, pad & "WHILE") ;
-        IF (gn2.typ = CRT.wt) THEN
+        IF (gn2.typ = CRT.NodeType.wt) THEN
           CRT.CompExpected(ABS(gn2.next), curSy, s1) ;
           CRT.CompExpected(ABS(gn.next), curSy, s2) ;
           CRT.GetSym(gn2.p1, sn) ;
@@ -452,7 +452,7 @@ BEGIN
         GenCode(wr, gp2, indent + 2, s1) ;
         Wr.PutText(wr, pad & "END ;\n")
 
-    | CRT.opt =>
+    | CRT.NodeType.opt =>
 
         CRT.CompFirstSet(gn.p1, s1) ;
         IF (checked = s1) THEN
@@ -470,7 +470,7 @@ BEGIN
       Process.Exit(1)
     END ;
 
-    IF ((gn.typ # CRT.eps) AND (gn.typ # CRT.sem) AND (gn.typ # CRT.sync)) THEN
+    IF ((gn.typ # CRT.NodeType.eps) AND (gn.typ # CRT.NodeType.sem) AND (gn.typ # CRT.NodeType.sync)) THEN
       checked := CRT.Set{}
     END ;
     gp := gn.next ;
