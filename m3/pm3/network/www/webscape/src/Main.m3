@@ -121,12 +121,21 @@ PROCEDURE URLProc (             fv: FormsVBT.T;
     LoadURL(fv, url);
   END URLProc;
 
+PROCEDURE HomeURL (): TEXT =
+  VAR url := Env.Get ("WWW_HOME");
+  BEGIN
+    IF url = NIL THEN
+      url := "http://www.research.digital.com/SRC/webbrowsing/";
+    END;
+    RETURN url;
+  END HomeURL;
+
 PROCEDURE HomeProc (            fv: FormsVBT.T;                    
                    <* UNUSED *> e : TEXT;
                    <* UNUSED *> cl: REFANY;
                    <* UNUSED *> t : VBT.TimeStamp) =
   BEGIN
-    LoadURL(fv, Env.Get("WWW_HOME"))
+    LoadURL(fv, HomeURL ())
   END HomeProc;
    
 PROCEDURE BackProc (            fv: FormsVBT.T;                    
@@ -360,7 +369,7 @@ PROCEDURE NewForm (): Form =
     FormsVBT.AttachProc(fv, "openpaste", OpenPasteProc);
 
     LOCK VBT.mu DO 
-      LoadURL(fv, Env.Get("WWW_HOME")) 
+      LoadURL (fv, HomeURL ()) 
     END;
     RETURN fv
   END NewForm;

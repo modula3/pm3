@@ -15,9 +15,11 @@ PROCEDURE Restore (): WorkspaceVBT.T =
   VAR
     w        := WorkspaceVBT.New();
     home     := Env.Get("HOME");
-    filename := home & "/.deckscape";
+    filename : TEXT;
   VAR rd: Rd.T;
   BEGIN
+    IF home = NIL THEN RETURN w END;
+    filename := home & "/.deckscape";
     TRY rd := FileRd.Open(filename) EXCEPT OSError.E => RETURN w END;
     Wr.PutText(
       Stdio.stderr, "Restoring workspace from " & filename & ".\n");
@@ -123,19 +125,20 @@ PROCEDURE RestoreDeck (list: RefList.T): DeckVBT.T =
     RETURN deckVBT
   END RestoreDeck;
 
-
 PROCEDURE Save (v: WorkspaceVBT.T) =
   VAR
     deckList := WorkspaceVBT.GetDecks(v);
     home     := Env.Get("HOME");
-    filename := home & "/.deckscape";
-    wr     := FileWr.Open(filename);
   BEGIN
-    WHILE deckList # NIL DO
-      SaveDeck(wr, deckList.head);
-      deckList := deckList.tail;
+    IF home # NIL THEN
+      WITH wr = FileWr.Open(home & "/.deckscape") DO
+        WHILE deckList # NIL DO
+          SaveDeck(wr, deckList.head);
+          deckList := deckList.tail;
+        END;
+        Wr.Close(wr);
+      END;
     END;
-    Wr.Close(wr);
   END Save;
 
 PROCEDURE SaveDeck (wr: Wr.T; deck: DeckVBT.T) =
