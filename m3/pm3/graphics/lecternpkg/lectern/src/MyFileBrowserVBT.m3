@@ -19,8 +19,8 @@ IMPORT AnchorSplit, AnyEvent, Atom, Axis, BorderedVBT, Cursor, File, Filter,
        Font, FS, HVSplit, ISOChar, Lex, ListVBT, MenuSwitchVBT, MultiFilter,
        MultiSplit, OSError, PaintOp, Pathname, Pixmap, Process, Rd, Rect,
        RegularFile, Shadow, ShadowedVBT, ShadowedFeedbackVBT, Split, Text,
-       TextList, TextListSort, TextPort, TextRd, TextSeq, TextVBT, Thread,
-       Time, TypeinVBT, VBT, WeakRef;
+       TextList, TextListSort, TextPort, TextRd, TextTransientSeq AS TextSeq,
+       TextVBT, Thread, Time, TypeinVBT, VBT, WeakRef;
 
 REVEAL
   T = Public BRANDED OBJECT

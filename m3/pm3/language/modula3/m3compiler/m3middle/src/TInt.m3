@@ -57,14 +57,21 @@ PROCEDURE ToInt (READONLY r: Int;  VAR x: INTEGER): BOOLEAN =
   END ToInt;
 
 PROCEDURE New (READONLY x: ARRAY OF CHAR;  VAR r: Int): BOOLEAN =
+  CONST ZERO = ORD ('0');   ZEROZERO = 10 * ZERO + ZERO;
   VAR tmp, digit: Int;
   BEGIN
-    digit := Zero;
     r := Zero;
-    FOR i := FIRST (x) TO LAST (x) DO
-      digit.x [0] := ORD (x[i]) - ORD ('0');
-      IF NOT Multiply (r, Ten, tmp) THEN RETURN FALSE; END;
-      IF NOT Add (tmp, digit, r)    THEN RETURN FALSE; END;
+    IF (NUMBER (x) = 1) THEN
+      r.x[0] := ORD (x[0]) - ZERO;
+    ELSIF (NUMBER (x) = 2) THEN
+      r.x[0] := 10 * ORD (x[0]) + ORD (x[1]) - ZEROZERO;
+    ELSE
+      digit := Zero;
+      FOR i := FIRST (x) TO LAST (x) DO
+        digit.x [0] := ORD (x[i]) - ZERO;
+        IF NOT Multiply (r, Ten, tmp) THEN RETURN FALSE; END;
+        IF NOT Add (tmp, digit, r)    THEN RETURN FALSE; END;
+      END;
     END;
     RETURN TRUE;
   END New;

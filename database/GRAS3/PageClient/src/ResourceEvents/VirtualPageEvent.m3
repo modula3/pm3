@@ -7,8 +7,11 @@ MODULE VirtualPageEvent EXPORTS VirtualPageEvent, PrivateVirtualPageEvent;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:37  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:48  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:37  hosking
+    Import of GRAS3 1.1
 
     Revision 1.3  1998/08/12 11:04:28  roland
     Efficiency improvement: RuleEngine notifies EventDetectors of
@@ -24,15 +27,15 @@ MODULE VirtualPageEvent EXPORTS VirtualPageEvent, PrivateVirtualPageEvent;
 *)
 (***************************************************************************)
 
-IMPORT Event, Transaction, EventTypes, EventType, RuleEngine, EventDetector;
+IMPORT Event, Txn, EventTypes, EventType, RuleEngine, EventDetector;
 FROM EventType IMPORT Mismatch, Unknown;
-IMPORT IntIntTbl, CardSeq;
+IMPORT IntIntTransientTbl AS IntIntTbl, CardSeq;
 
 PROCEDURE SignalBegin (unit        : CARDINAL;
                        resourceName: TEXT;
                        resource    : REFANY;
                        isPreEvent  : BOOLEAN;
-                       level       : Transaction.Level) =
+                       level       : Txn.Level) =
   <* FATAL EventType.Unknown, EventType.Mismatch *>
   BEGIN
     IF Detector.triggersActive(TypeNumber[Operation.Begin]) THEN
@@ -50,7 +53,7 @@ PROCEDURE SignalCommit (unit        : CARDINAL;
                         resourceName: TEXT;
                         resource    : REFANY;
                         isPreEvent  : BOOLEAN;
-                        level       : Transaction.Level) =
+                        level       : Txn.Level) =
   <* FATAL EventType.Unknown, EventType.Mismatch *>
   BEGIN
     IF Detector.triggersActive(TypeNumber[Operation.Commit]) THEN
@@ -64,11 +67,29 @@ PROCEDURE SignalCommit (unit        : CARDINAL;
     END;
   END SignalCommit;
 
+PROCEDURE SignalChain (unit        : CARDINAL;
+                       resourceName: TEXT;
+                       resource    : REFANY;
+                       isPreEvent  : BOOLEAN;
+                       level       : Txn.Level) =
+  <* FATAL EventType.Unknown, EventType.Mismatch *>
+  BEGIN
+    IF Detector.triggersActive(TypeNumber[Operation.Chain]) THEN
+      WITH e = NEW(Event.T).init(TypeNumber[Operation.Chain]) DO
+	e.setRefAnyAttribute(Resource[Operation.Chain], resource);
+	e.setTextAttribute(ResourceName[Operation.Chain], resourceName);
+	e.setBoolAttribute(IsPre[Operation.Chain], isPreEvent);
+	e.setIntAttribute(Level[Operation.Chain], level);
+	RuleEngine.Signal(unit, e);
+      END;
+    END;
+  END SignalChain;
+
 PROCEDURE SignalAbort (unit        : CARDINAL;
                        resourceName: TEXT;
                        resource    : REFANY;
                        isPreEvent  : BOOLEAN;
-                       level       : Transaction.Level) =
+                       level       : Txn.Level) =
   <* FATAL EventType.Unknown, EventType.Mismatch *>
   BEGIN
     IF Detector.triggersActive(TypeNumber[Operation.Abort]) THEN
@@ -130,7 +151,7 @@ PROCEDURE GetIsPreEvent (ev: T): BOOLEAN RAISES {Mismatch, Unknown} =
     END;
   END GetIsPreEvent;
 
-PROCEDURE GetLevel (ev: T): Transaction.Level RAISES {Mismatch, Unknown} =
+PROCEDURE GetLevel (ev: T): Txn.Level RAISES {Mismatch, Unknown} =
   VAR opno: INTEGER;
   BEGIN
     IF NOT TypeToOp.get(ev.type(), opno) THEN
@@ -167,6 +188,7 @@ CONST
 
   BeginInfo = "Signaled on transaction start.";
   CommitInfo = "Signaled on transaction commit.";
+  ChainInfo = "Signaled on transaction chain.";
   AbortInfo = "Signaled on transaction abort.";
     
   RemoteCommitInfo =
@@ -180,6 +202,7 @@ CONST
 
   OpInfo = ARRAY Operation OF TEXT{BeginInfo & GenInfo,
                                    CommitInfo & GenInfo,
+                                   ChainInfo & GenInfo,
                                    AbortInfo & GenInfo,
                                    RemoteCommitInfo};
 VAR Detector: EventDetector.T;

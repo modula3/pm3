@@ -13,13 +13,23 @@ UNSAFE MODULE Fingerprint;
    Externally a fingerprint is an opaque object of 64 bits. Internally a
    fingerprint is a polynomial of degree 64 over Z[2]. *)
 
-IMPORT Text, TextF, Poly, Word;
+IMPORT Text, Poly, Word;
 
 PROCEDURE FromText (t: Text.T): T =
   (* returns the fingerprint of t *)
-  VAR result: T;  poly: Poly.T;
+  VAR
+    result : T;
+    poly   : Poly.T   := Poly.ONE;
+    len    : CARDINAL := Text.Length (t);
+    offset : CARDINAL := 0;
+    buf    : ARRAY [0..255] OF CHAR;
   BEGIN
-    poly := Poly.ComputeMod (Poly.ONE, ADR (t[0]), Text.Length (t));
+    WHILE (offset < len) DO
+      Text.SetChars (buf, t, offset);
+      poly := Poly.ComputeMod (poly, ADR (buf[0]),
+                               MIN (len - offset, NUMBER (buf)));
+      INC (offset, NUMBER (buf));
+    END;
     Poly.ToBytes (poly, result.byte);
     RETURN result;
   END FromText;
@@ -104,6 +114,16 @@ PROCEDURE Hash (READONLY fp: T): INTEGER =
     Poly.FromBytes (fp.byte, x);
     RETURN Word.Xor (x[0], x[1]);
   END Hash;
+
+PROCEDURE Compare(fp1, fp2: T): [-1..1] =
+  BEGIN
+    FOR i := 0 TO 7 DO
+      IF    fp1.byte[i] < fp2.byte[i] THEN RETURN -1;
+      ELSIF fp1.byte[i] > fp2.byte[i] THEN RETURN +1;
+      END;
+    END;
+    RETURN 0;
+  END Compare;
 
 BEGIN
   Poly.ToBytes (Poly.ONE, OfEmpty.byte);

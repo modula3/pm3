@@ -48,7 +48,8 @@ PROCEDURE PackageSetup() =
     END;
   END PackageSetup;
 
-PROCEDURE New(swr: SynWr.T; env: GrammarEnv; stackSize: CARDINAL := 1024): T =
+PROCEDURE New(swr: SynWr.T; env: GrammarEnv; 
+              stackSize: CARDINAL := 10240): T =
   BEGIN
     RETURN 
       NEW(T, stack := NEW(REF ARRAY OF Tree, stackSize),
@@ -72,31 +73,101 @@ PROCEDURE Fault(p: T; msg: TEXT) RAISES {Fail} =
     RAISE Fail;
   END Fault;
 
-(* Default methods returning NIL *) PROCEDURE BuildNoAction(self:
-Action; g: T; base: INTEGER; READONLY info: SynLocation.Info): Tree = BEGIN
-RETURN NIL END BuildNoAction;
-PROCEDURE BuildNoGivenKeyword(self: GivenKeyword; g: T; READONLY info:
-SynLocation.Info): Tree = BEGIN RETURN NIL END BuildNoGivenKeyword;
-PROCEDURE BuildNoGivenIdentifier(self: GivenIdentifier; g: T; READONLY info:
-SynLocation.Info): Tree = BEGIN RETURN NIL END BuildNoGivenIdentifier;
-PROCEDURE BuildNoGivenName(self: GivenName; g: T; READONLY info:
-SynLocation.Info): Tree = BEGIN RETURN NIL END BuildNoGivenName;
-PROCEDURE BuildNoGivenDelimiter(self: GivenDelimiter; g: T; READONLY info:
-SynLocation.Info): Tree = BEGIN RETURN NIL END BuildNoGivenDelimiter;
-PROCEDURE BuildNoIdentifier(self: Identifier; g: T; name: TEXT; READONLY
-info: SynLocation.Info): Tree = BEGIN RETURN NIL END
-BuildNoIdentifier; PROCEDURE BuildNoName(self: Name; g: T; name: TEXT;
-READONLY info: SynLocation.Info): Tree = BEGIN RETURN NIL END
-BuildNoName; PROCEDURE BuildNoQuotedChar(self: QuotedChar; g: T; char: CHAR;
-READONLY info: SynLocation.Info): Tree = BEGIN RETURN NIL END
-BuildNoQuotedChar; PROCEDURE BuildNoInteger(self: Integer; g: T; int:
-INTEGER; READONLY info: SynLocation.Info): Tree = BEGIN RETURN NIL END
-BuildNoInteger; PROCEDURE BuildNoReal(self: Real; g: T; real: LONGREAL;
-READONLY info: SynLocation.Info): Tree = BEGIN RETURN NIL END
-BuildNoReal; PROCEDURE BuildNoQuotedString(self: QuotedString; g: T; string:
-TEXT; READONLY info: SynLocation.Info): Tree = BEGIN RETURN NIL END
-BuildNoQuotedString; PROCEDURE BuildNoEof(self: Eof; g: T; READONLY info:
-SynLocation.Info): Tree = BEGIN RETURN NIL END BuildNoEof;
+(* Default methods returning NIL *) 
+PROCEDURE BuildNoAction(<*UNUSED*>self: Action; 
+                        <*UNUSED*>g: T; 
+                        <*UNUSED*>base: INTEGER; 
+                        <*UNUSED*>READONLY info: SynLocation.Info): Tree =
+  BEGIN
+    RETURN NIL 
+  END BuildNoAction;
+
+PROCEDURE BuildNoGivenKeyword(<*UNUSED*>self: GivenKeyword;
+                              <*UNUSED*>g: T; 
+                              <*UNUSED*>READONLY info: SynLocation.Info):
+  Tree = 
+  BEGIN
+    RETURN NIL
+  END BuildNoGivenKeyword;
+
+PROCEDURE BuildNoGivenIdentifier(<*UNUSED*>self: GivenIdentifier; 
+                                 <*UNUSED*>g: T;
+                                 <*UNUSED*>READONLY info: SynLocation.Info):
+  Tree = 
+  BEGIN
+    RETURN NIL
+  END BuildNoGivenIdentifier;
+
+PROCEDURE BuildNoGivenName(<*UNUSED*>self: GivenName;
+                           <*UNUSED*>g: T;
+                           <*UNUSED*>READONLY info: SynLocation.Info): Tree =
+  BEGIN
+    RETURN NIL
+  END BuildNoGivenName;
+
+PROCEDURE BuildNoGivenDelimiter(<*UNUSED*>self: GivenDelimiter; 
+                                <*UNUSED*>g: T;
+                                <*UNUSED*>READONLY info: SynLocation.Info):
+  Tree = 
+  BEGIN
+    RETURN NIL
+  END BuildNoGivenDelimiter;
+
+PROCEDURE BuildNoIdentifier(<*UNUSED*>self: Identifier; 
+                            <*UNUSED*>g: T; 
+                            <*UNUSED*>name: TEXT; 
+                            <*UNUSED*>READONLY info: SynLocation.Info): Tree =
+  BEGIN
+    RETURN NIL
+  END BuildNoIdentifier;
+
+PROCEDURE BuildNoName(<*UNUSED*>self: Name;
+                      <*UNUSED*>g: T;
+                      <*UNUSED*>name: TEXT;
+                      <*UNUSED*>READONLY info: SynLocation.Info): Tree =
+  BEGIN
+    RETURN NIL
+  END BuildNoName;
+
+PROCEDURE BuildNoQuotedChar(<*UNUSED*>self: QuotedChar;
+                            <*UNUSED*>g: T; 
+                            <*UNUSED*>char: CHAR;
+                            <*UNUSED*>READONLY info: SynLocation.Info): Tree =
+  BEGIN
+    RETURN NIL
+  END BuildNoQuotedChar;
+
+PROCEDURE BuildNoInteger(<*UNUSED*>self: Integer;
+                         <*UNUSED*>g: T; 
+                         <*UNUSED*>int: INTEGER; 
+                         <*UNUSED*>READONLY info: SynLocation.Info): Tree =
+  BEGIN
+    RETURN NIL
+  END BuildNoInteger; 
+
+PROCEDURE BuildNoReal(<*UNUSED*>self: Real; 
+                      <*UNUSED*>g: T; 
+                      <*UNUSED*>real: LONGREAL;
+                      <*UNUSED*>READONLY info: SynLocation.Info): Tree =
+  BEGIN 
+    RETURN NIL
+  END BuildNoReal; 
+
+PROCEDURE BuildNoQuotedString(<*UNUSED*>self: QuotedString;
+                              <*UNUSED*>g: T; 
+                              <*UNUSED*>string: TEXT; 
+                              <*UNUSED*>READONLY info: SynLocation.Info): 
+  Tree = 
+  BEGIN 
+    RETURN NIL
+  END BuildNoQuotedString; 
+
+PROCEDURE BuildNoEof(<*UNUSED*>self: Eof; 
+                     <*UNUSED*>g: T; 
+                     <*UNUSED*>READONLY info: SynLocation.Info): Tree = 
+  BEGIN 
+    RETURN NIL
+  END BuildNoEof;
 
   PROCEDURE GetScanner(g: T): SynScan.T =
   BEGIN
@@ -117,7 +188,7 @@ SynLocation.Info): Tree = BEGIN RETURN NIL END BuildNoEof;
   END ReadNonTerminal;
 
   PROCEDURE Read(g: T; gram: Grammar; base: INTEGER:=0)
-      : Tree RAISES {Fail, SynScan.Fail, SynScan.NoReader} =
+      : Tree RAISES {Fail, SynScan.NoReader} =
     VAR max: INTEGER; tree: Tree; failed: Grammar;
     BEGIN
       max:=0;
@@ -316,7 +387,7 @@ PROCEDURE Lookup(g: T; name: TEXT; VAR (*out*) args: Args): Grammar
   PROCEDURE Read1(g: T; gram: Grammar;
 	base: INTEGER; VAR (*in-out*) max: INTEGER;
     	VAR (*out*) failed: Grammar; name: TEXT:=NIL): Tree 
-    	RAISES {Fail, SynScan.Fail, SynScan.NoReader} =
+    	RAISES {Fail, SynScan.NoReader} =
     VAR tree: Tree;
     BEGIN
       IF name = NIL THEN

@@ -237,14 +237,14 @@ PROCEDURE DirtyStub(c: StubLib.Conn; t: SpecialObj.ST;
     eventID: EventID;
     inVListLen: CARDINAL;
     fixedVList: ARRAY [0..2] OF StubLib.StubProtocol;
-    varVList: REF VersionList;
+    varVList: <*TRANSIENT*> REF VersionList;
   BEGIN
     StubLib.InBytes(c, wrep.byte);
     eventID[0] := StubLib.InInt32(c, rep);
     eventID[1] := StubLib.InInt32(c, rep);
     inVListLen := StubLib.InInt32(c, rep, 0);
     IF inVListLen > NUMBER(fixedVList) THEN
-      varVList := NEW(REF VersionList, inVListLen);
+      varVList := NEW(<*TRANSIENT*> REF VersionList, inVListLen);
       fpTower := t.dirty(wrep, eventID, varVList^, c.loc);
       StubLib.StartResult(c);
       FOR i := 0 TO inVListLen-1 DO
@@ -273,12 +273,12 @@ PROCEDURE CleanStub(c: StubLib.Conn; t: SpecialObj.ST; rep: StubLib.DataRep)
   VAR
     inBatchLen: CARDINAL;
     fixedBatch: ARRAY [0..DefaultBatchLen-1] OF CleanElem;
-    varBatch: REF CleanBatch;
+    varBatch: <*TRANSIENT*> REF CleanBatch;
     strong: BOOLEAN;
   BEGIN
     inBatchLen := StubLib.InInt32(c, rep, 0);
     IF inBatchLen > NUMBER(fixedBatch) THEN
-      varBatch := NEW(REF CleanBatch, inBatchLen);
+      varBatch := NEW(<*TRANSIENT*> REF CleanBatch, inBatchLen);
       FOR i := 0 TO inBatchLen-1 DO
         StubLib.InBytes(c, varBatch[i].wrep.byte);
         varBatch[i].id[0] := StubLib.InInt32(c, rep);

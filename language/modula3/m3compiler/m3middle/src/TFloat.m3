@@ -171,30 +171,17 @@ PROCEDURE ToChars (READONLY f: Float;  VAR buf: ARRAY OF CHAR): INTEGER =
     RETURN len;
   END ToChars;
 
-(******** OLD ********************
-PROCEDURE ToInts (READONLY f: Float;  VAR buf: ARRAY OF INTEGER): INTEGER =
-  CONST
-    Buf_size = BITSIZE (f.fraction) DIV BITSIZE (INTEGER);
-  VAR
-    zz := LOOPHOLE (f.fraction, ARRAY [0..Buf_size-1] OF INTEGER);
-    len := TargetMap.Float_types[f.pre].size DIV BITSIZE (INTEGER);
-  BEGIN
-    IF (NUMBER (buf) < len) THEN RETURN -1 END;
-    FOR i := 0 TO len-1 DO buf[i] := zz[i] END;
-    RETURN len;
-  END ToInts;
-************************************)
+TYPE
+  Ptr = UNTRACED REF ARRAY [0..BITSIZE (Float)] OF Byte;
 
-PROCEDURE ToInts (READONLY f: Float;  VAR buf: ARRAY OF INTEGER): INTEGER =
-  TYPE
-    Ptr = UNTRACED REF ARRAY [0..BITSIZE (Float)] OF INTEGER;
+PROCEDURE ToBytes (READONLY f: Float;  VAR buf: ARRAY OF Byte): INTEGER =
   VAR
     x1  : REAL;
     x2  : LONGREAL;
     x3  : EXTENDED;
     adr : ADDRESS;
     ptr : Ptr;
-    len := TargetMap.Float_types[f.pre].size DIV BITSIZE (INTEGER);
+    len := TargetMap.Float_types[f.pre].size DIV BITSIZE (Byte);
   BEGIN
     IF (NUMBER (buf) < len) THEN RETURN -1 END;
     IF    (f.pre = Precision.Short) THEN x1 := ToReal (f);     adr := ADR (x1);
@@ -204,7 +191,38 @@ PROCEDURE ToInts (READONLY f: Float;  VAR buf: ARRAY OF INTEGER): INTEGER =
     ptr := adr;
     SUBARRAY (buf, 0, len) := SUBARRAY (ptr^, 0, len);
     RETURN len;
-  END ToInts;
+  END ToBytes;
+
+PROCEDURE FromBytes (READONLY buf: ARRAY OF Byte;  p: Precision;
+                    VAR f: Float) =
+  VAR
+    len  := NUMBER (buf);
+    ptr  : Ptr;
+    x1   : REAL;
+    x2   : LONGREAL;
+    x3   : EXTENDED;
+  BEGIN
+    len := TargetMap.Float_types[p].size DIV BITSIZE (Byte);
+    <*ASSERT len <= NUMBER (buf) *>
+
+    f.pre      := p;
+    f.exponent := 0;
+
+    CASE p OF
+    | Precision.Short =>
+        ptr := ADR (x1);
+        SUBARRAY (ptr^, 0, len) := SUBARRAY (buf, 0, len);
+        f.fraction := FLOAT (x1, EXTENDED);
+    | Precision.Long =>
+        ptr := ADR (x2);
+        SUBARRAY (ptr^, 0, len) := SUBARRAY (buf, 0, len);
+        f.fraction := FLOAT (x2, EXTENDED);
+    | Precision.Extended =>
+        ptr := ADR (x3);
+        SUBARRAY (ptr^, 0, len) := SUBARRAY (buf, 0, len);
+        f.fraction := x3;
+    END;
+  END FromBytes;
 
 (*-------------------------------------------------------------- internal ---*)
 

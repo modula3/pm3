@@ -20,10 +20,11 @@
 #include <sym.h>
 void sigvec();
 
-/* TYPE Frame = RECORD pc, sp: ADDRESS END; */
+/* TYPE Frame = RECORD pc, sp, unwind: ADDRESS END; */
 typedef struct {
   unsigned long pc;
   unsigned long sp;
+  unsigned long unwind;
 } Frame;
 
 typedef struct runtime_pdr *Proc;
@@ -113,6 +114,9 @@ RTStack__PrevFrame (Frame* callee, Frame* caller)
 
   if (callee == 0) abort ();
   if (caller == 0) abort ();
+
+  /* unwind directly to handler */
+  f.unwind = 0;
 
   /* update the SP */
   f.sp = callee->sp + p->frameoffset;

@@ -10,4 +10,4 @@ import("obliq")
 implementation("Main")
 
 Program("obliqsrv-std")
-ManPage("obliqsrv-std", 1)
+ManPage("obliqsrv-std","1")

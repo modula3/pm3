@@ -4126,9 +4126,9 @@ new_symbol (struct die_info *die, struct type *type, struct objfile *objfile,
       SYMBOL_NAMESPACE (sym) = VAR_NAMESPACE;
       SYMBOL_CLASS (sym) = LOC_STATIC;
       if (type != NULL)
-	SYMBOL_TYPE (sym) = type;
+	SET_SYMBOL_TYPE (sym) = type;
       else
-	SYMBOL_TYPE (sym) = die_type (die, objfile, cu_header);
+	SET_SYMBOL_TYPE (sym) = die_type (die, objfile, cu_header);
       attr = dwarf_attr (die, DW_AT_decl_line);
       if (attr)
 	{
@@ -4172,7 +4172,7 @@ new_symbol (struct die_info *die, struct type *type, struct objfile *objfile,
 	     with missing type entries. Change the misleading `void' type
 	     to something sensible.  */
 	  if (TYPE_CODE (SYMBOL_TYPE (sym)) == TYPE_CODE_VOID)
-	    SYMBOL_TYPE (sym) = init_type (TYPE_CODE_INT,
+	    SET_SYMBOL_TYPE (sym) = init_type (TYPE_CODE_INT,
 					   TARGET_INT_BIT / HOST_CHAR_BIT, 0,
 					   "<variable, no debug info>",
 					   objfile);

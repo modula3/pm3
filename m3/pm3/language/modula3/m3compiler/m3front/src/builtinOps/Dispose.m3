@@ -8,8 +8,9 @@
 
 MODULE Dispose;
 
-IMPORT CG, CallExpr, Expr, ExprRep, Type, Procedure, Runtime;
+IMPORT CG, CallExpr, Expr, ExprRep, Type, Procedure, RunTyme;
 IMPORT Addr, Reff, Module, Error, ObjectRef, ObjectAdr, Target;
+IMPORT ReffTransient, ObjectTransient;
 
 VAR Z: CallExpr.MethodList;
 
@@ -25,6 +26,8 @@ PROCEDURE Check (ce: CallExpr.T;  <*UNUSED*> VAR cs: Expr.CheckState) =
     ELSIF Type.IsEqual (t, Reff.T, NIL)
        OR Type.IsEqual (t, Addr.T, NIL)
        OR Type.IsEqual (t, ObjectRef.T, NIL)
+       OR Type.IsEqual (t, ReffTransient.T, NIL)
+       OR Type.IsEqual (t, ObjectTransient.T, NIL)
        OR Type.IsEqual (t, ObjectAdr.T, NIL) THEN
       Error.Msg ("DISPOSE: must be applied to a fixed reference type");
     ELSIF NOT Expr.IsWritable (ce.args[0]) THEN
@@ -36,8 +39,8 @@ PROCEDURE Check (ce: CallExpr.T;  <*UNUSED*> VAR cs: Expr.CheckState) =
   END Check;
 
 PROCEDURE Prep (ce: CallExpr.T) =
-  CONST PHook = ARRAY BOOLEAN OF Runtime.Hook { Runtime.Hook.DisposeRef,
-                                                Runtime.Hook.DisposeObj };
+  CONST PHook = ARRAY BOOLEAN OF RunTyme.Hook { RunTyme.Hook.DisposeRef,
+                                                RunTyme.Hook.DisposeObj };
   VAR
     e := ce.args[0];
     t := Type.Base (Expr.TypeOf (e));
@@ -51,11 +54,11 @@ PROCEDURE Prep (ce: CallExpr.T) =
       CG.Load_nil ();
       CG.Store_indirect (CG.Type.Addr, 0, Target.Address.size);
     ELSE
-      proc := Runtime.LookUpProc (PHook [Type.IsSubtype (t, ObjectAdr.T)]);
+      proc := RunTyme.LookUpProc (PHook [Type.IsSubtype (t, ObjectAdr.T)]);
       Procedure.StartCall (proc);
       Expr.CompileAddress (e);
       CG.Pop_param (CG.Type.Addr);
-      EVAL Procedure.EmitCall (proc);
+      Procedure.EmitCall (proc);
     END;
     Expr.NoteWrite (e);
   END Prep;
@@ -77,7 +80,8 @@ PROCEDURE Initialize () =
                                  CallExpr.NoLValue,
                                  CallExpr.NotBoolean,
                                  CallExpr.NotBoolean,
-                                 CallExpr.NoValue, 
+                                 CallExpr.NoValue,
+                                 CallExpr.NoBounds,
 				 CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

@@ -6,5 +6,4 @@
 with an "M3PathElem.T". It provides the abstraction of a 
 <I>search path</I> as a list of directories. *)
 
-INTERFACE M3PathElemList = List(M3PathElem) 
-END M3PathElemList.
+INTERFACE M3PathElemList = List(Root, M3PathElem) END M3PathElemList.

@@ -28,8 +28,8 @@ readonly EXCEPTION_IMPL = {
   "NEXT"       : "ex_frame",
   "NT386"      : "ex_frame",
   "NT386GNU"   : "ex_frame",
-  "NetBSDi386" : "ex_frame",
   "OKI"        : "ex_frame",
+  "OS2"        : "ex_frame",
   "SEQUENT"    : "ex_frame",
   "SOLgnu"     : "ex_stack",  % has a working stack walker
   "SOLsun"     : "ex_stack",  % has a working stack walker
@@ -38,11 +38,13 @@ readonly EXCEPTION_IMPL = {
   "SUN386"     : "ex_frame",
   "Tru64v5"    : "ex_stack",  % has a working stack walker
   "UMAX"       : "ex_frame",
-  "VAX"        : "ex_frame"
+  "VAX"        : "ex_frame",
+  "I386_DARWIN": "ex_frame",
+  "PPC_DARWIN" : "ex_frame"
 }
 
-include_dir("common")
-include_dir(OS_TYPE)
-include_dir(TARGET)
-include_dir(EXCEPTION_IMPL{TARGET})
+include_dir ("common")
+include_dir (OS_TYPE)
+include_dir (TARGET)
+include_dir (EXCEPTION_IMPL{TARGET})
 

@@ -26,7 +26,7 @@ INTERFACE Stackx86;
 FROM M3CG IMPORT MType, ZType, Sign, ByteOffset;
 FROM M3CG_Ops IMPORT ErrorHandler;
 
-IMPORT M3x86Rep, Codex86;
+IMPORT M3x86Rep, Codex86, Wrx86;
 FROM M3x86Rep IMPORT Operand, OLoc, MVar, Regno, Force, RegSet, FlToInt;
 FROM M3x86Rep IMPORT x86Proc, x86Var;
 
@@ -37,6 +37,7 @@ TYPE Public = OBJECT
       METHODS
         unlock ();
         clearall ();
+        releaseall ();
         lock (r: Regno);
         find (stackp: INTEGER; force: Force; set := RegSet {};
               hintaddr := FALSE);
@@ -44,7 +45,6 @@ TYPE Public = OBJECT
         set_reg (stackp: INTEGER; r: Regno);
         dealloc_reg (stackp: INTEGER);
         corrupt (reg: Regno);
-        corrupt_all ();
         set_fstack (stackp: INTEGER);
         set_mvar (stackp: INTEGER; READONLY mvar: MVar);
         set_imm (stackp, imm: INTEGER);
@@ -103,5 +103,7 @@ TYPE Public = OBJECT
 TYPE MaxMin = { Max, Min };
 
 PROCEDURE New (parent: M3x86Rep.U; cg: Codex86.T; debug, pic: BOOLEAN): T;
+
+PROCEDURE Debug (t: T;  tag: TEXT;  wr: Wrx86.T);
 
 END Stackx86.

@@ -48,7 +48,7 @@ PROCEDURE New (a: Expr.T): Expr.T =
 
 PROCEDURE TypeOf (p: P): Type.T =
   BEGIN
-    RETURN Expr.TypeOf (p.a)
+    RETURN Type.Base (Expr.TypeOf (p.a));
   END TypeOf;
 
 PROCEDURE Check (p: P;  VAR cs: Expr.CheckState) =
@@ -56,10 +56,8 @@ PROCEDURE Check (p: P;  VAR cs: Expr.CheckState) =
   BEGIN
     Expr.TypeCheck (p.a, cs);
     t := Type.Base (Expr.TypeOf (p.a));
-    IF (t = Int.T) THEN
-      INC (cs.int_ops);
-    ELSIF (t = Reel.T) OR (t = LReel.T) OR (t = EReel.T) THEN
-      INC (cs.fp_ops);
+    IF (t = Int.T) OR (t = Reel.T) OR (t = LReel.T) OR (t = EReel.T) THEN
+      (* ok *)
     ELSE
       t := Expr.BadOperands ("unary \'-\'", t);
     END;

@@ -1,10 +1,10 @@
 (* Copyright (C) 1995, Digital Equipment Corporation. *)
 (* All rights reserved. *)
-(* Last modified on Tue Jun 25 21:48:27 PDT 1996 by steveg *)
+(* Last modified on Fri Jan 17 16:05:29 PST 1997 by steveg *)
 
 MODULE HTTPPayment;
 
-IMPORT App, Fmt, HTTP, CIText;
+IMPORT App, Fmt, HTTP, TextExtras;
 
 TYPE
   PF = {PaymentProtocol, PaymentCash, PaymentAuthorization, PaymentBid,
@@ -12,19 +12,19 @@ TYPE
 
 PROCEDURE PaymentField(field: HTTP.Field): PF =
   BEGIN
-    IF CIText.Equal(field.name, ProtocolField) THEN
+    IF TextExtras.CIEqual(field.name, ProtocolField) THEN
       RETURN PF.PaymentProtocol
-    ELSIF CIText.Equal(field.name, CashField) THEN
+    ELSIF TextExtras.CIEqual(field.name, CashField) THEN
       RETURN PF.PaymentCash
-    ELSIF CIText.Equal(field.name, AuthorizationField) THEN
+    ELSIF TextExtras.CIEqual(field.name, AuthorizationField) THEN
       RETURN PF.PaymentAuthorization
-    ELSIF CIText.Equal(field.name, BidField) THEN
+    ELSIF TextExtras.CIEqual(field.name, BidField) THEN
       RETURN PF.PaymentBid
-    ELSIF CIText.Equal(field.name, ReceiptField) THEN
+    ELSIF TextExtras.CIEqual(field.name, ReceiptField) THEN
       RETURN PF.PaymentReceipt
-    ELSIF CIText.Equal(field.name, OfferField) THEN
+    ELSIF TextExtras.CIEqual(field.name, OfferField) THEN
       RETURN PF.PaymentOffer
-    ELSIF CIText.Equal(field.name, ErrorField) THEN
+    ELSIF TextExtras.CIEqual(field.name, ErrorField) THEN
       RETURN PF.PaymentError
     ELSE
       RETURN PF.NotAPaymentField
@@ -148,7 +148,7 @@ PROCEDURE InitRequest (self: Request; request: HTTP.Request; log: App.Log):
 PROCEDURE ToRequest (self: Request; <* UNUSED *> log: App.Log): HTTP.Request =
   VAR
     req := NEW(HTTP.Request, method := self.request.method,
-               url := self.request.url);
+               url := self.request.url, postData := self.request.postData);
   BEGIN
     self.request.copyFields(req);
     IF self.protocols # NIL THEN

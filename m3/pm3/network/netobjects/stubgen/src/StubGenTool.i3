@@ -11,6 +11,8 @@ VAR tool_g: M3Args.T;
 
 CONST
   StubGen_Arg = "StubGen";
+  StubGen_V1_Arg = "v1";
+  StubGen_V2_Arg = "v2";
   StubGenTypes_Arg = "StubNetworkObjects";
   StubGenExists_Arg = "UseStubs";
   StubGenPerf_Arg = "StubPerfMon";

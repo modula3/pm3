@@ -49,6 +49,7 @@ PROCEDURE Initialize () =
                                  CallExpr.NotBoolean,
                                  CallExpr.NotBoolean,
                                  Fold,
+                                 CallExpr.NoBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

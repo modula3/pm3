@@ -17,6 +17,7 @@ TYPE
         offset  : INTEGER;
         tipe    : Type.T;
         dfault  : Expr.T;
+        transient : BOOLEAN;
       OVERRIDES
         typeCheck   := TypeCheck;
         set_globals := SetGlobals;
@@ -42,6 +43,7 @@ PROCEDURE New (READONLY info: Info): Value.T =
     t.offset := info.offset;
     t.tipe   := info.type;
     t.dfault := info.dfault;
+    t.transient := info.transient;
     RETURN t;
   END New;
 
@@ -62,6 +64,7 @@ PROCEDURE Split (field: Value.T;  VAR info: Info) =
     info.offset := t.offset;
     info.type   := t.tipe;
     info.dfault := t.dfault;
+    info.transient := t.transient;
   END Split;
 
 PROCEDURE SetOffset (field: Value.T;  newOffset: INTEGER) =
@@ -80,14 +83,27 @@ PROCEDURE EmitDeclaration (field: Value.T) =
     CG.Declare_field (t.name, t.offset, info.size, Type.GlobalUID (t.tipe));
   END EmitDeclaration;
 
-PROCEDURE IsEqual (va, vb: Value.T;  x: Type.Assumption): BOOLEAN =
+PROCEDURE IsEqualList (a, b: Value.T;  x: Type.Assumption;
+                       types: BOOLEAN): BOOLEAN =
+  BEGIN
+    WHILE (a # NIL) AND (b # NIL) DO
+      IF NOT IsEqual (a, b, x, types) THEN RETURN FALSE END;
+      a := a.next;  b := b.next;
+    END;
+    RETURN (a = NIL) AND (b = NIL);
+  END IsEqualList;
+
+PROCEDURE IsEqual (va, vb: Value.T;  x: Type.Assumption;
+                   types: BOOLEAN): BOOLEAN =
   VAR a: T := va;  b: T := vb;
   BEGIN
-    RETURN (a # NIL) AND (b # NIL)
-       AND (a.name = b.name)
-       AND (a.index = b.index)
-       (*******  only good after it's checked AND (a.offset = b.offset) ****)
-       AND Type.IsEqual (TypeOf (a), TypeOf (b), x)
+    IF (a = NIL) OR (b = NIL) OR (a.name # b.name) OR (a.index # b.index) THEN
+      RETURN FALSE;
+    END;
+    IF NOT types THEN RETURN TRUE; END;
+
+    (* now, we'll do the harder type-based checks... *)
+    RETURN Type.IsEqual (TypeOf (a), TypeOf (b), x)
        AND Expr.IsEqual (Expr.ConstValue (a.dfault),
                          Expr.ConstValue (b.dfault), x);
   END IsEqual;
@@ -109,6 +125,10 @@ PROCEDURE TypeCheck (t: T;  VAR cs: Value.CheckState) =
       Error.ID (t.name, "fields may not be open arrays");
     END;
     t.checked := TRUE;
+
+    IF t.transient AND info.isTransient THEN
+      Error.Warn (1, "field type already transient, <*TRANSIENT*> ignored");
+    END;
 
     IF (t.dfault # NIL) THEN
       (* check for assignability!! *)

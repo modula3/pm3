@@ -2,4 +2,6 @@
 import("m3doc")
 HtmlFile("index")
 
-OtherPackage("sgmltools")
+before_do_m3_hooks()
+gen_m3exports ("sgmltools")
+install_sources ()

@@ -9,7 +9,7 @@
 MODULE LecternOCR;
 
 IMPORT Cursor, Images, ImageVBT, LecternDoc, PaintOp, Point, PolyRegion,
-       Rd, Rect, Region, TextF, TextWr, Thread, VBT, Wr;
+       Rd, Rect, Region, Text8, TextWr, Thread, VBT, Wr;
 
 TYPE
   Rects = REF ARRAY OF Rect.T;
@@ -607,7 +607,7 @@ PROCEDURE GetWords(t: T; page: INTEGER): Words RAISES { Thread.Alerted } =
 PROCEDURE GetWordSeq(t: T; page: INTEGER): WordSeq RAISES { Thread.Alerted } =
   <* FATAL Rd.Failure *>
   VAR
-    seq: TEXT;
+    seq: Text8.T;
   BEGIN
     LOCK VBT.mu DO
       IF page+t.dir.origin < 0 OR page+t.dir.origin > LAST(t.dir.pages^) THEN
@@ -618,9 +618,9 @@ PROCEDURE GetWordSeq(t: T; page: INTEGER): WordSeq RAISES { Thread.Alerted } =
           IF words.start <= 0 THEN
             RETURN NIL
           ELSE
-            seq := TextF.New(words.length);
+            seq := Text8.Create(words.length);
             Rd.Seek(t.rd, words.start);
-            EVAL Rd.GetSub(t.rd, SUBARRAY(seq^, 0, words.length));
+            EVAL Rd.GetSub(t.rd, SUBARRAY(seq.contents^, 0, words.length));
             RETURN seq
           END;
         END;

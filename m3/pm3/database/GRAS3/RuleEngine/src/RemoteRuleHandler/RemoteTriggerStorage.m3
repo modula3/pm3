@@ -7,8 +7,11 @@ MODULE RemoteTriggerStorage;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:40  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:50  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:40  hosking
+    Import of GRAS3 1.1
 
     Revision 1.1  1997/10/31 14:05:13  roland
     The RuleEngine subsystem implements an event-trigger mechanism for GRAS.
@@ -28,14 +31,14 @@ PROCEDURE Store (id       : CARDINAL;
                  eventType: TEXT;
                  priority : CARDINAL;
                  action   : Action.T;
-                 userdata : REFANY) =
+                 userdata : <*TRANSIENT*> REFANY) =
   VAR
-    elem: REF ListElement;
+    elem: ListElement;
     hash: CARDINAL;
   BEGIN
     LOCK Access DO
       elem := NewListElement();
-      elem^ := ListElement{id, eventType, priority, action, userdata, NIL, NIL};
+      elem^ := ListElementRec{id, eventType, priority, action, userdata, NIL, NIL};
       hash := Hash(id);
       ListInsert(Table[hash], elem);
     END;
@@ -44,7 +47,7 @@ PROCEDURE Store (id       : CARDINAL;
 PROCEDURE Remove (id: CARDINAL) =
   VAR
     found: BOOLEAN;
-    elem : REF ListElement;
+    elem : ListElement;
     hash : CARDINAL;
   BEGIN
     LOCK Access DO
@@ -61,10 +64,10 @@ PROCEDURE Find (    id      : CARDINAL;
                 VAR type    : TEXT;
                 VAR priority: CARDINAL;
                 VAR action  : Action.T;
-                VAR userdata: REFANY): BOOLEAN =
+                VAR userdata: <*TRANSIENT*> REFANY): BOOLEAN =
   VAR
     found: BOOLEAN;
-    elem : REF ListElement;
+    elem : ListElement;
     hash : CARDINAL;
   BEGIN
     LOCK Access DO
@@ -83,30 +86,32 @@ PROCEDURE Find (    id      : CARDINAL;
 CONST TableSize = 53;
 
 TYPE
-  ListElement = RECORD
+  ListElementRec = RECORD
                   id        : CARDINAL;
-                  type      : TEXT;
+                  <*TRANSIENT*>
+		  type      : TEXT;
                   priority  : CARDINAL;
                   action    : Action.T;
-                  userdata  : REFANY;
-                  next, prev: REF ListElement;
+                  userdata  : <*TRANSIENT*> REFANY;
+                  next, prev: ListElement;
                 END;
+  ListElement = <*TRANSIENT*> REF ListElementRec;
 
   TableIndex = [0 .. TableSize - 1];
-  TriggerTable = ARRAY TableIndex OF REF ListElement;
+  TriggerTable = ARRAY TableIndex OF ListElement;
 
 PROCEDURE Hash (type: CARDINAL): TableIndex =
   BEGIN
     RETURN type MOD TableSize;
   END Hash;
 
-VAR FreeListElements: REF ListElement := NIL;
+VAR FreeListElements: ListElement := NIL;
 
-PROCEDURE NewListElement (): REF ListElement =
-  VAR new: REF ListElement;
+PROCEDURE NewListElement (): ListElement =
+  VAR new: ListElement;
   BEGIN
     IF FreeListElements = NIL THEN
-      RETURN NEW(REF ListElement);
+      RETURN NEW(ListElement);
     ELSE
       new := FreeListElements;
       FreeListElements := new.next;
@@ -114,15 +119,15 @@ PROCEDURE NewListElement (): REF ListElement =
     END;
   END NewListElement;
 
-PROCEDURE DisposeListElement (elem: REF ListElement) =
+PROCEDURE DisposeListElement (elem: ListElement) =
   BEGIN
-    elem^ := ListElement{0, NIL, 0, NIL, NIL, NIL, NIL};
+    elem^ := ListElementRec{0, NIL, 0, NIL, NIL, NIL, NIL};
     elem.next := FreeListElements;
     FreeListElements := elem;
   END DisposeListElement;
 
-PROCEDURE ListInsert (VAR list: REF ListElement; new: REF ListElement) =
-  VAR p: REF ListElement;
+PROCEDURE ListInsert (VAR list: ListElement; new: ListElement) =
+  VAR p: ListElement;
   BEGIN
     IF list = NIL OR list.id >= new.id THEN
       (* empty list or trigger preceeds/equals first element *)
@@ -139,7 +144,7 @@ PROCEDURE ListInsert (VAR list: REF ListElement; new: REF ListElement) =
     END;
   END ListInsert;
 
-PROCEDURE ListRemove (VAR list: REF ListElement; elem: REF ListElement) =
+PROCEDURE ListRemove (VAR list: ListElement; elem: ListElement) =
   BEGIN
     IF elem.prev = NIL THEN
       list := elem.next;
@@ -152,9 +157,9 @@ PROCEDURE ListRemove (VAR list: REF ListElement; elem: REF ListElement) =
   END ListRemove;
 
 
-PROCEDURE ListFind (    list : REF ListElement;
+PROCEDURE ListFind (    list : ListElement;
                         id   : CARDINAL;
-                    VAR elem : REF ListElement;
+                    VAR elem : ListElement;
                     VAR found: BOOLEAN          ) =
   BEGIN
     elem := list;

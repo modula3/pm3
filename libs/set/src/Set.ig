@@ -6,7 +6,7 @@
 
 (* "Set" is a generic interface defining sets of "Elem.T"'s. *)
 
-GENERIC INTERFACE Set(Elem);
+GENERIC INTERFACE Set(Super, Elem);
 (* Where "Elem.T" is a type that is not an open array type and "Elem" contains
 
 | CONST Brand = <text-constant>;
@@ -25,7 +25,7 @@ GENERIC INTERFACE Set(Elem);
 CONST Brand = "(Set " & Elem.Brand & ")";
 
 TYPE 
-  Public = OBJECT METHODS
+  Public = Super.T OBJECT METHODS
     fromArray(READONLY a: ARRAY OF Elem.T): T;
     copy(): T;
     member(e: Elem.T): BOOLEAN;

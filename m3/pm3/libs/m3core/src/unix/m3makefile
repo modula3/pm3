@@ -35,8 +35,8 @@ readonly _UnixPieces = {
   "NEXT"       : [ "ultrix-3-1.generic", "ultrix-3-1.NEXT" ],
   "NT386"      : [ ], % doesn't define a "Unix" interface
   "NT386GNU"   : [ ], % doesn't define a "Unix" interface
-  "NetBSDi386" : [ "netbsd-1" ],
   "OKI"        : [ "sysv-4.0" ],
+  "OS2"        : [ "os2" ],
   "SEQUENT"    : [ "ultrix-3-1.generic", "ultrix-3-1.SEQUENT" ],
   "SOLgnu"     : [ "solaris-2-x" ],
   "SOLsun"     : [ "solaris-2-x" ],
@@ -45,7 +45,9 @@ readonly _UnixPieces = {
   "SUN386"     : [ "ultrix-3-1.generic", "ultrix-3-1.SUN386" ],
   "Tru64v5"    : [ "osf-1.generic", "osf-1.Tru64v5" ],
   "UMAX"       : [ "ultrix-3-1.generic", "ultrix-3-1.UMAX" ],
-  "VAX"        : [ "ultrix-3-1.generic", "ultrix-3-1.VAX" ]
+  "VAX"        : [ "ultrix-3-1.generic", "ultrix-3-1.VAX" ],
+  "I386_DARWIN": [ "darwin-generic", "darwin-i386" ],
+  "PPC_DARWIN" : [ "darwin-generic", "darwin-ppc" ]
 }
 
 if _UnixPieces contains TARGET

@@ -7,8 +7,11 @@ INTERFACE ServerLockTable;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:39  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:49  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:39  hosking
+    Import of GRAS3 1.1
 
     Revision 1.2  1996/03/06 16:17:04  rbnix
     	Method/Procedure Fmt added.
@@ -49,7 +52,7 @@ TYPE
       fmt		() :TEXT;
     END;
 
-  Private		<: ROOT;
+  Private		<: <*TRANSIENT*> ROOT;
 
 
   Iterator		<: PublicIterator;

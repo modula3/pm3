@@ -15,15 +15,21 @@
 
 import ("libm3")
 
-if equal (TARGET, "LINUX") or equal (TARGET, "LINUXELF") or 
-    equal(TARGET, "LINUXLIBC6")
+if SYSTEM_LIBS contains "LEX-YACC"
+  if equal (TARGET, "HPPA")
+    include_dir ("lex-yacc-HPPA")
+  else
+    include_dir ("lex-yacc")
+  end
+else if SYSTEM_LIBS contains "FLEX-BISON"
   include_dir ("flex-bison")
 else
-  include_dir ("lex-yacc")
-end
+  error ("Unable to build the pretty printer without Lex&Yacc or Flex&Bison libraries.")
+end end
 
 % source   ("Parse.lex")
 % source   ("Parse.yacc")
+
 h_source ("hash")
 h_source ("lex_help")
 
@@ -38,6 +44,7 @@ implementation ("Main")
 import("m3doc")
 HtmlFile("index")
 
+generate_tfile()
 Program ("m3pp")
 ManPage ("m3pp",1)
 

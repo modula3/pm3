@@ -7,9 +7,9 @@
 
 MODULE QCompiler;
 
-IMPORT File, Fmt, M3ID, FS, OSError;
-IMPORT QToken, QScanner, QCode;
-FROM Quake IMPORT Error;
+IMPORT File, Fmt, FS, OSError;
+IMPORT QIdent, QToken, QScanner, QCode;
+FROM Quake IMPORT Error, ID, IDMap;
 
 TYPE
   TK = QToken.T;
@@ -19,7 +19,8 @@ TYPE
   State = RECORD
     lexer : QScanner.T;
     code  : QCode.Stream;
-    file  : M3ID.T;
+    file  : ID;
+    map   : IDMap;
   END;
 
 CONST
@@ -32,7 +33,8 @@ CONST
     TK.Cardinal, TK.Name, TK.String, TK.At
   };
 
-PROCEDURE CompileFile (path: TEXT): QCode.Stream  RAISES {Error} =
+PROCEDURE CompileFile (path: TEXT;  map: IDMap): QCode.Stream
+  RAISES {Error} =
   VAR s: State;  f: File.T;
   BEGIN
     TRY
@@ -42,9 +44,10 @@ PROCEDURE CompileFile (path: TEXT): QCode.Stream  RAISES {Error} =
     END;
 
     TRY
-      s.lexer      := NEW (QScanner.T).init (f);
-      s.file       := M3ID.Add (path);
+      s.lexer      := NEW (QScanner.T).init (f, map);
+      s.file       := map.txt2id (path);
       s.code       := NEW (QCode.Stream, source_file := s.file);
+      s.map        := map;
 
       s.code.emit (QC.SetLine, 1);
       s.lexer.next ();  (* prime the input symbol *)
@@ -56,10 +59,29 @@ PROCEDURE CompileFile (path: TEXT): QCode.Stream  RAISES {Error} =
     FINALLY
       TRY f.close (); EXCEPT OSError.E => (*ignore*) END;
     END;
-
     
     RETURN s.code;
   END CompileFile;
+
+PROCEDURE CompileText (name, value: TEXT;  map: IDMap): QCode.Stream
+  RAISES {Error} =
+  VAR s: State;
+  BEGIN
+    s.lexer      := NEW (QScanner.T).initText (value, map);
+    s.file       := map.txt2id (name);
+    s.code       := NEW (QCode.Stream, source_file := s.file);
+    s.map        := map;
+
+    s.code.emit (QC.SetLine, 1);
+    s.lexer.next ();  (* prime the input symbol *)
+    WHILE s.lexer.token IN StatementStartTokens DO
+      Statement (s);
+    END;
+    Match (s, TK.EOF);
+    s.code.emit (QC.Halt, 0);
+    
+    RETURN s.code;
+  END CompileText;
 
 PROCEDURE Block (VAR s: State) RAISES {Error} =
   BEGIN
@@ -107,7 +129,7 @@ PROCEDURE Decl (VAR s: State) RAISES {Error} =
   END Decl;
 
 PROCEDURE ForeachStmt (VAR s: State) RAISES {Error} =
-  VAR id: M3ID.T;  top, bot: INTEGER;
+  VAR id: ID;  top, bot: INTEGER;
   BEGIN
     Match (s, TK.Foreach);
     id := MatchName (s);
@@ -178,11 +200,11 @@ PROCEDURE ProcDeclStmt (VAR s: State; local, readonly: BOOLEAN)
   RAISES {Error}=
   VAR
     n_formals := 0;
-    formals   : ARRAY [0..19] OF M3ID.T;
+    formals   : ARRAY [0..19] OF ID;
     push      : INTEGER;
     goto      : INTEGER;
     entry     : INTEGER;
-    id        : M3ID.T;
+    id        : ID;
     proc_id   : INTEGER;
   BEGIN
     Match (s, TK.Proc);
@@ -232,7 +254,7 @@ PROCEDURE ProcDeclStmt (VAR s: State; local, readonly: BOOLEAN)
     s.code.patch (goto, QC.Goto, s.code.cursor - entry);
   END ProcDeclStmt;
 
-PROCEDURE EmitDefine (VAR s: State;  id: M3ID.T;  local, readonly: BOOLEAN) =
+PROCEDURE EmitDefine (VAR s: State;  id: ID;  local, readonly: BOOLEAN) =
   TYPE Z = ARRAY BOOLEAN OF QC;
   CONST ZZ = ARRAY BOOLEAN OF Z { Z {QC.DefineG, QC.DefineGR},
                                   Z {QC.DefineL, QC.DefineLR} };
@@ -429,7 +451,7 @@ PROCEDURE KeyValueList (VAR s: State): INTEGER RAISES {Error} =
 
 (*------------------------------------------------------------------ misc ---*)
 
-PROCEDURE MatchName (VAR s: State): M3ID.T RAISES {Error} =
+PROCEDURE MatchName (VAR s: State): ID RAISES {Error} =
   VAR nm := s.lexer.string;
   BEGIN
     Match (s, TK.Name);
@@ -449,7 +471,7 @@ PROCEDURE Match (VAR s: State;  tok: TK) RAISES {Error} =
 PROCEDURE Err (VAR s: State;  msg: TEXT) RAISES {Error} =
   BEGIN
     msg := Fmt.F ("%s, line %s: syntax error: %s",
-                   M3ID.ToText (s.file), Fmt.Int (s.lexer.line), msg);
+                   s.map.id2txt (s.file), Fmt.Int (s.lexer.line), msg);
     RAISE Error (msg);
   END Err;
 

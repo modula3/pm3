@@ -21,8 +21,8 @@ VAR(* CONST *)
   CG_Align_bytes : ARRAY CGType OF CARDINAL;
   CG_Size        : ARRAY CGType OF CARDINAL;
   CG_Bytes       : ARRAY CGType OF CARDINAL;
-  CG_Base        : ARRAY CGType OF CGType;
-  Int_types      : ARRAY [0..7] OF Int_type;
+  Word_types     : ARRAY [0..3] OF Int_type;
+  Integer_types  : ARRAY [0..3] OF Int_type;
   Float_types    : ARRAY Precision OF Float_type;
 
 PROCEDURE Init();

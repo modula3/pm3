@@ -9,7 +9,7 @@
 MODULE Val;
 
 IMPORT CallExpr, Expr, ExprRep, Type, Procedure, Error, TypeExpr, Int;
-IMPORT IntegerExpr, EnumExpr, EnumType, CheckExpr, Target, TInt;
+IMPORT IntegerExpr, EnumExpr, EnumType, CheckExpr, Target, TInt, CG;
 
 VAR Z: CallExpr.MethodList;
 
@@ -27,28 +27,31 @@ PROCEDURE Check (ce: CallExpr.T;  VAR cs: Expr.CheckState) =
   BEGIN
     u := Expr.TypeOf (ce.args[0]);
     t := Int.T;
-    IF  NOT Type.IsSubtype (u, Int.T) THEN
+    IF NOT Type.IsSubtype (u, Int.T) THEN
       Error.Msg ("VAL: first argument must be an INTEGER");
-    ELSIF  NOT TypeExpr.Split (ce.args[1], t) THEN
+    ELSIF NOT TypeExpr.Split (ce.args[1], t) THEN
       Error.Msg ("VAL: second argument must be a type");
-    ELSIF  NOT Type.IsOrdinal (t) THEN
+    ELSIF NOT Type.IsOrdinal (t) THEN
       Error.Msg ("VAL: second argument must be an ordinal type");
     ELSE (* looks ok *)
+      Expr.GetBounds (ce.args[0], minu, maxu);
       EVAL Type.GetBounds (t, mint, maxt);
-      EVAL Type.GetBounds (u, minu, maxu);
       IF TInt.LT (minu, mint) THEN
         (* we need a lower bound check *)
         IF TInt.LT (maxt, maxu) THEN
           (* we also need an upper bound check *)
-          ce.args[0] := CheckExpr.New (ce.args[0], mint, maxt);
+          ce.args[0] := CheckExpr.New (ce.args[0], mint, maxt,
+                                          CG.RuntimeError.ValueOutOfRange);
           Expr.TypeCheck (ce.args[0], cs);
         ELSE
-          ce.args[0] := CheckExpr.NewLower (ce.args[0], mint);
+          ce.args[0] := CheckExpr.NewLower (ce.args[0], mint,
+                                          CG.RuntimeError.ValueOutOfRange);
           Expr.TypeCheck (ce.args[0], cs);
         END;
       ELSIF TInt.LT (maxt, maxu) THEN
         (* we need an upper bound check *)
-        ce.args[0] := CheckExpr.NewUpper (ce.args[0], maxt);
+        ce.args[0] := CheckExpr.NewUpper (ce.args[0], maxt,
+                                          CG.RuntimeError.ValueOutOfRange);
         Expr.TypeCheck (ce.args[0], cs);
       END;
     END;
@@ -87,6 +90,11 @@ PROCEDURE Fold (ce: CallExpr.T): Expr.T =
     END;
   END Fold;
 
+PROCEDURE GetBounds (ce: CallExpr.T;  VAR min, max: Target.Int) =
+  BEGIN
+    Expr.GetBounds (ce.args[0], min, max);
+  END GetBounds;
+
 PROCEDURE Initialize () =
   BEGIN
     Z := CallExpr.NewMethodList (2, 2, TRUE, FALSE, TRUE, NIL,
@@ -100,6 +108,7 @@ PROCEDURE Initialize () =
                                  CallExpr.PrepNoBranch,
                                  CallExpr.NoBranch,
                                  Fold,
+                                 GetBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

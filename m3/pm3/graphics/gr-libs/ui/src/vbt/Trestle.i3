@@ -18,7 +18,7 @@ INTERFACE Trestle;
 IMPORT VBT, Rect, Point, Region, ScrnPixmap, TrestleComm;
 
 TYPE
-  T <: ROOT;
+  T <: <*TRANSIENT*> ROOT;
 
 (* A "Trestle.T" identifies an instance of a window system.  All the 
    routines in this interface that take a "Trestle.T" accept the value "NIL",

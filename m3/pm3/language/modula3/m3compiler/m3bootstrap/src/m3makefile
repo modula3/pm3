@@ -1,31 +1,60 @@
+readonly Platforms = {
+  "AIX386"    : [ "i486-ibm-aix", ""       ],
+  "ALPHA_OSF" : [ "alpha-dec-osf1", "T"    ],
+  "AP3000"    : [ "apollo68-bsd", ""       ],
+  "ARM"       : [ "arm--riscos", ""        ],
+  "BSDI4"     : [ "i386-unknown-freebsdelf", "T" ],
+  "DS3100"    : [ "decstation", "T"        ],
+  "FBSD_ALPHA": [ "alpha-unknown-freebsd", "T" ],
+  "FreeBSD"   : [ "i486-unknown-bsd", ""   ],
+  "FreeBSD2"  : [ "i486-unknown-freebsd", "T" ],
+  "FreeBSD3"  : [ "i486-unknown-freebsdelf", "T" ],
+  "FreeBSD4"  : [ "i486-unknown-freebsdelf", "T" ],
+  "HP300"     : [ "m68k-hp-hpux", ""       ],
+  "HPPA"      : [ "hppa1.1-hp-hpux", "T"   ],
+  "IBMR2"     : [ "rs6000-ibm-aix3.2", "" ],
+  "IBMRT"     : [ "romp-ibm-aos", ""       ],
+  "IRIX5"     : [ "mips-sgi-irix5", "T"    ],
+  "LINUX"     : [ "i486--linux", ""        ],
+  "LINUXELF"  : [ "i486--linuxelf", "T"    ],
+  "LINUXLIBC6": [ "i486--linuxelf", "T"    ],
+  "NEXT"      : [ "next-bsd", ""          ],
+  "NT386"     : [ "WIN32", "32BITS", "i486--nt", ""           ],
+  "NT386GNU"  : [ "WIN32", "32BITS", "i486--cygwin32", "T"    ],
+  "OKI"       : [ "i860--sysv4.0", ""      ],
+  "SEQUENT"   : [ "i386-sequent-bsd", ""   ],
+  "SOLgnu"    : [ "sparc-sun-solaris2", "T"],
+  "SOLsun"    : [ "sparc-sun-solaris2", "" ],
+  "SPARC"     : [ "sparc-sun-sunos4.1", "T"],
+  "SUN3"      : [ "m68k-sun-sunos4.1", ""  ],
+  "SUN386"    : [ "i386-sun-sunos4.1", ""  ],
+  "Tru64v5"   : [ "alpha-dec-osf1", "T"    ],
+  "UMAX"      : [ "encore-bsd", ""         ],
+  "VAX"       : [ "vax-dec-ultrix", ""     ]
+}
+
 %
 % Build a specific package, residing in dir, for target
 
 readonly proc BootstrapPkg(dir,pkg,target,host) is
-  local ret = 0
-
   % Create a directory for the package e.g. boot-LINUXELF/m3core
 
   local targetPkg = "pm3-" & target & SL & "boot-" & target & SL & pkg
-  ret = exec(["mkdir", targetPkg])
+  exec(["-mkdir", targetPkg])
 
   % Create a soft link to the source in the real package
 
-  ret = exec(["ln", "-s", ".." & SL & ".." & SL & ".." & SL & dir & SL & pkg & 
-      SL & "src", "."], [], targetPkg)
+  exec(["-cd", targetPkg, ";"],
+       ["ln", "-s", ".." & SL & ".." & SL & ".." & SL &
+        dir & SL & pkg & SL & "src", "."])
 
   % Issue the m3build command for the package
 
   write("---------- Building " & pkg & " ----------" & CR)
-  ret = exec([BIN_USE & SL & "m3build", "-b", target,
-      "-T", ".." & SL & ".." & SL & ".." & SL & 
-      ".." & SL & ".." & SL & ".." & SL & 
-      ".." & SL & ".." & SL & ".." & SL & 
-      "m3config" & SL & "src" , 
-      "-F", ".." & SL & ".." & SL & ".." & SL & "config.tmpl" ], 
-      [], targetPkg)
-  if not equal(ret, 0) error (BIN_USE & SL & "m3build failed for " & pkg & 
-      " in " & target & CR) end
+  exec(["cd", targetPkg, ";"], [BIN_USE & SL & "m3build", "-boot", "-b",
+      target, "-T", ".." & SL & ".." & SL & ".." & SL & ".." & SL & ".." & SL &
+      "libcm3" & SL & "src" &  SL & "config",
+      "-F", ".." & SL & ".." & SL & ".." & SL & "config.tmpl"])
 
   >> "pm3-" & target & SL & "config.tmpl" in
     write("override(\"" & pkg & "\",\".." & SL & "..\")" & CR)
@@ -36,9 +65,7 @@ end
 % Remove the links to the real source directory
 
 readonly proc CleanPkg(pkg,target) is
-  local ret = 0
-  ret = exec(["rm", "pm3-" & target & SL & "boot-" & target & SL & pkg & SL &
-      "src"])
+  exec(["rm", "pm3-" & target & SL & "boot-" & target & SL & pkg & SL & "src"])
 end
 
 %
@@ -47,7 +74,7 @@ end
 readonly proc WriteMakefileLine(pkg,target,options) is
   % In a makefile, only real / may work
   write("\tcd boot-" & target & "/" & pkg & "/" & target & 
-      "; ${MAKE} -f make.boot " & options, CR)
+      "; ${MAKE} " & options, CR)
 
 end
 
@@ -55,34 +82,21 @@ end
 % Write the global bootstrap makefile
 
 readonly proc CreateMakefile(file,target,header,options) is
-  local exportrpath = "-DEXPORTRPATH=binaries/" & target
-
-  if equal(target,"NT386GNU") 
-    exportrpath = "-DEXPORTRPATH=binaries\\\\" & target
-  end
-
   > file in
     write(header,CR,CR)
 
     write("all: boot packages", CR, CR)
 
-    write("exportall: boot exportpackages", CR, CR)
-
     write("packages:", CR)
-    write("\tboot-" & target & "/" & "m3build" & "/" & target & "/" &
-        "m3build -T ../m3config/src -DBOOTSTRAP=TRUE", 
+    write("\tboot-" & target & "/" & "cm3" & "/" & target & "/" &
+        "cm3 -DBOOTSTRAP=TRUE", 
         " ${M3OPTIONS}",CR, CR)
-
-    write("exportpackages:", CR)
-    write("\tboot-" & target & "/" & "m3build" & "/" & target & "/" &
-        "m3build -T ../m3config/src -DBOOTSTRAP=TRUE " &
-        "${M3OPTIONS} ",exportrpath, CR, CR)
 
     write("clean: pkg-clean boot-clean",CR, CR)
 
     write("pkg-clean:", CR)
-    write("\tboot-" & target & "/" & "m3build" & "/" & target & "/" &
-        "m3build -T ../m3config/src -DBOOTSTRAP=TRUE -DCLEAN_ALL", 
+    write("\tboot-" & target & "/" & "cm3" & "/" & target & "/" &
+        "cm3 -DBOOTSTRAP=TRUE -DCLEAN_ALL",
         " ${M3OPTIONS}",CR, CR)
 
     write("nothing:",CR,CR)
@@ -93,12 +107,9 @@ readonly proc CreateMakefile(file,target,header,options) is
     WriteMakefileLine("m3middle",target,options)
     WriteMakefileLine("m3front",target,options)
     WriteMakefileLine("m3linker",target,options)
-    WriteMakefileLine("m3driver",target,options)
     WriteMakefileLine("m3quake",target,options)
-    WriteMakefileLine("m3templates",target,options)
-    WriteMakefileLine("m3config",target,options)
-    WriteMakefileLine("m3build",target,options)
-    WriteMakefileLine("m3ship",target,options)
+    WriteMakefileLine("libcm3",target,options)
+    WriteMakefileLine("cm3",target,options)
 
     write(CR, "boot-clean:", CR)
     WriteMakefileLine("m3core",target, "clean " & options)
@@ -106,12 +117,9 @@ readonly proc CreateMakefile(file,target,header,options) is
     WriteMakefileLine("m3middle",target, "clean " & options)
     WriteMakefileLine("m3front",target, "clean " & options)
     WriteMakefileLine("m3linker",target, "clean " & options)
-    WriteMakefileLine("m3driver",target, "clean " & options)
     WriteMakefileLine("m3quake",target, "clean " & options)
-    WriteMakefileLine("m3templates",target, "clean " & options)
-    WriteMakefileLine("m3config",target, "clean " & options)
-    WriteMakefileLine("m3build",target, "clean " & options)
-    WriteMakefileLine("m3ship",target, "clean " & options)
+    WriteMakefileLine("libcm3",target, "clean " & options)
+    WriteMakefileLine("cm3",target, "clean " & options)
   end
 end
 
@@ -119,7 +127,6 @@ end
 % Compile m3cc as a cross compiler for the specified target
 
 readonly proc CompileCrossCompiler(target,host) is
-  local ret = 0
   local m3ccdir = "pm3-" & target & SL & "m3cc"
 
   % Create a subdirectory for m3cc and make links to the source code.
@@ -128,53 +135,47 @@ readonly proc CompileCrossCompiler(target,host) is
   write("---------- Creating cross compiler " & host & " to " & target)
   write(" ----------" & CR)
 
-  ret = exec(["mkdir", m3ccdir])
-  ret = exec(["ln", "-s", ".." & SL & ".." & SL & ".." & SL & ".." & SL &
-      "m3cc" & SL & "src", "."], [], m3ccdir)
-  ret = exec(["ln", "-s", ".." & SL & ".." & SL & ".." & SL & ".." & SL &
-      "m3cc" & SL & "gcc", "."], [], m3ccdir)
+  exec(["-mkdir", m3ccdir])
+  exec(["-cd", m3ccdir, ";"], ["ln", "-s", ".." & SL & ".." & SL & ".." &
+      SL & ".." & SL & "m3cc" & SL & "src", "."])
+  exec(["-cd", m3ccdir, ";"], ["ln", "-s", ".." & SL & ".." & SL & ".." &
+      SL & ".." & SL & "m3cc" & SL & "gcc", "."])
 
   %
   % C compilation is slow, as compared to M3, cache the cross-compiler
   %
 
-  if CACHE_CROSS_COMPILERS and not(stale(CACHE_CROSS_COMPILERS & SL & 
-      "m3cgc1-" & target,m3ccdir & SL & "gcc" & SL & "m3.c"))
-    ret = exec(["ln","-s",CACHE_CROSS_COMPILERS & SL & "m3cgc1-" & target,
-        "pm3-" & target])
-    ret = exec(["rm", "src", "gcc"], [], m3ccdir)
-    ret = exec(["rmdir", m3ccdir])
+  if not(stale("cm3cg-" & target,
+    m3ccdir & SL & "gcc" & SL & "gcc" & SL & "m3cg" & SL & "m3.c"))
+    exec(["-ln","-s", ".." & SL & "cm3cg-" & target, "pm3-" & target])
+    exec(["cd", m3ccdir, ";"], ["rm", "src", "gcc"])
+    exec(["-rmdir", m3ccdir])
     return
   end
 
-  ret = exec([BIN_USE & SL & "m3build",  "-b", host, 
-      "-T", ".." & SL & ".." & SL & 
-      ".." & SL & ".." & SL & ".." & SL & 
-      ".." & SL & ".." & SL & ".." & SL & 
-      "m3config" & SL & "src" , 
-      "-DM3CC_TARGET=" & target], [], m3ccdir)
-  if not equal(ret, 0) error ("m3build failed for m3cc in " & target & CR) end
+  exec(["cd", m3ccdir, ";"],
+      [BIN_USE & SL & "m3build",  "-b", host, 
+      "-T", ".." & SL & ".." & SL & ".." & SL & ".." & SL &
+      "libcm3" & SL & "src" & SL & "config" , 
+      "-DM3CC_TARGET=" & target])
 
-  % Keep the cross compiler under target-m3cgc1 and remove everything else.
+  % Keep the cross compiler under target-cm3cg and remove everything else.
 
   if equal(host,target)
-    ret = exec(["mv", host & SL & "m3cgc1", ".." & SL & "m3cgc1-" & target], 
-        [], m3ccdir)
+    exec(["cd", m3ccdir, ";"],
+         ["mv", host & SL & "cm3cg", ".." & SL & "cm3cg-" & target])
   else
-    ret = exec(["mv", host & "-" & target & SL & "m3cgc1", ".." & SL & 
-        "m3cgc1-" & target], [], m3ccdir)
-    ret = exec(["rm", "-r", host & "-" & target], [], m3ccdir)
+    exec(["cd", m3ccdir, ";"],
+         ["mv", host & "-" & target & SL & "cm3cg", ".." & SL & 
+        "cm3cg-" & target],)
+    exec(["cd", m3ccdir, ";"],["rm", "-r", host & "-" & target])
   end
-  ret = exec(["rm", "-r", host], [], m3ccdir)
-  ret = exec(["rm", "src", "gcc"], [], m3ccdir)
-  ret = exec(["rmdir", m3ccdir])
+  exec(["cd", m3ccdir, ";"],["rm", "-r", host])
+  exec(["cd", m3ccdir, ";"],["rm", "src", "gcc"])
+  exec(["rmdir", m3ccdir])
 
-  if CACHE_CROSS_COMPILERS
-    ret = exec(["mv","pm3-" & target & SL & "m3cgc1-" & target,
-        CACHE_CROSS_COMPILERS])
-    ret = exec(["ln","-s",CACHE_CROSS_COMPILERS & SL & "m3cgc1-" & target,
-        "pm3-" & target])
-  end
+  exec(["mv","pm3-" & target & SL & "cm3cg-" & target, "."])
+  exec(["ln","-s", ".." & SL & "cm3cg-" & target, "pm3-" & target])
 
   write("---------- Finished cross compiler ----------")
 end
@@ -183,10 +184,9 @@ end
 % Create everything needed for bootstrapping on platform "target"
 
 readonly proc BootstrapTarget(target) is
-  local ret = 0
   local host = TARGET
 
-  ret = exec(["mkdir", "pm3-" & target])
+  exec(["-mkdir", "pm3-" & target])
 
   CompileCrossCompiler(target,host)
 
@@ -196,33 +196,30 @@ readonly proc BootstrapTarget(target) is
   % bootstrap code size.
 
   > "pm3-" & target & SL & "config.tmpl" in
-    write("option(\"bootstrap\",\"T\")",CR)
-    write("option(\"shared_lib\",\"\")",CR)
+    write("build_standalone()",CR)
     if equal(target,"HPPA") or equal(target,"DS3100") or equal(target,"IRIX5")
         or equal(target,"NT386GNU") or equal(target,"IBMR2")
-      write("option(\"optimization\",\"\")",CR)
+      write("m3_optimize(FALSE)",CR)
     else 
-      write("option(\"optimization\",\"T\")",CR)
+      write("m3_optimize(TRUE)",CR)
     end
     if equal(target,"ALPHA_OSF") or equal(target, "Tru64v5")
-      % m3cgc1 generates bad code when -g flag is not used
-      write("option(\"debuginfo\",\"T\")",CR)
-    else	
-      write("option(\"debuginfo\",\"" & BOOTDEBUG & "\")",CR)
+      % cm3cg generates bad code when -g flag is not used
+      write("m3_debug(TRUE)",CR)
     end
     write("HOST=\"" & host & "\"",CR)
     write("USE_M3DOC=\"\"",CR)
+    write("M3_SPLIT_LIBNAMES=FALSE",CR)
     write("IBACK=\"\"",CR)
-    write("setDefault(\"\",\"\")",CR)
-    write("BACKEND=[\"" & path() & SL & ".." & SL & host & SL & "pm3-" & 
-        target & SL & "m3cgc1-" & target & 
+    write("m3back=[\"" & path() & SL & ".." & SL & host & SL & "pm3-" & 
+        target & SL & "cm3cg-" & target & 
         "\",\"-fno-strength-reduce\",\"-quiet\"]", CR)
   end
 
   write("---------- Config file ----------", CR)
-  ret = exec(["cat", "pm3-" & target & SL & "config.tmpl"])
+  exec(["cat", "pm3-" & target & SL & "config.tmpl"])
 
-  ret = exec(["mkdir", "pm3-" & target & SL & "boot-" & target])
+  exec(["-mkdir", "pm3-" & target & SL & "boot-" & target])
 
   % Build all the packages required for m3build and m3ship
   % to obtain a bootstrap m3build and m3ship.
@@ -233,24 +230,18 @@ readonly proc BootstrapTarget(target) is
   BootstrapPkg("../..","m3middle",target,host)
   BootstrapPkg("../..","m3front",target,host)
   BootstrapPkg("../..","m3linker",target,host)
-  BootstrapPkg("../..","m3driver",target,host)
   BootstrapPkg("../../../..","m3quake",target,host)
-  BootstrapPkg("../..","m3templates",target,host)
-  BootstrapPkg("../../../../..","m3config",target,host)
-  BootstrapPkg("../..","m3build",target,host)
-  BootstrapPkg("../..","m3ship",target,host)
+  BootstrapPkg("../..","libcm3",target,host)
+  BootstrapPkg("../..","cm3",target,host)
   CleanPkg("m3doc",target)
   CleanPkg("m3core",target)
   CleanPkg("libm3",target)
   CleanPkg("m3middle",target)
   CleanPkg("m3front",target)
   CleanPkg("m3linker",target)
-  CleanPkg("m3driver",target)
   CleanPkg("m3quake",target)
-  CleanPkg("m3templates",target)
-  CleanPkg("m3config",target)
-  CleanPkg("m3build",target)
-  CleanPkg("m3ship",target)
+  CleanPkg("libcm3",target)
+  CleanPkg("cm3",target)
 
   local header = "M3OPTIONS=" & CR
   local options = "\"CC=${CC}\" \"CFLAGS=${CFLAGS}\"" &
@@ -259,21 +250,11 @@ readonly proc BootstrapTarget(target) is
       " \"RANLIB=${RANLIB}\" \"EXTRALIBS=${EXTRALIBS}\"" & 
       " \"LDFLAGS=${LDFLAGS}\""
 
-  if equal(target,"NT386GNU")
-    header = header & "EXTRALIBS=-ladvapi32" & CR
-  else if equal(target,"SOLsun")
-    header = header & "EXTRALIBS=-lsunmath -lm" & CR
-  else if equal(target,"HPPA")
-    header = header & "EXTRALIBS=-lm -lBSD" & CR
-  else
-    header = header & "EXTRALIBS=-lm" & CR
-  end
-  end
-  end
+  header = header & "EXTRALIBS=" & CR
 
   if equal(target,"SOLgnu") or equal(target,"SOLsun")
-    AS = "/usr/ccs/bin/as"
-    AR = "/usr/ccs/bin/ld"
+    AS="/usr/ccs/bin/as"
+    AR="/usr/ccs/bin/ld"
     header = header & "ASFLAGS=-s -P" & CR
   end
 
@@ -283,7 +264,6 @@ readonly proc BootstrapTarget(target) is
   end
 
   if equal(target,"LINUXLIBC6")
-    include("../../../../../m3config/src/GCWRAP")
     header = header & "LDFLAGS=" & GCWRAPFLAGS & CR
   end
 
@@ -314,22 +294,22 @@ readonly proc BootstrapTarget(target) is
   CreateMakefile("pm3-" & target & SL & "Makefile",target,
       header, options)
 
-  ret = exec(["rm", "pm3-" & target & SL & "config.tmpl"])
-  ret = exec(["rm", "pm3-" & target & SL & "m3cgc1-" & target])
+  exec(["rm", "pm3-" & target & SL & "config.tmpl"])
+  exec(["rm", "pm3-" & target & SL & "cm3cg-" & target])
+  exec(["cp", ".." & SL & ".." & SL & "libcm3" & SL & "src" &  SL & "config"
+		   & SL & target, "pm3-" & target
+                   & SL & "cm3-" & target & ".cfg"])
   write("---------- bootstrap finished for " & target & " ----------", CR)
 end
 
 % Create a bootstrap for each of these "target" in boot-target
 %
 
-CACHE_CROSS_COMPILERS = lookup("CACHE_CROSS_COMPILERS","")
-BOOTDEBUG = lookup("BOOTDEBUG","")
-
 if defined("BOOTTARGET")
   BootstrapTarget(BOOTTARGET)
 else
   foreach platform in Platforms
-    if Platforms{platform}[3] BootstrapTarget(platform) end
+    if Platforms{platform}[1] BootstrapTarget(platform) end
   end
 end
 

@@ -9,7 +9,8 @@
 MODULE Typecode;
 
 IMPORT CG, CallExpr, Expr, ExprRep, Type, Procedure, Card, Error;
-IMPORT Reff, TypeExpr, ObjectType, M3RT;
+IMPORT Reff, TypeExpr, ObjectType, M3RT, Target;
+IMPORT ReffTransient;
 
 VAR Z: CallExpr.MethodList;
 
@@ -20,6 +21,8 @@ PROCEDURE Check (ce: CallExpr.T;  <*UNUSED*> VAR cs: Expr.CheckState) =
       IF (ObjectType.Is (t)) THEN
         (* ok *)
       ELSIF (Type.IsEqual (t, Reff.T, NIL)) THEN
+        Error.Msg ("TYPECODE: T must be a fixed reference type");
+      ELSIF (Type.IsEqual (t, ReffTransient.T, NIL)) THEN
         Error.Msg ("TYPECODE: T must be a fixed reference type");
       ELSIF (NOT Type.IsSubtype (t, Reff.T)) THEN
         Error.Msg ("TYPECODE: T must be a traced reference type");
@@ -46,10 +49,10 @@ PROCEDURE Prep (ce: CallExpr.T) =
       nil := CG.Next_label ();
       CG.Push (ce.tmp);
       CG.Load_nil ();
-      CG.If_eq (nil, CG.Type.Addr, CG.Never);
+      CG.If_compare (CG.Type.Addr, CG.Cmp.EQ, nil, CG.Never);
       CG.Push (ce.tmp);
       CG.Ref_to_typecode ();
-      CG.Loophole (CG.Type.Int, CG.Type.Addr);
+      CG.Loophole (Target.Integer.cg_type, CG.Type.Addr);
       CG.Store_temp (ce.tmp);
       CG.Set_label (nil);
     END;
@@ -65,7 +68,7 @@ PROCEDURE Compile (ce: CallExpr.T) =
     ELSE
       (* get the typecode from the REF's header *)
       CG.Push (ce.tmp);
-      CG.Loophole (CG.Type.Addr, CG.Type.Int);
+      CG.Loophole (CG.Type.Addr, Target.Integer.cg_type);
       CG.Free (ce.tmp);
       ce.tmp := NIL;
     END;
@@ -84,6 +87,7 @@ PROCEDURE Initialize () =
                                  CallExpr.NotBoolean,
                                  CallExpr.NotBoolean,
                                  CallExpr.NoValue, (* fold *)
+                                 CallExpr.NoBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

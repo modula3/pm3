@@ -14,4 +14,4 @@ import ("http")
 implementation("HTTPCat")
 
 Program ("webcat")
-ManPage ("webcat", 1)
+ManPage ("webcat", "1")

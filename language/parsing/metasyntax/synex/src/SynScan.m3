@@ -3,10 +3,8 @@
 (* Last modified on Fri Jun  3 13:22:49 1994 by luca                               *)
 
 MODULE SynScan;
-IMPORT Wr, TextRefTbl, Text, TextConv, Rd, Stdio, SynWr, SynLocation, 
-  Fmt, Lex, FloatMode, TextRd, Thread;
-
-<* FATAL Rd.Failure, Wr.Failure, Thread.Alerted *>
+IMPORT Wr, TextRefTbl, Text, TextConv, Rd, SynWr, SynLocation, 
+       Fmt, Lex, FloatMode, TextRd, Thread, SynScan;
 
 REVEAL
   Keyword =  BRANDED OBJECT name: TEXT; keyword: BOOLEAN END;
@@ -213,9 +211,14 @@ PROCEDURE PopInput(sc: T) RAISES {NoReader} =
   BEGIN
     IF sc^.input = NIL THEN RAISE NoReader
     ELSE
-      IF sc^.input^.closeReader THEN Rd.Close(sc^.input^.rd) END;
-      sc^.input := sc^.input^.rest;
-      GetInputState(sc);
+      TRY
+        TRY
+          IF sc^.input^.closeReader THEN Rd.Close(sc^.input^.rd) END;
+        FINALLY
+          sc^.input := sc^.input^.rest;
+          GetInputState(sc);
+        END;
+      EXCEPT Rd.Failure, Thread.Alerted => END;
     END;
   END PopInput;
 
@@ -240,18 +243,23 @@ PROCEDURE SetCharNo(sc: T; charNo, lineNo, lineCharNo: INTEGER) =
 
 PROCEDURE PrintPrompt(sc: T) =
   BEGIN
-    WITH z = sc^ DO
+    WITH z = sc^,
+         pwr = SynWr.UnderlyingWr(sc.swr) DO
       IF z.isFirstPrompt THEN
-        Wr.PutText(Stdio.stdout, z.firstPrompt);
-        Wr.Flush(Stdio.stdout);
-        INC(z.acceptedCharPos, Text.Length(z.firstPrompt));
-        INC(z.acceptedLineCharPos, Text.Length(z.firstPrompt));
+        TRY
+          Wr.PutText(pwr, z.firstPrompt);
+          Wr.Flush(pwr);
+          INC(z.acceptedCharPos, Text.Length(z.firstPrompt));
+          INC(z.acceptedLineCharPos, Text.Length(z.firstPrompt));
+        EXCEPT Wr.Failure, Thread.Alerted => END;
         z.isFirstPrompt := FALSE;
       ELSE
-        Wr.PutText(Stdio.stdout, z.nextPrompt);
-        Wr.Flush(Stdio.stdout);
-        INC(z.acceptedCharPos, Text.Length(z.nextPrompt));
-        INC(z.acceptedLineCharPos, Text.Length(z.nextPrompt));
+        TRY
+          Wr.PutText(pwr, z.nextPrompt);
+          Wr.Flush(pwr);
+          INC(z.acceptedCharPos, Text.Length(z.nextPrompt));
+          INC(z.acceptedLineCharPos, Text.Length(z.nextPrompt));
+        EXCEPT Wr.Failure, Thread.Alerted => END;
       END;
     END;
   END PrintPrompt;
@@ -262,13 +270,16 @@ PROCEDURE LookChar(sc: T): CHAR RAISES {NoReader} =
     WITH z = sc^ DO
       IF z.lookAheadReady THEN RETURN z.lookAheadChar END;
       IF z.input=NIL THEN RAISE NoReader END;
-      IF Rd.CharsReady(z.input^.rd) = 0 THEN PrintPrompt(sc); END;
+      TRY
+        IF Rd.CharsReady(z.input^.rd) = 0 THEN PrintPrompt(sc); END;
+      EXCEPT Rd.Failure => RAISE NoReader END;
       TRY 
         char := Rd.GetChar(z.input^.rd);
         z.lookAheadChar := char;
         z.lookAheadReady := TRUE;
         RETURN char;
-      EXCEPT Rd.EndOfFile => 
+      EXCEPT
+      |  Rd.EndOfFile => 
         IF z.input^.generateEOF THEN
 	  PopInput(sc);
 	  z.lookAheadChar := EofChar;
@@ -278,6 +289,7 @@ PROCEDURE LookChar(sc: T): CHAR RAISES {NoReader} =
 	  PopInput(sc);
 	  RETURN LookChar(sc);
         END;
+      | Rd.Failure, Thread.Alerted => RAISE NoReader;
       END;
     END;
   END LookChar;
@@ -380,7 +392,7 @@ PROCEDURE DecodeCharFromProducer(
     EVAL TextConv.DecodeChar(charsIn, availIn, (*out*)charOut);
   END DecodeCharFromProducer;
 
-PROCEDURE DecodeChar(sc: T): CHAR RAISES {NoReader, Fail} =
+PROCEDURE DecodeChar(sc: T): CHAR RAISES {Fail} =
   VAR char: CHAR;
   BEGIN
     TRY
@@ -576,26 +588,30 @@ PROCEDURE PrintSequel(sc: T) =
   BEGIN
     IF sc^.input = NIL THEN RETURN END;
     n := 40;
-    WHILE (0 < n) AND (Rd.CharsReady(sc^.input^.rd) > 0) DO
-      ch:=GetChar(sc); <* NOWARN *>
-      IF sc^.input = NIL THEN RETURN END;
-      IF (Rd.CharsReady(sc^.input^.rd)>0) OR (ch#'\n') THEN
-        SynWr.Char(sc.swr, ch, loud:=TRUE);
+    TRY
+      WHILE (0 < n) AND (Rd.CharsReady(sc^.input^.rd) > 0) DO
+        ch:=GetChar(sc); (* NOWARN *)
+        IF sc^.input = NIL THEN RETURN END;
+        IF (Rd.CharsReady(sc^.input^.rd)>0) OR (ch#'\n') THEN
+          SynWr.Char(sc.swr, ch, loud:=TRUE);
+        END;
+        n := n - 1;
       END;
-      n := n - 1;
-    END;
-    IF Rd.CharsReady(sc^.input^.rd) > 0 THEN
-      SynWr.Text(sc.swr, " ...", loud:=TRUE);
-    END;
+      IF Rd.CharsReady(sc^.input^.rd) > 0 THEN
+        SynWr.Text(sc.swr, " ...", loud:=TRUE);
+      END;
+    EXCEPT Rd.Failure, SynScan.NoReader => END;
   END PrintSequel;
 
 PROCEDURE FlushInput(sc: T) =
   BEGIN
     IF sc^.input = NIL THEN RETURN END;
-    WHILE Rd.CharsReady(sc^.input^.rd) > 0 DO 
-      EVAL GetChar(sc); <* NOWARN *>
-      IF sc^.input = NIL THEN RETURN END;
-    END; 
+    TRY
+      WHILE Rd.CharsReady(sc^.input^.rd) > 0 DO 
+        EVAL GetChar(sc); (* NOWARN *)
+        IF sc^.input = NIL THEN RETURN END;
+      END; 
+    EXCEPT Rd.Failure, SynScan.NoReader => END;
   END FlushInput;
 
 PROCEDURE ErrorMsg(sc: T; msg: TEXT := "") =
@@ -877,8 +893,12 @@ PROCEDURE Clear(sc: T) =
   VAR ch: CHAR; class: TokenClass;
   BEGIN
     IF TopLevel(sc) THEN FlushInput(sc) END;
-    IF sc^.lookAheadReady THEN ch:=GetChar(sc) END; <* NOWARN *>
-    IF sc^.tokenReady THEN class:=GetToken(sc) END; <* NOWARN *>
+    TRY
+      IF sc^.lookAheadReady THEN ch:=GetChar(sc) END; (* NOWARN *)
+    EXCEPT SynScan.NoReader => END;
+    TRY
+      IF sc^.tokenReady THEN class:=GetToken(sc) END; (* NOWARN *)
+    EXCEPT SynScan.NoReader, SynScan.Fail => END;
     sc^.scanBufferSize := 0;
   END Clear;
 
@@ -886,7 +906,9 @@ PROCEDURE Reset(sc: T) =
   BEGIN
     Clear(sc);
     WHILE (sc^.input#NIL) AND NOT(Text.Empty(sc^.input^.fileName)) DO 
-      PopInput(sc); <* NOWARN *>
+      TRY
+        PopInput(sc); (* NOWARN *)
+      EXCEPT SynScan.NoReader => END;
     END;
   END Reset;
 

@@ -1,3 +1,9 @@
+(* Copyright (C) 1990, Digital Equipment Corporation.         *)
+(* All rights reserved.                                       *)
+(* See the file COPYRIGHT for a full description.             *)
+
+(* Last modified on Wed Jul 30 13:55:56 EST 1997 by hosking *)
+
 INTERFACE Uframe;
 
 FROM Ctypes IMPORT int, char_star;
@@ -15,4 +21,5 @@ TYPE
     fr_argx  : ARRAY [0..0] OF int;	 (* array of args past the sixth *)
   END;
   struct_frame_star = UNTRACED REF struct_frame;
+
 END Uframe.

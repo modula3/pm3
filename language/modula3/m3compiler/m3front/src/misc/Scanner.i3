@@ -7,13 +7,14 @@
 
 INTERFACE Scanner;
 
-IMPORT Token, File, M3ID, M3String, M3, Target;
+IMPORT Token, File, M3ID, M3String, M3WString, M3, Target;
 
 TYPE
   Symbol = RECORD
     token  : Token.T;
     id     : M3ID.T;
     str    : M3String.T;
+    wstr   : M3WString.T;
     int    : Target.Int;
     float  : Target.Float;
     offset : INTEGER;

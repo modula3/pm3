@@ -23,10 +23,10 @@ PROCEDURE TypeOf (ce: CallExpr.T): Type.T =
     RETURN Type.Base (u);
   END TypeOf;
 
-PROCEDURE Check (ce: CallExpr.T;  VAR cs: Expr.CheckState) =
+PROCEDURE Check (ce: CallExpr.T;
+                 <*UNUSED*> VAR cs: Expr.CheckState) =
   VAR t, u: Type.T;  e: Expr.T;
   BEGIN
-    INC (cs.fp_ops);
     e := ce.args[0];
 
     u := Reel.T;
@@ -98,6 +98,7 @@ PROCEDURE Initialize () =
                                  CallExpr.NotBoolean,
                                  CallExpr.NotBoolean,
                                  Fold,
+                                 CallExpr.NoBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

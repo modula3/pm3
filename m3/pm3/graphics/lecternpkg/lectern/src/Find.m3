@@ -8,7 +8,7 @@
 
 MODULE Find EXPORTS Find;
 
-IMPORT ASCII, Fmt, FormsVBT, LecternDoc, LecternOCR, Text, TextF, Thread, VBT;
+IMPORT ASCII, Fmt, FormsVBT, LecternDoc, LecternOCR, Text, Thread, VBT;
 
 REVEAL T = Public BRANDED OBJECT
     dir: LecternDoc.Dir;
@@ -59,10 +59,10 @@ PROCEDURE SetupTarget(VAR t: Target; pat: TEXT) =
 *)
     FOR i := 0 TO t.len-1 DO
       IF t.ignoreCase THEN
-        t.tbl[ASCII.Lower[pat[i]]] := t.len-i-1;
-        t.tbl[ASCII.Upper[pat[i]]] := t.len-i-1;
+        t.tbl[ASCII.Lower[Text.GetChar(pat, i)]] := t.len-i-1;
+        t.tbl[ASCII.Upper[Text.GetChar(pat, i)]] := t.len-i-1;
       ELSE
-        t.tbl[pat[i]] := t.len-i-1;
+        t.tbl[Text.GetChar(pat, i)] := t.len-i-1;
       END;
     END;
   END SetupTarget;
@@ -75,9 +75,9 @@ PROCEDURE FindTarget(READONLY t: Target; candidate: TEXT): INTEGER
     p := t.len-1;
   BEGIN
     IF candidate = NIL THEN RAISE Error("OCR data missing") END;
-    txtlen := NUMBER(candidate^)-1;
+    txtlen := Text.Length(candidate);
     WHILE p < txtlen DO
-      VAR m := t.tbl[candidate[p]];
+      VAR m := t.tbl[Text.GetChar(candidate, p)];
       BEGIN
         IF m = 0 THEN
           (* test for match ending at candidate[p] *)
@@ -86,12 +86,13 @@ PROCEDURE FindTarget(READONLY t: Target; candidate: TEXT): INTEGER
             startOfMatch := p-(t.len-1);
           BEGIN
             IF t.ignoreCase THEN
-              WHILE j # t.len AND ASCII.Lower[t.pat[j]] =
-                                      ASCII.Lower[candidate[startOfMatch+j]] DO
+              WHILE j # t.len AND ASCII.Lower[Text.GetChar(t.pat, j)] =
+                ASCII.Lower[Text.GetChar(candidate, startOfMatch+j)] DO
                 INC(j);
               END;
             ELSE
-              WHILE j # t.len AND t.pat[j] = candidate[startOfMatch+j] DO
+              WHILE j # t.len AND Text.GetChar(t.pat, j) =
+                Text.GetChar(candidate, startOfMatch+j) DO
                 INC(j);
               END;
             END;
@@ -111,14 +112,14 @@ PROCEDURE FindAsWord(READONLY t: Target; candidate: TEXT): INTEGER
   VAR found := FindTarget(t, candidate);
   BEGIN
     IF found < 0 THEN RETURN found END;
-    IF found > 0 AND t.pat[0] IN ASCII.AlphaNumerics AND
-                     candidate[found-1] IN ASCII.AlphaNumerics THEN
+    IF found > 0 AND Text.GetChar(t.pat, 0) IN ASCII.AlphaNumerics AND
+      Text.GetChar(candidate, found-1) IN ASCII.AlphaNumerics THEN
       (* pattern starts with alpha, and char preceding match is alpha *)
       RETURN -1;
     END;
     IF found + t.len < Text.Length(candidate) AND
-             t.pat[t.len-1] IN ASCII.AlphaNumerics AND
-             candidate[found+t.len] IN ASCII.AlphaNumerics THEN
+             Text.GetChar(t.pat, t.len-1) IN ASCII.AlphaNumerics AND
+             Text.GetChar(candidate, found+t.len) IN ASCII.AlphaNumerics THEN
       (* pattern ends with alpha, and char following match is alpha *)
       RETURN -1;
     END;
@@ -141,7 +142,7 @@ PROCEDURE Search(t: T; forward, extreme: BOOLEAN;
         patLen = Text.Length(pat) DO
         IF patLen = 0 THEN RAISE Error("Search string is empty") END;
         FOR i := 0 TO patLen-1 DO
-          IF pat[i] = ' ' THEN
+          IF Text.GetChar(pat, i) = ' ' THEN
             RAISE Error("Search string contains spaces: not implemented");
           END;
         END;

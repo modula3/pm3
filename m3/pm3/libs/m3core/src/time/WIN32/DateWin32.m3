@@ -13,7 +13,8 @@ UNSAFE MODULE DateWin32 EXPORTS Date;
 IMPORT Text, Time;
 IMPORT WinDef, WinBase, WinNT, TimeWin32;
 
-REVEAL TimeZone = BRANDED OBJECT METHODS fromTime(t: Time.T): T END;
+REVEAL TimeZone
+  = <*TRANSIENT*> ROOT BRANDED OBJECT METHODS fromTime(t: Time.T): T END;
 
 PROCEDURE FromTimeLocal(<*UNUSED*> z: TimeZone; t: Time.T): T =
 (* Implementation note: This implementation is buggy on Windows 95 due
@@ -106,6 +107,17 @@ PROCEDURE FromTimeLocal(<*UNUSED*> z: TimeZone; t: Time.T): T =
 
 PROCEDURE CopyTimeZoneName(
     READONLY name: ARRAY [0 .. 31] OF WinNT.WCHAR): TEXT =
+  VAR chars: ARRAY [0..31] OF WIDECHAR; j := 0;
+  BEGIN
+    WHILE (j < NUMBER(name)) AND (name[j] # 0) DO
+      chars[j] := VAL (name[j], WIDECHAR); INC(j)
+    END;
+    RETURN Text.FromWideChars(SUBARRAY(chars, 0, j))
+  END CopyTimeZoneName;
+
+(*******
+PROCEDURE CopyTimeZoneName(
+    READONLY name: ARRAY [0 .. 31] OF WinNT.WCHAR): TEXT =
   VAR chars: ARRAY [0..31] OF CHAR; j := 0;
   BEGIN
     FOR i := 0 TO LAST(name) DO
@@ -118,6 +130,7 @@ PROCEDURE CopyTimeZoneName(
     END;
     RETURN Text.FromChars(SUBARRAY(chars, 0, j))
   END CopyTimeZoneName;
+*****)
       
 PROCEDURE FromTimeUTC(<*UNUSED*> z: TimeZone; t: Time.T): T =
   VAR d: T; st: WinBase.SYSTEMTIME; ft: WinBase.FILETIME;  status: INTEGER;

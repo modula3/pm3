@@ -35,6 +35,7 @@ struct expression;
 /* #include "lang_def.h" */
 #define	_LANG_c
 #define	_LANG_m2
+#define _LANG_m3
 #define	_LANG_chill
 #define  _LANG_fortran
 #define  _LANG_pascal

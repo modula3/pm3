@@ -461,7 +461,7 @@ PROCEDURE Connect (inst: TEXT; trsl: T := NIL): Trestle.T
       ELSE
         fullinst := inst
       END;
-      WITH s = M3toC.TtoS(inst) DO
+      WITH s = M3toC.SharedTtoS(inst) DO
         TRY
           LOCK openMu DO
             IF firstTime THEN
@@ -480,6 +480,7 @@ PROCEDURE Connect (inst: TEXT; trsl: T := NIL): Trestle.T
             END
           END
         FINALLY
+          M3toC.FreeSharedS(inst, s);
           LOCK openMu DO opening := FALSE END;
         END
       END;

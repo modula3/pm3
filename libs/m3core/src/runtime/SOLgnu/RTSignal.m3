@@ -2,15 +2,14 @@
 (* All rights reserved.                                       *)
 (* See the file COPYRIGHT for a full description.             *)
 (*                                                            *)
-(* Last modified on Mon Nov 21 13:15:02 PST 1994 by kalsow    *)
+(* Last modified on Wed Jul 30 13:55:56 EST 1997 by hosking   *)
+(*      modified on Mon Nov 21 13:15:02 PST 1994 by kalsow    *)
 (*      modified on Mon Mar 16 18:10:15 PST 1992 by muller    *)
 
 UNSAFE MODULE RTSignal;
 
-IMPORT RTMisc, RTProcess, Usignal, Uprocess;
+IMPORT RTError, RTProcess, Usignal, Uprocess, Uucontext;
 FROM Ctypes IMPORT int;
-FROM Usignal IMPORT siginfo_t_fault_star;
-FROM Uucontext IMPORT ucontext_t_star;
 
 VAR
   DefaultHandler   : Usignal.SignalHandler;
@@ -21,6 +20,9 @@ PROCEDURE InstallHandlers () =
   BEGIN
     DefaultHandler := LOOPHOLE (0, Usignal.SignalHandler);
     IgnoreSignal   := LOOPHOLE (1, Usignal.SignalHandler);
+    (* Note: we cannot use Usignal.SIG_DFL and Usignal.SIG_IGN because
+       they may not be initialized when this module is kicked into action
+       by the low-level runtime startup code... *)
 
     SetHandler (0, Usignal.SIGHUP,  Shutdown);
     SetHandler (1, Usignal.SIGINT,  Interrupt);
@@ -69,8 +71,8 @@ PROCEDURE RestoreHandler (id: INTEGER;  sig: int) =
   END RestoreHandler;
 
 PROCEDURE Shutdown (sig: int;
-                    <*UNUSED*> sip: siginfo_t_fault_star;
-                    <*UNUSED*> uap: ucontext_t_star) =
+         <*UNUSED*> sip: Usignal.siginfo_t_fault_star;
+         <*UNUSED*> uap: Uucontext.ucontext_t_star) =
   VAR new, old: Usignal.struct_sigaction;
   BEGIN
     new.sa_handler := DefaultHandler;
@@ -82,8 +84,8 @@ PROCEDURE Shutdown (sig: int;
   END Shutdown;
 
 PROCEDURE Interrupt (sig: int;
-                     sip: siginfo_t_fault_star;
-                     uap: ucontext_t_star) =
+                     sip: Usignal.siginfo_t_fault_star;
+                     uap: Uucontext.ucontext_t_star) =
   VAR h := RTProcess.OnInterrupt (NIL);
   BEGIN
     IF (h = NIL) THEN
@@ -95,21 +97,21 @@ PROCEDURE Interrupt (sig: int;
   END Interrupt;
 
 PROCEDURE Quit (<*UNUSED*> sig: int;
-                <*UNUSED*> sip: siginfo_t_fault_star;
-                uap: ucontext_t_star) =
+                <*UNUSED*> sip: Usignal.siginfo_t_fault_star;
+                           uap: Uucontext.ucontext_t_star) =
   VAR pc := 0;
   BEGIN
-    IF uap # NIL THEN pc := uap.uc_mcontext.gregs.pc; END;
-    RTMisc.FatalErrorPC (pc, "aborted");
+    IF (uap # NIL) THEN pc := uap.uc_mcontext.gregs.pc; END;
+    RTError.MsgPC (pc, "aborted");
   END Quit;
 
 PROCEDURE SegV (<*UNUSED*> sig: int;
-                <*UNUSED*> sip: siginfo_t_fault_star;
-                uap: ucontext_t_star) =
+                <*UNUSED*> sip: Usignal.siginfo_t_fault_star;
+                           uap: Uucontext.ucontext_t_star) =
   VAR pc := 0;
   BEGIN
-    IF uap # NIL THEN pc := uap.uc_mcontext.gregs.pc; END;
-    RTMisc.FatalErrorPC (pc,
+    IF (uap # NIL) THEN pc := uap.uc_mcontext.gregs.pc; END;
+    RTError.MsgPC (pc,
       "Segmentation violation - possible attempt to dereference NIL");
   END SegV;
 

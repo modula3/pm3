@@ -48,7 +48,7 @@ TYPE
       write(sel: Selection; val: Value; tc: CARDINAL) 
         RAISES {Error};
     END;
-  Prefix <: ROOT;
+  Prefix <: <*TRANSIENT*> ROOT;
 
 (* For example, if the user reshapes a window, Trestle will call
    the window's reshape method; if the user exposes some part of the

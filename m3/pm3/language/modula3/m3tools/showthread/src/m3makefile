@@ -10,6 +10,7 @@ implementation ("Main")
 
 HtmlFile("index")
 
+build_standalone()
 Program ("showthread")
 
-ManPage ("showthread", 1)
+ManPage ("showthread","1")

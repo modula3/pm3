@@ -4,6 +4,49 @@
 %
 % Last modified on Fri Feb 10 13:17:23 PST 1995 by kalsow
 %
+readonly Platform_info = {
+  "AIX386"    : "i486-ibm-aix",
+  "ALPHA_OSF" : "alpha-dec-osf1",
+  "AP3000"    : "apollo68-bsd",
+  "ARM"       : "arm--riscos",
+  "BSDI4"     : "i386-unknown-freebsdelf",
+  "DS3100"    : "decstation",
+  "FBSD_ALPHA": "alpha-unknown-freebsd",
+  "FreeBSD"   : "i486-unknown-bsd",
+  "FreeBSD2"  : "i486-unknown-freebsd",
+  "FreeBSD3"  : "i486-unknown-freebsdelf",
+  "FreeBSD4"  : "i486-unknown-freebsdelf",
+  "HP300"     : "m68k-hp-hpux",
+  "HPPA"      : "hppa1.1-hp-hpux",
+  "IBMR2"     : "rs6000-ibm-aix3.2",
+  "IBMRT"     : "romp-ibm-aos",
+  "IRIX5"     : "mips-sgi-irix5",
+  "LINUX"     : "i486--linux",
+  "LINUXELF"  : "i486--linuxelf",
+  "LINUXLIBC6": "i486--linuxelf",
+  "NEXT"      : "next-bsd",
+  "NT386"     : "i486--nt",
+  "NT386GNU"  : "i486--cygwin32",
+  "OKI"       : "i860--sysv4.0",
+  "SEQUENT"   : "i386-sequent-bsd",
+  "SOLgnu"    : "sparc-sun-solaris2",
+  "SOLsun"    : "sparc-sun-solaris2",
+  "SPARC"     : "sparc-sun-sunos4.1",
+  "SUN3"      : "m68k-sun-sunos4.1",
+  "SUN386"    : "i386-sun-sunos4.1",
+  "Tru64v5"   : "alpha-dec-osf1",
+  "UMAX"      : "encore-bsd",
+  "VAX"       : "vax-dec-ultrix"
+}
+
+readonly proc GNU_platform (x) is
+  if Platform_info contains x
+    return Platform_info{x}
+  else
+    error ("GNU platform is not known for \"" & x & "\"")
+    return "unknown-unknown-unknown"
+  end
+end
 
 readonly m3gdb_config = {
   % misc. gdb configuration options  (e.g.  "DS3100" : "--with-stabs")
@@ -27,44 +70,30 @@ end
 
 % check for overrides, otherwise use the defaults from the configuration file
 if not defined ("M3GDB_HOST")    M3GDB_HOST   = TARGET     end
-if not defined ("M3GDB_TARGET")  M3GDB_TARGET = TARGET     end
 if not defined ("M3GDB_CC")      M3GDB_CC     = GNU_CC     end
 if not defined ("M3GDB_CFLAGS")  M3GDB_CFLAGS = GNU_CFLAGS end
 if not defined ("M3GDB_MAKE")    M3GDB_MAKE   = GNU_MAKE   end
-if not defined ("M3GDB_CONFIG")  M3GDB_CONFIG = get_config (M3GDB_TARGET) end
+if not defined ("M3GDB_CONFIG")  M3GDB_CONFIG = get_config (M3GDB_HOST) end
 
 
 % check for non-default flags
 ARG0 = get_overrides ("CC", M3GDB_CC)
 ARG1 = get_overrides ("CFLAGS", M3GDB_CFLAGS)
-local ret = 0
 
 if defined ("quick")
   % don't bother reconfiguring, just build gdb
-  ret = exec ([M3GDB_MAKE, ARG0, ARG1],[],"../gdb-old")
-  if not equal(ret,0) error("Failed to build m3gdb") end
+  exec (M3GDB_MAKE, ARG0, ARG1)
 else
   % configure the sources & compile
-  local cmd = [".." & "/" & "gdb-old" & "/" & "configure", % M3GDB_CONFIG,
-      "--srcdir=../gdb-old", "--disable-gdbtk", gnu_platform (M3GDB_HOST)]
-  if equal(OS_TYPE,"WIN32")
-    > "tmpsh" in
-      write("#! /bin/sh",CR)
-      write(cmd,CR)
-    end
-    ret = exec(["sh","tmpsh"])
-  else
-    ret = exec (cmd)
-  end
-  ret = exec ([M3GDB_MAKE, ARG0, ARG1])
-  if not equal(ret,0) error("Failed to build m3gdb") end
+%  exec ("../gdb/configure", M3GDB_CONFIG,
+%           "--srcdir=../gdb", GNU_platform (M3GDB_HOST))
+  exec ("../gdb/configure", "--srcdir=../gdb")
+  exec (M3GDB_MAKE, ARG0, ARG1)
 end
 
 % finally, build the exportable link and man page and export them
-ret = exec(["mv",program_name("gdb/gdb"),program_name("m3gdb")])
-if not equal(ret,0) error("Failed to rename gdb to m3gdb") end
-
-BindExport (program_name("m3gdb"))
+link_file ("gdb/gdb", "m3gdb")
+BindExport ("m3gdb")
 ManPage ("m3gdb","1")
 
 import("m3doc")

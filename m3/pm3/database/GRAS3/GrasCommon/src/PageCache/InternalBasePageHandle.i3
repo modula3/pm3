@@ -7,8 +7,11 @@ INTERFACE InternalBasePageHandle;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:27  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:44  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:27  hosking
+    Import of GRAS3 1.1
 
     Revision 1.2  1996/03/08 10:29:47  rbnix
     	PageHandles are now tagged by an internal id. Therefore the
@@ -44,7 +47,6 @@ TYPE
       init		() :BasePageHandle.T;
 
       setPage		(        page		:Page.T);
-      getPage		() :Page.T;
     END;
 
   

@@ -13,7 +13,7 @@
 
 UNSAFE MODULE TCP EXPORTS TCP, TCPSpecial;
 
-IMPORT Atom, AtomList, ConnFD, IP, Rd, Wr, Thread;
+IMPORT Atom, AtomList, ConnFD, IP, IPError, Rd, Wr, Thread;
 IMPORT Ctypes, WinSock, TCPWin32, Fmt;
 
 REVEAL
@@ -44,9 +44,6 @@ CONST SockErr  = WinSock.SOCKET_ERROR;
 
 CONST SpinTimeout = 1.0D0;        (* one second *)
 
-VAR Unexpected: Atom.T;
-    ClosedErr: AtomList.T;
-
 PROCEDURE NewSocket (): WinSock.SOCKET RAISES {IP.Error} =
   VAR
     sock := WinSock.socket(WinSock.AF_INET, WinSock.SOCK_STREAM, 0(*TCP*));
@@ -55,8 +52,8 @@ PROCEDURE NewSocket (): WinSock.SOCKET RAISES {IP.Error} =
     IF sock = WinSock.INVALID_SOCKET THEN
       err := WinSock.WSAGetLastError();
       IF err = WinSock.WSAEMFILE
-        THEN Raise(IP.NoResources, err);
-        ELSE Raise(Unexpected, err);
+        THEN IPError.Raise(IP.NoResources, err);
+        ELSE Ouch(err, "TCP.NewSocket");
       END;
     END;
     RETURN sock;
@@ -81,12 +78,12 @@ PROCEDURE NewConnector (ep: IP.Endpoint): Connector RAISES {IP.Error} =
     IF WinSock.bind(res.sock, ADR(name), BYTESIZE(SockAddrIn)) = SockErr THEN
       err := WinSock.WSAGetLastError();
       IF err = WinSock.WSAEADDRINUSE
-        THEN Raise(IP.PortBusy, err);
-        ELSE Raise(Unexpected, err);
+        THEN IPError.Raise(IP.PortBusy, err);
+        ELSE Ouch(err, "TCP.NewConnector(bind)");
       END
     END;
     IF WinSock.listen(res.sock, 8) = SockErr THEN
-      Raise(Unexpected, WinSock.WSAGetLastError());
+      Ouch(WinSock.WSAGetLastError(), "TCP.NewConnector(listen)");
     END;
     RETURN res
   END NewConnector;
@@ -102,7 +99,7 @@ PROCEDURE GetEndPoint(c: Connector): IP.Endpoint =
     IF c.ep.port = IP.NullPort THEN
       namelen := BYTESIZE(SockAddrIn);
       IF WinSock.getsockname(c.sock, ADR(name), ADR(namelen)) = SockErr THEN
-        Die()
+        IPError.Die()
       END;
       c.ep.port := WinSock.ntohs(name.sin_port);
     END;
@@ -166,7 +163,7 @@ PROCEDURE FinishConnect(t: T; timeout: LONGREAL := -1.0D0): BOOLEAN
                                 ADR(fde), ADR(tm)) DO
           IF Thread.TestAlert() THEN RAISE Thread.Alerted; END;
           IF x = SockErr THEN 
-            Raise(Unexpected, WinSock.WSAGetLastError());
+            Ouch(WinSock.WSAGetLastError(), "TCP.FinishConnect");
           END;
           IF WinSock.FD_ISSET(t.sock, fdw) THEN
             (* connect succeeded *)
@@ -174,7 +171,7 @@ PROCEDURE FinishConnect(t: T; timeout: LONGREAL := -1.0D0): BOOLEAN
           END;
           IF WinSock.FD_ISSET(t.sock, fde) THEN
             (* connect failed *)
-            Raise(Refused, 0);
+            IPError.Raise(Refused, 0);
           END;
         END;
         IF timeout >= 0.0D0 THEN
@@ -205,20 +202,20 @@ PROCEDURE CheckConnect(sock: WinSock.SOCKET; ep: IP.Endpoint) : BOOLEAN
     | WinSock.WSAEADDRNOTAVAIL,
       WinSock.WSAECONNREFUSED,
       WinSock.WSAECONNRESET =>
-        Raise(Refused, err);
+        IPError.Raise(Refused, err);
     | WinSock.WSAETIMEDOUT =>
-        Raise(Timeout, err);
+        IPError.Raise(Timeout, err);
     | WinSock.WSAENETUNREACH,
       WinSock.WSAEHOSTUNREACH,
       WinSock.WSAEHOSTDOWN,
       WinSock.WSAENETDOWN =>
-        Raise(IP.Unreachable, err);
+        IPError.Raise(IP.Unreachable, err);
     | WinSock.WSAEWOULDBLOCK =>
         (* fall through => return false *)
     | WinSock.WSAEINVAL =>
         (* WindowsNT 3.5 acts as though EINVAL means "not ready" *)
     ELSE
-        Raise(Unexpected, err);
+        Ouch(err, "TCP.CheckConnect");
     END;
     RETURN FALSE;
   END CheckConnect;
@@ -233,23 +230,28 @@ PROCEDURE Accept (c: Connector): T
   BEGIN
     LOOP
       LOCK c DO
-        IF c.closed THEN Raise(Closed, 0); END;
+        IF c.closed THEN IPError.Raise(Closed, 0); END;
         sock := WinSock.accept(c.sock, ADR(name), ADR(nameSize));
+        IF sock # WinSock.INVALID_SOCKET THEN EXIT; END;
+        err := WinSock.WSAGetLastError();
       END;
-      IF sock # WinSock.INVALID_SOCKET THEN EXIT; END;
-      err := WinSock.WSAGetLastError();
-      IF    err = WinSock.WSAEMFILE      THEN  Raise(IP.NoResources, err);
+      IF    err = WinSock.WSAEMFILE      THEN  IPError.Raise(IP.NoResources, err);
       ELSIF err = WinSock.WSAEWOULDBLOCK THEN  EVAL IOWait(c.sock, TRUE, TRUE);
-      ELSE                                     Raise(Unexpected, err);
+      ELSE                                     Ouch(err, "TCP.Accept");
       END;
     END;
     InitSock(sock);
     RETURN NEW(T, sock := sock, ep := IP.NullEndPoint);
   END Accept;
 
-PROCEDURE CloseConnector(<*UNUSED*> c: Connector) =
+PROCEDURE CloseConnector(c: Connector) =
   BEGIN
-    Die();
+    LOCK c DO
+      IF NOT c.closed THEN
+        EVAL WinSock.closesocket(c.sock);
+        c.closed := TRUE;
+      END;
+    END;
   END CloseConnector;
   
 PROCEDURE EOF(t: T) : BOOLEAN =
@@ -294,7 +296,7 @@ PROCEDURE InitSock(sock: WinSock.SOCKET) =
            sock, WinSock.IPPROTO_TCP, WinSock.TCP_NODELAY,
            ADR(one), BYTESIZE(one));
     IF WinSock.ioctlsocket(sock, WinSock.FIONBIO, ADR(one)) = SockErr THEN
-      Die();
+      IPError.Die();
     END;
   END InitSock;
 
@@ -304,7 +306,7 @@ PROCEDURE Close(t: T) =
       IF NOT t.closed THEN
         EVAL WinSock.closesocket(t.sock);
         t.closed := TRUE;
-        t.error := ClosedErr;
+        t.error := IPError.ClosedErr;
       END;
     END;
   END Close;
@@ -318,9 +320,9 @@ PROCEDURE GetBytesFD(
       LOCK t DO
         IF t.error # NIL THEN RAISE Rd.Failure(t.error); END;
         len := WinSock.recv(t.sock, ADR(arr[0]), NUMBER(arr), 0);
+        IF len # SockErr THEN RETURN len; END;
+        err := WinSock.WSAGetLastError();
       END;
-      IF len # SockErr THEN RETURN len; END;
-      err := WinSock.WSAGetLastError();
       CASE err OF
       | WinSock.WSAECONNRESET =>
           RETURN 0;
@@ -337,7 +339,7 @@ PROCEDURE GetBytesFD(
             RAISE ConnFD.TimedOut;
           END;
       ELSE
-          SetError(t, Unexpected, err);
+          SetError(t, IPError.Unexpected, err, "TCP.GetBytesFD");
       END;
       (* loop to raise error *)
     END;
@@ -351,9 +353,9 @@ PROCEDURE PutBytesFD(t: T; READONLY arr: ARRAY OF CHAR)
       LOCK t DO
         IF t.error # NIL THEN RAISE Wr.Failure(t.error); END;
         len := WinSock.send(t.sock, ADR(arr[pos]), NUMBER(arr)-pos, 0);
+        IF len = SockErr THEN  err := WinSock.WSAGetLastError();  END;
       END;
       IF len = SockErr THEN
-        err := WinSock.WSAGetLastError();
         CASE err OF
         | WinSock.WSAECONNRESET,
           WinSock.WSAENETRESET =>
@@ -366,7 +368,7 @@ PROCEDURE PutBytesFD(t: T; READONLY arr: ARRAY OF CHAR)
         | WinSock.WSAEWOULDBLOCK =>
             EVAL IOWait(t.sock, FALSE, TRUE);
         ELSE
-            SetError(t, Unexpected, err);
+            SetError(t, IPError.Unexpected, err, "TCP.PutBytesFD");
         END;
       ELSE
         INC(pos, len)
@@ -374,12 +376,23 @@ PROCEDURE PutBytesFD(t: T; READONLY arr: ARRAY OF CHAR)
     END;
   END PutBytesFD;
 
-PROCEDURE SetError(t: T; atom: Atom.T;  err: INTEGER) =
+PROCEDURE SetError(t: T; atom: Atom.T;  err: INTEGER;  msg: TEXT := NIL) =
+  VAR xx: AtomList.T := NIL;
   BEGIN
+    IF (msg # NIL) THEN xx := AtomList.Cons (Atom.FromText(msg), NIL); END;
+    xx := AtomList.Cons(Atom.FromText(Fmt.Int(err)), xx);
+    xx := AtomList.Cons(atom, xx);
     LOCK t DO
-      t.error := AtomList.List2(atom, Atom.FromText(Fmt.Int(err)));
+      t.error := xx;
     END;
   END SetError;
+
+PROCEDURE Ouch(err: INTEGER;  msg: TEXT) RAISES {IP.Error} =
+  BEGIN
+    RAISE IP.Error(AtomList.List3(IPError.Unexpected,
+                                  Atom.FromText(Fmt.Int(err)),
+                                  Atom.FromText(msg)));
+  END Ouch;
 
 PROCEDURE ShutdownIn(t: T) RAISES {Rd.Failure} =
   BEGIN
@@ -396,15 +409,6 @@ PROCEDURE ShutdownOut(t: T) RAISES {Wr.Failure} =
       EVAL WinSock.shutdown(t.sock, 1);
     END;
   END ShutdownOut;
-
-PROCEDURE Raise(a: Atom.T;  err: INTEGER) RAISES {IP.Error} =
-  BEGIN
-    IF (err = 0) THEN
-      RAISE IP.Error(AtomList.List1(a));
-    ELSE
-      RAISE IP.Error(AtomList.List2(a, Atom.FromText(Fmt.Int(err))));
-    END;
-  END Raise;
 
 PROCEDURE IOWait(sock: WinSock.SOCKET; read: BOOLEAN; alert: BOOLEAN;
                   timeoutInterval: LONGREAL := -1.0D0): WaitResult
@@ -438,24 +442,9 @@ PROCEDURE IOWait(sock: WinSock.SOCKET; read: BOOLEAN; alert: BOOLEAN;
     END;
   END IOWait;
 
-EXCEPTION FatalError;
-
-PROCEDURE Die() RAISES {} =
-  <* FATAL FatalError *>
-  BEGIN
-    RAISE FatalError;
-  END Die;
-
 BEGIN
-  Refused := Atom.FromText("TCP.Refused");
-  Closed := Atom.FromText("TCP.Closed");
-  Timeout := Atom.FromText("TCP.Timeout");
-  ConnLost := Atom.FromText("TCP.ConnLost");
-  Unexpected := Atom.FromText("TCP.Unexpected");
-  ClosedErr := AtomList.List1(Closed);
 END TCP.
 
-    
 (*
 PROCEDURE Connect (ep: IP.Endpoint): T
     RAISES {IP.Error, Thread.Alerted} =
@@ -478,18 +467,34 @@ PROCEDURE Connect (ep: IP.Endpoint): T
       | WinSock.WSAEADDRNOTAVAIL,
         WinSock.WSAECONNREFUSED,
         WinSock.WSAECONNRESET =>
-          Raise(Refused, err);
+          IPError.Raise(Refused, err);
       | WinSock.WSAETIMEDOUT =>
-          Raise(Timeout, err);
+          IPError.Raise(Timeout, err);
       | WinSock.WSAENETUNREACH,
         WinSock.WSAEHOSTUNREACH,
         WinSock.WSAEHOSTDOWN,
         WinSock.WSAENETDOWN =>
-          Raise(IP.Unreachable, err);
+          IPError.Raise(IP.Unreachable, err);
       ELSE
-          Raise(Unexpected,err);
+          Ouch(err, "TCP.Connect");
       END;
     END;
     RETURN NEW(T, sock := sock, ep := ep);
   END Connect;
 *)
+
+(***************
+Here is a new version of tcp/src/WIN32/TCP.m3 that fixes the connection
+timeout problems.
+
+The problem was that connect was being called over and over on the
+same socket.  I don't know what the motivation for that was.  But, I 
+changed things to call connect once, and then use select() as described
+in the docs:  when it is writable, the connection has succeeded, and when
+there is an exceptional condition, the connection has failed.  
+
+It seems to work, timing out in a nice short time.
+
+  - Blair
+****************)
+

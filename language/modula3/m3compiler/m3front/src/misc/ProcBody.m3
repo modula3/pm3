@@ -8,7 +8,7 @@
 MODULE ProcBody;
 
 IMPORT Text;
-IMPORT M3ID, CG, Host, Target, M3RT, Module;
+IMPORT CG, Host, Target, M3RT, Module;
 
 REVEAL
   T = T_ BRANDED "ProcBody.T" OBJECT
@@ -16,20 +16,11 @@ REVEAL
     children : T := NIL;
   END;
 
-TYPE
-  Delay = REF RECORD
-    next       : Delay;
-    offset     : INTEGER;
-    src        : CG.Var;
-    src_offset : INTEGER;
-  END;
-
 VAR
   cur   : T := NIL;
   head  : T := NIL;
   done  : T := NIL;
   depth : INTEGER := -1;
-  delays: Delay := NIL;
 
 PROCEDURE Push (t: T) =
   BEGIN
@@ -60,24 +51,15 @@ PROCEDURE Schedule (t: T) =
     head := t;
   END Schedule;
 
-PROCEDURE DelayedInit (offset: INTEGER;  src: CG.Var;  src_offset: INTEGER) =
-  BEGIN
-    delays := NEW (Delay, next := delays, offset := offset,
-                     src := src, src_offset := src_offset);
-  END DelayedInit;
-
-PROCEDURE EmitAll (VAR proc_info: INTEGER;  VAR link_proc: CG.Proc) =
+PROCEDURE EmitAll (VAR proc_info: INTEGER) =
   VAR
-    t         : T;
-    base      : INTEGER := 0;
-    n_base    : INTEGER;
-    n, total  : INTEGER;
-    globals   : CG.Var := Module.GlobalData (NIL);
-    delay     : Delay;
-    link_name : TEXT;
+    t           : T;
+    base        : INTEGER := 0;
+    n_base      : INTEGER;
+    n, total    : INTEGER;
+    consts      : CG.Var := Module.GlobalData (is_const := TRUE);
   BEGIN
-    proc_info := 0;
-    link_proc := NIL;
+    proc_info := -1;
 
     (* generate the declarations and bodies *)
     WHILE (head # NIL) DO
@@ -90,7 +72,7 @@ PROCEDURE EmitAll (VAR proc_info: INTEGER;  VAR link_proc: CG.Proc) =
     (* count the linker registrations *)
     t := done;  n := 0;
     WHILE (t # NIL) DO
-      IF (t.cg_proc # NIL) AND ((t.name # NIL) OR (t.export_var # NIL)) THEN
+      IF (t.cg_proc # NIL) AND (t.name # NIL) THEN
         INC (n);
       END;
       t := t.sibling;
@@ -108,20 +90,20 @@ PROCEDURE EmitAll (VAR proc_info: INTEGER;  VAR link_proc: CG.Proc) =
 
       (* allocate the space we need for names *)
       total := total * Target.Char.size;
-      n_base := Module.Allocate (total, Target.Address.align, "*proc names*");
-      CG.Comment (n_base, "procedure names");
+      n_base := Module.Allocate (total, Target.Address.align, TRUE, "*proc names*");
+      CG.Comment (n_base, TRUE, "procedure names");
 
       (* allocate the space we need for proc info headers *)
       n := n * M3RT.PI_SIZE + Target.Address.size;
-      base := Module.Allocate (n, Target.Address.align, "*proc info*");
-      CG.Comment (base, "procedure table");
+      base := Module.Allocate (n, Target.Address.align, TRUE, "*proc info*");
+      CG.Comment (base, TRUE, "procedure table");
       proc_info := base;
 
       (* generate the procedure names *)
       t := done;  total := 0;
       WHILE (t # NIL) DO
         IF (t.cg_proc # NIL) AND (t.name # NIL) THEN
-          CG.Init_chars (n_base + total, t.name);
+          CG.Init_chars (n_base + total, t.name, is_const := TRUE);
           INC (total, Target.Char.size * (Text.Length (t.name) + 1));
         END;
         t := t.sibling;
@@ -131,15 +113,10 @@ PROCEDURE EmitAll (VAR proc_info: INTEGER;  VAR link_proc: CG.Proc) =
       t := done;  total := 0;  n := proc_info;
       WHILE (t # NIL) DO
         IF (t.cg_proc # NIL) THEN
-          IF (t.name # NIL) OR (t.export_var # NIL) THEN
-            CG.Init_proc (n + M3RT.PI_proc, t.cg_proc);
-          END;
           IF (t.name # NIL) THEN
-            CG.Init_var (n + M3RT.PI_name, globals, n_base + total);
+            CG.Init_proc (n + M3RT.PI_proc, t.cg_proc, is_const := TRUE);
+            CG.Init_var (n + M3RT.PI_name, consts, n_base+total, is_const := TRUE);
             INC (total, Target.Char.size * (Text.Length (t.name) + 1));
-          END;
-          IF (t.export_var # NIL) THEN
-            CG.Init_var (n + M3RT.PI_export, t.export_var, t.export_offs);
           END;
           INC (n, M3RT.PI_SIZE);
         END;
@@ -147,28 +124,6 @@ PROCEDURE EmitAll (VAR proc_info: INTEGER;  VAR link_proc: CG.Proc) =
       END;
 
     END;
-
-    (* generate the link proc *)
-    IF (delays # NIL) THEN
-      link_name := "_LINK" & Module.Prefix (NIL);
-      CG.Comment (-1, link_name);
-      link_proc := CG.Declare_procedure (M3ID.Add (link_name), 0,
-                    CG.Type.Void, lev := 0, cc := Target.DefaultCall,
-                    exported := FALSE, parent := NIL);
-      CG.Begin_procedure (link_proc);
-
-      delay := delays;
-      WHILE (delay # NIL) DO
-        CG.Load_addr (delay.src, delay.src_offset);
-        CG.Store_addr (globals, delay.offset);
-        delay := delay.next;
-      END;
-      delays := NIL;
-
-      CG.Exit_proc (CG.Type.Void);
-      CG.End_procedure (link_proc);
-    END;
-
   END EmitAll;
 
 PROCEDURE SourceOrder (t: T): T =
@@ -208,10 +163,10 @@ PROCEDURE EmitBody (t: T) =
     WHILE (t # NIL) DO
       IF (Host.nested_procs_first) THEN
         EmitBody (t.children);
-        IF (t.name # NIL) THEN CG.Comment (-1, t.name) END;
+        IF (t.name # NIL) THEN CG.Comment (-1, FALSE, t.name) END;
         t.gen_body ();
       ELSE
-        IF (t.name # NIL) THEN CG.Comment (-1, t.name) END;
+        IF (t.name # NIL) THEN CG.Comment (-1, FALSE, t.name) END;
         t.gen_body ();
         EmitBody (t.children);
       END;
@@ -229,7 +184,6 @@ PROCEDURE Reset () =
     head   := NIL;
     done   := NIL;
     depth  := -1;
-    delays := NIL;
   END Reset;
 
 BEGIN

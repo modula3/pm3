@@ -1,5 +1,4 @@
-(*                            -*- Mode: Modula-3 -*- 
- * 
+(*
  * For information about this program, contact Blair MacIntyre            
  * (bm@cs.columbia.edu) or Steven Feiner (feiner@cs.columbia.edu)         
  * at the Computer Science Dept., Columbia University,                    
@@ -9,25 +8,7 @@
  * City of New York.  Blair MacIntyre, Computer Science Department.       
  *
  * This file is released under the same conditions as Pickle.m3. See COPYRIGHT.
- * 
- * Author          : Blair MacIntyre
- * Created On      : Sun Jul 30 15:01:13 1995
- * Last Modified By: Blair MacIntyre
- * Last Modified On: Wed Oct 23 10:13:53 1996
- * Update Count    : 5
- * 
- * $Source$
- * $Date$
- * $Author$
- * $Revision$
- * 
- * $Log$
- * Revision 1.1  1998/02/26 16:37:34  dagenais
- * Enhanced pickler which allows communicating pickles between machines
- * with different endianess.
  *
- * 
- * HISTORY
  *)
 
 MODULE PackingTypeCode;

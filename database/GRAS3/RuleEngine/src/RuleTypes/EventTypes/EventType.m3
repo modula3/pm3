@@ -7,8 +7,11 @@ MODULE EventType EXPORTS EventType, InternEventType;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:40  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:51  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:40  hosking
+    Import of GRAS3 1.1
 
     Revision 1.3  1997/12/15 16:33:00  roland
     Bugfix: initialize result to avoid out of range error.
@@ -24,11 +27,14 @@ MODULE EventType EXPORTS EventType, InternEventType;
 *)
 (***************************************************************************)
 
-IMPORT TextIntTbl, IntSeq, TextSeq;
+IMPORT TextIntTransientTbl AS TextIntTbl, IntTransientSeq AS IntSeq,
+       TextTransientSeq AS TextSeq;
 
 REVEAL
   T = Intern BRANDED OBJECT
+        <*TRANSIENT*>
         name    : TEXT;
+        <*TRANSIENT*>
         info    : TEXT;
         attrIndx: TextIntTbl.T;
         attrName: TextSeq.T;

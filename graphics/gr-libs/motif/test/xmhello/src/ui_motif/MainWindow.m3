@@ -10,8 +10,7 @@ FROM Xmacro IMPORT
   XtVaSetValues, XtVaCreateManagedWidget,XtVaCreateWidget,
   TextVal,CharVal,IntVal,Args,ArgArray;
 
-FROM M3toC IMPORT
-  TtoS;
+FROM M3toC IMPORT FlatTtoS;
 
 IMPORT AppModel,Menu,Toolbar;
 
@@ -50,14 +49,14 @@ REVEAL
 PROCEDURE Init(self:T):T =
   CONST ftn = "init";
   VAR
-    argc : Xt.Cardinal := RTLinker.info.argc;
-    argv : X.Argv      := RTLinker.info.argv;
+    argc : Xt.Cardinal := RTLinker.argc;
+    argv : X.Argv      := RTLinker.argv;
   BEGIN
     debug(1,ftn,"begin\n");
 
     topLevel := Xt.AppInitialize(
                   app_context_return := appContext,
-                  application_class  := M3toC.TtoS("Hello"),
+                  application_class  := FlatTtoS("Hello"),
                   options            := NIL,
                   num_options        := 0,
                   argc_in_out        := argc,
@@ -101,7 +100,7 @@ BEGIN
 
   (*---main window---*)
   main_w:=XtVaCreateManagedWidget(
-        name        :=TtoS("main_window"),
+        name        :=FlatTtoS("main_window"),
         widget_class:=Xmw.xmMainWindowWidgetClass,
         parent      :=topLevel,
         n1:=XmN.scrollBarDisplayPolicy, v1:=IntVal(Xm.AS_NEEDED),
@@ -112,7 +111,7 @@ BEGIN
   Menu.init(main_w);
   
   work_rc:=XtVaCreateWidget(
-        name        :=TtoS("work_rc"),
+        name        :=FlatTtoS("work_rc"),
         widget_class:=Xmw.xmRowColumnWidgetClass,
         parent      :=main_w,
         n1:=XmN.orientation,            v1:=IntVal(Xm.VERTICAL),
@@ -124,9 +123,9 @@ BEGIN
   Toolbar.init(work_rc);      
 
   (*---make area for new hello labels---*)
-  str:=Xm.StringCreateSimple(TtoS("Hello, world"));
+  str:=Xm.StringCreateSimple(FlatTtoS("Hello, world"));
   main_label:=XtVaCreateManagedWidget(
-    TtoS("main_label"),Xmw.xmLabelWidgetClass,work_rc,
+    FlatTtoS("main_label"),Xmw.xmLabelWidgetClass,work_rc,
     XmN.labelString,   str,
     end:=NIL);
   Xm.StringFree(str);
@@ -136,13 +135,13 @@ BEGIN
   Xt.ManageChild(work_rc);
 
   (*---std messages---*)
-  str:=Xm.StringCreateSimple(TtoS("dummy"));
+  str:=Xm.StringCreateSimple(FlatTtoS("dummy"));
   args:=Args(args,ArgArray{XmN.messageString,str,NIL,..},argc);
-  any_msg     :=Xmw.CreateMessageDialog(main_w,TtoS("any_msg"),args,argc);
-  err_msg     :=Xmw.CreateErrorDialog(main_w,TtoS("err_msg"),args,argc);
-  warn_msg    :=Xmw.CreateWarningDialog(main_w,TtoS("warn_msg"),args,argc);
-  info_msg    :=Xmw.CreateInformationDialog(main_w,TtoS("info_msg"),args,argc);
-  working_msg :=Xmw.CreateWorkingDialog(main_w,TtoS("working_msg"),args,argc);
+  any_msg     :=Xmw.CreateMessageDialog(main_w,FlatTtoS("any_msg"),args,argc);
+  err_msg     :=Xmw.CreateErrorDialog(main_w,FlatTtoS("err_msg"),args,argc);
+  warn_msg    :=Xmw.CreateWarningDialog(main_w,FlatTtoS("warn_msg"),args,argc);
+  info_msg    :=Xmw.CreateInformationDialog(main_w,FlatTtoS("info_msg"),args,argc);
+  working_msg :=Xmw.CreateWorkingDialog(main_w,FlatTtoS("working_msg"),args,argc);
   Xm.StringFree(str);
 END MakeWidgets;
 
@@ -153,7 +152,7 @@ END MakeWidgets;
 (*------------------------*)
 PROCEDURE Msg(self:T; txt:TEXT)=
 VAR
-  t:=Xm.StringCreateSimple(TtoS(txt));
+  t:=StringCreateSimple(txt);
 BEGIN
   XtVaSetValues(any_msg,
     XmN.messageString,     t,
@@ -165,7 +164,7 @@ END Msg;
 (*------------------------*)
 PROCEDURE Err(self:T;txt:TEXT)=
 VAR
-  t:=Xm.StringCreateSimple(TtoS(txt));
+  t:=StringCreateSimple(txt);
 BEGIN
   XtVaSetValues(err_msg,
     XmN.messageString,     t,
@@ -177,7 +176,7 @@ END Err;
 (*------------------------*)
 PROCEDURE Warn(self:T;txt:TEXT)=
 VAR
-  t:=Xm.StringCreateSimple(TtoS(txt));
+  t:=StringCreateSimple(txt);
 BEGIN
   XtVaSetValues(warn_msg,
     XmN.messageString,     t,
@@ -189,7 +188,7 @@ END Warn;
 (*------------------------*)
 PROCEDURE Info(self:T;txt:TEXT)=
 VAR
-  t:=Xm.StringCreateSimple(TtoS(txt));
+  t:=StringCreateSimple(txt);
 BEGIN
   XtVaSetValues(info_msg,
     XmN.messageString,     t,
@@ -201,7 +200,7 @@ END Info;
 (*------------------------*)
 PROCEDURE Working(self:T;txt:TEXT)=
 VAR
-  t:=Xm.StringCreateSimple(TtoS(txt));
+  t:=StringCreateSimple(txt);
 BEGIN
   XtVaSetValues(working_msg,
     XmN.messageString,     t,
@@ -212,6 +211,19 @@ BEGIN
 END Working;
 
 (*========================*)
+
+PROCEDURE StringCreateSimple(txt: TEXT): Xt.String =
+  BEGIN
+    WITH str = M3toC.SharedTtoS(txt) DO
+      TRY
+        RETURN Xm.StringCreateSimple(str);
+      FINALLY
+        M3toC.FreeSharedS(txt, str);
+      END;
+    END;
+  END StringCreateSimple;
+    
+
 BEGIN
 END MainWindow.
 

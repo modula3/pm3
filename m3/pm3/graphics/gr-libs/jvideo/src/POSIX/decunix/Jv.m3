@@ -25,13 +25,13 @@ PROCEDURE Init (t: T; pipeName: TEXT): T RAISES {OSError.E} =
   VAR
     unaddr: Usocket.struct_sockaddr_un;
     fd    : INTEGER;
-    strlen                             := Text.Length(pipeName);
+    strlen := Text.Length(pipeName);
+    string := M3toC.SharedTtoS(pipeName);
   BEGIN
     unaddr.sun_family := Usocket.AF_UNIX;
-    WITH string = M3toC.TtoS(pipeName) DO
-      RTMisc.Copy(
+    RTMisc.Copy(
         string, ADR(unaddr.sun_path[0]), strlen + 1 (* +1 for '\0' *));
-    END;
+    M3toC.FreeSharedS(pipeName, string);
 
     fd := Usocket.socket(Usocket.AF_UNIX, Usocket.SOCK_STREAM, 0);
     IF fd < 0 THEN OSErrorPosix.Raise(); END;

@@ -26,6 +26,7 @@ TYPE
   InternServerList = REF ARRAY OF ServerEntry;
 
   Server = NameServer.T BRANDED "GrasNameServer" OBJECT
+             <*TRANSIENT*>
              serverList          : InternServerList;
              notifier            : NetObjNotifier.NotifierClosure;
              mainMutex, listMutex: Thread.Mutex;
@@ -53,6 +54,7 @@ TYPE
 TYPE
   Pinger = Thread.Closure OBJECT
              ns    : Server;
+             <*TRANSIENT*>
              server: ServerEntry;
            OVERRIDES
              apply := PingerApply;

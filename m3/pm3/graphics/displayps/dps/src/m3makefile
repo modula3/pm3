@@ -7,18 +7,13 @@
 %      modified on Mon Feb 10 16:54:50 PST 1992 by ayers
 
 import_lib ("dps", "/usr/lib")
-import ("X11")
+import ("X11R4")
 m3_option ("-X1@-I/usr/include/DPS@-I/usr/include/X11@-I.@")
 
 if defined ("_all")
   if stale ("wraps.h", "../src/wraps.psw")
     or stale ("wraps.c", "../src/wraps.psw")
-    local ret = 0
-    local cmd = [ "pswrap", "-o", "wraps.c", "-h", "wraps.h",
-                "../src/wraps.psw" ]
-    write(cmd, "\n")
-    ret = exec (cmd)
-    if not equal(ret, 0) error("command failed with error code: ", ret) end
+    exec ("pswrap -o wraps.c -h wraps.h ../src/wraps.psw")
   end
   deriveds ("", ["wraps.h", "wraps.c"])
 

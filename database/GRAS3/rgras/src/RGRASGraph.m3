@@ -7,8 +7,11 @@ MODULE RGRASGraph;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:44  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:53  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:44  hosking
+    Import of GRAS3 1.1
 
     Revision 1.13  1998/07/29 09:30:50  roland
     New parameter profile for AGLogin.
@@ -99,7 +102,7 @@ IMPORT ChgMgmtGraph, PoolList, Access, PageFile, Process, ErrorSupport,
 
 TYPE
 
-  ActionProcRecord = REF RECORD actionProc: ActionProc END;
+  ActionProcRecord = <*TRANSIENT*> REF RECORD actionProc: ActionProc END;
 
   RGRASEvaluator =
     Graph.Evaluator OBJECT
@@ -599,7 +602,7 @@ PROCEDURE KillRelSetEntry (VAR relSet: RelSet) =
 PROCEDURE ExecuteTriggeredAction (             e       : Event.T;
                                   <* UNUSED *> context : ContextSet.T;
                                   <* UNUSED *> local   : BOOLEAN;
-                                               userdata: REFANY        ) =
+                                               userdata: <*TRANSIENT*> REFANY) =
 
   PROCEDURE SetGraphEventInformation (VAR graphEvent       : GraphEvent;
                                           eventKind        : EventKind;

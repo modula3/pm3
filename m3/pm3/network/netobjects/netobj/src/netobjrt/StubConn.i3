@@ -10,10 +10,10 @@
    remote methods by the network objects runtime.  Here we reveal that
    a connection "c" consists of a message reader "c.rd" and a message
    writer "c.wr".
-<SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>StubLib.Conn</SPAN>
-<SPAN CLASS=INDEX.TEXT><TT>StubLib.Conn</TT></SPAN>
-</SPAN>
+   <SPAN CLASS=INDEX.MARK>
+   <SPAN CLASS=INDEX.KEY>StubLib.Conn</SPAN>
+   <SPAN CLASS=INDEX.TEXT><TT>StubLib.Conn</TT></SPAN>
+   </SPAN>
 
    Connections come in matching pairs; the two elements of the pair 
    are typically in different address spaces.  If "c1" and "c2"
@@ -29,7 +29,7 @@ REVEAL StubLib.Conn <: Public;
 
 TYPE 
   T = StubLib.Conn;      (* compatibility with old stub generator, remove *)
-  Public = OBJECT rd: MsgRd.T; wr: MsgWr.T END;
+  Public = <*TRANSIENT*> ROOT OBJECT rd: MsgRd.T; wr: MsgWr.T END;
 
 END StubConn.
 
@@ -37,7 +37,8 @@ END StubConn.
    "StubLib" interface and marshal and unmarshal arguments using
    inline code, for example to write directly to the underlying
    writer.  To do this, import the "RdClass" and "WrClass"
-   interfaces<A REL=BIB.ENTRY HREF="../../../../html/references.html#Modula3"> [Modula3] </A> to reveal the internal structure of
+   interfaces<A REL=BIB.ENTRY HREF="../../../../html/references.html#Modula3">
+   [Modula3] </A> to reveal the internal structure of
    readers and writers.  You will have to be careful about locks.  All
    readers and writers contain an internal lock used to serialize
    operations.  It is a requirement of the "StubLib" interface that
@@ -59,9 +60,10 @@ END StubConn.
    "nextMsg" method of a reader returns, there must be at least 24
    bytes of message data in the reader buffer. This requirement allows
    the runtime to efficiently read and write the headers required by
-   the network object protocol.<SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>buffered streams</SPAN>
-</SPAN>
+   the network object protocol.
+   <SPAN CLASS=INDEX.MARK>
+   <SPAN CLASS=INDEX.KEY>buffered streams</SPAN>
+   </SPAN>
   *)
 
 

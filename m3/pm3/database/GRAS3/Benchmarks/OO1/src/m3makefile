@@ -3,8 +3,6 @@ if defined("PROFILE")
      M3_CONFIG += "-z2@-lDYNAMIC_LINKING_AFTER_THIS@-lsocket@-lnsl@-lm@-ldl@-lw@"
 end
 
-m3_option ("-g")
-
 import("HiGRAS")
 import("BenchmarkTools")
 import("formsvbt")

@@ -5,10 +5,6 @@
 % Last modified on Mon Mar 21 23:10:15 PST 1994 by luca  
 %      modified on Wed Dec 22 14:48:28 PST 1993 by kalsow
 
-if defined("AT_SRC") m3_option("-O") end
-remove_m3_option("-w1")
-m3_option("-w2")
-
 import("synloc")
 import("synex")
 
@@ -16,14 +12,14 @@ module("Builder")
 module("Constructor")
 Module("MetaParser")
 
-resource_named("MetaGram", "metagrammar.gr")
-resource_named("ExtendGram", "extend.gr")
+resource_named("MetaGram","metagrammar.gr")
+resource_named("ExtendGram","extend.gr")
 bundle("MetaSynBdl")
 
 
 Library("metasyn")
 
-/* manPage("grammarfile", 5) */
-/* manPage("metaparser", 3) */
-/* manPage("extensibleGrammar", 3) */
+/* manPage(grammarfile,5) */
+/* manPage(metaparser,3) */
+/* manPage(extensibleGrammar,3) */
 

@@ -9,6 +9,7 @@ MODULE M3CG_Rd;
 
 IMPORT Text, Rd, IntIntTbl, Thread, Convert, Wr, Stdio, Fmt;
 IMPORT M3ID, M3CG, M3CG_Ops, Target, TInt, TFloat;
+FROM M3CG IMPORT CompareOp, ConvertOp, RuntimeError;
 
 CONST
   EOF = '\000';
@@ -37,7 +38,7 @@ TYPE
   END;
 
 CONST
-  CmdMap = ARRAY [0..155] OF Cmd {
+  CmdMap = ARRAY [0..151] OF Cmd {
     Cmd {"begin_unit", begin_unit},
     Cmd {"end_unit", end_unit},
     Cmd {"import_unit", import_unit},
@@ -106,11 +107,9 @@ CONST
     Cmd {"exit_proc", exit_proc},
     Cmd {"load", load},
     Cmd {"store", store},
-    Cmd {"store_ref", store_ref},
     Cmd {"load_address", load_address},
     Cmd {"load_indirect", load_indirect},
     Cmd {"store_indirect", store_indirect},
-    Cmd {"store_ref_indirect", store_ref_indirect},
     Cmd {"load_nil", load_nil},
     Cmd {"load_integer", load_integer},
     Cmd {"load_float", load_float},
@@ -158,6 +157,8 @@ CONST
     Cmd {"rotate", rotate},
     Cmd {"rotate_left", rotate_left},
     Cmd {"rotate_right", rotate_right},
+    Cmd {"widen", widen},
+    Cmd {"chop", chop},
     Cmd {"extract", extract},
     Cmd {"extract_n", extract_n},
     Cmd {"extract_mn", extract_mn},
@@ -171,11 +172,7 @@ CONST
     Cmd {"zero", zero},
     Cmd {"zero_n", zero_n},
     Cmd {"loophole", loophole},
-    Cmd {"assert_fault", assert_fault},
-    Cmd {"narrow_fault", narrow_fault},
-    Cmd {"return_fault", return_fault},
-    Cmd {"case_fault", case_fault},
-    Cmd {"typecase_fault", typecase_fault},
+    Cmd {"abort", abort},
     Cmd {"check_nil", check_nil},
     Cmd {"check_lo", check_lo},
     Cmd {"check_hi", check_hi},
@@ -194,16 +191,6 @@ CONST
     Cmd {"load_procedure", load_procedure},
     Cmd {"load_static_link", load_static_link},
     Cmd {"#", comment}
-  };
-
-CONST
-  Type_names = ARRAY [0..15] OF TEXT {
-    "Addr", "Word", "Int",
-    "Reel", "LReel", "XReel",
-    "Int.8", "Int.16", "Int.32", "Int.64",
-    "Word.8", "Word.16", "Word.32", "Word.64",
-    "Struct",
-    "Void"
   };
 
 VAR
@@ -242,9 +229,11 @@ PROCEDURE Init () =
     FOR i := FIRST (CmdMap) TO LAST (CmdMap) DO
       EVAL cmds.put (M3ID.Add (CmdMap[i].op), i);
     END;
-    types := NEW (IntIntTbl.Default).init (2 * NUMBER (Type_names));
-    FOR i := FIRST (Type_names) TO LAST (Type_names) DO
-      EVAL types.put (M3ID.Add (Type_names[i]), i);
+    WITH z = Target.TypeNames DO
+      types := NEW (IntIntTbl.Default).init (2 * NUMBER (z));
+      FOR i := FIRST (z) TO LAST (z) DO
+        EVAL types.put (M3ID.Add (z[i]), ORD (i));
+      END;
     END;
   END Init;
 
@@ -349,6 +338,16 @@ PROCEDURE Scan_int (VAR s: State): INTEGER =
     RETURN CvtInt (s, SUBARRAY (buf, 0, len));
   END Scan_int;
 
+PROCEDURE Scan_error (VAR s: State): RuntimeError =
+  VAR x := Scan_int (s);
+  BEGIN
+    IF (x < ORD (FIRST (RuntimeError))) OR (ORD (LAST (RuntimeError)) < x) THEN
+      Error (s, "bad error code: ", Fmt.Int (x));
+      x := ORD (FIRST (RuntimeError));
+    END;
+    RETURN VAL (x, RuntimeError);
+  END Scan_error;
+
 PROCEDURE Scan_Tint (VAR s: State): Target.Int =
   VAR buf: ARRAY [0..99] OF CHAR;  len := Scan_buf (s, buf);
       result, tmp: Target.Int;   value, used: INTEGER;
@@ -395,7 +394,7 @@ PROCEDURE Scan_type (VAR s: State): M3CG.Type =
   BEGIN
     IF types.get (name, val) THEN RETURN VAL (val, M3CG.Type) END;
     Error (s, "illegal type: ", M3ID.ToText (name));
-    RETURN M3CG.Type.Int;
+    RETURN M3CG.Type.Int32;
   END Scan_type;
 
 PROCEDURE Scan_bool (VAR s: State): BOOLEAN =
@@ -835,11 +834,12 @@ PROCEDURE import_global (VAR s: State) =
   END import_global;
 
 PROCEDURE declare_segment (VAR s: State) =
-  VAR name := Scan_name (s);
-      m3t  := Scan_tipe (s);
-      v    := Scan_varName (s);
+  VAR name     := Scan_name (s);
+      m3t      := Scan_tipe (s);
+      is_const := Scan_bool (s);
+      v        := Scan_varName (s);
   BEGIN
-    AddVar (s, v, s.cg.declare_segment (name, m3t));
+    AddVar (s, v, s.cg.declare_segment (name, m3t, is_const));
   END declare_segment;
 
 PROCEDURE bind_segment (VAR s: State) =
@@ -1075,73 +1075,66 @@ PROCEDURE jump (VAR s: State) =
   END jump;
 
 PROCEDURE if_true  (VAR s: State) =
-  VAR label := Scan_label (s);
+  VAR type  := Scan_type (s);
+      label := Scan_label (s);
       freq  := Scan_int (s);
   BEGIN
-    s.cg.if_true (label, freq);
+    s.cg.if_true (type, label, freq);
   END if_true;
 
 PROCEDURE if_false (VAR s: State) =
-  VAR label := Scan_label (s);
+  VAR type  := Scan_type (s);
+      label := Scan_label (s);
       freq  := Scan_int (s);
   BEGIN
-    s.cg.if_false (label, freq);
+    s.cg.if_false (type, label, freq);
   END if_false;
 
 PROCEDURE if_eq (VAR s: State) =
-  VAR label := Scan_label (s);
-      type  := Scan_type (s);
-      freq  := Scan_int (s);
   BEGIN
-    s.cg.if_eq (label, type, freq);
+    if_compare (s, CompareOp.EQ);
   END if_eq;
 
 PROCEDURE if_ne (VAR s: State) =
-  VAR label := Scan_label (s);
-      type  := Scan_type (s);
-      freq  := Scan_int (s);
   BEGIN
-    s.cg.if_ne (label, type, freq);
+    if_compare (s, CompareOp.NE);
   END if_ne;
 
 PROCEDURE if_gt (VAR s: State) =
-  VAR label := Scan_label (s);
-      type  := Scan_type (s);
-      freq  := Scan_int (s);
   BEGIN
-    s.cg.if_gt (label, type, freq);
+    if_compare (s, CompareOp.GT);
   END if_gt;
 
 PROCEDURE if_ge (VAR s: State) =
-  VAR label := Scan_label (s);
-      type  := Scan_type (s);
-      freq  := Scan_int (s);
   BEGIN
-    s.cg.if_ge (label, type, freq);
+    if_compare (s, CompareOp.GE);
   END if_ge;
 
 PROCEDURE if_lt (VAR s: State) =
-  VAR label := Scan_label (s);
-      type  := Scan_type (s);
-      freq  := Scan_int (s);
   BEGIN
-    s.cg.if_lt (label, type, freq);
+    if_compare (s, CompareOp.LT);
   END if_lt;
 
 PROCEDURE if_le (VAR s: State) =
-  VAR label := Scan_label (s);
-      type  := Scan_type (s);
-      freq  := Scan_int (s);
   BEGIN
-    s.cg.if_le (label, type, freq);
+    if_compare (s, CompareOp.LE);
   END if_le;
 
+PROCEDURE if_compare (VAR s: State;  op: CompareOp) =
+  VAR type  := Scan_type (s);
+      label := Scan_label (s);
+      freq  := Scan_int (s);
+  BEGIN
+    s.cg.if_compare (type, op, label, freq);
+  END if_compare;
+
 PROCEDURE case_jump (VAR s: State) =
-  VAR n := Scan_int (s);
-      x := NEW (REF ARRAY OF M3CG.Label, n);
+  VAR type := Scan_type (s);
+      n    := Scan_int (s);
+      x    := NEW (REF ARRAY OF M3CG.Label, n);
   BEGIN
     FOR i := 0 TO n-1 DO x[i] := Scan_label (s) END;
-    s.cg.case_jump (x^);
+    s.cg.case_jump (type, x^);
   END case_jump;
 
 PROCEDURE exit_proc (VAR s: State) =
@@ -1155,25 +1148,20 @@ PROCEDURE exit_proc (VAR s: State) =
 PROCEDURE load  (VAR s: State) =
   VAR v      := Scan_var (s);
       offset := Scan_int (s);
-      type   := Scan_type (s);
+      src    := Scan_type (s);
+      dest   := Scan_type (s);
   BEGIN
-    s.cg.load (v, offset, type);
+    s.cg.load (v, offset, src, dest);
   END load;
 
 PROCEDURE store  (VAR s: State) =
   VAR v      := Scan_var (s);
       offset := Scan_int (s);
-      type   := Scan_type (s);
+      src    := Scan_type (s);
+      dest   := Scan_type (s);
   BEGIN
-    s.cg.store (v, offset, type);
+    s.cg.store (v, offset, src, dest);
   END store;
-
-PROCEDURE store_ref (VAR s: State) =
-  VAR v      := Scan_var (s);
-      offset := Scan_int (s);
-  BEGIN
-    s.cg.store_ref (v, offset);
-  END store_ref;
 
 PROCEDURE load_address (VAR s: State) =
   VAR v      := Scan_var (s);
@@ -1184,24 +1172,19 @@ PROCEDURE load_address (VAR s: State) =
 
 PROCEDURE load_indirect (VAR s: State) =
   VAR offset := Scan_int (s);
-      type   := Scan_type (s);
+      src    := Scan_type (s);
+      dest   := Scan_type (s);
   BEGIN
-    s.cg.load_indirect (offset, type);
+    s.cg.load_indirect (offset, src, dest);
   END load_indirect;
 
 PROCEDURE store_indirect (VAR s: State) =
   VAR offset := Scan_int (s);
-      type   := Scan_type (s);
+      src    := Scan_type (s);
+      dest   := Scan_type (s);
   BEGIN
-    s.cg.store_indirect (offset, type);
+    s.cg.store_indirect (offset, src, dest);
   END store_indirect;
-
-PROCEDURE store_ref_indirect (VAR s: State) =
-  VAR offset := Scan_int (s);
-      is_var := Scan_bool (s);
-  BEGIN
-    s.cg.store_ref_indirect (offset, is_var);
-  END store_ref_indirect;
 
 (*-------------------------------------------------------------- literals ---*)
 
@@ -1211,54 +1194,59 @@ PROCEDURE load_nil (VAR s: State) =
   END load_nil;
 
 PROCEDURE load_integer  (VAR s: State) =
-  VAR value := Scan_Tint (s);
+  VAR
+    type  := Scan_type (s);
+    value := Scan_Tint (s);
   BEGIN
-    s.cg.load_integer (value);
+    s.cg.load_integer (type, value);
   END load_integer;
 
 PROCEDURE load_float    (VAR s: State) =
-  VAR value := Scan_float (s);
+  VAR
+    type  := Scan_type (s);
+    value := Scan_float (s);
   BEGIN
-    s.cg.load_float (value);
+    s.cg.load_float (type, value);
   END load_float;
 
 (*------------------------------------------------------------ arithmetic ---*)
 
 PROCEDURE eq (VAR s: State) =
-  VAR type := Scan_type (s);
   BEGIN
-    s.cg.eq (type);
+    compare (s, CompareOp.EQ);
   END eq;
 
 PROCEDURE ne (VAR s: State) =
-  VAR type := Scan_type (s);
   BEGIN
-    s.cg.ne (type);
+    compare (s, CompareOp.NE);
   END ne;
 
 PROCEDURE gt (VAR s: State) =
-  VAR type := Scan_type (s);
   BEGIN
-    s.cg.gt (type);
+    compare (s, CompareOp.GT);
   END gt;
 
 PROCEDURE ge (VAR s: State) =
-  VAR type := Scan_type (s);
   BEGIN
-    s.cg.ge (type);
+    compare (s, CompareOp.GE);
   END ge;
 
 PROCEDURE lt (VAR s: State) =
-  VAR type := Scan_type (s);
   BEGIN
-    s.cg.lt (type);
+    compare (s, CompareOp.LT);
   END lt;
 
 PROCEDURE le (VAR s: State) =
-  VAR type := Scan_type (s);
   BEGIN
-    s.cg.le (type);
+    compare (s, CompareOp.LE);
   END le;
+
+PROCEDURE compare (VAR s: State;  op: CompareOp) =
+  VAR src  := Scan_type (s);
+      dest := Scan_type (s);
+  BEGIN
+    s.cg.compare (src, dest, op);
+  END compare;
 
 PROCEDURE add (VAR s: State) =
   VAR type := Scan_type (s);
@@ -1325,28 +1313,32 @@ PROCEDURE min (VAR s: State) =
   END min;
 
 PROCEDURE round (VAR s: State) =
-  VAR type := Scan_type (s);
   BEGIN
-    s.cg.round (type);
+    cvt_int (s, ConvertOp.Round);
   END round;
 
 PROCEDURE trunc    (VAR s: State) =
-  VAR type := Scan_type (s);
   BEGIN
-    s.cg.trunc (type);
+    cvt_int (s, ConvertOp.Trunc);
   END trunc;
 
 PROCEDURE floor    (VAR s: State) =
-  VAR type := Scan_type (s);
   BEGIN
-    s.cg.floor (type);
+    cvt_int (s, ConvertOp.Floor);
   END floor;
 
 PROCEDURE ceiling  (VAR s: State) =
-  VAR type := Scan_type (s);
   BEGIN
-    s.cg.ceiling (type);
+    cvt_int (s, ConvertOp.Ceiling);
   END ceiling;
+
+PROCEDURE cvt_int (VAR s: State;  op: ConvertOp) =
+  VAR
+    src  := Scan_type (s);
+    dest := Scan_type (s);
+  BEGIN
+    s.cg.cvt_int (src, dest, op);
+  END cvt_int;
 
 PROCEDURE cvt_float    (VAR s: State) =
   VAR src  := Scan_type (s);
@@ -1382,148 +1374,182 @@ PROCEDURE set_sym_difference (VAR s: State) =
   END set_sym_difference;
 
 PROCEDURE set_member (VAR s: State) =
-  VAR size := Scan_int (s);
+  VAR
+    size := Scan_int (s);
+    type := Scan_type (s);
   BEGIN
-    s.cg.set_member (size);
+    s.cg.set_member (size, type);
   END set_member;
 
 PROCEDURE set_eq (VAR s: State) =
-  VAR size := Scan_int (s);
   BEGIN
-    s.cg.set_eq (size);
+    set_compare (s, CompareOp.EQ);
   END set_eq;
 
 PROCEDURE set_ne (VAR s: State) =
-  VAR size := Scan_int (s);
   BEGIN
-    s.cg.set_ne (size);
+    set_compare (s, CompareOp.NE);
   END set_ne;
 
 PROCEDURE set_gt (VAR s: State) =
-  VAR size := Scan_int (s);
   BEGIN
-    s.cg.set_gt (size);
+    set_compare (s, CompareOp.GT);
   END set_gt;
 
 PROCEDURE set_ge (VAR s: State) =
-  VAR size := Scan_int (s);
   BEGIN
-    s.cg.set_ge (size);
+    set_compare (s, CompareOp.GE);
   END set_ge;
 
 PROCEDURE set_lt (VAR s: State) =
-  VAR size := Scan_int (s);
   BEGIN
-    s.cg.set_lt (size);
+    set_compare (s, CompareOp.LT);
   END set_lt;
 
 PROCEDURE set_le (VAR s: State) =
-  VAR size := Scan_int (s);
   BEGIN
-    s.cg.set_le (size);
+    set_compare (s, CompareOp.LE);
   END set_le;
 
-PROCEDURE set_range (VAR s: State) =
+PROCEDURE set_compare (VAR s: State;  op: CompareOp) =
   VAR size := Scan_int (s);
+      type := Scan_type (s);
   BEGIN
-    s.cg.set_range (size);
+    s.cg.set_compare (size, op, type);
+  END set_compare;
+
+PROCEDURE set_range (VAR s: State) =
+  VAR
+    size := Scan_int (s);
+    type := Scan_type (s);
+  BEGIN
+    s.cg.set_range (size, type);
   END set_range;
 
 PROCEDURE set_singleton (VAR s: State) =
-  VAR size := Scan_int (s);
+  VAR
+    size := Scan_int (s);
+    type := Scan_type (s);
   BEGIN
-    s.cg.set_singleton (size);
+    s.cg.set_singleton (size, type);
   END set_singleton;
 
 (*------------------------------------------------- Word.T bit operations ---*)
 
 PROCEDURE not (VAR s: State) =
+  VAR type := Scan_type (s);
   BEGIN
-    s.cg.not ();
+    s.cg.not (type);
   END not;
 
 PROCEDURE and (VAR s: State) =
+  VAR type := Scan_type (s);
   BEGIN
-    s.cg.and ();
+    s.cg.and (type);
   END and;
 
 PROCEDURE or  (VAR s: State) =
+  VAR type := Scan_type (s);
   BEGIN
-    s.cg.or ();
+    s.cg.or (type);
   END or;
 
 PROCEDURE xor (VAR s: State) =
+  VAR type := Scan_type (s);
   BEGIN
-    s.cg.xor ();
+    s.cg.xor (type);
   END xor;
 
 PROCEDURE shift (VAR s: State) =
+  VAR type := Scan_type (s);
   BEGIN
-    s.cg.shift ();
+    s.cg.shift (type);
   END shift;
 
 PROCEDURE shift_left (VAR s: State) =
+  VAR type := Scan_type (s);
   BEGIN
-    s.cg.shift_left ();
+    s.cg.shift_left (type);
   END shift_left;
 
 PROCEDURE shift_right (VAR s: State) =
+  VAR type := Scan_type (s);
   BEGIN
-    s.cg.shift_right ();
+    s.cg.shift_right (type);
   END shift_right;
 
 PROCEDURE rotate (VAR s: State) =
+  VAR type := Scan_type (s);
   BEGIN
-    s.cg.rotate ();
+    s.cg.rotate (type);
   END rotate;
 
 PROCEDURE rotate_left  (VAR s: State) =
+  VAR type := Scan_type (s);
   BEGIN
-    s.cg.rotate_left ();
+    s.cg.rotate_left (type);
   END rotate_left;
 
 PROCEDURE rotate_right (VAR s: State) =
+  VAR type := Scan_type (s);
   BEGIN
-    s.cg.rotate_right ();
+    s.cg.rotate_right (type);
   END rotate_right;
 
-PROCEDURE extract (VAR s: State) =
+PROCEDURE widen (VAR s: State) =
   VAR sign_extend := Scan_bool (s);
   BEGIN
-    s.cg.extract (sign_extend);
+    s.cg.widen (sign_extend);
+  END widen;
+
+PROCEDURE chop (VAR s: State) =
+  BEGIN
+    s.cg.chop ();
+  END chop;
+
+PROCEDURE extract (VAR s: State) =
+  VAR type        := Scan_type (s);
+      sign_extend := Scan_bool (s);
+  BEGIN
+    s.cg.extract (type, sign_extend);
   END extract;
 
 PROCEDURE extract_n (VAR s: State) =
-  VAR sign_extend := Scan_bool (s);
+  VAR type        := Scan_type (s);
+      sign_extend := Scan_bool (s);
       width := Scan_int (s);
   BEGIN
-    s.cg.extract_n (sign_extend, width);
+    s.cg.extract_n (type, sign_extend, width);
   END extract_n;
 
 PROCEDURE extract_mn (VAR s: State) =
-  VAR sign_extend := Scan_bool (s);
+  VAR type        := Scan_type (s);
+      sign_extend := Scan_bool (s);
       offset := Scan_int (s);
       width := Scan_int (s);
   BEGIN
-    s.cg.extract_mn (sign_extend, offset, width);
+    s.cg.extract_mn (type, sign_extend, offset, width);
   END extract_mn;
 
 PROCEDURE insert  (VAR s: State) =
+  VAR type := Scan_type (s);
   BEGIN
-    s.cg.insert ();
+    s.cg.insert (type);
   END insert;
 
 PROCEDURE insert_n  (VAR s: State) =
-  VAR width := Scan_int (s);
+  VAR type  := Scan_type (s);
+      width := Scan_int (s);
   BEGIN
-    s.cg.insert_n (width);
+    s.cg.insert_n (type, width);
   END insert_n;
 
 PROCEDURE insert_mn  (VAR s: State) =
-  VAR offset := Scan_int (s);
-      width := Scan_int (s);
+  VAR type   := Scan_type (s);
+      offset := Scan_int (s);
+      width  := Scan_int (s);
   BEGIN
-    s.cg.insert_mn (offset, width);
+    s.cg.insert_mn (type, offset, width);
   END insert_mn;
 
 (*------------------------------------------------ misc. stack/memory ops ---*)
@@ -1542,10 +1568,11 @@ PROCEDURE pop  (VAR s: State) =
   END pop;
 
 PROCEDURE copy_n (VAR s: State) =
-  VAR type := Scan_type (s);
-      overlap := Scan_bool (s);
+  VAR cnt_type := Scan_type (s);
+      type     := Scan_type (s);
+      overlap  := Scan_bool (s);
   BEGIN
-    s.cg.copy_n (type, overlap);
+    s.cg.copy_n (cnt_type, type, overlap);
   END copy_n;
 
 PROCEDURE copy (VAR s: State) =
@@ -1557,9 +1584,10 @@ PROCEDURE copy (VAR s: State) =
   END copy;
 
 PROCEDURE zero_n (VAR s: State) =
-  VAR type := Scan_type (s);
+  VAR cnt_type := Scan_type (s);
+      type     := Scan_type (s);
   BEGIN
-    s.cg.zero_n (type);
+    s.cg.zero_n (cnt_type, type);
   END zero_n;
 
 PROCEDURE zero (VAR s: State) =
@@ -1580,63 +1608,55 @@ PROCEDURE loophole (VAR s: State) =
 
 (*------------------------------------------------ traps & runtime checks ---*)
 
-PROCEDURE assert_fault (VAR s: State) =
+PROCEDURE abort (VAR s: State) =
+  VAR code := Scan_error (s);
   BEGIN
-    s.cg.assert_fault ();
-  END assert_fault;
-
-PROCEDURE narrow_fault (VAR s: State) =
-  BEGIN
-    s.cg.narrow_fault ();
-  END narrow_fault;
-
-PROCEDURE return_fault (VAR s: State) =
-  BEGIN
-    s.cg.return_fault ();
-  END return_fault;
-
-PROCEDURE case_fault (VAR s: State) =
-  BEGIN
-    s.cg.case_fault ();
-  END case_fault;
-
-PROCEDURE typecase_fault (VAR s: State) =
-  BEGIN
-    s.cg.typecase_fault ();
-  END typecase_fault;
+    s.cg.abort (code);
+  END abort;
 
 PROCEDURE check_nil (VAR s: State) =
+  VAR code := Scan_error (s);
   BEGIN
-    s.cg.check_nil ();
+    s.cg.check_nil (code);
   END check_nil;
 
 PROCEDURE check_lo (VAR s: State) =
-  VAR i := Scan_Tint (s);
+  VAR type := Scan_type (s);
+      i    := Scan_Tint (s);
+      code := Scan_error (s);
   BEGIN
-    s.cg.check_lo (i);
+    s.cg.check_lo (type, i, code);
   END check_lo;
 
 PROCEDURE check_hi (VAR s: State) =
-  VAR i := Scan_Tint (s);
+  VAR type := Scan_type (s);
+      i    := Scan_Tint (s);
+      code := Scan_error (s);
   BEGIN
-    s.cg.check_hi (i);
+    s.cg.check_hi (type, i, code);
   END check_hi;
 
 PROCEDURE check_range (VAR s: State) =
-  VAR a := Scan_Tint (s);
-      b := Scan_Tint (s);
+  VAR type := Scan_type (s);
+      a    := Scan_Tint (s);
+      b    := Scan_Tint (s);
+      code := Scan_error (s);
   BEGIN
-    s.cg.check_range (a, b);
+    s.cg.check_range (type, a, b, code);
   END check_range;
 
 PROCEDURE check_index (VAR s: State) =
+  VAR type := Scan_type (s);
+      code := Scan_error (s);
   BEGIN
-    s.cg.check_index ();
+    s.cg.check_index (type, code);
   END check_index;
 
 PROCEDURE check_eq (VAR s: State) =
+  VAR type := Scan_type (s);
+      code := Scan_error (s);
   BEGIN
-    s.cg.check_eq ();
+    s.cg.check_eq (type, code);
   END check_eq;
 
 (*---------------------------------------------------- address arithmetic ---*)
@@ -1648,9 +1668,10 @@ PROCEDURE add_offset (VAR s: State) =
   END add_offset;
 
 PROCEDURE index_address (VAR s: State) =
-  VAR size := Scan_int (s);
+  VAR type := Scan_type (s);
+      size := Scan_int (s);
   BEGIN
-    s.cg.index_address (size);
+    s.cg.index_address (type, size);
   END index_address;
 
 (*------------------------------------------------------- procedure calls ---*)

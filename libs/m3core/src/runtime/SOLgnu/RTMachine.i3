@@ -2,7 +2,8 @@
 (* All rights reserved.                                     *)
 (* See the file COPYRIGHT for a full description.           *)
 (*                                                          *)
-(* Last modified on Tue May  2 11:43:28 PDT 1995 by kalsow  *)
+(* Last modified on Wed Jul 30 13:55:56 EST 1997 by hosking *)
+(*      modified on Tue May  2 11:43:35 PDT 1995 by kalsow  *)
 
 (* This interface defines platform (machine + OS) dependent
    types and constants. *)
@@ -50,10 +51,20 @@ CONST
 CONST
   VMHeap = TRUE;
 
-(*** hooks for the C wrapper functions ***)
+(* If "VMHeap" is true, "AtomicWrappers" indicates whether the wrappers
+   that validate parameters passed to system calls are atomic with
+   respect to the collector.  *)
 
+CONST
+  AtomicWrappers = TRUE;
+
+(*** hooks for the C wrapper functions ***)
 <*EXTERNAL*> VAR RTHeapRep_Fault: ADDRESS;  (* => RTHeapRep.Fault *)
 <*EXTERNAL*> VAR RTCSRC_FinishVM: ADDRESS;  (* => RTCollectorSRC.FinishVM *)
+
+(*** hooks for the stack walker ***)
+<*EXTERNAL*> VAR RTProcedureSRC_FromPC: ADDRESS; (* => RTProcedureSRC.FromPC *)
+<*EXTERNAL*> VAR RTHeapDep_Fault: ADDRESS;  (* => RTHeapDep.Fault *)
 
 (*--------------------------------------------------------- thread stacks ---*)
 
@@ -80,12 +91,13 @@ CONST
   (* Indicates whether this platform supports the stack walking functions
      defined in the "RTStack" interface. *)
 
-TYPE FrameInfo = RECORD
-  pc, sp, true_sp: ADDRESS;		 (* sp here is actually SPARC fp *)
-  ctxt: Uucontext.ucontext_t;
-  lock: INTEGER; (* to ensure that ctxt isn't overrun!! *)
-END;
+TYPE
+  FrameInfo = RECORD
+    pc, sp  : ADDRESS;       (* sp here is actually SPARC fp *)
+    true_sp : ADDRESS;
+    unwind  : ADDRESS;
+    ctxt    : Uucontext.ucontext_t;
+    lock    : INTEGER;       (* to ensure that ctxt isn't overrun!! *)
+  END;
 
 END RTMachine.
-
-

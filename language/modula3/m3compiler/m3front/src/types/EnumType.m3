@@ -9,11 +9,11 @@
 MODULE EnumType;
 
 IMPORT M3, M3ID, CG, Type, TypeRep, Value, Scope, Scanner, Ident;
-IMPORT EnumElt, Token, CChar, Bool, M3Buf, Word, Error, TipeMap, TipeDesc;
-IMPORT Target, TInt, TargetMap;
+IMPORT EnumElt, Token, Charr, Bool, M3Buf, Word, Error, TipeMap, TipeDesc;
+IMPORT Target, TInt, TWord, TargetMap, WCharr;
 
 TYPE
-  Rep = [FIRST (TargetMap.Int_types) .. LAST (TargetMap.Int_types)];
+  Rep = [FIRST (TargetMap.Word_types) .. LAST (TargetMap.Word_types)];
 
 TYPE
   P = Type.T BRANDED "EnumType.m3" OBJECT
@@ -65,6 +65,20 @@ PROCEDURE New (n_elts: INTEGER;  elts: Scope.T): Type.T =
     RETURN p;
   END New;
 
+PROCEDURE Build (READONLY elt_nms: ARRAY OF TEXT): Type.T =
+  VAR p: P;  val: Target.Int;  b: BOOLEAN;
+  BEGIN
+    p := Create (Scope.PushNew (FALSE, M3ID.NoID));
+    FOR i := 0 TO LAST (elt_nms) DO
+      b := TInt.FromInt (i, val);  <*ASSERT b*>
+      Scope.Insert (EnumElt.New (M3ID.Add (elt_nms[i]), val, p));
+    END;
+    Scope.PopNew ();
+    p.n_elts := NUMBER (elt_nms);
+    SetRep (p);
+    RETURN p;
+  END Build;
+
 PROCEDURE Reduce (t: Type.T): P =
   BEGIN
     IF (t = NIL) THEN RETURN NIL END;
@@ -111,8 +125,11 @@ PROCEDURE SetRep (p: P) =
       Error.Msg ("enumeration type too large");
     END;
     FOR i := FIRST (Rep) TO LAST (Rep) DO
-      IF TInt.LE (max, TargetMap.Int_types[i].max) THEN
-        p.rep := i; RETURN;
+      WITH t = TargetMap.Word_types[i] DO
+        IF (t.size <= Target.Word.size)
+          AND TWord.LE (max, t.max) THEN
+          p.rep := i; RETURN;
+        END;
       END;
     END;
     p.rep := LAST (Rep);
@@ -129,21 +146,22 @@ PROCEDURE Check (p: P) =
       v := v.next;
     END;
 
-    p.info.size      := TargetMap.Int_types[p.rep].size;
+    p.info.size      := TargetMap.Word_types[p.rep].size;
     p.info.min_size  := MinSize (p);
-    p.info.alignment := TargetMap.Int_types[p.rep].align;
-    p.info.mem_type  := TargetMap.Int_types[p.rep].cg_type;
-    p.info.stk_type  := TargetMap.CG_Base [p.info.mem_type];
+    p.info.alignment := TargetMap.Word_types[p.rep].align;
+    p.info.mem_type  := TargetMap.Word_types[p.rep].cg_type;
+    p.info.stk_type  := Target.Word.cg_type;
     p.info.class     := Type.Class.Enum;
     p.info.isTraced  := FALSE;
     p.info.isEmpty   := (p.n_elts <= 0);
     p.info.isSolid   := TRUE;
     p.info.hash      := hash;
+    p.info.isTransient := TRUE;
   END Check;
 
 PROCEDURE CheckAlign (p: P;  offset: INTEGER): BOOLEAN =
   VAR
-    sz := TargetMap.Int_types [p.rep].size;
+    sz := TargetMap.Word_types [p.rep].size;
     z0 := offset DIV Target.Integer.align * Target.Integer.align;
   BEGIN
     RETURN (offset + sz) <= (z0 + Target.Integer.size);
@@ -153,7 +171,7 @@ PROCEDURE Compiler (p: P) =
   VAR v := Scope.ToList (p.scope);
   BEGIN
     CG.Declare_enum (Type.GlobalUID (p), p.n_elts,
-                     TargetMap.Int_types[p.rep].size);
+                     TargetMap.Word_types[p.rep].size);
     WHILE (v # NIL) DO
       CG.Declare_enum_elt (Value.CName (v));
       v := v.next;
@@ -199,14 +217,14 @@ PROCEDURE InitCoster (p: P;  zeroed: BOOLEAN): INTEGER =
   BEGIN
     IF (p.n_elts <= 0) OR (zeroed) THEN RETURN 0; END;
     IF NOT TInt.FromInt (p.n_elts-1, max) THEN RETURN 1 END;
-    IF TInt.EQ (TargetMap.Int_types[p.rep].min, TInt.Zero)
-      AND TInt.EQ (TargetMap.Int_types[p.rep].max, max)
+    IF TInt.EQ (TargetMap.Word_types[p.rep].max, max)
       THEN RETURN 0;
       ELSE RETURN 1;
     END;
   END InitCoster;
 
-PROCEDURE GenMap (<*UNUSED*> p: P; offset, size: INTEGER; refs_only: BOOLEAN) =
+PROCEDURE GenMap (<*UNUSED*> p: P; offset, size: INTEGER; refs_only: BOOLEAN;
+                  <*UNUSED*> transient: BOOLEAN) =
   VAR bit_offset := offset MOD Target.Byte;  op: TipeMap.Op;
   BEGIN
     IF (refs_only) THEN RETURN END;
@@ -222,7 +240,7 @@ PROCEDURE GenMap (<*UNUSED*> p: P; offset, size: INTEGER; refs_only: BOOLEAN) =
 
 PROCEDURE GenDesc (p: P) =
   BEGIN
-    IF Type.IsEqual (p, CChar.T, NIL) THEN
+    IF Type.IsEqual (p, Charr.T, NIL) THEN
       EVAL TipeDesc.AddO (TipeDesc.Op.Char, p);
     ELSIF Type.IsEqual (p, Bool.T, NIL) THEN
       EVAL TipeDesc.AddO (TipeDesc.Op.Boolean, p);
@@ -235,10 +253,12 @@ PROCEDURE FPrinter (p: P;  VAR x: M3.FPInfo) =
   VAR v: Value.T;
   BEGIN
     x.n_nodes := 0;
-    IF Type.IsEqual (p, CChar.T, NIL) THEN
+    IF Type.IsEqual (p, Charr.T, NIL) THEN
       x.tag := "$char";
     ELSIF Type.IsEqual (p, Bool.T, NIL) THEN
       x.tag := "$boolean";
+    ELSIF Type.IsEqual (p, WCharr.T, NIL) THEN
+      x.tag := "$widechar";
     ELSE
       M3Buf.PutText (x.buf, "ENUM");
       v := Scope.ToList (p.scope);

@@ -7,27 +7,43 @@
 %      modified on Mon Apr 26 13:38:31 PDT 1993 by mcjones
 %      modified on Wed Oct  7 16:21:30 PDT 1992 by johnh
 
+Generic_interface("SortedTableRep")
+Generic_interface("SortedTableTransientRep")
 Generic_module("SortedTable")
 HtmlGenericInterface("SortedTable")
 
 template ("sortedtable")
 
-Sorted_table ("AtomAtom", "Atom", "Atom")
-Sorted_table ("AtomInt",  "Atom", "Integer")
-Sorted_table ("AtomRef",  "Atom", "Refany")
-Sorted_table ("AtomText", "Atom", "Text")
+TransientSorted_table ("AtomAtom", "Atom", "Atom")
+TransientSorted_table ("AtomInt",  "Atom", "Integer")
+TransientSorted_table ("AtomRefTransient",  "Atom", "RefanyTransient")
+TransientSorted_table ("AtomRef",  "Atom", "Refany")
+TransientSorted_table ("AtomText", "Atom", "Text")
 
-Sorted_table ("IntAtom", "Integer", "Atom")
 Sorted_table ("IntInt",  "Integer", "Integer")
 Sorted_table ("IntRef",  "Integer", "Refany")
 Sorted_table ("IntText", "Integer", "Text")
 
-Sorted_table ("RefAtom", "Refany", "Atom")
+TransientSorted_table ("IntAtom", "Integer", "Atom")
+TransientSorted_table ("IntIntTransient",  "Integer", "Integer")
+TransientSorted_table ("IntRefTransient",  "Integer", "RefanyTransient")
+TransientSorted_table ("IntTextTransient", "Integer", "Text")
+
 Sorted_table ("RefInt",  "Refany", "Integer")
 Sorted_table ("RefRef",  "Refany", "Refany")
 Sorted_table ("RefText", "Refany", "Text")
 
-Sorted_table ("TextAtom", "Text", "Atom")
+TransientSorted_table ("RefAtom", "Refany", "Atom")
+TransientSorted_table ("RefAtomTransient", "RefanyTransient", "Atom")
+TransientSorted_table ("RefIntTransient",  "RefanyTransient", "Integer")
+TransientSorted_table ("RefRefTransient",  "RefanyTransient", "RefanyTransient")
+TransientSorted_table ("RefTextTransient", "RefanyTransient", "Text")
+
 Sorted_table ("TextInt",  "Text", "Integer")
 Sorted_table ("TextRef",  "Text", "Refany")
 Sorted_table ("TextText", "Text", "Text")
+
+TransientSorted_table ("TextAtom", "Text", "Atom")
+TransientSorted_table ("TextIntTransient",  "Text", "Integer")
+TransientSorted_table ("TextRefTransient",  "Text", "RefanyTransient")
+TransientSorted_table ("TextTextTransient", "Text", "Text")

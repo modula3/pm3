@@ -7,9 +7,8 @@
 
 INTERFACE EqualExpr;
 
-IMPORT Expr;
+IMPORT Expr, CG;
 
-PROCEDURE NewEQ (a, b: Expr.T): Expr.T;
-PROCEDURE NewNE (a, b: Expr.T): Expr.T;
+PROCEDURE New (a, b: Expr.T;  op: [ CG.Cmp.EQ .. CG.Cmp.NE ]): Expr.T;
 
 END EqualExpr.

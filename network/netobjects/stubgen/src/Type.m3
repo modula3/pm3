@@ -13,8 +13,6 @@ MODULE Type;
 
 IMPORT Atom, Fmt, StubUtils, Text, Value, ValueProc;
 
-<* FATAL StubUtils.Error *>
-
 TYPE Foo = OBJECT name: Qid; visited := FALSE; brandsOK := TRUE; END;
 
 REVEAL T =  Foo BRANDED OBJECT END;
@@ -26,6 +24,7 @@ PROCEDURE ToText(t: T; byName: BOOLEAN := TRUE): Text.T =
     IF t.name # NIL AND byName THEN RETURN QidToText(t.name); END;
     TYPECASE t OF 
       | Char => RETURN "CHAR"
+      | WideChar => RETURN "WIDECHAR"
       | UserDefined (ud) => 
           IF NUMBER(ud.elts^) = 0 THEN text := "";
           ELSE 
@@ -37,7 +36,7 @@ PROCEDURE ToText(t: T; byName: BOOLEAN := TRUE): Text.T =
           RETURN "{" & text & "}";
       | Enumeration (enum) =>
           IF enum = boolean THEN RETURN "BOOLEAN"; END;
-          RAISE StubUtils.Error("Run time error -- shouldn't occur");
+          StubUtils.Die("Type.ToText: unsupported enumeration type");
       | Subrange (sub) => 
           VAR min, max: INTEGER;
               ud: UserDefined;
@@ -51,6 +50,10 @@ PROCEDURE ToText(t: T; byName: BOOLEAN := TRUE): Text.T =
             IF sub.base = char THEN RETURN
                "[VAL(" & Fmt.Int(min) &  ", CHAR) .. VAL(" & 
                      Fmt.Int(max) & ", CHAR)]"
+            END;
+            IF sub.base = widechar THEN RETURN
+               "[VAL(" & Fmt.Int(min) &  ", WIDECHAR) .. VAL(" & 
+                     Fmt.Int(max) & ", WIDECHAR)]"
             END;
             ud := NARROW(sub.base, UserDefined);
             RETURN "[" & ToText(sub.base) & "." & Atom.ToText(ud.elts[min]) & 
@@ -81,9 +84,9 @@ PROCEDURE ToText(t: T; byName: BOOLEAN := TRUE): Text.T =
             | Ref (r) => 
               IF NOT r.traced THEN text := "UNTRACED " & text END;
               RETURN text & "REF " & ToText(r.target, TRUE);
-            ELSE RAISE StubUtils.Error("Run time error -- shouldn't occur");
+            ELSE StubUtils.Die("Type.ToText: unsupported reference type");
             END;
-          ELSE RAISE StubUtils.Error("Run time error -- shouldn't occur");
+          ELSE StubUtils.Die("Type.ToText: unsupported reference type");
           END;
       | Array (arr) =>
           IF arr.index = NIL THEN
@@ -100,8 +103,10 @@ PROCEDURE ToText(t: T; byName: BOOLEAN := TRUE): Text.T =
           RETURN "SET OF " & ToText(set.range);
       | Procedure (proc) =>
           RETURN "PROCEDURE" & SigToText(proc.sig);
-      ELSE  RAISE StubUtils.Error("Run time error -- shouldn't occur");
+      ELSE  StubUtils.Die("Type.ToText: unsupported type");
     END;
+
+    RETURN NIL;
   END ToText;
 
 PROCEDURE QidToText(qid: Qid): TEXT =
@@ -164,7 +169,7 @@ PROCEDURE MethodsToText(m: REF ARRAY OF Method): TEXT =
           MethodDefault1 (md1) => text := text & QidToText(md1.qid);
         | MethodDefault2 (md2) => text := text & ToText(md2.obType) &
                                  "." & Atom.ToText(md2.method);
-        ELSE RAISE StubUtils.Error("Run time error -- shouldn't occur");
+        ELSE StubUtils.Die("Type.MethodsToText: unrecognized method value");
         END;
       END;
     END;
@@ -260,6 +265,8 @@ BEGIN
 
   char :=    NEW(Char, 
                name := NEW(Qid, intf := nullAtm, item := Atom.FromText("CHAR")));
+  widechar := NEW(WideChar, 
+               name := NEW(Qid, intf := nullAtm, item := Atom.FromText("WIDECHAR")));
   real    := NEW(Real, 
                name := NEW(Qid, intf := nullAtm, item := Atom.FromText("REAL")));
   longreal := NEW(LongReal, name := 

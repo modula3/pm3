@@ -9,12 +9,17 @@
 UNSAFE MODULE Module;
 
 IMPORT M3, M3ID, CG, Value, ValueRep, Scope, Stmt, Error, ESet,  External;
-IMPORT Variable, Type, Procedure, Ident, M3Buf, BlockStmt;
+IMPORT Variable, Type, Procedure, Ident, M3Buf, BlockStmt, Int;
 IMPORT Host, Token, Revelation, Coverage, Decl, Scanner, WebInfo;
-IMPORT ProcBody, Target, M3RT, Marker, M3FP, File, Tracer;
-IMPORT M3Compiler;
+IMPORT ProcBody, Target, M3RT, Marker, File, Tracer;
 
 FROM Scanner IMPORT GetToken, Fail, Match, MatchID, cur;
+
+TYPE
+  DataSeg = RECORD
+    size : INTEGER;
+    seg  : CG.Var;
+  END;
 
 REVEAL
   T = Value.T BRANDED "Module.T" OBJECT
@@ -35,9 +40,10 @@ REVEAL
         body_origin : INTEGER;
         visit_age   : INTEGER;
         compile_age : INTEGER;
-        global_size : INTEGER;
-        global_data : CG.Var;
-        prefix      : TEXT;
+        globals     : ARRAY BOOLEAN (*const*) OF DataSeg;
+        import_offs : INTEGER;
+        last_import : INTEGER;
+        data_name   : TEXT;
         trace       : Tracer.T;
         type_info   : Type.ModuleInfo;
         value_info  : Value.T;
@@ -61,6 +67,7 @@ REVEAL
 TYPE
   InitBody = ProcBody.T OBJECT
     self: T;
+    arg: CG.Var := NIL;
   OVERRIDES
     gen_decl := EmitDecl;
     gen_body := EmitBody;
@@ -70,11 +77,8 @@ TYPE
   TK = Token.T;
 
 VAR (* CONST *)
-  builtin0_name : M3ID.T  := M3ID.NoID;
-  builtin0      : T       := NIL;
-  builtin1_name : M3ID.T  := M3ID.NoID;
-  builtin1      : T       := NIL;
-  init_proc_uid : INTEGER := 0;
+  n_builtins : CARDINAL := 0;
+  builtins   : ARRAY [0..3] OF RECORD name: M3ID.T;  t: T;  END;
 
 VAR
   curModule   : T := NIL;
@@ -87,6 +91,13 @@ VAR
 
 CONST
   ModuleTypeUID = -1;  (* special CG.TypeUID used for all interface records *)
+
+CONST
+  InitialCounter = ARRAY [0..4] OF CHAR { '_', '0', '0', '0', '0' };
+
+CONST
+  GlobalDataPrefix = ARRAY (*t.interface*)BOOLEAN OF TEXT { "M_", "I_"   };
+  MainBodySuffix   = ARRAY (*t.interface*)BOOLEAN OF TEXT { "_M3", "_I3" };
 
 PROCEDURE Reset () =
   BEGIN
@@ -114,17 +125,20 @@ PROCEDURE Create (name: M3ID.T): T =
     t.body        := NIL;
     t.revelations := Revelation.NewSet (t);
     t.fails       := NIL;
-    t.prefix      := NIL;
+    t.data_name   := NIL;
     t.body_origin := Scanner.offset;
     t.visit_age   := 0;
     t.compile_age := compile_age;
-    t.global_size := 0;
-    t.global_data := NIL;
+    t.globals[FALSE].size := 0;
+    t.globals[FALSE].seg  := NIL;
+    t.globals[TRUE].size := 0;
+    t.globals[TRUE].seg  := NIL;
+    t.import_offs := -1;
+    t.last_import := 0;
     t.trace       := NIL;
     t.type_info   := NIL;
     t.value_info  := NIL;
-    t.counter[0]  := '_';
-    FOR i := 1 TO LAST (t.counter) DO t.counter[i] := '0' END;
+    t.counter     := InitialCounter;
     RETURN t;
   END Create;
 
@@ -154,10 +168,8 @@ PROCEDURE NewDefn (name: TEXT;  safe: BOOLEAN;  syms: Scope.T): T =
   VAR save, t: T;  zz: Scope.T;  yy: Revelation.Set;
   BEGIN
     t := Create (M3ID.Add (name));
-    IF (builtin0 = NIL)
-      THEN builtin0_name := t.name;  builtin0 := t;
-      ELSE builtin1_name := t.name;  builtin1 := t;
-    END;
+    WITH z = builtins[n_builtins] DO z.name := t.name;  z.t := t; END;
+    INC (n_builtins);
     t.safe := safe;
     save := Switch (t);
     yy := Revelation.Push (t.revelations);
@@ -187,6 +199,7 @@ PROCEDURE Parse (interfaceOnly : BOOLEAN := FALSE): T =
     topLevel := NOT interfaceOnly;
     n_errs, n_warns, n_initial_errs: INTEGER;
     cc: CG.CallingConvention;
+    got_cc: BOOLEAN;
   BEGIN
     (* ETimer.Push (M3Timers.parse); *)
     Error.Count (n_initial_errs, n_warns);
@@ -196,7 +209,7 @@ PROCEDURE Parse (interfaceOnly : BOOLEAN := FALSE): T =
     save := Switch (t);
 
     IF (cur.token = TK.tEXTERNAL) THEN
-      Decl.ParseExternalPragma (id, cc);
+      Decl.ParseExternalPragma (id, cc, got_cc);
       IF (id # M3ID.NoID) THEN
         Error.ID (id, "external module name ignored");
       END;
@@ -277,7 +290,8 @@ PROCEDURE Parse (interfaceOnly : BOOLEAN := FALSE): T =
 
         t.body_origin := Scanner.offset;
         IF (topLevel) THEN
-          t.body := NEW (InitBody, self := t, name :="_INIT" & Prefix (t));
+          t.body := NEW (InitBody, self := t,
+                         name := BinderName (t.name, t.interface));
           ProcBody.Push (t.body);
         END;
         IF (NOT t.interface) THEN
@@ -500,7 +514,10 @@ PROCEDURE MakeCurrent (t: T) =
   BEGIN
     IF (t # NIL) AND (t.compile_age < compile_age) THEN
       t.compile_age := compile_age;
-      t.global_data := NIL;
+      t.globals[FALSE].seg := NIL;
+      t.globals[TRUE].seg  := NIL;
+      t.import_offs := -1;
+      t.last_import := 0;
       t.used        := FALSE;
       t.imported    := TRUE;
       t.exported    := FALSE;
@@ -517,8 +534,11 @@ PROCEDURE RecordInterface (t: T) =
      for code generation and constant evaluation. *)
   BEGIN
     IF (t = NIL) OR (t.name = M3ID.NoID) THEN RETURN END;
-    IF (t.name = builtin0_name) AND (t # builtin0) THEN RETURN END;
-    IF (t.name = builtin1_name) AND (t # builtin1) THEN RETURN END;
+    FOR i := 0 TO n_builtins-1 DO
+      WITH z = builtins[i] DO
+        IF (z.name = t.name) AND (t # z.t) THEN RETURN END;
+      END;
+    END;
     Host.env.note_ast (t.name, t);
   END RecordInterface;
 
@@ -610,11 +630,13 @@ PROCEDURE SetGlobals (t: T) =
   BEGIN
     IF (t.has_errors) THEN (*don't bother *) RETURN END;
     IF (Host.verbose) OR (Host.load_map AND Scanner.in_main) THEN
-      Out (Target.EOL, Target.EOL, " allocation for ");
-      Out (Prefix (t), Target.EOL);
+      Out (TRUE, Target.EOL, Target.EOL, " global constants for ");
+      Out (TRUE, DataName (t), Target.EOL);
+      Out (FALSE, Target.EOL, Target.EOL, " global data allocation for ");
+      Out (FALSE, DataName (t), Target.EOL);
     END;
-    IF (t.global_size = 0) THEN
-      EVAL Allocate (M3RT.MI_SIZE, Target.Address.align, "*module info*");
+    IF (t.globals[FALSE].size = 0) THEN
+      EVAL Allocate (M3RT.MI_SIZE, Target.Address.align, FALSE, "*module info*");
     END;
     Type.BeginSetGlobals ();
     WHILE (v # NIL) DO
@@ -624,47 +646,55 @@ PROCEDURE SetGlobals (t: T) =
     Type.SetGlobals (LAST (INTEGER));
   END SetGlobals;
 
-PROCEDURE Allocate (size, align: INTEGER;
+PROCEDURE Allocate (size, align: INTEGER;  is_const : BOOLEAN;
                     tag: TEXT := NIL;  id: M3ID.T := M3ID.NoID): INTEGER =
   VAR offset: INTEGER;
   BEGIN
     align  := MAX (align, Target.Byte);
     align  := (align + Target.Byte - 1) DIV Target.Byte * Target.Byte;
     size   := (size  + Target.Byte - 1) DIV Target.Byte * Target.Byte;
-    offset := (curModule.global_size + align - 1) DIV align * align;
-    curModule.global_size := offset + size;
+    offset := (curModule.globals[is_const].size + align - 1) DIV align * align;
+    curModule.globals[is_const].size := offset + size;
 
     IF (Host.verbose) OR (Host.load_map AND Scanner.in_main) THEN
-      OutI (offset DIV Target.Byte, 6);
-      OutI (size   DIV Target.Byte, 6);
-      OutI (align  DIV Target.Byte, 3);
-      Out  ("  ", tag);
-      IF (id # M3ID.NoID) THEN M3ID.Put (load_map, id); END;
-      Out  (Target.EOL);
+      OutI (offset DIV Target.Byte, 6, is_const);
+      OutI (size   DIV Target.Byte, 6, is_const);
+      OutI (align  DIV Target.Byte, 3, is_const);
+      Out  (is_const, "  ", tag);
+      IF (id # M3ID.NoID) THEN M3ID.Put (load_map[is_const], id); END;
+      Out  (is_const, Target.EOL);
     END;
 
     RETURN offset;
   END Allocate;
 
-VAR load_map: M3Buf.T := NIL;
+VAR load_map := ARRAY BOOLEAN (*is_const*) OF M3Buf.T { NIL, NIL };
 CONST Pads = ARRAY [0..5] OF TEXT { "", " ", "  ", "   ", "    ", "     " };
 
-PROCEDURE OutI (n, width: INTEGER) =
+PROCEDURE InitLoadMap () =
+  BEGIN
+    IF (load_map[FALSE] = NIL) THEN
+      load_map[FALSE] := M3Buf.New ();
+      load_map[TRUE]  := M3Buf.New ();
+    END;
+  END InitLoadMap;
+
+PROCEDURE OutI (n, width: INTEGER;  is_const: BOOLEAN) =
   VAR x := 10;  pad := width - 1;
   BEGIN
-    IF (load_map = NIL) THEN load_map := M3Buf.New () END;
+    IF (load_map[FALSE] = NIL) THEN InitLoadMap (); END;
     WHILE (pad > 0) AND (n >= x) DO DEC (pad); x := 10*x; END;
-    IF (pad > 0) THEN M3Buf.PutText (load_map, Pads[pad]) END;
-    M3Buf.PutInt (load_map, n);
+    IF (pad > 0) THEN M3Buf.PutText (load_map[is_const], Pads[pad]) END;
+    M3Buf.PutInt (load_map[is_const], n);
   END OutI;
 
-PROCEDURE Out (a, b, c, d: TEXT := NIL) =
+PROCEDURE Out (is_const: BOOLEAN;  a, b, c, d: TEXT := NIL) =
   BEGIN
-    IF (load_map = NIL) THEN load_map := M3Buf.New () END;
-    IF (a # NIL) THEN M3Buf.PutText (load_map, a) END;
-    IF (b # NIL) THEN M3Buf.PutText (load_map, b) END;
-    IF (c # NIL) THEN M3Buf.PutText (load_map, c) END;
-    IF (d # NIL) THEN M3Buf.PutText (load_map, d) END;
+    IF (load_map[FALSE] = NIL) THEN InitLoadMap (); END;
+    IF (a # NIL) THEN M3Buf.PutText (load_map[is_const], a) END;
+    IF (b # NIL) THEN M3Buf.PutText (load_map[is_const], b) END;
+    IF (c # NIL) THEN M3Buf.PutText (load_map[is_const], c) END;
+    IF (d # NIL) THEN M3Buf.PutText (load_map[is_const], d) END;
   END Out;
 
 PROCEDURE CheckDuplicates (t: T) =
@@ -759,11 +789,6 @@ PROCEDURE IsExternal (): BOOLEAN =
     RETURN (curModule # NIL) AND (curModule.external);
   END IsExternal;
 
-PROCEDURE GetImports (t: T): M3Compiler.IDList =
-  BEGIN
-    RETURN External.GetImports (t.externals);
-  END GetImports;
-
 PROCEDURE ExportScope (t: T): Scope.T =
   BEGIN
     IF (t = NIL)
@@ -791,9 +816,12 @@ PROCEDURE Compile (t: T) =
         THEN CompileInterface (t);
         ELSE CompileModule (t);
       END;
-      IF (load_map # NIL) THEN
-        CG.Comment (-1, "load map", Target.EOL, M3Buf.ToText (load_map));
-        load_map := NIL;
+      IF (load_map[FALSE] # NIL) THEN
+        CG.Comment (-1, FALSE, "load map", Target.EOL,
+                    M3Buf.ToText (load_map[FALSE]),
+                    M3Buf.ToText (load_map[TRUE]));
+        load_map[FALSE] := NIL;
+        load_map[TRUE]  := NIL;
       END;
       CG.End_unit ();
       Host.env.note_webinfo (WebInfo.Finish ());
@@ -804,7 +832,7 @@ PROCEDURE Compile (t: T) =
   END Compile;
 
 PROCEDURE CompileInterface (t: T) =
-  VAR proc_info, type_map, rev_full, rev_part: INTEGER;  link_proc: CG.Proc;
+  VAR proc_info, type_map, rev_full, rev_part: INTEGER;
   BEGIN
     (* declare the modules that I import & export *)
     (** EVAL GlobalData (t); **)
@@ -814,6 +842,7 @@ PROCEDURE CompileInterface (t: T) =
       Host.env.note_generic_use (t.genericBase);
     END;
     External.GenLinkInfo (t.externals);
+    ImportImplementations ();
 
     (* declare my imports, exports and local variables *)
     External.GenImports (t.externals);
@@ -824,16 +853,16 @@ PROCEDURE CompileInterface (t: T) =
     Revelation.Declare (t.revelations, rev_full, rev_part);
 
     (* generate any internal procedures *)
-    ProcBody.EmitAll (proc_info, link_proc);
+    ProcBody.EmitAll (proc_info);
 
     type_map := Variable.GenGlobalMap (t.localScope);
 
-    GenLinkerInfo (t, proc_info, type_map, rev_full, rev_part, link_proc);
+    GenLinkerInfo (t, proc_info, type_map, rev_full, rev_part);
 
   END CompileInterface;
 
 PROCEDURE CompileModule (t: T) =
-  VAR proc_info, type_map, rev_full, rev_part: INTEGER;  link_proc: CG.Proc;
+  VAR proc_info, type_map, rev_full, rev_part: INTEGER;
   BEGIN
     (* declare the modules that I import & export *)
     IF (t.genericBase # M3ID.NoID) THEN
@@ -853,7 +882,7 @@ PROCEDURE CompileModule (t: T) =
     Coverage.GenerateTables ();
 
     (* generate any internal procedures *)
-    ProcBody.EmitAll (proc_info, link_proc);
+    ProcBody.EmitAll (proc_info);
 
     type_map := Variable.GenGlobalMap (t.localScope);
 
@@ -863,68 +892,96 @@ PROCEDURE CompileModule (t: T) =
        has been generated to pick up imports that are used
        via "Value.Load", but not "Scope.LookUp". *)
 
-    GenLinkerInfo (t, proc_info, type_map, rev_full, rev_part, link_proc);
+    GenLinkerInfo (t, proc_info, type_map, rev_full, rev_part);
 
   END CompileModule;
 
 PROCEDURE DeclareGlobalData (t: T) =
   BEGIN
-    CG.Comment (-1, "module global data");
-    t.global_data := CG.Declare_segment (M3ID.Add (Prefix (t)), ModuleTypeUID);
+    CG.Comment (-1, FALSE, "module global constants");
+    t.globals[TRUE].seg := CG.Declare_segment (M3ID.NoID,
+                                                ModuleTypeUID, is_const := TRUE);
+    CG.Comment (-1, FALSE, "module global data");
+    t.globals[FALSE].seg := CG.Declare_segment (M3ID.Add (DataName (t)),
+                                                ModuleTypeUID, is_const := FALSE);
   END DeclareGlobalData;
 
-PROCEDURE GlobalData (t: T): CG.Var =
+PROCEDURE GlobalData (is_const: BOOLEAN): CG.Var =
   BEGIN
-    IF (t = NIL) THEN t := curModule END;
-    <*ASSERT t.compile_age >= compile_age*>
-    IF (t.global_data = NIL) THEN
-      (* this is the first reference to the imported interface 't' *)
-      t.global_data := CG.Import_global (M3ID.Add (Prefix (t)), t.global_size,
-                                         Target.Address.align,
-                                         CG.Type.Struct, ModuleTypeUID);
-    END;
-    RETURN t.global_data;
+    <*ASSERT curModule.compile_age >= compile_age*>
+    RETURN curModule.globals[is_const].seg;
   END GlobalData;
 
-PROCEDURE NeedMain (t: T): BOOLEAN =
-  VAR v: Value.T;
+PROCEDURE LoadGlobalAddr (t: T;  offset: INTEGER;  is_const: BOOLEAN) =
   BEGIN
-    (* were there any user written statements? *)
-    IF (t.block # NIL) THEN RETURN TRUE END;
-
-    (* do any of the imported symbols require init code? *)
-    v := Scope.ToList (t.importScope);
-    WHILE (v # NIL) DO
-      IF Value.NeedsInit (v) THEN RETURN TRUE END;
-      v := v.next;
+    <*ASSERT t.compile_age >= compile_age*>
+    IF (t = curModule) THEN
+      CG.Load_addr_of (t.globals[is_const].seg, offset, CG.Max_alignment);
+    ELSE
+      <*ASSERT NOT is_const*>
+      ImportInterface (t);
+      CG.Load_addr (curModule.globals[FALSE].seg, t.import_offs + M3RT.II_import);
+      CG.Boost_alignment (CG.Max_alignment);
+      CG.Add_offset (offset);
     END;
+  END LoadGlobalAddr;
 
-    (* do any of the global symbols require init code? *)
-    v := Scope.ToList (t.localScope);
-    WHILE (v # NIL) DO
-      IF Value.NeedsInit (v) THEN RETURN TRUE END;
-      v := v.next;
+PROCEDURE ImportInterface (t: T) =
+  BEGIN
+    <*ASSERT t.compile_age >= compile_age*>
+    IF (t # curModule) AND (t.import_offs < 0) THEN
+      (* this is the first reference to the imported interface 't' *)
+      t.import_offs := BuildImportLink (t.name, BinderName (t.name, t.interface));
     END;
+  END ImportInterface;
 
-    IF External.NeedGlobalInit (t.externals) THEN RETURN TRUE END;
+PROCEDURE BuildImportLink (nm: M3ID.T;  binder: TEXT): INTEGER =
+  VAR
+    new_proc  : BOOLEAN;
+    prev_link : INTEGER;
+    offset    := Allocate (M3RT.II_SIZE, Target.Address.align, FALSE,
+                           "import ", nm);
+    proc      := CG.Import_procedure (M3ID.Add (binder), 0, CG.Type.Addr,
+                                       Target.DefaultCall, new_proc);
+  BEGIN
+    IF (curModule.last_import = 0)
+      THEN prev_link := M3RT.MI_imports;
+      ELSE prev_link := curModule.last_import + M3RT.II_next;
+    END;
+    curModule.last_import := offset;
+    CG.Init_var (prev_link, curModule.globals[FALSE].seg, offset, FALSE);
+    CG.Init_proc (offset + M3RT.II_binder, proc, FALSE);
+    RETURN offset;
+  END BuildImportLink;
 
-    RETURN FALSE;
-  END NeedMain;
+PROCEDURE ImportImplementations () =
+  (* Generate the import and initialization links that cause the
+     importer of an interface to also bind to the implementations
+     of that interface. *)
+  VAR x := Host.env.get_implementations (curModule.name);
+  BEGIN
+    WHILE (x # NIL) DO
+      EVAL BuildImportLink (x.impl, BinderName (x.impl, interface := FALSE));
+      x := x.next;
+    END;
+  END ImportImplementations;
 
 PROCEDURE EmitDecl (x: InitBody) =
   VAR t := x.self;
   BEGIN
     IF (x.cg_proc # NIL) THEN RETURN END;
-    IF NOT NeedMain (t) THEN RETURN END;
     Scanner.offset := t.body_origin;
     CG.Gen_location (t.body_origin);
-    x.cg_proc := CG.Declare_procedure (M3ID.Add (x.name), 0, CG.Type.Void,
-                                 lev := 0, cc := Target.DefaultCall,
-                                 exported := FALSE, parent := NIL);
+    x.cg_proc := CG.Declare_procedure (M3ID.Add (x.name), 1, CG.Type.Addr,
+       lev := 0, cc := Target.DefaultCall, exported := TRUE, parent := NIL);
+    x.arg := CG.Declare_param (M3ID.Add ("mode"), Target.Integer.size,
+                               Target.Integer.align, Target.Integer.cg_type,
+                               Type.GlobalUID (Int.T), (*in_memory*) FALSE,
+                               (*up_level*) FALSE, (*frequency*) CG.Always);
   END EmitDecl;
 
 PROCEDURE EmitBody (x: InitBody) =
-  VAR t := x.self;  zz: Scope.T;
+  VAR t := x.self;  zz: Scope.T;   skip := CG.Next_label ();
   BEGIN
     IF (x.cg_proc = NIL) THEN RETURN END;
 
@@ -932,10 +989,14 @@ PROCEDURE EmitBody (x: InitBody) =
     zz := Scope.Push (t.localScope);
 
     (* generate my initialization procedure *)
-    CG.Comment (-1, "module main body ", x.name);
+    CG.Comment (-1, FALSE, "module main body ", x.name);
     Scanner.offset := t.body_origin;
     CG.Gen_location (t.body_origin);
     CG.Begin_procedure (x.cg_proc);
+
+    CG.Load_int (x.arg, 0);
+    CG.If_false (skip, CG.Never);
+
     Scope.InitValues (t.importScope);
     Scope.InitValues (t.localScope);
 
@@ -947,19 +1008,19 @@ PROCEDURE EmitBody (x: InitBody) =
     EVAL Stmt.Compile (t.block);
     Tracer.Pop (t.trace);
 
-    CG.Exit_proc (CG.Type.Void);
+    CG.Set_label (skip);
+
+    CG.Load_addr_of (t.globals[FALSE].seg, 0, CG.Max_alignment);
+    CG.Exit_proc (CG.Type.Addr);
     CG.End_procedure (x.cg_proc);
 
     Scope.Pop (zz);
   END EmitBody;
 
-PROCEDURE GenLinkerInfo (t: T;
-                         proc_info, type_map, rev_full, rev_part: INTEGER;
-                         link_proc: CG.Proc) =
-  CONST LinkName = ARRAY BOOLEAN OF TEXT {"M3_LINK", "I3_LINK"};
-  CONST MainName = ARRAY BOOLEAN OF TEXT {"M3_MAIN", "I3_MAIN"};
+PROCEDURE GenLinkerInfo (t: T;  proc_info, type_map, rev_full, rev_part: INTEGER) =
   VAR
-    v := t.global_data;
+    v  := t.globals[FALSE].seg;
+    vc := t.globals[TRUE].seg;
     file: TEXT;
     line, offs: INTEGER;
     type_cells, type_cell_ptrs: INTEGER;
@@ -967,73 +1028,65 @@ PROCEDURE GenLinkerInfo (t: T;
   BEGIN
     Scanner.offset := t.origin;
     IF (t.genericFile # NIL) THEN
-      offs := CG.EmitText (t.genericFile);
+      offs := CG.EmitText (t.genericFile, is_const := TRUE);
     ELSE
       Scanner.Here (file, line);
-      offs := CG.EmitText (file);
+      offs := CG.EmitText (file, is_const := TRUE);
     END;
-    CG.Init_var (M3RT.MI_file, v, offs);
-    CG.Comment (offs, "file name");
+    CG.Init_var (M3RT.MI_file, vc, offs, is_const := FALSE);
+    CG.Comment (offs, TRUE, "file name");
 
     type_cells := Type.GenCells ();
     type_cell_ptrs := Type.GenCellPtrs ();
     (* note: the type info cannot be generated until *all* types have
        have been declared *)
 
-    IF (type_cells # 0) THEN
-      CG.Init_var (M3RT.MI_type_cells, v, type_cells);
+    IF (type_cells >= 0) THEN
+      CG.Init_var (M3RT.MI_type_cells, v, type_cells, FALSE);
     END;
-    IF (type_cell_ptrs # 0) THEN
-      CG.Init_var (M3RT.MI_type_cell_ptrs, v, type_cell_ptrs);
+    IF (type_cell_ptrs >= 0) THEN
+      CG.Init_var (M3RT.MI_type_cell_ptrs, v, type_cell_ptrs, FALSE);
     END;
-    IF (rev_full # 0) THEN
-      CG.Init_var (M3RT.MI_full_rev, v, rev_full);
+    IF (rev_full >= 0) THEN
+      CG.Init_var (M3RT.MI_full_rev, vc, rev_full, FALSE);
     END;
-    IF (rev_part # 0) THEN
-      CG.Init_var (M3RT.MI_part_rev, v, rev_part);
+    IF (rev_part >= 0) THEN
+      CG.Init_var (M3RT.MI_part_rev, vc, rev_part, FALSE);
     END;
-    IF (proc_info # 0) THEN
-      CG.Init_var (M3RT.MI_proc_info, v, proc_info);
+    IF (proc_info >= 0) THEN
+      CG.Init_var (M3RT.MI_proc_info, vc, proc_info, FALSE);
     END;
-    IF (exception_scopes # 0) THEN
-      CG.Init_var (M3RT.MI_try_scopes, v, exception_scopes);
+    IF (exception_scopes >= 0) THEN
+      CG.Init_var (M3RT.MI_try_scopes, vc, exception_scopes, FALSE);
     END;
-    IF (type_map > 0) THEN
-      CG.Init_var (M3RT.MI_var_map, v, type_map);
-      CG.Init_var (M3RT.MI_gc_map, v, type_map);
-    END;
-    IF (link_proc # NIL) THEN
-      CG.Declare_global_field (M3ID.Add (LinkName [t.interface]), M3RT.MI_link,
-                               Target.Address.size, InitProcType ());
-      CG.Init_proc (M3RT.MI_link, link_proc);
+    IF (type_map >= 0) THEN
+      CG.Init_var (M3RT.MI_var_map, vc, type_map, FALSE);
+      CG.Init_var (M3RT.MI_gc_map, vc, type_map, FALSE);
     END;
     IF (t.body # NIL) AND (t.body.cg_proc # NIL) THEN
-      CG.Declare_global_field (M3ID.Add (MainName [t.interface]), M3RT.MI_main,
-                               Target.Address.size, InitProcType ());
-      CG.Init_proc (M3RT.MI_main, t.body.cg_proc);
+      CG.Init_proc (M3RT.MI_binder, t.body.cg_proc, FALSE);
     END;
 
     (* finish up the global data segment allocations *)
-    EVAL Allocate (0, Target.Address.align, "*TOTAL*");
+    EVAL Allocate (0, Target.Address.align, FALSE, "*TOTAL*");
+    EVAL Allocate (0, Target.Address.align, TRUE, "*TOTAL*");
 
     (* generate a debugging type descriptor for the global data *)
-    CG.Comment (-1, "global data type descriptor");
-    CG.Emit_global_record (t.global_size);
+    CG.Comment (-1, FALSE, "global constant type descriptor");
+    CG.Emit_global_record (t.globals[TRUE].size, TRUE);
+    CG.Comment (-1, FALSE, "global data type descriptor");
+    CG.Emit_global_record (t.globals[FALSE].size, FALSE);
 
     (* finish the global data initializations *)
-    CG.Comment (-1, "module global data");
-    CG.Bind_segment (t.global_data, t.global_size, CG.Max_alignment,
-                     CG.Type.Struct, exported := TRUE, init := TRUE);
+    CG.Comment (-1, TRUE, "module global constants");
+    CG.Bind_segment (t.globals[TRUE].seg, t.globals[TRUE].size, CG.Max_alignment,
+                     CG.Type.Struct, exported := FALSE, init := TRUE,
+                     is_const := TRUE);
+    CG.Comment (-1, FALSE, "module global data");
+    CG.Bind_segment (t.globals[FALSE].seg, t.globals[FALSE].size, CG.Max_alignment,
+                     CG.Type.Struct, exported := FALSE, init := TRUE,
+                     is_const := FALSE);
   END GenLinkerInfo;
-
-PROCEDURE InitProcType(): INTEGER =
-  (* we need the UID of a procedure type with no parameters... *)
-  BEGIN
-    IF (init_proc_uid = 0) THEN
-      init_proc_uid := M3FP.ToInt (M3FP.FromText ("PROC()"));
-    END;
-    RETURN init_proc_uid;
-  END InitProcType;
 
 PROCEDURE AddFPTag (t: T;  VAR x: M3.FPInfo): CARDINAL =
   CONST Tags = ARRAY BOOLEAN OF TEXT { "MODULE ", "INTERFACE " };
@@ -1059,28 +1112,36 @@ PROCEDURE Name (t: T): M3ID.T =
     RETURN t.name;
   END Name;
 
-PROCEDURE Prefix (t: T): TEXT =
-  CONST Prefix = ARRAY (*t.interface*)BOOLEAN OF TEXT {"M_", "I_"};
+PROCEDURE DataName (t: T): TEXT =
   BEGIN
     IF (t = NIL) THEN t := curModule; END;
     IF (t = NIL) THEN RETURN "";      END;
-    IF (t.prefix = NIL) THEN
-      t.prefix := Prefix [t.interface] & M3ID.ToText (t.name);
+    IF (t.data_name = NIL) THEN
+      t.data_name := GlobalDataPrefix [t.interface] & M3ID.ToText (t.name);
     END;
-    RETURN t.prefix;
-  END Prefix;
+    RETURN t.data_name;
+  END DataName;
 
-PROCEDURE CurrentCounter (): ARRAY [0..4] OF CHAR =
+PROCEDURE BinderName (nm: M3ID.T;  interface: BOOLEAN): TEXT =
+  BEGIN
+    RETURN M3ID.ToText (nm) & MainBodySuffix[interface];
+  END BinderName;
+
+PROCEDURE GetNextCounter (VAR c: ARRAY [0..4] OF CHAR) =
   BEGIN
     <* ASSERT curModule # NIL *>
-    RETURN curModule.counter;
-  END CurrentCounter;
+    WITH cnt = curModule.counter DO
+      c := curModule.counter;
 
-PROCEDURE SetCurrentCounter (c: ARRAY [0..4] OF CHAR) =
-  BEGIN
-    <* ASSERT curModule # NIL *>
-    curModule.counter := c;
-  END SetCurrentCounter;
+      (* bump the counter *)
+      FOR j := LAST (cnt) TO FIRST (cnt) BY -1 DO
+        IF (cnt[j] = '9')
+           THEN cnt[j] := '0';
+           ELSE cnt[j] := VAL (ORD (cnt[j]) + 1, CHAR);  EXIT;
+        END;
+      END;
+    END;
+  END GetNextCounter;
 
 PROCEDURE GetTypeInfo (t: T): Type.ModuleInfo =
   BEGIN

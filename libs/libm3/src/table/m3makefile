@@ -5,28 +5,43 @@
 % Last modified on Thu Aug 26 11:55:48 PDT 1993 by kalsow
 %      modified on Mon Apr 26 13:38:32 PDT 1993 by mcjones
 
+Generic_interface("TableRep")
+Generic_interface("TableTransientRep")
 Generic_module("Table")
 HtmlGenericInterface("Table")
 
 template ("table")
 
-Table ("AtomAtom", "Atom", "Atom")
-Table ("AtomInt",  "Atom", "Integer")
-Table ("AtomRef",  "Atom", "Refany")
-Table ("AtomText", "Atom", "Text")
+TransientTable ("AtomAtom", "Atom", "Atom")
+TransientTable ("AtomInt",  "Atom", "Integer")
+TransientTable ("AtomRef",  "Atom", "Refany")
+TransientTable ("AtomRefTransient",  "Atom", "RefanyTransient")
+TransientTable ("AtomText", "Atom", "Text")
 
-Table ("IntAtom", "Integer", "Atom")
 Table ("IntInt",  "Integer", "Integer")
 Table ("IntRef",  "Integer", "Refany")
 Table ("IntText", "Integer", "Text")
 
-Table ("RefAtom", "Refany", "Atom")
+TransientTable ("IntAtom", "Integer", "Atom")
+TransientTable ("IntIntTransient",  "Integer", "Integer")
+TransientTable ("IntRefTransient",  "Integer", "RefanyTransient")
+TransientTable ("IntTextTransient", "Integer", "Text")
+
 Table ("RefInt",  "Refany", "Integer")
 Table ("RefRef",  "Refany", "Refany")
 Table ("RefText", "Refany", "Text")
 
-Table ("TextAtom", "Text", "Atom")
+TransientTable ("RefAtom", "Refany", "Atom")
+TransientTable ("RefAtomTransient", "RefanyTransient", "Atom")
+TransientTable ("RefIntTransient",  "RefanyTransient", "Integer")
+TransientTable ("RefRefTransient",  "RefanyTransient", "RefanyTransient")
+TransientTable ("RefTextTransient", "RefanyTransient", "Text")
+
 Table ("TextInt",  "Text", "Integer")
 Table ("TextRef",  "Text", "Refany")
 Table ("TextText", "Text", "Text")
 
+TransientTable ("TextAtom", "Text", "Atom")
+TransientTable ("TextIntTransient",  "Text", "Integer")
+TransientTable ("TextRefTransient",  "Text", "RefanyTransient")
+TransientTable ("TextTextTransient", "Text", "Text")

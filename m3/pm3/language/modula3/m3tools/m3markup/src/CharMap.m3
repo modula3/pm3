@@ -6,7 +6,7 @@
 
 MODULE CharMap;
 
-IMPORT ASCII, TextF;
+IMPORT ASCII, Text;
 
 (******
 VAR (*READONLY*) SortOrder : ARRAY CHAR OF CHAR;
@@ -43,7 +43,7 @@ PROCEDURE Init () =
 ********)
 
 PROCEDURE CmpText (t, u: TEXT): [-1 .. +1] =
-  VAR n_t := NUMBER (t^) - 1;  n_u := NUMBER (u^) - 1;  c_t, c_u: CHAR;
+  VAR n_t := Text.Length (t) - 1;  n_u := Text.Length (u) - 1;  c_t, c_u: CHAR;
   BEGIN
     IF (n_t <= 0) THEN
       IF (n_u <= 0) THEN RETURN 0 ELSE RETURN -1 END;
@@ -51,8 +51,8 @@ PROCEDURE CmpText (t, u: TEXT): [-1 .. +1] =
       RETURN 1;
     ELSE
       FOR i := 0 TO MIN (n_t, n_u) DO
-        c_t := ASCII.Upper [t [i]];
-        c_u := ASCII.Upper [u [i]];
+        c_t := ASCII.Upper [Text.GetChar(t, i)];
+        c_u := ASCII.Upper [Text.GetChar(u, i)];
         IF    c_t < c_u THEN RETURN -1;
         ELSIF c_t > c_u THEN RETURN +1;
         END;
@@ -66,14 +66,14 @@ PROCEDURE CmpText (t, u: TEXT): [-1 .. +1] =
 
 PROCEDURE Substr (a, b: TEXT): BOOLEAN =
   VAR
-    len_a := NUMBER (a^) - 1;
-    len_b := NUMBER (b^) - 1;
+    len_a := Text.Length(a) - 1;
+    len_b := Text.Length(b) - 1;
     c_a, c_b : CHAR;
   BEGIN
     FOR i := 0 TO len_a - len_b DO
       FOR j := 0 TO len_b-1 DO
-        c_a := ASCII.Upper [a [i+j]];
-        c_b := ASCII.Upper [b [j]];
+        c_a := ASCII.Upper [Text.GetChar (a, i+j)];
+        c_b := ASCII.Upper [Text.GetChar (b, j)];
         IF (c_a # c_b) THEN EXIT END;
         IF (j = len_b-1) THEN RETURN TRUE END;
       END;
@@ -83,11 +83,11 @@ PROCEDURE Substr (a, b: TEXT): BOOLEAN =
 
 PROCEDURE PrefixMatch (a, b: TEXT;  len: INTEGER): BOOLEAN =
   BEGIN
-    IF (len >= NUMBER (a^)) OR (len >= NUMBER (b^)) THEN
+    IF (len >= Text.Length (a)) OR (len >= Text.Length (b)) THEN
       RETURN FALSE;
     END;
     FOR i := 0 TO len-1 DO
-      IF ASCII.Upper[a[i]] # ASCII.Upper[b[i]] THEN RETURN FALSE END;
+      IF ASCII.Upper[Text.GetChar (a, i)] # ASCII.Upper[Text.GetChar (b, i)] THEN RETURN FALSE END;
     END;
     RETURN TRUE;
   END PrefixMatch;

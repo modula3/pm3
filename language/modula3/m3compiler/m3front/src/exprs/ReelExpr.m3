@@ -260,9 +260,10 @@ PROCEDURE GenFPLiteral (p: P;  buf: M3Buf.T) =
     M3Buf.PutChar  (buf, '>');
   END GenFPLiteral;
 
-PROCEDURE GenLiteral (p: P;  offset: INTEGER;  <*UNUSED*>type: Type.T) =
+PROCEDURE GenLiteral (p: P;  offset: INTEGER;  <*UNUSED*>type: Type.T;
+                      is_const: BOOLEAN) =
   BEGIN
-    CG.Init_float (offset, p.val);
+    CG.Init_float (offset, p.val, is_const);
   END GenLiteral;
 
 BEGIN

@@ -6,37 +6,36 @@
 
 MODULE Quake;
 
-IMPORT Wr;
-IMPORT QMachine, QValue, QCompiler, M3ID;
+IMPORT Thread, QIdent, QMachine, QValue, QVal, QCompiler;
 
-PROCEDURE NewMachine (writer: Wr.T): Machine =
+PROCEDURE NewMachine (map: IDMap): Machine =
   BEGIN
-    RETURN NEW (QMachine.T).init (writer);
+    RETURN NEW (QMachine.T).init (map);
   END NewMachine;
 
-PROCEDURE RunSourceFile (m: Machine;  source_file: TEXT) RAISES {Error} =
+PROCEDURE Run (m: Machine;  source_file: TEXT)
+  RAISES {Error, Thread.Alerted} =
   BEGIN
-    m.evaluate (QCompiler.CompileFile (source_file));
-  END RunSourceFile;
-
-PROCEDURE CompileSourceFile (source_file: TEXT): CodeStream RAISES {Error} =
-  BEGIN
-    RETURN QCompiler.CompileFile (source_file);
-  END CompileSourceFile;
-
-PROCEDURE RunCodeStream (m: Machine;  code_stream: CodeStream) RAISES {Error} =
-  BEGIN
-    m.evaluate (code_stream);
-  END RunCodeStream;
+    m.evaluate (QCompiler.CompileFile (source_file, m.map));
+  END Run;
 
 PROCEDURE Define (m: Machine;  symbol, value: TEXT) RAISES {Error} =
   VAR v: QValue.T;
   BEGIN
     v.kind := QValue.Kind.String;
-    v.int  := M3ID.Add (value);
+    v.int  := m.map.txt2id (value);
     v.ref  := NIL;
-    m.put (M3ID.Add (symbol), v);
+    m.put (m.map.txt2id (symbol), v);
   END Define;
+
+PROCEDURE LookUp (m: Machine;  symbol: TEXT): TEXT RAISES {Error} =
+  VAR b := m.lookup (m.map.txt2id (symbol));
+  BEGIN
+    IF (b = NIL)
+      THEN RETURN NIL;
+      ELSE RETURN QVal.ToText (m, b.value);
+    END;
+  END LookUp;
 
 PROCEDURE Done (m: Machine) RAISES {Error} =
   BEGIN

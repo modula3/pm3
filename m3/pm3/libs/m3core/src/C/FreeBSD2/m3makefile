@@ -10,8 +10,7 @@
 Interface ("Csetjmp")
 Interface ("Csignal")
 Interface ("Cstring")
-Module ("Cstdio")
-
-c_source ("CstdioC")
+Module    ("Cstdio")
+c_source  ("CstdioC")
 
 

@@ -18,8 +18,6 @@ TYPE
     level      : INTEGER := 0;   (* set by Push *)
     name       : TEXT    := NIL; (* set by client *)
     cg_proc    : CG.Proc := NIL; (* set by client *)
-    export_var : CG.Var  := NIL; (* set by client *)
-    export_offs: INTEGER := 0;   (* set by client *)
   METHODS
     gen_decl ();
     gen_body ();
@@ -35,13 +33,8 @@ PROCEDURE Pop ();
 PROCEDURE Schedule (t: T);
 (* schedules "t" to be written as a top-level procedure *)
 
-PROCEDURE DelayedInit (offset: INTEGER;  src: CG.Var;  src_offset: INTEGER);
-(* generate the runtime code to initialize the pointer at "offset" with
-   the value at "src+src_offset". *)
-
-PROCEDURE EmitAll (VAR proc_info: INTEGER;  VAR link_proc: CG.Proc);
-(* generate all the procedure bodies, build the global table,
-   and generate the link proc if it's needed *)
+PROCEDURE EmitAll (VAR proc_info: INTEGER);
+(* generate all the procedure bodies and build the global proc table. *)
 
 PROCEDURE Reset ();
 

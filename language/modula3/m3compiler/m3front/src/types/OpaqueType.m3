@@ -17,6 +17,7 @@ TYPE
 	super      : Type.T;
         id         : M3ID.T;
         isTraced   : BOOLEAN;
+        isTransient: BOOLEAN;
       OVERRIDES
         check      := Check;
         check_align:= TypeRep.ScalarAlign;
@@ -79,11 +80,14 @@ PROCEDURE Check (p: P) =
   BEGIN
     p.super := Type.CheckInfo (p.super, info);
     p.isTraced := info.isTraced;
+    p.isTransient := info.isTransient;
 
     IF    (info.class # Type.Class.Opaque)
       AND (info.class # Type.Class.Ref)
       AND (info.class # Type.Class.Object) THEN
-      Error.Msg ("opaque super type must be a reference type");
+      IF (info.class # Type.Class.Error) THEN
+        Error.Msg ("opaque super type must be a reference type");
+      END;
       p.super := Reff.T;
     END;
 
@@ -97,6 +101,7 @@ PROCEDURE Check (p: P) =
     p.info.isEmpty   := FALSE;
     p.info.isSolid   := TRUE;
     p.info.hash      := -p.id; (* all opaque types are unique *)
+    p.info.isTransient := info.isTransient;
   END Check;
 
 PROCEDURE Compiler (p: P) =

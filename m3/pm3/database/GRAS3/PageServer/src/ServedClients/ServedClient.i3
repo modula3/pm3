@@ -7,8 +7,11 @@ INTERFACE ServedClient;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:38  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:49  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:38  hosking
+    Import of GRAS3 1.1
 
     Revision 1.5  1996/11/21 07:55:13  roland
     New resources getResourceUser, getFileUser, and getGraphUser
@@ -49,7 +52,7 @@ INTERFACE ServedClient;
 IMPORT
   Word,
   Pathname,
-  CallbackPort, CommunicationSeq, ClientInfo;
+  CallbackPort, CommunicationSeq, ClientInfo, CommunicationTbl;
 
 
 CONST
@@ -58,7 +61,7 @@ CONST
 TYPE
   T				<: Public;
 
-  Public			= OBJECT
+  Public			= <*TRANSIENT*> ROOT OBJECT
     METHODS
       getID			() :TEXT;
       getInfo			() :ClientInfo.T;
@@ -81,6 +84,9 @@ TYPE
 
       getPropagationData	() :CommunicationSeq.T;
       clearPropagationData	();
+
+      getChainData		() :CommunicationTbl.T;
+      clearChainData		();
     END;
 
 

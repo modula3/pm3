@@ -10,12 +10,12 @@ INTERFACE ID;
    are represented by the same "ID.T".  Any non-NULL character
    may be included in an "ID.T".  *)
 
-IMPORT Wx;
+IMPORT Wx, Text8;
 
 TYPE  T    = [-16_7fffffff-1 .. 16_7fffffff]; (* a 32-bit integer *)
 CONST NoID = 0;  (* an illegal ID, never returned by Add or FromStr *)
 
-PROCEDURE Add (x: TEXT): T;
+PROCEDURE Add (x: Text8.T): T;
 (* Returns the ID representing "x". *)
 
 PROCEDURE FromStr (READONLY buf: ARRAY OF CHAR;  length: INTEGER := 99999): T;

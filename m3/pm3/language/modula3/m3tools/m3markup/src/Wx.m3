@@ -6,7 +6,7 @@
 
 MODULE Wx;
 
-IMPORT TextF, Convert;
+IMPORT Text, Text8, Convert;
 
 CONST
   ChunkSize = 2 * 1024 - 3 * BYTESIZE (INTEGER);
@@ -65,8 +65,24 @@ PROCEDURE PutStr (t: T;  READONLY x: ARRAY OF CHAR) =
   END PutStr;
 
 PROCEDURE PutText (t: T;  txt: TEXT) =
+  VAR
+    next := 0;
+    len  := Text.Length (txt);
+    n : INTEGER;
   BEGIN
-    PutStr (t, SUBARRAY (txt^, 0, LAST (txt^)));
+    IF (len < ChunkSize - t.next) THEN
+      Text.SetChars (SUBARRAY (t.tail.buf, t.next, len), txt);
+      INC (t.next, len);
+    ELSE
+      WHILE (len > 0) DO
+        n := MIN (len, ChunkSize - t.next);
+        Text.SetChars (SUBARRAY (t.tail.buf, t.next, n), txt, next);
+        DEC (len, n);
+        INC (next, n);
+        INC (t.next, n);
+        IF (len > 0) THEN Expand (t) END;
+      END;
+    END;
   END PutText;
 
 CONST digits = ARRAY [0..9] OF CHAR {'0','1','2','3','4','5','6','7','8','9'};
@@ -121,18 +137,18 @@ PROCEDURE PutInt  (t: T;  i: INTEGER) =
   END PutInt;
 
 PROCEDURE ToText (t: T): TEXT =
-  VAR txt := NEW (TEXT, t.nFull * ChunkSize + t.next + 1);
+  VAR txt := Text8.Create (t.nFull * ChunkSize + t.next);
   VAR c := t.head;   n := 0;
   BEGIN
     FOR i := 1 TO t.nFull DO
-      SUBARRAY (txt^, n, ChunkSize) := c.buf;
+      SUBARRAY (txt.contents^, n, ChunkSize) := c.buf;
       c := c.next;
       INC (n, ChunkSize);
     END;
     IF (t.next # 0) THEN
-      SUBARRAY (txt^, n, t.next) := SUBARRAY (c.buf, 0, t.next);
+      SUBARRAY (txt.contents^, n, t.next) := SUBARRAY (c.buf, 0, t.next);
     END;
-    txt [LAST (txt^)] := '\000';
+    txt.contents [LAST (txt.contents^)] := '\000';
     Reset (t);
     RETURN txt;
   END ToText;

@@ -52,7 +52,7 @@ PROCEDURE EmitExit ();
 PROCEDURE AllocReturnTemp ();
 PROCEDURE EmitReturn (expr: Expr.T;  fromFinally: BOOLEAN);
 PROCEDURE EmitScopeTable (): INTEGER;
-PROCEDURE EmitExceptionTest (signature: Type.T);
+PROCEDURE EmitExceptionTest (signature: Type.T;  need_value: BOOLEAN): CG.Val;
 PROCEDURE NextHandler (VAR(*OUT*) handler: CG.Label;
                        VAR(*OUT*) info: CG.Var): BOOLEAN;
 

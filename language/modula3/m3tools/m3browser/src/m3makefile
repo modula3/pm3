@@ -8,8 +8,6 @@ import ("libm3")
 import ("tcp")
 import ("m3scan")
 import ("m3markup")
-import ("m3config")
-import ("tcpextras")
 
 module ("OS")
 module ("TCPServer")

@@ -551,8 +551,10 @@ int gettimeofday(struct timeval *tp, void *tzp)
    * Some callers pass an invalid second argument
    * e.g., InitTimes in libXt
    */
-  if (RTHeapRep_Fault) RTHeapRep_Fault(tzp); /* make it readable */
-  if (RTHeapRep_Fault) RTHeapRep_Fault(tzp); /* make it writable */
+  if (tzp) {
+    if (RTHeapRep_Fault) RTHeapRep_Fault(tzp, 1); /* make it readable */
+    if (RTHeapRep_Fault) RTHeapRep_Fault(tzp, 2); /* make it writable */
+  }
   result = _gettimeofday(tp, tzp);
   EXIT_CRITICAL;
   return result;
@@ -584,8 +586,8 @@ int ioctl(int fildes, int request, ...)
   va_start(args, request);
   argp = va_arg(args, int);
   va_end(args);
-  if (RTHeapRep_Fault) RTHeapRep_Fault(argp); /* make it readable */
-  if (RTHeapRep_Fault) RTHeapRep_Fault(argp); /* make it writable */
+  if (RTHeapRep_Fault) RTHeapRep_Fault(argp, 1); /* make it readable */
+  if (RTHeapRep_Fault) RTHeapRep_Fault(argp, 2); /* make it writable */
   result = _ioctl(fildes, request, argp);
   EXIT_CRITICAL;
   return result;
@@ -1141,6 +1143,9 @@ int setauid(const au_id_t *auid)
   return result;
 }
 
+/*
+Seems this is already wrapper.
+
 int setcontext(ucontext_t *ucp)
 {
   int result;
@@ -1153,6 +1158,7 @@ int setcontext(ucontext_t *ucp)
       return result;
   }
 }
+*/
 
 int setgroups(int ngroups, const gid_t *grouplist)
 {

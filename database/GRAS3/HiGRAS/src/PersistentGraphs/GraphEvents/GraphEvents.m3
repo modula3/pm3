@@ -7,8 +7,11 @@ MODULE GraphEvents EXPORTS GraphEvents, PrivateGraphEvents;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:32  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:46  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:32  hosking
+    Import of GRAS3 1.1
 
     Revision 1.5  1998/08/12 11:04:15  roland
     Efficiency improvement: RuleEngine notifies EventDetectors of
@@ -30,7 +33,7 @@ MODULE GraphEvents EXPORTS GraphEvents, PrivateGraphEvents;
 *)
 (***************************************************************************)
 
-IMPORT Event, Transaction, EventTypes, EventType, RuleEngine,
+IMPORT Event, Txn, EventTypes, EventType, RuleEngine,
        GraphEventInfos, Node, EventDetector;
 FROM EventType IMPORT Mismatch, Unknown;
 IMPORT IntIntTbl, Bundle, CardSeq;
@@ -65,7 +68,7 @@ PROCEDURE SignalCreateNode (         transUnit : CARDINAL;
                                      graphNo   : CARDINAL;
                                      graph     : REFANY;
                                      isPreEvent: BOOLEAN;
-                                     level     : Transaction.Level;
+                                     level     : Txn.Level;
                             READONLY node      : Node.T;
                                      label     : CARDINAL           ) =
   BEGIN
@@ -83,7 +86,7 @@ PROCEDURE SignalDeleteNode (         transUnit : CARDINAL;
                                      graphNo   : CARDINAL;
                                      graph     : REFANY;
                                      isPreEvent: BOOLEAN;
-                                     level     : Transaction.Level;
+                                     level     : Txn.Level;
                             READONLY node      : Node.T;
                                      label     : CARDINAL           ) =
   BEGIN
@@ -101,7 +104,7 @@ PROCEDURE SignalCreateEdge (         transUnit     : CARDINAL;
                                      graphNo       : CARDINAL;
                                      graph         : REFANY;
                                      isPreEvent    : BOOLEAN;
-                                     level         : Transaction.Level;
+                                     level         : Txn.Level;
                             READONLY source, target: Node.T;
                                      label         : CARDINAL;
                             sourceEx, targetEx: BOOLEAN) =
@@ -126,7 +129,7 @@ PROCEDURE SignalDeleteEdge (         transUnit     : CARDINAL;
                                      graphNo       : CARDINAL;
                                      graph         : REFANY;
                                      isPreEvent    : BOOLEAN;
-                                     level         : Transaction.Level;
+                                     level         : Txn.Level;
                             READONLY source, target: Node.T;
                                      label         : CARDINAL;
                             sourceEx, targetEx: BOOLEAN) =
@@ -151,7 +154,7 @@ PROCEDURE SignalPutAttribute (         transUnit : CARDINAL;
                                        graphNo   : CARDINAL;
                                        graph     : REFANY;
                                        isPreEvent: BOOLEAN;
-                                       level     : Transaction.Level;
+                                       level     : Txn.Level;
                               READONLY node      : Node.T;
                                        attrno    : CARDINAL;
                                        start     : CARDINAL;
@@ -176,7 +179,7 @@ PROCEDURE SignalTruncateAttribute (         transUnit : CARDINAL;
                                             graphNo   : CARDINAL;
                                             graph     : REFANY;
                                             isPreEvent: BOOLEAN;
-                                            level     : Transaction.Level;
+                                            level     : Txn.Level;
                                    READONLY node      : Node.T;
                                             attrno    : CARDINAL;
                                             length    : CARDINAL;
@@ -200,7 +203,7 @@ PROCEDURE SignalPutIndex (         transUnit : CARDINAL;
                                    graphNo   : CARDINAL;
                                    graph     : REFANY;
                                    isPreEvent: BOOLEAN;
-                                   level     : Transaction.Level;
+                                   level     : Txn.Level;
                           READONLY node      : Node.T;
                                    attrno    : CARDINAL;
                                    value     : TEXT;
@@ -223,7 +226,7 @@ PROCEDURE SignalDeleteIndex (         transUnit : CARDINAL;
                                       graphNo   : CARDINAL;
                                       graph     : REFANY;
                                       isPreEvent: BOOLEAN;
-                                      level     : Transaction.Level;
+                                      level     : Txn.Level;
                              READONLY node      : Node.T;
                                       attrno    : CARDINAL;
                                       value     : TEXT;
@@ -302,7 +305,7 @@ PROCEDURE GetIsPreEvent (ev: T): BOOLEAN RAISES {Mismatch, Unknown} =
     END;
   END GetIsPreEvent;
 
-PROCEDURE GetLevel (ev: T): Transaction.Level RAISES {Mismatch, Unknown} =
+PROCEDURE GetLevel (ev: T): Txn.Level RAISES {Mismatch, Unknown} =
   VAR opno: INTEGER;
   BEGIN
     IF NOT TypeToOp.get(ev.type(), opno) THEN

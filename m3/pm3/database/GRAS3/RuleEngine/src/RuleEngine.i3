@@ -9,8 +9,11 @@ INTERFACE RuleEngine;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:40  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:50  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:40  hosking
+    Import of GRAS3 1.1
 
     Revision 1.6  1998/08/12 11:04:45  roland
     Efficiency improvement: RuleEngine notifies EventDetectors of
@@ -137,7 +140,7 @@ TYPE Interest = {Self, Others, All};
 
 PROCEDURE RegisterTrigger (trigger : Trigger.T;
                            interest: Interest;
-                           userdata: REFANY      := NIL): CARDINAL;
+                           userdata: <*TRANSIENT*> REFANY := NIL): CARDINAL;
   (* Registers trigger with the corresponding event handler.  The returned
      number serves as unique identifier for this trigger.  If interest is
      Self, only local events are monitored.  Interest.Others specifies to
@@ -190,6 +193,10 @@ PROCEDURE PreCommitTransaction (tu: CARDINAL);
 PROCEDURE PostCommitTransaction (tu: CARDINAL);
   (* Decrements transaction level.  If level is 0 after decrement, all
      decoupled action are executed. *)
+
+PROCEDURE NotifyChainTransaction (tu: CARDINAL);
+  (* Executes all deferred actions, except when action execution is
+     delayed. *)
 
 PROCEDURE NotifyAbortTransaction (tu: CARDINAL);
   (* Cancels all actions which were triggered by this or any nested

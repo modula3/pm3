@@ -68,7 +68,8 @@ CONST (* # of bytes of operand in the map *)
     5,            (* SkipB_5 *)
     6,            (* SkipB_6 *)
     7,            (* SkipB_7 *)
-    8             (* SkipB_8 *)
+    8,            (* SkipB_8 *)
+    0             (* TransientRef *)
   };
 
 CONST
@@ -130,7 +131,8 @@ CONST
     -7,                   (* SkipB_5 *)
     -7,                   (* SkipB_6 *)
     -7,                   (* SkipB_7 *)
-    -7                    (* SkipB_8 *)
+    -7,                   (* SkipB_8 *)
+    -8                    (* TransientRef *)
   };
 
 TYPE
@@ -159,15 +161,15 @@ PROCEDURE Finish (a, b, c, d: TEXT := NIL): INTEGER =
     Add (cursor, Op.Stop, 0);
 
     (* allocate space *)
-    base := Module.Allocate (n_bytes * Target.Int_A.size,
-                             Target.Int_A.align, "type_map");
-    CG.Comment (base, a, b, c, d);
+    base := Module.Allocate (n_bytes * Target.Int8.size,
+                             Target.Int8.align, TRUE, "type_map");
+    CG.Comment (base, TRUE, a, b, c, d);
 
     (* generate the bytes *)
     offset := base;
     FOR i := 0 TO n_bytes-1 DO
-      CG.Init_intt (offset, Target.Int_A.size, bytes[i]);
-      INC (offset, Target.Int_A.size);
+      CG.Init_intt (offset, Target.Int8.size, bytes[i], is_const := TRUE);
+      INC (offset, Target.Int8.size);
     END;
 
     busy := FALSE;

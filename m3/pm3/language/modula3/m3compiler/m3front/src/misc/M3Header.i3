@@ -7,8 +7,10 @@
 
 INTERFACE M3Header;
 
-IMPORT M3Compiler;
+IMPORT M3Front;
 
-PROCEDURE Parse (): M3Compiler.IDList;
+TYPE IDList = M3Front.IDList;
+
+PROCEDURE Parse (): IDList;
 
 END M3Header.

@@ -449,7 +449,7 @@ PROCEDURE NewInt (i: INTEGER): M3ID.T =
     RETURN M3ID.FromStr (buf, len);
   END NewInt;
 
-PROCEDURE ToUnit (v: Value.T): CG.Var =
+PROCEDURE ToUnit (v: Value.T): M3.Value =
   VAR t, t0: T;
   BEGIN
     v := Value.Base (v);
@@ -463,7 +463,7 @@ PROCEDURE ToUnit (v: Value.T): CG.Var =
     (* mark any intervening scopes with the same "home" *)
     WHILE (t0 # t) DO t0.home := t.home;  t0 := t0.parent END;
 
-    RETURN Module.GlobalData (t.home);
+    RETURN t.home;
   END ToUnit;
 
 PROCEDURE Initialize () =

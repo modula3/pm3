@@ -7,9 +7,11 @@
 %      modified on Fri Jun 25 13:33:11 PDT 1993 by owicki
 %      modified on Tue May 18 10:26:41 PDT 1993 by mjordan
 
-import("libm3")
+% m3_option("-times")
 
-include_dir("misc")
+import("libm3")
+import("m3tk-misc")
+
 include_dir("files")
 include_dir("ast")
 include_dir("gast")

@@ -51,7 +51,6 @@ TYPE
 
 
 (* Resource limits *)
-(* Not on HP-UX -- PvO
 
 CONST
   RLIMIT_CPU   = 0;		(* cpu time in milliseconds *)
@@ -60,8 +59,10 @@ CONST
   RLIMIT_STACK = 3;		(* stack size *)
   RLIMIT_CORE  = 4;		(* core file size *)
   RLIMIT_RSS   = 5;		(* resident set size *)
+  RLIMIT_NOFILE = 6;		(* maximum number of open files *)
+  RLIMIT_OPEN_MAX = RLIMIT_NOFILE;  (* maximum number of open files *)
 
-  RLIM_NLIMITS = 6;		(* number of resource limits *)
+  RLIM_NLIMITS = 7;		(* number of resource limits *)
 
   RLIM_INFINITY	= 16_7fffffff;
 
@@ -80,9 +81,8 @@ TYPE
 
 (*** getrusage(2) - get information about resource utilization ***)
 
-<*EXTERNAL*> PROCEDURE getrusage (who: int; rus: struct_rusage_star): int;
+<*EXTERNAL*> PROCEDURE getrusage (who: int; VAR rus: struct_rusage): int;
 
-*)
 
 (*** getpriority(2), setpriority(2) - get/set program scheduling priority ***)
 

@@ -11,9 +11,17 @@
 readonly proc _build_pqueue(nm, elt, vis) is
   local pq  = nm & "PQ"
   local rep = pq & "Rep"
-  build_generic_intf (pq,  "PQueue",    [elt],         vis)
+  build_generic_intf (pq,  "PQueue",    ["Root", elt],         vis)
   build_generic_intf (rep, "PQueueRep", [pq],          vis)
-  build_generic_impl (pq,  "PQueue",    [elt, pq, rep])
+  build_generic_impl (pq,  "PQueue",    ["Root", elt, pq, rep])
+end
+
+readonly proc _build_transient_pqueue(nm, elt, vis) is
+  local pq  = nm & "PQ"
+  local rep = pq & "Rep"
+  build_generic_intf (pq,  "PQueue",    ["RootTransient", elt],         vis)
+  build_generic_intf (rep, "PQueueTransientRep", [pq],          vis)
+  build_generic_impl (pq,  "PQueue",    ["RootTransient", elt, pq, rep])
 end
 
 readonly proc pqueue (nm, elt) is
@@ -22,4 +30,12 @@ end
 
 readonly proc Pqueue (nm, elt) is
   _build_pqueue(nm, elt, VISIBLE)
+end
+
+readonly proc transientPqueue (nm, elt) is
+  _build_transient_pqueue(nm, elt, HIDDEN)
+end
+
+readonly proc TransientPqueue (nm, elt) is
+  _build_transient_pqueue(nm, elt, VISIBLE)
 end

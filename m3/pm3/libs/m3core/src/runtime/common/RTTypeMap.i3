@@ -6,6 +6,8 @@
 
 INTERFACE RTTypeMap;
 
+IMPORT RT0;
+
 (* An RTTypeMap.T, type map, defines the layout of runtime values. Type
    maps are provided by the compiler.
 
@@ -24,16 +26,20 @@ TYPE
     Int_1, Int_2, Int_4, Int_8,     (* 1, 2, 4, or 8 byte signed integer *)
     Word_1, Word_2, Word_4, Word_8, (* 1, 2, 4, or 8 byte unsigned integer *)
     Int_Field, Word_Field,          (* signed or unsigned bit field *)
-    Set                             (* bit set *)
+    Set,                            (* bit set *)
+    TransientRef		    (* transient ref *)
   };
 
 TYPE Visitor <: V_;
-     V_ = OBJECT METHODS apply (field: ADDRESS;  k: Kind) RAISES ANY END;
+     V_ = <*TRANSIENT*> ROOT OBJECT METHODS apply (field: ADDRESS;  k: Kind)
+       RAISES ANY END;
 
 PROCEDURE WalkRef (r: REFANY;  m: Mask;  v: Visitor) RAISES ANY;
 (* Locate each scalar field of the referent "r^".  For each field with
    kind 'k' in 'm' that's found at address 'x', call 'v.apply(x, k)'.
    The only exceptions raised are those raised by 'v's apply method. *)
 
-END RTTypeMap.
+PROCEDURE DoWalkRef (t: RT0.TypeDefn; a: ADDRESS; m: Mask; v: Visitor)
+  RAISES ANY;
 
+END RTTypeMap.

@@ -7,8 +7,11 @@ INTERFACE ClientLockTable;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:36  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:47  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:36  hosking
+    Import of GRAS3 1.1
 
     Revision 1.3  1997/01/20 08:54:21  roland
     ClientLockTable uses an array now directly to gain more performance
@@ -39,7 +42,7 @@ INTERFACE ClientLockTable;
  *)
 
 IMPORT
-  Transaction,
+  Txn,
   PageLock,
   ClientLockEntry;
 
@@ -47,21 +50,21 @@ IMPORT
 TYPE
   T			<: Public;
 
-  Public		= OBJECT
+  Public		= <*TRANSIENT*> ROOT OBJECT
     METHODS
       init		() :T;
 
-      putEntry		(         level		:Transaction.Level;
+      putEntry		(         level		:Txn.Level;
                                   entry		:ClientLockEntry.T);
 
-      getEntry		(         level		:Transaction.Level)
+      getEntry		(         level		:Txn.Level)
 			:ClientLockEntry.T;
 
-      getLastEntry	(         searchLevel	:Transaction.Level;
-                         VAR	  lastLevel	:Transaction.Level) 
+      getLastEntry	(         searchLevel	:Txn.Level;
+                         VAR	  lastLevel	:Txn.Level) 
 			:ClientLockEntry.T;
 
-      exists		(         searchLevel	:Transaction.Level;
+      exists		(         searchLevel	:Txn.Level;
                                   lock		:PageLock.ClientMode) :BOOLEAN;
 
 

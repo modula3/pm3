@@ -3,8 +3,7 @@
 (* See the file COPYRIGHT for a full description.              *)
 
 (* File: InExpr.m3                                             *)
-(* Last modified on Thu Jun 27 13:59:05 PDT 1996 by heydon     *)
-(*      modified on Fri Jul  8 09:48:45 PDT 1994 by kalsow     *)
+(* Last modified on Fri Jul  8 09:48:45 PDT 1994 by kalsow     *)
 (*      modified on Thu Nov 29 03:31:28 1990 by muller         *)
 
 MODULE InExpr;
@@ -88,17 +87,17 @@ PROCEDURE Prep (p: P) =
       Expr.Compile (p.a);
       IF NOT TInt.EQ (min, TInt.Zero) THEN
         CG.Load_integer (min);
-        CG.Subtract (CG.Type.Int);
+        CG.Subtract (Target.Integer.cg_type);
       END;
       index := CG.Pop ();
       CG.Load_integer (TInt.Zero);
       p.tmp := CG.Pop_temp ();
       CG.Push (index);
-      CG.Loophole (CG.Type.Int, CG.Type.Word);
+      CG.Loophole (Target.Integer.cg_type, Target.Word.cg_type);
       CG.Load_integer (n_elts);
-      CG.Loophole (CG.Type.Int, CG.Type.Word);
+      CG.Loophole (Target.Integer.cg_type, Target.Word.cg_type);
       skip := CG.Next_label ();
-      CG.If_gt (skip, CG.Type.Word, CG.Never);
+      CG.If_compare (Target.Word.cg_type, CG.Cmp.GT, skip, CG.Never);
       Expr.Compile (p.b);
       CG.Push (index);
       CG.Set_member (info.size);
@@ -131,7 +130,7 @@ PROCEDURE Compile (p: P) =
       Expr.Compile (p.a);
       IF NOT TInt.EQ (min, TInt.Zero) THEN
         CG.Load_integer (min);
-        CG.Subtract (CG.Type.Int);
+        CG.Subtract (Target.Integer.cg_type);
       END;
       CG.Set_member (info.size);
     END;

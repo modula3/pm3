@@ -129,7 +129,7 @@ CONST
 <*EXTERNAL "_hypot"*> PROCEDURE hypot (x, y: LONGREAL): LONGREAL;
 (* returns sqrt (x*x + y*y). *)
 
-<*EXTERNAL*> PROCEDURE cabs (z: Complex): LONGREAL;
+<*EXTERNAL "_cabs" *> PROCEDURE cabs (z: Complex): LONGREAL;
 TYPE Complex = RECORD x, y: LONGREAL END;
 (* returns sqrt (z.x*z.x + z.y*z.y) *)
 
@@ -148,19 +148,6 @@ TYPE Complex = RECORD x, y: LONGREAL END;
    such that "f + i = x" and such that "f" and "i" both have the same sign as
    "x", and returns "f". Although "i" is a LONGREAL, it is set to an integral
    value. *)
-
-
-(*---- Modulo functions ----*)
-
-<*EXTERNAL*> PROCEDURE fmod (x, y: LONGREAL): LONGREAL;
-(* returns the remainder of dividing x by y.
-   Note: use the built-in Modula-3 function MOD. *)
-
-<*EXTERNAL*> PROCEDURE drem (x, y: LONGREAL): LONGREAL;
-<*EXTERNAL*> PROCEDURE remainder (x, y: LONGREAL): LONGREAL;
-(* returns the remainder "r = x - n * y", where "n = ROUND(x/y)".
-   Note: the Modula-3 functions MOD and ROUND may be appropriate. *)
-
 
 (*---- Error functions ----*)
 
@@ -181,22 +168,33 @@ TYPE Complex = RECORD x, y: LONGREAL END;
 
 (*---- Bessel functions ----*)
 
-<*EXTERNAL*> PROCEDURE j0 (x: LONGREAL): LONGREAL;
+<*EXTERNAL "_j0" *> PROCEDURE j0 (x: LONGREAL): LONGREAL;
 (* returns the zero-order Bessel function of first kind on x. *)
 
-<*EXTERNAL*> PROCEDURE j1 (x: LONGREAL): LONGREAL;
+<*EXTERNAL "_j1" *> PROCEDURE j1 (x: LONGREAL): LONGREAL;
 (* returns the first-order Bessel function of first kind on x. *)
 
-<*EXTERNAL*> PROCEDURE jn (n: INTEGER;  x: LONGREAL): LONGREAL;
+<*EXTERNAL "_jn" *> PROCEDURE jn (n: INTEGER;  x: LONGREAL): LONGREAL;
 (* returns the n th-order Bessel function of first kind on x. *)
 
-<*EXTERNAL "_y0"*> PROCEDURE y0 (x: LONGREAL): LONGREAL;
+<*EXTERNAL "_y0" *> PROCEDURE y0 (x: LONGREAL): LONGREAL;
 (* returns the zero-order Bessel function of second kind on x. *)
 
-<*EXTERNAL "_y1"*> PROCEDURE y1 (x: LONGREAL): LONGREAL;
+<*EXTERNAL "_y1" *> PROCEDURE y1 (x: LONGREAL): LONGREAL;
 (* returns the first-order Bessel function of second kind on x. *)
 
-<*EXTERNAL "_yn"*> PROCEDURE yn (n: INTEGER; x: LONGREAL): LONGREAL;
+<*EXTERNAL "_yn" *> PROCEDURE yn (n: INTEGER;  x: LONGREAL): LONGREAL;
 (* returns the n th-order Bessel function of second kind on x. *)
+
+(*---- Modulo functions ----*)
+
+<*EXTERNAL*> PROCEDURE fmod (x, y: LONGREAL): LONGREAL;
+(* returns the remainder of dividing x by y.
+   Note: use the built-in Modula-3 function MOD. *)
+
+<*EXTERNAL*> PROCEDURE drem (x, y: LONGREAL): LONGREAL;
+<*EXTERNAL*> PROCEDURE remainder (x, y: LONGREAL): LONGREAL;
+(* returns remainder "r = x - n*y", where "n = ROUND(x/y)".
+   Note: the Modula-3 functions MOD and ROUND may be appropriate. *)
 
 END Math.

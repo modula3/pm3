@@ -8,8 +8,11 @@ INTERFACE TriggerStorage;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:40  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:50  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:40  hosking
+    Import of GRAS3 1.1
 
     Revision 1.2  1998/08/12 11:05:02  roland
     Efficiency improvement: RuleEngine notifies EventDetectors of
@@ -31,9 +34,9 @@ IMPORT Trigger, Event, ContextSet, Action;
 
 TYPE
 
-  T = OBJECT
+  T = <*TRANSIENT*> ROOT OBJECT
       METHODS
-        storeTrigger (t: Trigger.T; userdata: REFANY; id: CARDINAL);
+        storeTrigger (t: Trigger.T; userdata: <*TRANSIENT*> REFANY; id: CARDINAL);
                       (* store a trigger in trigger storage using id as a
                          (unique) identifier. *)
         removeTrigger (id: CARDINAL; VAR type: CARDINAL);
@@ -43,7 +46,7 @@ TYPE
         getNextAction (VAR act     : Action.T;
                        VAR coupl   : Trigger.CouplingMode;
                        VAR priority: CARDINAL;
-                       VAR userdata: REFANY): BOOLEAN;
+                       VAR userdata: <*TRANSIENT*> REFANY): BOOLEAN;
                        (* notifyEvent computes all activated actions for
                           event e.  These are held internal and can be
                           queried with getNextAction. *)

@@ -177,9 +177,11 @@ PROCEDURE Check (p: P;  VAR cs: Stmt.CheckState) =
     Marker.Pop ();
 
     (* check each handler *)
-    h := p.handles;
-    WHILE (h # NIL) DO CheckHandler (h, cs); h := h.next; END;
-    Stmt.TypeCheck (p.elseBody, cs);
+    PushHandler (NIL, 0, FALSE);
+      h := p.handles;
+      WHILE (h # NIL) DO CheckHandler (h, cs); h := h.next; END;
+      Stmt.TypeCheck (p.elseBody, cs);
+    PopHandler ();
   END Check;
 
 PROCEDURE CheckLabels (h: Handler;  scope: Scope.T;  VAR cs: Stmt.CheckState) =
@@ -264,11 +266,11 @@ PROCEDURE Compile1 (p: P): Stmt.Outcomes =
     next_info: CG.Var;
   BEGIN
     (* declare and initialize the info record *)
-    info := CG.Declare_local (M3ID.NoID, M3RT.EI_SIZE, Target.Address.align,
+    info := CG.Declare_local (M3ID.NoID, M3RT.EA_SIZE, Target.Address.align,
                               CG.Type.Struct, 0, in_memory := TRUE,
                               up_level := FALSE, f := CG.Never);
     CG.Load_nil ();
-    CG.Store_addr (info, M3RT.EI_exception);
+    CG.Store_addr (info, M3RT.EA_exception);
 
     (* compile the body *)
     l := CG.Next_label (3);
@@ -290,6 +292,9 @@ PROCEDURE Compile1 (p: P): Stmt.Outcomes =
     (* check for enclosing handlers *)
     another := Marker.NextHandler (next_handler, next_info);
 
+    (* set the "Compiler.ThisException()" globals *)
+    PushHandler (info, 0, direct := TRUE);
+
     (* compile each of the handlers *)
     CG.Set_label (l+1, barrier := TRUE);
     Scanner.offset := p.h_origin;
@@ -305,12 +310,14 @@ PROCEDURE Compile1 (p: P): Stmt.Outcomes =
       oc := oc + Stmt.Compile (p.elseBody);
     ELSIF another THEN
       (* we didn't eat this exception => mark and invoke the next handler *)
-      CG.Load_addr  (info, M3RT.EI_exception);
-      CG.Store_addr (next_info, M3RT.EI_exception);
-      CG.Load_addr  (info, M3RT.EI_arg);
-      CG.Store_addr (next_info, M3RT.EI_arg);
+      CG.Load_addr_of (next_info, 0, Target.Address.align);
+      CG.Load_addr_of (info, 0, Target.Address.align);
+      CG.Copy (M3RT.EA_SIZE, overlap := FALSE);
       CG.Jump (next_handler);
     END;
+
+    (* restore the "Compiler.ThisException()" globals *)
+    PopHandler ();
 
     CG.Set_label (l+2);
 
@@ -336,12 +343,14 @@ PROCEDURE CompileHandler1 (h: Handler;  info: CG.Var;
       e := h.tags;
       <*ASSERT e # NIL*>
       WHILE (e # NIL) DO
-        Value.Load (e.obj);
-        CG.Load_addr (info, M3RT.EI_exception);
+        CG.Load_addr (info, M3RT.EA_exception);
+        CG.Boost_alignment (Target.Integer.align);
+        CG.Load_indirect (Target.Integer.cg_type, 0, Target.Integer.size);
+        CG.Load_intt (Exceptionz.UID (e.obj));  (** Value.Load (e.obj);  **)
         e := e.next;
         IF (e # NIL)
-          THEN CG.If_eq (top, CG.Type.Addr, CG.Maybe);  need_top := TRUE;
-          ELSE CG.If_ne (top+1, CG.Type.Addr, CG.Maybe);
+          THEN CG.If_compare (Target.Integer.cg_type, CG.Cmp.EQ, top, CG.Maybe);  need_top := TRUE;
+          ELSE CG.If_compare (Target.Integer.cg_type, CG.Cmp.NE, top+1, CG.Maybe);
         END;
       END;
       (*** CG.Jump (top+1); ***)
@@ -356,11 +365,11 @@ PROCEDURE CompileHandler1 (h: Handler;  info: CG.Var;
         Variable.LoadLValue (h.var);
         EVAL Type.CheckInfo (h.type, t_info);
         IF Exceptionz.ArgByReference (h.type) THEN
-          CG.Load_addr (info, M3RT.EI_arg);
+          CG.Load_addr (info, M3RT.EA_arg);
           CG.Boost_alignment (t_info.alignment);
           CG.Copy (t_info.size, overlap := FALSE);
         ELSE
-          CG.Load_addr (info, M3RT.EI_arg);
+          CG.Load_addr (info, M3RT.EA_arg);
           CG.Loophole (CG.Type.Addr, t_info.stk_type);
           CG.Store_indirect (t_info.stk_type, 0, t_info.size);
         END;
@@ -429,6 +438,9 @@ PROCEDURE Compile2 (p: P): Stmt.Outcomes =
       oc := oc - Stmt.Outcomes {Stmt.Outcome.Returns, Stmt.Outcome.Exits};
     END;
 
+    (* set the "Compiler.ThisException()" globals *)
+    PushHandler (frame, M3RT.EF1_info, direct := TRUE);
+
     (* compile each of the handlers *)
     CG.Set_label (l+1, barrier := TRUE);
     Scanner.offset := p.h_origin;
@@ -443,6 +455,9 @@ PROCEDURE Compile2 (p: P): Stmt.Outcomes =
     IF (p.hasElse) THEN
       oc := oc + Stmt.Compile (p.elseBody);
     END;
+
+    (* restore the "Compiler.ThisException()" globals *)
+    PopHandler ();
 
     CG.Set_label (l+2);
 
@@ -468,12 +483,14 @@ PROCEDURE CompileHandler2 (h: Handler;  frame: CG.Var;
       e := h.tags;
       <*ASSERT e # NIL*>
       WHILE (e # NIL) DO
-        Value.Load (e.obj);
-        CG.Load_addr (frame, M3RT.EF1_exception);
+        CG.Load_addr (frame, M3RT.EF1_info + M3RT.EA_exception);
+        CG.Boost_alignment (Target.Integer.align);
+        CG.Load_indirect (Target.Integer.cg_type, 0, Target.Integer.size);
+        CG.Load_intt (Exceptionz.UID (e.obj));  (** Value.Load (e.obj);  **)
         e := e.next;
         IF (e # NIL)
-          THEN CG.If_eq (top, CG.Type.Addr, CG.Maybe);  need_top := TRUE;
-          ELSE CG.If_ne (top+1, CG.Type.Addr, CG.Maybe);
+          THEN CG.If_compare (Target.Integer.cg_type, CG.Cmp.EQ, top, CG.Maybe);  need_top := TRUE;
+          ELSE CG.If_compare (Target.Integer.cg_type, CG.Cmp.NE, top+1, CG.Maybe);
         END;
       END;
       (*** CG.Jump (top+1); ***)
@@ -488,11 +505,11 @@ PROCEDURE CompileHandler2 (h: Handler;  frame: CG.Var;
         Variable.LoadLValue (h.var);
         EVAL Type.CheckInfo (h.type, t_info);
         IF Exceptionz.ArgByReference (h.type) THEN
-          CG.Load_addr (frame, M3RT.EF1_arg);
+          CG.Load_addr (frame, M3RT.EF1_info + M3RT.EA_arg);
           CG.Boost_alignment (t_info.alignment);
           CG.Copy (t_info.size, overlap := FALSE);
         ELSE
-          CG.Load_addr (frame, M3RT.EF1_arg);
+          CG.Load_addr (frame, M3RT.EF1_info + M3RT.EA_arg);
           CG.Loophole (CG.Type.Addr, t_info.stk_type);
           CG.Store_indirect (t_info.stk_type, 0, t_info.size);
         END;
@@ -531,6 +548,52 @@ PROCEDURE GetOutcome (p: P): Stmt.Outcomes =
 
     RETURN oc;
   END GetOutcome;
+
+(*------------------------------- handler info for Compiler.ThisException ---*)
+
+TYPE
+  HandlerInfo = RECORD
+    info   : CG.Var;
+    offset : INTEGER;
+    direct : BOOLEAN;
+  END;
+
+VAR (* for "Compiler.ThisException()" *)
+  tos   : INTEGER := 0;
+  stack : ARRAY [0..50] OF HandlerInfo;
+
+PROCEDURE PushHandler (info: CG.Var;  offset: INTEGER;   direct: BOOLEAN) =
+  BEGIN
+    WITH z = stack [tos] DO
+      z.info   := info;
+      z.offset := offset;
+      z.direct := direct;
+    END;
+    INC (tos);
+  END PushHandler;
+
+PROCEDURE PopHandler () =
+  BEGIN
+    DEC (tos);
+    stack[tos].info := NIL;
+  END PopHandler;
+
+PROCEDURE InHandler (): BOOLEAN =
+  BEGIN
+    RETURN (tos > 0);
+  END InHandler;
+
+PROCEDURE LoadInfoPtr () =
+  BEGIN
+    IF (tos <= 0) THEN  CG.Load_nil ();  RETURN;  END;
+    WITH z = stack[tos-1] DO
+      IF z.direct THEN
+        CG.Load_addr_of (z.info, z.offset, Target.Address.align);
+      ELSE
+        CG.Load_addr (z.info, z.offset);
+      END;
+    END;
+  END LoadInfoPtr;
 
 BEGIN
 END TryStmt.

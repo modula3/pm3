@@ -8,13 +8,13 @@
 
 MODULE ExprParse;
 
-IMPORT M3ID, Token, Expr, ExprRep, Error, Type, CChar, ObjectType;
+IMPORT M3ID, Token, Expr, ExprRep, Error, Type, Charr, ObjectType;
 IMPORT AndExpr, OrExpr, EqualExpr, CompareExpr, MultiplyExpr, DivExpr;
 IMPORT DivideExpr, ModExpr, AddExpr, SubtractExpr, InExpr, PlusExpr;
 IMPORT NegateExpr, NotExpr, ConcatExpr, IntegerExpr, ReelExpr;
 IMPORT TextExpr, DerefExpr, QualifyExpr, SubscriptExpr, TypeExpr;
 IMPORT CallExpr, ConsExpr, RangeExpr, NamedExpr, KeywordExpr, EnumExpr;
-IMPORT RefType, NamedType, TInt;
+IMPORT NamedType, TInt, WCharr, CG, Brand;
 
 FROM Scanner IMPORT Match, MatchID, GetToken, Fail, cur, offset;
 
@@ -78,12 +78,12 @@ PROCEDURE E3 (types: BOOLEAN;  ): Expr.T =
       GetToken ();
       b := E4 (FALSE);
       CASE t OF
-      | TK.tEQUAL   => a := EqualExpr.NewEQ (a, b);
-      | TK.tSHARP   => a := EqualExpr.NewNE (a, b);
-      | TK.tLESS    => a := CompareExpr.NewLT (a, b);
-      | TK.tLSEQUAL => a := CompareExpr.NewLE (a, b);
-      | TK.tGREATER => a := CompareExpr.NewGT (a, b);
-      | TK.tGREQUAL => a := CompareExpr.NewGE (a, b);
+      | TK.tEQUAL   => a := EqualExpr.New (a, b, CG.Cmp.EQ);
+      | TK.tSHARP   => a := EqualExpr.New (a, b, CG.Cmp.NE);
+      | TK.tLESS    => a := CompareExpr.New (a, b, CG.Cmp.LT);
+      | TK.tLSEQUAL => a := CompareExpr.New (a, b, CG.Cmp.LE);
+      | TK.tGREATER => a := CompareExpr.New (a, b, CG.Cmp.GT);
+      | TK.tGREQUAL => a := CompareExpr.New (a, b, CG.Cmp.GE);
       | TK.tIN      => a := InExpr.New (a, b);
       ELSE             <*ASSERT FALSE*>
       END;
@@ -173,14 +173,15 @@ PROCEDURE E8 (types: BOOLEAN): Expr.T =
   VAR a: Expr.T;  here := offset;
   BEGIN
     CASE cur.token OF
-    | TK.tIDENT =>     a := NamedExpr.New (cur.id, cur.defn);     GetToken ();
-    | TK.tCARDCONST => a := IntegerExpr.New (cur.int);            GetToken ();
-    | TK.tCHARCONST => a := EnumExpr.New (CChar.T, cur.int);      GetToken ();
-    | TK.tTEXTCONST => a := TextExpr.New (cur.str);               GetToken ();
-    | TK.tREALCONST => a := ReelExpr.New (cur.float, RP.Short);   GetToken ();
-    | TK.tLONGREALCONST=> a := ReelExpr.New (cur.float,RP.Long);  GetToken ();
-    | TK.tEXTENDEDCONST=> a :=ReelExpr.New(cur.float, RP.Extended); GetToken();
-
+    | TK.tIDENT        => a := NamedExpr.New (cur.id, cur.defn);    GetToken ();
+    | TK.tCARDCONST    => a := IntegerExpr.New (cur.int);           GetToken ();
+    | TK.tCHARCONST    => a := EnumExpr.New (Charr.T, cur.int);     GetToken ();
+    | TK.tWCHARCONST   => a := EnumExpr.New (WCharr.T, cur.int);    GetToken ();
+    | TK.tTEXTCONST    => a := TextExpr.New8 (cur.str);             GetToken ();
+    | TK.tWTEXTCONST   => a := TextExpr.New16 (cur.wstr);           GetToken ();
+    | TK.tREALCONST    => a := ReelExpr.New (cur.float, RP.Short);  GetToken ();
+    | TK.tLONGREALCONST=> a := ReelExpr.New (cur.float,RP.Long);    GetToken ();
+    | TK.tEXTENDEDCONST=> a := ReelExpr.New(cur.float, RP.Extended); GetToken();
 
     | TK.tLPAREN =>
         GetToken ();
@@ -194,7 +195,7 @@ PROCEDURE E8 (types: BOOLEAN): Expr.T =
           Error.Msg ("expected a constructor");
         END;
 
-    | TK.tBRANDED, TK.tLBRACE, TK.tUNTRACED, TK.tOBJECT,
+    | TK.tBRANDED, TK.tLBRACE, TK.tUNTRACED, TK.tOBJECT, TK.tTRANSIENT,
       TK.tPROCEDURE, TK.tREF, TK.tLBRACKET, TK.tCALLCONV =>
         IF NOT types THEN Error.Msg ("unexpected type expression") END;
         a := TypeExpr.New (Type.Parse ());
@@ -213,7 +214,7 @@ PROCEDURE ESelector (types: BOOLEAN;  a: Expr.T;
     t: Type.T;
     open: BOOLEAN;
     name, module: M3ID.T;
-    brand: Expr.T;
+    brand: Brand.T;
     here := offset;
   BEGIN
     CASE cur.token OF
@@ -248,7 +249,7 @@ PROCEDURE ESelector (types: BOOLEAN;  a: Expr.T;
         a.origin := here;
     | TK.tBRANDED, TK.tOBJECT =>
         IF (types) THEN
-	  brand := RefType.ParseBrand ();
+	  brand := Brand.Parse ();
           IF NamedExpr.SplitName (a, name) THEN
             t := NamedType.Create (M3ID.NoID, name);
           ELSIF QualifyExpr.SplitQID (a, module, name) THEN
@@ -257,7 +258,7 @@ PROCEDURE ESelector (types: BOOLEAN;  a: Expr.T;
             t := NIL;
             Fail ("bad selector");
           END;
-	  a := TypeExpr.New (ObjectType.Parse (t, TRUE, brand));
+	  a := TypeExpr.New (ObjectType.Parse (t, TRUE, FALSE, brand));
           a.origin := here;
         END;
     ELSE Fail ("bad selector");

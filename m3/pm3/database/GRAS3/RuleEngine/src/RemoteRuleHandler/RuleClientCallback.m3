@@ -7,8 +7,11 @@ MODULE RuleClientCallback;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:40  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:50  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:40  hosking
+    Import of GRAS3 1.1
 
     Revision 1.2  1998/09/14 08:15:27  roland
     Modified code to remove compiler warnings.
@@ -21,7 +24,11 @@ MODULE RuleClientCallback;
 *)
 (***************************************************************************)
 
-IMPORT RuleEngineCallback, IntIntTbl, IntSeq, IntTextTbl, TextSeq,
+IMPORT RuleEngineCallback,
+       IntIntTransientTbl AS IntIntTbl,
+       IntTransientSeq AS IntSeq,
+       IntTextTransientTbl AS IntTextTbl,
+       TextTransientSeq AS TextSeq,
        CardRelation, Thread;
 IMPORT Event, EventPattern, Trigger, Action, LocalRuleHandler,
        EventTranslation, TriggerMap, RemoteActivatedActions,
@@ -158,7 +165,7 @@ PROCEDURE NotifyEvent (<* UNUSED *> client    : RuleClient;
     action      : Action.T;
     localTrigger: CARDINAL;
     priority    : CARDINAL;
-    userdata    : REFANY;
+    userdata    : <*TRANSIENT*> REFANY;
   BEGIN
     (* clientno has monitored the event described by the parameters. *)
     TRY

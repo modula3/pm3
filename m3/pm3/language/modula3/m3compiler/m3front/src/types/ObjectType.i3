@@ -9,11 +9,12 @@
 
 INTERFACE ObjectType;
 
-IMPORT M3ID, Type, Scope, Value, Expr;
+IMPORT M3ID, Type, Scope, Value, Brand;
 
-PROCEDURE Parse (super: Type.T;  traced: BOOLEAN;  brand: Expr.T): Type.T;
+PROCEDURE Parse (super: Type.T;  traced, transient: BOOLEAN; brand: Brand.T):
+  Type.T;
 
-PROCEDURE New   (super: Type.T;  traced: BOOLEAN;  brand: Expr.T;
+PROCEDURE New   (super: Type.T;  traced, transient: BOOLEAN;  brand: Brand.T;
                                         fields, methods: Scope.T): Type.T;
 
 PROCEDURE Is (t: Type.T): BOOLEAN;

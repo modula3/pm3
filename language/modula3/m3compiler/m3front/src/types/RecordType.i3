@@ -10,7 +10,7 @@ INTERFACE RecordType;
 
 IMPORT M3ID, Type, Scope, Value;
 
-PROCEDURE Parse (): Type.T;
+PROCEDURE Parse (transient: BOOLEAN): Type.T;
 PROCEDURE ParseFieldList ();
 
 PROCEDURE Split (t: Type.T;  VAR fields: Value.T): BOOLEAN;

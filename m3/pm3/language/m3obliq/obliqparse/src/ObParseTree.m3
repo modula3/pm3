@@ -19,38 +19,44 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
       RETURN NARROW(p.stack[index], MetaParser.RealTemp).real;
     END SelectReal;
 
-  PROCEDURE Select1(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-      READONLY info: SynLocation.Info): SynParse.Tree =
+  PROCEDURE Select1(<*UNUSED*>self: SynParse.Action; 
+                    p: SynParse.T; base: INTEGER;
+      <*UNUSED*>READONLY info: SynLocation.Info): SynParse.Tree =
     BEGIN
       RETURN p.stack[base+1];
     END Select1;
 
-  PROCEDURE Select2(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-      READONLY info: SynLocation.Info): SynParse.Tree =
+  PROCEDURE Select2(<*UNUSED*>self: SynParse.Action;
+                    p: SynParse.T; base: INTEGER;
+      <*UNUSED*>READONLY info: SynLocation.Info): SynParse.Tree =
     BEGIN
       RETURN p.stack[base+2];
     END Select2;
 
-  PROCEDURE Select3(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-      READONLY info: SynLocation.Info): SynParse.Tree =
+  PROCEDURE Select3(<*UNUSED*>self: SynParse.Action;
+                    p: SynParse.T; base: INTEGER;
+                    <*UNUSED*>READONLY info: SynLocation.Info): SynParse.Tree =
     BEGIN
       RETURN p.stack[base+3];
     END Select3;
 
-  PROCEDURE Select4(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-      READONLY info: SynLocation.Info): SynParse.Tree =
+  PROCEDURE Select4(<*UNUSED*>self: SynParse.Action;
+                    p: SynParse.T; base: INTEGER;
+      <*UNUSED*>READONLY info: SynLocation.Info): SynParse.Tree =
     BEGIN
       RETURN p.stack[base+4];
     END Select4;
 
-  PROCEDURE Select5(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-      READONLY info: SynLocation.Info): SynParse.Tree =
+  PROCEDURE Select5(<*UNUSED*>self: SynParse.Action; 
+                    p: SynParse.T; base: INTEGER;
+                    <*UNUSED*>READONLY info: SynLocation.Info): SynParse.Tree =
     BEGIN
       RETURN p.stack[base+5];
     END Select5;
 
-  PROCEDURE Select6(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-      READONLY info: SynLocation.Info): SynParse.Tree =
+  PROCEDURE Select6(<*UNUSED*>self: SynParse.Action; 
+                    p: SynParse.T; base: INTEGER;
+      <*UNUSED*>READONLY info: SynLocation.Info): SynParse.Tree =
     BEGIN
       RETURN p.stack[base+6];
     END Select6;
@@ -60,13 +66,14 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
       RETURN NEW(ObTree.IdeName, text:=SelectText(p, index), variant:=0);
     END BuildIdeName;
 
-  PROCEDURE BuildPhraseEmpty(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-      READONLY info: SynLocation.Info): SynParse.Tree =
+  PROCEDURE BuildPhraseEmpty(<*UNUSED*>self: SynParse.Action; 
+                             <*UNUSED*>p: SynParse.T; <*UNUSED*>base: INTEGER;
+      <*UNUSED*>READONLY info: SynLocation.Info): SynParse.Tree =
     BEGIN
       RETURN NIL;
     END BuildPhraseEmpty;
 
-  PROCEDURE BuildPhraseFlag(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildPhraseFlag(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
   VAR name, arg: TEXT;
   BEGIN
@@ -83,7 +90,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
         set:=ObTree.doCommandSet, name:=name, arg:=arg);
   END BuildPhraseFlag;
 
-  PROCEDURE BuildPhraseHelp(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildPhraseHelp(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
   VAR name, arg: TEXT;
   BEGIN
@@ -100,7 +107,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
         set:=ObLib.helpCommandSet, name:=name, arg:=arg);
   END BuildPhraseHelp;
 
-  PROCEDURE BuildPhraseTerm(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildPhraseTerm(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN
@@ -108,7 +115,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	  term:=p.stack[base+1], printDepth:=-1);
     END BuildPhraseTerm;
 
-  PROCEDURE BuildPhraseTermDeep(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildPhraseTermDeep(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN
@@ -116,7 +123,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	  term:=p.stack[base+1], printDepth:=40);
     END BuildPhraseTermDeep;
 
-  PROCEDURE BuildPhraseTermDepth(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildPhraseTermDepth(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN
@@ -125,7 +132,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	  printDepth:=SelectInt(p, base+2));       
     END BuildPhraseTermDepth;
 
-  PROCEDURE BuildTermBinding(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermBinding(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -135,7 +142,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	  rest:=p.stack[base+3]);
     END BuildTermBinding;
 
-  PROCEDURE BuildTermBindingSingle(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermBindingSingle(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -145,89 +152,89 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	  rest:=NIL);
     END BuildTermBindingSingle;
 
-  PROCEDURE BuildTermBindingNil(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-      READONLY info: SynLocation.Info): SynParse.Tree  =
+  PROCEDURE BuildTermBindingNil(<*UNUSED*>self: SynParse.Action; <*UNUSED*>p: SynParse.T; <*UNUSED*>base: INTEGER;
+      <*UNUSED*>READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN NIL;
     END BuildTermBindingNil;
 
-  PROCEDURE BuildTermIde(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermIde(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN NEW(ObTree.TermIde, location:=SynLocation.NewLineLocation(info),
 	name:=BuildIdeName(p, base+1), place:=NIL);
     END BuildTermIde;
 
-  PROCEDURE BuildTermOk(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermOk(<*UNUSED*>self: SynParse.Action; <*UNUSED*>p: SynParse.T; <*UNUSED*>base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN NEW(ObTree.TermOk, location:=SynLocation.NewLineLocation(info));
     END BuildTermOk;
 
-  PROCEDURE BuildTermBoolTrue(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermBoolTrue(<*UNUSED*>self: SynParse.Action; <*UNUSED*>p: SynParse.T; <*UNUSED*>base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN NEW(ObTree.TermBool, location:=SynLocation.NewLineLocation(info),
 	bool:=TRUE);
     END BuildTermBoolTrue;
 
-  PROCEDURE BuildTermBoolFalse(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermBoolFalse(<*UNUSED*>self: SynParse.Action; <*UNUSED*>p: SynParse.T; <*UNUSED*>base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN NEW(ObTree.TermBool, location:=SynLocation.NewLineLocation(info),
 	bool:=FALSE);
     END BuildTermBoolFalse;
 
-  PROCEDURE BuildTermChar(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermChar(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN NEW(ObTree.TermChar, location:=SynLocation.NewLineLocation(info),
 	char:=Text.GetChar(SelectText(p, base+1),0));
     END BuildTermChar;
 
-  PROCEDURE BuildTermText(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermText(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN NEW(ObTree.TermText, location:=SynLocation.NewLineLocation(info),
 	text:=SelectText(p, base+1));
     END BuildTermText;
 
-  PROCEDURE BuildTermInt(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermInt(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN NEW(ObTree.TermInt, location:=SynLocation.NewLineLocation(info),
 	int:=SelectInt(p, base+1));
     END BuildTermInt;
 
-  PROCEDURE BuildTermReal(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermReal(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN NEW(ObTree.TermReal, location:=SynLocation.NewLineLocation(info),
 	real:=SelectReal(p, base+1));
     END BuildTermReal;
 
-  PROCEDURE BuildTermArray(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermArray(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN NEW(ObTree.TermArray, location:=SynLocation.NewLineLocation(info),
 	elems:=p.stack[base+1]);
     END BuildTermArray;
 
-  PROCEDURE BuildTermOption(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermOption(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN NEW(ObTree.TermOption, location:=SynLocation.NewLineLocation(info),
 	tag := BuildIdeName(p, base+1), term :=p.stack[base+2]);
     END BuildTermOption;
 
-  PROCEDURE BuildTermAlias(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermAlias(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN NEW(ObTree.TermAlias, location:=SynLocation.NewLineLocation(info),
 	label := BuildIdeName(p, base+1), term :=p.stack[base+2]);
     END BuildTermAlias;
 
-  PROCEDURE BuildTermOp(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermOp(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
     VAR pkg: ObTree.IdeName;
     BEGIN
@@ -245,7 +252,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	argsNo:=0, package:=NIL, opCode:=NIL);
     END BuildTermOp;
 
-  PROCEDURE BuildTermOpConst(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermOpConst(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
     VAR pkg: ObTree.IdeName;
     BEGIN
@@ -263,20 +270,22 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	package:=NIL, opCode:=NIL);
     END BuildTermOpConst;
 
-  PROCEDURE BuildIdeListNil(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-      READONLY info: SynLocation.Info): SynParse.Tree  =
+  PROCEDURE BuildIdeListNil(<*UNUSED*>self: SynParse.Action;
+                            <*UNUSED*>p: SynParse.T; 
+                            <*UNUSED*>base: INTEGER;
+      <*UNUSED*>READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN NIL;
     END BuildIdeListNil;
 
-  PROCEDURE BuildIdeListSingle(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildIdeListSingle(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN NEW(ObTree.IdeList, location:=SynLocation.NewLineLocation(info),
         first:=BuildIdeName(p, base+1), rest:=NIL);
     END BuildIdeListSingle;
 
-  PROCEDURE BuildIdeListCons(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildIdeListCons(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN NEW(ObTree.IdeList, location:=SynLocation.NewLineLocation(info),
@@ -284,20 +293,23 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
         rest:=p.stack[base+2]);
     END BuildIdeListCons;
 
-  PROCEDURE BuildTermListNil(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-      READONLY info: SynLocation.Info): SynParse.Tree  =
+  PROCEDURE BuildTermListNil(<*UNUSED*>self: SynParse.Action;
+                             <*UNUSED*>p: SynParse.T; 
+                             <*UNUSED*>base: INTEGER;
+                             <*UNUSED*>READONLY info: SynLocation.Info): 
+    SynParse.Tree  =
     BEGIN
       RETURN NIL;
     END BuildTermListNil;
 
-  PROCEDURE BuildTermListSingle(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermListSingle(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN NEW(ObTree.TermList, location:=SynLocation.NewLineLocation(info),
         first:=p.stack[base+1], rest:=NIL);
     END BuildTermListSingle;
 
-  PROCEDURE BuildTermListCons(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermListCons(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN NEW(ObTree.TermList, location:=SynLocation.NewLineLocation(info),
@@ -305,7 +317,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
         rest:=p.stack[base+2]);
     END BuildTermListCons;
 
- PROCEDURE BuildTermProc(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTermProc(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -317,8 +329,8 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	  globalsNo:=-1);
     END BuildTermProc;
 
-  PROCEDURE BuildTermAppl(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-      READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
+  PROCEDURE BuildTermAppl(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
+      READONLY info: SynLocation.Info): SynParse.Tree=
     VAR fun: ObTree.Term; args: ObTree.TermList; 
       loc: SynLocation.T; pkgName: TEXT;
     BEGIN
@@ -341,8 +353,8 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
       END;
     END BuildTermAppl;
 
-  PROCEDURE BuildTermInfix(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-      READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
+  PROCEDURE BuildTermInfix(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
+      READONLY info: SynLocation.Info): SynParse.Tree=
     VAR opName: ObTree.IdeName; pkgName: TEXT; args: ObTree.TermList; 
       loc: SynLocation.T;
     BEGIN
@@ -370,7 +382,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
       END;
     END BuildTermInfix;
 
-  PROCEDURE BuildTermSeq(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermSeq(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN NEW(ObTree.TermSeq, location:=SynLocation.NewLineLocation(info),
@@ -378,44 +390,53 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	after:=p.stack[base+2]);
     END BuildTermSeq;
 
- PROCEDURE BuildTermObj(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-      READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
+ PROCEDURE BuildTermObj(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
+      READONLY info: SynLocation.Info): SynParse.Tree =
     VAR protected: BOOLEAN; serialized: ObTree.Sync;
+        semantics := ObTree.SharingSemantics.Remote;
     BEGIN
       protected := NARROW(p.stack[base+1], BoolTemp).bool;
       IF NARROW(p.stack[base+2], BoolTemp).bool THEN
         serialized := ObTree.Sync.Monitored;
       ELSE serialized := ObTree.Sync.None;
       END;
+
+      IF NARROW(p.stack[base+3], BoolTemp).bool THEN
+        semantics := ObTree.SharingSemantics.Replicated;
+      END;
+      IF NARROW(p.stack[base+4], BoolTemp).bool THEN
+        semantics := ObTree.SharingSemantics.Simple;
+      END;
       RETURN 
         NEW(ObTree.TermObj, location:=SynLocation.NewLineLocation(info),
 	  protected := protected, 
           sync := serialized,
-          fields:=p.stack[base+3]);
+          semantics := semantics,
+          fields:=p.stack[base+5]);
     END BuildTermObj;
 
   TYPE BoolTemp = 
     SynParse.Tree BRANDED OBJECT bool: BOOLEAN END;
 
-  PROCEDURE BuildOptionYes(self: SynParse.Action; p: SynParse.T; 
-      base:INTEGER; READONLY info: SynLocation.Info): SynParse.Tree  =
+  PROCEDURE BuildOptionYes(<*UNUSED*>self: SynParse.Action; <*UNUSED*>p: SynParse.T; 
+      <*UNUSED*>base:INTEGER; <*UNUSED*>READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN NEW(BoolTemp, location:=NIL, bool:=TRUE);
     END BuildOptionYes;
 
-  PROCEDURE BuildOptionNo(self: SynParse.Action; p: SynParse.T; 
-      base:INTEGER; READONLY info: SynLocation.Info): SynParse.Tree  =
+  PROCEDURE BuildOptionNo(<*UNUSED*>self: SynParse.Action; <*UNUSED*>p: SynParse.T; 
+      <*UNUSED*>base:INTEGER; <*UNUSED*>READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN NEW(BoolTemp, location:=NIL, bool:=FALSE);
     END BuildOptionNo;
 
- PROCEDURE BuildTermObjFieldNil(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-      READONLY info: SynLocation.Info): SynParse.Tree  =
+ PROCEDURE BuildTermObjFieldNil(<*UNUSED*>self: SynParse.Action; <*UNUSED*>p: SynParse.T; <*UNUSED*>base: INTEGER;
+      <*UNUSED*>READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN NIL;
     END BuildTermObjFieldNil;
 
- PROCEDURE BuildTermObjFieldSingle(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTermObjFieldSingle(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -425,7 +446,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	  rest:=NIL);
     END BuildTermObjFieldSingle;
 
- PROCEDURE BuildTermObjField(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTermObjField(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -435,7 +456,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	  rest:=p.stack[base+3]);
     END BuildTermObjField;
 
- PROCEDURE BuildTermMeth(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTermMeth(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -447,7 +468,20 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	  globalsNo := -1);
     END BuildTermMeth;
 
- PROCEDURE BuildTermClone(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTermUpdateMeth(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
+      READONLY info: SynLocation.Info): SynParse.Tree  =
+    BEGIN
+      RETURN 
+        NEW(ObTree.TermMeth,location:=SynLocation.NewLineLocation(info),
+	  binders:=p.stack[base+1],
+	  bindersNo := -1,
+	  body:=p.stack[base+2],
+	  globals := NIL,
+	  globalsNo := -1, 
+          update := TRUE);
+    END BuildTermUpdateMeth; 
+
+ PROCEDURE BuildTermClone(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -455,7 +489,52 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	  objs:=p.stack[base+1]);
     END BuildTermClone;
 
- PROCEDURE BuildTermRedirect(self: SynParse.Action; p: SynParse.T;
+ PROCEDURE BuildTermNotify(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
+      READONLY info: SynLocation.Info): SynParse.Tree  =
+    BEGIN
+      RETURN 
+        NEW(ObTree.TermNotify,location:=SynLocation.NewLineLocation(info),
+            obj:=p.stack[base+1], withObj:=p.stack[base+2]);
+    END BuildTermNotify;
+
+ PROCEDURE BuildTermPickler(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
+      READONLY info: SynLocation.Info): SynParse.Tree  =
+    BEGIN
+      RETURN 
+        NEW(ObTree.TermPickler, 
+            location:=SynLocation.NewLineLocation(info),
+            obj:=p.stack[base+1], pklIn:=p.stack[base+2],
+            pklOut:=p.stack[base+3]);
+    END BuildTermPickler; 
+
+ PROCEDURE BuildTermReplicate(<*UNUSED*>self: SynParse.Action; 
+                              p: SynParse.T; base: INTEGER;
+                              READONLY info: SynLocation.Info): SynParse.Tree =
+    BEGIN
+      RETURN 
+        NEW(ObTree.TermReplicate,location:=SynLocation.NewLineLocation(info),
+	  args:=p.stack[base+1]);
+    END BuildTermReplicate; 
+
+ PROCEDURE BuildTermRemote(<*UNUSED*>self: SynParse.Action; 
+                              p: SynParse.T; base: INTEGER;
+                              READONLY info: SynLocation.Info): SynParse.Tree =
+    BEGIN
+      RETURN 
+        NEW(ObTree.TermRemote,location:=SynLocation.NewLineLocation(info),
+	  obj:=p.stack[base+1]);
+    END BuildTermRemote; 
+
+ PROCEDURE BuildTermSimple(<*UNUSED*>self: SynParse.Action; 
+                              p: SynParse.T; base: INTEGER;
+                              READONLY info: SynLocation.Info): SynParse.Tree =
+    BEGIN
+      RETURN 
+        NEW(ObTree.TermSimple,location:=SynLocation.NewLineLocation(info),
+	  obj:=p.stack[base+1]);
+    END BuildTermSimple; 
+
+ PROCEDURE BuildTermRedirect(<*UNUSED*>self: SynParse.Action; p: SynParse.T;
       base: INTEGER; READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -463,7 +542,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	  obj:=p.stack[base+1], toObj:=p.stack[base+2]);
     END BuildTermRedirect;
 
- PROCEDURE BuildTermSelect(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTermSelect(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -473,7 +552,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	  invoke:=FALSE, argsNo:=0, args:=NIL);
     END BuildTermSelect;
 
- PROCEDURE BuildTermInvoke(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTermInvoke(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -483,7 +562,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	  invoke:=TRUE, argsNo:=0, args:=p.stack[base+3]);
     END BuildTermInvoke;
 
- PROCEDURE BuildTermUpdate(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTermUpdate(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -493,7 +572,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	  term:=p.stack[base+3]);
     END BuildTermUpdate;
 
- PROCEDURE BuildTermArrayGet(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTermArrayGet(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     VAR loc: SynLocation.T;
     BEGIN
@@ -511,7 +590,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	package:=NIL, opCode:=NIL);
     END BuildTermArrayGet;
 
- PROCEDURE BuildTermArraySub(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTermArraySub(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     VAR loc: SynLocation.T;
     BEGIN
@@ -531,7 +610,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	package:=NIL, opCode:=NIL);
     END BuildTermArraySub;
 
- PROCEDURE BuildTermArraySet(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTermArraySet(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     VAR loc: SynLocation.T;
     BEGIN
@@ -551,7 +630,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	package:=NIL, opCode:=NIL);
     END BuildTermArraySet;
 
- PROCEDURE BuildTermArrayUpd(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTermArrayUpd(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     VAR loc: SynLocation.T;
     BEGIN
@@ -573,7 +652,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	package:=NIL, opCode:=NIL);
     END BuildTermArrayUpd;
 
-  PROCEDURE BuildTermMinus(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermMinus(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     VAR loc: SynLocation.T;
     BEGIN
@@ -589,7 +668,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	package:=NIL, opCode:=NIL);
     END BuildTermMinus;
 
- PROCEDURE BuildTermLet(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTermLet(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -598,7 +677,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	  binding:=p.stack[base+1]);
     END BuildTermLet;
 
- PROCEDURE BuildTermVar(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTermVar(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -607,7 +686,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	  binding:=p.stack[base+1]);
     END BuildTermVar;
 
- PROCEDURE BuildTermLetRec(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTermLetRec(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -616,7 +695,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	  binding:=p.stack[base+1]);
     END BuildTermLetRec;
 
- PROCEDURE BuildTermVarRec(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTermVarRec(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -625,7 +704,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	  binding:=p.stack[base+1]);
     END BuildTermVarRec;
 
- PROCEDURE BuildTermAssign(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTermAssign(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail}  =
     VAR name: ObTree.IdeName;
     BEGIN
@@ -640,7 +719,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	  name:=name, place:=NIL, val:=p.stack[base+2]);
     END BuildTermAssign;
 
-  PROCEDURE BuildTermIf(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermIf(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -650,13 +729,15 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	  ifFalse:=p.stack[base+3]);
     END BuildTermIf;
 
-  PROCEDURE BuildTermIfEnd(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-      READONLY info: SynLocation.Info): SynParse.Tree  =
+  PROCEDURE BuildTermIfEnd(<*UNUSED*>self: SynParse.Action; 
+                           <*UNUSED*>p: SynParse.T; 
+                           <*UNUSED*>base: INTEGER;
+      <*UNUSED*>READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN NIL;
     END BuildTermIfEnd;
 
-  PROCEDURE BuildTermAndif(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermAndif(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -668,7 +749,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
                   bool:=FALSE));
     END BuildTermAndif;
 
-  PROCEDURE BuildTermOrif(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermOrif(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -680,7 +761,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	  ifFalse:=p.stack[base+2]);
     END BuildTermOrif;
 
-  PROCEDURE BuildTermCase(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermCase(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -689,7 +770,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	  caseList:=p.stack[base+2]);
     END BuildTermCase;
 
- PROCEDURE BuildTermLoop(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTermLoop(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -697,14 +778,15 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	  loop:=p.stack[base+1]);
     END BuildTermLoop;
 
- PROCEDURE BuildTermExit(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTermExit(<*UNUSED*>self: SynParse.Action;
+                         <*UNUSED*>p: SynParse.T; <*UNUSED*>base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
         NEW(ObTree.TermExit,location:=SynLocation.NewLineLocation(info));
     END BuildTermExit;
 
-  PROCEDURE BuildTermFor(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermFor(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN
@@ -713,7 +795,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
           ub := p.stack[base+3], body := p.stack[base+4]);
     END BuildTermFor;
 
-  PROCEDURE BuildTermForeachDo(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermForeachDo(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN
@@ -722,7 +804,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
           body := p.stack[base+3], map:=FALSE);
     END BuildTermForeachDo;
 
-  PROCEDURE BuildTermForeachMap(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermForeachMap(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN
@@ -731,7 +813,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
           body := p.stack[base+3], map:=TRUE);
     END BuildTermForeachMap;
 
- PROCEDURE BuildTermException(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTermException(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -739,7 +821,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
             name:=p.stack[base+1]);
     END BuildTermException;
 
- PROCEDURE BuildTermRaise(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTermRaise(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -747,7 +829,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
           exception:=p.stack[base+1]);
     END BuildTermRaise;
 
- PROCEDURE BuildTermTry(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTermTry(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -756,7 +838,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
           tryList:=p.stack[base+2]);
     END BuildTermTry;
 
- PROCEDURE BuildTermTryElse(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTermTryElse(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -769,7 +851,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
               rest:=NIL));
     END BuildTermTryElse;
 
- PROCEDURE BuildTermTryFinally(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTermTryFinally(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -778,7 +860,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
           finally:=p.stack[base+2]);
     END BuildTermTryFinally;
 
- PROCEDURE BuildCaseListCons(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildCaseListCons(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     VAR bind: ObTree.IdeName;
     BEGIN
@@ -793,7 +875,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
           rest:=p.stack[base+4]);
     END BuildCaseListCons;
 
- PROCEDURE BuildCaseListElse(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildCaseListElse(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -801,13 +883,14 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
           tag:=NIL, binder:=NIL, body:=p.stack[base+1], rest:=NIL);
     END BuildCaseListElse;
 
- PROCEDURE BuildCaseListNil(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-      READONLY info: SynLocation.Info): SynParse.Tree  =
+ PROCEDURE BuildCaseListNil(<*UNUSED*>self: SynParse.Action; 
+                            <*UNUSED*>p: SynParse.T; <*UNUSED*>base: INTEGER;
+      <*UNUSED*>READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN NIL;
     END BuildCaseListNil;
 
- PROCEDURE BuildTryListCons(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTryListCons(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -817,7 +900,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
           rest:=p.stack[base+3]);
     END BuildTryListCons;
 
- PROCEDURE BuildTryListConsElse(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTryListConsElse(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -831,7 +914,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
                 rest:=NIL));
     END BuildTryListConsElse;
 
- PROCEDURE BuildTryListSingle(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTryListSingle(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -841,7 +924,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
           rest:=NIL);
     END BuildTryListSingle;
 
- PROCEDURE BuildTryListElse(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+ PROCEDURE BuildTryListElse(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN 
@@ -851,13 +934,13 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
           rest:=NIL);
     END BuildTryListElse;
 
- PROCEDURE BuildTryListNil(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-      READONLY info: SynLocation.Info): SynParse.Tree  =
+ PROCEDURE BuildTryListNil(<*UNUSED*>self: SynParse.Action; <*UNUSED*>p: SynParse.T; <*UNUSED*>base: INTEGER;
+      <*UNUSED*>READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN NIL;
     END BuildTryListNil;
 
-  PROCEDURE BuildTermLock(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+  PROCEDURE BuildTermLock(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
       READONLY info: SynLocation.Info): SynParse.Tree  =
     VAR loc: SynLocation.T;
     BEGIN
@@ -879,7 +962,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
 	  package:=NIL, opCode:=NIL);
       END BuildTermLock;
 
-  PROCEDURE BuildTermWatch(self: SynParse.Action; p: SynParse.T; 
+  PROCEDURE BuildTermWatch(<*UNUSED*>self: SynParse.Action; p: SynParse.T; 
       base: INTEGER; READONLY info: SynLocation.Info): SynParse.Tree  =
     BEGIN
       RETURN
@@ -888,8 +971,7 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
           guard:=p.stack[base+2]);
       END BuildTermWatch;
       
-  PROCEDURE RegisterActions(actions: MetaParser.ActionTable) 
-    RAISES {SynParse.Fail} =
+  PROCEDURE RegisterActions(actions: MetaParser.ActionTable) =
   BEGIN
     MetaParser.Register("Select1", Select1, actions);
     MetaParser.Register("Select2", Select2, actions);
@@ -947,9 +1029,15 @@ IMPORT SynLocation, SynScan, Text, SynParse, ObLib, ObTree, MetaParser;
     MetaParser.Register("BuildTermObjFieldSingle", BuildTermObjFieldSingle, actions);
     MetaParser.Register("BuildTermObjFieldNil", BuildTermObjFieldNil, actions);
     MetaParser.Register("BuildTermClone", BuildTermClone, actions);
+    MetaParser.Register("BuildTermNotify", BuildTermNotify, actions);
+    MetaParser.Register("BuildTermPickler", BuildTermPickler, actions);
+    MetaParser.Register("BuildTermReplicate", BuildTermReplicate, actions);
+    MetaParser.Register("BuildTermSimple", BuildTermSimple, actions);
+    MetaParser.Register("BuildTermRemote", BuildTermRemote, actions);
     MetaParser.Register("BuildTermRedirect", BuildTermRedirect, actions);
     MetaParser.Register("BuildTermProc", BuildTermProc, actions);
     MetaParser.Register("BuildTermMeth", BuildTermMeth, actions);
+    MetaParser.Register("BuildTermUpdateMeth", BuildTermUpdateMeth, actions);
     MetaParser.Register("BuildTermLoop", BuildTermLoop, actions);
     MetaParser.Register("BuildTermExit", BuildTermExit, actions);
     MetaParser.Register("BuildTermFor", BuildTermFor, actions);

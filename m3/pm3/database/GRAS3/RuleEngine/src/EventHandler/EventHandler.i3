@@ -8,8 +8,11 @@ INTERFACE EventHandler;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:40  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:50  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:40  hosking
+    Import of GRAS3 1.1
 
     Revision 1.2  1998/08/12 11:04:59  roland
     Efficiency improvement: RuleEngine notifies EventDetectors of
@@ -35,6 +38,7 @@ TYPE
   T <: Public;
 
   Public =
+    <*TRANSIENT*> ROOT
     OBJECT
     METHODS
       init (ts: TriggerStorage.T): T;
@@ -43,7 +47,7 @@ TYPE
       newTransactionUnit (tu: CARDINAL);
       delTransactionUnit (tu: CARDINAL);
       
-      storeTrigger (t: Trigger.T; userdata: REFANY; id: CARDINAL);
+      storeTrigger (t: Trigger.T; userdata: <*TRANSIENT*> REFANY; id: CARDINAL);
                     (* store a trigger in trigger storage using id as a
                        (unique) identifier. *)
       removeTrigger (id: CARDINAL; VAR type: CARDINAL);
@@ -61,7 +65,7 @@ TYPE
                      VAR context         : ContextSet.T;
                      VAR transactionLevel: CARDINAL;
                      VAR action          : Action.T;
-                     VAR userdata        : REFANY                ):
+                     VAR userdata        : <*TRANSIENT*> REFANY ):
                      BOOLEAN;
                      (* Queries activated action storage of tu for activated
                         actions of the respective coupling mode. *)

@@ -3,8 +3,7 @@
 (* See the file COPYRIGHT for a full description.              *)
 
 (* File: Procedure.m3                                          *)
-(* Last Modified On Tue Aug 27 09:25:21 PDT 1996 by heydon     *)
-(*      Modified On Tue Jun 20 09:58:41 PDT 1995 by kalsow     *)
+(* Last Modified On Tue Jun 20 09:58:41 PDT 1995 by kalsow     *)
 (*      Modified On Tue Jun 13 20:00:51 PDT 1995 by ericv      *)
 (*      Modified On Thu Dec  5 17:21:10 PST 1991 by muller     *)
 
@@ -12,28 +11,31 @@ MODULE Procedure;
 
 IMPORT M3, M3ID, CG, Value, ValueRep, Type, Scope, Error, Host;
 IMPORT ProcType, Stmt, BlockStmt, Marker, Coverage, M3RT;
-IMPORT CallExpr, Token, Variable, Module, ProcExpr, Tracer;
+IMPORT CallExpr, Token, Variable, ProcExpr, Tracer;
 IMPORT Scanner, Decl, ESet, ProcBody, Target, Expr, Formal;
 FROM Scanner IMPORT GetToken, Match, MatchID, cur;
 
 REVEAL
   T = Value.T BRANDED OBJECT
-        peer         : T;
+        intf_peer    : T;
+        impl_peer    : T;
+        next_defn    : T;
         signature    : Type.T;
         syms         : Scope.T;
         block        : Stmt.T;
         body         : Body;
         result       : Variable.T;
 	builtin      : BOOLEAN;
+        predefined   : BOOLEAN;
         needs_raises : BOOLEAN;
         direct       : BOOLEAN;
         fails        : ESet.T;
         cg_proc      : CG.Proc;
-        offset       : INTEGER;
+        next_cg_proc : T;
         end_origin   : INTEGER;
       OVERRIDES
         typeCheck   := Check;
-        set_globals := SetGlobals;
+        set_globals := ValueRep.NoInit;
         load        := Load;
         declare     := Declarer;
         const_init  := ValueRep.NoInit;
@@ -60,8 +62,35 @@ VAR (*CONST*)
   resultName : M3ID.T := M3ID.NoID;
   returnName : M3ID.T := M3ID.NoID;
 
+VAR
+  defined_procs: T := NIL;
+  (* interface procedures that are implemented in the current compilation unit *)
+
+VAR
+  cg_procs: T := NIL;
+  (* procedures that have M3CG attachments *)
+
 PROCEDURE Reset () =
+  VAR t, u: T;
   BEGIN
+    (* disconnect the interface->implementation mappings *)
+    t := defined_procs;
+    WHILE (t # NIL) DO
+      u := t;  t := t.next_defn;
+      u.impl_peer := NIL;
+      u.next_defn := NIL;
+    END;
+    defined_procs := NIL;
+
+    (* release any M3CG objects that were created. *)
+    t := cg_procs;
+    WHILE (t # NIL) DO
+      u := t;  t := t.next_cg_proc;
+      u.cg_proc      := NIL;
+      u.next_cg_proc := NIL;
+      u.body         := NIL;
+    END;
+    cg_procs := NIL;
   END Reset;
 
 PROCEDURE ParseDecl (READONLY att: Decl.Attributes;
@@ -146,7 +175,8 @@ PROCEDURE IsEqual (a, b: Value.T): BOOLEAN =
     | T(t) => tb := t;
     ELSE      RETURN FALSE;
     END;
-    RETURN (ta.peer = tb) OR (tb.peer = ta);
+    RETURN (ta.intf_peer = tb) OR (tb.intf_peer = ta)
+        OR (ta.impl_peer = tb) OR (tb.impl_peer = ta);
   END IsEqual;
 
 PROCEDURE Create (name: M3ID.T): T =
@@ -155,20 +185,22 @@ PROCEDURE Create (name: M3ID.T): T =
     t := NEW (T);
     ValueRep.Init (t, name, Value.Class.Procedure);
     t.readonly     := TRUE;
-    t.peer         := NIL;
+    t.intf_peer    := NIL;
+    t.impl_peer    := NIL;
+    t.next_defn    := NIL;
     t.signature    := NIL;
     t.syms         := NIL;
     t.body         := NIL;
     t.block        := NIL;
     t.external     := FALSE;
     t.builtin      := FALSE;
-    t.direct       := FALSE;
+    t.predefined   := FALSE;
     t.result       := NIL;
     t.extName      := M3ID.NoID;
     t.needs_raises := TRUE;
     t.fails        := NIL;
     t.cg_proc      := NIL;
-    t.offset       := 0;
+    t.next_cg_proc := NIL;
     t.end_origin   := t.origin;
     RETURN t;
   END Create;
@@ -186,8 +218,9 @@ PROCEDURE Define (name      : TEXT;
     ProcType.SetMethods (sig, methods);
     s := M3ID.Add (name);
     t := Create (s);
-    t.signature := sig;
-    t.builtin   := (signature = NIL);
+    t.signature  := sig;
+    t.builtin    := (signature = NIL);
+    t.predefined := TRUE;
     Scope.Insert (t);
     IF (reserved) THEN Scanner.NoteReserved (s, t) END;
   END Define;
@@ -195,15 +228,17 @@ PROCEDURE Define (name      : TEXT;
 PROCEDURE NoteExport (implv, intfv: Value.T) =
   VAR impl: T := Value.Base (implv);  intf: T := Value.Base (intfv);
   BEGIN
-    IF (impl.peer # NIL) THEN
-      Redefined (impl, NIL(*intf*));
-    ELSIF NOT Type.IsAssignable (intf.signature, impl.signature) THEN
+    IF (impl.intf_peer # NIL) OR (intf.impl_peer # NIL) THEN
       Redefined (impl, NIL(*intf*));
     ELSE
-      impl.peer   := intf;
-      impl.scope  := intf.scope;  (* retain the exported module name *)
-      impl.offset := intf.offset; (* and interface record slot! *)
-      impl.used   := TRUE;
+      IF NOT Type.IsAssignable (intf.signature, impl.signature) THEN
+        Redefined (impl, NIL(*intf*));
+      END;
+      intf.next_defn := defined_procs;  defined_procs := intf;
+      intf.impl_peer := impl;
+      impl.intf_peer := intf;
+      impl.scope     := intf.scope;  (* retain the exported module name *)
+      impl.used      := TRUE;
     END;
   END NoteExport;
 
@@ -219,16 +254,7 @@ PROCEDURE Check (p: T;  VAR cs: Value.CheckState) =
        you do, the formals will be reused by procedures with the
        same signature. *)
 
-    Value.TypeCheck (p.peer, cs);
-
-    (* decide whether to put this guy in the interface record *)
-    IF (p.builtin) THEN
-      p.direct := FALSE;
-    ELSIF (Host.all_direct)
-       OR (p.external AND Host.ext_direct)
-       OR IsNested (p) THEN
-      p.direct := TRUE;
-    END;
+    Value.TypeCheck (p.intf_peer, cs);
 
     (* defer the rest to CheckBody *)
   END Check;
@@ -274,9 +300,6 @@ PROCEDURE CheckBody (p: T;  VAR cs: Value.CheckState) =
       raises := ProcType.Raises (p.signature);
       save := cs;
       cs.raises_others := FALSE;
-      cs.int_ops := 0;
-      cs.fp_ops := 0;
-      cs.div_ops := 0;
       ESet.TypeCheck (p.fails);
       ESet.Push (cs, raises, p.fails, stop := TRUE);
 
@@ -290,15 +313,7 @@ PROCEDURE CheckBody (p: T;  VAR cs: Value.CheckState) =
       DEC (Type.recursionDepth);
 
       p.needs_raises := cs.raises_others;
-      IF   (cs.fp_ops > 0)    (* all machines have floating-point traps *)
-        OR (cs.div_ops > 0)   (* all machines have divide-by-zero traps *)
-        OR ((cs.int_ops > 0) AND (Target.Checks_integer_ops)) THEN
-        p.needs_raises := TRUE;
-      END;
       cs.raises_others := save.raises_others;
-      cs.int_ops := save.int_ops;
-      cs.fp_ops := save.fp_ops;
-      cs.div_ops := save.div_ops;
       ESet.Pop (cs, raises, p.fails, stop := TRUE);
 
     Scope.Pop (zz);
@@ -337,13 +352,10 @@ PROCEDURE Load (t: T) =
     IF (t.builtin) THEN
       Error.ID (t.name, "builtin operation is not a procedure");
     END;
+    IF (t.impl_peer # NIL) THEN t := t.impl_peer; END;
     t.used := TRUE;
     Value.Declare (t);
-    IF (t.direct) THEN
-      CG.Load_procedure (t.cg_proc);
-    ELSE
-      CG.Load_addr (Scope.ToUnit (t), t.offset);
-    END;
+    CG.Load_procedure (t.cg_proc);
   END Load;
 
 PROCEDURE LoadStaticLink (t: T) =
@@ -351,6 +363,7 @@ PROCEDURE LoadStaticLink (t: T) =
     IF (t.builtin) THEN
       Error.ID (t.name, "builtin operation is not a procedure");
     END;
+    IF (t.impl_peer # NIL) THEN t := t.impl_peer; END;
     t.used := TRUE;
     Value.Declare (t);
     IF IsNested (t)
@@ -359,18 +372,12 @@ PROCEDURE LoadStaticLink (t: T) =
     END;
  END LoadStaticLink;
 
-PROCEDURE SetGlobals (p: T) =
-  BEGIN
-    IF (p.offset # 0) OR (p.direct) THEN RETURN END;
-    (* Type.SetGlobals (p.signature); *)
-    p.offset := Module.Allocate (Target.Address.size, Target.Address.align,
-                                 id := p.name);
-  END SetGlobals;
-
 PROCEDURE ImportProc (p: T;  name: TEXT;  n_formals: INTEGER;
                       cg_result: CG.Type;  cc: CG.CallingConvention) =
   VAR zz: Scope.T;  new: BOOLEAN;
   BEGIN
+    <*ASSERT p.cg_proc = NIL*>
+    p.next_cg_proc := cg_procs;  cg_procs := p;
     p.cg_proc := CG.Import_procedure (M3ID.Add (name), n_formals,
                                       cg_result, cc, new);
     IF (new) THEN
@@ -426,16 +433,19 @@ PROCEDURE Declarer (p: T): BOOLEAN =
     par: CG.Proc := NIL;
     cg_result: CG.Type;
     name := Value.GlobalName (p, dots := FALSE, with_module := TRUE);
-    tag : TEXT;
     type: CG.TypeUID;
-    globals, my_unit: CG.Var;
     sig := p.signature;
-    local_offs: INTEGER;
     n_formals: INTEGER;
     cconv: CG.CallingConvention;
   BEGIN
-    IF (p.peer # NIL) THEN
-      sig := p.peer.signature;
+    IF (p.predefined) AND (p.body = NIL) THEN
+      (* don't bother importing Word.* procedures or declaring their
+         signatures, but do generate a version stamp dependency *)
+      RETURN TRUE;
+    END;
+
+    IF (p.intf_peer # NIL) THEN
+      sig := p.intf_peer.signature;
       Type.Compile (sig);
     END;
     Type.Compile (p.signature);
@@ -446,49 +456,27 @@ PROCEDURE Declarer (p: T): BOOLEAN =
     n_formals := ProcType.NFormals (p.signature);
     cconv     := ProcType.CallConv (p.signature);
 
-    SetGlobals (p);
-    globals := Module.GlobalData (NIL);
-    my_unit := Scope.ToUnit(p);
-    IF (p.offset # 0) AND (my_unit = globals) THEN
-      tag := Value.GlobalName (p, dots := FALSE, with_module := FALSE);
-      CG.Declare_global_field (M3ID.Add (tag), p.offset, Target.Address.size,
-                               type);
-    END;
-
     IF (p.body = NIL) THEN
       (* it's not a local procedure *)
-      IF (p.direct) THEN
+      IF p.impl_peer # NIL THEN
+        (* it's an interface procedure that's implemented in this module *)
+        Value.Declare (p.impl_peer);
+        RETURN FALSE;
+      ELSE
+        (* it's an imported procedure *)
         ImportProc (p, name, n_formals, cg_result, cconv);
+        RETURN TRUE;
       END;
-      IF (p.offset # 0) AND (my_unit = globals) AND (p.cg_proc # NIL) THEN
-        CG.Init_proc (p.offset, p.cg_proc);
-      END;
-      RETURN TRUE;
     END;
 
     IF (p.body.parent # NIL) THEN par := p.body.parent.cg_proc END;
 
+    p.next_cg_proc := cg_procs;  cg_procs := p;
     p.cg_proc := CG.Declare_procedure (M3ID.Add (name),
                     n_formals, cg_result, p.body.level,  cconv,
-                    exported := p.direct AND (p.exported OR p.imported),
+                    exported := (p.exported OR p.imported),
                     parent := par);
     p.body.cg_proc := p.cg_proc;
-    IF (p.direct) THEN
-      (* no interface record slot *)
-    ELSIF (my_unit = globals) THEN
-      CG.Init_proc (p.offset, p.cg_proc);
-    ELSE (* this procedure is exported => external interface slot *)
-      p.body.export_var  := my_unit;
-      p.body.export_offs := p.offset;
-      (* nevertheless, create a local interface record slot for the debugger *)
-      tag := Value.GlobalName (p, dots := FALSE, with_module := FALSE);
-      local_offs := Module.Allocate (Target.Address.size, Target.Address.align,
-                                      id := p.name);
-      CG.Declare_global_field (M3ID.Add (tag), local_offs,
-                               Target.Address.size, type);
-      CG.Init_proc (local_offs, p.cg_proc);
-    END;
-
     Scanner.offset := p.origin;
     IF (p.syms # NIL) THEN
       zz := Scope.Push (p.syms);
@@ -533,19 +521,12 @@ PROCEDURE StaticLevel (t: T): INTEGER =
     END;
   END StaticLevel;
 
-PROCEDURE CGName (t: T;  VAR proc: CG.Proc;
-                  VAR unit: CG.Var;  VAR offset: INTEGER) =
+PROCEDURE CGName (t: T): CG.Proc =
   BEGIN
+    IF (t.impl_peer # NIL) THEN t := t.impl_peer; END;
     t.used := TRUE;
     Value.Declare (t);
-    proc := t.cg_proc;
-    IF (t.direct) THEN
-      unit   := NIL;
-      offset := 0;
-    ELSE
-      unit   := Scope.ToUnit (t);
-      offset := t.offset;
-    END;
+    RETURN t.cg_proc;
   END CGName;
 
 PROCEDURE EmitDecl (x: Body) =
@@ -577,6 +558,7 @@ PROCEDURE GenBody (p: T) =
          in the outer procedure, before we enter the nested one.*)
       Tracer.EmitPending ();
     END;
+
     Scanner.offset := p.origin;
     zz := Scope.Push (p.syms);
     tresult := ProcType.Result (p.signature);
@@ -602,7 +584,7 @@ PROCEDURE GenBody (p: T) =
         ELSE
           Error.WarnID (1, p.name, "function may not return a value");
           IF Host.doReturnChk THEN
-            CG.Return_fault ();
+            CG.Abort (CG.RuntimeError.NoReturnValue);
             oc := oc - Stmt.Outcomes {Stmt.Outcome.FallThrough};
           END;
         END;
@@ -668,47 +650,29 @@ PROCEDURE EndRaises (t: T;  l: CG.Label;  frame: CG.Var;  fallThru: BOOLEAN) =
   END EndRaises;
 
 PROCEDURE StartCall (t: T) =
-  VAR
-    result := ProcType.CGResult (t.signature);
-    cconv  := ProcType.CallConv (t.signature);
+  VAR result := ProcType.CGResult (t.signature);
   BEGIN
+    IF (t.impl_peer # NIL) THEN t := t.impl_peer; END;
     t.used := TRUE;
     Value.Declare (t);
-    IF (t.cg_proc # NIL) THEN
-      CG.Start_call_direct (t.cg_proc, StaticLevel (t), result);
-    ELSE
-      CG.Start_call_indirect (result, cconv);
-    END;
+    CG.Start_call_direct (t.cg_proc, StaticLevel (t), result);
   END StartCall;
 
-PROCEDURE EmitCall (t: T): CG.Val =
-  VAR
-    result := ProcType.CGResult (t.signature);
-    cconv  := ProcType.CallConv (t.signature);
-    tmp: CG.Val;
+PROCEDURE EmitValueCall (t: T): CG.Val =
+  VAR result := ProcType.CGResult (t.signature);
   BEGIN
-    IF (t.cg_proc # NIL) THEN
-      CG.Call_direct (t.cg_proc, result);
-    ELSE
-      CG.Load_addr (Scope.ToUnit (t), t.offset);
-      CG.Call_indirect (result, cconv);
-    END;
-    tmp := CaptureResult (result);
-    Marker.EmitExceptionTest (t.signature);
-    RETURN tmp;
-  END EmitCall;
+    IF (t.impl_peer # NIL) THEN t := t.impl_peer; END;
+    CG.Call_direct (t.cg_proc, result);
+    RETURN Marker.EmitExceptionTest (t.signature, need_value := TRUE);
+  END EmitValueCall;
 
-PROCEDURE CaptureResult (result: CG.Type): CG.Val =
+PROCEDURE EmitCall (t: T) =
+  VAR result := ProcType.CGResult (t.signature);
   BEGIN
-    IF (result = CG.Type.Void) THEN
-      RETURN NIL;
-    ELSIF (result # CG.Type.Struct) THEN
-      RETURN CG.Pop ();
-    ELSE
-      CG.Discard (result);
-      RETURN NIL;
-    END;
-  END CaptureResult;
+    IF (t.impl_peer # NIL) THEN t := t.impl_peer; END;
+    CG.Call_direct (t.cg_proc, result);
+    EVAL Marker.EmitExceptionTest (t.signature, need_value := FALSE);
+  END EmitCall;
 
 PROCEDURE Redefined (t: T;  other: Value.T;) =
   VAR save: INTEGER;
@@ -734,17 +698,16 @@ PROCEDURE HasBody (t: T): BOOLEAN =
   END HasBody;
 
 PROCEDURE AddFPTag (t: T;  VAR x: M3.FPInfo): CARDINAL =
-  VAR offset := t.offset DIV Target.Address.size;
   BEGIN
-    ValueRep.FPStart (t, x, "PROCEDURE ", offset, global := TRUE);
+    ValueRep.FPStart (t, x, "PROCEDURE ", 0, global := TRUE);
     RETURN 1;
   END AddFPTag;
 
 PROCEDURE FPType (t: T): Type.T =
   BEGIN
-    IF (t.peer = NIL)
+    IF (t.intf_peer = NIL)
       THEN RETURN t.signature;
-      ELSE RETURN t.peer.signature;
+      ELSE RETURN t.intf_peer.signature;
     END;
   END FPType;
 

@@ -16,7 +16,7 @@ PROCEDURE Initialize () =
     s := Scope.PushNew (FALSE, M3ID.NoID);
     Scope.PopNew ();
     T := NIL;   (* the value is used by ObjectType.New ! *)
-    T := ObjectType.New (NIL, TRUE, NIL, s, s);
+    T := ObjectType.New (NIL, TRUE, FALSE, NIL, s, s);
     Tipe.Define ("ROOT", T, TRUE);
   END Initialize;
 

@@ -7,8 +7,11 @@ MODULE Event;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:40  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:50  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:40  hosking
+    Import of GRAS3 1.1
 
     Revision 1.1  1997/10/31 14:06:17  roland
     The RuleEngine subsystem implements an event-trigger mechanism for GRAS.
@@ -21,10 +24,10 @@ MODULE Event;
 IMPORT EventType, InternEventType, EventTypes;
 
 TYPE
-  BoolArray = REF ARRAY OF BOOLEAN;
-  IntArray = REF ARRAY OF INTEGER;
-  TextArray = REF ARRAY OF TEXT;
-  RefAnyArray = REF ARRAY OF REFANY;
+  BoolArray = <*TRANSIENT*> REF ARRAY OF BOOLEAN;
+  IntArray = <*TRANSIENT*> REF ARRAY OF INTEGER;
+  TextArray = <*TRANSIENT*> REF <*TRANSIENT*> ARRAY OF TEXT;
+  RefAnyArray = <*TRANSIENT*> REF <*TRANSIENT*> ARRAY OF REFANY;
 
 REVEAL
   T = Public BRANDED OBJECT
@@ -107,7 +110,8 @@ PROCEDURE SetTextAttribute (event: T; index: CARDINAL; val: TEXT)
     event.texts^[typedIdx] := val;
   END SetTextAttribute;
 
-PROCEDURE SetRefAnyAttribute (event: T; index: CARDINAL; val: REFANY)
+PROCEDURE SetRefAnyAttribute (event: T; index: CARDINAL;
+                              val: REFANY)
   RAISES {EventType.Unknown, EventType.Mismatch} =
   VAR typedIdx: CARDINAL;
   BEGIN

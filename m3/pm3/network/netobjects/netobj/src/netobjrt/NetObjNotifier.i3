@@ -18,7 +18,7 @@ IMPORT NetObj;
 TYPE
   OwnerState = {Dead, Failed};
 
-  NotifierClosure = OBJECT METHODS
+  NotifierClosure = <*TRANSIENT*> ROOT OBJECT METHODS
     notify(obj: NetObj.T; st: OwnerState);
   END;
     
@@ -28,10 +28,10 @@ PROCEDURE AddNotifier(obj: NetObj.T; cl: NotifierClosure);
    If "obj" is not a surrogate object then "AddNotifier" has no effect.
    If "obj" is already inaccessible at the time "AddNotifier" is called,
    then a call to "cl.notify" is scheduled immediately.
-<SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>NetObjNotifier.AddNotifier</SPAN>
-<SPAN CLASS=INDEX.TEXT><TT>NetObjNotifier.AddNotifier</TT></SPAN>
-</SPAN>
+   <SPAN CLASS=INDEX.MARK>
+   <SPAN CLASS=INDEX.KEY>NetObjNotifier.AddNotifier</SPAN>
+   <SPAN CLASS=INDEX.TEXT><TT>NetObjNotifier.AddNotifier</TT></SPAN>
+   </SPAN>
 *)
 
 END NetObjNotifier.

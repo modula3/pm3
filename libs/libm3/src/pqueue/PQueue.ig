@@ -9,7 +9,7 @@
    new element into the queue and to delete one of its elements with minimal
    priority value. *)
 
-GENERIC INTERFACE PQueue(Priority);
+GENERIC INTERFACE PQueue(Super, Priority);
 (* Where "Priority.T" is a type that is not an open array type, and the
    "Priority" interface contains:
 
@@ -25,11 +25,11 @@ GENERIC INTERFACE PQueue(Priority);
    mode of either "VALUE" or "READONLY", but not "VAR". *)
 
 CONST
-  EltBrand = "(PQueueElt " & Priority.Brand & ")";
+  EltBrand = "(" & Super.Brand & " PQueueElt " & Priority.Brand & ")";
   (* The type "PQueue.Elt" is revealed to have the brand "EltBrand". *)
 
 TYPE
-  Elt <: OBJECT
+  Elt <: Super.T OBJECT
     priority: Priority.T
   END;
 
@@ -48,7 +48,7 @@ CONST
   (* The type "PQueue.Default" is revealed to have the brand "DefaultBrand". *)
 
 TYPE
-  T = OBJECT METHODS
+  T = Super.T OBJECT METHODS
     insert(READONLY elt: Elt);
     delete(elt: Elt) RAISES {NotInQueue};
     size(): CARDINAL;

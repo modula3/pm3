@@ -11,16 +11,14 @@
 
 MODULE Value EXPORTS Value, ValueProc;
 
-IMPORT Atom, Fmt, Text, Type;
+IMPORT Atom, Fmt, Text, Type, StubUtils;
 
 REVEAL T =  ROOT BRANDED OBJECT END;
-
-EXCEPTION FatalError;    <*FATAL FatalError*>
 
 PROCEDURE ToText(v: T; type: Type.T): TEXT =
   BEGIN
     TYPECASE v OF
-      Ordinal (ordinal) => 
+    | Ordinal (ordinal) => 
         IF (type = Type.integer) OR (type = Type.cardinal) THEN
           RETURN Fmt.Int(ordinal.ord); 
         ELSIF type = Type.boolean THEN 
@@ -33,7 +31,7 @@ PROCEDURE ToText(v: T; type: Type.T): TEXT =
              RETURN ToText(NEW(Ordinal, 
                     ord := ordinal.ord +  NARROW(sub.min, Ordinal).ord),
                            sub.base);
-          ELSE RAISE FatalError;
+          ELSE StubUtils.Die("Value.ToText: unsupported ordinal type");
           END;
         END;
     | Float (f) =>
@@ -93,10 +91,11 @@ PROCEDURE ToText(v: T; type: Type.T): TEXT =
         END;
     | Txt (text) => RETURN "\"" & text.val & "\"";
     | Null  => RETURN "NIL";
-    ELSE RAISE FatalError;
+    ELSE StubUtils.Die("Value.ToText: unsupported type");
     END;
+
+    RETURN NIL;
   END ToText;
 
 BEGIN
-
 END Value.

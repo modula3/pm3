@@ -9,13 +9,14 @@
 MODULE LockStmt;
 
 IMPORT M3ID, Expr, Mutex, Error, Type, Stmt, StmtRep, Token, Marker;
-IMPORT CG, Target, M3RT;
+IMPORT CG, Target, M3RT, Scanner;
 FROM Scanner IMPORT Match;
 
 TYPE
   P = Stmt.T OBJECT
         mutex   : Expr.T;
         body    : Stmt.T;
+        tail    : INTEGER;
       OVERRIDES
         check       := Check;
 	compile     := Compile;
@@ -31,6 +32,7 @@ PROCEDURE Parse (): Stmt.T =
     p.mutex := Expr.Parse ();
     Match (TK.tDO);
     p.body := Stmt.Parse ();
+    p.tail := Scanner.offset;
     Match (TK.tEND);
     RETURN p;
   END Parse;
@@ -79,6 +81,8 @@ PROCEDURE Compile1 (p: P): Stmt.Outcomes =
     Marker.SaveFrame ();
       oc := Stmt.Compile (p.body);
     Marker.Pop ();
+
+    CG.Gen_location (p.tail);
     CG.Set_label (l+1, barrier := TRUE);
 
     IF (Stmt.Outcome.FallThrough IN oc) THEN
@@ -115,6 +119,7 @@ PROCEDURE Compile2 (p: P): Stmt.Outcomes =
       oc := Stmt.Compile (p.body);
     Marker.Pop ();
 
+    CG.Gen_location (p.tail);
     CG.Set_label (l+1, barrier := TRUE);
 
     IF (Stmt.Outcome.FallThrough IN oc) THEN

@@ -9,22 +9,22 @@
 
 INTERFACE NGCMonitor;
 
-IMPORT WireRep, DirtyElem, Fingerprint, Transport, RefList;
+IMPORT WireRep, DirtyElem, Fingerprint, Transport, RefTransientList AS RefList;
 
 TYPE
   (* A value of type "Dump" is a snapshot of the state of the network
      object garbage collector in some program. *)
 
-  Dump = REF RECORD
+  Dump = <*TRANSIENT*> REF RECORD
     concs: RefList.T (* of CDump *) := NIL;
     srgts: RefList.T (* of SDump *) := NIL;
     locs:  RefList.T (* of LDump *) := NIL;
   END;
 
-  ODump = OBJECT
+  ODump = <*TRANSIENT*> ROOT OBJECT
     obj: WireRep.T;
     fp: Fingerprint.T;
-    typeName: TEXT;
+    <*TRANSIENT*> typeName: TEXT;
   END;
 
   CDump = ODump OBJECT
@@ -32,22 +32,22 @@ TYPE
   END;
 
   SDump = ODump OBJECT
-    owner: Transport.Endpoint;
+    <*TRANSIENT*> owner: Transport.Endpoint;
   END;
 
-  LDump = REF RECORD
-    info: TEXT;
-    ep: Transport.Endpoint;
+  LDump = <*TRANSIENT*> REF RECORD
+    <*TRANSIENT*> info: TEXT;
+    <*TRANSIENT*> ep: Transport.Endpoint;
     exports: RefList.T (* of DDump *) := NIL;
   END;
 
-  DDump = REF RECORD
+  DDump = <*TRANSIENT*> REF RECORD
     wrep: WireRep.T;
     de: DirtyElem.T;
   END;
 
-  NDump = REF RECORD
-    name: TEXT;    (* in export table *)
+  NDump = <*TRANSIENT*> REF RECORD
+    <*TRANSIENT*> name: TEXT;    (* in export table *)
     obj: WireRep.T;
   END;
 

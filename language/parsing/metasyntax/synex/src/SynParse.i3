@@ -351,10 +351,12 @@ PROCEDURE PackageSetup();
 
 VAR (* READONLY *) noArgs : Args;
 
-PROCEDURE New(swr: SynWr.T; env: GrammarEnv; stackSize: CARDINAL := 1024): T;
+PROCEDURE New(swr: SynWr.T; env: GrammarEnv; 
+              stackSize: CARDINAL := 10240): T;
 (* A new parsers, including a new scanner and the specified grammar
-   and stack. Error messages are written to swr. Use single-threaded. 
-   Separate parsers can be used concurrently in separate threads. *)
+   and stack. Error messages are written to swr. 
+   Use single-threaded. Separate parsers can be used
+   concurrently in separate threads. *)
 
 PROCEDURE NewEnv():  GrammarEnv;
 (* Creates a new, empty, grammar env. *)

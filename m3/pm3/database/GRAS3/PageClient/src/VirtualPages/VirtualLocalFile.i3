@@ -7,8 +7,11 @@ INTERFACE VirtualLocalFile;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:37  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:48  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:37  hosking
+    Import of GRAS3 1.1
 
     Revision 1.2  1997/11/13 14:14:15  roland
     New parameter composeName for VirtualLocalFile.Open determines whether
@@ -44,6 +47,7 @@ TYPE
                                   composeName   :BOOLEAN)
 			:T
 			RAISES {PageFile.NoAccess};
+      flush		();
     END;
   
 

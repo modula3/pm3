@@ -9,11 +9,12 @@
 
 MODULE ObjectType;
 
-IMPORT M3, M3ID, M3String, CG, Type, TypeRep, Scope, Expr, Host;
+IMPORT M3, M3ID, CG, Type, TypeRep, Scope, Expr, Host, TInt, UserProc;
 IMPORT Value, Error, RecordType, ProcType, OpaqueType, Revelation;
-IMPORT Field, Reff, Addr, RefType, Word, TextExpr, M3Buf, ErrType;
-IMPORT ObjectAdr, ObjectRef, Token, Module, Method;
+IMPORT Field, Reff, Addr, Word, M3Buf, ErrType, Procedure, AddressExpr;
+IMPORT ObjectAdr, ObjectRef, Token, Module, Method, Brand;
 IMPORT AssignStmt, M3RT, Scanner, TipeMap, TipeDesc, TypeFP, Target;
+IMPORT ReffTransient, ObjectTransient;
 FROM Scanner IMPORT Match, GetToken, cur;
 
 CONST
@@ -23,8 +24,7 @@ CONST
 
 TYPE
   P = Type.T BRANDED "ObjectType.T" OBJECT
-        brandE       : Expr.T;
-        brand        : M3String.T;
+        brand        : Brand.T;
         superType    : Type.T;
         fields       : Scope.T;
         fieldOffset  : INTEGER;
@@ -38,6 +38,7 @@ TYPE
         inPrimLookUp : BOOLEAN;
         isTraced     : BOOLEAN;
         user_name    : TEXT;
+        isTransient  : BOOLEAN;
       OVERRIDES
         check      := Check;
         check_align:= CheckAlign;
@@ -55,13 +56,15 @@ VAR
   NIL_ID: INTEGER := 0;
   ROOT_ID: INTEGER := 0;
   UROOT_ID: INTEGER := 0;
+  TROOT_ID: INTEGER := 0;
 
-PROCEDURE Parse (sup: Type.T;  traced: BOOLEAN;  brand: Expr.T): Type.T =
+PROCEDURE Parse (sup: Type.T;  traced, transient: BOOLEAN;  brand: Brand.T):
+  Type.T =
   TYPE TK = Token.T;
   VAR p: P;
   BEGIN
     LOOP
-      p := New (sup, traced, brand, NIL, NIL);
+      p := New (sup, traced, transient, brand, NIL, NIL);
       Match (TK.tOBJECT);
 
       p.fields := Scope.PushNew (FALSE, M3ID.NoID);
@@ -80,13 +83,14 @@ PROCEDURE Parse (sup: Type.T;  traced: BOOLEAN;  brand: Expr.T): Type.T =
       Scope.PopNew ();
 
       Match (TK.tEND);
-      brand := RefType.ParseBrand ();
+      brand := Brand.Parse ();
       IF (cur.token # TK.tOBJECT) THEN
         IF (brand # NIL) THEN Error.Msg ("dangling brand") END;
         EXIT;
       END;
       sup := p;
       traced := FALSE;
+      transient := FALSE;
     END;
     RETURN p;
   END Parse;
@@ -126,10 +130,7 @@ PROCEDURE ParseMethodList (p: P;  overrides := FALSE): INTEGER =
         END;
       ELSE 
         IF info.signature = NIL THEN
-          Error.ID (info.name, "missing method signature (old override?)");
-        END;
-        IF (info.signature = NIL) AND (info.dfault = NIL) THEN
-          Error.ID (info.name, "methods must include a signature or default value");
+          Error.ID (info.name, "missing method signature");
         END;
       END;
       
@@ -143,21 +144,25 @@ PROCEDURE ParseMethodList (p: P;  overrides := FALSE): INTEGER =
     RETURN info.offset;
   END ParseMethodList;
 
-PROCEDURE New (super: Type.T;  traced: BOOLEAN;  brand: Expr.T;
-                                            fields, methods: Scope.T): Type.T =
+PROCEDURE New (super: Type.T;  traced, transient: BOOLEAN;  brand: Brand.T;
+               fields, methods: Scope.T): Type.T =
   VAR p: P;
   BEGIN
     IF (super = NIL) THEN
       IF (traced)
-        THEN super := ObjectRef.T;
+        THEN
+          IF (transient)
+            THEN super := ObjectTransient.T;
+            ELSE super := ObjectRef.T;
+          END;
 	ELSE super := ObjectAdr.T;
       END;
     END;
     p := NEW (P);
     TypeRep.Init (p, Type.Class.Object);
     p.isTraced     := traced;
-    p.brandE       := brand;
-    p.brand        := NIL;
+    p.isTransient  := transient;
+    p.brand        := brand;
     p.superType    := super;
     p.fields       := fields;
     p.fieldOffset  := Unchecked_offset;
@@ -225,19 +230,15 @@ PROCEDURE IsBranded (t: Type.T): BOOLEAN =
   VAR info: Type.Info;
   BEGIN
     t := Type.CheckInfo (t, info);
-    IF (info.class # Type.Class.Object) THEN RETURN FALSE END;
-
-    (* try for TYPE t = BRANDED OBJECT ... END *)
-    IF (info.class = Type.Class.Object) THEN
-      RETURN (NARROW (t, P).brand # NIL);
-    END;
-
-    IF (info.class # Type.Class.Opaque) THEN RETURN FALSE END;
 
     (* try for REVEAL t = BRANDED OBJECT ... END *)
-    t := Revelation.LookUp (t);
-    IF (t = NIL) THEN RETURN FALSE END;
-    t := Type.CheckInfo (t, info);
+    IF (info.class = Type.Class.Opaque) THEN
+      t := Revelation.LookUp (t);
+      IF (t = NIL) THEN RETURN FALSE END;
+      t := Type.CheckInfo (t, info);
+    END;
+
+    (* try for TYPE t = BRANDED OBJECT ... END *)
     IF (info.class = Type.Class.Object) THEN
       RETURN (NARROW (t, P).brand # NIL);
     END;
@@ -331,7 +332,6 @@ PROCEDURE PrimaryMethodDeclaration (p: P;  v: Value.T): P =
 PROCEDURE Check (p: P) =
   VAR
     super    : Type.T;
-    brand    : Expr.T;
     name     : M3ID.T;
     n        : INTEGER;
     o, v     : Value.T;
@@ -352,6 +352,7 @@ PROCEDURE Check (p: P) =
       IF Is (super) THEN
         (* super type is an object type *)
         p.isTraced := super_info.isTraced;
+        p.isTransient := super_info.isTransient;
         hash := Word.Times (super_info.hash, 37);
         IF (super = p) THEN
           Error.Msg ("illegal recursive supertype");
@@ -363,21 +364,11 @@ PROCEDURE Check (p: P) =
         Error.Msg ("super type must be an object type");
         p.superType := NIL;
         p.isTraced  := super_info.isTraced;
+        p.isTransient := super_info.isTransient;
       END;
     END;
 
-    IF (p.brandE # NIL) THEN
-      Expr.TypeCheck (p.brandE, cs);
-      brand := Expr.ConstValue (p.brandE);
-      IF (brand = NIL) THEN
-        Error.Msg ("brand is not a constant");
-      ELSIF TextExpr.Split (brand, p.brand) THEN
-        hash := Word.Plus (Word.Times (hash, 37), M3String.Hash (p.brand));
-        RefType.NoteBrand (p, p.brand);
-      ELSE
-        Error.Msg ("brand is not a TEXT constant");
-      END;
-    END;
+    Brand.Check (p.brand, p, hash, cs);
 
     (* include the fields in my hash value *)
     o := Scope.ToList (p.fields);  n := 0;
@@ -410,6 +401,7 @@ PROCEDURE Check (p: P) =
     p.info.isEmpty   := FALSE;
     p.info.isSolid   := TRUE;
     p.info.hash      := hash;
+    p.info.isTransient := p.isTransient;
 
     INC (Type.recursionDepth); (*------------------------------------*)
     p.checked := TRUE;
@@ -439,7 +431,9 @@ PROCEDURE Check (p: P) =
     (* compute the size & alignment requirements of my fields *)
     GetSizes (p);
 
-    IF (NOT p.isTraced) AND Module.IsSafe() THEN CheckTracedFields (p) END;
+    IF p.isTraced THEN
+      IF p.isTransient THEN CheckNonTransientFields (p) END;
+    ELSIF Module.IsSafe() THEN CheckTracedFields (p) END;
   END Check;
 
 PROCEDURE CheckAlign (<*UNUSED*> p: P;  offset: INTEGER): BOOLEAN =
@@ -460,10 +454,44 @@ PROCEDURE CheckTracedFields (p: P) =
     END;
   END CheckTracedFields;
 
+PROCEDURE IsTransient (t: Type.T): BOOLEAN =
+  VAR info: Type.Info;
+  BEGIN
+    t := Type.CheckInfo (t, info);
+
+    IF (info.isTransient) THEN RETURN TRUE END;
+
+    (* try for REVEAL t = <*TRANSIENT*> ... *)
+    IF (info.class = Type.Class.Opaque) THEN
+      t := Revelation.LookUp (t);
+      IF (t = NIL) THEN RETURN FALSE END;
+      t := Type.CheckInfo (t, info);
+    END;
+
+    IF (info.isTransient) THEN RETURN TRUE END;
+    RETURN FALSE;
+  END IsTransient;
+
+PROCEDURE CheckNonTransientFields (p: P) =
+  VAR fields := Scope.ToList (p.fields); field: Field.Info;
+  BEGIN
+    WHILE (fields # NIL) DO
+      Field.Split (fields, field);
+      IF NOT field.transient AND NOT IsTransient(Value.TypeOf(fields)) THEN
+        VAR save := Scanner.offset;
+        BEGIN
+          Scanner.offset := fields.origin;
+          Error.Warn (1, "transient object contains a non-transient field");
+          Scanner.offset := save;
+        END;
+      END;
+      fields := fields.next;
+    END;
+  END CheckNonTransientFields; 
+
 PROCEDURE Compiler (p: P) =
   VAR
     fields, methods, v: Value.T;
-    brand: TEXT := NIL;
     nFields, nMethods, nOverrides: INTEGER;
   BEGIN
     Type.Compile (p.superType);
@@ -483,10 +511,9 @@ PROCEDURE Compiler (p: P) =
     GenFields (fields, FALSE);
 
     (* declare myself, my fields, and my methods *)
-    IF (p.brand # NIL) THEN brand := M3String.ToText (p.brand) END;
     CG.Declare_object (Type.GlobalUID (p), Type.GlobalUID (p.superType),
-                       brand, p.isTraced, nFields, nMethods, nOverrides,
-                       p.fieldSize);
+                       Brand.ToText (p.brand), p.isTraced, p.isTransient,
+                       nFields, nMethods, nOverrides, p.fieldSize);
     GenMethods (methods, TRUE);
     GenOverrides (methods, TRUE);
     GenFields (fields, TRUE);
@@ -550,71 +577,73 @@ PROCEDURE NoteRefName (t: Type.T;  name: TEXT) =
   END NoteRefName;
 
 PROCEDURE InitTypecell (t: Type.T;  offset, prev: INTEGER) =
+  TYPE RK = ARRAY BOOLEAN OF M3RT.TraceKind;
+  CONST Traced = ARRAY BOOLEAN OF RK
+    { RK { M3RT.TraceKind.Untraced, M3RT.TraceKind.Untraced },
+      RK { M3RT.TraceKind.Traced,   M3RT.TraceKind.Transient } };
   VAR
     p         : P := t;
     fields    := Scope.ToList (p.fields);
+    brand     := Brand.Compile (p.brand);
     type_map  := GenTypeMap (p, fields, refs_only := FALSE);
     gc_map    := GenTypeMap (p, fields, refs_only := TRUE);
     type_desc := GenTypeDesc (p, fields);
+    defaults  := GenMethodList (p);
     initProc  := GenInitProc (p);
-    linkProc  := GenLinkProc (p);
-    brand     : INTEGER := 0;
+    linkProc  := GenLinkProc (p, defaults);
     super_id  : INTEGER := 0;
     isz       : INTEGER := Target.Integer.size;
     name_offs : INTEGER := 0;
     fp        := TypeFP.FromType (p);
-    globals   := Module.GlobalData (NIL);
+    globals   := Module.GlobalData (is_const := FALSE);
+    consts    := Module.GlobalData (is_const := TRUE);
   BEGIN
     IF (p.superType # NIL) THEN super_id := Type.GlobalUID (p.superType) END;
 
-    IF (p.brand # NIL) THEN
-      brand := Module.Allocate (8 * (M3String.Length (p.brand) + 1),
-                                Target.Char.align, "brand");
-      M3String.Init_chars (brand, p.brand);
-    END;
-
     IF (p.user_name # NIL) THEN
-      name_offs := CG.EmitText (p.user_name);
+      name_offs := CG.EmitText (p.user_name, is_const := TRUE);
     END;
 
     (* generate my Type cell info *)
-    CG.Init_intt   (offset + M3RT.TC_selfID, isz, Type.GlobalUID (p));
+    CG.Init_intt   (offset + M3RT.TC_selfID, isz, Type.GlobalUID (p), FALSE);
     FOR i := FIRST (fp.byte) TO LAST (fp.byte) DO
-      CG.Init_intt (offset + M3RT.TC_fp + i * 8, 8, fp.byte[i]);
+      CG.Init_intt (offset + M3RT.TC_fp + i * 8, 8, fp.byte[i], FALSE);
     END;
-    IF (p.isTraced) THEN
-      CG.Init_intt (offset + M3RT.TC_traced, isz, 1);
+    CG.Init_intt (offset + M3RT.TC_traced, 8, ORD (Traced[p.isTraced, p.isTransient]), FALSE);
+    CG.Init_intt (offset + M3RT.TC_kind, 8, ORD (M3RT.TypeKind.Obj), FALSE);
+    CG.Init_intt (offset + M3RT.TC_dataAlignment, 8, p.fieldAlign DIV Target.Byte, FALSE);
+    CG.Init_intt (offset + M3RT.TC_dataSize, isz, p.fieldSize DIV Target.Byte, FALSE);
+    IF (type_map >= 0) THEN
+      CG.Init_var (offset + M3RT.TC_type_map, consts, type_map, FALSE);
     END;
-    CG.Init_intt   (offset + M3RT.TC_dataSize, isz,
-                      p.fieldSize DIV Target.Byte);
-    CG.Init_intt   (offset + M3RT.TC_dataAlignment, isz,
-                      p.fieldAlign DIV Target.Byte);
-    CG.Init_intt   (offset + M3RT.TC_methodSize, isz,
-                      p.methodSize DIV Target.Byte);
-    IF (type_map > 0) THEN
-      CG.Init_var (offset + M3RT.TC_type_map, globals, type_map);
+    IF (gc_map >= 0) THEN
+      CG.Init_var (offset + M3RT.TC_gc_map, consts, gc_map, FALSE);
     END;
-    IF (gc_map > 0) THEN
-      CG.Init_var (offset + M3RT.TC_gc_map, globals, gc_map);
+    IF (type_desc >= 0) THEN
+      CG.Init_var (offset + M3RT.TC_type_desc, consts, type_desc, FALSE);
     END;
-    IF (type_desc > 0) THEN
-      CG.Init_var (offset + M3RT.TC_type_desc, globals, type_desc);
-    END;
-    CG.Init_intt (offset + M3RT.TC_parentID, isz, super_id);
     IF (initProc # NIL) THEN
-      CG.Init_proc (offset + M3RT.TC_initProc, initProc);
+      CG.Init_proc (offset + M3RT.TC_initProc, initProc, FALSE);
     END;
-    IF (linkProc # NIL) THEN
-      CG.Init_proc (offset + M3RT.TC_linkProc, linkProc);
-    END;
-    IF (brand # 0) THEN
-      CG.Init_var (offset + M3RT.TC_brand, globals, brand);
+    IF (brand >= 0) THEN
+      CG.Init_var (offset + M3RT.TC_brand, consts, brand, FALSE);
     END;
     IF (p.user_name # NIL) THEN
-      CG.Init_var (offset + M3RT.TC_name,  globals, name_offs);
+      CG.Init_var (offset + M3RT.TC_name,  consts, name_offs, FALSE);
     END;
     IF (prev # 0) THEN
-      CG.Init_var (offset + M3RT.TC_next,  globals, prev);
+      CG.Init_var (offset + M3RT.TC_next,  globals, prev, FALSE);
+    END;
+
+    (* OBJECT specific extensions to the typecell *)
+    CG.Init_intt (offset + M3RT.OTC_parentID, isz, super_id, FALSE);
+    IF (linkProc # NIL) THEN
+      CG.Init_proc (offset + M3RT.OTC_linkProc, linkProc, FALSE);
+    END;
+    CG.Init_intt (offset + M3RT.OTC_methodSize, isz,
+                      p.methodSize DIV Target.Byte, FALSE);
+    IF (defaults >= 0) THEN
+      CG.Init_var (offset + M3RT.OTC_defaultMethods, consts, defaults, FALSE);
     END;
 
     NoteOffsets (p, p);
@@ -628,7 +657,7 @@ PROCEDURE GenTypeMap (p: P;  fields: Value.T;  refs_only: BOOLEAN): INTEGER =
 
     WHILE (fields # NIL) DO
       Field.Split (fields, field);
-      Type.GenMap (field.type, field.offset, -1, refs_only);
+      Type.GenMap (field.type, field.offset, -1, refs_only, field.transient);
       fields := fields.next;
     END;
 
@@ -658,6 +687,126 @@ PROCEDURE GenTypeDesc (p: P;  fields: Value.T): INTEGER =
     RETURN TipeDesc.Finish ("type description for ", Type.Name (p));
   END GenTypeDesc;
 
+CONST
+  MaxShortMethodList = 32;
+TYPE
+  MethodValue = RECORD known: BOOLEAN;  proc: CG.Proc;  END;
+
+PROCEDURE GenMethodList (p: P): INTEGER =
+  VAR n := MethodOffset (p);
+  BEGIN
+    IF n < 0 THEN RETURN -1; (* don't know! *) END;
+
+    (* # of methods *)
+    n := (n + p.methodSize) DIV Target.Address.size;
+
+    IF (n <= 0) THEN
+      RETURN -1;
+    ELSIF (n <= MaxShortMethodList) THEN
+      RETURN GenShortMethodList (p, n);
+    ELSE
+      RETURN GenLongMethodList (p, n);
+    END;
+  END GenMethodList;
+
+PROCEDURE GenShortMethodList (p: P;  n_methods: CARDINAL): INTEGER =
+  VAR methods: ARRAY [0..MaxShortMethodList-1] OF MethodValue;
+  BEGIN
+    RETURN DoMethodList (p, SUBARRAY (methods, 0, n_methods));
+  END GenShortMethodList;
+
+PROCEDURE GenLongMethodList (p: P;  n_methods: CARDINAL): INTEGER =
+  VAR methods := NEW (REF ARRAY OF MethodValue, n_methods);
+  BEGIN
+    RETURN DoMethodList (p, methods^);
+  END GenLongMethodList;
+
+PROCEDURE DoMethodList (p: P;  VAR m: ARRAY OF MethodValue): INTEGER =
+  VAR offset: INTEGER;
+  BEGIN
+    FOR i := FIRST (m) TO LAST (m) DO
+      m[i].known := FALSE;
+    END;
+
+    IF NOT FillMethods (p, m) THEN RETURN -1; END;
+
+    FOR i := FIRST (m) TO LAST (m) DO
+      IF NOT m[i].known THEN RETURN -1; END;
+    END;
+
+    offset := Module.Allocate (NUMBER (m) * Target.Address.size,
+                               Target.Address.align, TRUE, "method list");
+    FOR i := FIRST (m) TO LAST (m) DO
+      VAR p := m[i].proc; BEGIN
+        IF p # NIL THEN
+          CG.Init_proc (offset + i * Target.Address.size, p, TRUE);
+        END;
+      END;
+    END;
+    RETURN offset;
+  END DoMethodList;
+
+PROCEDURE FillMethods (t: Type.T;  VAR m: ARRAY OF MethodValue): BOOLEAN =
+  VAR
+    p         : P;
+    v         : Value.T;
+    method    : Method.Info;
+    b         : BOOLEAN;
+    top       : Value.T;
+    tVisible  : Type.T;
+    m_offset  : INTEGER;
+    expr      : Expr.T;
+    proc      : Value.T;
+    addr      : Target.Int;
+  BEGIN
+    IF (t = NIL) THEN RETURN TRUE; END;
+
+    p := Confirm (t);
+    IF p = NIL THEN RETURN FALSE; END;
+
+    IF NOT FillMethods (p.superType, m) THEN RETURN FALSE; END;
+      
+    (* try splitting each of my methods/overrides *)
+    v := Scope.ToList (p.methods);
+    WHILE (v # NIL) DO
+      Method.SplitX (v, method);
+      b := LookUp (p, method.name, top, tVisible); <* ASSERT b *>
+      m_offset := MethodOffset (tVisible);
+      IF (m_offset < 0) THEN RETURN FALSE; END;
+      m_offset := (m_offset + method.offset) DIV Target.Address.size;
+      WITH info = m[m_offset] DO
+        expr := Expr.ConstValue (method.dfault);
+        IF (expr = NIL) THEN
+          (* no method default specified or it is not a constant! *)
+          info.known := FALSE;
+          info.proc  := NIL;
+        ELSIF UserProc.IsProcedureLiteral (expr, proc) THEN
+          (* method default is a named procedure *)
+          info.known := TRUE;
+          info.proc  := Procedure.CGName (proc);
+        ELSIF AddressExpr.Split (expr, addr) AND TInt.EQ (addr, TInt.Zero) THEN
+          (* method default is NIL *)
+          (*************************
+            The runtime will initialize this slot to a routine that
+            raises an "undefined method" exception.  If we generate
+            a constant *read-only* method list, the runtime initialization
+            will fail!
+          info.known := TRUE;
+          info.proc  := NIL;
+          *************************)
+          info.known := FALSE;
+          info.proc  := NIL;
+        ELSE
+          info.known := FALSE;
+          info.proc  := NIL;
+        END;
+      END;
+      v := v.next;
+    END;
+
+    RETURN TRUE;
+  END FillMethods;
+
 PROCEDURE GenInitProc (p: P): CG.Proc =
   VAR
     v     := Scope.ToList (p.fields);
@@ -682,8 +831,8 @@ PROCEDURE GenInitProc (p: P): CG.Proc =
 
     (* generate the procedure body *)
 
-    name := Module.Prefix (NIL) & Type.Name (p) & "_INIT";
-    CG.Comment (-1, name);
+    name := Type.LinkName (p, "_INIT");
+    CG.Comment (-1, FALSE, name);
     Scanner.offset := p.origin;
     CG.Gen_location (p.origin);
     proc := CG.Declare_procedure (M3ID.Add (name), 1, CG.Type.Void,
@@ -703,7 +852,7 @@ PROCEDURE GenInitProc (p: P): CG.Proc =
       CG.Add_offset (p.fieldOffset);
     ELSE
       (* the field offsets are unknown *)
-      Type.LoadInfo (p, M3RT.TC_dataOffset);
+      Type.LoadInfo (p, M3RT.OTC_dataOffset);
       CG.Index_bytes (Target.Byte);
     END;
     ptr := CG.Pop ();
@@ -724,7 +873,7 @@ PROCEDURE GenInitProc (p: P): CG.Proc =
         CG.Push (ptr);
         CG.Boost_alignment (p.fieldAlign);
         CG.Add_offset (field.offset);
-        AssignStmt.Emit (field.type, field.dfault);
+        AssignStmt.DoEmit (field.type, field.dfault);
       END;
       v := v.next;
     END;
@@ -735,7 +884,7 @@ PROCEDURE GenInitProc (p: P): CG.Proc =
     RETURN proc;
   END GenInitProc;
 
-PROCEDURE GenLinkProc (p: P): CG.Proc =
+PROCEDURE GenLinkProc (p: P;  defaults: INTEGER): CG.Proc =
   VAR
     v         := Scope.ToList (p.methods);
     method    : Method.Info;
@@ -748,7 +897,11 @@ PROCEDURE GenLinkProc (p: P): CG.Proc =
     done      : BOOLEAN := TRUE;
     name      : TEXT    := NIL;
     proc      : CG.Proc := NIL;
+    defn      : CG.Var;
   BEGIN
+    (* check for a statically initialized method list *)
+    IF (defaults >= 0) THEN RETURN NIL; END;
+      
     (* check to see if we need any setup code *)
     WHILE (v # NIL) DO
       Method.SplitX (v, method);
@@ -761,16 +914,24 @@ PROCEDURE GenLinkProc (p: P): CG.Proc =
 
 
     (* get a pointer to my default method list *)
-    name := Module.Prefix (NIL) & Type.Name (p) & "_LINK";
-    CG.Comment (-1, name);
+    name := Type.LinkName (p, "_LINK");
+    CG.Comment (-1, FALSE, name);
     Scanner.offset := p.origin;
     CG.Gen_location (p.origin);
-    proc := CG.Declare_procedure (M3ID.Add (name), 0, CG.Type.Void,
+    proc := CG.Declare_procedure (M3ID.Add (name), 1, CG.Type.Void,
                                   0, Target.DefaultCall, exported:= FALSE,
                                   parent := NIL);
+    defn := CG.Declare_param (M3ID.NoID, Target.Address.size,
+                             Target.Address.align, CG.Type.Addr,
+                             Type.GlobalUID (Addr.T),
+                             in_memory := FALSE, up_level := FALSE,
+                             f := CG.Always);
     CG.Begin_procedure (proc);
 
-    Type.LoadInfo (p, M3RT.TC_defaultMethods, addr := TRUE);
+    (* grab the default methodlist pointer *)
+    CG.Load_addr (defn);
+    CG.Boost_alignment (Target.Address.align);
+    CG.Load_indirect (CG.Type.Addr, M3RT.OTC_defaultMethods, Target.Address.size);
     ptr := CG.Pop ();
 
     v := Scope.ToList (p.methods);
@@ -788,11 +949,11 @@ PROCEDURE GenLinkProc (p: P): CG.Proc =
         IF (m_offset >= 0) THEN
           CG.Add_offset (m_offset);
         ELSE
-          Type.LoadInfo (tVisible, M3RT.TC_methodOffset);
+          Type.LoadInfo (tVisible, M3RT.OTC_methodOffset);
           CG.Index_bytes (Target.Byte);
         END;
         CG.Boost_alignment (Target.Address.align);
-        AssignStmt.Emit (t_default, method.dfault);
+        AssignStmt.DoEmit (t_default, method.dfault);
       END;
       v := v.next;
     END;
@@ -804,41 +965,55 @@ PROCEDURE GenLinkProc (p: P): CG.Proc =
   END GenLinkProc;
 
 PROCEDURE EqualChk (a: P;  t: Type.T;  x: Type.Assumption): BOOLEAN =
-  VAR b: P := t;  xa, xb: Value.T;
+  (* Note: it is important to do the surface syntax checks before
+     checking the types of the fields and methods.  Otherwise, we will
+     add "a = t" to the current set of assumptions and may decide that
+     other types are equal when they are not! *)
+  VAR b: P := t;  fa, fb, ma, mb: Value.T;
   BEGIN
     IF (a = NIL)
       OR (a.isTraced # b.isTraced)
-      OR (a.brand # b.brand)
-      OR (NOT Type.IsEqual (a.superType, b.superType, x)) THEN
+      OR (a.isTransient # b.isTransient)
+      OR NOT Brand.Equal (a.brand, b.brand) THEN
       RETURN FALSE;
     END;
 
-    (* check the fields *)
-    xa := Scope.ToList (a.fields);
-    xb := Scope.ToList (b.fields);
-    WHILE (xa # NIL) AND (xb # NIL) DO
-      IF NOT Field.IsEqual (xa, xb, x) THEN RETURN FALSE END;
-      xa := xa.next;  xb := xb.next;
-    END;
-    IF (xa # NIL) OR (xb # NIL) THEN RETURN FALSE END;
+    fa := Scope.ToList (a.fields);
+    fb := Scope.ToList (b.fields);
 
-    (* check the methods *)
-    xa := Scope.ToList (a.methods);
-    xb := Scope.ToList (b.methods);
-    WHILE (xa # NIL) AND (xb # NIL) DO
-      IF NOT Method.IsEqual (xa, xb, x) THEN RETURN FALSE END;
-      xa := xa.next;  xb := xb.next;
+    (* check the field names and offsets *)
+    IF NOT Field.IsEqualList (fa, fb, x, types := FALSE) THEN RETURN FALSE; END;
+
+    ma := Scope.ToList (a.methods);
+    mb := Scope.ToList (b.methods);
+
+    (* check the method names and offsets *)
+    IF NOT Method.IsEqualList (ma, mb, x, types := FALSE) THEN RETURN FALSE; END;
+
+    (* check the super types *)
+    IF NOT Type.IsEqual (a.superType, b.superType, x) THEN
+      RETURN FALSE;
     END;
-    IF (xa # NIL) OR (xb # NIL) THEN RETURN FALSE END;
+
+    (* check the field types and default values *)
+    IF NOT Field.IsEqualList (fa, fb, x, types := TRUE) THEN RETURN FALSE; END;
+
+    (* check the method types and defaults *)
+    IF NOT Method.IsEqualList (ma, mb, x, types := TRUE) THEN RETURN FALSE; END;
 
     RETURN TRUE;
   END EqualChk;
 
 PROCEDURE Subtyper (a: P;  t: Type.T): BOOLEAN =
-  VAR root := Reff.T;
   BEGIN
-    IF (NOT a.isTraced) THEN root := Addr.T END;
-    IF Type.IsEqual (t, root, NIL) THEN RETURN TRUE END;
+    IF a.isTraced THEN
+      IF a.isTransient THEN
+        IF Type.IsEqual (t, ReffTransient.T, NIL) THEN RETURN TRUE END;
+      END;
+      IF Type.IsEqual (t, Reff.T, NIL) THEN RETURN TRUE END;
+    ELSE
+      IF Type.IsEqual (t, Addr.T, NIL) THEN RETURN TRUE END;
+    END;
     RETURN Type.IsEqual (a, t, NIL)
         OR ((a.superType # NIL) AND Type.IsSubtype (a.superType, t));
   END Subtyper;
@@ -857,15 +1032,15 @@ PROCEDURE FPrinter (p: P;  VAR x: M3.FPInfo) =
     ELSIF Type.IsEqual (p, ObjectAdr.T, NIL) THEN
       x.tag := "$objectadr";
       x.n_nodes := 0;
+    ELSIF Type.IsEqual (p, ObjectTransient.T, NIL) THEN
+      x.tag := "$objecttransient";
+      x.n_nodes := 0;
     ELSE
       M3Buf.PutText (x.buf, "OBJECT");
-      IF (NOT p.isTraced) THEN M3Buf.PutText (x.buf, "-UNTRACED") END;
-      IF (p.brand # NIL) THEN
-        M3Buf.PutText (x.buf, "-BRAND ");
-        M3Buf.PutInt  (x.buf, M3String.Length (p.brand));
-        M3Buf.PutChar (x.buf, ' ');
-        M3String.Put  (x.buf, p.brand);
-      END;
+      IF p.isTraced THEN
+        IF p.isTransient THEN M3Buf.PutText (x.buf, "-TRANSIENT") END;
+      ELSE M3Buf.PutText (x.buf, "-UNTRACED") END;
+      Brand.GenFPrint (p.brand, x);
 
       (* count the children *)
       n := 1; (* for supertype *)
@@ -969,7 +1144,7 @@ PROCEDURE GetOffsets (p: P;  use_magic: BOOLEAN) =
 
     IF (p.superType = NIL) THEN  (* p is ROOT or UNTRACED ROOT *)
       p.fieldOffset  := Target.Address.size;
-      p.methodOffset := Target.Integer.size;
+      p.methodOffset := 0;
     ELSE
       IF (use_magic) THEN
         p.fieldOffset  := Unknown_w_magic;
@@ -1003,11 +1178,12 @@ PROCEDURE FindMagic (t_id: INTEGER;  VAR d_size, m_size: INTEGER): BOOLEAN =
       NIL_ID   := Type.GlobalUID (NIL);
       ROOT_ID  := Type.GlobalUID (ObjectRef.T);
       UROOT_ID := Type.GlobalUID (ObjectAdr.T);
+      TROOT_ID := Type.GlobalUID (ObjectTransient.T);
     END;
 
-    IF (t_id = NIL_ID) OR (t_id = ROOT_ID) OR (t_id = UROOT_ID) THEN
+    IF (t_id = NIL_ID) OR (t_id = ROOT_ID) OR (t_id = UROOT_ID) OR (t_id = TROOT_ID) THEN
       d_size := Target.Address.size;
-      m_size := Target.Integer.size;
+      m_size := 0;
       RETURN TRUE;
 
     ELSIF NOT Host.env.find_opaque_magic (t_id, super, my_d_size,

@@ -21,7 +21,7 @@ readonly _DateImpls = {
   "FreeBSD3"   : "DateBsd",
   "FreeBSD4"   : "DateBsd",
   "HP300"      : "DateBsd",
-  "HPPA"       : "DateBsd",
+  "HPPA"       : "DatePosix",
   "IBMR2"      : "DateBsd",
   "IBMRT"      : "DateBsd",
   "IRIX5"      : "DatePosix",
@@ -31,7 +31,6 @@ readonly _DateImpls = {
   "NEXT"       : "DateBsd",
   "NT386"      : "DateBsd",
   "NT386GNU"   : "DateBsd",
-  "NetBSDi386" : "DateBsd",
   "OKI"        : "DateBsd",
   "SEQUENT"    : "DateBsd",
   "SOLgnu"     : "DatePosix",
@@ -41,7 +40,9 @@ readonly _DateImpls = {
   "SUN386"     : "DateBsd",
   "Tru64v5"    : "DateBsd",
   "UMAX"       : "DateBsd",
-  "VAX"        : "DateBsd"
+  "VAX"        : "DateBsd",
+  "I386_DARWIN": "DateBsd",
+  "PPC_DARWIN" : "DateBsd"
 }
 
 if _DateImpls contains TARGET

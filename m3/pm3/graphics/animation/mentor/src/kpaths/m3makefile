@@ -11,13 +11,11 @@ oblume("ShortestPath", "SPGraph")
 
 interface("Edge")
 interface("Vertex")
-interface("EdgeSeqRep")
-interface("VertexSeqRep")
-module("EdgeSeq")
-module("VertexSeq")
+sequence ("Edge", "Edge")
+sequence("Vertex", "Vertex")
 module("ShortestPath")
-module("AtomEdgeTbl")
-module("AtomVertexTbl")
+table("AtomEdge", "Atom", "Edge")
+table("AtomVertex", "Atom", "Vertex")
 
 resource("graph.sx")
 

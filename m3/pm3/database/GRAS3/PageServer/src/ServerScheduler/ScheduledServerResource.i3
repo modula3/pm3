@@ -7,8 +7,11 @@ INTERFACE ScheduledServerResource;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:39  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:49  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:39  hosking
+    Import of GRAS3 1.1
 
     Revision 1.5  1997/04/24 12:13:51  roland
     Added parameter (access) mode for opening a remote file. If a resource
@@ -49,10 +52,10 @@ INTERFACE ScheduledServerResource;
  *)
 IMPORT BaseScheduledServerResource AS Super;
 IMPORT
-  Pathname, TextSeq,
+  Pathname, TextTransientSeq AS TextSeq,
   Page,
   PageFile,
-  Access, PageLock, Transaction,
+  Access, PageLock, Txn,
   CommunicationSeq, RemoteFile,
   ServedClient, ClientInfoSeq;
 
@@ -131,8 +134,9 @@ TYPE
 			RAISES {Access.Invalid, Access.Locked};
 
       putData		(         client	:ServedClient.T;
-                                  end		:Transaction.End;
+                                  end		:Txn.End;
                                   entries       :CommunicationSeq.T)
+			:CARDINAL
 			RAISES {Access.Invalid};
 
       startTransaction	(         client	:ServedClient.T)

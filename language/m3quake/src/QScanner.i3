@@ -7,7 +7,7 @@
 
 INTERFACE QScanner;
 
-IMPORT File, M3ID, QToken;
+IMPORT File, Quake, QToken;
 
 VAR
   WhiteSpace := ARRAY CHAR OF BOOLEAN { FALSE, .. };
@@ -16,10 +16,13 @@ TYPE
   T <: T_; T_ = OBJECT
     token    : QToken.T;  (* current token class *)
     line     : INTEGER;   (* source line number *)
-    string   : M3ID.T;    (* token = QToken.T.{Name,String} *)
+    start    : CARDINAL;  (* character offset of the token in the input *)
+    length   : CARDINAL;  (* length of the token in characters *)
+    string   : Quake.ID;  (* token = QToken.T.{Name,String} *)
     cardinal : CARDINAL;  (* token = OToken.T.Cardinal *)
   METHODS
-    init (f: File.T): T;
+    init (f: File.T;  map: Quake.IDMap): T;
+    initText (txt: TEXT;  map: Quake.IDMap): T;
     next ();  (* update the fields above *)
   END;
 

@@ -7,6 +7,8 @@
 % Last modified on Mon Jan 23 14:47:21 PST 1995 by kalsow
 %      modified on Thu May 12 16:03:14 PDT 1994 by wobber
 
+/* m3_option("-X1@-Wf,-XNp300000@-Wf,-XNd200000@") */
+% m3_option ("-times")
 
 import("libm3")
 import("m3tk")
@@ -29,16 +31,15 @@ module("FRefRefTbl")
 
 implementation("Main")
 
-% Be extra careful with multiple versions
+build_standalone()
+Program("stubgen")
 
-if ""
-  option("standalone","T")
-  local stubgenv1 = program_name("stubgenv1")
-  link_file (program_name("stubgen"), stubgenv1)
-  BindExport(stubgenv1)
-end
+% if "TRUE"
+%   local stubgenv1 = program_name ("stubgenv1")
+%   link_file (program_name ("stubgen"), stubgenv1)
+%   install_derived (stubgenv1)
+%   install_link_to_derived (stubgenv1, BIN_INSTALL)
+% end
 
 ManPage("stubgen","1")
-
-Program("stubgen")
 

@@ -1,0 +1,109 @@
+% Copyright (C) 1993 Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+%
+% Last modified on Mon Jul 25 11:54:58 PDT 1994 by detlefs 
+%      modified on Mon Sep 20 12:26:41 PDT 1993 by kalsow 
+
+%
+%  Quake functions to instantiate a generic table.
+%
+
+readonly proc MkBag(nm, elem) is
+  local bag = nm & "Bag"
+  build_generic_intf (bag, "Bag", ["Root", elem], VISIBLE)
+  build_generic_impl (bag, "Bag", [elem])
+end
+
+readonly proc mkBag(nm, elem) is
+  local bag = nm & "Bag"
+  build_generic_intf (bag, "Bag", ["Root", elem], HIDDEN)
+  build_generic_impl (bag, "Bag", [elem])
+end
+
+readonly proc MkTransientBag(nm, elem) is
+  local bag = nm & "TransientBag"
+  build_generic_intf (bag, "Bag", ["RootTransient", elem], VISIBLE)
+  build_generic_impl (bag, "Bag", [elem])
+end
+
+readonly proc mkTransientBag(nm, elem) is
+  local bag = nm & "TransientBag"
+  build_generic_intf (bag, "Bag", ["RootTransient", elem], HIDDEN)
+  build_generic_impl (bag, "Bag", [elem])
+end
+
+%
+% Table-based implementation
+%
+
+readonly proc MkBagDef (nm, elem) is
+  local bag = nm & "Bag"
+  local bagDef = nm & "BagDef"
+  local elemIntTbl = nm & "IntTbl"
+  build_generic_intf (bagDef, "BagDef", [bag], VISIBLE)
+  build_generic_impl (bagDef, "BagDef", [elem, bag, elemIntTbl])
+end
+
+readonly proc mkBagDef (nm, elem) is
+  local bag = nm & "Bag"
+  local bagDef = nm & "BagDef"
+  local elemIntTbl = nm & "IntTbl"
+  build_generic_intf (bagDef, "BagDef", [bag], HIDDEN)
+  build_generic_impl (bagDef, "BagDef", [elem, bag, elemIntTbl])
+end
+
+readonly proc MkTransientBagDef (nm, elem) is
+  local bag = nm & "TransientBag"
+  local bagDef = nm & "TransientBagDef"
+  local elemIntTbl = nm & "IntTransientTbl"
+  build_generic_intf (bagDef, "BagDef", [bag], VISIBLE)
+  build_generic_impl (bagDef, "BagDef", [elem, bag, elemIntTbl])
+end
+
+readonly proc mkTransientBagDef (nm, elem) is
+  local bag = nm & "TransientBag"
+  local bagDef = nm & "TransientBagDef"
+  local elemIntTbl = nm & "IntTransientTbl"
+  build_generic_intf (bagDef, "BagDef", [bag], HIDDEN)
+  build_generic_impl (bagDef, "BagDef", [elem, bag, elemIntTbl])
+end
+
+%
+% List-based implementation
+%
+
+readonly proc MkBagList (nm, elem) is
+  local bag = nm & "Bag"
+  local bagList = nm & "BagList"
+  local elemList = nm & "List"
+  build_generic_intf (bagList, "BagList", [bag], VISIBLE)
+  build_generic_impl (bagList, "BagList", [elem, bag, elemList])
+end
+
+readonly proc mkBagList (nm, elem) is
+  local bag = nm & "Bag"
+  local bagList = nm & "BagList"
+  local elemList = nm & "List"
+  build_generic_intf (bagList, "BagList", [bag], HIDDEN)
+  build_generic_impl (bagList, "BagList", [elem, bag, elemList])
+end
+
+readonly proc MkTransientBagList (nm, elem) is
+  local bag = nm & "TransientBag"
+  local bagList = nm & "TransientBagList"
+  local elemList = nm & "TransientList"
+  build_generic_intf (bagList, "BagList", [bag], VISIBLE)
+  build_generic_impl (bagList, "BagList", [elem, bag, elemList])
+end
+
+readonly proc mkTransientBagList (nm, elem) is
+  local bag = nm & "TransientBag"
+  local bagList = nm & "TransientBagList"
+  local elemList = nm & "TransientList"
+  build_generic_intf (bagList, "BagList", [bag], HIDDEN)
+  build_generic_impl (bagList, "BagList", [elem, bag, elemList])
+end
+
+
+

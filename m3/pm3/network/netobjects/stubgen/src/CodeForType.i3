@@ -9,7 +9,7 @@
 
 INTERFACE CodeForType;
 
-IMPORT Atom, Formatter, AtomRefTbl, StubCode, Type;
+IMPORT Atom, Formatter, AtomRefTransientTbl AS AtomRefTbl, StubCode, Type;
 
 (* Return a textual representation of the type t.  If byName = TRUE, and 
    type T is named, then return the name.  Otherwise return text 

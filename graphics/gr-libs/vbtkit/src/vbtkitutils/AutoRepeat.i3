@@ -52,7 +52,7 @@ TYPE
       repeat ();
       canRepeat(): BOOLEAN;
     END;
-  Private <: ROOT;
+  Private <: <*TRANSIENT*> ROOT;
 
 (* The call "ar.init(firstWait, period)" initializes "ar" as an
    "AutoRepeat.T", and it returns "ar".  The "firstWait" and

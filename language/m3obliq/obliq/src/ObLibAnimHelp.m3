@@ -11,7 +11,7 @@ IMPORT SynWr, Text, ObLib, ObCommand, Bundle, ObliqBdl2;
     ObLib.RegisterHelp("zeus", HelpZeus);
   END Setup;
 
-  PROCEDURE HelpRects(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL) =
+  PROCEDURE HelpRects(self: ObCommand.T; arg: TEXT; <*UNUSED*>data: REFANY:=NIL) =
     BEGIN
       IF Text.Equal(arg, "!") THEN
         SynWr.Text(SynWr.out, "  rects             (the built-in rects library)\n");
@@ -24,7 +24,7 @@ IMPORT SynWr, Text, ObLib, ObCommand, Bundle, ObliqBdl2;
       END;
     END HelpRects;
 
-  PROCEDURE HelpGraph(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL) =
+  PROCEDURE HelpGraph(self: ObCommand.T; arg: TEXT; <*UNUSED*>data: REFANY:=NIL) =
     BEGIN
       IF Text.Equal(arg, "!") THEN
         SynWr.Text(SynWr.out, "  graph             (the built-in graph library)\n");
@@ -37,7 +37,7 @@ IMPORT SynWr, Text, ObLib, ObCommand, Bundle, ObliqBdl2;
       END;
     END HelpGraph;
 
-  PROCEDURE HelpZeus(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL) =
+  PROCEDURE HelpZeus(self: ObCommand.T; arg: TEXT; <*UNUSED*>data: REFANY:=NIL) =
     BEGIN
       IF Text.Equal(arg, "!") THEN
         SynWr.Text(SynWr.out, "  zeus              (the built-in zeus library)\n");

@@ -7,8 +7,11 @@ MODULE RuleMonitor;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:41  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:51  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:41  hosking
+    Import of GRAS3 1.1
 
     Revision 1.2  1997/11/12 17:24:18  roland
     Start/Stop fixed. The listener really gets killed when stopping the
@@ -108,7 +111,7 @@ PROCEDURE UninstallMonitor () =
 PROCEDURE ActionProc (             event  : Event.T;
                                    context: ContextSet.T;
                                    local  : BOOLEAN;
-                      <* UNUSED *> data   : REFANY        ) =
+                      <* UNUSED *> data   : <*TRANSIENT*> REFANY) =
   CONST LocalText = ARRAY BOOLEAN OF TEXT{"remote ", "local "};
   VAR
     type    : EventType.T;

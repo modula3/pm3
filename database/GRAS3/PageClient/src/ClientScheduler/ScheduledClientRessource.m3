@@ -8,8 +8,11 @@ MODULE ScheduledClientRessource EXPORTS ScheduledClientRessource,
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:37  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:48  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:37  hosking
+    Import of GRAS3 1.1
 
     Revision 1.11  1997/10/31 14:13:28  roland
     Adapted to new RuleEngine.
@@ -70,7 +73,7 @@ MODULE ScheduledClientRessource EXPORTS ScheduledClientRessource,
  | ------------------------------------------------------------------------
  *)
 IMPORT BaseScheduledClientRessource AS Super;
-IMPORT Pathname, PageFile, PageLock, Access, Transaction, RemoteFile,
+IMPORT Pathname, PageFile, PageLock, Access, Txn, RemoteFile,
        CommunicationSeq, InternalBaseScheduledClientFile,
        ScheduledClientFile, InternalScheduledClientFile,
        ScheduledClientFileTbl, ErrorSupport, CallbackPort;
@@ -89,6 +92,7 @@ REVEAL
 
         startTransaction  := StartTransaction;
         commitTransaction := CommitTransaction;
+        chainTransaction  := ChainTransaction;
         abortTransaction  := AbortTransaction;
 
         releaseCallback   := ReleaseCallback;
@@ -120,7 +124,7 @@ PROCEDURE Init (self    : T;
 
 PROCEDURE Close (self: T) RAISES {FatalError} =
   BEGIN
-    IF Transaction.EnvelopeLevel < self.getTransactionLevel() THEN
+    IF Txn.EnvelopeLevel < self.getTransactionLevel() THEN
       RAISE
         FatalError(ErrorSupport.Create("ScheduledClientRessource.Close",
                                        "Pending transaction(s)"));
@@ -225,6 +229,31 @@ PROCEDURE CommitTransaction (self: T)
   END CommitTransaction;
 
 
+PROCEDURE ChainTransaction (self: T)
+  RAISES {NotInTransaction, FatalError} =
+  VAR
+    baseName: Pathname.T;
+    file    : ScheduledClientFile.T;
+    i       : ScheduledClientFileTbl.Iterator;
+  BEGIN
+    TRY
+      i := self.files.iterate();
+      WHILE i.next(baseName, file) DO file.chainTransaction(); END;
+      Super.T.chainTransaction(self);
+    EXCEPT
+      ScheduledClientFile.FatalError (info) =>
+        RAISE FatalError(ErrorSupport.Propagate(
+                             "ScheduledClientRessource.ChainTransaction",
+                             "ScheduledClientFile.FatalError", info));
+    | Super.FatalError (info) =>
+        RAISE FatalError(ErrorSupport.Propagate(
+                             "ScheduledClientRessource.ChainTransaction",
+                             "Super.FatalError", info));
+    | Super.NotInTransaction => RAISE NotInTransaction;
+    END;
+  END ChainTransaction;
+
+
 PROCEDURE AbortTransaction (self: T)
   RAISES {NotInTransaction, FatalError} =
   VAR
@@ -279,7 +308,7 @@ PROCEDURE ReleaseCallback (self   : T;
 
 
 PROCEDURE PropagateCallback (self   : T;
-                             end    : Transaction.End;
+                             end    : Txn.End;
                              entries: CommunicationSeq.T)
   RAISES {CallbackPort.FatalError} =
 
@@ -294,10 +323,13 @@ PROCEDURE PropagateCallback (self   : T;
     END;
 
     CASE end OF
-    | Transaction.End.Abort, Transaction.End.No =>
+    | Txn.End.Abort, Txn.End.No =>
       (* nothing to do *)
 
-    | Transaction.End.Commit =>
+    | Txn.End.Chain =>
+      (* should we do anything? *)
+
+    | Txn.End.Commit =>
         self.remoteCommitNotifier.notify();
     END;
   END PropagateCallback;

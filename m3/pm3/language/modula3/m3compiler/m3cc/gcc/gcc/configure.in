@@ -666,10 +666,13 @@ changequote([,])dnl
 		    # a broken tar, so we use cpio instead.
 		    install_headers_dir=install-headers-cpio
 		    ;;
+		  *-*-osf5*)
+		    tm_file="${tm_file} alpha/osf.h alpha/osf5.h"
+		    ;;
 		esac
 		case $machine in
 changequote(,)dnl
-		  *-*-osf4.0[b-z] | *-*-osf4.[1-9]*)
+		  *-*-osf4.0[b-z] | *-*-osf4.[1-9]* | *-*-osf5*)
 changequote([,])dnl
 		    target_cpu_default=MASK_SUPPORT_ARCH
 		    ;;

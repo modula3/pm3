@@ -12,12 +12,16 @@ IMPORT M3toC, Time, Text;
 IMPORT IP, Unix, Ustat;
 
 PROCEDURE CreateTime (file: TEXT): Time.T =
-  VAR s: Ustat.struct_stat;
+  VAR
+    s: Ustat.struct_stat;
+    ret := NO_TIME;
+    s_file := M3toC.SharedTtoS (file);
   BEGIN
-    IF Ustat.stat (M3toC.TtoS (file), ADR (s)) = 0
-      THEN RETURN FLOAT (s.st_mtime, LONGREAL);
-      ELSE RETURN NO_TIME;
+    IF Ustat.stat (s_file, ADR (s)) = 0 THEN
+      ret := FLOAT (s.st_mtime, LONGREAL);
     END;
+    M3toC.FreeSharedS (file, s_file);
+    RETURN ret;
   END CreateTime;
 
 PROCEDURE GetHostName (): TEXT =

@@ -81,7 +81,7 @@ TYPE
   END;
   (*
     | entry in the "source" action table
-    | the "source" action table is juste an array of these.
+    | the "source" action table is just an array of these.
     | To use it, it must first be transformed into a hash-table, using the 
     | procedure TableFromArray
   *)
@@ -118,12 +118,14 @@ TYPE
 
 (* CAUTION: If you use multi-threading, put a lock around any call to Parse. *)
 
-PROCEDURE NewParser(swr: SynWr.T; actionTable : ActionTable; fileName: TEXT; rd: Rd.T)
+PROCEDURE NewParser(swr: SynWr.T; 
+                    actionTable : ActionTable; fileName: TEXT; rd: Rd.T)
     : SynParse.T 
     RAISES {SynParse.Fail, SynScan.Fail, SynScan.NoReader};
 (* This procedure returns a new parser for the grammar read from rd;
     actionTable is a hashed actionTable used to translate the action strings 
-   of the grammar file into procedures.  The parser writes messages to swr.
+   of the grammar file into procedures.  The parser writes messages to
+   swr.
 *)
 
 PROCEDURE NewClauseList(actionTable : ActionTable; fileName: TEXT; rd: Rd.T)
@@ -145,7 +147,7 @@ PROCEDURE NewActionTable(): ActionTable;
 PROCEDURE Register(name: TEXT; proc: ActionProc;
                           table: ActionTable );
 
-PROCEDURE TableFromArray( sourceTable : ActionProcTable;
+PROCEDURE TableFromArray(READONLY sourceTable : ActionProcTable;
                           table: ActionTable ) ;
 (* merges an array of ActionProcEntry's (sourceTable) into a ActionTable,
   which can be passed to ReadGFile *)

@@ -55,12 +55,12 @@ PROCEDURE ConvertOSError(a: Atom.T): TEXT =
     RETURN Atom.ToText(a)
   END ConvertOSError;
 
-PROCEDURE ConvertPath(t: Text.T) : char_star =
+PROCEDURE ConvertPath(s: char_star) : char_star =
   BEGIN
-    IF t = NIL THEN
-      RETURN M3toC.TtoS("");
+    IF s = NIL THEN
+      RETURN M3toC.FlatTtoS("");
     ELSE
-      RETURN M3toC.TtoS(t);
+      RETURN s;
     END;
   END ConvertPath;
 
@@ -71,12 +71,13 @@ PROCEDURE ConvertPath(t: Text.T) : char_star =
 PROCEDURE GetInfo(path: TEXT; VAR (*OUT*) mtime: Time.T): FileType
                   RAISES { FileNotFound, FileError } =
   VAR
-    p := ConvertPath(path);
+    p := M3toC.SharedTtoS(path);
     statBuf: Ustat.struct_stat;
     status: int;
     micro: INTEGER;
   BEGIN
-    status := Ustat.stat(p, ADR(statBuf));
+    status := Ustat.stat(ConvertPath(p), ADR(statBuf));
+    M3toC.FreeSharedS(path, p);
     IF status = -1 THEN
       IF ClassifyError(Uerror.errno) = ErrorClass.LookupError THEN
         RAISE FileNotFound
@@ -127,10 +128,11 @@ PROCEDURE OpenWrite(path: TEXT; append: BOOLEAN): Wr.T RAISES { FileError } =
 
 PROCEDURE Delete(path: TEXT) RAISES { FileError } =
   VAR
-    p: char_star := ConvertPath(path);
+    p := M3toC.SharedTtoS(path);
     status: int;
   BEGIN
-    status := Unix.unlink(p);
+    status := Unix.unlink(ConvertPath(p));
+    M3toC.FreeSharedS(path, p);
     IF status = -1 THEN
       RAISE FileError(ErrorMessage(Uerror.errno));
     END;
@@ -138,11 +140,13 @@ PROCEDURE Delete(path: TEXT) RAISES { FileError } =
   
 PROCEDURE Rename(srce, dest: TEXT) RAISES { FileError } =
   VAR
-    pSrce: char_star := ConvertPath(srce);
-    pDest: char_star := ConvertPath(dest);
+    pSrce := M3toC.SharedTtoS(srce);
+    pDest := M3toC.SharedTtoS(dest);
     status: int;
   BEGIN
-    status := Unix.rename(pSrce, pDest);
+    status := Unix.rename(ConvertPath(pSrce), ConvertPath(pDest));
+    M3toC.FreeSharedS(srce, pSrce);
+    M3toC.FreeSharedS(dest, pDest);
     IF status = -1 THEN
       RAISE FileError(ErrorMessage(Uerror.errno));
     END;
@@ -151,14 +155,14 @@ PROCEDURE Rename(srce, dest: TEXT) RAISES { FileError } =
 PROCEDURE MakeDir(path: TEXT) RAISES { FileError } =
   VAR
     status: int;
-    p := ConvertPath(path);
+    p := M3toC.SharedTtoS(path);
   BEGIN
-    status := Unix.mkdir(p, 8_0777); (* masked by process's mode mask *)
+    status := Unix.mkdir(ConvertPath(p), 8_0777); (* masked by process's mode mask *)
+    M3toC.FreeSharedS(path, p);
     IF status = -1 THEN
       RAISE FileError(ErrorMessage(Uerror.errno));
     END;
   END MakeDir;
-
 
 PROCEDURE Enumerate(path: TEXT): TextList.T RAISES { FileError } =
   VAR

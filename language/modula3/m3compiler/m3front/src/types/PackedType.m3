@@ -119,6 +119,7 @@ PROCEDURE Check (p: P) =
     p.info.isEmpty   := info.isEmpty;
     p.info.isSolid   := info.isSolid;
     p.info.hash      := Word.Plus (Word.Times (61, info.hash), new_sz);
+    p.info.isTransient := info.isTransient;
   END Check;
 
 PROCEDURE CheckAlign (p: P;  offset: INTEGER): BOOLEAN =
@@ -166,10 +167,10 @@ PROCEDURE GenInit (p: P;  zeroed: BOOLEAN) =
     Type.InitValue (p.baseType, zeroed);  (* BUG!! *)
   END GenInit;
 
-PROCEDURE GenMap (p: P;  offset, size: INTEGER;  refs_only: BOOLEAN) =
+PROCEDURE GenMap (p: P; offset, size: INTEGER; refs_only, transient: BOOLEAN) =
   BEGIN
     <*ASSERT size <= p.newSize*>
-    Type.GenMap (p.baseType, offset, size, refs_only);
+    Type.GenMap (p.baseType, offset, size, refs_only, transient);
   END GenMap;
 
 PROCEDURE GenDesc (p: P) =

@@ -11,7 +11,7 @@ MODULE Stmt EXPORTS Stmt, StmtRep;
 IMPORT CG, AssertStmt, AssignStmt, BlockStmt, CaseStmt, ExitStmt;
 IMPORT EvalStmt, ForStmt, IfStmt, LockStmt, LoopStmt, RepeatStmt;
 IMPORT ReturnStmt, RaiseStmt, TryStmt, TypeCaseStmt, WhileStmt, WithStmt;
-IMPORT Scanner, Token, Coverage, Error, Tracer, M3ID;
+IMPORT Scanner, Token, Coverage, Error, Tracer, M3ID, DebugStmt;
 FROM Scanner IMPORT GetToken, cur;
 
 TYPE TK = Token.T;
@@ -41,6 +41,7 @@ PROCEDURE Parse (): T =
         TK.tRECORD   => t := AssignStmt.Parse ();
       | TK.tASSERT   => t := AssertStmt.Parse ();
       | TK.tCASE     => t := CaseStmt.Parse ();
+      | TK.tDEBUG    => t := DebugStmt.Parse ();
       | TK.tEXIT     => t := ExitStmt.Parse ();
       | TK.tEVAL     => t := EvalStmt.Parse ();
       | TK.tFOR      => t := ForStmt.Parse ();

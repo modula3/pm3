@@ -17,8 +17,9 @@ IMPORT AnchorBtnVBT, Axis, BorderedVBT, ButtonVBT, BtnVBTClass,
 CONST 
   XSize = 10;
   YSize = 30;
-  BrickSizeV = 5.6;
-  BrickSizeH = 17.0;
+  AbsoluteScaling = 1.0;
+  BrickSizeV = AbsoluteScaling * 5.6;
+  BrickSizeH = AbsoluteScaling * 17.0;
   SafeZone = 3;
 
 TYPE
@@ -350,7 +351,10 @@ PROCEDURE BrickAction(self: ButtonVBT.T; READONLY cd: VBT.MouseRec) RAISES {} =
   VAR brick: Brick;
   BEGIN
     brick := NARROW(self, Brick);
-    IF brick.wall.gameOver THEN RETURN END;
+    IF brick.wall.gameOver THEN
+      brick.wall.StartGame (brick.wall.difficulty);
+      RETURN;
+    END;
     IF (cd.whatChanged = VBT.Modifier.MouseR) 
 	OR (VBT.Modifier.Shift IN cd.modifiers) THEN
       ToggleMarking(brick);
@@ -360,8 +364,11 @@ PROCEDURE BrickAction(self: ButtonVBT.T; READONLY cd: VBT.MouseRec) RAISES {} =
         IF brick.state = UnknownState THEN
           brick.ShowAndFlood();
         ELSE
-          IF (cd.whatChanged = VBT.Modifier.MouseL) OR 
-             (brick.wall.difficulty < Difficulty.Hard) THEN
+          IF (brick.wall.difficulty < Difficulty.Hard) THEN
+	    AutoBrick( brick, Range.Short);
+	  ELSIF (VBT.Modifier.Control IN cd.modifiers) THEN
+	    AutoBrick( brick, Range.Long);
+          ELSIF (cd.whatChanged = VBT.Modifier.MouseL) THEN
 	    AutoBrick( brick, Range.Short);
 	  ELSE
 	    AutoBrick( brick, Range.Long);
@@ -405,11 +412,17 @@ PROCEDURE BrickShape(self: VBT.T; ax: Axis.T; <*UNUSED*>n: CARDINAL): VBT.SizeRa
 PROCEDURE BrickMouse(v: Brick; READONLY cd: VBT.MouseRec) RAISES {} =
   BEGIN
     IF cd.clickType = VBT.ClickType.FirstDown THEN
-      IF (v.wall.difficulty < Difficulty.Desperate) OR 
-         (cd.whatChanged = VBT.Modifier.MouseL) THEN
+      IF (v.wall.difficulty < Difficulty.Desperate) THEN
         v.wall.range := Range.Short;
       ELSIF cd.whatChanged = VBT.Modifier.MouseM THEN
         v.wall.range := Range.Long;
+      ELSIF (cd.whatChanged = VBT.Modifier.MouseL) 
+	AND (VBT.Modifier.Control IN cd.modifiers) THEN
+        v.wall.range := Range.Long;
+      ELSIF (cd.whatChanged = VBT.Modifier.MouseL) THEN
+        v.wall.range := Range.Short;
+      ELSE
+        v.wall.range := Range.Short;
       END;
     END;
     

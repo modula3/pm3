@@ -1,5 +1,5 @@
 interface("InternEventType")
 Interface("EventType")
 implementation("EventType")
-sequence("EventType", "EventType")
+transientSequence("EventType", "EventType")
 Module("EventTypes")

@@ -9,7 +9,7 @@
 MODULE ProcExpr;
 
 IMPORT M3, CG, Expr, ExprRep, Type, Value, Procedure, M3Buf;
-IMPORT Scope, ProcBody;
+IMPORT Scope;
 
 TYPE
   P = Expr.T OBJECT
@@ -104,14 +104,10 @@ PROCEDURE GenFPLiteral (p: P;  buf: M3Buf.T) =
     Scope.PutStack (buf, s);
   END GenFPLiteral;
 
-PROCEDURE GenLiteral (p: P;  offset: INTEGER;  <*UNUSED*>type: Type.T) =
-  VAR proc: CG.Proc;  globals: CG.Var;  g_offset: INTEGER;
+PROCEDURE GenLiteral (p: P;  offset: INTEGER;  <*UNUSED*>type: Type.T;
+                      is_const: BOOLEAN) =
   BEGIN
-    Procedure.CGName (p.proc, proc, globals, g_offset);
-    IF (proc # NIL)
-      THEN CG.Init_proc (offset, proc);
-      ELSE ProcBody.DelayedInit (offset, globals, g_offset);
-    END;
+    CG.Init_proc (offset, Procedure.CGName (p.proc), is_const);
   END GenLiteral;
 
 BEGIN

@@ -7,8 +7,11 @@ INTERFACE PrivateVirtualPageEvent;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:37  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:48  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:37  hosking
+    Import of GRAS3 1.1
 
     Revision 1.1  1997/10/31 14:14:17  roland
     Subsystem introduces event and pattern types for virtual resources.
@@ -17,7 +20,7 @@ INTERFACE PrivateVirtualPageEvent;
 (***************************************************************************)
 
 FROM VirtualPageEvent IMPORT Operation;
-IMPORT EventType, IntIntTbl;
+IMPORT EventType, IntIntTransientTbl AS IntIntTbl;
 
 (* These variables are also used by VirtualPageEventPattern.  They store
    the type and attribute numbers of VirtualPageEvents *)

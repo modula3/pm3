@@ -13,17 +13,26 @@ IMPORT Thread, M3toC, Cstring, Ctypes, RTProcedure, RTParams;
 VAR
   DEBUG := FALSE;
   dump_enabled := FALSE;
+  implicitExceptions : ARRAY [0..7] OF ExceptionName;
 
 EXCEPTION
   OUCH; (* to keep the compiler from complaining *)
 
-PROCEDURE Raise (en: ExceptionName;  arg: ExceptionArg) RAISES ANY =
+PROCEDURE IsImplicitException(ex: ExceptionName) : BOOLEAN =
+  BEGIN
+    FOR i := FIRST(implicitExceptions) TO LAST(implicitExceptions) DO
+      IF implicitExceptions[i] = ex THEN RETURN TRUE; END;
+    END;
+    RETURN FALSE;
+  END IsImplicitException;
+
+PROCEDURE MyRaise (en: ExceptionName;  arg: ExceptionArg) RAISES ANY =
   VAR
     here, f: RTStack.Frame;
     s: Scope;
     ex: ExceptionList;
+    isImplicitException: BOOLEAN;
   BEGIN
-
     IF DEBUG THEN
       RTIO.PutText ("---> RAISE:");
       RTIO.PutText ("  en=");   RTIO.PutAddr (en);
@@ -32,6 +41,8 @@ PROCEDURE Raise (en: ExceptionName;  arg: ExceptionArg) RAISES ANY =
       RTIO.PutText ("\n");
       DumpStack ();
     END;
+
+    isImplicitException := IsImplicitException(en);
 
     RTStack.CurrentFrame (here);
     RTStack.PreviousFrame (here, f); (* skip self *)
@@ -60,15 +71,17 @@ PROCEDURE Raise (en: ExceptionName;  arg: ExceptionArg) RAISES ANY =
               ORD (ScopeKind.Lock) =>
                 (* ignore for this pass *)
             | ORD (ScopeKind.RaisesNone) =>
-                NoHandler (en);
+                IF NOT isImplicitException THEN NoHandler (en) END;
             | ORD (ScopeKind.Raises) =>
                 (* check that this procedure does indeed raise 'en' *)
-                ex := s.excepts;
-                IF ex = NIL THEN NoHandler (en); END;
-                LOOP
-                  IF (ex^ = NIL) THEN  NoHandler (en) END;
-                  IF (ex^ = en)  THEN  (* ok, it passes *) EXIT  END;
-                  INC (ex, ADRSIZE (ex^));
+                IF NOT isImplicitException THEN
+                  ex := s.excepts;
+                  IF ex = NIL THEN NoHandler (en); END;
+                  LOOP
+                    IF (ex^ = NIL) THEN  NoHandler (en) END;
+                    IF (ex^ = en)  THEN  (* ok, it passes *) EXIT  END;
+                    INC (ex, ADRSIZE (ex^));
+                  END;
                 END;
             ELSE <*ASSERT FALSE*>
             END;
@@ -86,7 +99,7 @@ PROCEDURE Raise (en: ExceptionName;  arg: ExceptionArg) RAISES ANY =
       (* try the previous frame *)
       RTStack.PreviousFrame (f, f);
     END;
-  END Raise;
+  END MyRaise;
 
 PROCEDURE ResumeRaise (en: ExceptionName;  arg: ExceptionArg) RAISES ANY =
   VAR
@@ -154,7 +167,7 @@ PROCEDURE ResumeRaise (en: ExceptionName;  arg: ExceptionArg) RAISES ANY =
     END;
   END ResumeRaise;
 
-PROCEDURE InvokeHandler (s: Scope;  READONLY f: RTStack.Frame;
+PROCEDURE InvokeHandler (s: Scope;  VAR f: RTStack.Frame;
                          en: ExceptionName;  arg: ExceptionArg) RAISES ANY =
   VAR p : UNTRACED REF ExceptionInfo := f.sp + s.offset;
   BEGIN
@@ -171,6 +184,7 @@ PROCEDURE InvokeHandler (s: Scope;  READONLY f: RTStack.Frame;
     END;
     p.exception := en;
     p.arg := arg;
+    IF (f.unwind = NIL) THEN f.pc := s.stop ELSE f.pc := f.unwind END;
     RTStack.Unwind (f);
     RTMisc.FatalErrorPC (LOOPHOLE (f.pc, INTEGER), "Unwind returned!");
     RAISE OUCH;
@@ -441,7 +455,10 @@ PROCEDURE DumpStack () =
     offset: INTEGER;
     info: ADDRESS;
   BEGIN
-    IF NOT DEBUG AND NOT dump_enabled THEN RETURN; END;
+    IF NOT DEBUG AND NOT dump_enabled THEN 
+      RTIO.PutText ("  use option @M3stackdump to get a stack trace\n");
+      RETURN; 
+    END;
 
     RTOS.LockHeap (); (* disable thread switching... (you wish!) *)
 
@@ -532,6 +549,22 @@ PROCEDURE DumpStack () =
     RTOS.UnlockHeap (); (* re-enable thread switching *)
   END DumpStack;
 
+PROCEDURE NoteImplicitException (ex: ExceptionName; enable: BOOLEAN) =
+  BEGIN
+    FOR i := FIRST(implicitExceptions) TO LAST(implicitExceptions) DO
+      IF implicitExceptions[i] = ex THEN
+        IF NOT enable THEN implicitExceptions[i] := NIL; END;
+        RETURN;
+      ELSIF implicitExceptions[i] = NIL AND enable THEN
+        implicitExceptions[i] := ex;
+        RETURN;
+      END;
+    END;
+    IF enable THEN
+      RTMisc.FatalError(NIL, 0, "Too many implicit exceptions");
+    END;
+  END NoteImplicitException;
+
 PROCEDURE DumpHandles (x: ExceptionList) =
   VAR first := TRUE;  en: ExceptionName;
   BEGIN
@@ -562,6 +595,8 @@ PROCEDURE EName (en: ExceptionName): TEXT =
   END EName;
 
 BEGIN
-  dump_enabled := RTParams.IsPresent ("stackdump");
+  Raise := MyRaise;
+  dump_enabled := dump_enabled OR RTParams.IsPresent ("stackdump");
+  DEBUG := RTParams.IsPresent ("debugex");
   <*ASSERT RTStack.Has_walker*>
 END RTException.

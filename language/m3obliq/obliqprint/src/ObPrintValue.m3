@@ -2,8 +2,8 @@
 (* Distributed only by permission.                             *)
 
 MODULE ObPrintValue;
-IMPORT Text, ObErr, SynWr, ObCommand, ObTree, ObPrintTree,
-  ObCheck, NetObj, ObValue, ObLib;
+IMPORT Text, ObErr, SynWr, ObCommand, ObTree, ObPrintTree, Process,
+       ObCheck, NetObj, ObValue, ObLib, Thread, SharedObj;
 
 VAR 
   printClosureGlobals: BOOLEAN;
@@ -21,7 +21,6 @@ VAR
     libEnv: ObLib.Env; printEnv: ObTree.Env; depth: INTEGER) =
   VAR sep: TEXT; size: INTEGER;
   BEGIN
-    TRY
       sep := "";
       size := NUMBER(array^);
       FOR i:=0 TO size-1 DO
@@ -31,8 +30,6 @@ VAR
         PrintVal(swr, array^[i], libEnv, printEnv, depth-1);
         SynWr.End(swr);
       END;
-    EXCEPT NetObj.Error => SynWr.Text(swr, "<disconnected>");
-    END;
   END PrintValArray;
 
   PROCEDURE PrintVal(swr: SynWr.T; val: ObValue.Val; 
@@ -44,7 +41,9 @@ VAR
     TYPECASE val OF
     | ObValue.ValVar(node) => 
       TRY val1 := node.remote.Get();
-      EXCEPT NetObj.Error => SynWr.Text(swr, "<remote variable disconnected>");
+      EXCEPT
+      | NetObj.Error, Thread.Alerted => 
+        SynWr.Text(swr, "<remote variable disconnected>");
       END;
       PrintVal(swr, val1, libEnv, printEnv, depth);
     | ObValue.ValOk => ObPrintTree.PrintOk(swr);
@@ -95,7 +94,12 @@ VAR
         IF depth <= 0 THEN SynWr.Text(swr, "..."); RETURN END;
         SynWr.Beg(swr, 1);
           SynWr.Char(swr, '[');
-          PrintValArray(swr, node.remote.Obtain(), libEnv, printEnv, depth);
+          TRY
+            PrintValArray(swr, node.remote.Obtain(), libEnv, printEnv, depth);
+          EXCEPT
+          | NetObj.Error, Thread.Alerted => 
+            SynWr.Text(swr, "<remote array disconnected>");
+          END;
           SynWr.Char(swr, ']');
 	SynWr.End(swr);
     | ObValue.ValAnything(node) => 
@@ -108,35 +112,93 @@ VAR
         IF depth <= 0 THEN SynWr.Text(swr, "..."); RETURN END;
         PrintClosure(swr, node.meth, node.meth.globals, node.global, 
           libEnv, printEnv, depth);
-   | ObValue.ValObj(node) => 
+   | ObValue.ValRemObj(node) => 
         IF depth <= 0 THEN SynWr.Text(swr, "..."); RETURN END;
         TYPECASE node.remote OF
         | ObValue.RemObjServer(remObj) => 
+          TRY
             who := remObj.Who((*out*)protected, (*out*)serialized);
-            fields := remObj.Obtain(TRUE);
     	    SynWr.Beg(swr, 1); 
-    	    SynWr.Char(swr, '{');
+    	    SynWr.Text(swr, "{");
             PrintProtected(swr, protected);
             PrintSerialized(swr, serialized);
-            PrintValObjFields(swr, fields, libEnv, printEnv, depth);
+            TRY
+              fields := remObj.Obtain(TRUE);
+              PrintValObjFields(swr, fields, libEnv, printEnv, depth, FALSE);
+            EXCEPT
+            | ObValue.ServerError =>
+              SynWr.Text(swr, "<cannot obtain fields of protected object>");
+            END;
     	    SynWr.Char(swr, '}');
     	    SynWr.End(swr);
+          EXCEPT
+          | NetObj.Error, Thread.Alerted => 
+            SynWr.Text(swr, "<remote object disconnected>");
+          END;
         ELSE 
-          SynWr.Beg(swr, 1); SynWr.Char(swr, '{');
+          SynWr.Beg(swr, 1); SynWr.Text(swr, "{");
           TRY 
             who := node.remote.Who((*out*)protected, (*out*)serialized);
             IF Text.Empty(who) THEN SynWr.Text(swr, "<unknown>");
             ELSE SynWr.Text(swr, who);
             END;
-          EXCEPT NetObj.Error => SynWr.Text(swr, "<disconnected>");
+          EXCEPT NetObj.Error, Thread.Alerted => 
+            SynWr.Text(swr, "<disconnected>");
           END;
           SynWr.Char(swr, '}'); SynWr.End(swr);
+        END;
+   | ObValue.ValSimpleObj(node) => 
+        IF depth <= 0 THEN SynWr.Text(swr, "..."); RETURN END;
+        TRY
+          who := node.Who((*out*)protected, (*out*)serialized);
+          SynWr.Beg(swr, 1); 
+          SynWr.Text(swr, "{simple, ");
+          PrintProtected(swr, protected);
+          PrintSerialized(swr, serialized);
+          TRY
+            fields := node.Obtain(TRUE);
+            PrintValObjFields(swr, fields, libEnv, printEnv, depth, FALSE);
+          EXCEPT
+          | ObValue.ServerError =>
+            SynWr.Text(swr, "<cannot obtain fields of protected object>");
+          END;
+          SynWr.Char(swr, '}');
+          SynWr.End(swr);
+        EXCEPT
+        | SharedObj.Error => 
+          SynWr.Text(swr, "<replicated object invalidated>");
+        | NetObj.Error, Thread.Alerted => 
+          SynWr.Text(swr, "<remote object disconnected>");
+        END;
+   | ObValue.ValReplObj(node) => 
+        IF depth <= 0 THEN SynWr.Text(swr, "..."); RETURN END;
+        TRY
+          who := node.Who((*out*)protected, (*out*)serialized);
+          SynWr.Beg(swr, 1); 
+          SynWr.Text(swr, "{replicated, ");
+          PrintProtected(swr, protected);
+          PrintSerialized(swr, serialized);
+          TRY
+            fields := node.Obtain(TRUE);
+            PrintValObjFields(swr, fields, libEnv, printEnv, depth, TRUE);
+          EXCEPT
+          | ObValue.ServerError =>
+            SynWr.Text(swr, "<cannot obtain fields of protected object>");
+          END;
+          SynWr.Char(swr, '}');
+          SynWr.End(swr);
+        EXCEPT
+        | SharedObj.Error => 
+          SynWr.Text(swr, "<replicated object invalidated>");
+        | NetObj.Error, Thread.Alerted => 
+          SynWr.Text(swr, "<remote object disconnected>");
         END;
    | ObValue.ValEngine(node) => 
         IF depth <= 0 THEN SynWr.Text(swr, "..."); RETURN END;
         SynWr.Beg(swr, 1); SynWr.Text(swr, "<Engine ");
         TRY SynWr.Text(swr, node.remote.Who())
-        EXCEPT NetObj.Error => SynWr.Text(swr, "<disconnected>");
+        EXCEPT NetObj.Error, Thread.Alerted => 
+          SynWr.Text(swr, "<disconnected>");
         END;
         SynWr.Char(swr, '>'); SynWr.End(swr);
     | ObValue.ValException(node) => 
@@ -154,7 +216,8 @@ VAR
     TYPECASE val OF
     | ObValue.ValVar(node) => 
       TRY val1 := node.remote.Get();
-      EXCEPT NetObj.Error => SynWr.Text(swr, "<remote variable disconnected>");
+      EXCEPT NetObj.Error, Thread.Alerted => 
+        SynWr.Text(swr, "<remote variable disconnected>");
       END;
       PrintValSummary(swr, val1, libEnv, printEnv);
     | ObValue.ValOk, ObValue.ValBool, ObValue.ValChar,
@@ -191,33 +254,89 @@ VAR
         ObPrintTree.PrintSignature(swr, node.fun, libEnv, printEnv);
     | ObValue.ValMeth(node) => 
         ObPrintTree.PrintSignature(swr, node.meth, libEnv, printEnv);
-    | ObValue.ValObj(node) => 
+   | ObValue.ValRemObj(node) => 
         TYPECASE node.remote OF
-        | ObValue.RemObjServer(remObj) =>
+        | ObValue.RemObjServer(remObj) => 
+          TRY
             who := remObj.Who((*out*)protected, (*out*)serialized);
-            fields := remObj.Obtain(TRUE);
     	    SynWr.Beg(swr, 1); 
-    	    SynWr.Char(swr, '{');
+    	    SynWr.Text(swr, "{");
             PrintProtected(swr, protected);
             PrintSerialized(swr, serialized);
-            PrintValObjFieldsSummary(swr, fields, libEnv, printEnv);
+            TRY
+              fields := remObj.Obtain(TRUE);
+              PrintValObjFieldsSummary(swr, fields, libEnv, printEnv, FALSE);
+            EXCEPT
+            | ObValue.ServerError =>
+              SynWr.Text(swr, "<cannot obtain fields of protected object>");
+            END;
     	    SynWr.Char(swr, '}');
     	    SynWr.End(swr);
+          EXCEPT
+          | NetObj.Error, Thread.Alerted => 
+            SynWr.Text(swr, "<remote object disconnected>");
+          END;
         ELSE 
-          SynWr.Beg(swr, 1); SynWr.Char(swr, '{');
+          SynWr.Beg(swr, 1); SynWr.Text(swr, "{");
           TRY 
             who := node.remote.Who((*out*)protected, (*out*)serialized);
             IF Text.Empty(who) THEN SynWr.Text(swr, "<unknown>");
             ELSE SynWr.Text(swr, who);
             END;
-          EXCEPT NetObj.Error => SynWr.Text(swr, "<disconnected>");
+          EXCEPT NetObj.Error, Thread.Alerted => 
+            SynWr.Text(swr, "<disconnected>");
           END;
           SynWr.Char(swr, '}'); SynWr.End(swr);
+        END;
+   | ObValue.ValSimpleObj(node) => 
+        TRY
+          who := node.Who((*out*)protected, (*out*)serialized);
+          SynWr.Beg(swr, 1); 
+          SynWr.Text(swr, "{simple, ");
+          PrintProtected(swr, protected);
+          PrintSerialized(swr, serialized);
+          TRY
+            fields := node.Obtain(TRUE);
+            PrintValObjFieldsSummary(swr, fields, libEnv, printEnv, FALSE);
+          EXCEPT
+          | ObValue.ServerError =>
+            SynWr.Text(swr, "<cannot obtain fields of protected object>");
+          END;
+          SynWr.Char(swr, '}');
+          SynWr.End(swr);
+        EXCEPT
+        | SharedObj.Error => 
+          SynWr.Text(swr, "<replicated object invalidated>");
+        | NetObj.Error, Thread.Alerted => 
+          SynWr.Text(swr, "<remote object disconnected>");
+        END;
+   | ObValue.ValReplObj(node) => 
+        TRY
+          who := node.Who((*out*)protected, (*out*)serialized);
+          SynWr.Beg(swr, 1); 
+          SynWr.Text(swr, "{replicated, ");
+          PrintProtected(swr, protected);
+          PrintSerialized(swr, serialized);
+          TRY
+            fields := node.Obtain(TRUE);
+            PrintValObjFieldsSummary(swr, fields, libEnv, printEnv, TRUE);
+          EXCEPT
+          | ObValue.ServerError =>
+            SynWr.Text(swr, "<cannot obtain fields of protected object>");
+          END;
+          SynWr.Char(swr, '}');
+          SynWr.End(swr);
+        EXCEPT
+        | SharedObj.Error => 
+          SynWr.Text(swr, "<replicated object invalidated>");
+        | NetObj.Error, Thread.Alerted => 
+          SynWr.Text(swr, "<remote object disconnected>");
         END;
    | ObValue.ValEngine(node) => 
         SynWr.Beg(swr, 1); SynWr.Text(swr, "<Engine ");
         TRY SynWr.Text(swr, node.remote.Who())
-        EXCEPT NetObj.Error => SynWr.Text(swr, "<disconnected>");
+        EXCEPT NetObj.Error, Thread.Alerted => 
+          SynWr.Text(swr, "<disconnected>");
         END;
         SynWr.Char(swr, '>'); SynWr.End(swr);
     | ObValue.ValException(node) => 
@@ -297,7 +416,8 @@ VAR
   END PrintSerialized;
 
   PROCEDURE PrintValObjFields(swr: SynWr.T; fields: REF ObValue.ObjFields; 
-    libEnv: ObLib.Env; printEnv: ObTree.Env; depth: INTEGER) =
+    libEnv: ObLib.Env; printEnv: ObTree.Env; depth: INTEGER; 
+    isReplicated: BOOLEAN) =
   VAR sep: TEXT;
   BEGIN
     sep := "";
@@ -308,6 +428,9 @@ VAR
 	  SynWr.Beg(swr, 4);
 	    SynWr.Text(swr, fields^[i].label);
 	    SynWr.Text(swr, " => ");
+            IF isReplicated AND fields^[i].update THEN
+              SynWr.Text(swr, "update ");
+            END;
 	  SynWr.End(swr);
 	SynWr.Break(swr);
 	  PrintVal(swr, fields^[i].field, libEnv, printEnv, depth-1);
@@ -317,7 +440,8 @@ VAR
 
   PROCEDURE PrintValObjFieldsSummary(swr: SynWr.T; 
     fields: REF ObValue.ObjFields; 
-    libEnv: ObLib.Env; printEnv: ObTree.Env) =
+    <*UNUSED*>libEnv: ObLib.Env; <*UNUSED*>printEnv: ObTree.Env; 
+    isReplicated: BOOLEAN) =
   VAR sep: TEXT;
   BEGIN
     sep := "";
@@ -327,7 +451,11 @@ VAR
         SynWr.Beg(swr, 2);
 	  SynWr.Beg(swr, 4);
 	    SynWr.Text(swr, fields^[i].label);
-	    SynWr.Text(swr, "=> ... ");
+	    SynWr.Text(swr, "=> ");
+            IF isReplicated AND fields^[i].update THEN
+              SynWr.Text(swr, "update ");
+            END;
+	    SynWr.Text(swr, "... ");
 	  SynWr.End(swr);
 	SynWr.End(swr);
     END;
@@ -346,10 +474,11 @@ PROCEDURE PrintPhraseLet(swr: SynWr.T; checkEnv, checkEnvStop: ObCheck.Env;
 PROCEDURE PrintTermBinding(swr: SynWr.T; checkEnv, checkEnvStop: ObCheck.Env; 
     env, envStop: ObValue.Env; libEnv: ObLib.Env; depth: INTEGER) =
   BEGIN
+    TRY
     IF (checkEnv=checkEnvStop) AND (env=envStop) THEN RETURN END;
     IF (checkEnv=checkEnvStop) OR (env=envStop) OR
 	NOT ObTree.SameIdeName(checkEnv.name, env.name) THEN
-	ObErr.Fault(swr, "Envs do not match. (1)"); <* NOWARN *>
+	ObErr.Fault(swr, "Envs do not match. (1)"); (* NOWARN *)
     END;
     PrintTermBinding(swr, checkEnv.rest, checkEnvStop, 
 	env.rest, envStop, libEnv, depth);
@@ -368,14 +497,17 @@ PROCEDURE PrintTermBinding(swr: SynWr.T; checkEnv, checkEnvStop: ObCheck.Env;
               (* PrintVal(swr, valueNode.val, libEnv, checkNode.rest, depth-1); *)
               PrintValSummary(swr, valueNode.val, libEnv, checkNode.rest);
 	    SynWr.End(swr);
-	ELSE ObErr.Fault(swr, "Envs do not match. (2)"); <* NOWARN *>
+	ELSE ObErr.Fault(swr, "Envs do not match. (2)"); (* NOWARN *)
 	END;
-    ELSE ObErr.Fault(swr, "PrintTermBinding"); <* NOWARN *>
+    ELSE ObErr.Fault(swr, "PrintTermBinding"); (* NOWARN *)
+    END;
+    EXCEPT
+    | ObErr.Fail => Process.Crash("Unexpected failure in PrintTermBinding");
     END;
   END PrintTermBinding;
 
   PROCEDURE PrintClosureGlobals(self: ObCommand.T; arg: TEXT; 
-                                data: REFANY:=NIL) =
+                                <*UNUSED*>data: REFANY:=NIL) =
     BEGIN
       IF Text.Equal(arg, "!") OR Text.Equal(arg, "?") THEN
 	SynWr.Text(SynWr.out , self.name & " {On Off} is ");

@@ -12,6 +12,7 @@ IMPORT Type;
 PROCEDURE Initialize ();
 
 PROCEDURE Emit (tlhs, trhs: Type.T);
-(* generate  "NARROW (s0.trhs, tlhs)"  *)
+(* generate  "NARROW (s0.trhs, tlhs)"  -- Note: the generated code
+   may include a procedure call. *)
 
 END Narrow.

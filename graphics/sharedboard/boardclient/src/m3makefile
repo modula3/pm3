@@ -4,10 +4,10 @@
 %
 import ("ui")
 import ("netobj")
-import ("m3tk")
+import ("m3tk-misc")
 import ("formsvbt")
-include_dir ("dblbuffer")
-override ("board", path_of(".." & SL & ".."))
+%include_dir ("dblbuffer")
+%override ("board", "/udir/umesh/m3/board/3")
 import ("board")
 
 module ("View")

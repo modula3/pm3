@@ -1,5 +1,4 @@
-(*                            -*- Mode: Modula-3 -*- 
- * 
+(* 
  * For information about this program, contact Blair MacIntyre            
  * (bm@cs.columbia.edu) or Steven Feiner (feiner@cs.columbia.edu)         
  * at the Computer Science Dept., Columbia University,                    
@@ -10,24 +9,6 @@
  *
  * This file is released under the same conditions as Pickle.m3. See COPYRIGHT.
  * 
- * Author          : Blair MacIntyre
- * Created On      : Fri Jul 21 21:52:00 1995
- * Last Modified By: Blair MacIntyre
- * Last Modified On: Fri Jul 11 13:05:05 1997
- * Update Count    : 23
- * 
- * $Source$
- * $Date$
- * $Author$
- * $Revision$
- * 
- * $Log$
- * Revision 1.1  1998/02/26 16:37:34  dagenais
- * Enhanced pickler which allows communicating pickles between machines
- * with different endianess.
- *
- * 
- * HISTORY
  *)
 
 UNSAFE INTERFACE PklTipeMap;
@@ -52,7 +33,8 @@ PROCEDURE Read (v: ConvertPacking.ReadVisitor; r: REFANY; tc: TypeCode;
    handle the incoming data.  *)
 
 PROCEDURE Write (v: ConvertPacking.WriteVisitor; r: REFANY; tc: TypeCode; 
-                from: RTPacking.T; READONLY shape: ARRAY OF INTEGER; n: INTEGER)  
+                 from: RTPacking.T;  READONLY shape: ARRAY OF INTEGER;
+                 n: INTEGER)  
     RAISES { Error, Wr.Failure, Thread.Alerted };
 
 (* Write "r" using "v".  The data is writen in the local data format. *)

@@ -25,7 +25,7 @@ MODULE Main;
 
 IMPORT SGML, SGMLPrint, Stdio, Params, Text, Fmt, Wr, Process, TempFiles,
     TextRefTbl, Rd, FileWr, Thread, OSError, FS, ASCII, Pipe, FileRd, File,
-    TextConv, TextSeq, TextTextTbl, TextWr, Pathname;
+    TextConv, TextTransientSeq AS TextSeq, TextTextTbl, TextWr, Pathname;
 
 TYPE
   T = SGMLPrint.T OBJECT

@@ -123,7 +123,7 @@ VAR
 PROCEDURE NewRd(fd: ConnFD.T) : MsgRd.T =
   BEGIN
     RETURN NEW(RdT, fd := fd, 
-        buff := NEW(REF ARRAY OF CHAR, BufferSize),
+        buff := NEW(<*TRANSIENT*> REF ARRAY OF CHAR, BufferSize),
         st := 0,
         lo := 0,
         hi := 0,
@@ -136,7 +136,7 @@ PROCEDURE NewRd(fd: ConnFD.T) : MsgRd.T =
 PROCEDURE NewWr(fd: ConnFD.T) : MsgWr.T =
   BEGIN
       RETURN NEW(WrT, fd := fd, 
-        buff := NEW(REF ARRAY OF CHAR, BufferSize),
+        buff := NEW(<*TRANSIENT*> REF ARRAY OF CHAR, BufferSize),
         st := HeaderBytes,
         lo := 0,
         hi := BufferSize - HeaderBytes,
@@ -203,7 +203,7 @@ PROCEDURE Align(n: CARDINAL) : CARDINAL =
   
 PROCEDURE ReadAligned(
     fd: ConnFD.T;
-    buff: REF ARRAY OF CHAR) : INTEGER
+    buff: <*TRANSIENT*> REF ARRAY OF CHAR) : INTEGER
   RAISES {Rd.Failure, Thread.Alerted} =
     (*
        "ReadAligned" always returns a non-zero result.

@@ -12,15 +12,8 @@ readonly proc WindowsResource (file) is
 
   if defined ("_all")
     if stale (obj, src)
-      local ret = 0
-      local cmd = [ "rc", "-DWIN32", "-i", path_of(""), "-fo", res, src ]
-      write (cmd)
-      ret = exec (cmd)
-      if not equal(ret, 0) error ("command failed with error code: ", ret) end
-      cmd = [ "cvtres", "-i386", res, "-o", obj ]
-      write (cmd)
-      ret = exec (cmd)
-      if not equal(ret, 0) error ("command failed with error code: ", ret) end
+      exec ("rc -DWIN32 -i", path_of(""), "-fo", res, src)
+      exec ("cvtres -i386", res, "-o", obj)
     end
   end
   COMPILE_SOURCES += obj
@@ -39,7 +32,7 @@ import ("libm3")
 
 if not equal (OS_TYPE, "WIN32")
   %--- hack to get Win32 interfaces while compiling on Unix
-  override ("winlib", WDROOT)
+  override ("winlib", ROOT)
   import ("winlib")
 end
 

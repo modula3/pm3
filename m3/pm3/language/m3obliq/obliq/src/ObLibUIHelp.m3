@@ -11,7 +11,7 @@ IMPORT SynWr, Text, ObLib, ObCommand, Bundle, ObliqBdl2;
     ObLib.RegisterHelp("form", HelpForm);
   END Setup;
 
-  PROCEDURE HelpColor(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL)  =
+  PROCEDURE HelpColor(self: ObCommand.T; arg: TEXT; <*UNUSED*>data: REFANY:=NIL)  =
     BEGIN
       IF Text.Equal(arg, "!") THEN
         SynWr.Text(SynWr.out, "  color             (the built-in color library)\n");
@@ -24,7 +24,7 @@ IMPORT SynWr, Text, ObLib, ObCommand, Bundle, ObliqBdl2;
       END;
     END HelpColor;
 
-  PROCEDURE HelpVBT(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL) =
+  PROCEDURE HelpVBT(self: ObCommand.T; arg: TEXT; <*UNUSED*>data: REFANY:=NIL) =
     BEGIN
       IF Text.Equal(arg, "!") THEN
         SynWr.Text(SynWr.out, "  vbt               (the built-in vbt library)\n");
@@ -38,7 +38,7 @@ IMPORT SynWr, Text, ObLib, ObCommand, Bundle, ObliqBdl2;
       END;
     END HelpVBT;
 
-  PROCEDURE HelpForm(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL) =
+  PROCEDURE HelpForm(self: ObCommand.T; arg: TEXT; <*UNUSED*>data: REFANY:=NIL) =
     BEGIN
       IF Text.Equal(arg, "!") THEN
         SynWr.Text(SynWr.out, "  form              (the built-in forms library)\n");

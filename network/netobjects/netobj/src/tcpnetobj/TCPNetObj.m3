@@ -9,7 +9,8 @@
 MODULE TCPNetObj EXPORTS TCPNetObj, TCPTransport;
    
 IMPORT NetObj, IP, TCP, TCPSpecial, Transport;
-IMPORT AtomList, Convert, Fmt, TextRefTbl, Thread, Text, Time;
+IMPORT AtomList, Convert, Fmt, TextRefTransientTbl AS TextRefTbl, Thread,
+       Text, Time;
 IMPORT Rd, Wr, WeakRef, HeaderOps, ConnFD, ConnMsgRW, TransportUtils;
 IMPORT Process, NetObjNotifier, StubLib;
 IMPORT Atom, Stdio, FmtTime, RTParams;
@@ -46,7 +47,7 @@ TYPE
   Location = Transport.Location OBJECT
     mu: MUTEX;
     t: T;
-    e: Transport.Endpoint;
+    <*TRANSIENT*> e: Transport.Endpoint;
     ep: IP.Endpoint;
     knownEP: BOOLEAN;
     activity: BOOLEAN := FALSE;
@@ -91,7 +92,7 @@ TYPE
     apply := ProcessPing;
   END;  
 
-  WR = REF WeakRef.T;
+  WR = <*TRANSIENT*> REF WeakRef.T;
 
 CONST MaxCachedConnections = 2;
 
@@ -110,7 +111,6 @@ PROCEDURE New() : Transport.T =
 (* exported to TCPNetObj *)
 
 PROCEDURE Locate (ep: IP.Endpoint) : NetObj.Address =
-  <*FATAL IP.Error*>
   BEGIN
     (* might want to cache the local ip address in IP.m3 *)
     IF ep.addr = IP.NullAddress THEN ep.addr := IP.GetHostAddr(); END;
@@ -151,7 +151,7 @@ PROCEDURE LocationFromEndpoint(
     t: T; e: Transport.Endpoint) : Transport.Location =
   VAR ep: IP.Endpoint;
   VAR loc: Location := NIL;
-  VAR r: REFANY;
+  VAR r: <*TRANSIENT*> REFANY;
   VAR wr: WR;
   BEGIN
     LOCK t.mu DO
@@ -179,7 +179,7 @@ PROCEDURE LocationCleanup(<*UNUSED*> READONLY wr: WeakRef.T; r: REFANY) =
   VAR loc := NARROW(r, Location);
       t := loc.t;
       cc: ConnT;
-      x: REFANY;
+      x: <*TRANSIENT*> REFANY;
   BEGIN
     LOCK t.mu DO
       IF t.locationTbl.get(loc.e, x) THEN
@@ -213,7 +213,7 @@ PROCEDURE ListenerEndpoint(t: T) : Transport.Endpoint =
 PROCEDURE EnumerateLocs (t:T; p: TransportUtils.EnumProc; cl: REFANY := NIL) =
   VAR
     waste: TEXT;
-    r: REFANY;
+    r: <*TRANSIENT*> REFANY;
     it: TextRefTbl.Iterator;
     loc: Location;
   BEGIN
@@ -359,6 +359,7 @@ PROCEDURE Listener(l: ListenerClosure) : REFANY =
         (* pause and retry on IP.Error(NoResources) *)
         Thread.Pause(1.0D0);
       END;
+      <*ASSERT conn # NIL *>
       EVAL Thread.Fork(l);    (* fork another listener *)
       op := HeaderOps.Receive(conn, -1.0D0, me, him);
       IF Text.Equal(me, l.rep^[0]) OR KnownEndpoint(me) THEN

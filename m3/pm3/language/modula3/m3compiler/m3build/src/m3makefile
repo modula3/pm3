@@ -6,16 +6,15 @@
 
 import ("libm3")
 import ("m3quake")
-import ("m3templates")
-import ("m3config")
-import("m3doc")
+import ("libcm3")
+import ("m3doc")
 
 implementation ("Main")
 
-option("standalone","T")
-
 include_dir("html")
 HtmlFile("index")
+
+%build_standalone()
 
 Program ("m3build")
 

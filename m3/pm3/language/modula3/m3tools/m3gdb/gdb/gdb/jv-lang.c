@@ -161,7 +161,7 @@ add_class_symbol (struct type *type, CORE_ADDR addr)
   SYMBOL_NAME (sym) = TYPE_TAG_NAME (type);
   SYMBOL_CLASS (sym) = LOC_TYPEDEF;
   /*  SYMBOL_VALUE (sym) = valu; */
-  SYMBOL_TYPE (sym) = type;
+  SET_SYMBOL_TYPE (sym) = type;
   SYMBOL_NAMESPACE (sym) = STRUCT_NAMESPACE;
   SYMBOL_VALUE_ADDRESS (sym) = addr;
   return sym;

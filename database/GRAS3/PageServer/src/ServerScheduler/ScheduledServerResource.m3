@@ -8,8 +8,11 @@ EXPORTS ScheduledServerResource, InternalScheduledServerResource;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:39  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:49  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:39  hosking
+    Import of GRAS3 1.1
 
     Revision 1.24  1998/08/27 16:12:39  roland
     Bugfixes for IntraCopyGraph.
@@ -154,21 +157,21 @@ EXPORTS ScheduledServerResource, InternalScheduledServerResource;
  | ------------------------------------------------------------------------
  *)
 IMPORT BaseScheduledServerResource AS Super;
-IMPORT ServedClientSetDef AS ServedClientSet;
+IMPORT ServedClientTransientSetDef AS ServedClientSet;
 IMPORT
-  Thread, NetObj, Fmt, TextSeq,
+  Thread, NetObj, Fmt, TextTransientSeq AS TextSeq,
   Pathname,
   Variant, Journal,
   Page,
   PageFile, PageFileSystem, ErrorSupport, CallbackPort,
-  Access, PageLock, Transaction, Termination,
+  Access, PageLock, Txn, Termination,
   CommunicationSeqSupport, CommunicationSeq, RemoteFile,
   ServedClientTable, ServedClient,
   BaseServerScheduler,
   InternalBaseScheduledServerResource,
   ScheduledServerFile, InternalScheduledServerFile,
   InternalBaseScheduledServerFile, ScheduledServerFileTbl,
-  ServedClientTbl,
+  ServedClientTbl, CommunicationEntry, CommunicationTbl,
   ClientInfoSeq;
 
 REVEAL
@@ -183,7 +186,7 @@ REVEAL
 				:= CheckAccess;
 
       propagateData		(         client	:ServedClient.T;
-	                                  end		:Transaction.End)
+	                                  end		:Txn.End)
 				:= PropagateData;
 
     OVERRIDES
@@ -416,12 +419,28 @@ PROCEDURE KillClient		(         self		:T;
 
   (* KillClient *)
   BEGIN
+    WITH chain = client.getChainData() DO
+      IF chain.size() > 0 THEN
+        VAR
+          it := chain.iterate();
+          entry : CommunicationEntry.T;
+          <*FATAL Access.Invalid*>
+        BEGIN
+          WHILE it.next(entry, entry) DO
+            NARROW (entry.file, ScheduledServerFile.T).putData (client, Txn.End.Commit, entry);
+          END
+        END;
+        self.propagateData (client, Txn.End.Commit);
+        client.clearChainData();
+      END
+    END;
+
     KillFromScheduledFiles ();
     KillFromRegisteredFiles ();
 
     EVAL self.clientSet.delete (client);
     client.kill (why);
-    self.propagateData (client, Transaction.End.Abort);
+    self.propagateData (client, Txn.End.Abort);
   END KillClient;
           
 
@@ -723,7 +742,7 @@ PROCEDURE CloseFile		(         self		:T;
 
 PROCEDURE PropagateData		(         self		:T;
                                           client	:ServedClient.T;
-                                          end		:Transaction.End) =
+                                          end		:Txn.End) =
   VAR
     otherClient			:ServedClient.T;
     i				:ServedClientTable.Iterator;
@@ -732,13 +751,13 @@ PROCEDURE PropagateData		(         self		:T;
     WHILE i.next (otherClient) DO
       IF (NOT otherClient.isKilled ()) AND
          (client # otherClient) AND
-         ((end = Transaction.End.Commit) OR
+         ((end = Txn.End.Commit) OR
           (0 < otherClient.getPropagationData ().size ())) THEN
         TRY
           IF Variant.TestServerCommunication OR Variant.TestServerScheduler THEN
             Journal.Add ("ScheduledServerResource.PropagateData (" &
               "client = " & otherClient.getID () &
-              ", end = " & Transaction.FmtEnd (end) &
+              ", end = " & Txn.FmtEnd (end) &
               ", entries = " & CommunicationSeqSupport.Fmt (
                            otherClient.getPropagationData (),GetFileName) & ")");
           END;
@@ -768,12 +787,10 @@ PROCEDURE PropagateData		(         self		:T;
 
 PROCEDURE PutData		(         self		:T;
                                           client	:ServedClient.T;
-	                                  end		:Transaction.End;
+	                                  end		:Txn.End;
 	                                  entries       :CommunicationSeq.T)
+				:CARDINAL
 				RAISES {Access.Invalid} =
-  VAR
-    dataUnchanged		:BOOLEAN;
-    j				:CARDINAL;
   BEGIN
     self.checkAccess (client);
 
@@ -785,45 +802,119 @@ PROCEDURE PutData		(         self		:T;
         END
       END;
 
-      (* accept returned data *)
-      FOR i := 0 TO entries.size ()-1 DO
-        WITH entry = entries.get (i) DO
-          NARROW (entry.file, ScheduledServerFile.T).putData (client, end, entry)
-        END
-      END;
+      (* Propagate data / events to other clients.
+         Propagate even when data unchanged:
+         delayed data may be pending even for aborted transactions *)
 
-      (* propagate data / event to other clients *)
-      j := 0;
-      dataUnchanged := TRUE;
-      WHILE dataUnchanged AND (j < entries.size ()) DO
-        dataUnchanged := (entries.get (j).page = NIL);
-        INC (j);
-      END;
-      (*
-       propagate when data changed and even data unchanged,
-       delayed data may pending even for aborted transactions
-      *)
-      (* IF NOT dataUnchanged THEN *)
+      CASE end OF
+      | Txn.End.No =>
+        (* accept returned data *)
+        FOR i := 0 TO entries.size ()-1 DO
+          WITH entry = entries.get (i) DO
+            NARROW (entry.file, ScheduledServerFile.T).putData (client, end, entry)
+          END
+        END;
         self.propagateData (client, end);
-      (* END; *)
 
-      (* handling transaction termination *)
-      IF (end = Transaction.End.Abort) OR (end = Transaction.End.Commit) THEN
+      | Txn.End.Chain =>
+        (* accept chained data *)
+        WITH chain = client.getChainData() DO
+          FOR i := 0 TO entries.size ()-1 DO
+            WITH entry = entries.get (i) DO
+              EVAL chain.put(entry, entry);
+            END
+          END
+        END;
+
+        client.setTransaction (on := TRUE);
+
+      | Txn.End.Abort =>
+        (* propagate chained data *)
+        WITH chain = client.getChainData() DO
+          IF chain.size() > 0 THEN
+            VAR
+              it := chain.iterate();
+              entry: CommunicationEntry.T;
+            BEGIN
+              WHILE it.next(entry, entry) DO
+                NARROW (entry.file, ScheduledServerFile.T).putData (client, Txn.End.Commit, entry);
+              END
+            END;
+            self.propagateData (client, Txn.End.Commit);
+            client.clearChainData();
+          END
+        END;
+
+        (* accept returned data *)
+        FOR i := 0 TO entries.size ()-1 DO
+          WITH entry = entries.get (i) DO
+            NARROW (entry.file, ScheduledServerFile.T).putData (client, end, entry)
+          END
+        END;
+        self.propagateData (client, end);
+
+        (* handling transaction termination *)
         IF 0 # client.getXLockCount () THEN
           RAISE Access.Invalid (
                     "Illegal end of transaction." &
                     "Client has to return all X-Locks on end of transaction " &
                     "but there still rests " & Fmt.Int (client.getXLockCount ()));
         END;
-        
         client.setTransaction (on := FALSE);
-      END
+
+      | Txn.End.Commit =>
+        VAR
+          OEntries:= NEW(CommunicationTbl.Default).init();
+          entry: CommunicationEntry.T;
+          chain := client.getChainData();
+        BEGIN
+          (* accept returned data *)
+          FOR i := 0 TO entries.size ()-1 DO
+            entry := entries.get(i);
+            IF entry.lock = PageLock.Mode.O THEN
+              EVAL OEntries.put(entry, entry);
+            ELSE
+              EVAL chain.put(entry, entry);
+            END
+          END;
+
+          (* propagate chained data *)
+          IF chain.size() > 0 THEN
+            VAR it := chain.iterate();
+            BEGIN
+              WHILE it.next(entry, entry) DO
+                NARROW (entry.file, ScheduledServerFile.T).putData (client, end, entry);
+              END
+            END;
+            client.clearChainData();
+          END;
+
+          VAR it := OEntries.iterate();            
+          BEGIN
+            WHILE it.next(entry, entry) DO
+              NARROW (entry.file, ScheduledServerFile.T).putData (client, end, entry);
+            END
+          END
+        END;
+
+        self.propagateData (client, end);
+
+        (* handling transaction termination *)
+        IF 0 # client.getXLockCount () THEN
+          RAISE Access.Invalid (
+                    "Illegal end of transaction." &
+                    "Client has to return all X-Locks on end of transaction " &
+                    "but there still rests " & Fmt.Int (client.getXLockCount ()));
+        END;
+        client.setTransaction (on := FALSE);
+      END;
       
     EXCEPT
     | Access.Invalid (description) =>
       self.killClient (client, description);
       RAISE Access.Invalid (description)
     END;
+    RETURN client.getTransactionNumber ();
   END PutData;
   
     
@@ -844,7 +935,7 @@ PROCEDURE GetData		(         self		:T;
 
     TRY
       IF 0 <  putEntries.size () THEN
-        self.putData (client, Transaction.End.No, putEntries);
+        EVAL self.putData (client, Txn.End.No, putEntries);
       END;
 
       page :=  NARROW (file, ScheduledServerFile.T).getData

@@ -7,8 +7,11 @@ INTERFACE PageFile;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:28  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:44  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:28  hosking
+    Import of GRAS3 1.1
 
     Revision 1.6  1996/11/20 12:16:44  roland
     Method shutdown added to close a buffered file when server is forced
@@ -56,7 +59,7 @@ EXCEPTION
 TYPE
   T			<: Public;
 
-  Public		= OBJECT
+  Public		= <*TRANSIENT*> ROOT OBJECT
     METHODS
       init              (         fileName      :Pathname.T;
 				  new		:BOOLEAN) :T;
@@ -72,7 +75,8 @@ TYPE
 
       flush		();
 
-      getData		(         pageNo	:CARDINAL) :PageData.T;
+      getData		(         pageNo	:CARDINAL;
+                              VAR data          :PageData.T);
 
       putData		(         pageNo	:CARDINAL;
                          READONLY data		:PageData.T);

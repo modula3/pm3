@@ -7,12 +7,11 @@
 
 MODULE M3Header;
 
-IMPORT File, M3Compiler, Token, Host, M3ID, Scanner;
+IMPORT File, Token, Host, M3ID, Scanner;
 FROM Scanner IMPORT GetToken, cur;
 
 TYPE
-  IDList = M3Compiler.IDList;
-  TK     = Token.T;
+  TK = Token.T;
 
 TYPE
   State = RECORD
@@ -22,7 +21,7 @@ TYPE
     failed    : BOOLEAN := FALSE;
   END;
 
-PROCEDURE Parse (): M3Compiler.IDList =
+PROCEDURE Parse (): IDList =
   VAR
     s  : State;
     id : M3ID.T;
@@ -203,7 +202,7 @@ PROCEDURE MatchID (VAR s: State;  VAR(*OUT*) id: M3ID.T): BOOLEAN =
 
 PROCEDURE PushID (VAR s: State;  id: M3ID.T) =
   BEGIN
-    s.imports := NEW (M3Compiler.IDList, interface := id, next := s.imports);
+    s.imports := NEW (IDList, interface := id, next := s.imports);
   END PushID;
 
 BEGIN

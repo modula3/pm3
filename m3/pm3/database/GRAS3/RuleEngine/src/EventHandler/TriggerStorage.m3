@@ -7,8 +7,11 @@ MODULE TriggerStorage;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:40  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:50  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:40  hosking
+    Import of GRAS3 1.1
 
     Revision 1.2  1998/08/12 11:05:03  roland
     Efficiency improvement: RuleEngine notifies EventDetectors of
@@ -47,15 +50,15 @@ PROCEDURE Init (ts: Default): Default =
     RETURN ts;
   END Init;
 
-PROCEDURE StoreTrigger (ts: Default; t: Trigger.T; userdata: REFANY; id: CARDINAL) =
+PROCEDURE StoreTrigger (ts: Default; t: Trigger.T; userdata: <*TRANSIENT*> REFANY; id: CARDINAL) =
   VAR
-    new      : REF ListElement;
+    new      : ListElement;
     map, list: CARDINAL;
   BEGIN
     new := NewListElement();
-    new^ := ListElement{trigger := t, userdata := userdata,
-                        id := id, next := NIL, prev :=
-                        NIL, nextMap := NIL, prevMap := NIL};
+    new^ := ListElementRec{trigger := t, userdata := userdata,
+                           id := id, next := NIL, prev := NIL,
+                           nextMap := NIL, prevMap := NIL};
     list := Hash(t.pattern().type());
     map := HashMap(id);
     ListInsert(ts.table[list], new);
@@ -64,7 +67,7 @@ PROCEDURE StoreTrigger (ts: Default; t: Trigger.T; userdata: REFANY; id: CARDINA
 
 PROCEDURE RemoveTrigger (ts: Default; id: CARDINAL; VAR type: CARDINAL) =
   VAR
-    elem     : REF ListElement;
+    elem     : ListElement;
     map, list: CARDINAL;
   BEGIN
     map := HashMap(id);
@@ -96,15 +99,15 @@ PROCEDURE RemoveTrigger (ts: Default; id: CARDINAL; VAR type: CARDINAL) =
 PROCEDURE NotifyEvent (ts: Default; e: Event.T; context: ContextSet.T) =
   VAR
     list : CARDINAL;
-    elem : REF ListElement;
-    act  : REF FiredAction;
+    elem : ListElement;
+    act  : FiredAction;
     found: BOOLEAN;
   BEGIN
     list := Hash(e.type());
     ListGetFirstMatch(ts.table[list], e, context, elem, found);
     WHILE found DO
       act := NewFiredAction();
-      act^ := FiredAction{action := elem.trigger.action(), userdata := elem.userdata, coupling :=
+      act^ := FiredActionRec{action := elem.trigger.action(), userdata := elem.userdata, coupling :=
                           elem.trigger.coupling(), priority :=
                           elem.trigger.priority(), next := NIL};
       act.next := actions;
@@ -117,9 +120,9 @@ PROCEDURE GetNextAction (<* UNUSED *>     ts      : Default;
                                       VAR act     : Action.T;
                                       VAR coupl   : Trigger.CouplingMode;
                                       VAR priority: CARDINAL;
-                                      VAR userdata: REFANY):
+                                      VAR userdata: <*TRANSIENT*> REFANY):
   BOOLEAN =
-  VAR h: REF FiredAction;
+  VAR h: FiredAction;
   BEGIN
     IF actions # NIL THEN
       act := actions.action;
@@ -139,16 +142,17 @@ PROCEDURE GetNextAction (<* UNUSED *>     ts      : Default;
 CONST TableSize = 229;
 
 TYPE
-  ListElement = RECORD
+  ListElementRec = RECORD
                   trigger         : Trigger.T;
-                  userdata        : REFANY;
+                  userdata        : <*TRANSIENT*> REFANY;
                   id              : CARDINAL;
-                  next, prev      : REF ListElement;
-                  nextMap, prevMap: REF ListElement;
+                  next, prev      : ListElement;
+                  nextMap, prevMap: ListElement;
                 END;
+  ListElement = <*TRANSIENT*> REF ListElementRec;
 
   TableIndex = [0 .. TableSize - 1];
-  TriggerTable = ARRAY TableIndex OF REF ListElement;
+  TriggerTable = ARRAY TableIndex OF ListElement;
   TriggerMap = TriggerTable;
 
 PROCEDURE Hash (type: CARDINAL): TableIndex =
@@ -161,13 +165,13 @@ PROCEDURE HashMap (id: CARDINAL): TableIndex =
     RETURN id MOD TableSize;
   END HashMap;
 
-VAR FreeListElements: REF ListElement := NIL;
+VAR FreeListElements: ListElement := NIL;
 
-PROCEDURE NewListElement (): REF ListElement =
-  VAR new: REF ListElement;
+PROCEDURE NewListElement (): ListElement =
+  VAR new: ListElement;
   BEGIN
     IF FreeListElements = NIL THEN
-      RETURN NEW(REF ListElement);
+      RETURN NEW(ListElement);
     ELSE
       new := FreeListElements;
       FreeListElements := new.next;
@@ -175,15 +179,15 @@ PROCEDURE NewListElement (): REF ListElement =
     END;
   END NewListElement;
 
-PROCEDURE DisposeListElement (elem: REF ListElement) =
+PROCEDURE DisposeListElement (elem: ListElement) =
   BEGIN
-    elem^ := ListElement{NIL, NIL, 0, NIL, NIL, NIL, NIL};
+    elem^ := ListElementRec{NIL, NIL, 0, NIL, NIL, NIL, NIL};
     elem.next := FreeListElements;
     FreeListElements := elem;
   END DisposeListElement;
 
-PROCEDURE ListInsert (VAR list: REF ListElement; new: REF ListElement) =
-  VAR p: REF ListElement;
+PROCEDURE ListInsert (VAR list: ListElement; new: ListElement) =
+  VAR p: ListElement;
   BEGIN
     IF list = NIL OR NOT EventPattern.Less(
                            list.trigger.pattern(), new.trigger.pattern()) THEN
@@ -204,7 +208,7 @@ PROCEDURE ListInsert (VAR list: REF ListElement; new: REF ListElement) =
     END;
   END ListInsert;
 
-PROCEDURE ListRemove (VAR list: REF ListElement; elem: REF ListElement) =
+PROCEDURE ListRemove (VAR list: ListElement; elem: ListElement) =
   BEGIN
     IF elem.prev = NIL THEN
       list := elem.next;
@@ -217,10 +221,10 @@ PROCEDURE ListRemove (VAR list: REF ListElement; elem: REF ListElement) =
   END ListRemove;
 
 
-PROCEDURE ListGetFirstMatch (    list   : REF ListElement;
+PROCEDURE ListGetFirstMatch (    list   : ListElement;
                                  event  : Event.T;
                                  context: ContextSet.T;
-                             VAR elem   : REF ListElement;
+                             VAR elem   : ListElement;
                              VAR found  : BOOLEAN          ) =
   BEGIN
     elem := list;
@@ -236,10 +240,10 @@ PROCEDURE ListGetFirstMatch (    list   : REF ListElement;
     END;
   END ListGetFirstMatch;
 
-PROCEDURE ListGetNextMatch (<* UNUSED *>     list   : REF ListElement;
+PROCEDURE ListGetNextMatch (<* UNUSED *>     list   : ListElement;
                                              event  : Event.T;
                                              context: ContextSet.T;
-                                         VAR elem   : REF ListElement;
+                                         VAR elem   : ListElement;
                                          VAR found  : BOOLEAN          ) =
   BEGIN
     elem := elem.next;
@@ -255,8 +259,8 @@ PROCEDURE ListGetNextMatch (<* UNUSED *>     list   : REF ListElement;
     END;
   END ListGetNextMatch;
 
-PROCEDURE MapInsert (VAR map: REF ListElement; new: REF ListElement) =
-  VAR p: REF ListElement;
+PROCEDURE MapInsert (VAR map: ListElement; new: ListElement) =
+  VAR p: ListElement;
   BEGIN
     IF map = NIL OR map.id >= new.id THEN
       (* empty map or trigger preceeds/equals first element *)
@@ -275,7 +279,7 @@ PROCEDURE MapInsert (VAR map: REF ListElement; new: REF ListElement) =
     END;
   END MapInsert;
 
-PROCEDURE MapRemove (VAR map: REF ListElement; elem: REF ListElement) =
+PROCEDURE MapRemove (VAR map: ListElement; elem: ListElement) =
   BEGIN
     IF elem.prevMap = NIL THEN
       map := elem.nextMap;
@@ -287,9 +291,9 @@ PROCEDURE MapRemove (VAR map: REF ListElement; elem: REF ListElement) =
     elem.nextMap := NIL;
   END MapRemove;
 
-PROCEDURE MapGet (    map : REF ListElement;
+PROCEDURE MapGet (    map : ListElement;
                       id  : CARDINAL;
-                  VAR elem: REF ListElement  ): BOOLEAN =
+                  VAR elem: ListElement  ): BOOLEAN =
   BEGIN
     elem := map;
     WHILE elem # NIL AND elem.id < id DO elem := elem.next; END;
@@ -298,21 +302,22 @@ PROCEDURE MapGet (    map : REF ListElement;
 
 
 TYPE
-  FiredAction = RECORD
+  FiredActionRec = RECORD
                   action  : Action.T;
-                  userdata: REFANY;
+                  userdata: <*TRANSIENT*> REFANY;
                   coupling: Trigger.CouplingMode;
                   priority: CARDINAL;
-                  next    : REF FiredAction;
+                  next    : FiredAction;
                 END;
+  FiredAction = <*TRANSIENT*> REF FiredActionRec;
 
-VAR actions, FreeFiredActions: REF FiredAction;
+VAR actions, FreeFiredActions: FiredAction;
 
-PROCEDURE NewFiredAction (): REF FiredAction =
-  VAR new: REF FiredAction;
+PROCEDURE NewFiredAction (): FiredAction =
+  VAR new: FiredAction;
   BEGIN
     IF FreeFiredActions = NIL THEN
-      RETURN NEW(REF FiredAction);
+      RETURN NEW(FiredAction);
     ELSE
       new := FreeFiredActions;
       FreeFiredActions := new.next;
@@ -320,9 +325,9 @@ PROCEDURE NewFiredAction (): REF FiredAction =
     END;
   END NewFiredAction;
 
-PROCEDURE DisposeFiredAction (act: REF FiredAction) =
+PROCEDURE DisposeFiredAction (act: FiredAction) =
   BEGIN
-    act^ := FiredAction{NIL, NIL, Trigger.CouplingMode.Immediate, 0, NIL};
+    act^ := FiredActionRec{NIL, NIL, Trigger.CouplingMode.Immediate, 0, NIL};
     act.next := FreeFiredActions;
     FreeFiredActions := act;
   END DisposeFiredAction;

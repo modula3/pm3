@@ -2,7 +2,8 @@
 (* Distributed only by permission.                             *)
 
 MODULE ObLibOnline;
-IMPORT SynWr, SynLocation, TextRd, SynScan, ObLib, ObValue, ObPrintValue, ObFrame;
+IMPORT SynWr, SynLocation, TextRd, SynScan, ObLib, ObValue,
+       ObPrintValue, ObFrame, Pickle; 
 
 TYPE
 
@@ -57,9 +58,10 @@ TYPE
     END RegisterScanner;
 
   PROCEDURE EvalOnline(self: PackageOnline; opCode: ObLib.OpCode; 
-      arity: ObLib.OpArity; READONLY args: ObValue.ArgArray; 
-      temp: BOOLEAN; loc: SynLocation.T)
-      : ObValue.Val RAISES {ObValue.Error, ObValue.Exception} =
+                       <*UNUSED*>arity: ObLib.OpArity; 
+                       READONLY args: ObValue.ArgArray; 
+                       <*UNUSED*>temp: BOOLEAN; loc: SynLocation.T)
+      : ObValue.Val RAISES {ObValue.Error} =
     VAR int1: INTEGER; text1, text2: TEXT;
     BEGIN
       CASE NARROW(opCode, OnlineOpCode).code OF
@@ -100,8 +102,31 @@ TYPE
           RETURN ObValue.valOk;
       ELSE
         ObValue.BadOp(self.name, opCode.name, loc);
+        <*ASSERT FALSE*>
       END;
     END EvalOnline;
 
+TYPE
+  ObPackageSpecial = Pickle.Special BRANDED OBJECT
+                       OVERRIDES
+                         write := WriteLib;
+                         read := ReadLib;
+                       END;
+  
+(* just use the same one locally! *)
+PROCEDURE WriteLib (<*UNUSED*>ts: ObPackageSpecial; 
+                    <*UNUSED*>ref: REFANY; <*UNUSED*> out: Pickle.Writer) =
+  BEGIN
+  END WriteLib; 
+
+PROCEDURE ReadLib (<*UNUSED*>ts: ObPackageSpecial;
+                   in: Pickle.Reader;
+                   id: Pickle.RefID):REFANY =
+  BEGIN
+    in.noteRef(packageOnline, id);
+    RETURN packageOnline;
+  END ReadLib;
+
 BEGIN
+  Pickle.RegisterSpecial(NEW(ObPackageSpecial, sc := TYPECODE(PackageOnline)));
 END ObLibOnline.

@@ -21,6 +21,29 @@ Montreal, Quebec, H3C 3A7</ADDRESS>
 </DIV>
 
 <DL>
+<DT><A REL=INCLUDE HREF="../GRAS3">GRAS3</A>
+    <DD>GRAS is a set of libraries and programs that together implement
+    a structure-oriented client/server database management system. In general,
+    structure-oriented DBMS offer a richer set of data types and constructors
+    than e.g. relational DBMS. The data model of GRAS is the directed,
+    attributed, node and edge labelled graph. GRAS is not intended as a
+    stand-alone system, but must be accessed via its application programming
+    interface.
+<DT><A REL=INCLUDE HREF="../persistence">Orthogonal Persistence</A>
+    <DD>Libraries and <A REL=INCLUDE
+    HREF="../persistence/libpm3common/src">interfaces</A> to orthogonally
+    persistent distributed storage for Modula-3 objects. Persistent storage is
+    (by default) provided by the GRAS3 transactional page server. An
+    experimental binding to the SHORE object store is also available on
+    machines where SHORE is installed. Example applications include
+    implementations of the <A REL=INCLUDE HREF="../persistence/OO7">OO7</A>
+    traversal operations and a <A REL=INCLUDE
+    HREF="../persistence/primes/src">prime number generator</A> that starts 
+    generating prime numbers where it left off in its previous invocation.
+    Orthogonally persistent applications run as clients of the GRAS3 page
+    server (or SHORE server), which must be running before they can
+    execute. See the information on getting started with GRAS3 in the GRAS3 <A
+    REL = INCLUDE HREF="../GRAS3/README">README</A>.
 <DT><A REL=INCLUDE HREF="../stableobjects/src">Stable Objects</A>
     <DD>With this package, user objects may easily be converted to 
     crash-resistant persistent objects.

@@ -530,6 +530,7 @@ SFILES = ax-general.c ax-gdb.c bcache.c blockframe.c breakpoint.c \
 	printcmd.c remote.c remote-nrom.c scm-exp.c scm-lang.c \
 	scm-valprint.c signals.c source.c stabsread.c stack.c symfile.c \
 	symmisc.c symtab.c linespec.c target.c thread.c top.c tracepoint.c \
+	m3-uid.c m3-token.c m3-exp.c m3-lang.c m3-typeprint.c m3-valprint.c \
 	typeprint.c utils.c valarith.c valops.c valprint.c values.c \
 	serial.c ser-unix.c mdebugread.c os9kread.c \
 	tui/tui.c tui/tui.h tui/tuiCommand.c tui/tuiCommand.h \
@@ -637,7 +638,8 @@ HFILES_NO_SRCDIR = bcache.h buildsym.h call-cmds.h coff-solib.h defs.h \
 	symfile.h stabsread.h target.h terminal.h typeprint.h xcoffsolib.h \
 	c-lang.h ch-lang.h f-lang.h \
 	jv-lang.h \
-	m2-lang.h  p-lang.h \
+	m2-lang.h p-lang.h \
+	m3-uid.h m3-lang.h \
 	complaints.h valprint.h \
 	29k-share/udi/udiids.h 29k-share/udi_soc nindy-share/b.out.h \
 	nindy-share/block_io.h nindy-share/coff.h \
@@ -693,6 +695,7 @@ COMMON_OBS = version.o blockframe.o breakpoint.o findvar.o regcache.o \
 	varobj.o wrapper.o \
 	jv-lang.o jv-valprint.o jv-typeprint.o \
 	m2-lang.o p-lang.o p-typeprint.o p-valprint.o \
+	m3-uid.o m3-lang.o m3-typeprint.o m3-valprint.o m3-token.o m3-exp.o \
 	scm-exp.o scm-lang.o scm-valprint.o complaints.o typeprint.o \
 	c-typeprint.o ch-typeprint.o f-typeprint.o m2-typeprint.o \
 	c-valprint.o cp-valprint.o ch-valprint.o f-valprint.o m2-valprint.o \
@@ -869,6 +872,8 @@ saber_gdb: $(SFILES) $(DEPFILES) copying.c version.c
 	#load jv-exp.tab.c
 	#load m2-exp.tab.c
 	#load p-exp.tab.c
+	#load m3-token.c
+	#load m3-exp.c
 	#load copying.c version.c
 	#load ../opcodes/libopcodes.a
 	#load ../libiberty/libiberty.a
@@ -1643,6 +1648,27 @@ m2-typeprint.o: m2-typeprint.c $(defs_h) $(expression_h) $(gdbcmd_h) \
 m2-valprint.o: m2-valprint.c $(defs_h) $(gdbtypes_h) $(symtab_h) \
 	valprint.h m2-lang.h
 
+m3-exp.o: m3-exp.c m3-lang.h m3-token.h $(defs_h) $(expression_h) \
+	$(value_h) parser-defs.h language.h $(gdbtypes_h)
+
+m3-lang.o: m3-lang.c m3-lang.h m3-uid.h $(defs_h) $(expression_h) \
+	$(gdbtypes_h) language.h parser-defs.h $(symtab_h) $(value_h) \
+	$(frame_h)
+
+m3-typeprint.o: m3-typeprint.c m3-lang.h $(defs_h) $(expression_h) \
+	$(gdbcmd_h) $(gdbcore_h) $(gdbtypes_h) language.h $(symtab_h) \
+	target.h $(command_h) typeprint.h $(value_h) gdb_string.h \
+	$(INCLUDE_DIR)/demangle.h symfile.h objfiles.h
+
+m3-valprint.o: m3-valprint.c m3-lang.h $(defs_h) $(expression_h) \
+	$(gdbtypes_h) language.h $(symtab_h) valprint.h $(value_h) \
+	$(INCLUDE_DIR)/demangle.h
+
+m3-uid.o: m3-uid.c m3-uid.h $(defs_h)
+
+m3-token.o: m3-token.c m3-token.h $(defs_h) $(expression_h) $(value_h) \
+	parser-defs.h
+
 m3-nat.o: m3-nat.c $(defs_h) $(inferior_h) $(value_h) language.h target.h \
 	gdb_wait.h $(gdbcmd_h) $(gdbcore_h) $(regcache_h)
 
@@ -2130,6 +2156,8 @@ z8k-tdep.o: z8k-tdep.c $(bfd_h) $(dis-asm_h) $(defs_h) $(frame_h) \
 c-exp.tab.o: c-exp.tab.c c-lang.h $(defs_h) $(expression_h) \
 	$(gdbtypes_h) language.h parser-defs.h $(symtab_h) $(value_h) \
 	$(bfd_h) objfiles.h symfile.h
+
+m3-valprint.c: m3-lang.h
 
 jv-exp.tab.o: jv-exp.tab.c jv-lang.h $(defs_h) $(expression_h) \
 	$(gdbtypes_h) language.h parser-defs.h $(symtab_h) $(value_h) \

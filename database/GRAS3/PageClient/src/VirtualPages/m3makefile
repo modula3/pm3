@@ -12,10 +12,10 @@ Module			("VirtualFile")
 interface		("InternalVirtualFile")
 Module			("VirtualLocalFile")
 Module			("VirtualRemoteFile")
-table			("VirtualPage", "Cardinal", "VirtualPage")
+transientTable		("VirtualPage", "Cardinal", "VirtualPage")
 
 % *** pages ***
 Module			("VirtualPage")
-interface		("InternalVirtualPage")
+Interface		("InternalVirtualPage")
 module			("VirtualLocalPage")
 module			("VirtualRemotePage")

@@ -7,7 +7,7 @@
 
 INTERFACE QCode;
 
-IMPORT M3ID, Quake;
+IMPORT Quake, Thread;
 
 TYPE (* the Quake virtual machine opcodes *)
   Op = {
@@ -158,20 +158,20 @@ TYPE
   Stream_ = OBJECT
     cursor      : INTEGER               := 0;
     instrs      : REF ARRAY OF Instr    := NIL;
-    source_file : M3ID.T                := M3ID.NoID;
+    source_file : Quake.ID              := Quake.NoID;
     n_procs     : INTEGER               := 0;
     procs       : REF ARRAY OF ProcInfo := NIL;
   METHODS
     emit  (op: Op;  a: INTEGER);
     patch (pc: INTEGER;  op: Op;  a: INTEGER);
-    add_proc (nm: M3ID.T): INTEGER;
+    add_proc (nm: Quake.ID): INTEGER;
   END;
 
 TYPE
   ProcInfo = REF RECORD
     code    : Stream      := NIL;
     entry   : INTEGER     := 0;
-    name    : M3ID.T      := M3ID.NoID;
+    name    : Quake.ID    := Quake.NoID;
     n_args  : INTEGER     := 0;
     builtin : BOOLEAN     := FALSE;
     isFunc  : BOOLEAN     := FALSE; (* only valid if builtin *)
@@ -180,6 +180,6 @@ TYPE
 
 TYPE
   BuiltinProc = PROCEDURE (m: Quake.Machine;  n_args: INTEGER)
-                  RAISES {Quake.Error};
+                  RAISES {Quake.Error, Thread.Alerted};
 
 END QCode.

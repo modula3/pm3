@@ -31,7 +31,7 @@ PROCEDURE Iterate() : Iterator;
 
 TYPE
   Iterator <: IteratorPublic;
-  IteratorPublic = OBJECT METHODS
+  IteratorPublic = <*TRANSIENT*> ROOT OBJECT METHODS
     next (VAR (*OUT*) tr: Transport.T): BOOLEAN;
   END;
 

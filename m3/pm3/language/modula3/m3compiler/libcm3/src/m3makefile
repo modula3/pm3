@@ -1,0 +1,60 @@
+% Copyright (C) 1992, Digital Equipment Corporation
+% All rights reserved.
+% See the file COPYRIGHT for a full description.
+%
+% File: m3makefile
+% Last modified on Tue Jan 24 13:10:54 PST 1995 by kalsow
+%      modified on Wed Jun  2 12:06:33 PDT 1993 by muller
+
+% remove_m3_option ("-gui")
+% m3_option ("-times")
+
+import ("libm3")
+import ("m3middle")
+import ("m3linker")
+import ("m3front")
+import ("m3quake")
+
+interface ("M3Backend")
+
+IBACK = lookup("IBACK", "TRUE")
+if equal (TARGET, "LINUXELF") or equal (TARGET, "LINUXLIBC6") and IBACK
+  import ("m3objfile")
+  import ("m3back")
+  implementation ("M3BackLinux")
+  implementation ("UtilsPosix")
+else if equal(TARGET, "NT386") and IBACK
+  import ("m3objfile")
+  import ("m3back")
+  implementation ("M3BackWin32")
+  implementation ("UtilsWin32")
+else
+  implementation ("M3BackPosix")
+  implementation ("UtilsPosix")
+end end
+
+Module ("Arg")
+Module ("Builder")
+Module ("Dirs")
+Module ("M3Build")
+Module ("M3Loc")
+Module ("M3Options")
+Module ("M3Path")
+Module ("M3Unit")
+Module ("Makefile")
+Module ("Msg")
+Module ("Utils")
+Module ("WebFile")
+%implementation ("Main")
+
+%build_standalone () %-- we don't want to depend on the shared libraries...
+%program ("cm3")
+library ("cm3")
+
+%% install a fresh copy of the configuration file too...
+%cp_if (format ("..%ssrc%sconfig%s%s", SL, SL, SL, TARGET), "cm3.cfg")
+%BindExport ("cm3.cfg")
+
+%-- the man page is *very* stale, don't bother.
+% ManPage ("m3","1")
+

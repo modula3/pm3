@@ -17,6 +17,8 @@ TYPE
         tipe     : Type.T;
 	value    : Expr.T;
         offset   : INTEGER;
+        coffset  : INTEGER;
+        calign   : INTEGER;
 	explicit : BOOLEAN;
         gen_init : BOOLEAN;
       OVERRIDES
@@ -40,13 +42,6 @@ PROCEDURE ParseDecl (READONLY att: Decl.Attributes) =
   TYPE TK = Token.T;
   VAR t: T; id: M3ID.T;
   BEGIN
-    IF att.isInline   THEN Error.Msg ("a constant cannot be inline"); END;
-    IF att.isExternal THEN
-      Error.Msg ("a constant cannot be external");
-    ELSIF att.callingConv # NIL THEN
-      Error.Msg ("a constant does not have a calling convention");
-    END;
-    
     Match (TK.tCONST);
     WHILE (cur.token = TK.tIDENT) DO
       id := MatchID ();
@@ -73,6 +68,8 @@ PROCEDURE Create (name: M3ID.T): T =
     t.tipe     := NIL;
     t.value    := NIL;
     t.offset   := 0;
+    t.coffset  := 0;
+    t.calign   := 0;
     t.explicit := FALSE;
     t.gen_init := FALSE;
     RETURN t;
@@ -143,7 +140,10 @@ PROCEDURE SetGlobals (t: T) =
       align := MAX (Target.Address.align, Target.Integer.align);
     END;
 
-    t.offset := Module.Allocate (size, align, "constant ", id := t.name);
+    t.calign  := align;
+    t.coffset := Module.Allocate (size, align, TRUE, "constant ", id := t.name);
+    t.offset  := Module.Allocate (Target.Address.size, Target.Address.align,
+                                  FALSE, "constant", id := t.name);
   END SetGlobals;
 
 PROCEDURE Load (t: T) =
@@ -155,7 +155,13 @@ PROCEDURE Load (t: T) =
   BEGIN
     IF (t.explicit) THEN
       SetGlobals (t);
-      CG.Load_addr_of (Scope.ToUnit (t), t.offset, CG.Max_alignment);
+      IF (t.imported) THEN
+        Module.LoadGlobalAddr (Scope.ToUnit (t), t.offset, is_const := FALSE);
+        CG.Load_indirect (CG.Type.Addr, 0, Target.Address.size);
+        CG.Boost_alignment (t.calign);
+      ELSE
+        Module.LoadGlobalAddr (Scope.ToUnit (t), t.coffset, is_const := TRUE);
+      END;
     ELSE
       Expr.Prep (t.value);
       Expr.Compile (t.value);
@@ -183,7 +189,10 @@ PROCEDURE Declarer (t: T): BOOLEAN =
       EVAL Scope.ToUnit (t); (* force the module to be imported *)
     ELSE
       SetGlobals (t);
-      CG.Declare_global_field (t.name, t.offset, size, type);
+      CG.Declare_global_field (t.name, t.offset, Target.Address.size,
+                               CG.Declare_indirect (type), is_const := FALSE);
+      CG.Declare_global_field (t.name, t.coffset, size,
+                               type, is_const := TRUE);
       t.gen_init := TRUE;
     END;
 
@@ -194,9 +203,13 @@ PROCEDURE ConstInit (t: T) =
   BEGIN
     IF t.gen_init THEN
       t.gen_init := FALSE;
-      CG.Comment (t.offset, "constant ", M3ID.ToText (t.name));
-      Expr.PrepLiteral (t.value, t.tipe);
-      Expr.GenLiteral (t.value, t.offset, t.tipe);
+
+      CG.Comment (t.offset, FALSE, "constant ", M3ID.ToText (t.name));
+      CG.Init_var (t.offset, Module.GlobalData (TRUE), t.coffset, FALSE);
+
+      CG.Comment (t.coffset, TRUE, "constant ", M3ID.ToText (t.name));
+      Expr.PrepLiteral (t.value, t.tipe, TRUE);
+      Expr.GenLiteral (t.value, t.coffset, t.tipe, TRUE);
     END;
   END ConstInit;
 

@@ -4,25 +4,37 @@
 
 /* Last modified on Mon Jun  3 14:10:23 PDT 1996 by mcjones */
 
-implementation("LecternClientPosix")
-implementation("LecternServerPosix")
+% readonly proc simple_c_program(nm) is
+%   local SRCFILE = path_of(nm & ".c")
+%   local EXEFILE = nm
+%
+%   if stale(EXEFILE, SRCFILE)
+%     exec (CC, "-o " & EXEFILE, SRCFILE)
+%   end
+%
+%   deriveds(EXEFILE, no_extension)
+% end
 
 readonly proc simple_c_program(nm) is
   local src = path_of (nm & ".c")
-  local obj = nm & NAMING_CONVENTIONS[13] % .o
-  local pgm = nm & NAMING_CONVENTIONS[20] % .exe
-  local ret = 0
+  local obj = nm & ".o"
+  local pgm = program_name (nm)
+  local toss = 0
 
-  if stale(pgm, src)
-    ret = m3_compile_c(src,obj,[])
-    if not equal(ret, 0) error("command failed with error code: ", ret) end
-    ret = m3_link(pgm,[obj],[])
-    if not equal(ret, 0) error("command failed with error code: ", ret) end
+  if defined ("_all")
+    if stale (pgm, src)
+      toss = compile_c (src, obj, [], FALSE, FALSE)
+      toss = m3_link (pgm, [], obj, SYSTEM_LIBS{"LIBC"}, FALSE)
+    end
   end
 
-  deriveds(pgm, [NAMING_CONVENTIONS[17]])
+  deriveds("", [ obj, pgm ])
+  BindExport (pgm)
 end
 
-setCommands()
 simple_c_program("LecternClient")
-BindExport("LecternClient")
+
+implementation("LecternClientPosix")
+implementation("LecternServerPosix")
+
+

@@ -10,7 +10,7 @@
 
 INTERFACE Pathname;
 
-IMPORT TextSeq;
+IMPORT TextTransientSeq AS TextSeq;
 
 TYPE
   T = TEXT;
@@ -91,7 +91,7 @@ PROCEDURE Compose(a: Arcs): T RAISES {Invalid};
 (* Combine the elements of "a" to form a pathname corresponding to the
    syntax of this operating system.  Raise "Invalid" if "a" is "NIL",
    if "a.getlo()" is neither "NIL" nor a valid root directory name, or
-   if one of the elments of "TextSeq.Sub(a, 1)" is not a valid arc
+   if one of the elements of "TextSeq.Sub(a, 1)" is not a valid arc
    name. *)
 
 PROCEDURE Absolute(pn: T): BOOLEAN;
@@ -114,24 +114,43 @@ PROCEDURE Base(pn: T): T;
 PROCEDURE Join(pn, base: T; ext: TEXT := NIL): T;
 (* Return a pathname formed by prepending "pn" to "base" (if "pn" is
    not "NIL") and appending "ext" to "base" (if "ext" is not "NIL").
-   More precisely, if "pn", "base", and "ext" conform to the syntax 
-   of the particular operating system (as described at the end 
-   of this section), this is equivalent to: *)
-
+   More precisely, this is equivalent to the following, in which "a"
+   is a local variable of type "Arcs": *)
 (*
-| IF ext # NIL THEN base := base & "." & ext END;
-| IF pn = NIL THEN RETURN base
+| IF pn = NIL THEN a := NIL
 | ELSE
 |   IF Absolute(base) THEN `Cause checked runtime error` END;
-|   RETURN Compose(TextSeq.Cat(
-|                    Decompose(pn),
-|                    TextSeq.Sub(Decompose(base), 1)))
+|   a := Decompose(pn)
 | END;
+| IF ext # NIL THEN base := base & "." & ext END;
+| RETURN Compose(
+|   TextSeq.Cat(a, TextSeq.Sub(Decompose(base), 1)))
 *)
 
 (* The value returned by "Join" will be a valid pathname only if the
    "base" and "ext" conform to the syntax of the particular operating
    system, as specified at the end of this section. *)
+
+(*** VERSION 2 ***)
+ (* Return a pathname formed by prepending "pn" to "base" (if "pn" is
+     not "NIL") and appending "ext" to "base" (if "ext" is not "NIL").
+     More precisely, this is equivalent to the following: *)
+
+  (*
+  | IF ext # NIL THEN base := base & "." & ext END;
+  | IF pn = NIL THEN RETURN base
+  | ELSE
+  |   IF Absolute(base) THEN `Cause checked runtime error` END;
+  |   RETURN Compose(TextSeq.Cat(
+  |                    Decompose(pn),
+  |                    TextSeq.Sub(Decompose(base), 1)))
+  | END;
+  *)
+
+  (* The value returned by "Join" will be a valid pathname only if 
+     "pn", "base" and "ext" conform to the syntax of the particular 
+     operating system, as specified at the end of this section. *) 
+
 
 PROCEDURE LastBase(pn: T): T;
 (* Return the base of the final arc name of "pn".  It is a checked
@@ -139,11 +158,6 @@ PROCEDURE LastBase(pn: T): T;
    name. *)
 
 PROCEDURE LastExt(pn: T): TEXT;
-(* Return the extension of the last arc name of "pn".  It is a checked
-   runtime error if "pn" is empty or consists only of a root directory
-   name. *)
-
-PROCEDURE ReplaceExt(pn: T; ext: TEXT): T;
 (* Return a pathname equal to "pn" except with the extension of the
    final arc name set to "ext", replacing the previous extension. If
    the final arc name is empty, "pn" is returned unchanged; if the
@@ -152,6 +166,10 @@ PROCEDURE ReplaceExt(pn: T; ext: TEXT): T;
 | pn & "." & ext
 
    is returned. *)
+
+PROCEDURE ReplaceExt(pn: T; ext: TEXT): T;
+(* Return a pathname equal to "pn" except with the extension of the
+   final arc name replaced with "ext", which must be non-"NIL". *)
 
 VAR (*CONST*)
   Parent: TEXT;

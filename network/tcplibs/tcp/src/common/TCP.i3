@@ -28,7 +28,7 @@ INTERFACE TCP;
 IMPORT Atom, ConnFD, IP, Thread;
 
 TYPE
-  Connector <: ROOT;
+  Connector <: <*TRANSIENT*> ROOT;
   T <: ConnFD.T;
      
 (* The TCP implementation produces a "ConnFD.T" which raises

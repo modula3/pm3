@@ -29,6 +29,14 @@ PROCEDURE SplitX (method: Value.T;  VAR info: Info);
 
 PROCEDURE NoteOverride (new, old: Value.T);
 
-PROCEDURE IsEqual (va, vb: Value.T;  x: Type.Assumption): BOOLEAN;
+PROCEDURE IsEqualList (va, vb: Value.T;  x: Type.Assumption;
+                       types: BOOLEAN): BOOLEAN;
+(* Returns "TRUE" if the two lists of values represented by "va" and "vb"
+   have the same length and for each pair of values "a" and "b",
+   "IsEqual(a, b, x, types)" returns "TRUE".  Otherwise, returns "FALSE". *)
+
+PROCEDURE IsEqual (va, vb: Value.T;  x: Type.Assumption; types: BOOLEAN): BOOLEAN;
+(* If "types" is "FALSE", only the surface syntax (name & field index) are
+   checked.  Otherwise, the field types and default values are checked too. *)
 
 END Method.

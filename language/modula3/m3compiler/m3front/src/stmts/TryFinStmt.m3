@@ -8,8 +8,8 @@
 
 MODULE TryFinStmt;
 
-IMPORT M3ID, CG, Token, Scanner, Stmt, StmtRep, Marker, Target;
-IMPORT Runtime, Procedure, ProcBody, M3RT, Scope, Fmt, Host, Module;
+IMPORT M3ID, CG, Token, Scanner, Stmt, StmtRep, Marker, Target, Type, Addr;
+IMPORT RunTyme, Procedure, ProcBody, M3RT, Scope, Fmt, Host, TryStmt, Module;
 FROM Stmt IMPORT Outcome;
 
 TYPE
@@ -29,6 +29,7 @@ TYPE
 TYPE
   HandlerProc = ProcBody.T OBJECT
     self: P;
+    activation: CG.Var;
   OVERRIDES
     gen_decl := EmitDecl;
     gen_body := EmitBody;
@@ -68,6 +69,7 @@ PROCEDURE Check (p: P;  VAR cs: Stmt.CheckState) =
     Marker.PushFinally (CG.No_label, CG.No_label, NIL);
     Stmt.TypeCheck (p.body, cs);
     Marker.Pop ();
+    TryStmt.PushHandler (NIL, 0, FALSE);
     IF Target.Has_stack_walker THEN
       Stmt.TypeCheck (p.finally, cs);
     ELSE
@@ -78,7 +80,7 @@ PROCEDURE Check (p: P;  VAR cs: Stmt.CheckState) =
       ELSE
         p.viaProc := TRUE;
         name := p.forigin MOD 10000;
-        p.handler.name := Module.Prefix (NIL) & "_LINE_" & Fmt.Int (name);
+        p.handler.name := HandlerName (name);
         IF (name = last_name) THEN
           INC (next_uid);
           p.handler.name := p.handler.name & "_" & Fmt.Int (next_uid);
@@ -92,7 +94,16 @@ PROCEDURE Check (p: P;  VAR cs: Stmt.CheckState) =
         Scope.Pop (zz);
       END;
     END;
+    TryStmt.PopHandler ();
   END Check;
+
+PROCEDURE HandlerName (uid: INTEGER): TEXT =
+  CONST Insert = ARRAY BOOLEAN OF TEXT { "_M3_LINE_", "_I3_LINE_" };
+  BEGIN
+    RETURN M3ID.ToText (Module.Name (NIL))
+           & Insert [Module.IsInterface ()]
+           & Fmt.Int (uid);
+  END HandlerName;
 
 PROCEDURE Compile (p: P): Stmt.Outcomes =
   BEGIN
@@ -110,11 +121,11 @@ PROCEDURE Compile1 (p: P): Stmt.Outcomes =
     proc: Procedure.T;
   BEGIN
     (* declare and initialize the info record *)
-    info := CG.Declare_local (M3ID.NoID, M3RT.EI_SIZE, Target.Address.align,
+    info := CG.Declare_local (M3ID.NoID, M3RT.EA_SIZE, Target.Address.align,
                               CG.Type.Struct, 0, in_memory := TRUE,
                               up_level := FALSE, f := CG.Never);
     CG.Load_nil ();
-    CG.Store_addr (info, M3RT.EI_exception);
+    CG.Store_addr (info, M3RT.EA_exception);
 
     (* compile the body *)
     l := CG.Next_label (2);
@@ -125,6 +136,9 @@ PROCEDURE Compile1 (p: P): Stmt.Outcomes =
     Marker.Pop ();
     CG.Set_label (l+1, barrier := TRUE);
 
+    (* set the "Compiler.ThisException()" globals *)
+    TryStmt.PushHandler (info, 0, direct := TRUE);
+
     (* compile the handler *)
     Scanner.offset := p.forigin;
     CG.Gen_location (p.forigin);
@@ -134,33 +148,36 @@ PROCEDURE Compile1 (p: P): Stmt.Outcomes =
 
     IF (Outcome.Returns IN oc) THEN
       l := CG.Next_label ();
-      CG.Load_int (info, M3RT.EI_exception);
+      CG.Load_int (info, M3RT.EA_exception);
       CG.Load_intt (Marker.Return_exception);
-      CG.If_ne (l, CG.Type.Int, CG.Always);
+      CG.If_compare (Target.Integer.cg_type, CG.Cmp.NE, l, CG.Always);
       Marker.EmitReturn (NIL, fromFinally := TRUE);
       CG.Set_label (l);
     END;
 
     IF (Outcome.Exits IN oc) THEN
       l := CG.Next_label ();
-      CG.Load_int (info, M3RT.EI_exception);
+      CG.Load_int (info, M3RT.EA_exception);
       CG.Load_intt (Marker.Exit_exception);
-      CG.If_ne (l, CG.Type.Int, CG.Always);
+      CG.If_compare (Target.Integer.cg_type, CG.Cmp.NE, l, CG.Always);
       Marker.EmitExit ();
       CG.Set_label (l);
     END;
 
     (* resume the exception *)
-    proc := Runtime.LookUpProc (Runtime.Hook.ResumeRaise);
+    proc := RunTyme.LookUpProc (RunTyme.Hook.ResumeRaiseEx);
     l := CG.Next_label ();
-    CG.Load_addr (info, M3RT.EI_exception);
+    CG.Load_addr (info, M3RT.EA_exception);
     CG.Load_nil ();
-    CG.If_eq (l, CG.Type.Addr, CG.Always);
+    CG.If_compare (CG.Type.Addr, CG.Cmp.EQ, l, CG.Always);
     Procedure.StartCall (proc);
     CG.Load_addr_of (info, 0, Target.Address.align);
     CG.Pop_param (CG.Type.Addr);
-    EVAL Procedure.EmitCall (proc);
+    Procedure.EmitCall (proc);
     CG.Set_label (l);
+
+    (* restore the "Compiler.ThisException()" globals *)
+    TryStmt.PopHandler ();
 
     o := Stmt.Outcomes {};
     IF Outcome.FallThrough IN xc THEN o := oc END;
@@ -200,6 +217,9 @@ PROCEDURE Compile2 (p: P): Stmt.Outcomes =
     END;
     CG.Set_label (l+1, barrier := TRUE);
 
+    (* set the "Compiler.ThisException()" globals *)
+    TryStmt.PushHandler (p.handler.activation, 0, direct := FALSE);
+
     Scanner.offset := p.forigin;
     CG.Gen_location (p.forigin);
     IF (Host.inline_nested_procs) THEN
@@ -211,6 +231,9 @@ PROCEDURE Compile2 (p: P): Stmt.Outcomes =
       CG.Note_procedure_origin (p.handler.cg_proc);
       xc := Stmt.GetOutcome (p.finally);
     END;
+
+    (* restore the "Compiler.ThisException()" globals *)
+    TryStmt.PopHandler ();
 
     o := Stmt.Outcomes {};
     IF Outcome.FallThrough IN xc THEN o := oc END;
@@ -224,9 +247,14 @@ PROCEDURE EmitDecl (x: HandlerProc) =
   BEGIN
     IF (p.viaProc) THEN
       IF (x.parent # NIL) THEN par := x.parent.cg_proc; END;
-      x.cg_proc := CG.Declare_procedure (M3ID.Add (x.name), 0, CG.Type.Void,
+      x.cg_proc := CG.Declare_procedure (M3ID.Add (x.name), 1, CG.Type.Void,
                                          x.level, Target.DefaultCall,
                                          exported := FALSE, parent := par);
+      x.activation := CG.Declare_param (M3ID.NoID, Target.Address.size,
+                                        Target.Address.align, CG.Type.Addr,
+                                        Type.GlobalUID (Addr.T),
+                                        in_memory := FALSE, up_level := FALSE,
+                                        f := CG.Always);
     END;
   END EmitDecl;
 
@@ -234,12 +262,21 @@ PROCEDURE EmitBody (x: HandlerProc) =
   VAR p := x.self;
   BEGIN
     IF (p.viaProc) AND (NOT Host.inline_nested_procs) THEN
+
+      (* set the "Compiler.ThisException()" globals *)
+      TryStmt.PushHandler (x.activation, 0, direct := FALSE);
+
+      (* generate the actual procedure *)
       Scanner.offset := p.forigin;
       CG.Gen_location (p.forigin);
       CG.Begin_procedure (x.cg_proc);
       EVAL Stmt.Compile (p.finally);
       CG.Exit_proc (CG.Type.Void);
       CG.End_procedure (x.cg_proc);
+
+      (* restore the "Compiler.ThisException()" globals *)
+      TryStmt.PopHandler ();
+
     END;
   END EmitBody;
 
@@ -258,7 +295,7 @@ PROCEDURE Compile3 (p: P): Stmt.Outcomes =
                                CG.Type.Struct, 0, in_memory := TRUE,
                                up_level := FALSE, f := CG.Never);
     CG.Load_nil ();
-    CG.Store_addr (frame, M3RT.EF1_exception);
+    CG.Store_addr (frame, M3RT.EF1_info + M3RT.EA_exception);
 
     l := CG.Next_label (3);
     CG.Set_label (l, barrier := TRUE);
@@ -274,6 +311,9 @@ PROCEDURE Compile3 (p: P): Stmt.Outcomes =
     END;
     CG.Set_label (l+1, barrier := TRUE);
 
+    (* set the "Compiler.ThisException()" globals *)
+    TryStmt.PushHandler (frame, M3RT.EF1_info, direct := TRUE);
+
     (* compile the handler *)
     Scanner.offset := p.forigin;
     CG.Gen_location (p.forigin);
@@ -283,37 +323,40 @@ PROCEDURE Compile3 (p: P): Stmt.Outcomes =
       (* generate the bizzare end-tests *)
 
       (* exceptional outcome? *)
-      CG.Load_addr (frame, M3RT.EF1_exception);
+      CG.Load_addr (frame, M3RT.EF1_info + M3RT.EA_exception);
       CG.Load_nil ();
-      CG.If_eq (l+2, CG.Type.Addr, CG.Always);
+      CG.If_compare (CG.Type.Addr, CG.Cmp.EQ, l+2, CG.Always);
 
       IF (exitSeen) THEN
         xx := CG.Next_label ();
-        CG.Load_int (frame, M3RT.EF1_exception);
+        CG.Load_int (frame, M3RT.EF1_info + M3RT.EA_exception);
         CG.Load_intt (Marker.Exit_exception);
-        CG.If_ne (xx, CG.Type.Int, CG.Always);
+        CG.If_compare (Target.Integer.cg_type, CG.Cmp.NE, xx, CG.Always);
         Marker.EmitExit ();
         CG.Set_label (xx);
       END;
 
       IF (returnSeen) THEN
         xx := CG.Next_label ();
-        CG.Load_int (frame, M3RT.EF1_exception);
+        CG.Load_int (frame, M3RT.EF1_info + M3RT.EA_exception);
         CG.Load_intt (Marker.Return_exception);
-        CG.If_ne (xx, CG.Type.Int, CG.Always);
+        CG.If_compare (Target.Integer.cg_type, CG.Cmp.NE, xx, CG.Always);
         Marker.EmitReturn (NIL, fromFinally := TRUE);
         CG.Set_label (xx);
       END;
 
       (* ELSE, a real exception is being raised => resume it *)
-      proc := Runtime.LookUpProc (Runtime.Hook.ResumeRaise);
+      proc := RunTyme.LookUpProc (RunTyme.Hook.ResumeRaiseEx);
       Procedure.StartCall (proc);
-      CG.Load_addr_of (frame, M3RT.EF1_exception, Target.Address.align);
+      CG.Load_addr_of (frame, M3RT.EF1_info, Target.Address.align);
       CG.Pop_param (CG.Type.Addr);
-      EVAL Procedure.EmitCall (proc);
+      Procedure.EmitCall (proc);
 
       CG.Set_label (l+2, barrier := TRUE);
     END;
+
+    (* restore the "Compiler.ThisException()" globals *)
+    TryStmt.PopHandler ();
 
     o := Stmt.Outcomes {};
     IF Outcome.FallThrough IN xc THEN o := oc END;

@@ -9,7 +9,7 @@
 MODULE NamedType;
 
 IMPORT M3, M3ID, Token, Type, TypeRep, Scanner, ObjectType;
-IMPORT Error, Scope, RefType, Value, ErrType;
+IMPORT Error, Scope, Brand, Value, ErrType;
 
 TYPE
   P = Type.T BRANDED "NamedType.T" OBJECT
@@ -56,11 +56,11 @@ PROCEDURE Parse (): Type.T =
       END;
       t := p;
     END;
- 
+
     IF (Scanner.cur.token = TK.tBRANDED) THEN
-      t := ObjectType.Parse (t, FALSE, RefType.ParseBrand ());
+      t := ObjectType.Parse (t, FALSE, FALSE, Brand.Parse ());
     ELSIF (Scanner.cur.token = TK.tOBJECT) THEN
-      t := ObjectType.Parse (t, FALSE, NIL);
+      t := ObjectType.Parse (t, FALSE, FALSE, NIL);
     END;
     RETURN t;
   END Parse;
@@ -194,10 +194,10 @@ PROCEDURE GenInit (p: P;  zeroed: BOOLEAN) =
     Type.InitValue (p.type, zeroed);
   END GenInit;
 
-PROCEDURE GenMap (p: P;  offset, size: INTEGER;  refs_only: BOOLEAN) =
+PROCEDURE GenMap (p: P; offset, size: INTEGER; refs_only, transient: BOOLEAN) =
   BEGIN
     IF (p.type = NIL) THEN Resolve (p) END;
-    Type.GenMap (p.type, offset, size, refs_only);
+    Type.GenMap (p.type, offset, size, refs_only, transient);
   END GenMap;
 
 PROCEDURE GenDesc (p: P) =

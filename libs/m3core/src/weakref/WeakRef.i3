@@ -77,6 +77,8 @@ TYPE CleanUpProc = PROCEDURE(READONLY w: T; r: REFANY);
 (* If "cp(w)" is not "NIL", then when "w" dies, the garbage collector
    will schedule the call "cp(w)(w, &lt;reference to nd(w)>)".  *)
 
+CONST Brand = "WeakRef";
+
 END WeakRef.
 
 (* The cleanup procedure will be executed at some point after 

@@ -23,7 +23,7 @@
 
 INTERFACE Codex86;
 
-IMPORT M3CG, M3ObjFile;
+IMPORT M3CG, M3ObjFile, TFloat;
 
 FROM M3CG IMPORT MType, Label, ByteOffset, Alignment;
 FROM M3CG_Ops IMPORT ErrorHandler;
@@ -34,11 +34,10 @@ FROM M3x86Rep IMPORT Operand, OLoc, NRegs, MVar, x86Var, x86Proc, Regno;
 
 TYPE T <: Public;
 TYPE Public = OBJECT
-        wr            : Wrx86.T := NIL;
-        reg           : ARRAY [0 .. NRegs] OF Operand;
-        ftop_mem      : MVar;
-        ftop_inmem    := FALSE;
-        internalvar   : x86Var;
+        wr         : Wrx86.T := NIL;
+        reg        : ARRAY [0 .. NRegs] OF Operand;
+        ftop_mem   : MVar;
+        ftop_inmem := FALSE;
       METHODS
         wrFlush ();
         set_obj (obj: M3ObjFile.T);
@@ -67,9 +66,9 @@ TYPE Public = OBJECT
         fstack_swap ();
         fstack_discard ();
 	fstack_check(depth: INTEGER; place: TEXT);
-        f_loadlit (READONLY flarr: ARRAY OF INTEGER; type: MType);
-        immOp (op: Op; READONLY dest: Operand; imm: INTEGER; indreg:=
-							     BASE_FOR_PIC);
+        f_loadlit (READONLY flarr: FloatBytes; type: MType);
+        immOp (op: Op; READONLY dest: Operand; imm: INTEGER;
+               indreg:= BASE_FOR_PIC);
         binOp (op: Op; READONLY dest, src: Operand; indreg:= BASE_FOR_PIC);
         tableOp (op: Op; READONLY dest, index: Operand; scale: INTEGER;
                  table: MVar);
@@ -79,14 +78,15 @@ TYPE Public = OBJECT
         movImm (READONLY dest: Operand; imm: INTEGER; indreg:= BASE_FOR_PIC);
         MOVSWOp ();
         STOSWOp ();
+        CBWOp ();
         pushOp (READONLY src: Operand; indreg:= BASE_FOR_PIC);
         popOp (READONLY dest: Operand; indreg:= BASE_FOR_PIC);
         decOp (READONLY op: Operand; indreg:= BASE_FOR_PIC);
         unOp (op: Op; READONLY dest: Operand; indreg:= BASE_FOR_PIC);
         mulOp (READONLY src: Operand; indreg:= BASE_FOR_PIC);
         imulOp (READONLY dest, src: Operand; indreg:= BASE_FOR_PIC);
-        imulImm (READONLY dest, src: Operand; imm, imsize: INTEGER; indreg:=
-								 BASE_FOR_PIC);
+        imulImm (READONLY dest, src: Operand; imm, imsize: INTEGER;
+                 indreg:= BASE_FOR_PIC);
         divOp (READONLY divisor: Operand; indreg:= BASE_FOR_PIC);
         idivOp (READONLY divisor: Operand; indreg:= BASE_FOR_PIC);
         diffdivOp (READONLY divisor: Operand; apos: BOOLEAN);
@@ -97,8 +97,8 @@ TYPE Public = OBJECT
         allocate_temp (var: x86Var; size, align: INTEGER);
         reserve_labels (n: INTEGER; short := FALSE): Label;
         set_label (l: Label; offset := 0);
-        case_jump (index: Operand; READONLY l: ARRAY OF Label; indreg:=
-							 BASE_FOR_PIC);
+        case_jump (index: Operand; READONLY l: ARRAY OF Label;
+                   indreg:= BASE_FOR_PIC);
         load_ind (r: Regno; READONLY ind: Operand; o: ByteOffset;
                   type: MType);
         fast_load_ind (r: Regno; READONLY ind: Operand; o: ByteOffset;
@@ -113,12 +113,13 @@ TYPE Public = OBJECT
         end ();
       END;
 
+TYPE Cond = { Z, NZ, E, NE, G, GE, L, LE, A, AE, B, BE, Always };
+
+CONST CondName = ARRAY Cond OF TEXT { "Z", "NZ", "E", "NE", "G", "GE",
+                                      "L", "LE", "A", "AE", "B", "BE", "*" };
+
 CONST
   BASE_FOR_PIC = Operand{ loc:= OLoc.register, reg:= 3 };
-
-TYPE IntnlVar = { Lowset_table, Highset_table };
-
-TYPE Cond = { Z, NZ, E, NE, G, GE, L, LE, A, AE, B, BE, Always };
 
 CONST revcond = ARRAY Cond OF Cond
   { Cond.Z, Cond.NZ, Cond.E, Cond.NE, Cond.L, Cond.LE,
@@ -171,6 +172,9 @@ CONST condopcode = ARRAY Cond OF CondOpCode
     CondOpCode { "",      -1    } };
 
 TYPE
+  FloatBytes = ARRAY [0..7] OF TFloat.Byte;
+
+TYPE
   FOpCode = RECORD
     name: TEXT;
     m32, m64, memop, stbase, stmodrm,
@@ -215,6 +219,9 @@ TYPE
   END;
 
 TYPE FIm = { ONE, L2T, L2E, PI, LG2, LN2, Z };
+
+CONST FImName = ARRAY FIm OF TEXT { "1.0", "Log2(10)", "Log2(e)", "pi",
+                                    "Log10(2)", "LogE(2)", "0.0" };
 
 CONST imcode = ARRAY FIm OF FImOp
   { FImOp { "FLD1",   16_D9E8 },

@@ -7,8 +7,11 @@ INTERFACE VirtualPage;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:37  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:48  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:37  hosking
+    Import of GRAS3 1.1
 
     Revision 1.5  1997/11/19 17:59:43  roland
     Removed grouping of page accesses.
@@ -48,7 +51,7 @@ CONST
 TYPE
   T			<: Public;
 
-  Public		= OBJECT
+  Public		= <*TRANSIENT*> ROOT OBJECT
     METHODS
       putByte		(         pos   	:PageData.Index;
                                   value		:Type.Byte)
@@ -119,13 +122,14 @@ TYPE
 			RAISES {Access.Locked, FatalError};
 
 
-      putAll		(READONLY value		:PageData.T)
+      putAll		(         unswizzler	:PageData.Unswizzler)
 			RAISES {Access.Locked, FatalError};
 
-      getAll		()
-			:PageData.T
+      getAll		(	  swizzler	:PageData.Swizzler)
 			RAISES {Access.Locked, FatalError};
 
+      peekAll		(	  swizzler	:PageData.Swizzler)
+			RAISES {FatalError};
     END;
 
 EXCEPTION

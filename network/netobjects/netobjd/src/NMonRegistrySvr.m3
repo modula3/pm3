@@ -10,7 +10,7 @@ MODULE NMonRegistrySvr;
 
 IMPORT NetObjMon, NetObj, NetObjNotifier;
 
-IMPORT TextRefTbl;
+IMPORT TextRefTransientTbl AS TextRefTbl;
 
 <* PRAGMA LL *>
 
@@ -27,7 +27,7 @@ TYPE
 
   Note = NetObjNotifier.NotifierClosure OBJECT
     t: T;
-    id: TEXT;
+    <*TRANSIENT*> id: TEXT;
   OVERRIDES
     notify := DeadEntry;
   END;
@@ -40,7 +40,7 @@ PROCEDURE New (): NetObjMon.Registry =
 
 PROCEDURE DeadEntry(n: Note; obj: NetObj.T;
                     <*UNUSED*> st: NetObjNotifier.OwnerState) =
-  VAR r: REFANY;
+  VAR r: <*TRANSIENT*> REFANY;
   BEGIN
     LOCK n.t.mu DO
       IF n.t.entries.get(n.id, r) AND r = obj THEN
@@ -65,7 +65,7 @@ PROCEDURE RegistryList (t: T): REF ARRAY OF TEXT =
       res := NEW (REF ARRAY OF TEXT, t.entries.size());
       VAR it := t.entries.iterate();
           i := 0;
-          r: REFANY;
+          r: <*TRANSIENT*> REFANY;
           txt: TEXT;
       BEGIN
         WHILE it.next(txt, r) DO res[i] := txt; INC(i); END;
@@ -76,7 +76,7 @@ PROCEDURE RegistryList (t: T): REF ARRAY OF TEXT =
 
 PROCEDURE RegistryGet (t: T; id: TEXT): NetObjMon.T =
   VAR
-    res: REFANY;
+    res: <*TRANSIENT*> REFANY;
   BEGIN
     LOCK t.mu DO
       IF t.entries.get (id, res) THEN

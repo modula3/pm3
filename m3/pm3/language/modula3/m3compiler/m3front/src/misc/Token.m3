@@ -15,15 +15,15 @@ CONST
     "*EOF*",
 
     "*id*", "*cardinal*", "*real*", "*longreal*",
-    "*extended*", "*char*", "*text*",
+    "*extended*", "*char*", "*wchar*", "*text*", "*wtext*",
 
     "+", "-", "*", "/", ":=", "&", ".", ",",
     ";", "(", "[", "{", "^", "=", "#", "<",
     ">", "<=", ">=", "..", ":", ")", "]",
     "}", "|", "<:", "=>", "*>",
 
-    "INLINE", "EXTERNAL", "ASSERT", "UNUSED", "OBSOLETE", "TRACE",
-    "*CALLCONV*", "FATAL",
+    "INLINE", "EXTERNAL", "ASSERT", "UNUSED", "OBSOLETE", "TRACE", "TRANSIENT",
+    "*CALLCONV*", "IMPLICIT", "DEBUG", "FATAL",
 
     "AND", "ANY", "ARRAY", "AS",
     "BEGIN", "BITS", "BRANDED", "BY",
@@ -53,7 +53,7 @@ CONST
     "INTEGER", "ISTYPE", "LAST", "LONGREAL", "LOOPHOLE", "MAX",
     "MIN", "MUTEX", "NARROW", "NEW", "NIL", "NULL", "NUMBER",
     "ORD", "REAL", "REFANY", "ROOT", "ROUND", "SUBARRAY", "TEXT",
-    "TRUE", "TRUNC", "TYPECODE", "VAL"
+    "TRUE", "TRUNC", "TYPECODE", "VAL", "WIDECHAR"
   };
 
 PROCEDURE Initialize () =

@@ -219,6 +219,7 @@ PROCEDURE Check (p: P) =
     p.info.isEmpty   := FALSE;
     p.info.isSolid   := TRUE;
     p.info.hash      := hash;
+    p.info.isTransient := TRUE;
 
     INC (Type.recursionDepth); (*------------------------------------*)
       p.checked := TRUE;
@@ -385,7 +386,9 @@ PROCEDURE CGResult (t: Type.T): CG.Type =
     IF (p = NIL) OR (p.result = NIL) THEN
       RETURN CG.Type.Void;
     ELSIF NOT LargeResult (p.result) THEN
-      RETURN Type.CGType (p.result);
+      RETURN Type.CGType (p.result, in_memory := TRUE);
+      (*** 2/27/96 WKK:  in_memory = TRUE => so that Win32 code generator
+           can convert register return values to their full 32-bit width! ***)
     ELSIF p.callConv.standard_structs THEN
       RETURN CG.Type.Void;
     ELSE
@@ -470,7 +473,8 @@ PROCEDURE InitCoster (<*UNUSED*> p: P;  zeroed: BOOLEAN): INTEGER =
     IF (zeroed) THEN RETURN 0 ELSE RETURN 1 END;
   END InitCoster;
 
-PROCEDURE GenMap (<*UNUSED*> p: P; offset, size: INTEGER; refs_only: BOOLEAN) =
+PROCEDURE GenMap (<*UNUSED*> p: P; offset, size: INTEGER; refs_only: BOOLEAN;
+                  <*UNUSED*> transient: BOOLEAN) =
   BEGIN
     <*ASSERT size = Target.Address.size*>
     IF NOT refs_only THEN

@@ -23,8 +23,6 @@ MODULE FSM;
 
 IMPORT RefSeq, Atom, AtomRefTbl, Pickle, TextRd, TextWr;
 
-IMPORT AtomPkl; <*NOWARN*> (* It is used for its side effect *)
-
 REVEAL
   T = BRANDED REF RECORD
       firstNode, lastNode: Node;

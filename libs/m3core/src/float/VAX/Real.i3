@@ -2,8 +2,7 @@
 (* All rights reserved.                                        *)
 (* See the file COPYRIGHT for a full description.              *)
 
-(* Last modified on Fri Aug 16 15:06:51 PDT 1996 by heydon     *)
-(*      modified on Fri Sep 24 08:24:15 PDT 1993 by kalsow     *)
+(* Last modified on Fri Sep 24 08:24:15 PDT 1993 by kalsow     *)
 (*      modified on Thu Apr 29 16:10:39 PDT 1993 by muller     *)
 (*      modified on Fri Feb 28 20:49:49 PST 1992 by stolfi     *)
 

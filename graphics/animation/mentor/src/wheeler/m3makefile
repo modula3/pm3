@@ -5,7 +5,7 @@
 % Last modified on Thu Jun 20 15:46:31 PDT 1996 by heydon
 
 import("zeus")
-	
+
 module("MiscFmt")
 
 zume("Wheeler")

@@ -34,9 +34,9 @@ PROCEDURE Compile (ce: CallExpr.T) =
     IF x1 AND x2 THEN
       (* we can use the extract_mn operator *)
       IF (i1 + i2 > Target.Integer.size) THEN
-        Error.Warn (2, "value out of range");
+        Error.Warn (2, "Word.Extract: i+n value out of range");
         CG.Load_integer (TInt.One);
-        CG.Check_hi (TInt.Zero);
+        CG.Check_hi (TInt.Zero, CG.RuntimeError.ValueOutOfRange);
       ELSE
         Expr.Compile (ce.args[0]);
         CG.Extract_mn (FALSE, i1, i2);
@@ -46,7 +46,8 @@ PROCEDURE Compile (ce: CallExpr.T) =
       (* we can use the extract_n operator *)
       b := TInt.FromInt (Target.Integer.size - i2, max); <*ASSERT b*>
       Expr.Compile (ce.args[0]);
-      CheckExpr.Emit (ce.args[1], TInt.Zero, max);
+      CheckExpr.EmitChecks (ce.args[1], TInt.Zero, max,
+                            CG.RuntimeError.ValueOutOfRange);
       CG.Extract_n (FALSE, i2);
 
     ELSIF x1 THEN
@@ -56,22 +57,25 @@ PROCEDURE Compile (ce: CallExpr.T) =
       Expr.Compile (ce.args[0]);
       CG.Force ();
       CG.Load_intt (i1);
-      CheckExpr.Emit (ce.args[2], TInt.Zero, max);
+      CheckExpr.EmitChecks (ce.args[2], TInt.Zero, max,
+                            CG.RuntimeError.ValueOutOfRange);
       CG.Extract (sign := FALSE);
 
     ELSE
       (* we need the general purpose extract operator *)
-      CheckExpr.Emit (ce.args[1], TInt.Zero, Target.Integer.max);
+      CheckExpr.EmitChecks (ce.args[1], TInt.Zero, Target.Integer.max,
+                            CG.RuntimeError.ValueOutOfRange);
       t1 := CG.Pop ();
-      CheckExpr.Emit (ce.args[2], TInt.Zero, Target.Integer.max);
+      CheckExpr.EmitChecks (ce.args[2], TInt.Zero, Target.Integer.max,
+                            CG.RuntimeError.ValueOutOfRange);
       t2 := CG.Pop ();
       IF Host.doRangeChk THEN
         b := TInt.FromInt (Target.Integer.size, max); <*ASSERT b*>
         CG.Push (t1);
         CG.Push (t2);
-        CG.Add (CG.Type.Int);
-        CG.Check_hi (max);
-        CG.Discard (CG.Type.Int);
+        CG.Add (Target.Integer.cg_type);
+        CG.Check_hi (max, CG.RuntimeError.ValueOutOfRange);
+        CG.Discard (Target.Integer.cg_type);
       END;
       Expr.Compile (ce.args[0]);
       CG.Force ();
@@ -108,6 +112,22 @@ PROCEDURE Fold (ce: CallExpr.T): Expr.T =
     RETURN IntegerExpr.New (result);
   END Fold;
 
+PROCEDURE GetBounds (ce: CallExpr.T;  VAR min, max: Target.Int) =
+  VAR b: BOOLEAN;  int_size, min_bits, max_bits: Target.Int;
+  BEGIN
+    b := TInt.FromInt (Target.Integer.size, int_size); <*ASSERT b*>
+    Expr.GetBounds (ce.args[2], min_bits, max_bits);
+    IF TInt.LT (max_bits, int_size) THEN
+      min := TInt.Zero;
+      IF NOT TWord.Extract (TInt.MOne, TInt.Zero, max_bits, max) THEN
+        max := Target.Integer.max;
+      END;
+    ELSE
+      (* possible that we'll preserve all bits *)
+      Expr.GetBounds (ce.args[0], min, max);
+    END;
+  END GetBounds;
+
 PROCEDURE Initialize () =
   VAR
     f0 := Formal.NewBuiltin ("x", 0, Int.T);
@@ -126,6 +146,7 @@ PROCEDURE Initialize () =
                                  CallExpr.NotBoolean,
                                  CallExpr.NotBoolean,
                                  Fold,
+                                 GetBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

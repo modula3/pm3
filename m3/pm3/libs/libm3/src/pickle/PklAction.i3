@@ -1,5 +1,4 @@
-(*                            -*- Mode: Modula-3 -*- 
- * 
+(* 
  * For information about this program, contact Blair MacIntyre            
  * (bm@cs.columbia.edu) or Steven Feiner (feiner@cs.columbia.edu)         
  * at the Computer Science Dept., Columbia University,                    
@@ -10,24 +9,6 @@
  *
  * This file is released under the same conditions as Pickle.m3. See COPYRIGHT.
  * 
- * Author          : Blair MacIntyre
- * Created On      : Sun Jul 23 00:27:29 1995
- * Last Modified By: Blair MacIntyre
- * Last Modified On: Wed Oct 23 10:16:20 1996
- * Update Count    : 24
- * 
- * $Source$
- * $Date$
- * $Author$
- * $Revision$
- * 
- * $Log$
- * Revision 1.1  1998/02/26 16:37:34  dagenais
- * Enhanced pickler which allows communicating pickles between machines
- * with different endianess.
- *
- * 
- * HISTORY
  *)
 
 INTERFACE PklAction;
@@ -35,7 +16,7 @@ INTERFACE PklAction;
 CONST Brand = "Tipe Conversion Action 1.0";
 
 TYPE 
-  T = OBJECT kind: Kind; length: INTEGER END;
+  T = <*TRANSIENT*> ROOT OBJECT kind: Kind; length: INTEGER END;
 
 TYPE
   Kind = {
@@ -76,7 +57,7 @@ TYPE
 
   SwapPacked = T OBJECT 
     size  : CARDINAL;
-    field : REF ARRAY OF CARDINAL;
+    field : <*TRANSIENT*> REF ARRAY OF CARDINAL;
   END;
 
   Ref = T OBJECT refType: RefType; END;

@@ -13,9 +13,5 @@
 
 h_source ("lex.yy") % it's really a .c file that matters
 c_source ("y.tab")
-import_lib ("fl", "/usr/lib")
-
-
-
-
+import_sys_lib ("FLEX-BISON")
 

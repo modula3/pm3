@@ -7,9 +7,9 @@
 %
 % Contributed by Harry George (hgeorge@eskimo.com), 5/16/95
 
-if PLATFORM_SUPPORTS_MOTIF
-  import_Motif ()
-  import ("X11")
+if SYSTEM_LIBS contains "MOTIF"
+  import_sys_lib ("MOTIF")
+  import ("X11R4")
 
   Interface ("IntrinsicP")
   Module    ("Xmacro")

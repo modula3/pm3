@@ -16,10 +16,8 @@ TYPE
   Class = { cINT, cREAL, cLONG, cEXTND, cADDR, cSET, cENUM };
 
 CONST
-  CGType = ARRAY Class OF CG.Type {
-             CG.Type.Int,   CG.Type.Reel,  CG.Type.LReel,
-             CG.Type.XReel, CG.Type.Word,  CG.Type.Addr,
-             CG.Type.Int };
+  FPType = ARRAY [Class.cREAL .. Class.cEXTND] OF CG.Type {
+             CG.Type.Reel,  CG.Type.LReel, CG.Type.XReel };
 
 TYPE
   P = ExprRep.Tab BRANDED "SubtractExpr.P" OBJECT
@@ -81,13 +79,13 @@ PROCEDURE Check (p: P;  VAR cs: Expr.CheckState) =
     ta := Type.Base (Expr.TypeOf (p.a));
     tb := Type.Base (Expr.TypeOf (p.b));
     IF    (ta = Int.T)   AND (tb = Int.T)   THEN
-      p.class := Class.cINT;  INC (cs.int_ops);
+      p.class := Class.cINT;
     ELSIF (ta = Reel.T)  AND (tb = Reel.T)  THEN
-      p.class := Class.cREAL;  INC (cs.fp_ops);
+      p.class := Class.cREAL;
     ELSIF (ta = LReel.T) AND (tb = LReel.T) THEN
-      p.class := Class.cLONG;  INC (cs.fp_ops);
+      p.class := Class.cLONG;
     ELSIF (ta = EReel.T) AND (tb = EReel.T) THEN
-      p.class := Class.cEXTND;  INC (cs.fp_ops);
+      p.class := Class.cEXTND;
     ELSIF (ta = ErrType.T) OR (tb = ErrType.T) THEN
       p.class := Class.cINT; (* there's already an error *)
       ta := ErrType.T;
@@ -139,6 +137,14 @@ PROCEDURE Compile (p: P) =
   VAR size: INTEGER;  info: Type.Info;
   BEGIN
     CASE p.class OF
+    | Class.cINT, Class.cENUM =>
+        Expr.Compile (p.a);
+        Expr.Compile (p.b);
+        CG.Subtract (Target.Integer.cg_type);
+    | Class.cREAL, Class.cLONG, Class.cEXTND =>
+        Expr.Compile (p.a);
+        Expr.Compile (p.b);
+        CG.Subtract (FPType [p.class]);
     | Class.cSET  =>
         EVAL Type.CheckInfo (p.type, info);
         size := info.size;
@@ -158,15 +164,11 @@ PROCEDURE Compile (p: P) =
           CG.Index_bytes (-Target.Byte);
         ELSE (* Addr - Addr *)
           Expr.Compile (p.a);
-          CG.Loophole (CG.Type.Addr, CG.Type.Int);
+          CG.Loophole (CG.Type.Addr, Target.Word.cg_type);
           Expr.Compile (p.b);
-          CG.Loophole (CG.Type.Addr, CG.Type.Int);
-          CG.Subtract (CG.Type.Word);
+          CG.Loophole (CG.Type.Addr, Target.Word.cg_type);
+          CG.Subtract (Target.Word.cg_type);
         END;
-    ELSE
-        Expr.Compile (p.a);
-        Expr.Compile (p.b);
-        CG.Subtract (CGType [p.class]);
     END;
   END Compile;
 

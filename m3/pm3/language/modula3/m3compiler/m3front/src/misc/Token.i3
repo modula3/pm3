@@ -17,8 +17,8 @@ TYPE
        tIDENT,
        tCARDCONST,
        tREALCONST, tLONGREALCONST, tEXTENDEDCONST,
-       tCHARCONST,
-       tTEXTCONST,
+       tCHARCONST, tWCHARCONST,
+       tTEXTCONST, tWTEXTCONST,
 
        (* operators *)
        tPLUS, tMINUS, tASTERISK, tSLASH, tASSIGN, tAMPERSAND, tDOT, tCOMMA,
@@ -27,8 +27,8 @@ TYPE
        tRBRACE, tBAR, tSUBTYPE, tIMPLIES, tENDPRAGMA,
 
        (* pragmas (that escape from the scanner) *)
-       tINLINE, tEXTERNAL, tASSERT, tUNUSED, tOBSOLETE, tTRACE,
-       tCALLCONV, tFATAL,
+       tINLINE, tEXTERNAL, tASSERT, tUNUSED, tOBSOLETE, tTRACE, tTRANSIENT,
+       tCALLCONV, tIMPLICIT, tDEBUG, tFATAL,
 
        (* reserved words *)
        tAND, tANY, tARRAY, tAS,
@@ -54,7 +54,7 @@ TYPE
 
 CONST
   First_Literal  = T.tIDENT;
-  Last_Literal   = T.tTEXTCONST;
+  Last_Literal   = T.tWTEXTCONST;
   First_Operator = T.tPLUS;
   Last_Operator  = T.tENDPRAGMA;
   First_Pragma   = T.tINLINE;
@@ -68,23 +68,23 @@ TYPE
 CONST
   EmptySet = Set {};
 
-  DeclStart = Set {T.tCONST, T.tTYPE, T.tREVEAL, T.tVAR,
+  DeclStart = Set {T.tCONST, T.tTYPE, T.tREVEAL, T.tVAR, T.tIMPLICIT,
                    T.tEXTERNAL, T.tINLINE, T.tUNUSED, T.tOBSOLETE,
                    T.tEXCEPTION, T.tPROCEDURE, T.tFATAL, T.tCALLCONV};
 
   TypeStart = Set {T.tIDENT, T.tARRAY, T.tBITS, T.tBRANDED, T.tLBRACE,
                    T.tUNTRACED, T.tOBJECT, T.tPROCEDURE, T.tRECORD,
-		   T.tREF, T.tSET, T.tLBRACKET, T.tLPAREN};
+		   T.tREF, T.tSET, T.tTRANSIENT, T.tLBRACKET, T.tLPAREN};
 
   ExprStart = Set {T.tNOT, T.tPLUS, T.tMINUS, T.tIDENT, T.tCARDCONST,
                    T.tLONGREALCONST, T.tREALCONST, T.tEXTENDEDCONST,
-                   T.tCHARCONST, T.tTEXTCONST, T.tLPAREN,
-                   T.tARRAY, T.tBITS, T.tRECORD, T.tSET};
+                   T.tCHARCONST, T.tWCHARCONST, T.tTEXTCONST, T.tWTEXTCONST,
+                   T.tLPAREN, T.tARRAY, T.tBITS, T.tRECORD, T.tSET};
 
   StmtStart = Set {T.tCASE, T.tEXIT, T.tEVAL, T.tFOR, T.tIF, T.tLOCK,
                    T.tLOOP, T.tRAISE, T.tREPEAT, T.tRETURN, T.tTRY,
 		   T.tTYPECASE, T.tWHILE, T.tWITH, T.tBEGIN, T.tASSERT,
-                   T.tIDENT, T.tLPAREN, T.tARRAY, T.tRECORD}
+                   T.tIDENT, T.tLPAREN, T.tARRAY, T.tRECORD, T.tDEBUG}
 		   + DeclStart;
 
 VAR (*CONST*)

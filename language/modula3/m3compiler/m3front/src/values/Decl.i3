@@ -17,13 +17,15 @@ TYPE
       isInline:    BOOLEAN  := FALSE;
       isUnused:    BOOLEAN  := FALSE;
       isObsolete:  BOOLEAN  := FALSE;
+      isImplicit:  BOOLEAN  := FALSE;
       callingConv: CG.CallingConvention := NIL;
     END;
 
 
 PROCEDURE Parse (interface, top_level: BOOLEAN;  VAR fails: M3.ExSet);
 
-PROCEDURE ParseExternalPragma (VAR(*OUT*) alias : M3ID.T;
-                               VAR(*OUT*) cc    : CG.CallingConvention);
+PROCEDURE ParseExternalPragma (VAR(*OUT*) alias  : M3ID.T;
+                               VAR(*OUT*) cc     : CG.CallingConvention;
+                               VAR(*OUT*) got_cc : BOOLEAN);
 
 END Decl.

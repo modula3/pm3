@@ -1055,47 +1055,41 @@ PROCEDURE GetStabType(t: Type;  s: BitSize:= 0) : TEXT =
 PROCEDURE GetTargetType(type: Type;  s: BitSize): Stab_Type =
   BEGIN
     CASE type OF
+    | Type.Word8  =>
+      RETURN BuildTargetType(Type.Word8, Type.Int32);
+
+    | Type.Int8  =>
+      RETURN BuildTargetType(Type.Int8, Type.Int32);
+
+    | Type.Word16 =>
+      RETURN BuildTargetType(Type.Word16, Type.Int32);
+
+    | Type.Int16  =>
+      RETURN BuildTargetType(Type.Int16, Type.Int32);
+
+    | Type.Word32 =>
+      RETURN BuildTargetType(Type.Word32, Type.Int32);
+
+    | Type.Int32  =>
+      RETURN BuildTargetType(Type.Int32, Type.Int32);
+
+    | Type.Word64 =>
+      RETURN BuildTargetType(Type.Word64, Type.Int32);
+
+    | Type.Int64  =>
+      RETURN BuildTargetType(Type.Int64, Type.Int32);
+
     | Type.Addr   =>
       RETURN BuildTargetType(Type.Addr, Type.Void);
 
-    | Type.Word   =>
-      RETURN BuildTargetType(Type.Word, Type.Int);
-
-    | Type.Int    =>
-      RETURN BuildTargetType(Type.Int, Type.Int);
-
     | Type.Reel   =>
-      RETURN BuildTargetType(Type.Reel, Type.Int);
+      RETURN BuildTargetType(Type.Reel, Type.Int32);
 
     | Type.LReel  =>
-      RETURN BuildTargetType(Type.LReel, Type.Int);
+      RETURN BuildTargetType(Type.LReel, Type.Int64);
 
     | Type.XReel  =>
-      RETURN BuildTargetType(Type.XReel, Type.Int);
-
-    | Type.Int_A  =>
-      RETURN BuildTargetType(Type.Int_A, Type.Int_A);
-
-    | Type.Int_B  =>
-      RETURN BuildTargetType(Type.Int_B, Type.Int);
-
-    | Type.Int_C  =>
-      RETURN BuildTargetType(Type.Int_C, Type.Int);
-
-    | Type.Int_D  =>
-      RETURN BuildTargetType(Type.Int_D, Type.Int);
-
-    | Type.Word_A =>
-      RETURN BuildTargetType(Type.Word_A, Type.Int);
-
-    | Type.Word_B =>
-      RETURN BuildTargetType(Type.Word_B, Type.Int);
-
-    | Type.Word_C =>
-      RETURN BuildTargetType(Type.Word_C, Type.Int);
-
-    | Type.Word_D =>
-      RETURN BuildTargetType(Type.Word_D, Type.Int);
+      RETURN BuildTargetType(Type.XReel, Type.Int64);
 
     | Type.Struct =>
       RETURN BuildStructType(s);
@@ -1155,7 +1149,7 @@ PROCEDURE TypeT (): TEXT =
 
 PROCEDURE GetFeildFmt (): TEXT =
   BEGIN
-     RETURN ":" & GetStabType(Type.Int) & ",0,1;";
+     RETURN ":" & GetStabType(Type.Int32) & ",0,1;";
   END GetFeildFmt;
 
 PROCEDURE AddSourceLine(source_line, address: INTEGER) =
@@ -1204,20 +1198,18 @@ PROCEDURE BeginUnit (t: T) =
       current_global      := NIL;
 
       basic_stab := ARRAY Type OF Basic_Stab {
-                    Basic_Stab{ def1:= "=*", def2:= "" },
-                    Basic_Stab{ def1:= "=r", def2:= ";0;-1;" },
-                    Basic_Stab{ def1:= "=r", def2:= ";-2147483648;2147483647;" },
-                    Basic_Stab{ def1:= "=r", def2:= ";4;0;" },
-                    Basic_Stab{ def1:= "=r", def2:= ";8;0;" },
-                    Basic_Stab{ def1:= "=r", def2:= ";8;0;" },
-                    Basic_Stab{ def1:= "=r", def2:= ";0;127;" },
+                    Basic_Stab{ def1:= "=r", def2:= ";0;255;" },
+                    Basic_Stab{ def1:= "=r", def2:= ";-128;127;" },
+                    Basic_Stab{ def1:= "=r", def2:= ";0;65535;" },
                     Basic_Stab{ def1:= "=r", def2:= ";-32768;32767;" },
                     Basic_Stab{ def1:= "=r", def2:= ";-2147483648;2147483647;" },
                     Basic_Stab{ def1:= "=r", def2:= ";-2147483648;2147483647;" },
-                    Basic_Stab{ def1:= "=r", def2:= ";0;255;" },
-                    Basic_Stab{ def1:= "=r", def2:= ";0;65535;" },
                     Basic_Stab{ def1:= "=r", def2:= ";0;-1;" },
                     Basic_Stab{ def1:= "=r", def2:= ";0;-1;" },
+                    Basic_Stab{ def1:= "=r", def2:= ";4;0;" },
+                    Basic_Stab{ def1:= "=r", def2:= ";8;0;" },
+                    Basic_Stab{ def1:= "=r", def2:= ";8;0;" },
+                    Basic_Stab{ def1:= "=*", def2:= "" },
                     Basic_Stab{ def1:= "",   def2:= "" },  (* Built differently *)
                     Basic_Stab{ def1:= "=",  def2:= "" }
 		  };

@@ -8,8 +8,11 @@ INTERFACE RemoteRuleHandler;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:40  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:50  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:40  hosking
+    Import of GRAS3 1.1
 
     Revision 1.2  1997/11/03 12:40:34  roland
     New procedures to check connection to rule server.
@@ -48,7 +51,7 @@ PROCEDURE CheckRuleServer (VAR connected: BOOLEAN; VAR msg: TEXT);
 (* Trigger handling *)
 
 PROCEDURE RegisterTrigger (trigger : Trigger.T;
-                           userdata: REFANY;
+                           userdata: <*TRANSIENT*> REFANY;
                            id      : CARDINAL   );
   (* Registers trigger with the corresponding event handler.  The id
      servers as unique identifier for this trigger. *)
@@ -67,7 +70,7 @@ PROCEDURE SendRemoteAction (event  : Event.T;
 PROCEDURE GetNextAction (VAR event   : Event.T;
                          VAR context : ContextSet.T;
                          VAR action  : Action.T;
-                         VAR userdata: REFANY        ): BOOLEAN;
+                         VAR userdata: <*TRANSIENT*> REFANY        ): BOOLEAN;
   (* Returns TRUE if events were reported by the rule server.  action then
      contains the triggered action with highest priority. *)
 

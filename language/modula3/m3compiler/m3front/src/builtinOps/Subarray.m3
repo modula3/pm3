@@ -3,8 +3,7 @@
 (* See the file COPYRIGHT for a full description.              *)
 
 (* File: Subarray.m3                                           *)
-(* Last Modified On Sat Mar 23 13:48:43 PST 1996 By heydon     *)
-(*      Modified On Wed Jun 29 17:03:23 PDT 1994 By kalsow     *)
+(* Last Modified On Wed Jun 29 17:03:23 PDT 1994 By kalsow     *)
 (*      Modified On Thu Mar  7 20:18:53 1991 By muller         *)
 
 MODULE Subarray;
@@ -43,15 +42,15 @@ PROCEDURE Check (ce: CallExpr.T;  VAR cs: Expr.CheckState) =
     Expr.NeedsAddress (ce.args[0]);
     t := ArrayType.OpenCousin (t);
     ce.type := Type.Check (t);
-    INC (cs.int_ops);
   END Check;
 
 PROCEDURE CheckPositive (e: Expr.T;  VAR cs: Expr.CheckState): Expr.T =
-  VAR min, max: Target.Int; BEGIN
-    IF e = NIL THEN RETURN NIL END;
+  VAR min, max: Target.Int;
+  BEGIN
+    IF (e = NIL) THEN RETURN NIL; END;
     Expr.GetBounds (e, min, max);
     IF TInt.LT (min, TInt.Zero) OR TInt.LT (max, min) THEN
-      e := CheckExpr.NewLower (e, TInt.Zero);
+      e := CheckExpr.NewLower (e, TInt.Zero, CG.RuntimeError.ValueOutOfRange);
       Expr.TypeCheck (e, cs);
     END;
     RETURN e;
@@ -117,9 +116,9 @@ PROCEDURE Prep (ce: CallExpr.T) =
             Expr.Compile (start);         t_start := CG.Pop ();
             CG.Push (t_start);
             CG.Load_int (t_result, M3RT.OA_size_0);
-            CG.Add (CG.Type.Int);
-            CG.Check_hi (n_elts);
-            CG.Discard (CG.Type.Int);
+            CG.Add (Target.Integer.cg_type);
+            CG.Check_hi (n_elts, CG.RuntimeError.ValueOutOfRange);
+            CG.Discard (Target.Integer.cg_type);
             Expr.CompileAddress (base);
             CG.Push (t_start);
             CG.Free (t_start);
@@ -143,9 +142,9 @@ PROCEDURE Prep (ce: CallExpr.T) =
            Expr.Compile (start);         t_start := CG.Pop ();
             CG.Push (t_start);
             CG.Load_integer (x_len);
-            CG.Add (CG.Type.Int);
-            CG.Check_hi (n_elts);
-           CG.Discard (CG.Type.Int);
+            CG.Add (Target.Integer.cg_type);
+            CG.Check_hi (n_elts, CG.RuntimeError.ValueOutOfRange);
+           CG.Discard (Target.Integer.cg_type);
             Expr.CompileAddress (base);
             CG.Push (t_start);
             CG.Free (t_start);
@@ -153,11 +152,11 @@ PROCEDURE Prep (ce: CallExpr.T) =
             Error.Warn (2, "SUBARRAY length out of range");
             Expr.CompileAddress (base);
             Expr.Compile (start);
-            CG.Check_hi (max);
+            CG.Check_hi (max, CG.RuntimeError.ValueOutOfRange);
           ELSE
             Expr.CompileAddress (base);
             Expr.Compile (start);
-            CG.Check_hi (max);
+            CG.Check_hi (max, CG.RuntimeError.ValueOutOfRange);
           END;
 
           (* initialize the new data pointer *)
@@ -177,19 +176,19 @@ PROCEDURE Prep (ce: CallExpr.T) =
             (* cannot compute n-start at compile time *)
             CG.Load_int (t_result, M3RT.OA_size_0);
             CG.Load_integer (x_start);
-            CG.Add (CG.Type.Int);
-            CG.Check_hi (n_elts);
-            CG.Discard (CG.Type.Int);
+            CG.Add (Target.Integer.cg_type);
+            CG.Check_hi (n_elts, CG.RuntimeError.ValueOutOfRange);
+            CG.Discard (Target.Integer.cg_type);
           ELSIF TInt.LT (max, TInt.Zero) THEN
             (* initialize and check the new count *)
             Error.Warn (2, "SUBARRAY initial index out of range");
             Expr.Compile (len);
-            CG.Check_hi (max);
+            CG.Check_hi (max, CG.RuntimeError.ValueOutOfRange);
             CG.Store_int (t_result, M3RT.OA_size_0);
           ELSE
             (* initialize and check the new count *)
             Expr.Compile (len);
-            CG.Check_hi (max);
+            CG.Check_hi (max, CG.RuntimeError.ValueOutOfRange);
             CG.Store_int (t_result, M3RT.OA_size_0);
           END;
 
@@ -210,15 +209,15 @@ PROCEDURE Prep (ce: CallExpr.T) =
             (* cannot compute start+len at compile time *)
             CG.Load_integer (x_start);
             CG.Load_integer (x_len);
-            CG.Add (CG.Type.Int);
-            CG.Check_hi (n_elts);
-            CG.Discard (CG.Type.Int);
+            CG.Add (Target.Integer.cg_type);
+            CG.Check_hi (n_elts, CG.RuntimeError.ValueOutOfRange);
+            CG.Discard (Target.Integer.cg_type);
           ELSIF TInt.LT (n_elts, max) THEN
             (* oops, they're too big *)
             Error.Warn (2, "SUBARRAY start+length out of range");
             CG.Load_integer (max);
-            CG.Check_hi (n_elts);
-            CG.Discard (CG.Type.Int);
+            CG.Check_hi (n_elts, CG.RuntimeError.ValueOutOfRange);
+            CG.Discard (Target.Integer.cg_type);
           ELSE
             (* ok *)
           END;
@@ -241,12 +240,12 @@ PROCEDURE Prep (ce: CallExpr.T) =
           IF Host.doRangeChk THEN
             CG.Push (t_start);
             CG.Load_int (t_result, M3RT.OA_size_0);
-            CG.Add (CG.Type.Int);
+            CG.Add (Target.Integer.cg_type);
             CG.Push (t_base);
             CG.Open_size (0);
-            CG.Subtract (CG.Type.Int);
-            CG.Check_hi (TInt.Zero);
-            CG.Discard (CG.Type.Int);
+            CG.Subtract (Target.Integer.cg_type);
+            CG.Check_hi (TInt.Zero, CG.RuntimeError.ValueOutOfRange);
+            CG.Discard (Target.Integer.cg_type);
           END;
 
           (* initialize the new data pointer *)
@@ -271,12 +270,12 @@ PROCEDURE Prep (ce: CallExpr.T) =
           IF Host.doRangeChk THEN
             CG.Push (t_start);
             CG.Load_integer (x_len);
-            CG.Add (CG.Type.Int);
+            CG.Add (Target.Integer.cg_type);
             CG.Push (t_base);
             CG.Open_size (0);
-            CG.Subtract (CG.Type.Int);
-            CG.Check_hi (TInt.Zero);
-            CG.Discard (CG.Type.Int);
+            CG.Subtract (Target.Integer.cg_type);
+            CG.Check_hi (TInt.Zero, CG.RuntimeError.ValueOutOfRange);
+            CG.Discard (Target.Integer.cg_type);
           END;
 
           (* initialize the new data pointer *)
@@ -300,12 +299,12 @@ PROCEDURE Prep (ce: CallExpr.T) =
           IF Host.doRangeChk THEN
             CG.Load_int (t_result, M3RT.OA_size_0);
             CG.Load_integer (x_start);
-            CG.Add (CG.Type.Int);
+            CG.Add (Target.Integer.cg_type);
             CG.Push (t_base);
             CG.Open_size (0);
-            CG.Subtract (CG.Type.Int);
-            CG.Check_hi (TInt.Zero);
-            CG.Discard (CG.Type.Int);
+            CG.Subtract (Target.Integer.cg_type);
+            CG.Check_hi (TInt.Zero, CG.RuntimeError.ValueOutOfRange);
+            CG.Discard (Target.Integer.cg_type);
           END;
 
           (* initialize the new data pointer *)
@@ -336,18 +335,18 @@ PROCEDURE Prep (ce: CallExpr.T) =
             CG.Load_integer (max);
             CG.Push (t_base);
             CG.Open_size (0);
-            CG.Subtract (CG.Type.Int);
-            CG.Check_hi (TInt.Zero);
-            CG.Discard (CG.Type.Int);
+            CG.Subtract (Target.Integer.cg_type);
+            CG.Check_hi (TInt.Zero, CG.RuntimeError.ValueOutOfRange);
+            CG.Discard (Target.Integer.cg_type);
           ELSE
             CG.Load_integer (x_start);
             CG.Load_integer (x_len);
-            CG.Add (CG.Type.Int);
+            CG.Add (Target.Integer.cg_type);
             CG.Push (t_base);
             CG.Open_size (0);
-            CG.Subtract (CG.Type.Int);
-            CG.Check_hi (TInt.Zero);
-            CG.Discard (CG.Type.Int);
+            CG.Subtract (Target.Integer.cg_type);
+            CG.Check_hi (TInt.Zero, CG.RuntimeError.ValueOutOfRange);
+            CG.Discard (Target.Integer.cg_type);
           END;
 
           (* initialize the new data pointer *)
@@ -393,7 +392,7 @@ PROCEDURE ComputeOffset (array: CG.Var;  depth, elt_pack: INTEGER) =
   BEGIN
     FOR i := 1 TO depth - 1 DO
       CG.Load_int (array, M3RT.OA_sizes + i * Target.Integer.pack);
-      CG.Multiply (CG.Type.Int);
+      CG.Multiply (Target.Integer.cg_type);
     END;
     CG.Index_bytes (elt_pack);
     CG.Store_addr (array, M3RT.OA_elt_ptr);
@@ -436,6 +435,7 @@ PROCEDURE Initialize () =
                                  CallExpr.NotBoolean,
                                  CallExpr.NotBoolean,
                                  CallExpr.NoValue, (* fold *)
+                                 CallExpr.NoBounds,
                                  IsWritable,
                                  IsDesignator,
                                  NoteWrites);

@@ -21,7 +21,7 @@
 
 INTERFACE Atom;
 
-TYPE T <: REFANY;
+TYPE T <: <*TRANSIENT*> REFANY;
 
 CONST Brand = "Atom-1.0";
 

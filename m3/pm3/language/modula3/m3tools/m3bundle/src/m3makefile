@@ -9,7 +9,9 @@
 import ("libm3")
 
 implementation ("m3bundle")
+
+build_standalone ()
 Program ("m3bundle")
 
-ManPage ("m3bundle", 1)
+ManPage ("m3bundle","1")
 

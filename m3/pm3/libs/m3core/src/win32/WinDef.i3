@@ -40,6 +40,7 @@ TYPE
   PDWORD = WinBaseTypes.PDWORD;
   LPDWORD = WinBaseTypes.LPDWORD;
   LPVOID = WinBaseTypes.LPVOID;
+  LPCVOID = WinBaseTypes.LPCVOID;
   INT = WinBaseTypes.INT;
   UINT = WinBaseTypes.UINT;
   PUINT = WinBaseTypes.PUINT;
@@ -83,9 +84,9 @@ TYPE
   GLOBALHANDLE = WinBaseTypes.HANDLE;
   LOCALHANDLE  = WinBaseTypes.HANDLE;
 
-  PROC     = PROCEDURE ();
-  NEARPROC = PROCEDURE ();
-  FARPROC  = PROCEDURE ();
+  PROC     = <*WINAPI*> PROCEDURE ();
+  NEARPROC = <*WINAPI*> PROCEDURE ();
+  FARPROC  = <*WINAPI*> PROCEDURE ();
 
 TYPE
   HWND         <: HANDLE;

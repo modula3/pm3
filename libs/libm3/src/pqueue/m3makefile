@@ -6,10 +6,15 @@
 
 Generic_module    ("PQueue")
 Generic_interface ("PQueueRep")
+Generic_interface ("PQueueTransientRep")
 template          ("pqueue")
 
 %% standard instances
-Pqueue ("Atom", "Atom")
 Pqueue ("Int",  "Integer")
 Pqueue ("Ref",  "Refany")
 Pqueue ("Text", "Text")
+
+TransientPqueue ("Atom", "Atom")
+TransientPqueue ("IntTransient",  "Integer")
+TransientPqueue ("RefTransient",  "RefanyTransient")
+TransientPqueue ("TextTransient", "Text")

@@ -3,7 +3,7 @@
 
 INTERFACE NetObjMon_T_v1;
 
-IMPORT RefList, Wr, Thread, StubLib, NetObj, Rd, NetObjMon;
+IMPORT RefTransientList AS RefList, Wr, Thread, StubLib, NetObj, Rd, NetObjMon;
 
 TYPE Surrogate_NetObjMon_T = NetObjMon.T OBJECT
       OVERRIDES
@@ -11,8 +11,8 @@ TYPE Surrogate_NetObjMon_T = NetObjMon.T OBJECT
         dumpNames := Surrogate_dumpNames;
       END;
 
-PROCEDURE Surrogate_dump(self: NetObjMon.T): REFANY RAISES {NetObj.Error,
-    Thread.Alerted};
+PROCEDURE Surrogate_dump(self: NetObjMon.T): <*TRANSIENT*> REFANY
+  RAISES {NetObj.Error, Thread.Alerted};
 
 PROCEDURE Surrogate_dumpNames(self: NetObjMon.T): RefList.T
      RAISES {NetObj.Error, Thread.Alerted};

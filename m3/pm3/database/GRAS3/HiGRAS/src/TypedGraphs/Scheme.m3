@@ -7,8 +7,11 @@ MODULE Scheme EXPORTS Scheme, InternScheme;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:35  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:46  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:35  hosking
+    Import of GRAS3 1.1
 
     Revision 1.17  1998/03/18 09:27:23  kluck
     When closing a graph there is no local parameter needed.
@@ -84,7 +87,7 @@ IMPORT AttributeValue, TypedGraphPool, InternTypedGraphPool;
 IMPORT ErrorSupport;
 IMPORT Text, Pathname;
 IMPORT NodeCard, CardText, NameCache, IdCache, AttributeCache, LabelCache,
-       SourceCache, TargetCache, Node, NodeSet, Transaction;
+       SourceCache, TargetCache, Node, NodeSet, Txn;
 
 REVEAL
   T =
@@ -423,7 +426,7 @@ PROCEDURE CloseAndFlush (scheme: T) RAISES {InternalError} =
     Close(scheme);
     depth := 0;
     TRY
-      WHILE scheme.pool.getTransactionLevel() >= Transaction.TopLevel DO
+      WHILE scheme.pool.getTransactionLevel() >= Txn.TopLevel DO
         scheme.pool.commitTransaction();
         INC(depth);
       END;

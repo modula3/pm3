@@ -19,7 +19,7 @@
 INTERFACE Random;
 
 TYPE
-  T = OBJECT METHODS
+  T = ROOT OBJECT METHODS
     integer(min := FIRST(INTEGER);
       max := LAST(INTEGER)): INTEGER;
     real(min := 0.0e+0; max := 1.0e+0): REAL;

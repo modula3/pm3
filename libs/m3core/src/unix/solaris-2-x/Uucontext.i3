@@ -1,3 +1,9 @@
+(* Copyright (C) 1990, Digital Equipment Corporation.         *)
+(* All rights reserved.                                       *)
+(* See the file COPYRIGHT for a full description.             *)
+
+(* Last modified on Wed Jul 30 13:55:56 EST 1997 by hosking *)
+
 INTERFACE Uucontext;
 
 FROM Ctypes IMPORT int, long, char_star, unsigned_int, unsigned_char, double;

@@ -7,8 +7,11 @@ MODULE OriginalMedia;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:36  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:48  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:36  hosking
+    Import of GRAS3 1.1
 
     Revision 1.2  1998/09/14 08:15:19  roland
     Modified code to remove compiler warnings.
@@ -27,6 +30,7 @@ MODULE OriginalMedia;
 
 IMPORT
   PageHandle,
+  PageData,
   RemoteFile,
   ScheduledClientFile, InternalScheduledClientFile;
 
@@ -66,9 +70,11 @@ PROCEDURE GetFile	(         self		:T) : RemoteFile.T =
 
 
 PROCEDURE LoadData	(         <* UNUSED *>
-				  self            :T;
+				  self          :T;
                                   <* UNUSED *>
-				  handle	:PageHandle.T) =
+                                  handle        :PageHandle.T;
+                                  <* UNUSED *>
+			      VAR data          :PageData.T) =
   BEGIN
     <* ASSERT (FALSE) *>
     (*
@@ -78,7 +84,9 @@ PROCEDURE LoadData	(         <* UNUSED *>
 
 
 PROCEDURE DropData	(         self		:T;
-                                  handle	:PageHandle.T) =
+                                  handle        :PageHandle.T;
+                                  <* UNUSED *>
+			 READONLY data          :PageData.T) =
   BEGIN
     <* ASSERT (NOT (handle.isChanged())) *>
     (*
@@ -94,3 +102,4 @@ PROCEDURE DropData	(         self		:T;
 
 BEGIN
 END OriginalMedia.
+

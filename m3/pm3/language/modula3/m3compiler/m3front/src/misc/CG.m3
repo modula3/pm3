@@ -3,17 +3,15 @@
 (* See the file COPYRIGHT for a full description.              *)
 (*                                                             *)
 (* File: CG.m3                                                 *)
-(* Last modified on Mon Jun  3 14:27:56 PDT 1996 by heydon     *)
-(*      modified on Tue Jun 20 15:58:21 PDT 1995 by kalsow     *)
+(* Last modified on Tue Jun 20 15:58:21 PDT 1995 by kalsow     *)
 (*      modified on Tue May 25 11:19:53 PDT 1993 by muller     *)
 
 MODULE CG;
 
 IMPORT Text, IntIntTbl, IntRefTbl, Fmt, Word;
-IMPORT Scanner, Error, Module, Runtime, WebInfo;
+IMPORT Scanner, Error, Module, RunTyme, WebInfo;
 IMPORT M3, M3CG, M3CG_Ops, M3CG_Check;
 IMPORT Host, Target, TInt, TFloat, TWord, TargetMap, M3RT (**, RTObject **);
-FROM M3Compiler IMPORT FrontError;
 
 CONST
   Max_init_chars = 256; (* max size of a single init_chars string *)
@@ -86,8 +84,8 @@ VAR
   last_offset : INTEGER     := -2;
   last_file   : TEXT        := NIL;
   last_line   : INTEGER     := -2;
-  pending     : Node        := NIL;
-  fields      : Node        := NIL;
+  pending     : ARRAY BOOLEAN OF Node;
+  fields      : ARRAY BOOLEAN OF Node;
   in_init     : BOOLEAN     := FALSE;
   init_pc     : INTEGER     := 0;
   init_bits   : Target.Int  := TInt.Zero;
@@ -102,11 +100,19 @@ VAR
   tos         : CARDINAL    := 0;  (* top-of-stack *)
   stack       : ARRAY [0..99] OF ValRec;
 
+VAR (*CONST*)
+  StackType   : ARRAY Type OF Type;
+
 (*---------------------------------------------------------------------------*)
 
-PROCEDURE Init () RAISES {FrontError} =
+PROCEDURE Init () =
   BEGIN
     Max_alignment := Target.Alignments [LAST (Target.Alignments)];
+
+    FOR t := FIRST (Type) TO LAST (Type) DO StackType[t] := t; END;
+    FOR t := Type.Word8 TO Type.Int64 DO
+      StackType[t] := Target.Integer.cg_type;
+    END;
 
     cg_wr := Host.env.init_code_generator ();
     IF (cg_wr = NIL) THEN
@@ -125,23 +131,25 @@ PROCEDURE Init () RAISES {FrontError} =
 
     cg.set_error_handler (Error.Msg);
 
-    last_offset := -2;
-    last_file   := NIL;
-    last_line   := -2;
-    pending     := NIL;
-    fields      := NIL;
-    in_init     := FALSE;
-    init_pc     := 0;
-    init_bits   := TInt.Zero;
-    free_temps  := NIL;
-    busy_temps  := NIL;
-    free_values := NIL;
-    busy_values := NIL;
-    indirects   := NIL;
-    variables   := NIL;
-    procedures  := NIL;
-    block_cnt   := 0;
-    tos         := 0;
+    last_offset    := -2;
+    last_file      := NIL;
+    last_line      := -2;
+    pending[FALSE] := NIL;
+    pending[TRUE]  := NIL;
+    fields[FALSE]  := NIL;
+    fields[TRUE]   := NIL;
+    in_init        := FALSE;
+    init_pc        := 0;
+    init_bits      := TInt.Zero;
+    free_temps     := NIL;
+    busy_temps     := NIL;
+    free_values    := NIL;
+    busy_values    := NIL;
+    indirects      := NIL;
+    variables      := NIL;
+    procedures     := NIL;
+    block_cnt      := 0;
+    tos            := 0;
   END Init;
 
 (*----------------------------------------------------------- ID counters ---*)
@@ -264,10 +272,11 @@ PROCEDURE Declare_subrange (t, domain: TypeUID;  READONLY min, max: Target.Int;
     WebInfo.Declare_subrange (t, domain, min, max, s);
   END Declare_subrange;
 
-PROCEDURE Declare_pointer (t, target: TypeUID;  brand: TEXT;  traced: BOOLEAN)=
+PROCEDURE Declare_pointer (t, target: TypeUID;  brand: TEXT;
+                           traced, transient: BOOLEAN)=
   BEGIN
     cg.declare_pointer (t, target, brand, traced);
-    WebInfo.Declare_pointer (t, target, brand, traced);
+    WebInfo.Declare_pointer (t, target, brand, traced, transient);
   END Declare_pointer;
 
 PROCEDURE Declare_indirect (target: TypeUID): TypeUID =
@@ -303,13 +312,14 @@ PROCEDURE Declare_raises (n: Name) =
     WebInfo.Declare_raises (n);
   END Declare_raises;
 
-PROCEDURE Declare_object (t, super: TypeUID;  brand: TEXT;  traced: BOOLEAN;
-                           n_fields, n_methods, n_overrides: INTEGER;
-                           field_size: Size) =
+PROCEDURE Declare_object (t, super: TypeUID;  brand: TEXT;
+                          traced, transient: BOOLEAN;
+                          n_fields, n_methods, n_overrides: INTEGER;
+                          field_size: Size) =
   BEGIN
     cg.declare_object (t, super, brand, traced,
                        n_fields, n_methods, field_size);
-    WebInfo.Declare_object (t, super, brand, traced,
+    WebInfo.Declare_object (t, super, brand, traced, transient,
                             n_fields, n_methods, n_overrides, field_size);
   END Declare_object;
 
@@ -336,9 +346,11 @@ PROCEDURE Reveal_opaque (lhs, rhs: TypeUID) =
     WebInfo.Reveal_opaque (lhs, rhs);
   END Reveal_opaque;
 
-PROCEDURE Declare_global_field (n: Name;  o: Offset;  s: Size;  t: TypeUID) =
+PROCEDURE Declare_global_field (n: Name;  o: Offset;  s: Size;  t: TypeUID;
+                                is_const: BOOLEAN) =
   BEGIN
-    fields := NEW (FieldNode, next := fields, n := n, o := o, s := s, t := t);
+    fields[is_const] := NEW (FieldNode, next := fields[is_const],
+                             n := n, o := o, s := s, t := t);
   END Declare_global_field;
 
 PROCEDURE DumpField (x: FieldNode) =
@@ -347,20 +359,20 @@ PROCEDURE DumpField (x: FieldNode) =
     cg.declare_field (x.n, x.o, x.s, x.t);
   END DumpField;
 
-PROCEDURE Emit_global_record (s: Size) =
-  VAR n := fields;  cnt := 0;  xx: REF ARRAY OF Node;
+PROCEDURE Emit_global_record (s: Size;  is_const: BOOLEAN) =
+  VAR n := fields[is_const];  cnt := 0;  xx: REF ARRAY OF Node;
   BEGIN
     (* build a sorted array of fields *)
     WHILE (n # NIL) DO INC (cnt);  n := n.next END;
     xx := NEW (REF ARRAY OF Node, cnt);
-    n := fields;  cnt := 0;
+    n := fields[is_const];  cnt := 0;
     WHILE (n # NIL) DO xx[cnt] := n;  INC (cnt);  n := n.next;  END;
     SortNodes (xx^);
 
     (* finally, declare the record *)
     cg.declare_record (-1, s, NUMBER (xx^));
     FOR i := 0 TO LAST (xx^) DO  xx[i].dump () END;
-    fields := NIL;
+    fields[is_const] := NIL;
   END Emit_global_record;
 
 PROCEDURE Declare_exception (n: Name;  arg_type: TypeUID;
@@ -369,7 +381,7 @@ PROCEDURE Declare_exception (n: Name;  arg_type: TypeUID;
     cg.declare_exception (n, arg_type, raise_proc, base, ToBytes (offset));
   END Declare_exception;
 
-(*--------------------------------------------------------- runtime hooks ---*)
+(*--------------------------------------------------------- RunTyme hooks ---*)
 
 PROCEDURE Set_runtime_proc (n: Name;  p: Proc) =
   BEGIN
@@ -400,18 +412,18 @@ PROCEDURE Import_global (n: Name;  s: Size;  a: Alignment;  t: Type;
     RETURN v;
   END Import_global;
 
-PROCEDURE Declare_segment (n: Name;  m3t: TypeUID): Var =
+PROCEDURE Declare_segment (n: Name;  m3t: TypeUID;  is_const: BOOLEAN): Var =
   BEGIN
-    RETURN cg.declare_segment (n, m3t);
+    RETURN cg.declare_segment (n, m3t, is_const);
   END Declare_segment;
 
 PROCEDURE Bind_segment (seg: Var;  s: Size;  a: Alignment;  t: Type;
-                        exported, init: BOOLEAN) =
+                        exported, init, is_const: BOOLEAN) =
   BEGIN
     cg.bind_segment (seg, ToVarSize (s, a), FixAlign (a), t, exported, init);
     IF (init) THEN
       Begin_init (seg);
-      DumpPendingNodes ();
+      DumpPendingNodes (is_const);
       End_init (seg);
     END;
   END Bind_segment;
@@ -578,7 +590,7 @@ PROCEDURE Pop (): Val =
     IF (v.kind = VKind.Stacked) THEN
       z := Declare_temp (TargetMap.CG_Size [v.type], TargetMap.CG_Align [v.type],
                          v.type, in_memory := FALSE);
-      cg.store (z, 0, v.type);
+      cg.store (z, 0, StackType[v.type], v.type);
       v.kind      := VKind.Direct;
       v.temp_base := TRUE;
       v.temp_bits := FALSE;
@@ -590,7 +602,7 @@ PROCEDURE Pop (): Val =
     ELSIF (v.kind = VKind.Pointer) THEN
       z := Declare_temp (Target.Address.size, Target.Address.align,
                          Type.Addr, in_memory := FALSE);
-      cg.store (z, 0, Type.Addr);
+      cg.store (z, 0, Type.Addr, Type.Addr);
 
       v.kind      := VKind.Indirect;
       v.type      := Type.Addr;
@@ -680,19 +692,19 @@ PROCEDURE Force () =
       CASE (x.kind) OF
 
       | VKind.Integer =>
-          cg.load_integer (x.int);
-          x.type := Type.Int;
+          x.type := Target.Integer.cg_type;
+          cg.load_integer (x.type, x.int);
 
       | VKind.Float =>
-          cg.load_float (x.float);
           x.type := TargetMap.Float_types [TFloat.Prec (x.float)].cg_type;
+          cg.load_float (x.type, x.float);
 
       | VKind.Stacked =>
           (* value is already on the stack *)
 
       | VKind.Direct =>
           Force_align (x);
-          cg.load (x.base, AsBytes (x.offset), x.type);
+          cg.load (x.base, AsBytes (x.offset), x.type, StackType[x.type]);
           IF (x.bits # NIL) THEN
             Err ("attempt to force a direct bit-level address...");
           END;
@@ -704,7 +716,7 @@ PROCEDURE Force () =
 
       | VKind.Indirect =>
           Force_align (x);
-          cg.load  (x.base, 0, Type.Addr);
+          cg.load  (x.base, 0, Type.Addr, Type.Addr);
           IF (x.offset # 0) THEN cg.add_offset (AsBytes (x.offset)) END;
           Force_LValue (x);
 
@@ -720,7 +732,7 @@ PROCEDURE Force () =
 
       (* finish the descriptor *)
       x.kind      := VKind.Stacked;
-      x.type      := TargetMap.CG_Base [x.type];
+      x.type      := StackType[x.type];
       x.offset    := 0;
       x.next      := NIL;
       (** x.align     := TargetMap.CG_Align [x.type];
@@ -784,16 +796,16 @@ PROCEDURE End_init (v: Var) =
     in_init := FALSE;
   END End_init;
 
-PROCEDURE DumpPendingNodes () =
-  VAR n := pending;  cnt := 0;  xx: REF ARRAY OF Node;
+PROCEDURE DumpPendingNodes (is_const: BOOLEAN) =
+  VAR n := pending[is_const];  cnt := 0;  xx: REF ARRAY OF Node;
   BEGIN
     WHILE (n # NIL) DO INC (cnt);  n := n.next END;
     xx := NEW (REF ARRAY OF Node, cnt);
-    n := pending;  cnt := 0;
+    n := pending[is_const];  cnt := 0;
     WHILE (n # NIL) DO xx[cnt] := n;  INC (cnt);  n := n.next;  END;
     SortNodes (xx^);
     FOR i := 0 TO LAST (xx^) DO  xx[i].dump () END;
-    pending := NIL;
+    pending[is_const] := NIL;
   END DumpPendingNodes;
 
 PROCEDURE SortNodes (VAR x: ARRAY OF Node) =
@@ -877,12 +889,12 @@ PROCEDURE InsertionSort (VAR a: ARRAY OF Node;  lo, hi: INTEGER) =
     END;
   END InsertionSort;
 
-PROCEDURE PushPending (n: Node) =
+PROCEDURE PushPending (n: Node;  is_const: BOOLEAN) =
   BEGIN
     (** n.file := last_file; **)
     (** n.line := last_line; **)
-    n.next := pending;
-    pending := n;
+    n.next := pending[is_const];
+    pending[is_const] := n;
   END PushPending;
 
 PROCEDURE DumpNode (<*UNUSED*> n: Node) =
@@ -935,8 +947,9 @@ PROCEDURE AdvanceInit (o: Offset) =
           cg.init_int (init_pc DIV Target.Byte, tmp, t);
           init_bits := new_bits;
         ELSE
-          Err ("unable to convert or initialize bit field value??");
-          <*ASSERT FALSE*>
+          Err ("unable to convert or initialize bit field value??  n_bytes="
+                & Fmt.Int(n_bytes) & "  b_size=" & Fmt.Int (b_size));
+          (** <*ASSERT FALSE*> **)
         END;
         DEC (n_bytes, TargetMap.CG_Bytes[t]);
         INC (init_pc, TargetMap.CG_Size[t]);
@@ -946,11 +959,14 @@ PROCEDURE AdvanceInit (o: Offset) =
 
 PROCEDURE FindInitType (n_bytes, offset: INTEGER;  VAR t: Type): BOOLEAN =
   BEGIN
-    FOR i := LAST (TargetMap.Int_types) TO FIRST (TargetMap.Int_types) BY -1 DO
-      IF (TargetMap.Int_types[i].bytes <= n_bytes)
-        AND (offset MOD TargetMap.Int_types[i].align = 0) THEN
-        t := TargetMap.Int_types[i].cg_type;
-        RETURN TRUE;
+    FOR i := LAST (TargetMap.Integer_types)
+          TO FIRST (TargetMap.Integer_types) BY -1 DO
+      WITH z = TargetMap.Integer_types[i] DO
+        IF (z.bytes <= n_bytes) AND (z.size <= Target.Integer.size)
+          AND (offset MOD z.align = 0) THEN
+          t := z.cg_type;
+          RETURN TRUE;
+        END;
       END;
     END;
     ErrI (n_bytes, "cg: unable to find suitable target machine type");
@@ -958,11 +974,12 @@ PROCEDURE FindInitType (n_bytes, offset: INTEGER;  VAR t: Type): BOOLEAN =
     RETURN FALSE;
   END FindInitType;
 
-PROCEDURE Init_int (o: Offset;  s: Size;  READONLY value: Target.Int) =
+PROCEDURE Init_int (o: Offset;  s: Size;  READONLY value: Target.Int;
+                    is_const: BOOLEAN) =
   VAR bit_offset: INTEGER;  itype: Type;  base, n_bits, tmp: Target.Int;
   BEGIN
     IF (NOT in_init) THEN
-      PushPending (NEW (IntNode, o := o, s := s, v := value));
+      PushPending (NEW (IntNode, o := o, s := s, v := value), is_const);
       RETURN;
     END;
 
@@ -988,20 +1005,20 @@ PROCEDURE Init_int (o: Offset;  s: Size;  READONLY value: Target.Int) =
     END;
   END Init_int;
 
-PROCEDURE Init_intt (o: Offset;  s: Size;  value: INTEGER) =
+PROCEDURE Init_intt (o: Offset;  s: Size;  value: INTEGER;  is_const: BOOLEAN) =
   VAR val: Target.Int;  b := TInt.FromInt (value, val);
   BEGIN
     IF NOT b THEN ErrI (value, "integer const not representable") END;
-    Init_int (o, s, val);
+    Init_int (o, s, val, is_const);
   END Init_intt;
 
 PROCEDURE DumpInt (x: IntNode) =
   BEGIN
     DumpNode (x);
-    Init_int (x.o, x.s, x.v);
+    Init_int (x.o, x.s, x.v, FALSE);
   END DumpInt;
 
-PROCEDURE Init_proc (o: Offset;  value: Proc) =
+PROCEDURE Init_proc (o: Offset;  value: Proc;  is_const: BOOLEAN) =
   BEGIN
     IF (in_init) THEN
       AdvanceInit (o);
@@ -1009,17 +1026,17 @@ PROCEDURE Init_proc (o: Offset;  value: Proc) =
       <*ASSERT o MOD Target.Address.align = 0 *>
       cg.init_proc (AsBytes (o), value);
     ELSE
-      PushPending (NEW (ProcNode, o := o, v := value));
+      PushPending (NEW (ProcNode, o := o, v := value), is_const);
     END;
   END Init_proc;
 
 PROCEDURE DumpProc (x: ProcNode) =
   BEGIN
     DumpNode (x);
-    Init_proc (x.o, x.v);
+    Init_proc (x.o, x.v, FALSE);
   END DumpProc;
 
-PROCEDURE Init_label (o: Offset;  value: Label) =
+PROCEDURE Init_label (o: Offset;  value: Label;  is_const: BOOLEAN) =
   BEGIN
     IF (in_init) THEN
       AdvanceInit (o);
@@ -1027,17 +1044,17 @@ PROCEDURE Init_label (o: Offset;  value: Label) =
       <*ASSERT o MOD Target.Address.align = 0 *>
       cg.init_label (AsBytes (o), value);
     ELSE
-      PushPending (NEW (LabelNode, o := o, v := value));
+      PushPending (NEW (LabelNode, o := o, v := value), is_const);
     END;
   END Init_label;
 
 PROCEDURE DumpLabel (x: LabelNode) =
   BEGIN
     DumpNode (x);
-    Init_label (x.o, x.v);
+    Init_label (x.o, x.v, FALSE);
   END DumpLabel;
 
-PROCEDURE Init_var (o: Offset;  value: Var;  bias: Offset) =
+PROCEDURE Init_var (o: Offset;  value: Var;  bias: Offset;  is_const: BOOLEAN) =
   BEGIN
     IF (in_init) THEN
       AdvanceInit (o);
@@ -1046,17 +1063,17 @@ PROCEDURE Init_var (o: Offset;  value: Var;  bias: Offset) =
       <*ASSERT bias MOD Target.Byte = 0*>
       cg.init_var (AsBytes (o), value, AsBytes (bias));
     ELSE
-      PushPending (NEW (VarNode, o := o, v := value, b := bias));
+      PushPending (NEW (VarNode, o := o, v := value, b := bias), is_const);
     END;
   END Init_var;
 
 PROCEDURE DumpVar (x: VarNode) =
   BEGIN
     DumpNode (x);
-    Init_var (x.o, x.v, x.b);
+    Init_var (x.o, x.v, x.b, FALSE);
   END DumpVar;
 
-PROCEDURE Init_offset (o: Offset;  value: Var) =
+PROCEDURE Init_offset (o: Offset;  value: Var;  is_const: BOOLEAN) =
   BEGIN
     IF (in_init) THEN
       AdvanceInit (o);
@@ -1064,17 +1081,17 @@ PROCEDURE Init_offset (o: Offset;  value: Var) =
       <*ASSERT o MOD Target.Integer.align = 0 *>
       cg.init_offset (AsBytes (o), value);
     ELSE
-      PushPending (NEW (OffsetNode, o := o, v := value));
+      PushPending (NEW (OffsetNode, o := o, v := value), is_const);
     END;
   END Init_offset;
 
 PROCEDURE DumpOffset (x: OffsetNode) =
   BEGIN
     DumpNode (x);
-    Init_offset (x.o, x.v);
+    Init_offset (x.o, x.v, FALSE);
   END DumpOffset;
 
-PROCEDURE Init_chars (o: Offset;  value: TEXT) =
+PROCEDURE Init_chars (o: Offset;  value: TEXT;  is_const: BOOLEAN) =
   VAR len, start: INTEGER;
   BEGIN
     IF (in_init) THEN
@@ -1092,17 +1109,17 @@ PROCEDURE Init_chars (o: Offset;  value: TEXT) =
         cg.init_chars (AsBytes (o), Text.Sub (value, start));
       END;
     ELSE
-      PushPending (NEW (CharsNode, o := o, t := value));
+      PushPending (NEW (CharsNode, o := o, t := value), is_const);
     END;
   END Init_chars;
 
 PROCEDURE DumpChars (x: CharsNode) =
   BEGIN
     DumpNode (x);
-    Init_chars (x.o, x.t);
+    Init_chars (x.o, x.t, FALSE);
   END DumpChars;
 
-PROCEDURE Init_float (o: Offset;  READONLY f: Target.Float) =
+PROCEDURE Init_float (o: Offset;  READONLY f: Target.Float;  is_const: BOOLEAN) =
   BEGIN
     IF (in_init) THEN
       AdvanceInit (o);
@@ -1110,17 +1127,17 @@ PROCEDURE Init_float (o: Offset;  READONLY f: Target.Float) =
       <*ASSERT o MOD Target.Real.align = 0 *>
       cg.init_float (AsBytes (o), f);
     ELSE
-      PushPending (NEW (FloatNode, o := o, f := f));
+      PushPending (NEW (FloatNode, o := o, f := f), is_const);
     END;
   END Init_float;
 
 PROCEDURE DumpFloat (x: FloatNode) =
   BEGIN
     DumpNode (x);
-    Init_float (x.o, x.f);
+    Init_float (x.o, x.f, FALSE);
   END DumpFloat;
 
-PROCEDURE EmitText (t: TEXT): INTEGER =
+PROCEDURE EmitText (t: TEXT;  is_const: BOOLEAN): INTEGER =
   VAR  len, size, align, offset: INTEGER;
   BEGIN
     IF (t = NIL) THEN t := "" END;
@@ -1128,8 +1145,8 @@ PROCEDURE EmitText (t: TEXT): INTEGER =
     size   := len * Target.Char.size;
     (** align  := MAX (Target.Char.align, Target.Integer.align); **)
     align  := Target.Char.align;
-    offset := Module.Allocate (size, align, "*string*");
-    PushPending (NEW (CharsNode, o := offset, t := t));
+    offset := Module.Allocate (size, align, is_const, "*string*");
+    PushPending (NEW (CharsNode, o := offset, t := t), is_const);
     RETURN offset;
   END EmitText;
 
@@ -1151,9 +1168,13 @@ PROCEDURE Import_procedure (n: Name;  n_params: INTEGER;  ret_type: Type;
 PROCEDURE Declare_procedure (n: Name;  n_params: INTEGER;  ret_type: Type;
                              lev: INTEGER;  cc: CallingConvention;
                              exported: BOOLEAN;  parent: Proc): Proc =
+  VAR p: Proc;
   BEGIN
-    RETURN cg.declare_procedure (n, n_params, ret_type,
+    IF (procedures = NIL) THEN procedures := NewNameTbl() END;
+    p := cg.declare_procedure (n, n_params, ret_type,
                                  lev, cc, exported, parent);
+    EVAL procedures.put (n, p);
+    RETURN p;
   END Declare_procedure;
 
 PROCEDURE Begin_procedure (p: Proc) =
@@ -1201,63 +1222,39 @@ PROCEDURE Jump (l: Label) =
 PROCEDURE If_true (l: Label;  f: Frequency) =
   BEGIN
     Force1 ("If_true");
-    cg.if_true (l, f);
+    cg.if_true (Target.Integer.cg_type, l, f);
   END If_true;
 
 PROCEDURE If_false (l: Label;  f: Frequency) =
   BEGIN
     Force1 ("If_false");
-    cg.if_false (l, f);
+    cg.if_false (Target.Integer.cg_type, l, f);
   END If_false;
 
-PROCEDURE If_eq (l: Label;  t: ZType;  f: Frequency) =
+PROCEDURE If_compare (t: ZType;  op: Cmp;  l: Label;  f: Frequency) =
   BEGIN
-    EVAL Force2 ("If_eq", commute := TRUE);
-    cg.if_eq (l, t, f);
-  END If_eq;
-
-PROCEDURE If_ne (l: Label;  t: ZType;  f: Frequency) =
-  BEGIN
-    EVAL Force2 ("If_ne", commute := TRUE);
-    cg.if_ne (l, t, f);
-  END If_ne;
-
-PROCEDURE If_gt (l: Label;  t: ZType;  f: Frequency) =
-  BEGIN
-    IF Force2 ("If_gt", commute := TRUE)
-      THEN cg.if_lt (l, t, f);
-      ELSE cg.if_gt (l, t, f);
+    IF Force2 ("If_compare", commute := TRUE) THEN
+      op := M3CG.SwappedCompare [op];
     END;
-  END If_gt;
+    cg.if_compare (t, op, l, f);
+  END If_compare;
 
-PROCEDURE If_ge (l: Label;  t: ZType;  f: Frequency) =
+PROCEDURE If_then (t: ZType;  op: Cmp;  true, false: Label;  f: Frequency) =
   BEGIN
-    IF Force2 ("If_ge", commute := TRUE)
-      THEN cg.if_le (l, t, f);
-      ELSE cg.if_ge (l, t, f);
+    IF Force2 ("If_compare", commute := TRUE) THEN
+      op := M3CG.SwappedCompare [op];
     END;
-  END If_ge;
-
-PROCEDURE If_lt (l: Label;  t: ZType;  f: Frequency) =
-  BEGIN
-    IF Force2 ("If_lt", commute := TRUE)
-      THEN cg.if_gt (l, t, f);
-      ELSE cg.if_lt (l, t, f);
+    IF (true = No_label) THEN
+      op := M3CG.NotCompare [op];
+      true := false;
     END;
-  END If_lt;
-
-PROCEDURE If_le (l: Label;  t: ZType;  f: Frequency) =
-  BEGIN
-    IF Force2 ("If_le", commute := TRUE)
-      THEN cg.if_ge (l, t, f);
-      ELSE cg.if_le (l, t, f);
-    END;
-  END If_le;
+    cg.if_compare (t, op, true, f);
+  END If_then;
 
 PROCEDURE Case_jump (READONLY labels: ARRAY OF Label) =
   BEGIN
     Force1 ("Case_jump");
-    cg.case_jump (labels);
+    cg.case_jump (Target.Integer.cg_type, labels);
   END Case_jump;
 
 PROCEDURE Exit_proc (t: Type) =
@@ -1285,7 +1282,7 @@ PROCEDURE Load (v: Var;  o: Offset;  s: Size;  a: Alignment;  t: Type) =
       SimpleLoad (v, o, t);
       Force ();  (* to connect the error message to the bad code *)
 
-    ELSIF (t = Type.Word) OR (t = Type.Int) THEN
+    ELSIF (t = Target.Word.cg_type) OR (t = Target.Integer.cg_type) THEN
       best_type  := FindIntType (t, s, o, a);
       best_size  := TargetMap.CG_Size [best_type];
       best_align := TargetMap.CG_Align [best_type];
@@ -1295,10 +1292,12 @@ PROCEDURE Load (v: Var;  o: Offset;  s: Size;  a: Alignment;  t: Type) =
         SimpleLoad (v, o, best_type);
       ELSE
         (* unaligned, partial load *)
-        cg.load (v, AsBytes (o - align), best_type);
+        cg.load (v, AsBytes (o - align), best_type, Target.Integer.cg_type);
         IF Target.Little_endian
-          THEN cg.extract_mn (t = Type.Int, align, s);
-          ELSE cg.extract_mn (t = Type.Int, best_size - align - s, s);
+          THEN cg.extract_mn (Target.Integer.cg_type, Target.SignedType[t],
+                              align, s);
+          ELSE cg.extract_mn (Target.Integer.cg_type, Target.SignedType[t],
+                              best_size - align - s, s);
         END;
         SPush (t);
       END;
@@ -1351,12 +1350,12 @@ PROCEDURE Load_addr_of_temp (v: Var;  o: Offset;  a: Alignment) =
 
 PROCEDURE Load_int (v: Var;  o: Offset := 0) =
   BEGIN
-    SimpleLoad (v, o, Type.Int);
+    SimpleLoad (v, o, Target.Integer.cg_type);
   END Load_int;
 
 PROCEDURE Load_int_temp (v: Var;  o: Offset := 0) =
   BEGIN
-    SimpleLoad (v, o, Type.Int);
+    SimpleLoad (v, o, Target.Integer.cg_type);
     stack [tos-1].temp_base := TRUE;
   END Load_int_temp;
 
@@ -1410,7 +1409,7 @@ PROCEDURE Load_indirect (t: Type;  o: Offset;  s: Size) =
         Force (); (* to connect the error message with the code *)
         SimpleIndirectLoad (x, t);
 
-      ELSIF (t = Type.Word) OR (t = Type.Int) THEN
+      ELSIF (t = Target.Word.cg_type) OR (t = Target.Integer.cg_type) THEN
         base_align := Base_align (x);
         best_type  := FindIntType (t, s, x.offset, base_align);
         best_size  := TargetMap.CG_Size [best_type];
@@ -1423,8 +1422,10 @@ PROCEDURE Load_indirect (t: Type;  o: Offset;  s: Size) =
           IF (s # best_size) THEN
             Force ();
             IF Target.Little_endian
-              THEN cg.extract_mn (t = Type.Int, 0, s);
-              ELSE cg.extract_mn (t = Type.Int, best_size - s, s);
+              THEN cg.extract_mn (Target.Integer.cg_type,
+                                  Target.SignedType[t], 0, s);
+              ELSE cg.extract_mn (Target.Integer.cg_type,
+                                  Target.SignedType[t], best_size - s, s);
             END;
           END;
         ELSIF (x.bits = NIL) THEN
@@ -1433,12 +1434,26 @@ PROCEDURE Load_indirect (t: Type;  o: Offset;  s: Size) =
           SimpleIndirectLoad (x, best_type);
           Force ();
           IF Target.Little_endian
-            THEN cg.extract_mn (t = Type.Int, bit_offset, s);
-            ELSE cg.extract_mn (t = Type.Int, best_size - bit_offset - s, s);
+            THEN cg.extract_mn (Target.Integer.cg_type, Target.SignedType[t],
+                                bit_offset, s);
+            ELSE cg.extract_mn (Target.Integer.cg_type, Target.SignedType[t],
+                                best_size - bit_offset - s, s);
           END;
         ELSE
           (* unaligned, partial load with variable offset *)
           IF (best_align > x.align) THEN Err ("unaligned base variable"); END;
+
+          a := MIN (base_align, Target.Integer.size);
+          IF (best_size < a) THEN
+            (* make sure we load the largest possible aligned value,
+               because we can't tell how far the variable bit-offset
+               will take us.  *)
+            best_type  := FindIntType (t, MAX (s, a),
+                                       x.offset MOD a, base_align);
+            best_size  := TargetMap.CG_Size [best_type];
+            best_align := TargetMap.CG_Align [best_type];
+            bit_offset := x.offset MOD best_align;
+          END;
 
           (* hide the bit offset *)
           save_bits := x.bits;       x.bits := NIL;
@@ -1452,19 +1467,19 @@ PROCEDURE Load_indirect (t: Type;  o: Offset;  s: Size) =
 
           (* compute the full bit offset *)
           IF Target.Little_endian THEN
-            cg.load (save_bits, 0, Type.Int);
+            cg.load (save_bits, 0, Target.Integer.cg_type, Target.Integer.cg_type);
             IF (const_bits # 0) THEN
               Push_int (const_bits);
-              cg.add (Type.Int);
+              cg.add (Target.Integer.cg_type);
             END;
           ELSE (* big endian *)
             Push_int (best_size - const_bits - s);
-            cg.load (save_bits, 0, Type.Int);
-            cg.subtract (Type.Int);
+            cg.load (save_bits, 0, Target.Integer.cg_type, Target.Integer.cg_type);
+            cg.subtract (Target.Integer.cg_type);
           END;
 
           (* extract the needed bits *)
-          cg.extract_n (t = Type.Int, s);
+          cg.extract_n (Target.Integer.cg_type, Target.SignedType[t], s);
 
           (* restore the hidden bit offset *)
           x.bits := save_bits;
@@ -1491,14 +1506,14 @@ PROCEDURE SimpleIndirectLoad (VAR x: ValRec;  t: Type) =
     ELSIF (x.kind = VKind.Pointer) OR (x.kind = VKind.Stacked) THEN
       offs := x.offset;  x.offset := 0;
       Force ();
-      cg.load_indirect (AsBytes (offs), t);
+      cg.load_indirect (AsBytes (offs), t, StackType[t]);
       x.type  := t;
       x.align := Target.Byte;
       x.kind  := VKind.Stacked;
     ELSE (* ?? *)
       ErrI (ORD (x.kind), "bad mode in SimpleIndirectLoad");
       Force ();
-      cg.load_indirect (AsBytes (x.offset), t);
+      cg.load_indirect (AsBytes (x.offset), t, StackType[t]);
       x.type  := t;
       x.align := Target.Byte;
       x.kind  := VKind.Stacked;
@@ -1517,56 +1532,46 @@ PROCEDURE Store (v: Var;  o: Offset;  s: Size;  a: Alignment;  t: Type) =
 
     IF (size = s) AND ((a+o) MOD align) = 0 THEN
       (* a simple aligned store *)
-      cg.store (v, AsBytes (o), t);
+      cg.store (v, AsBytes (o), StackType[t], t);
     ELSIF (size < s) THEN
       Err ("store size too large");
-      cg.store (v, AsBytes (o), t);
-    ELSIF (t = Type.Word) OR (t = Type.Int) THEN
+      cg.store (v, AsBytes (o), StackType[t], t);
+    ELSIF (t = Target.Word.cg_type) OR (t = Target.Integer.cg_type) THEN
       best_type  := FindIntType (t, s, o, a);
       best_size  := TargetMap.CG_Size [best_type];
       best_align := TargetMap.CG_Align [best_type];
       align := (a+o) MOD best_align;
       IF (s = best_size) AND (align = 0) THEN
         (* this is a simple partial word store *)
-        cg.store (v, AsBytes (o), best_type);
+        cg.store (v, AsBytes (o), Target.Integer.cg_type, best_type);
       ELSE
         (* unaligned, partial store *)
-        cg.load (v, AsBytes (o - align), best_type);
+        cg.load (v, AsBytes (o - align), best_type, Target.Integer.cg_type);
         cg.swap (t, t);
         IF Target.Little_endian
-          THEN cg.insert_mn (align, s);
-          ELSE cg.insert_mn (best_size - align - s, s);
+          THEN cg.insert_mn (Target.Integer.cg_type, align, s);
+          ELSE cg.insert_mn (Target.Integer.cg_type, best_size - align - s, s);
         END;
-        cg.store (v, AsBytes (o - align), best_type);
+        cg.store (v, AsBytes (o - align), Target.Integer.cg_type, best_type);
       END;
     ELSE
       (* unaligned non-integer value *)
       Err ("unaligned store  type="& Fmt.Int (ORD (t))
             & "  s/o/a=" & Fmt.Int (s) & "/" & Fmt.Int (o) & "/" & Fmt.Int(a));
-      cg.store (v, ToBytes (o), t);
+      cg.store (v, ToBytes (o), Target.Integer.cg_type, t);
     END;
     SPop (1, "Store");
   END Store;
 
-PROCEDURE Store_ref (v: Var;  o: Offset := 0) =
-  BEGIN
-    Store (v, o, Target.Address.size, Target.Address.align, Type.Addr);
-  END Store_ref;
-
 PROCEDURE Store_int (v: Var;  o: Offset := 0) =
   BEGIN
-    Store (v, o, Target.Integer.size, Target.Integer.align, Type.Int);
+    Store (v, o, Target.Integer.size, Target.Integer.align, Target.Integer.cg_type);
   END Store_int;
 
 PROCEDURE Store_addr (v: Var;  o: Offset := 0) =
   BEGIN
     Store (v, o, Target.Address.size, Target.Address.align, Type.Addr);
   END Store_addr;
-
-PROCEDURE Store_ref_indirect (o: Offset;  <*UNUSED*>var: BOOLEAN) =
-  BEGIN
-    Store_indirect (Type.Addr, o, Target.Address.size);
-  END Store_ref_indirect;
 
 PROCEDURE Store_indirect (t: Type;  o: Offset;  s: Size) =
   VAR
@@ -1614,7 +1619,14 @@ PROCEDURE Store_indirect (t: Type;  o: Offset;  s: Size) =
         x.kind := VKind.Pointer;
 
       ELSIF (x.kind = VKind.Absolute) THEN
+        (* save the bit offset *)
+        save_bits := x.bits;  x.bits := NIL;
+        save_temp := x.temp_bits;  x.temp_bits := FALSE;
+        const_bits := (x.offset + o) MOD x.align;
+        x.offset := x.offset + o - const_bits;
+(***
         INC (x.offset, o);
+***)
         Force (); (* the rhs *)
 
       ELSIF (x.kind = VKind.Indirect) THEN
@@ -1644,7 +1656,7 @@ PROCEDURE Store_indirect (t: Type;  o: Offset;  s: Size) =
       ELSIF (size < s) THEN
         Err ("store_indirect size too large");
         SimpleIndirectStore (x, t);
-      ELSIF (t = Type.Word) OR (t = Type.Int) THEN
+      ELSIF (t = Target.Word.cg_type) OR (t = Target.Integer.cg_type) THEN
         base_align := Base_align (x);
         best_type  := FindIntType (t, s, x.offset, base_align);
         best_size  := TargetMap.CG_Size [best_type];
@@ -1662,8 +1674,8 @@ PROCEDURE Store_indirect (t: Type;  o: Offset;  s: Size) =
           Swap ();
           EVAL Force_pair (commute := FALSE);
           IF Target.Little_endian
-            THEN cg.insert_mn (0, s);
-            ELSE cg.insert_mn (best_size - s, s);
+            THEN cg.insert_mn (Target.Integer.cg_type, 0, s);
+            ELSE cg.insert_mn (Target.Integer.cg_type, best_size - s, s);
           END;
           SPop (1, "Store_indirect #1");
           Push (tmp);  XForce ();
@@ -1680,8 +1692,8 @@ PROCEDURE Store_indirect (t: Type;  o: Offset;  s: Size) =
           Swap ();
           EVAL Force_pair (commute := FALSE);
           IF Target.Little_endian
-            THEN cg.insert_mn (const_bits, s);
-            ELSE cg.insert_mn (best_size - const_bits - s, s);
+            THEN cg.insert_mn (Target.Integer.cg_type, const_bits, s);
+            ELSE cg.insert_mn (Target.Integer.cg_type, best_size - const_bits - s, s);
           END;
           SPop (1, "Store_indirect #2");
           Push (tmp);  XForce ();
@@ -1692,6 +1704,18 @@ PROCEDURE Store_indirect (t: Type;  o: Offset;  s: Size) =
           (* unaligned, partial store with variable offset *)
           IF (best_align > x.align) THEN
             Err ("unaligned base variable in store");
+          END;
+
+          a := MIN (base_align, Target.Integer.size);
+          IF (best_size < a) THEN
+            (* make sure we load and store the largest possible aligned value,
+               because we can't tell how far the variable bit-offset
+               will take us.  *)
+            best_type  := FindIntType (t, MAX (s, a),
+                                       x.offset MOD a, base_align);
+            best_size  := TargetMap.CG_Size [best_type];
+            best_align := TargetMap.CG_Align [best_type];
+            const_bits := x.offset MOD best_align;
           END;
 
           (* hide the bit offset *)
@@ -1710,17 +1734,17 @@ PROCEDURE Store_indirect (t: Type;  o: Offset;  s: Size) =
           (* stuff the bits *)
           Swap ();
           IF Target.Little_endian THEN
-            cg.load (save_bits, 0, Type.Int);
+            cg.load (save_bits, 0, Target.Integer.cg_type, Target.Integer.cg_type);
             IF (const_bits # 0) THEN
               Push_int (const_bits);
-              cg.add (Type.Int);
+              cg.add (Target.Integer.cg_type);
             END;
           ELSE (* big endian *)
             Push_int (best_size - const_bits - s);
-            cg.load (save_bits, 0, Type.Int);
-            cg.subtract (Type.Int);
+            cg.load (save_bits, 0, Target.Integer.cg_type, Target.Integer.cg_type);
+            cg.subtract (Target.Integer.cg_type);
           END;
-          cg.insert_n (s);
+          cg.insert_n (Target.Integer.cg_type, s);
           SPop (1, "Store_indirect #3");
 
           (* finally, store the result *)
@@ -1744,12 +1768,12 @@ PROCEDURE Store_indirect (t: Type;  o: Offset;  s: Size) =
 PROCEDURE SimpleIndirectStore (READONLY x: ValRec;  t: MType)=
   BEGIN
     IF (x.kind = VKind.Absolute) THEN
-      cg.store (x.base, AsBytes (x.offset), t);
+      cg.store (x.base, AsBytes (x.offset), StackType [t], t);
     ELSIF (x.kind = VKind.Pointer) OR (x.kind = VKind.Stacked) THEN
-      cg.store_indirect (AsBytes (x.offset), t);
+      cg.store_indirect (AsBytes (x.offset), StackType [t], t);
     ELSE (* ?? *)
       ErrI (ORD (x.kind), "bad mode in SimpleIndirectStore");
-      cg.store_indirect (AsBytes (x.offset), t);
+      cg.store_indirect (AsBytes (x.offset), StackType[t], t);
     END;
   END SimpleIndirectStore;
 
@@ -1779,7 +1803,7 @@ PROCEDURE Load_intt (i: INTEGER) =
 
 PROCEDURE Load_integer (READONLY i: Target.Int) =
   BEGIN
-    SPush (Type.Int);
+    SPush (Target.Integer.cg_type);
     WITH x = stack[tos-1] DO
       x.kind := VKind.Integer;
       x.int  := i;
@@ -1798,61 +1822,15 @@ PROCEDURE Load_float (READONLY f: Target.Float) =
 
 (*------------------------------------------------------------ arithmetic ---*)
    
-PROCEDURE Eq (t: ZType) =
+PROCEDURE Compare (t: ZType;  op: Cmp) =
   BEGIN
-    EVAL Force_pair (commute := TRUE);
-    cg.eq (t);
-    SPop (2, "Eq");
-    SPush (Type.Int);
-  END Eq;
-
-PROCEDURE Ne (t: ZType) =
-  BEGIN
-    EVAL Force_pair (commute := TRUE);
-    cg.ne (t);
-    SPop (2, "Ne");
-    SPush (Type.Int);
-  END Ne;
-
-PROCEDURE Gt (t: ZType) =
-  BEGIN
-    IF Force_pair (commute := TRUE)
-      THEN cg.lt (t);
-      ELSE cg.gt (t);
+    IF Force_pair (commute := TRUE) THEN
+      op := M3CG.SwappedCompare [op];
     END;
-    SPop (2, "Gt");
-    SPush (Type.Int);
-  END Gt;
-
-PROCEDURE Ge (t: ZType) =
-  BEGIN
-    IF Force_pair (commute := TRUE)
-      THEN cg.le (t);
-      ELSE cg.ge (t);
-    END;
-    SPop (2, "Ge");
-    SPush (Type.Int);
-  END Ge;
-
-PROCEDURE Lt (t: ZType) =
-  BEGIN
-    IF Force_pair (commute := TRUE)
-      THEN cg.gt (t);
-      ELSE cg.lt (t);
-    END;
-    SPop (2, "Lt");
-    SPush (Type.Int);
-  END Lt;
-
-PROCEDURE Le (t: ZType) =
-  BEGIN
-    IF Force_pair (commute := TRUE)
-      THEN cg.ge (t);
-      ELSE cg.le (t);
-    END;
-    SPop (2, "Le");
-    SPush (Type.Int);
-  END Le;
+    cg.compare (t, Target.Integer.cg_type, op);
+    SPop (2, "Compare");
+    SPush (Type.Int32);
+  END Compare;
 
 PROCEDURE Add (t: AType) =
   BEGIN
@@ -1918,37 +1896,13 @@ PROCEDURE Min (t: ZType) =
     SPush (t);
   END Min;
 
-PROCEDURE Round (t: RType) =
+PROCEDURE Cvt_int (t: RType;  op: Cvt) =
   BEGIN
     Force ();
-    cg.round (t);
-    SPop (1, "Round");
-    SPush (Type.Int);
-  END Round;
-
-PROCEDURE Trunc (t: RType) =
-  BEGIN
-    Force ();
-    cg.trunc (t);
-    SPop (1, "Trunc");
-    SPush (Type.Int);
-  END Trunc;
-
-PROCEDURE Floor (t: RType) =
-  BEGIN
-    Force ();
-    cg.floor (t);
-    SPop (1, "Floor");
-    SPush (Type.Int);
-  END Floor;
-
-PROCEDURE Ceiling (t: RType) =
-  BEGIN
-    Force ();
-    cg.ceiling (t);
-    SPop (1, "Ceiling");
-    SPush (Type.Int);
-  END Ceiling;
+    cg.cvt_int (t, Target.Integer.cg_type, op);
+    SPop (1, "Cvt_int");
+    SPush (Target.Integer.cg_type);
+  END Cvt_int;
 
 PROCEDURE Cvt_float (t: AType;  u: RType) =
   BEGIN
@@ -1980,7 +1934,7 @@ PROCEDURE Set_union (s: Size) =
   BEGIN
     EVAL Force_pair (commute := TRUE);
     IF (s <= Target.Integer.size) THEN
-      cg.or ();
+      cg.or (Target.Integer.cg_type);
       SPop (1, "Set_union");
     ELSE
       cg.set_union (AsBytes (s));
@@ -1992,8 +1946,8 @@ PROCEDURE Set_difference (s: Size) =
   BEGIN
     EVAL Force_pair (commute := FALSE);
     IF (s <= Target.Integer.size) THEN
-      cg.not ();
-      cg.and ();
+      cg.not (Target.Integer.cg_type);
+      cg.and (Target.Integer.cg_type);
       SPop (1, "Set_diff");
     ELSE
       cg.set_difference (AsBytes (s));
@@ -2005,7 +1959,7 @@ PROCEDURE Set_intersection (s: Size) =
   BEGIN
     EVAL Force_pair (commute := TRUE);
     IF (s <= Target.Integer.size) THEN
-      cg.and ();
+      cg.and (Target.Integer.cg_type);
       SPop (1, "Set_inter");
     ELSE
       cg.set_intersection (AsBytes (s));
@@ -2017,7 +1971,7 @@ PROCEDURE Set_sym_difference (s: Size) =
   BEGIN
     EVAL Force_pair (commute := TRUE);
     IF (s <= Target.Integer.size) THEN
-      cg.xor ();
+      cg.xor (Target.Integer.cg_type);
       SPop (1, "Set_symd");
     ELSE
       cg.set_sym_difference (AsBytes (s));
@@ -2029,97 +1983,31 @@ PROCEDURE Set_member (s: Size) =
   BEGIN
     EVAL Force_pair (commute := FALSE);
     IF (s <= Target.Integer.size) THEN
-      cg.load_integer (TInt.One);
-      cg.swap (Type.Int, Type.Int);
-      cg.shift_left ();
-      cg.and ();
-      cg.load_integer (TInt.Zero);
-      cg.ne (Type.Word);
+      cg.load_integer (Target.Integer.cg_type, TInt.One);
+      cg.swap (Target.Integer.cg_type, Target.Integer.cg_type);
+      cg.shift_left (Target.Integer.cg_type);
+      cg.and (Target.Integer.cg_type);
+      cg.load_integer (Target.Integer.cg_type, TInt.Zero);
+      cg.compare (Target.Word.cg_type, Target.Integer.cg_type, Cmp.NE);
     ELSE
-      cg.set_member (AsBytes (s));
+      cg.set_member (AsBytes (s), Target.Integer.cg_type);
     END;
     SPop (2, "Set_member");
-    SPush (Type.Int);
+    SPush (Target.Integer.cg_type);
   END Set_member;
 
-PROCEDURE Set_eq (s: Size) =
+PROCEDURE Set_compare (s: Size;  op: Cmp) =
   BEGIN
-    EVAL Force_pair (commute := TRUE);
-    IF (s <= Target.Integer.size) THEN
-      cg.eq (Type.Word);
-    ELSE
-      cg.set_eq (AsBytes (s));
+    IF Force_pair (commute := TRUE) THEN
+      op := M3CG.SwappedCompare [op];
+    END;
+    IF (s <= Target.Integer.size)
+      THEN cg.compare (Target.Word.cg_type, Target.Integer.cg_type, op);
+      ELSE cg.set_compare (AsBytes (s), op, Target.Integer.cg_type);
     END;
     SPop (2, "Set_eq");
-    SPush (Type.Int);
-  END Set_eq;
-
-PROCEDURE Set_ne (s: Size) =
-  BEGIN
-    EVAL Force_pair (commute := TRUE);
-    IF (s <= Target.Integer.size) THEN
-      cg.ne (Type.Word);
-    ELSE
-      cg.set_ne (AsBytes (s));
-    END;
-    SPop (2, "Set_ne");
-    SPush (Type.Int);
-  END Set_ne;
-
-PROCEDURE Set_lt (s: Size) =
-  BEGIN
-    EVAL Force_pair (commute := FALSE);
-    IF (s <= Target.Integer.size) THEN
-      <*ASSERT FALSE*>
-    ELSE
-      cg.set_lt (AsBytes (s));
-    END;
-    SPop (2, "Set_lt");
-    SPush (Type.Int);
-  END Set_lt;
-
-PROCEDURE Set_le (s: Size) =
-  BEGIN
-    EVAL Force_pair (commute := FALSE);
-    IF (s <= Target.Integer.size) THEN
-      cg.not ();
-      cg.and ();
-      cg.load_integer (TInt.Zero);
-      cg.eq (Type.Word);
-    ELSE
-      cg.set_le (AsBytes (s));
-    END;
-    SPop (2, "Set_le");
-    SPush (Type.Int);
-  END Set_le;
-
-PROCEDURE Set_gt (s: Size) =
-  BEGIN
-    EVAL Force_pair (commute := FALSE);
-    IF (s <= Target.Integer.size) THEN
-      <*ASSERT FALSE*>
-    ELSE
-      cg.set_gt (AsBytes (s));
-    END;
-    SPop (2, "Set_gt");
-    SPush (Type.Int);
-  END Set_gt;
-
-PROCEDURE Set_ge (s: Size) =
-  BEGIN
-    EVAL Force_pair (commute := FALSE);
-    IF (s <= Target.Integer.size) THEN
-      cg.swap (Type.Word, Type.Word);
-      cg.not ();
-      cg.and ();
-      cg.load_integer (TInt.Zero);
-      cg.eq (Type.Word);
-    ELSE
-      cg.set_ge (AsBytes (s));
-    END;
-    SPop (2, "Set_ge");
-    SPush (Type.Int);
-  END Set_ge;
+    SPush (Type.Int32);
+  END Set_compare;
 
 PROCEDURE Set_range (s: Size) =
   BEGIN
@@ -2127,25 +2015,26 @@ PROCEDURE Set_range (s: Size) =
     IF (s <= Target.Integer.size) THEN
       (* given x, a, b:  compute  x || {a..b} *)
 
-      cg.load_integer (TInt.MOne);      (* -1 = 16_ffffff = {0..N} *)
-      cg.swap (Type.Int, Type.Int);
+      cg.load_integer (Target.Integer.cg_type, TInt.MOne);
+        (* -1 = 16_ffffff = {0..N} *)
+      cg.swap (Target.Integer.cg_type, Target.Integer.cg_type);
       Push_int (Target.Integer.size-1);
-      cg.swap (Type.Int, Type.Int);
-      cg.subtract (Type.Int);
-      cg.shift_right ();                (*  x, a, {0..b} *)
+      cg.swap (Target.Integer.cg_type, Target.Integer.cg_type);
+      cg.subtract (Target.Integer.cg_type);
+      cg.shift_right (Target.Integer.cg_type);                  (*  x, a, {0..b} *)
 
-      cg.swap (Type.Int, Type.Int);     (*  x, {0..b}, a *)
+      cg.swap (Target.Integer.cg_type, Target.Integer.cg_type); (*  x, {0..b}, a *)
 
-      cg.load_integer (TInt.MOne);
-      cg.swap (Type.Int, Type.Int);
-      cg.shift_left ();                 (*  x, {0..b}, {a..N} *)
+      cg.load_integer (Target.Integer.cg_type, TInt.MOne);
+      cg.swap (Target.Integer.cg_type, Target.Integer.cg_type);
+      cg.shift_left (Target.Integer.cg_type);           (*  x, {0..b}, {a..N} *)
 
-      cg.and ();                        (*  x, {a..b} *)
-      cg.or ();                         (*  x || {a..b} *)
+      cg.and (Target.Integer.cg_type);                  (*  x, {a..b} *)
+      cg.or (Target.Integer.cg_type);                   (*  x || {a..b} *)
       SPop (3, "Set_range-a");
-      SPush (Type.Int);
+      SPush (Target.Integer.cg_type);
     ELSE
-      cg.set_range (AsBytes (s));
+      cg.set_range (AsBytes (s), Target.Integer.cg_type);
       SPop (3, "Set_range-b");
     END;
   END Set_range;
@@ -2154,14 +2043,14 @@ PROCEDURE Set_singleton (s: Size) =
   BEGIN
     EVAL Force_pair (commute := FALSE);
     IF (s <= Target.Integer.size) THEN
-      cg.load_integer (TInt.One);
-      cg.swap (Type.Int, Type.Int);
-      cg.shift_left ();
-      cg.or ();
+      cg.load_integer (Target.Integer.cg_type, TInt.One);
+      cg.swap (Target.Integer.cg_type, Target.Integer.cg_type);
+      cg.shift_left (Target.Integer.cg_type);
+      cg.or (Target.Integer.cg_type);
       SPop (2, "Set_single-b");
-      SPush (Type.Int);
+      SPush (Target.Integer.cg_type);
     ELSE
-      cg.set_singleton (AsBytes (s));
+      cg.set_singleton (AsBytes (s), Target.Integer.cg_type);
       SPop (2, "Set_single-b");
     END;
   END Set_singleton;
@@ -2171,129 +2060,129 @@ PROCEDURE Set_singleton (s: Size) =
 PROCEDURE Not () =
   BEGIN
     Force ();
-    cg.not ();
+    cg.not (Target.Integer.cg_type);
     SPop (1, "Not");
-    SPush (Type.Int);
+    SPush (Target.Integer.cg_type);
   END Not;
 
 PROCEDURE And () =
   BEGIN
     EVAL Force_pair (commute := TRUE);
-    cg.and ();
+    cg.and (Target.Integer.cg_type);
     SPop (2, "And");
-    SPush (Type.Int);
+    SPush (Target.Integer.cg_type);
   END And;
 
 PROCEDURE Or () =
   BEGIN
     EVAL Force_pair (commute := TRUE);
-    cg.or ();
+    cg.or (Target.Integer.cg_type);
     SPop (2, "Or");
-    SPush (Type.Int);
+    SPush (Target.Integer.cg_type);
   END Or;
 
 PROCEDURE Xor () =
   BEGIN
     EVAL Force_pair (commute := TRUE);
-    cg.xor ();
+    cg.xor (Target.Integer.cg_type);
     SPop (2, "Xor");
-    SPush (Type.Int);
+    SPush (Target.Integer.cg_type);
   END Xor;
 
 PROCEDURE Shift () =
   BEGIN
     EVAL Force_pair (commute := FALSE);
-    cg.shift ();
+    cg.shift (Target.Integer.cg_type);
     SPop (2, "Shift");
-    SPush (Type.Int);
+    SPush (Target.Integer.cg_type);
   END Shift;
 
 PROCEDURE Shift_left () =
   BEGIN
     EVAL Force_pair (commute := FALSE);
-    cg.shift_left ();
+    cg.shift_left (Target.Integer.cg_type);
     SPop (2, "Shift_left");
-    SPush (Type.Int);
+    SPush (Target.Integer.cg_type);
   END Shift_left;
 
 PROCEDURE Shift_right () =
   BEGIN
     EVAL Force_pair (commute := FALSE);
-    cg.shift_right ();
+    cg.shift_right (Target.Integer.cg_type);
     SPop (2, "Shift_right");
-    SPush (Type.Int);
+    SPush (Target.Integer.cg_type);
   END Shift_right;
 
 PROCEDURE Rotate () =
   BEGIN
     EVAL Force_pair (commute := FALSE);
-    cg.rotate ();
+    cg.rotate (Target.Integer.cg_type);
     SPop (2, "Rotate");
-    SPush (Type.Int);
+    SPush (Target.Integer.cg_type);
   END Rotate;
 
 PROCEDURE Rotate_left () =
   BEGIN
     EVAL Force_pair (commute := FALSE);
-    cg.rotate_left ();
+    cg.rotate_left (Target.Integer.cg_type);
     SPop (2, "Rotate_left");
-    SPush (Type.Int);
+    SPush (Target.Integer.cg_type);
   END Rotate_left;
 
 PROCEDURE Rotate_right () =
   BEGIN
     EVAL Force_pair (commute := FALSE);
-    cg.rotate_right ();
+    cg.rotate_right (Target.Integer.cg_type);
     SPop (2, "Rotate_right");
-    SPush (Type.Int);
+    SPush (Target.Integer.cg_type);
   END Rotate_right;
 
 PROCEDURE Extract (sign: BOOLEAN) =
   BEGIN
     EVAL Force_pair (commute := FALSE);
-    cg.extract (sign);
+    cg.extract (Target.Integer.cg_type, sign);
     SPop (3, "Extract");
-    SPush (Type.Int);
+    SPush (Target.Integer.cg_type);
   END Extract;
 
 PROCEDURE Extract_n (sign: BOOLEAN;  n: INTEGER) =
   BEGIN
     EVAL Force_pair (commute := FALSE);
-    cg.extract_n (sign, n);
+    cg.extract_n (Target.Integer.cg_type, sign, n);
     SPop (2, "Extract_n");
-    SPush (Type.Int);
+    SPush (Target.Integer.cg_type);
   END Extract_n;
 
 PROCEDURE Extract_mn (sign: BOOLEAN;  m, n: INTEGER) =
   BEGIN
     Force ();
-    cg.extract_mn (sign, m, n);
+    cg.extract_mn (Target.Integer.cg_type, sign, m, n);
     SPop (1, "Extract_mn");
-    SPush (Type.Int);
+    SPush (Target.Integer.cg_type);
   END Extract_mn;
 
 PROCEDURE Insert () =
   BEGIN
     EVAL Force_pair (commute := FALSE);
-    cg.insert ();
+    cg.insert (Target.Integer.cg_type);
     SPop (4, "Insert");
-    SPush (Type.Int);
+    SPush (Target.Integer.cg_type);
   END Insert;
 
 PROCEDURE Insert_n (n: INTEGER) =
   BEGIN
     EVAL Force_pair (commute := FALSE);
-    cg.insert_n (n);
+    cg.insert_n (Target.Integer.cg_type, n);
     SPop (3, "Insert_n");
-    SPush (Type.Int);
+    SPush (Target.Integer.cg_type);
   END Insert_n;
 
 PROCEDURE Insert_mn (m, n: INTEGER) =
   BEGIN
     EVAL Force_pair (commute := FALSE);
-    cg.insert_mn (m, n);
+    cg.insert_mn (Target.Integer.cg_type, m, n);
     SPop (2, "Insert_mn");
-    SPush (Type.Int);
+    SPush (Target.Integer.cg_type);
   END Insert_mn;
 
 (*------------------------------------------------ misc. stack/memory ops ---*)
@@ -2344,7 +2233,7 @@ PROCEDURE Copy_n (s: Size;  overlap: BOOLEAN) =
       z := TargetMap.CG_Size [t];
       <*ASSERT z = Target.Byte*>
       Push_int (Target.Byte DIV s);
-      cg.div (Type.Int, Sign.Positive, Sign.Positive);
+      cg.div (Target.Integer.cg_type, Sign.Positive, Sign.Positive);
     ELSE (* s > Target.Byte *)
       IF (s MOD Target.Byte) # 0 THEN ErrI (s, "impossible copy_n size") END;
       t := AlignedType (s, a);
@@ -2352,11 +2241,11 @@ PROCEDURE Copy_n (s: Size;  overlap: BOOLEAN) =
       IF (z < s) THEN
         IF (s MOD z) # 0 THEN ErrI (s, "impossible copy_n size") END;
         Push_int (s DIV z);
-        cg.multiply (Type.Int);
+        cg.multiply (Target.Integer.cg_type);
       END;
     END;
 
-    cg.copy_n (t, overlap);
+    cg.copy_n (Target.Integer.cg_type, t, overlap);
     SPop (3, "Copy_n");
   END Copy_n;
 
@@ -2396,77 +2285,53 @@ PROCEDURE Loophole (from, two: Type) =
 
 (*------------------------------------------------ traps & runtime checks ---*)
 
-PROCEDURE Assert_fault () =
+PROCEDURE Abort (code: RuntimeError) =
   BEGIN
-    EVAL Runtime.LookUpProc (Runtime.Hook.AssertFault);
-    cg.assert_fault ();
-  END Assert_fault;
+    EVAL RunTyme.LookUpProc (RunTyme.Hook.Abort);
+    cg.abort (code);
+  END Abort;
 
-PROCEDURE Narrow_fault () =
+PROCEDURE Check_nil (code: RuntimeError) =
   BEGIN
-    EVAL Runtime.LookUpProc (Runtime.Hook.NarrowFault);
-    cg.narrow_fault ();
-  END Narrow_fault;
-
-PROCEDURE Return_fault () =
-  BEGIN
-    EVAL Runtime.LookUpProc (Runtime.Hook.ReturnFault);
-    cg.return_fault ();
-  END Return_fault;
-
-PROCEDURE Case_fault () =
-  BEGIN
-    EVAL Runtime.LookUpProc (Runtime.Hook.CaseFault);
-    cg.case_fault ();
-  END Case_fault;
-
-PROCEDURE Typecase_fault () =
-  BEGIN
-    EVAL Runtime.LookUpProc (Runtime.Hook.TypecaseFault);
-    cg.typecase_fault ();
-  END Typecase_fault;
-
-PROCEDURE Check_nil () =
-  BEGIN
-    EVAL Runtime.LookUpProc (Runtime.Hook.NilFault);
+    EVAL RunTyme.LookUpProc (RunTyme.Hook.Abort);
     Force ();
-    cg.check_nil ();
+    cg.check_nil (code);
   END Check_nil;
 
-PROCEDURE Check_lo (READONLY i: Target.Int) =
+PROCEDURE Check_lo (READONLY i: Target.Int;  code: RuntimeError) =
   BEGIN
-    EVAL Runtime.LookUpProc (Runtime.Hook.RangeFault);
+    EVAL RunTyme.LookUpProc (RunTyme.Hook.Abort);
     Force ();
-    cg.check_lo (i);
+    cg.check_lo (Target.Integer.cg_type, i, code);
   END Check_lo;
 
-PROCEDURE Check_hi (READONLY i: Target.Int) =
+PROCEDURE Check_hi (READONLY i: Target.Int;  code: RuntimeError) =
   BEGIN
-    EVAL Runtime.LookUpProc (Runtime.Hook.RangeFault);
+    EVAL RunTyme.LookUpProc (RunTyme.Hook.Abort);
     Force ();
-    cg.check_hi (i);
+    cg.check_hi (Target.Integer.cg_type, i, code);
   END Check_hi;
 
-PROCEDURE Check_range (READONLY a, b: Target.Int) =
+PROCEDURE Check_range (READONLY a, b: Target.Int;  code: RuntimeError) =
   BEGIN
-    EVAL Runtime.LookUpProc (Runtime.Hook.RangeFault);
+    EVAL RunTyme.LookUpProc (RunTyme.Hook.Abort);
     Force ();
-    cg.check_range (a, b);
+    cg.check_range (Target.Integer.cg_type, a, b, code);
   END Check_range;
 
-PROCEDURE Check_index () =
+PROCEDURE Check_index (code: RuntimeError) =
   BEGIN
-    EVAL Runtime.LookUpProc (Runtime.Hook.SubscriptFault);
+    EVAL RunTyme.LookUpProc (RunTyme.Hook.Abort);
     EVAL Force_pair (commute := FALSE);
-    cg.check_index ();
+    cg.check_index (Target.Integer.cg_type, code);
     SPop (1, "Check_index");
   END Check_index;
 
-PROCEDURE Check_eq () =
+PROCEDURE Check_eq (code: RuntimeError) =
   BEGIN
-    EVAL Runtime.LookUpProc (Runtime.Hook.ShapeFault);
+    EVAL RunTyme.LookUpProc (RunTyme.Hook.Abort);
     EVAL Force_pair (commute := TRUE);
-    cg.check_eq ();
+    cg.check_eq (Target.Integer.cg_type, code);
     SPop (2, "Check_eq");
   END Check_eq;
 
@@ -2481,18 +2346,19 @@ PROCEDURE Check_byte_aligned () =
       ELSIF (x.bits # NIL) THEN
         extra_bits := x.bits;   extra_is_temp := x.temp_bits;
         x.bits := NIL;          x.temp_bits := FALSE;
-        EVAL Runtime.LookUpProc (Runtime.Hook.ShapeFault);
-        cg.load (extra_bits, 0, Type.Int);
+        EVAL RunTyme.LookUpProc (RunTyme.Hook.Abort);
+        cg.load (extra_bits, 0, Target.Integer.cg_type, Target.Integer.cg_type);
         Push_int (Target.Byte - 1);  (*** Push_int (Target.Byte); ***)
-        cg.and ();  (*** cg.mod (Type.Int, Sign.Unknown, Sign.Positive); ***)
-        cg.load_integer (TInt.Zero);
-        cg.check_eq ();
+        cg.and (Target.Integer.cg_type);
+          (*** cg.mod (Target.Integer.cg_type, Sign.Unknown, Sign.Positive); ***)
+        cg.load_integer (Target.Integer.cg_type, TInt.Zero);
+        cg.check_eq (Target.Integer.cg_type, RuntimeError.UnalignedAddress);
         Boost_alignment (Target.Byte);
         Force ();
-        cg.load (extra_bits, 0, Type.Int);
+        cg.load (extra_bits, 0, Target.Integer.cg_type, Target.Integer.cg_type);
         Push_int (Target.Byte);
-        cg.div (Type.Int, Sign.Unknown, Sign.Positive);
-        cg.index_address (1);
+        cg.div (Target.Integer.cg_type, Sign.Unknown, Sign.Positive);
+        cg.index_address (Target.Integer.cg_type, 1);
         IF (extra_is_temp) THEN Free_temp (extra_bits); END;
       END;
     END;
@@ -2530,7 +2396,7 @@ PROCEDURE Index_bytes (size: INTEGER) =
   VAR align := SLV_align (2);
   BEGIN
     EVAL Force_pair (commute := FALSE);
-    cg.index_address (AsBytes (size));
+    cg.index_address (Target.Integer.cg_type, AsBytes (size));
     SPop (2, "Index_bytes");
     SPush (Type.Addr);
     stack [SCheck (1, "Index_bytes")].align := GCD (align, size);
@@ -2576,14 +2442,15 @@ PROCEDURE Start_call_indirect (t: Type;  cc: CallingConvention) =
     cg.start_call_indirect (t, cc);
   END Start_call_indirect;
 
-PROCEDURE Call_indirect (t: Type;  cc: CallingConvention) =
+PROCEDURE Gen_Call_indirect (t: Type;  cc: CallingConvention) =
   BEGIN
+    IF Host.doProcChk THEN Check_nil (RuntimeError.BadMemoryReference); END;
     Force ();
     cg.call_indirect (t, cc);
     SPop (1, "Call_indirect");
     SEmpty ("Call_indirect");
     PushResult (t);
-  END Call_indirect;
+  END Gen_Call_indirect;
 
 PROCEDURE PushResult (t: Type) =
   BEGIN
@@ -2633,7 +2500,7 @@ PROCEDURE Ref_to_typecode () =
   VAR base: INTEGER;
   BEGIN
     Boost_alignment (Target.Address.align);
-    Load_indirect (Type.Int, -Target.Address.pack, Target.Address.size);
+    Load_indirect (Target.Integer.cg_type, -Target.Address.pack, Target.Address.size);
     Force ();
     IF Target.Little_endian THEN
       base := M3RT.RH_typecode_offset;
@@ -2642,7 +2509,7 @@ PROCEDURE Ref_to_typecode () =
                   - M3RT.RH_typecode_offset
                   - M3RT.RH_typecode_size;
     END;
-    cg.extract_mn (FALSE, base, M3RT.RH_typecode_size);
+    cg.extract_mn (Target.Integer.cg_type, FALSE, base, M3RT.RH_typecode_size);
   END Ref_to_typecode;
 
 (*------------------------------------------------------------ open arrays --*)
@@ -2660,42 +2527,37 @@ PROCEDURE Open_elt_ptr (a: Alignment) =
 PROCEDURE Open_size (n: INTEGER) =
   BEGIN
     Boost_alignment (Target.Address.align);
-    Load_indirect (Type.Int, M3RT.OA_sizes + n * Target.Integer.pack,
+    Load_indirect (Target.Integer.cg_type, M3RT.OA_sizes + n * Target.Integer.pack,
                    Target.Integer.size);
   END Open_size;
 
 (*------------------------------------------- procedure and closure types ---*)
 
 PROCEDURE If_closure (proc: Val;  true, false: Label;  freq: Frequency) =
-  VAR skip := Next_label ();
+  VAR skip := Next_label ();  nope := skip;
   BEGIN
+    IF (false # No_label) THEN  nope := false; END;
     IF NOT Target.Aligned_procedures THEN
       Push (proc);
       Force ();
-      cg.loophole (Type.Addr, Type.Int);
+      cg.loophole (Type.Addr, Target.Integer.cg_type);
       Push_int (3);
-      cg.and ();
-      IF (false # No_label)
-        THEN cg.if_true (false, Always - freq);
-        ELSE cg.if_true (skip,  Always - freq);
-      END;
+      cg.and (Target.Integer.cg_type);
+      cg.if_true (Target.Integer.cg_type, nope, Always - freq);
       SPop (1, "If_closure-unaligned");
     END;
     Push (proc);
     Boost_alignment (Target.Address.align);
     Force ();
     cg.load_nil ();
-    IF (false # No_label)
-      THEN cg.if_eq (false, Type.Addr, Always - freq);
-      ELSE cg.if_eq (skip, Type.Addr, Always - freq);
-    END;
+    cg.if_compare (Type.Addr, Cmp.EQ, nope, Always - freq);
     Push (proc);
     Boost_alignment (Target.Integer.align);
-    Load_indirect (Type.Int, M3RT.CL_marker, Target.Integer.size);
+    Load_indirect (Target.Integer.cg_type, M3RT.CL_marker, Target.Integer.size);
     Push_int (M3RT.CL_marker_value);
     IF (true # No_label)
-      THEN cg.if_eq (true, Type.Int, freq);
-      ELSE cg.if_ne (false, Type.Int, freq);
+      THEN cg.if_compare (Target.Integer.cg_type, Cmp.EQ, true, freq);
+      ELSE cg.if_compare (Target.Integer.cg_type, Cmp.NE, false, freq);
     END;
     Set_label (skip);
     SPop (2, "If_closure");
@@ -2715,12 +2577,12 @@ PROCEDURE Closure_frame () =
 
 (*----------------------------------------------------------------- misc. ---*)
 
-PROCEDURE Comment (o: INTEGER;  a, b, c, d: TEXT := NIL) =
+PROCEDURE Comment (o: INTEGER;  is_const: BOOLEAN;  a, b, c, d: TEXT := NIL) =
   BEGIN
     IF (o < 0) THEN
       cg.comment (a, b, c, d);
     ELSE
-      PushPending (NEW (CommentNode, o := o-1, a:=a, b:=b, c:=c, d:=d));
+      PushPending (NEW (CommentNode, o := o-1, a:=a, b:=b, c:=c, d:=d), is_const);
     END;
   END Comment;
 
@@ -2739,13 +2601,18 @@ PROCEDURE FixAlign (a: Alignment): Alignment =
 
 PROCEDURE AlignedType (s: Size;  a: Alignment): MType =
   BEGIN
-    IF IsAlignedMultiple (s, a, Target.Integer) THEN RETURN Type.Int;   END;
-    IF IsAlignedMultiple (s, a, Target.Int_D)   THEN RETURN Type.Int_D; END;
-    IF IsAlignedMultiple (s, a, Target.Int_C)   THEN RETURN Type.Int_C; END;
-    IF IsAlignedMultiple (s, a, Target.Int_B)   THEN RETURN Type.Int_B; END;
-    IF IsAlignedMultiple (s, a, Target.Int_A)   THEN RETURN Type.Int_A; END;
+    IF IsAlignedMultiple (s, a, Target.Integer) THEN
+      RETURN Target.Integer.cg_type;
+    END;
+    IF (Target.Int64.size <= Target.Integer.size)
+       AND IsAlignedMultiple (s, a, Target.Int64) THEN
+      RETURN Type.Int64;
+    END;
+    IF IsAlignedMultiple (s, a, Target.Int32)   THEN RETURN Type.Int32; END;
+    IF IsAlignedMultiple (s, a, Target.Int16)   THEN RETURN Type.Int16; END;
+    IF IsAlignedMultiple (s, a, Target.Int8)    THEN RETURN Type.Int8;  END;
     Err ("unaligned copy or zero:  s/a=" & Fmt.Int (s) & "/" & Fmt.Int (a));
-    RETURN Type.Int_A;
+    RETURN Target.Integer.cg_type;
   END AlignedType;
 
 PROCEDURE IsAlignedMultiple (s: Size;  a: Alignment;
@@ -2778,7 +2645,7 @@ PROCEDURE Push_int (i: INTEGER) =
   VAR val: Target.Int;  b := TInt.FromInt (i, val);
   BEGIN
     IF NOT b THEN ErrI (i, "integer not representable") END;
-    cg.load_integer (val);
+    cg.load_integer (Target.Integer.cg_type, val);
   END Push_int;
 
 PROCEDURE Force_pair (commute: BOOLEAN): BOOLEAN =
@@ -2847,31 +2714,42 @@ PROCEDURE GCD (a, b: INTEGER): INTEGER =
   END GCD;
 
 PROCEDURE FindIntType (t: Type;  s: Size;  o: Offset;  a: Alignment): MType =
-  VAR j := -1;
+  VAR best_t : Type;
+  BEGIN
+    IF Target.SignedType [t]
+      THEN best_t := ScanTypes (TargetMap.Integer_types, t, s, o, a);
+      ELSE best_t := ScanTypes (TargetMap.Word_types, t, s, o, a);
+    END;
+    IF (best_t = Type.Void) THEN
+      best_t := t;
+      Err ("unable to find integer type?  type=" & Target.TypeNames[t]
+            & "  s/o/a=" & Fmt.Int (s) & "/" & Fmt.Int (o) & "/" & Fmt.Int (a));
+    END;
+    RETURN best_t;
+  END FindIntType;
+
+PROCEDURE ScanTypes (READONLY x: ARRAY [0..3] OF Target.Int_type;
+                     t: Type;  s: Size;  o: Offset;  a: Alignment): MType =
+  VAR
     best_s := TargetMap.CG_Size [t] + 1;
     best_a := TargetMap.CG_Align [t] + 1;
-    size   : Size;
-    align  : Alignment;
+    best_t := Type.Void;
   BEGIN
-    FOR i := FIRST (TargetMap.Int_types) TO LAST (TargetMap.Int_types) DO
-      size  := TargetMap.Int_types[i].size;
-      align := TargetMap.Int_types[i].align;
-      IF (TargetMap.CG_Base [TargetMap.Int_types[i].cg_type] = t)
-        AND (s <= size) AND (size < best_s)
-        AND (align <= best_a)
-        AND (a MOD align = 0)
-        AND (s + (o MOD align) <= size) THEN
-         (* remember this type *)
-        j := i;
-        best_s := size;
-        best_a := align;
+    FOR i := FIRST (x) TO LAST (x) DO
+      WITH z = x[i] DO
+        IF (s <= z.size) AND (z.size < best_s)
+          AND (z.align <= best_a)
+          AND (a MOD z.align = 0)
+          AND (s + (o MOD z.align) <= z.size) THEN
+          (* remember this type *)
+          best_t := z.cg_type;
+          best_s := z.size;
+          best_a := z.align;
+        END;
       END;
     END;
-    IF (j # -1) THEN RETURN TargetMap.Int_types[j].cg_type END;
-    Err ("unable to find integer type?  type="& Fmt.Int (ORD (t))
-          & "  s/o/a=" & Fmt.Int (s) & "/" & Fmt.Int (o) & "/" & Fmt.Int (a));
-    RETURN t;
-  END FindIntType;
+    RETURN best_t;
+  END ScanTypes;
 
 PROCEDURE SPush (t: Type) =
   BEGIN
@@ -2939,11 +2817,10 @@ CONST
   Bool = ARRAY BOOLEAN OF TEXT { "F ", "T "};
 CONST
   TypeName = ARRAY Type OF TEXT {
-    "Addr   ", "Word   ", "Int    ",
+    "Word8  ", "Int8   ", "Word16 ", "Int16  ",
+    "Word32 ", "Int32  ", "Word64 ", "Int64  ",
     "Reel   ", "LReel  ", "XReel  ",
-    "Int_A  ", "Int_B  ", "Int_C  ", "Int_D  ",
-    "Word_A ", "Word_B ", "Word_C ", "Word_D ",
-    "Struct ", "Void   "
+    "Addr   ", "Struct ", "Void   "
   };
 CONST
   VName = ARRAY VKind OF TEXT {

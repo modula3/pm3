@@ -7,8 +7,11 @@ MODULE RuleServer;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:38  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:49  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:38  hosking
+    Import of GRAS3 1.1
 
     Revision 1.2  1997/11/03 12:40:20  roland
     New procedures to check connection to rule server.
@@ -20,7 +23,10 @@ MODULE RuleServer;
 (***************************************************************************)
 
 IMPORT Thread, NetObj;
-IMPORT IntIntTbl, IntTextTbl, TextSeq, IntSeq;
+IMPORT IntIntTransientTbl AS IntIntTbl,
+       IntTextTransientTbl AS IntTextTbl,
+       TextTransientSeq AS TextSeq,
+       IntTransientSeq AS IntSeq;
 IMPORT RuleEngineCallback, RuleEngineServer, IntCallbackTbl, Variant;
 IMPORT Fmt, Journal;
 
@@ -34,7 +40,7 @@ TYPE
       hasDeadClients  : Thread.Condition;
       cleaner         : Thread.T;
       triggerClientMap: IntIntTbl.T;       (* map trigger ids to clients *)
-      triggerList: REF RemoteTrigger;
+      triggerList: RemoteTrigger;
       notifier   : Thread.T;
       eventBuffer: EventBuffer;
       nextClient : CARDINAL;
@@ -234,17 +240,18 @@ PROCEDURE Shutdown () =
 TYPE
   EventBuffer = RECORD
                   notEmpty   : Thread.Condition;
-                  first, last: REF BufferedEvent;
+                  first, last: BufferedEvent;
                 END;
 
-  BufferedEvent = RECORD
+  BufferedEvent = <*TRANSIENT*> REF BufferedEventRec;
+  BufferedEventRec = RECORD
                     client    : CARDINAL;
                     trigger   : CARDINAL;
                     eBools    : IntIntTbl.T;
                     eInts     : IntIntTbl.T;
                     eTexts    : IntTextTbl.T;
                     context   : TextSeq.T;
-                    next, prev: REF BufferedEvent;
+                    next, prev: BufferedEvent;
                   END;
 
 PROCEDURE EventBufferInit (VAR buf: EventBuffer) =
@@ -261,7 +268,7 @@ PROCEDURE EventBufferPut (VAR buf    : EventBuffer;
                               context: TextSeq.T     ) =
   VAR ev := NewBufferedEvent();
   BEGIN
-    ev^ := BufferedEvent{
+    ev^ := BufferedEventRec{
              client, trigger, eBools, eInts, eTexts, context, NIL, NIL};
     (* insert at end of list *)
     IF buf.last = NIL THEN
@@ -287,7 +294,7 @@ PROCEDURE EventBufferGet (VAR buf    : EventBuffer;
                           VAR eInts  : IntIntTbl.T;
                           VAR eTexts : IntTextTbl.T;
                           VAR context: TextSeq.T     ) =
-  VAR ev: REF BufferedEvent;
+  VAR ev: BufferedEvent;
   BEGIN
     ev := buf.first;
     buf.first := ev.next;
@@ -306,7 +313,7 @@ PROCEDURE EventBufferGet (VAR buf    : EventBuffer;
   END EventBufferGet;
 
 PROCEDURE EventBufferDeleteTrigger (VAR buf: EventBuffer; trigger: CARDINAL) =
-  VAR h, d: REF BufferedEvent;
+  VAR h, d: BufferedEvent;
   BEGIN
     (* loop through the list and remove any entries for trigger *)
     h := buf.first;
@@ -331,13 +338,13 @@ PROCEDURE EventBufferDeleteTrigger (VAR buf: EventBuffer; trigger: CARDINAL) =
     END;
   END EventBufferDeleteTrigger;
 
-VAR FreeBufferedEvents: REF BufferedEvent;
+VAR FreeBufferedEvents: BufferedEvent;
 
-PROCEDURE NewBufferedEvent (): REF BufferedEvent =
-  VAR ev: REF BufferedEvent;
+PROCEDURE NewBufferedEvent (): BufferedEvent =
+  VAR ev: BufferedEvent;
   BEGIN
     IF FreeBufferedEvents = NIL THEN
-      RETURN NEW(REF BufferedEvent);
+      RETURN NEW(BufferedEvent);
     ELSE
       ev := FreeBufferedEvents;
       FreeBufferedEvents := ev.next;
@@ -345,9 +352,9 @@ PROCEDURE NewBufferedEvent (): REF BufferedEvent =
     END;
   END NewBufferedEvent;
 
-PROCEDURE DisposeBufferedEvent (ev: REF BufferedEvent) =
+PROCEDURE DisposeBufferedEvent (ev: BufferedEvent) =
   BEGIN
-    ev^ := BufferedEvent{0, 0, NIL, NIL, NIL, NIL, NIL, NIL};
+    ev^ := BufferedEventRec{0, 0, NIL, NIL, NIL, NIL, NIL, NIL};
     ev.next := FreeBufferedEvents;
     FreeBufferedEvents := ev;
   END DisposeBufferedEvent;
@@ -356,18 +363,19 @@ PROCEDURE DisposeBufferedEvent (ev: REF BufferedEvent) =
 (* Remote trigger list implementation *)
 
 TYPE
-  RemoteTrigger = RECORD
+  RemoteTrigger = <*TRANSIENT*> REF RemoteTriggerRec;
+  RemoteTriggerRec = RECORD
                     trigger, client   : CARDINAL;
-                    type              : TEXT;
+                    <*TRANSIENT*> type: TEXT;
                     bools, ints       : IntIntTbl.T;
                     texts             : IntTextTbl.T;
                     coupling, priority: CARDINAL;
                     inh, perm         : TextSeq.T;
-                    next, prev        : REF RemoteTrigger;
+                    next, prev        : RemoteTrigger;
                   END;
 
 
-PROCEDURE RemoteTriggerListInsert (VAR list           : REF RemoteTrigger;
+PROCEDURE RemoteTriggerListInsert (VAR list           : RemoteTrigger;
                                        trigger, client: CARDINAL;
                                        pType          : TEXT;
                                        pBools, pInts  : IntIntTbl.T;
@@ -377,18 +385,18 @@ PROCEDURE RemoteTriggerListInsert (VAR list           : REF RemoteTrigger;
   VAR rt := NewRemoteTrigger();
   BEGIN
     rt^ :=
-      RemoteTrigger{trigger := trigger, client := client, type := pType,
-                    bools := pBools, ints := pInts, texts := pTexts,
-                    coupling := coupling, priority := priority, inh := inh,
-                    perm := perm, next := NIL, prev := NIL};
+      RemoteTriggerRec{trigger := trigger, client := client, type := pType,
+                       bools := pBools, ints := pInts, texts := pTexts,
+                       coupling := coupling, priority := priority, inh := inh,
+                       perm := perm, next := NIL, prev := NIL};
     rt.next := list;
     IF list # NIL THEN list.prev := rt; END;
     list := rt;
   END RemoteTriggerListInsert;
 
-PROCEDURE RemoteTriggerListRemove (VAR list: REF RemoteTrigger;
+PROCEDURE RemoteTriggerListRemove (VAR list: RemoteTrigger;
                                        id  : CARDINAL           ) =
-  VAR h: REF RemoteTrigger;
+  VAR h: RemoteTrigger;
   BEGIN
     h := list;
     WHILE h # NIL AND h.trigger # id DO h := h.next END;
@@ -399,9 +407,9 @@ PROCEDURE RemoteTriggerListRemove (VAR list: REF RemoteTrigger;
     END;
   END RemoteTriggerListRemove;
 
-PROCEDURE RemoteTriggerListDeleteClient (VAR list  : REF RemoteTrigger;
+PROCEDURE RemoteTriggerListDeleteClient (VAR list  : RemoteTrigger;
                                              client: CARDINAL           ) =
-  VAR h, d: REF RemoteTrigger;
+  VAR h, d: RemoteTrigger;
   BEGIN
     h := list;
     WHILE h # NIL DO
@@ -421,9 +429,9 @@ PROCEDURE RemoteTriggerListDeleteClient (VAR list  : REF RemoteTrigger;
     END;
   END RemoteTriggerListDeleteClient;
 
-PROCEDURE RemoteTriggerListLast (list: REF RemoteTrigger):
-  REF RemoteTrigger =
-  VAR h: REF RemoteTrigger;
+PROCEDURE RemoteTriggerListLast (list: RemoteTrigger):
+  RemoteTrigger =
+  VAR h: RemoteTrigger;
   BEGIN
     IF list = NIL THEN RETURN NIL END;
     h := list;
@@ -431,19 +439,19 @@ PROCEDURE RemoteTriggerListLast (list: REF RemoteTrigger):
     RETURN h;
   END RemoteTriggerListLast;
 
-PROCEDURE RemoteTriggerListPrev (elem: REF RemoteTrigger):
-  REF RemoteTrigger =
+PROCEDURE RemoteTriggerListPrev (elem: RemoteTrigger):
+  RemoteTrigger =
   BEGIN
     RETURN elem.prev;
   END RemoteTriggerListPrev;
 
-VAR FreeRemoteTriggers: REF RemoteTrigger;
+VAR FreeRemoteTriggers: RemoteTrigger;
 
-PROCEDURE NewRemoteTrigger (): REF RemoteTrigger =
-  VAR rt: REF RemoteTrigger;
+PROCEDURE NewRemoteTrigger (): RemoteTrigger =
+  VAR rt: RemoteTrigger;
   BEGIN
     IF FreeRemoteTriggers = NIL THEN
-      RETURN NEW(REF RemoteTrigger);
+      RETURN NEW(RemoteTrigger);
     ELSE
       rt := FreeRemoteTriggers;
       FreeRemoteTriggers := rt.next;
@@ -451,10 +459,10 @@ PROCEDURE NewRemoteTrigger (): REF RemoteTrigger =
     END;
   END NewRemoteTrigger;
 
-PROCEDURE DisposeRemoteTrigger (rt: REF RemoteTrigger) =
+PROCEDURE DisposeRemoteTrigger (rt: RemoteTrigger) =
   BEGIN
     rt^ :=
-      RemoteTrigger{0, 0, NIL, NIL, NIL, NIL, 0, 0, NIL, NIL, NIL, NIL};
+      RemoteTriggerRec{0, 0, NIL, NIL, NIL, NIL, 0, 0, NIL, NIL, NIL, NIL};
     rt.next := FreeRemoteTriggers;
     FreeRemoteTriggers := rt;
   END DisposeRemoteTrigger;
@@ -573,7 +581,7 @@ PROCEDURE BroadcastRemoveTrigger (server: Server; trigger, client: CARDINAL) =
 
 PROCEDURE PropagateTriggers (server: Server; client: CARDINAL) =
   VAR
-    rt: REF RemoteTrigger;
+    rt: RemoteTrigger;
     cb: RuleEngineCallback.T;
   BEGIN
     IF server.clients.get(client, cb) THEN
@@ -600,7 +608,7 @@ PROCEDURE InternUnregisterClient (server: Server; client: CARDINAL) =
   VAR
     cb              : RuleEngineCallback.T;
     oc              : INTEGER;
-    triggers        : IntSeq.T             := NEW(IntSeq.T).init();
+    triggers        : IntSeq.T := NEW(IntSeq.T).init();
     trig, trigClient: INTEGER;
   BEGIN
     IF server.clients.delete(client, cb) THEN

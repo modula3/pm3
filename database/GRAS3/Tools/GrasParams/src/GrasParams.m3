@@ -7,8 +7,11 @@ MODULE GrasParams;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:41  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:51  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:41  hosking
+    Import of GRAS3 1.1
 
     Revision 1.4  1997/06/20 14:33:59  roland
     Bugfix: ServerId-Parameter must be assigned to serverid.
@@ -88,7 +91,7 @@ PROCEDURE ParseComandLine (VAR root      : TEXT;
     EXCEPT
       ParseParams.Error =>
         ParseError(
-          "Parameter '" & graskey[Param.RootPath] & "' requieres an argument.");
+          "Parameter '" & graskey[Param.RootPath] & "' requires an argument.");
     END;
     IF root # NIL THEN
       rootValid := TRUE;
@@ -114,7 +117,7 @@ PROCEDURE ParseComandLine (VAR root      : TEXT;
     EXCEPT
       ParseParams.Error =>
         ParseError("Parameter '" & graskey[Param.CacheSize]
-                     & "' requieres a numeric argument.");
+                     & "' requires a numeric argument.");
     END;
 
     TRY
@@ -125,7 +128,7 @@ PROCEDURE ParseComandLine (VAR root      : TEXT;
     EXCEPT
       ParseParams.Error =>
         ParseError("Parameter '" & graskey[Param.ServerId]
-                     & "' requieres an argument.");
+                     & "' requires an argument.");
     END;
 
     TRY
@@ -136,7 +139,7 @@ PROCEDURE ParseComandLine (VAR root      : TEXT;
     EXCEPT
       ParseParams.Error =>
         ParseError("Parameter '" & graskey[Param.NameServer]
-                     & "' requieres an argument.");
+                     & "' requires an argument.");
     END;
   END ParseComandLine;
 

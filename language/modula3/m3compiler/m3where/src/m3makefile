@@ -7,8 +7,8 @@
 import ("libm3")
 import ("m3quake")
 import ("tempfiles")
-import ("m3templates")
-import ("m3config")
+import ("libcm3")
+import ("m3doc")
 
 implementation ("Main")
 

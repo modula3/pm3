@@ -2,8 +2,8 @@
 (* All rights reserved.                                        *)
 (* See the file COPYRIGHT for a full description.              *)
 (*                                                             *)
-(* Last modified on Tue Dec 20 13:52:29 PST 1994 by kalsow     *)
-(*      modified on Tue Jun  1 13:27:55 PDT 1993 by muller     *)
+(* Portions Copyright 1996-2000, Critical Mass, Inc.           *)
+(* See file COPYRIGHT-CMASS for details.                       *)
 
 (*  Modula-3 code generator interface
 
@@ -39,21 +39,35 @@ TYPE T <: ROOT; (* a code generator *)
 
 TYPE
   Type = Target.CGType;
-  MType = [ Type.Addr .. Type.Word_D ];  (* "memory" types *)
-  IType = [ Type.Word .. Type.Int ];     (* "integer" types *)
-  RType = [ Type.Reel .. Type.XReel ];   (* "real" types *)
-  AType = [ Type.Word .. Type.XReel ];   (* "arithmetic" types *)
-  ZType = [ Type.Addr .. Type.XReel ];   (* "operator" types *)
+  MType = [ Type.Word8  .. Type.Addr  ];  (* "memory" types *)
+  ZType = [ Type.Word32 .. Type.Addr  ];  (* "operator" types *)
+  AType = [ Type.Word32 .. Type.XReel ];  (* "arithmetic" types *)
+  IType = [ Type.Word32 .. Type.Int64 ];  (* "integer" operator types *)
+  RType = [ Type.Reel   .. Type.XReel ];  (* "real" types *)
   (* The code generator manipulates scalar values of the types
      listed above.  The notation "sN.B" denotes the stack value
      that is "N" elements from the top of stack and has the type
      whose first letter is "B".  Only loads and stores manipulate
-     MTypes, when loaded values are sign or zero extended as necessary
-     to produce ZTypes.  *)
+     MTypes, when loaded values are sign-extended or zero-extended
+     as necessary to produce ZTypes.  *)
 
 TYPE
   Sign = { Positive, Negative, Unknown };
   (* extra compile-time information for DIV and MOD *)
+
+TYPE
+  CompareOp = { EQ, NE, GT, GE, LT, LE };
+  ConvertOp = { Round, Trunc, Floor, Ceiling };
+
+CONST (*  A op B  ===  B SwappedCompare[op] A  *)
+  SwappedCompare = ARRAY CompareOp OF CompareOp {
+                     CompareOp.EQ, CompareOp.NE, CompareOp.LT,
+                     CompareOp.LE, CompareOp.GT, CompareOp.GE };
+
+CONST (*  A op B  ===  NOT (A NotCompare[op] B)  *)
+  NotCompare = ARRAY CompareOp OF CompareOp {
+                     CompareOp.NE, CompareOp.EQ, CompareOp.LE,
+                     CompareOp.LT, CompareOp.GE, CompareOp.GT };
 
 TYPE
   Name = M3ID.T;
@@ -93,6 +107,42 @@ CONST
 
 TYPE
   CallingConvention = Target.CallingConvention;
+
+TYPE
+  RuntimeError = {
+    AssertFailed,           (* <*ASSERT*> condition was FALSE. *)
+    ValueOutOfRange,        (* An enumeration or subrange value was out of range. *)
+    SubscriptOutOfRange,    (* An array subscript was out of range. *)
+    IncompatibleArrayShape, (* open array had the wrong shape *)
+    BadMemoryReference,     (* attempted to reference a bad location in memory. *)
+    NarrowFailed,           (* An explicit or implicit NARROW() operation failed. *)
+    NoReturnValue,          (* A function failed to return a value. *)
+    UnhandledCase,          (* no handler for the current CASE value. *)
+    UnhandledTypecase,      (* no handler for the given type in a TYPECASE stmt. *)
+    StackOverflow,          (* A thread stack overflowed *)
+    OutOfMemory,            (* NEW() was unable to allocate more memory. *)
+    UnalignedAddress,       (* attempted to get the address of an unaligned value *)
+    UnhandledException,     (* An exception was raised, but not handled. *)
+    BlockedException,       (* An exception was blocked by a RAISES clause. *)
+    IntegerOverflow,        (* integer result too large to represent *)
+    IntegerDivideByZero,    (* Attempt to DIV or MOD by zero. *)
+    FloatDivideByZero,      (* Attempted floating-point division by zero. *)
+    FloatOverflow,          (* floating-point result too large to represent *)
+    FloatUnderflow,         (* floating-point result too small to represent *)
+    FloatInexact,           (* floating-point result is inexact *)
+    FloatInvalid,           (* invalid floating-point argument *)
+    DuplicateBrand,         (* two types with the same brand exist *)
+    MissingType,            (* a compile-time type is missing at link time *)
+    SupertypeCycle,         (* supertypes of an object form a cycle *)
+    OpaqueTypeRedefined,    (* multiple full revelations of an opaque type *)
+    InconsistentRevelation, (* partial revelations don't match type declarations *)
+    UndefinedMethod,        (* a NIL-valued method was invoked *)
+    PrivilegedInstruction,  (* a privileged machine instruction was attempted *)
+    SystemError,            (* a low-level OS or machine error occurred *)
+    Unknown
+  };
+  (* NOTE: This enumeration must be kept in synch with the version
+     of RuntimeError.T used by the runtime system. *)
 
 END M3CG.
 

@@ -7,8 +7,11 @@ MODULE RemoteActivatedActions;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:40  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:50  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:40  hosking
+    Import of GRAS3 1.1
 
     Revision 1.1  1997/10/31 14:05:05  roland
     The RuleEngine subsystem implements an event-trigger mechanism for GRAS.
@@ -30,7 +33,7 @@ PROCEDURE Store (event   : Event.T;
                  context : ContextSet.T;
                  priority: CARDINAL;
                  act     : Action.T;
-                 userdata: REFANY        ) =
+                 userdata: <*TRANSIENT*> REFANY        ) =
   VAR aact: RemoteActiveAction.T;
   BEGIN
     LOCK Access DO
@@ -48,7 +51,7 @@ PROCEDURE Store (event   : Event.T;
 PROCEDURE Get (VAR event   : Event.T;
                VAR context : ContextSet.T;
                VAR act     : Action.T;
-               VAR userdata: REFANY        ): BOOLEAN =
+               VAR userdata: <*TRANSIENT*> REFANY        ): BOOLEAN =
   VAR action: RemoteActiveAction.T;
   BEGIN
     LOCK Access DO

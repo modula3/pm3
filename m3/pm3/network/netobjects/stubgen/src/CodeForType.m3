@@ -9,10 +9,11 @@
 
 MODULE CodeForType;
 
-IMPORT Atom, Fmt, Formatter, AtomRefTbl, StubCode, StubUtils,
-       Text, Type, Value, ValueProc, Wr;
+IMPORT Atom, Fmt, Formatter, AtomRefTransientTbl AS AtomRefTbl, StubCode,
+       StubUtils, Text, Type, Value, ValueProc, Wr;
 
-<* FATAL Wr.Failure, StubUtils.Error  *>
+<* FATAL Wr.Failure  *>
+
 PROCEDURE ToText(t: Type.T; byName: BOOLEAN := TRUE): Text.T =
   VAR text: Text.T;
   BEGIN
@@ -20,6 +21,7 @@ PROCEDURE ToText(t: Type.T; byName: BOOLEAN := TRUE): Text.T =
     IF t.name # NIL AND byName THEN RETURN QidToText(t.name); END;
     TYPECASE t OF 
       | Type.Char => RETURN "CHAR"
+      | Type.WideChar => RETURN "WIDECHAR"
       | Type.UserDefined (ud) => 
           IF NUMBER(ud.elts^) = 0 THEN text := "";
           ELSE 
@@ -31,7 +33,7 @@ PROCEDURE ToText(t: Type.T; byName: BOOLEAN := TRUE): Text.T =
           RETURN "{" & text & "}";
       | Type.Enumeration (enum) =>
           IF enum = Type.boolean THEN RETURN "BOOLEAN"; END;
-           RAISE StubUtils.Error("Run time error -- shouldn't occur");
+          StubUtils.Die("CodeForType.ToText: unsupported enumeration type");
       | Type.Subrange (sub) => 
           VAR min, max: INTEGER;
               ud: Type.UserDefined;
@@ -69,15 +71,17 @@ PROCEDURE ToText(t: Type.T; byName: BOOLEAN := TRUE): Text.T =
             END;
             TYPECASE ref OF
             | Type.Object(o) => 
-              RETURN ToText(o.super) & " " & text & "OBJECT\n" &
-                   FieldsToText(o.fields) &
-                  "\nMETHODS\n" & MethodsToText(o.methods) & "\nEND";
+              RETURN ToText(o.super) & " " & text & "OBJECT" & Wr.EOL &
+                     FieldsToText(o.fields) & Wr.EOL
+                  & "METHODS" & Wr.EOL
+                  & MethodsToText(o.methods) & Wr.EOL
+                  & "END";
             | Type.Ref (r) => 
               IF NOT r.traced THEN text := "UNTRACED " & text END;
               RETURN text & "REF " & ToText(r.target, TRUE);
-            ELSE RAISE StubUtils.Error("Run time error -- shouldn't occur");
+            ELSE StubUtils.Die("CodeForType.ToText: unsupported reference type");
             END;
-          ELSE RAISE StubUtils.Error("Run time error -- shouldn't occur");
+          ELSE StubUtils.Die("CodeForType.ToText: unsupported reference type");
           END;
       | Type.Array (arr) =>
           IF arr.index = NIL THEN
@@ -94,8 +98,10 @@ PROCEDURE ToText(t: Type.T; byName: BOOLEAN := TRUE): Text.T =
           RETURN "SET OF " & ToText(set.range);
       | Type.Procedure  =>
           RETURN "PROCEDURE" (* & SigToText(proc.sig);*)
-      ELSE RAISE StubUtils.Error("Run time error -- shouldn't occur");
+      ELSE StubUtils.Die("CodeForType.ToText: unsupported type");
     END;
+
+    RETURN NIL;
   END ToText;
 
 PROCEDURE QidToText(qid: Type.Qid): TEXT = 
@@ -170,7 +176,7 @@ PROCEDURE MethodsToText(m: REF ARRAY OF Type.Method): TEXT =
       text := "";
   BEGIN
     FOR i := 0 TO LAST(m^) DO
-      IF notFirst THEN text := text & ";\n"; END;
+      IF notFirst THEN text := text & ";" & Wr.EOL; END;
       notFirst := TRUE;
       text := text & Atom.ToText(m[i].name) (*& SigToText(m[i].sig);*);
       IF m[i].default # NIL THEN
@@ -224,7 +230,7 @@ PROCEDURE ImportRevelations(t: Type.Reference; importTbl: AtomRefTbl.T) =
                 EVAL importTbl.put(o.revIntf, NIL);
               END;
               o := o.super;
-            ELSE RAISE StubUtils.Error("Run time error -- shouldn't occur");
+            ELSE StubUtils.Die("CodeForType.ImportRevelations: unsupported object supertype");
             END;
           END;
         END;
@@ -292,7 +298,7 @@ PROCEDURE ImportFromType(t: Type.T; importTbl: AtomRefTbl.T;
     | Type.Record (rec) => ImportFromFields(rec.fields, importTbl);        
     | Type.Set (s) => ImportFromType(s.range, importTbl);
     | Type.Procedure (p) => ImportFromSig(p.sig, importTbl);
-    ELSE RAISE StubUtils.Error("Run time error -- shouldn't occur");
+    ELSE StubUtils.Die("CodeForType.ImportFromType: unsupported type");
     END;
   END ImportFromType;
 
@@ -344,7 +350,7 @@ PROCEDURE ImportRefsFromType(t: Type.T; importTbl: AtomRefTbl.T) =
         FOR i := 0 TO LAST(rec.fields^) DO
           ImportRefsFromType(rec.fields[i].type, importTbl);
         END;
-    ELSE RAISE StubUtils.Error("Run time error -- shouldn't occur");
+    ELSE StubUtils.Die("CodeForType.ImportRefsFromType: unsupported type");
     END;
   END ImportRefsFromType;
 
@@ -384,7 +390,7 @@ PROCEDURE AddModuleImports(importTbl: AtomRefTbl.T;
 PROCEDURE ProduceImports(fmtWr: Formatter.T; 
                          <* UNUSED *>objName: Type.Qid; 
                          imports: AtomRefTbl.T) =
-  VAR key: Atom.T; value: REFANY;
+  VAR key: Atom.T; value: <*TRANSIENT*> REFANY;
     iter := imports.iterate();
     firstTime := TRUE;
   BEGIN

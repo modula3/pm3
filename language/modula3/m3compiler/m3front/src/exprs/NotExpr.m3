@@ -63,7 +63,7 @@ PROCEDURE Compile (p: P) =
   BEGIN
     Expr.Compile (p.a);
     CG.Load_integer (TInt.Zero);
-    CG.Eq (CG.Type.Int);
+    CG.Compare (Target.Integer.cg_type, CG.Cmp.EQ);
   END Compile;
 
 PROCEDURE PrepBR (p: P;  true, false: CG.Label;  freq: CG.Frequency) =

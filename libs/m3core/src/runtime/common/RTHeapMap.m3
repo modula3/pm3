@@ -8,6 +8,7 @@
 UNSAFE MODULE RTHeapMap;
 
 IMPORT RT0, RTType, RTHeapRep, RTModule, RTMapOp, RTIO;
+IMPORT RTParams;
 
 VAR DEBUG := FALSE;
 
@@ -49,10 +50,15 @@ PROCEDURE WalkRef (h: ObjectPtr;  v: Visitor) =
   END WalkRef;
 
 PROCEDURE DoWalkRef (t: RT0.TypeDefn;  a: ADDRESS;  v: Visitor) =
+  TYPE TK = RT0.TypeKind;
   BEGIN
-    IF (t.parent # NIL) THEN
-      DoWalkRef (t.parent, a, v);
-      INC (a, t.dataOffset);
+    IF (t.kind = ORD (TK.Obj)) THEN
+      VAR tt := LOOPHOLE (t, RT0.ObjectTypeDefn); BEGIN
+        IF (tt.parent # NIL) THEN
+          DoWalkRef (tt.parent, a, v);
+          INC (a, tt.dataOffset);
+        END;
+      END;
     END;
     Walk (a, t.gc_map, v);
   END DoWalkRef;
@@ -184,7 +190,7 @@ PROCEDURE Walk (x, pc: ADDRESS;  v: Visitor) =
             x := elts;
           END;
             
-      | Op.Ref =>
+      | Op.Ref, Op.TransientRef =>
           v.apply (x);
           INC (x, ADRSIZE (ADDRESS));
 
@@ -227,5 +233,6 @@ PROCEDURE Walk (x, pc: ADDRESS;  v: Visitor) =
   END Walk;
 
 BEGIN
+  IF RTParams.IsPresent("debugmaps") THEN DEBUG := TRUE; END;
 END RTHeapMap.
 

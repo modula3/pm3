@@ -8,8 +8,11 @@ MODULE PersistentGraphPool
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:32  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:46  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:32  hosking
+    Import of GRAS3 1.1
 
     Revision 1.9  1998/05/19 10:20:39  roland
     Bugfixes for local graphs and pretty-printing.
@@ -55,13 +58,12 @@ MODULE PersistentGraphPool
 *)
 (***************************************************************************)
 
-IMPORT PersistentNames, Names, Access, PageFile;
+IMPORT PersistentNames, Names, Access, PageFile, PageData;
 IMPORT ExtConnectorStorage, TextCursorSet;
 IMPORT ClientInfoSeq, Database, ErrorSupport;
 IMPORT VirtualResource AS Super;
 IMPORT Pathname, Fmt, TextSeq, Text;
-IMPORT Transaction, VirtualPage, VirtualFile, VirtualRemoteFile,
-       VirtualLocalFile;
+IMPORT Txn, VirtualPage, VirtualFile, VirtualRemoteFile, VirtualLocalFile;
 
 REVEAL
   T = Internal BRANDED OBJECT
@@ -915,6 +917,7 @@ PROCEDURE CopyGraph (sourcePool : T;
       sourceFile, targetFile: VirtualFile.T;
       sourcePage, targetPage: VirtualPage.T;
       size                  : CARDINAL;
+      data                  : PageData.T;
     BEGIN
       TRY
         size := Super.T.fileSize(source, sourceName, sourcelocal);
@@ -977,7 +980,8 @@ PROCEDURE CopyGraph (sourcePool : T;
           BeginTransaction();
           sourcePage := sourceFile.getPage(i - 1);
           targetPage := targetFile.getPage(i - 1);
-          targetPage.putAll(sourcePage.getAll());
+          sourcePage.getAll(data);
+          targetPage.putAll(data);
           CommitTransaction();
         END;
         sourceFile.close();
@@ -1009,10 +1013,8 @@ PROCEDURE CopyGraph (sourcePool : T;
 
   BEGIN
     TRY
-      IF Super.T.getTransactionLevel(sourcePool)
-           > Transaction.EnvelopeLevel
-           OR Super.T.getTransactionLevel(targetPool)
-                > Transaction.EnvelopeLevel THEN
+      IF Super.T.getTransactionLevel(sourcePool) > Txn.EnvelopeLevel
+           OR Super.T.getTransactionLevel(targetPool) > Txn.EnvelopeLevel THEN
         RAISE InTransaction;
       END;
       BeginTransaction();

@@ -38,10 +38,7 @@ readonly proc zume(x) is
   end
 
   if defined("_all") and any_stale
-    local cmd = [ _ZUME_EXEC, path_of(x) ]
-    write(cmd, CR)
-    local ret = exec(cmd)
-    if not equal(ret, 0) error("command failed with error code: ", ret) end
+    exec(_ZUME_EXEC, path_of(x))
   end
 
   foreach r in _ZUME_FV_FILES
@@ -69,10 +66,7 @@ readonly proc zume3D(x) is
   end
 
   if defined("_all") and any_stale
-    local cmd = [ _ZUME_EXEC, "-3D", path_of(x) ]
-    write(cmd, CR)
-    local ret = exec(cmd)
-    if not equal(ret, 0) error("command failed with error code: ", ret) end
+    exec(_ZUME_EXEC, "-3D", path_of(x))
   end
 
   foreach r in _ZUME_FV_FILES
@@ -103,10 +97,7 @@ readonly proc oblume(x, obl) is
   end
 
   if defined ("_all") and any_stale
-    local cmd = [ _ZUME_EXEC, "-Obliq", path_of(obl), path_of(x) ]
-    write(cmd, CR)
-    local ret = exec(cmd)
-    if not equal(ret, 0) error("command failed with error code: ", ret) end
+    exec(_ZUME_EXEC, "-Obliq", path_of(obl), path_of(x))
   end
 
   resource(obl & ".obl")
@@ -135,10 +126,7 @@ readonly proc oblume3D(x, obl) is
   end
 
   if defined ("_all") and any_stale
-    local cmd = [ _ZUME_EXEC, "-Obliq3D", path_of(obl), path_of(x) ]
-    write(cmd, CR)
-    local ret = exec(cmd)
-    if not equal(ret, 0) error("command failed with error code: ", ret) end
+    exec(_ZUME_EXEC, "-Obliq3D", path_of(obl), path_of(x))
   end
 
   resource(obl & ".obl")
@@ -163,10 +151,7 @@ readonly proc junozume(x, viewName) is
   end
 
   if defined ("_all") and any_stale
-    local cmd = [ _ZUME_EXEC, "-Juno", viewName, path_of(x) ]
-    write(cmd, CR)
-    local ret = exec(cmd)
-    if not equal(ret, 0) error("command failed with error code: ", ret) end
+    exec(_ZUME_EXEC, "-Juno", viewName, path_of(x))
   end
 end
 

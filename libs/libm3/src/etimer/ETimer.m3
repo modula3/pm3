@@ -125,7 +125,9 @@ PROCEDURE Dump (wr: Wr.T) =
        cause a deadlock... *)
 
     (* write the report *)
-    Wr.PutText (wr, "\n seconds  #times  operation\n");
+    Wr.PutText (wr, Wr.EOL);
+    Wr.PutText (wr, " seconds  #times  operation");
+    Wr.PutText (wr, Wr.EOL);
     WHILE (t # NIL) DO
       IF (t.cnt > 0) AND (t.time >= MinPrintable) THEN
         Wr.PutText (wr, FmtTime (t.time));
@@ -135,14 +137,17 @@ PROCEDURE Dump (wr: Wr.T) =
         END;
         Wr.PutText (wr, "  ");
         IF (t.tag # NIL) THEN Wr.PutText (wr, t.tag); END;
-        Wr.PutText (wr, "\n");
+        Wr.PutText (wr, Wr.EOL);
       END;
       total := total + t.time;
       t := t.next;
     END;
-    Wr.PutText (wr, "---------------------------------------------------\n");
+    Wr.PutText (wr, "---------------------------------------------------");
+    Wr.PutText (wr, Wr.EOL);
     Wr.PutText (wr, FmtTime (total));
-    Wr.PutText (wr, "          TOTAL\n\n");
+    Wr.PutText (wr, "          TOTAL");
+    Wr.PutText (wr, Wr.EOL);
+    Wr.PutText (wr, Wr.EOL);
   END Dump;
 
 PROCEDURE FmtTime (t: Time.T): TEXT =

@@ -7,8 +7,11 @@ INTERFACE VirtualResource;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:37  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:48  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:37  hosking
+    Import of GRAS3 1.1
 
     Revision 1.15  1998/03/18 12:13:35  kluck
     Further adaptions referring to local parameter because of RGRAS
@@ -92,14 +95,15 @@ INTERFACE VirtualResource;
 (*
  | --- VirtualResource ----------------------------------------------------
  *)
-IMPORT Pathname, TextSeq, PageFile, Access, Transaction, ClientInfoSeq;
+IMPORT Pathname, TextTransientSeq AS TextSeq,
+       PageFile, Access, Txn, ClientInfoSeq;
 IMPORT AtomList;
 
 TYPE
   T <: Public;
 
   Public =
-    OBJECT
+    <*TRANSIENT*> ROOT OBJECT
     METHODS
       (* resource administration *)
       open (baseName: Pathname.T; access: Access.Mode; new: BOOLEAN): T
@@ -111,8 +115,9 @@ TYPE
       (* other support *)
       beginTransaction    () RAISES {FatalError};
       commitTransaction   () RAISES {FatalError, NotInTransaction};
+      chainTransaction    () RAISES {FatalError, NotInTransaction};
       abortTransaction    () RAISES {FatalError, NotInTransaction};
-      getTransactionLevel (): Transaction.Level;
+      getTransactionLevel (): Txn.Level;
 
       getAccessMode (): Access.Mode;
       getBaseName   (): Pathname.T;

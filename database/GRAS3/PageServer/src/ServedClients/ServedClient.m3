@@ -8,8 +8,11 @@ EXPORTS ServedClient, InternalServedClient;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:38  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:49  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:38  hosking
+    Import of GRAS3 1.1
 
     Revision 1.8  1996/11/21 07:55:14  roland
     New resources getResourceUser, getFileUser, and getGraphUser
@@ -58,21 +61,25 @@ EXPORTS ServedClient, InternalServedClient;
 IMPORT
   Word, Text,
   Fmt, Pathname,
-  CallbackPort, CommunicationSeq, ClientInfo;
+  CallbackPort, CommunicationSeq, ClientInfo, CommunicationTbl;
 
 
 REVEAL
   T				= Internal BRANDED OBJECT
+      <*TRANSIENT*>
       id			:TEXT;
       info			:ClientInfo.T;
+      <*TRANSIENT*>
       resourceName		:TEXT;
       callbackPort		:CallbackPort.T;
       xLockCount		:INTEGER;
       killed			:BOOLEAN;
+      <*TRANSIENT*>
       killReason		:TEXT;
       transactionActive		:BOOLEAN;
       transactionNumber		:CARDINAL;
       propagationData		:CommunicationSeq.T;
+      chainData			:CommunicationTbl.Default;
 
     OVERRIDES
       init			:= Init;
@@ -96,6 +103,9 @@ REVEAL
 
       getPropagationData	:= GetPropagationData;
       clearPropagationData	:= ClearPropagationData;
+
+      getChainData		:= GetChainData;
+      clearChainData		:= ClearChainData
     END;
 
 
@@ -121,6 +131,7 @@ PROCEDURE Init			(         self		:T;
     self.killReason := "Unkown";
     self.transactionActive := FALSE;
     self.propagationData := NEW (CommunicationSeq.T).init ();
+    self.chainData := NEW(CommunicationTbl.Default).init();
 
     RETURN self;
   END Init;
@@ -230,6 +241,19 @@ PROCEDURE ClearPropagationData	(         self		:T) =
   BEGIN
     self.propagationData := NEW (CommunicationSeq.T).init ();
   END ClearPropagationData;
+
+
+PROCEDURE GetChainData		(         self		:T)
+				:CommunicationTbl.T =
+  BEGIN
+    RETURN self.chainData;
+  END GetChainData; 
+
+
+PROCEDURE ClearChainData	(         self		:T) =
+  BEGIN
+    EVAL self.chainData.init();
+  END ClearChainData;
 
 
 PROCEDURE Equal			(         t1, t2	:T) :BOOLEAN =

@@ -1,39 +1,39 @@
 import			("set")
 
 % *** common stuff ***
-mkSet			("ServedClient", "ServedClient")
-table			("ServedClientRef", "ServedClient", "Refany")
-mkSetDef		("ServedClient", "ServedClient")
+mkTransientSet		("ServedClient", "ServedClient")
+transientTable		("ServedClientRefTransient", "ServedClient", "RefanyTransient")
+mkTransientSetDef	("ServedClient", "ServedClient")
 
 % *** server lock entry ***
 module			("ServerLockEntry")
 
 % *** scheduled server page ***
-table			("BaseServerLock", "ServedClient", "ServerLockEntry")
+transientTable		("BaseServerLock", "ServedClient", "ServerLockEntry")
 module			("ServerLockTable")
 module			("ScheduledServerPage")
 
 % *** scheduled server file ***
 Module			("BaseScheduledServerFile")
 interface		("InternalBaseScheduledServerFile")
-table			("ScheduledServerPage", "Cardinal", "ScheduledServerPage")
+transientTable		("ScheduledServerPage", "Cardinal", "ScheduledServerPage")
 Module			("ScheduledServerFile")
 interface		("InternalScheduledServerFile")
 
 % *** scheduled server resource ***
 Module			("BaseScheduledServerResource")
 interface		("InternalBaseScheduledServerResource")
-table			("ScheduledServerFile", "Text", "ScheduledServerFile")
+transientTable		("ScheduledServerFile", "Text", "ScheduledServerFile")
 Module			("ScheduledServerResource")
 interface		("InternalScheduledServerResource")
 
 % *** server scheduler ***
 module			("BaseServerScheduler")
-table			("ScheduledServerResource","Text","ScheduledServerResource")
+transientTable		("ScheduledServerResource","Text","ScheduledServerResource")
 Module			("ServerScheduler")
 
 % *** deadlock detection ***
 module			("ServerWaitEntry")
-table			("ServerWait", "ServedClient", "ServerWaitEntry")
+transientTable		("ServerWait", "ServedClient", "ServerWaitEntry")
 module			("WaitForGraph")
 module			("DeadlockDetection")

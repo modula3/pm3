@@ -19,9 +19,11 @@ TYPE
   END;
 
 CONST
-  Header  = "<<<<Coverage 1.0";
-  Trailer = "Coverage 1.0>>>>";
   MaxLine = 100000;
+
+VAR
+  Header  : TEXT;
+  Trailer : TEXT;
 
 TYPE
   LineSeen = {no, yes, generated};
@@ -110,29 +112,29 @@ PROCEDURE GenerateTables () =
     INC (size, l_trailer * Target.Char.size);  (*trailer*)
 
     (* allocate the variable *)
-    tbl := CG.Declare_global (M3ID.NoID, size, Target.Address.align, CG.Type.Addr, 0,
-                              exported := FALSE, init := TRUE);
+    tbl := CG.Declare_global (M3ID.NoID, size, Target.Address.align,
+                              CG.Type.Addr, 0, exported := FALSE, init := TRUE);
 
     (* initialize the coverage tables *)
     CG.Begin_init (tbl);
     size := 0;
 
-    CG.Init_chars (size, Header);
+    CG.Init_chars (size, Header, FALSE);
     INC (size, l_header * Target.Char.size);     (*header*)
 
-    (* CG.Init_int (size, Target.Integer.size, TInt.Zero); *)
+    (* CG.Init_int (size, Target.Integer.size, TInt.Zero, FALSE); *)
     INC (size, Target.Integer.size);             (*timestamp*)
 
-    CG.Init_intt (size, Target.Integer.size, Text.Length (fname));
+    CG.Init_intt (size, Target.Integer.size, Text.Length (fname), FALSE);
     INC (size, Target.Integer.size);             (*fileLen*)
 
-    CG.Init_chars (size, fname);
+    CG.Init_chars (size, fname, FALSE);
     INC (size, l_fname * Target.Char.size);      (*file*)
 
-    CG.Init_intt (size, Target.Integer.size, minLine);
+    CG.Init_intt (size, Target.Integer.size, minLine, FALSE);
     INC (size, Target.Integer.size);             (*firstLine*)
 
-    CG.Init_intt (size, Target.Integer.size, nLines);
+    CG.Init_intt (size, Target.Integer.size, nLines, FALSE);
     INC (size, Target.Integer.size);             (*nLines*)
 
     lines_offset := size;
@@ -141,11 +143,11 @@ PROCEDURE GenerateTables () =
         THEN len := 0;
         ELSE len := -1;
       END;
-      CG.Init_intt (size, Target.Integer.size, len);
+      CG.Init_intt (size, Target.Integer.size, len, FALSE);
       INC (size, Target.Integer.size);    (*lines[x]*)
     END;
 
-    CG.Init_intt (size, Target.Integer.size, i);
+    CG.Init_intt (size, Target.Integer.size, i, FALSE);
     INC (size, Target.Integer.size);             (*nProcs*)
 
     p := procs;
@@ -153,20 +155,20 @@ PROCEDURE GenerateTables () =
       IF (p.proc # NIL) THEN
         len := TLen (p.name);
 
-        CG.Init_intt (size, Target.Integer.size, Text.Length (p.name));
+        CG.Init_intt (size, Target.Integer.size, Text.Length (p.name), FALSE);
         INC (size, Target.Integer.size);         (*len[p]*)
 
-        CG.Init_chars (size, p.name);
+        CG.Init_chars (size, p.name, FALSE);
         INC (size, len * Target.Char.size);      (*pname[p]*)
 
-        (* CG.Init_int (size, Target.Integer.size, 0); *)
+        (* CG.Init_int (size, Target.Integer.size, 0, FALSE); *)
         p.offset := size;
         INC (size, Target.Integer.size);         (*cnt[p]*)
       END;
       p := p.next;
     END;
 
-    CG.Init_chars (size, Trailer);
+    CG.Init_chars (size, Trailer, FALSE);
     INC (size, l_trailer * Target.Char.size);    (*trailer*)
 
     CG.End_init (tbl);
@@ -190,7 +192,7 @@ PROCEDURE CountLine () =
     offset := lines_offset + (line - minLine) * Target.Integer.size;
     CG.Load_int (tbl, offset);
     CG.Load_integer (TInt.One);
-    CG.Add (CG.Type.Word);
+    CG.Add (Target.Word.cg_type);
     CG.Store_int (tbl, offset);
     used [line] := LineSeen.generated;
   END CountLine;
@@ -211,7 +213,7 @@ PROCEDURE CountProcedure (v: Value.T) =
 
     CG.Load_int (tbl, p.offset);
     CG.Load_integer (TInt.One);
-    CG.Add (CG.Type.Word);
+    CG.Add (Target.Word.cg_type);
     CG.Store_int (tbl, p.offset);
   END CountProcedure;
 
@@ -226,4 +228,11 @@ PROCEDURE Reset () =
   END Reset;
 
 BEGIN
+  (* This initialization is designed so that the special header and trailer
+     strings recognized by the coverage analyzer don't appear as literals
+     in this module. *)
+  Header  := "<<";
+  Header  := Header & "<<Coverage 1.0";
+  Trailer := "Coverage 1.0>>";
+  Trailer := Trailer & ">>";
 END Coverage.

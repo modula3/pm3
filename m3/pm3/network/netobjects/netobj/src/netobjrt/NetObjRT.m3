@@ -6,7 +6,7 @@
 (*      modified on Mon Feb  8 11:43:23 PST 1993 by owicki *)
 (*      modified on Tue Sep 15 10:36:23 PDT 1992 by evers  *)
 
-MODULE NetObjRT EXPORTS NetObjRT, NetObjNotifier,
+MODULE NetObjRT EXPORTS NetObjRT, NetObjNotifier, NetObjF,
                         NGCMonitor, SpecialObj, StubLib;
   
 <* PRAGMA LL *>
@@ -14,9 +14,9 @@ MODULE NetObjRT EXPORTS NetObjRT, NetObjNotifier,
 IMPORT Atom, AtomList;
 IMPORT NetObj, NetObjRep, Transport, TransportUtils, TransportRegistry;
 IMPORT SpaceID, WireRep, Fingerprint;
-IMPORT IntRefTbl, TextRefTbl, ObjTbl, ObjElem,
-       FPRefTbl, DirtyTbl, DirtyElem;
-IMPORT Thread, RefList;
+IMPORT IntRefTransientTbl AS IntRefTbl, TextRefTransientTbl AS TextRefTbl,
+       ObjTbl, ObjElem, FPRefTbl, DirtyTbl, DirtyElem;
+IMPORT Thread, RefTransientList AS RefList;
 IMPORT RTAllocator, RTType, RTTypeFP, RTTypeSRC, WeakRef;
 
 VAR
@@ -55,7 +55,7 @@ VAR <* LL >= {mu} *>
 CONST MaxVersions = 3;
 
 TYPE
-  TypeInfo = REF RECORD
+  TypeInfo = <*TRANSIENT*> REF RECORD
     pureTC: Typecode;
     fp: Fingerprint.T;
     nvers: CARDINAL := 0;
@@ -105,7 +105,7 @@ VAR <* LL >= {mu} *>
    space.  *)
 
 TYPE
-  Notifier = REF RECORD
+  Notifier = <*TRANSIENT*> REF RECORD
     wr: WeakRef.T;    (* to a surrogate object *)
     cl: NotifierClosure;
   END;
@@ -135,7 +135,7 @@ REVEAL
 VAR
   <* LL >= {mu} *>
   locTbl: RECORD
-    locs: REF ARRAY OF Transport.Location := NIL;
+    locs: <*TRANSIENT*> REF ARRAY OF Transport.Location := NIL;
     free: CARDINAL := 0;
   END;
 
@@ -147,7 +147,7 @@ VAR
 *)
 
 TYPE
-  ExportInfo = BRANDED OBJECT
+  ExportInfo = <*TRANSIENT*> ROOT BRANDED OBJECT
     typeInfo: TypeInfo;
     <* LL >= {mu} *>
     pinCount: CARDINAL := 0;(* # of incomplete marshalling actions from owner + 
@@ -209,6 +209,28 @@ PROCEDURE FindDispatcher(exp: ExportInfo; stubProt: StubProtocol): Dispatcher =
     RETURN NIL;
   END FindDispatcher;
 
+(* These two routines are in the NetObjF interface. *)
+PROCEDURE ToWireRep(ref: NetObj.T; 
+                    VAR (*OUT*) rep: WRep; VAR addr: NetObj.Address) =
+  BEGIN
+    rep := InsertAndPin(ref);
+    TYPECASE ref.r OF
+    | NULL, ExportInfo =>
+      addr := TransportRegistry.LocalAdr();
+    | Transport.Location(loc) =>
+      addr := NEW(NetObj.Address, 1);
+      addr[0] := loc.getEp()
+    ELSE
+      <* NOWARN *> Die();
+    END;
+  END ToWireRep;
+
+PROCEDURE FromWireRep(wrep: WRep; addr: NetObj.Address): NetObj.T 
+  RAISES {NetObj.Error, Thread.Alerted} =
+  BEGIN
+    RETURN Find(wrep, TransportRegistry.LocationFromAdr(addr));
+  END FromWireRep;
+
 PROCEDURE Find (wrep: WireRep.T; loc: Transport.Location): NetObj.T
     RAISES {NetObj.Error, Thread.Alerted} =
   <* LL.sup < mu *>
@@ -262,7 +284,7 @@ PROCEDURE Find (wrep: WireRep.T; loc: Transport.Location): NetObj.T
         ELSE
       	  (* an exception was raised or NewSrgt returned NIL *)
           EVAL objTbl.delete(wrep, oe);
-      	  VAR r: REFANY; loc: Transport.Location;
+      	  VAR r: <*TRANSIENT*> REFANY; loc: Transport.Location;
           BEGIN
 	    IF spaceTbl.get(WireRep.GetSpaceID(wrep), r) THEN
               loc := TransportRegistry.LocationFromAdr(r);
@@ -406,7 +428,7 @@ TYPE
   END;
 
 TYPE
-  CleanQElem = REF RECORD
+  CleanQElem = <*TRANSIENT*> REF RECORD
     next: CleanQElem := NIL;
     elem: CleanElem;
     strong: BOOLEAN;
@@ -431,7 +453,7 @@ PROCEDURE CleanerEnqueue(
 PROCEDURE CleanerApply(cl: Cleaner): REFANY =
   CONST tries = 3;
   (* The next call after a failed call is guaranteed to make a new connection.
-     If that connection cannot be made, the location will be declare dead. *)
+     If that connection cannot be made, the location will be declared dead. *)
   VAR
     st := New(cl.loc);
     nElem: CARDINAL;
@@ -498,7 +520,7 @@ PROCEDURE Register(
   <* LL.sup < mu *>
   VAR
     info: TypeInfo;
-    r: REFANY;
+    r: <*TRANSIENT*> REFANY;
   BEGIN
     LOCK mu DO
       IF typeTbl.get(pureTC, r) THEN
@@ -523,7 +545,7 @@ PROCEDURE BuildFpTower(tt: TypeInfo) : FpTower =
   <* LL.sup = mu *>
   VAR n: CARDINAL := 0;
       tc: Typecode := tt.pureTC;
-      r: REFANY;
+      r: <*TRANSIENT*> REFANY;
   BEGIN
     IF tt.fpTower = NIL THEN
       WHILE tc # TYPECODE(NetObj.T) DO
@@ -565,20 +587,24 @@ PROCEDURE NewSrgt(
     tc: CARDINAL; 
     fpTower: FpTower;
     vers: ARRAY [0..MaxVersions-1] OF Int32;
+    res: NetObj.T;
   BEGIN
     fpTower := st.dirty(wrep, ts, vers);
     tc := TowerToSurrogateTC(fpTower, vers);
-    VAR res: NetObj.T := RTAllocator.NewTraced(tc); BEGIN
-      res.w := wrep;
-      res.r := st.r;
-      RETURN res
-    END
+    TRY
+      res := RTAllocator.NewTraced(tc);
+    EXCEPT RTAllocator.OutOfMemory =>
+      RaiseError (NetObj.NoResources);
+    END;
+    res.w := wrep;
+    res.r := st.r;
+    RETURN res;
   END NewSrgt;
 
 PROCEDURE SpaceToSpecial(space: SpaceID.T; loc: Transport.Location) : ST
     RAISES {NetObj.Error, Thread.Alerted} =
     <* LL.sup < mu *>
-  VAR r: REFANY;
+  VAR r: <*TRANSIENT*> REFANY;
       adr: NetObj.Address;
       found: BOOLEAN;
       rloc: Transport.Location;
@@ -601,7 +627,7 @@ PROCEDURE SpaceToSpecial(space: SpaceID.T; loc: Transport.Location) : ST
 
 PROCEDURE TowerToSurrogateTC(fpTower: FpTower; VAR vers: VersionList): Typecode
   <* LL.sup < mu *> =
-  VAR r: REFANY;
+  VAR r: <*TRANSIENT*> REFANY;
       i: CARDINAL := 0;
       tc: Typecode := TYPECODE(NetObj.T);
       firstInfo: TypeInfo := NIL;
@@ -641,7 +667,7 @@ PROCEDURE MatchVersion(
 
 PROCEDURE NewExportInfo(tc: Typecode) : ExportInfo =
   <* LL.sup = mu *>
-  VAR r: REFANY; res: ExportInfo;
+  VAR r: <*TRANSIENT*> REFANY; res: ExportInfo;
   BEGIN
     IF tc = RTType.NoSuchType THEN Die(); END;
     IF typeTbl.get(tc, r) THEN
@@ -666,6 +692,7 @@ PROCEDURE NewExportInfo(tc: Typecode) : ExportInfo =
 
 PROCEDURE New(loc: Transport.Location) : ST =
   <* LL.sup ???? *>
+  <* FATAL RTAllocator.OutOfMemory *>
   VAR st: ST;
   BEGIN
     st := RTAllocator.NewTraced(TYPECODE(Surrogate));
@@ -691,14 +718,14 @@ PROCEDURE InitAgent() =
 
 TYPE
   Note = NotifierClosure OBJECT
-    name: TEXT;
+    <*TRANSIENT*> name: TEXT;
   OVERRIDES
     notify := DeadEntry;
   END;
 
 PROCEDURE DeadEntry(n: Note; obj: NetObj.T; <*UNUSED*> st: OwnerState) =
     <* LL.sup < mu *>
-  VAR r: REFANY;
+  VAR r: <*TRANSIENT*> REFANY;
   BEGIN
     LOCK mu DO
       IF localAgentT.table.get(n.name, r) AND r = obj THEN
@@ -709,7 +736,7 @@ PROCEDURE DeadEntry(n: Note; obj: NetObj.T; <*UNUSED*> st: OwnerState) =
 
 PROCEDURE AgentGet(t: AgentT; name: TEXT) : NetObj.T =
     <* LL.sup < mu *>
-  VAR r: REFANY;
+  VAR r: <*TRANSIENT*> REFANY;
   BEGIN
     LOCK mu DO
       IF NOT t.table.get(name, r) THEN
@@ -730,7 +757,7 @@ PROCEDURE AgentPut(t: AgentT; name: TEXT; obj: NetObj.T) =
 PROCEDURE AgentGetAdr(
     <*UNUSED*> t: AgentT; sp: SpaceID.T) : NetObj.Address =
   <* LL.sup < mu *>
-  VAR r: REFANY;
+  VAR r: <*TRANSIENT*> REFANY;
   BEGIN
     LOCK mu DO
       IF spaceTbl.get(sp, r) THEN 
@@ -751,7 +778,7 @@ PROCEDURE AgentDirty(
   VAR
     oe: ObjElem.T;
     de: DirtyElem.T;
-    rti: REFANY := NIL;
+    rti: <*TRANSIENT*> REFANY := NIL;
     c: NetObj.T;
     bump: BOOLEAN; (* did we make a clean -> dirty transition ? *)
   BEGIN
@@ -956,7 +983,7 @@ PROCEDURE MonitorDumpNames (): RefList.T =
   <* LL.sup < mu *>
   VAR
     res: RefList.T := NIL;
-    key: TEXT; r: REFANY;
+    key: TEXT; r: <*TRANSIENT*> REFANY;
     it: TextRefTbl.Iterator;
   BEGIN
     LOCK mu DO
@@ -994,13 +1021,14 @@ PROCEDURE AddToLocTbl(loc: Transport.Location) =
   BEGIN
     IF ol = NIL THEN
       locTbl.free := 0;
-      locTbl.locs := NEW(REF ARRAY OF Transport.Location, 10);
+      locTbl.locs := NEW(<*TRANSIENT*> REF ARRAY OF Transport.Location, 10);
       FOR i := 0 TO LAST(locTbl.locs^) DO locTbl.locs[i] := NIL; END;
     ELSE
       WHILE locTbl.locs[locTbl.free] # NIL DO
         INC(locTbl.free);
         IF locTbl.free = NUMBER(locTbl.locs^) THEN
-          locTbl.locs := NEW(REF ARRAY OF Transport.Location, NUMBER(ol^) * 2);
+          locTbl.locs := NEW(<*TRANSIENT*> REF ARRAY OF Transport.Location,
+                             NUMBER(ol^) * 2);
           SUBARRAY(locTbl.locs^, 0, NUMBER(ol^)) := ol^;
           FOR i := NUMBER(ol^) TO LAST(locTbl.locs^) DO
             locTbl.locs[i] := NIL;

@@ -9,4 +9,4 @@ import("obliq")
 implementation("Main")
 
 Program("obliq-min")
-ManPage("obliq-min", 1)
+ManPage("obliq-min",1)

@@ -1,8 +1,9 @@
-#define _ASM
-#include <sys/asm_linkage.h>
-
-	ENTRY(RTStack__Flush)
-	ta ST_FLUSH_WINDOWS
+	.section ".text"
+	.align 4
+	.global RTStack__Flush
+	.type RTStack__Flush, #function
+RTStack__Flush: 
+	ta 0x03
 	retl
 	nop
-	SET_SIZE(RTStack__Flush)
+	.size RTStack__Flush, (.-RTStack__Flush)

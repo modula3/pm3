@@ -11,7 +11,7 @@ IMPORT Random, TimeStamp, Thread, Swap;
 EXCEPTION Failure;
 <*FATAL Failure*>
 
-VAR state := NEW(Thread.Mutex OBJECT r: Random.T := NIL; END);
+VAR state := NEW(Thread.Mutex OBJECT <*TRANSIENT*> r: Random.T := NIL; END);
 
 PROCEDURE New (): T =
   VAR t: T;

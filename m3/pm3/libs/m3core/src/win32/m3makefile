@@ -2,8 +2,7 @@
 % All rights reserved.
 % See the file COPYRIGHT for a full description.
 %
-% Last modified on Mon Aug 19 10:45:07 PDT 1996 by heydon  
-%      modified on Wed Nov  9 15:14:29 PST 1994 by kalsow  
+% Last modified on Wed Nov  9 15:14:29 PST 1994 by kalsow  
 
 Interface  ("WinBaseTypes")
 Module     ("WinDef")
@@ -12,10 +11,14 @@ Module     ("WinNT")
 Interface  ("WinBase")
 Interface  ("WinCon")
 Module     ("WinGDI")
+Module     ("WinIoctl")
 Interface  ("WinNetwk")
-Interface  ("WinReg")
+Interface  ("WinNLS")
+Module     ("WinReg")
+Module     ("WinSock")
 Module     ("WinUser")
 Module     ("WinVer")
 Module     ("NB30")
+Interface  ("CDErr")
 Interface  ("CommDlg")
-Module     ("WinIoctl")
+Interface  ("TlHelp32")

@@ -68,15 +68,21 @@ PROCEDURE ZName (t: T;  n: Name) =
     END;
   END ZName;
 
+PROCEDURE XName (t: T;  n: Name) =
+  BEGIN
+    IF (n # M3ID.NoID) THEN
+      OutC (t, '[');
+      OutN (t, n);
+      OutC (t, ']');
+    END;
+  END XName;
+
 PROCEDURE VName (t: T;  v: Var) =
+  CONST VTag = ARRAY VLoc OF TEXT { " gv.", " tv." };
   BEGIN
     TYPECASE v OF
     | NULL     => OutT (t, " *");
-    | x86Var(x)=> CASE x.loc OF
-                    VLoc.global => OutT (t, " g");
-                  | VLoc.temp => OutT (t, " t");
-                  END;
-                  OutT (t, "v.");  OutI (t, x.tag);  ZName (t, x.name);
+    | x86Var(x)=> OutT (t, VTag[x.loc]);  OutI (t, x.tag);  XName (t, x.name);
     ELSE          OutT (t, " v.???");
     END;
   END VName;
@@ -85,18 +91,19 @@ PROCEDURE PName (t: T;  p: Proc) =
   BEGIN
     TYPECASE p OF
     | NULL       => OutT (t, " *");
-    | x86Proc(x) => OutT (t, "p."); OutI (t, x.tag);  ZName (t, x.name);
+    | x86Proc(x) => OutT (t, " p.");  OutI (t, x.tag);  XName (t, x.name);
     ELSE            OutT (t, " p.???");
     END;
   END PName;
 
 PROCEDURE TName (t: T;  type: Type) =
   CONST type_names = ARRAY Type OF TEXT {
-                       " Addr", " Word", " Int",
+                       " Word.8",  " Int.8",
+                       " Word.16", " Int.16",
+                       " Word.32", " Int.32",
+                       " Word.64", " Int.64",
                        " Reel", " LReel", " XReel",
-                       " Int.8", " Int.16", " Int.32", " Int.32D",
-                       " Word.8", " Word.16", " Word.32", " Word.32D",
-                       " Struct", " Void"
+                       " Addr", " Struct", " Void"
                      };
   BEGIN
     OutT (t, type_names[type]);

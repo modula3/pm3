@@ -6,13 +6,10 @@ module ("PklTipeMap")
 module ("ConvertPacking")
 interface ("PklAction")
 interface ("PickleRd")
-sequence ("PklAction", "PklAction")
+transientSequence ("PklAction", "PklAction")
 module ("PackingTypeCode")
-table ("Packing", "PackingTypeCode", "Refany")
+transientTable ("Packing", "PackingTypeCode", "RefanyTransient")
+module ("BuiltinSpecials")
 
 Module ("Pickle")
 Module ("PickleStubs")
-
-Module ("ListPkl")
-Module("AtomPkl")
-

@@ -10,7 +10,7 @@
 
 MODULE Wheeler EXPORTS Wheeler;
 
-IMPORT Char, CharArraySort, Text, TextArraySort, TextF, VBT;
+IMPORT Char, CharArraySort, Text, TextArraySort, Text8, VBT;
 IMPORT Thread, FormsVBT;
 
 (* Zeus stuff *)
@@ -66,23 +66,22 @@ PROCEDURE Ws(alg: T; pause, finalOnly: BOOLEAN;
    return values and the alphabet as inputs, "UnWs" can reconstruct "string". 
 *)
 
-  PROCEDURE Rotate(s: TEXT; i: CARDINAL): TEXT =
+  PROCEDURE Rotate(s: TEXT; i: CARDINAL): Text8.T =
     (* Return a new string that is "s" rotated "i" positions
        to the left (cyclically). *)
-    VAR sn := NUMBER(s^)-1;
-        res := NEW(TEXT, sn+1);
+    VAR sn := Text.Length(s);
+        res := Text8.Create(sn);
     BEGIN
       FOR j := 0 TO sn-1 DO
-        res[j] := string[(i+j) MOD sn]
+        res.contents[j] := Text.GetChar(string, (i+j) MOD sn);
       END;
-      res[sn] := '\000';
       RETURN res
     END Rotate;
 
-  VAR n := NUMBER(string^)-1;
+  VAR n := Text.Length(string);
       rotations := NEW(REF ARRAY OF TEXT, n);
-      lastchars := NEW(TEXT, n+1);
-      xchars: TEXT;
+      lastchars := Text8.Create(n);
+      xchars: Text8.T;
   BEGIN
     IF NOT finalOnly THEN WheelerIE.StartPermute(alg, string, alpha) END;
 
@@ -103,17 +102,16 @@ PROCEDURE Ws(alg: T; pause, finalOnly: BOOLEAN;
 
     (* pick off the last character of each rotation *)
     FOR i := 0 TO n-1 DO
-      lastchars[i] := rotations[i][n-1]
+      lastchars.contents[i] := Text.GetChar(rotations[i], n-1);
     END;
-    lastchars[n] := '\000';
     IF NOT finalOnly THEN WheelerIE.PermuteDone(alg, lastchars, pos) END;
     IF pause AND NOT finalOnly THEN ZeusPanel.Pause(alg) END;
 
     (* append list of last characters to the alphabet *)
     VAR alen := Text.Length(alpha); BEGIN
-      xchars := NEW(TEXT, alen + n + 1);
-      SUBARRAY(xchars^, 0, alen) := SUBARRAY(alpha^, 0, alen);
-      SUBARRAY(xchars^, alen, n+1) := lastchars^
+      xchars := Text8.Create(alen + n);
+      Text.SetChars(SUBARRAY(xchars.contents^, 0, alen), alpha);
+      SUBARRAY(xchars.contents^, alen, n) := lastchars.contents^
     END;
     IF NOT finalOnly THEN WheelerIE.StartEncode(alg, alpha) END;
 
@@ -124,15 +122,15 @@ PROCEDURE Ws(alg: T; pause, finalOnly: BOOLEAN;
        to the original string. *)
     VAR output := NEW(REF ARRAY OF INTEGER, n); BEGIN
       FOR i := 0 TO n-1 DO
-        VAR c := lastchars[i];
+        VAR c := lastchars.contents[i];
             seen := NEW(REF ARRAY OF BOOLEAN, 256);
             count := 0;
             j := Text.Length(alpha) + i - 1;
         BEGIN
           IF NOT finalOnly THEN WheelerIE.EncodeNextChar(alg, i, c) END;
-          WHILE(xchars[j] # c) DO
-            IF NOT seen[ORD(xchars[j])] THEN
-              seen[ORD(xchars[j])] := TRUE;
+          WHILE(xchars.contents[j] # c) DO
+            IF NOT seen[ORD(xchars.contents[j])] THEN
+              seen[ORD(xchars.contents[j])] := TRUE;
               INC(count);
               IF NOT finalOnly THEN
                 WheelerIE.EncodeDistinctCount(alg, i, j, count, c)
@@ -165,10 +163,10 @@ PROCEDURE UnWs(alg: T; pause, finalOnly: BOOLEAN;
     BEGIN IF NOT finalOnly THEN ZeusCodeView.At(alg, line) END; END At;
 *******)
   VAR n := NUMBER(codes^);
-      alen := NUMBER(alpha^) - 1;
-      xchars := NEW(TEXT, alen + n + 1);
-      lastchars := NEW(TEXT, n + 1);
-      firstchars := NEW(TEXT, n + 1);
+      alen := Text.Length(alpha);
+      xchars := Text8.Create(alen + n);
+      lastchars := Text8.Create(n);
+      firstchars := Text8.Create(n);
       charmap := NEW(REF ARRAY OF INTEGER, n);
   BEGIN
     (*ZeusCodeView.Enter(alg, procedureName := "Decompress");*)
@@ -178,7 +176,7 @@ PROCEDURE UnWs(alg: T; pause, finalOnly: BOOLEAN;
     (*At(2);*)
     IF NOT finalOnly THEN WheelerIE.InitDecode(alg, alpha, codes, pos) END;
     IF NOT finalOnly THEN WheelerIE.StartDecode(alg) END;
-    SUBARRAY(xchars^, 0, alen+1) := alpha^;
+    Text.SetChars(SUBARRAY(xchars.contents^, 0, alen), alpha);
     FOR i := 0 TO n-1 DO
       VAR count := 0;
           seen := NEW(REF ARRAY OF BOOLEAN, 256);
@@ -187,8 +185,8 @@ PROCEDURE UnWs(alg: T; pause, finalOnly: BOOLEAN;
         IF NOT finalOnly THEN WheelerIE.DecodeNextCode(alg, i) END;
         WHILE (count < codes[i]+1) DO
           DEC(j);
-          IF NOT seen[ORD(xchars[j])] THEN
-            seen[ORD(xchars[j])] := TRUE;
+          IF NOT seen[ORD(xchars.contents[j])] THEN
+            seen[ORD(xchars.contents[j])] := TRUE;
             INC(count);
             IF count < codes[i] + 1 THEN
               IF NOT finalOnly THEN
@@ -198,12 +196,11 @@ PROCEDURE UnWs(alg: T; pause, finalOnly: BOOLEAN;
           END
         END;
         IF NOT finalOnly THEN
-          WheelerIE.DecodeFoundChar(alg, i, j, xchars[j])
+          WheelerIE.DecodeFoundChar(alg, i, j, xchars.contents[j])
         END;
-        xchars[alen+i] := xchars[j];
-        lastchars[i] := xchars[j]
+        xchars.contents[alen+i] := xchars.contents[j];
+        lastchars.contents[i] := xchars.contents[j]
       END;
-      lastchars[n] := '\000'
     END;
 
     WheelerIE.DecodeDone(alg, lastchars, pos);
@@ -214,8 +211,8 @@ PROCEDURE UnWs(alg: T; pause, finalOnly: BOOLEAN;
 
     (* obtain the array of initial characters in the sorted rotations
        by sorting the "lastchars" array *)
-    firstchars^ := lastchars^;
-    CharArraySort.Sort(SUBARRAY(firstchars^, 0, n), Char.Compare); 
+    firstchars.contents^ := lastchars.contents^;
+    CharArraySort.Sort(SUBARRAY(firstchars.contents^, 0, n), Char.Compare); 
 
     (*At(4);*)
     WheelerIE.FirstChars(alg, firstchars);
@@ -226,12 +223,12 @@ PROCEDURE UnWs(alg: T; pause, finalOnly: BOOLEAN;
     (*At(5);*)
     VAR j := 0; BEGIN
       FOR i := 0 TO n-1 DO
-        IF i # 0 AND firstchars[i] # firstchars[i-1] THEN
+        IF i # 0 AND firstchars.contents[i] # firstchars.contents[i-1] THEN
           j := 0;
           WheelerIE.FinishCharRun(alg)
         END;
         WheelerIE.ConsiderChar(alg, i);
-        WHILE firstchars[i] # lastchars[j] DO
+        WHILE firstchars.contents[i] # lastchars.contents[j] DO
           INC(j);
         END;
         WheelerIE.EqualChars(alg, i, j);
@@ -246,13 +243,12 @@ PROCEDURE UnWs(alg: T; pause, finalOnly: BOOLEAN;
     (* construct the original string by reading through "firstchars" and
        "lastchars" using "charmap" *)
     (*At(6);*)
-    VAR ans := NEW(TEXT, n+1); BEGIN
+    VAR ans := Text8.Create(n); BEGIN
       FOR i := 0 TO n-1 DO
         WheelerIE.ResultNextChar(alg, pos, i);
-        ans[i] := firstchars[pos];
+        ans.contents[i] := firstchars.contents[pos];
         pos := charmap[pos]
       END;
-      ans[n] := '\000';
       WheelerIE.EndResult(alg);
       RETURN ans
     END;

@@ -16,7 +16,7 @@
 
 MODULE Formatter;
 
-IMPORT Text, Wr, Thread, Scheduler;
+IMPORT AtomList, Text, Wr, Thread, Scheduler;
 
 <*FATAL Thread.Alerted *>
 
@@ -24,9 +24,9 @@ TYPE
   (* RefStream = ARRAY [0..LAST(CARDINAL)] OF REFANY; *)
 
 REVEAL
-  T = BRANDED REF RECORD
+  T = <*TRANSIENT*> BRANDED REF RECORD
       wr:          Wr.T;    
-        
+
       width:       CARDINAL;   (* Current nominal line width *)
       indent:      CARDINAL;   (* Current offset for breaks *)
 
@@ -52,7 +52,7 @@ REVEAL
 
       waiters:     CARDINAL;     (* Number of threads waiting for Allocate *)
       failure:     BOOLEAN;
-      failureCode: REFANY;
+      failureCode: AtomList.T;
     END;
   (*
     Note on the storage scheme:
@@ -109,7 +109,7 @@ REVEAL
     has to do unbounded lookahead.   *)
 
 TYPE
-  ExprBuf = REF ARRAY OF REFANY;
+  ExprBuf = <*TRANSIENT*> REF <*TRANSIENT*> ARRAY OF REFANY;
   CharBuf = ARRAY [0..255] OF CHAR;
   Who    = {Producer, Consumer};
 
@@ -252,6 +252,8 @@ PROCEDURE PutChar(t: T;  c: CHAR) RAISES {Wr.Failure} =
   BEGIN
     IF c = '\n' THEN
       NewLine(t, FIRST (INTEGER), FALSE);
+    ELSIF c = '\r' THEN
+      (* ignore the incoming carriage return characters *)
     ELSIF c = ' ' THEN
       IF t.numChars > 0 THEN AddChars(t) END;
       AddRef(t, chars[c]);
@@ -500,7 +502,7 @@ PROCEDURE WaitUntilEmpty(t: T;  index: CARDINAL) RAISES {Wr.Failure} =
   These procedures are used to pass Wr.Failure codes from 
   Consumer to Producer. *)
 
-PROCEDURE SetFailure(t: T;  failureCode: REFANY) RAISES {} =
+PROCEDURE SetFailure(t: T;  failureCode: AtomList.T) RAISES {} =
   BEGIN
     LOCK t.lock DO
       t.failure := TRUE;
@@ -1090,7 +1092,7 @@ PROCEDURE DoNewLine(
     offset: INTEGER
   ): BOOLEAN RAISES {Thread.Alerted, Wr.Failure} =
   BEGIN
-    IF mode = Mode.Writing THEN Wr.PutChar(t.wr, '\n') END;
+    IF mode = Mode.Writing THEN Wr.PutText(t.wr, Wr.EOL) END;
     pos.c := 0;
     pos.b := MAX (0, t.indent + offset);
     pos.l := pos.l + 1;
@@ -1108,7 +1110,7 @@ PROCEDURE DoFreshLine(
   BEGIN
     b := MAX (0, t.indent + offset);
     IF b < pos.c + pos.b THEN
-      IF mode = Mode.Writing THEN Wr.PutChar(t.wr, '\n') END;
+      IF mode = Mode.Writing THEN Wr.PutText(t.wr, Wr.EOL) END;
       pos.c := 0;
       pos.b := b;
       pos.l := pos.l + 1;

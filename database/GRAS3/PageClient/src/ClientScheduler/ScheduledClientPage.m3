@@ -8,8 +8,11 @@ EXPORTS ScheduledClientPage, InternalScheduledClientPage;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:37  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:48  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:37  hosking
+    Import of GRAS3 1.1
 
     Revision 1.14  1998/02/04 11:51:02  roland
     Cache locks on envelope level might not have data loaded. This is
@@ -146,9 +149,8 @@ EXPORTS ScheduledClientPage, InternalScheduledClientPage;
 IMPORT Fmt AS StdFmt;
 IMPORT
   Variant, Journal,
-  Page,
-  PageHandle, PageCache,
-  PageLock, Access, Transaction,
+  Page, PageHandle, PageCache, PageLock, PageData,
+  Access, Txn,
   ShadowMedia,
   ClientLockEntry, ClientLockTable,
   BaseScheduledClientFile, InternalBaseScheduledClientFile,
@@ -161,6 +163,7 @@ REVEAL
       locks		:ClientLockTable.T;
       logPageNo		:CARDINAL;
       pageAge		:CARDINAL;
+      newPageAge        :CARDINAL;
 
     METHODS
       fmt		() :TEXT
@@ -170,10 +173,12 @@ REVEAL
       init		:= Init;
       close		:= Close;
 
+      peekAccess        := PeekAccess;
       readAccess	:= ReadAccess;
       writeAccess	:= WriteAccess;
 
       commitTransaction	:= CommitTransaction;
+      chainTransaction	:= ChainTransaction;
       abortTransaction	:= AbortTransaction;
 
       releaseCallback	:= ReleaseCallback;
@@ -191,6 +196,7 @@ PROCEDURE Init		(         self		:T;
     self.logPageNo := pageNo;
     self.locks := NEW (ClientLockTable.T).init ();
     self.pageAge := 0;
+    self.newPageAge := 0;
 
     RETURN self;
   END Init;
@@ -198,8 +204,8 @@ PROCEDURE Init		(         self		:T;
 
 PROCEDURE Close		(         self		:T) RAISES {FatalError} =
   VAR
-    currentLevel	:Transaction.Level;
-    lastLevel		:Transaction.Level;
+    currentLevel	:Txn.Level;
+    lastLevel		:Txn.Level;
     lastEntry		:ClientLockEntry.T;
   BEGIN
     IF Variant.TestClientScheduler THEN
@@ -214,7 +220,7 @@ PROCEDURE Close		(         self		:T) RAISES {FatalError} =
       (* nothing to do *)
 
     | PageLock.Mode.P, PageLock.Mode.C =>
-      IF lastLevel # Transaction.EnvelopeLevel THEN
+      IF lastLevel # Txn.EnvelopeLevel THEN
         RAISE FatalError(ErrorSupport.Create("ScheduledClientPage.Close",
                                              "Lock mode error."));
       END;
@@ -225,7 +231,7 @@ PROCEDURE Close		(         self		:T) RAISES {FatalError} =
       self.locks.putEntry (lastLevel, ClientLockEntry.T {PageLock.Mode.O, NIL});
 
     | PageLock.Mode.S, PageLock.Mode.X =>
-      IF lastLevel # Transaction.EnvelopeLevel THEN
+      IF lastLevel # Txn.EnvelopeLevel THEN
         RAISE FatalError(ErrorSupport.Create("ScheduledClientPage.Close",
                                              "Lock mode error."));
       END;
@@ -233,17 +239,114 @@ PROCEDURE Close		(         self		:T) RAISES {FatalError} =
   END Close;
 
 
-PROCEDURE ReadAccess	(         self		:T) :PageHandle.T
-			RAISES {Access.Locked, FatalError} =
+PROCEDURE PeekAccess	(         self		:T) :PageHandle.T
+			RAISES {FatalError} =
   VAR
-    currentLevel	:Transaction.Level;
-    lastLevel		:Transaction.Level;
+    currentLevel	:Txn.Level;
+    lastLevel		:Txn.Level;
     lastEntry		:ClientLockEntry.T;
     page		:Page.T;
     changes		:BOOLEAN := FALSE;
   BEGIN
     currentLevel := self.scheduledFile.getTransactionLevel ();
-    IF NOT (Transaction.EnvelopeLevel < currentLevel) THEN
+    IF NOT (Txn.EnvelopeLevel < currentLevel) THEN
+      RAISE FatalError(ErrorSupport.Create("ScheduledClientPage.PeekAccess",
+                                           "Not in transaction."));
+    END;
+
+    (* wait for access unless pending lock is released *)
+    lastEntry := self.locks.getLastEntry (currentLevel, lastLevel);
+
+    IF Variant.TestClientScheduler AND
+       ((currentLevel # lastLevel) OR 
+        ((lastEntry.lock#PageLock.Mode.S) AND (lastEntry.lock#PageLock.Mode.X)))THEN
+      Journal.Add ("ScheduledClientPage.PeekAccess\n" &
+		   "page  = (" & self.fmt () & ")");
+    END;
+
+    WHILE lastEntry.lock = PageLock.Mode.P DO		
+      IF NOT (lastLevel = Txn.EnvelopeLevel) THEN
+        RAISE FatalError(ErrorSupport.Create("ScheduledClientPage.PeekAccess",
+                                           "Protocol error."));
+      END;
+      TRY
+        self.scheduledFile.waitAccess (self.logPageNo, PageLock.Mode.C);
+      EXCEPT
+        BaseScheduledClientFile.FatalError(info) =>
+          RAISE FatalError(ErrorSupport.Propagate(
+                               "ScheduledClientPage.PeekAccess",
+                               "BaseScheduledClientFile.FatalError", info));
+      END;
+      lastEntry := self.locks.getLastEntry (currentLevel, lastLevel);
+    END;
+
+    CASE lastEntry.lock OF
+    | PageLock.Mode.P =>
+      RAISE FatalError(ErrorSupport.Create("ScheduledClientPage.PeekAccess",
+                                           "Lock mode error."));
+      
+    | PageLock.Mode.X =>
+        (*
+          nothing to do,
+          peek locks are compatible with write locks
+        *)
+
+    | PageLock.Mode.C =>
+
+      (*
+        local and autonomous upgrading of cached lock
+      *)
+      IF NOT (lastLevel = Txn.EnvelopeLevel) THEN
+        RAISE FatalError(ErrorSupport.Create("ScheduledClientPage.PeekAccess",
+                                             "Lock mode error."));
+      END;
+
+    | PageLock.Mode.S =>
+
+    | PageLock.Mode.O =>
+
+      IF lastEntry.handle = NIL THEN
+        TRY
+          page := self.scheduledFile.getData (
+                           self.logPageNo, self.pageAge,
+                           PageLock.Mode.O, transferData := TRUE);
+        EXCEPT
+          BaseScheduledClientFile.FatalError(info) =>
+          RAISE FatalError(ErrorSupport.Propagate(
+                               "ScheduledClientPage.PeekAccess",
+                               "BaseScheduledClientFile.FatalError", info));
+        END;
+        lastEntry.handle := PageCache.InsertPage (
+                                self.logPageNo,
+                                self.scheduledFile.getOriginalMedia (),
+                                page.data);
+        lastEntry.lock := PageLock.Mode.O;
+        self.locks.putEntry (currentLevel, lastEntry);
+        changes := TRUE;
+      END
+    END;
+
+    IF Variant.TestClientScheduler AND changes THEN
+      Journal.Add ("ScheduledClientPage.PeekAccess  " &
+		   "page' = (" & self.fmt () & ")");
+    END;
+
+    RETURN lastEntry.handle;
+  END PeekAccess;
+
+
+PROCEDURE ReadAccess	(         self		:T;
+                              VAR pageAge       :CARDINAL) :PageHandle.T
+			RAISES {Access.Locked, FatalError} =
+  VAR
+    currentLevel	:Txn.Level;
+    lastLevel		:Txn.Level;
+    lastEntry		:ClientLockEntry.T;
+    page		:Page.T;
+    changes		:BOOLEAN := FALSE;
+  BEGIN
+    currentLevel := self.scheduledFile.getTransactionLevel ();
+    IF NOT (Txn.EnvelopeLevel < currentLevel) THEN
       RAISE FatalError(ErrorSupport.Create("ScheduledClientPage.ReadAccess",
                                            "Not in transaction."));
     END;
@@ -260,7 +363,7 @@ PROCEDURE ReadAccess	(         self		:T) :PageHandle.T
 
 
     WHILE lastEntry.lock = PageLock.Mode.P DO		
-      IF NOT (lastLevel = Transaction.EnvelopeLevel) THEN
+      IF NOT (lastLevel = Txn.EnvelopeLevel) THEN
         RAISE FatalError(ErrorSupport.Create("ScheduledClientPage.ReadAccess",
                                            "Protocol error."));
       END;
@@ -303,7 +406,7 @@ PROCEDURE ReadAccess	(         self		:T) :PageHandle.T
       (*
         local and autonomous upgrading of cached lock
       *)
-      IF NOT (lastLevel = Transaction.EnvelopeLevel) THEN
+      IF NOT (lastLevel = Txn.EnvelopeLevel) THEN
         RAISE FatalError(ErrorSupport.Create("ScheduledClientPage.ReadAccess",
                                              "Lock mode error."));
       END;
@@ -322,7 +425,7 @@ PROCEDURE ReadAccess	(         self		:T) :PageHandle.T
                                  "BaseScheduledClientFile.FatalError", info));
         END;
 
-        PageCache.ReInsertPage (lastEntry.handle, page.getAll ());
+        PageCache.ReInsertPage (lastEntry.handle, page.data);
         changes := TRUE;
       END;
       lastEntry.lock := PageLock.Mode.S;
@@ -344,7 +447,7 @@ PROCEDURE ReadAccess	(         self		:T) :PageHandle.T
                                  "BaseScheduledClientFile.FatalError", info));
         END;
 
-        PageCache.ReInsertPage (lastEntry.handle, page.getAll ());
+        PageCache.ReInsertPage (lastEntry.handle, page.data);
         changes := TRUE;
       END;
 
@@ -367,7 +470,7 @@ PROCEDURE ReadAccess	(         self		:T) :PageHandle.T
       lastEntry.handle := PageCache.InsertPage (
                               self.logPageNo,
                               self.scheduledFile.getOriginalMedia (),
-                              page.getAll ());
+                              page.data);
       lastEntry.lock := PageLock.Mode.S;
       self.locks.putEntry (currentLevel, lastEntry);
       changes := TRUE;
@@ -378,24 +481,26 @@ PROCEDURE ReadAccess	(         self		:T) :PageHandle.T
 		   "page' = (" & self.fmt () & ")");
     END;
 
+    pageAge := self.pageAge;
     RETURN lastEntry.handle;
   END ReadAccess;
 
   
-PROCEDURE WriteAccess	(         self		:T) :PageHandle.T
+PROCEDURE WriteAccess	(         self		:T;
+                              VAR pageAge       :CARDINAL) :PageHandle.T
 			RAISES {Access.Locked, FatalError} =
   VAR
-    currentLevel	:Transaction.Level;
-    lastLevel		:Transaction.Level;
+    currentLevel	:Txn.Level;
+    lastLevel		:Txn.Level;
     lastEntry		:ClientLockEntry.T;
-    prevLevel		:Transaction.Level;
+    prevLevel		:Txn.Level;
     prevEntry		:ClientLockEntry.T;
     page		:Page.T;
     shadowMedia		:ShadowMedia.T;
     changes		:BOOLEAN := FALSE;
   BEGIN
     currentLevel := self.scheduledFile.getTransactionLevel ();
-    IF currentLevel <= Transaction.EnvelopeLevel THEN
+    IF currentLevel <= Txn.EnvelopeLevel THEN
       RAISE FatalError(ErrorSupport.Create("ScheduledClientPage.WriteAccess",
                                            "Not in transaction."));
     END;
@@ -414,7 +519,7 @@ PROCEDURE WriteAccess	(         self		:T) :PageHandle.T
     END;
 
     WHILE lastEntry.lock = PageLock.Mode.P DO
-      IF lastLevel # Transaction.EnvelopeLevel THEN
+      IF lastLevel # Txn.EnvelopeLevel THEN
       RAISE FatalError(ErrorSupport.Create("ScheduledClientPage.WriteAccess",
                                            "Protocol error."));
       END;        
@@ -445,7 +550,7 @@ PROCEDURE WriteAccess	(         self		:T) :PageHandle.T
       END;
 
     | PageLock.Mode.C =>
-      IF NOT (lastLevel = Transaction.EnvelopeLevel) THEN
+      IF NOT (lastLevel = Txn.EnvelopeLevel) THEN
         RAISE FatalError(ErrorSupport.Create("ScheduledClientPage.WriteAccess",
                                              "Lock mode error."));
       END;        
@@ -487,7 +592,7 @@ PROCEDURE WriteAccess	(         self		:T) :PageHandle.T
       lastEntry.handle := PageCache.InsertPage (
                               shadowMedia.obtainPageNo (),
                               shadowMedia,
-                              page.getAll ());
+                              page.data);
       self.locks.putEntry (currentLevel, lastEntry);
       changes := TRUE;
 
@@ -517,10 +622,10 @@ PROCEDURE WriteAccess	(         self		:T) :PageHandle.T
         lastEntry.handle.setMedia (shadowMedia);
         lastEntry.handle.setPageNo (shadowMedia.obtainPageNo ());
         IF NOT (lastEntry.handle.isLoad ()) THEN
-          PageCache.ReInsertPage (lastEntry.handle, page.getAll ());
+          PageCache.ReInsertPage (lastEntry.handle, page.data);
         END;
         IF prevEntry.lock = PageLock.Mode.C THEN
-          self.locks.putEntry (Transaction.EnvelopeLevel,
+          self.locks.putEntry (Txn.EnvelopeLevel,
                                ClientLockEntry.T {PageLock.Mode.O, NIL});
         END;
       ELSIF page # NIL THEN
@@ -528,7 +633,7 @@ PROCEDURE WriteAccess	(         self		:T) :PageHandle.T
         lastEntry.handle := PageCache.InsertPage (
                                 shadowMedia.obtainPageNo (),
                                 shadowMedia,
-                                page.getAll ());
+                                page.data);
       ELSE
         (* create a new independent page copy for this level *)
         lastEntry.handle := PageCache.CopyPage (
@@ -539,19 +644,23 @@ PROCEDURE WriteAccess	(         self		:T) :PageHandle.T
       self.locks.putEntry (currentLevel, lastEntry);
       changes := TRUE;
     END;
+
+    (* set new page age *)
+    self.newPageAge := self.scheduledFile.getTransactionNumber ();
     
     IF Variant.TestClientScheduler AND changes THEN
       Journal.Add ("ScheduledClientPage.WriteAccess  " &
 		   "page' = (" & self.fmt () & ")");
     END;
 
+    pageAge := self.pageAge;
     RETURN lastEntry.handle;
   END WriteAccess;
 
   
 PROCEDURE CommitTransaction (     self		:T) RAISES {FatalError}=
   VAR
-    currentLevel	:Transaction.Level;
+    currentLevel	:Txn.Level;
     currentEntry	:ClientLockEntry.T;
     shadowMedia		:ShadowMedia.T;
     changes		:BOOLEAN := FALSE;
@@ -559,7 +668,7 @@ PROCEDURE CommitTransaction (     self		:T) RAISES {FatalError}=
   PROCEDURE CommitNestedTransaction () RAISES {FatalError} =
     VAR
       prevEntry         :ClientLockEntry.T;
-      prev2Level        :Transaction.Level;
+      prev2Level        :Txn.Level;
       prev2Entry        :ClientLockEntry.T;
     BEGIN
       CASE currentEntry.lock OF
@@ -636,28 +745,36 @@ PROCEDURE CommitTransaction (     self		:T) RAISES {FatalError}=
         IF currentEntry.handle.isLoad () THEN
           (* place page as cached in envelope *)
           currentEntry.lock := PageLock.Mode.C;
-          self.locks.putEntry (Transaction.EnvelopeLevel, currentEntry);
+          self.locks.putEntry (Txn.EnvelopeLevel, currentEntry);
         ELSE
           (* downgrade lock and clear envelope *)
           self.scheduledFile.putData (
                    self.logPageNo, self.pageAge, PageLock.Mode.O, page := NIL);
           PageCache.RemovePage (currentEntry.handle);
-          self.locks.putEntry (Transaction.EnvelopeLevel,
+          self.locks.putEntry (Txn.EnvelopeLevel,
                                ClientLockEntry.T {PageLock.Mode.O, NIL});
         END;
         changes := TRUE;
 
       | PageLock.Mode.X =>
-        (* set new page age *)
-        self.pageAge := self.scheduledFile.getTransactionNumber ();
+        IF self.newPageAge = self.scheduledFile.getTransactionNumber () THEN
+          (* set new page age *)
+          self.pageAge := self.newPageAge;
         
-        (* transfer changes back to server *)
-        page := NEW (Page.T);
-        page.putData (currentEntry.handle.getAll ());
-        self.scheduledFile.putData (self.logPageNo,
-                                    self.pageAge,
-                                    PageLock.Mode.C,
-                                    page);
+          (* transfer changes back to server *)
+          page := NEW (Page.T);
+          PROCEDURE GetAll(READONLY data: PageData.T) =
+            BEGIN
+              page.data := data;
+            END GetAll;
+          BEGIN
+            currentEntry.handle.getAll (GetAll);
+          END;
+          self.scheduledFile.putData (self.logPageNo,
+                                      self.pageAge,
+                                      PageLock.Mode.C,
+                                      page);
+        END;
 
         (* relocate page to original media *)
         shadowMedia := currentEntry.handle.getMedia ();
@@ -668,7 +785,7 @@ PROCEDURE CommitTransaction (     self		:T) RAISES {FatalError}=
 
         (* place page as cached in envelope *)
         currentEntry.lock := PageLock.Mode.C;
-        self.locks.putEntry (Transaction.EnvelopeLevel, currentEntry);
+        self.locks.putEntry (Txn.EnvelopeLevel, currentEntry);
         changes := TRUE;
       END;
       self.locks.putEntry (currentLevel, ClientLockEntry.T {PageLock.Mode.O, NIL});
@@ -686,10 +803,10 @@ PROCEDURE CommitTransaction (     self		:T) RAISES {FatalError}=
     currentLevel := self.scheduledFile.getTransactionLevel ();
     currentEntry := self.locks.getEntry (currentLevel);
 
-    IF Transaction.TopLevel < currentLevel THEN
+    IF Txn.TopLevel < currentLevel THEN
       CommitNestedTransaction ();
     ELSE
-      IF Transaction.TopLevel # currentLevel THEN
+      IF Txn.TopLevel # currentLevel THEN
         RAISE FatalError(ErrorSupport.Create(
                              "ScheduledClientPage.CommitTransaction",
                              "Protocol error."));
@@ -704,16 +821,155 @@ PROCEDURE CommitTransaction (     self		:T) RAISES {FatalError}=
   END CommitTransaction;
 
   
+PROCEDURE ChainTransaction (     self		:T) RAISES {FatalError}=
+  VAR
+    currentLevel	:Txn.Level;
+    currentEntry	:ClientLockEntry.T;
+    shadowMedia		:ShadowMedia.T;
+    changes		:BOOLEAN := FALSE;
+
+  PROCEDURE ChainNestedTransaction () RAISES {FatalError} =
+    VAR
+      prevEntry         :ClientLockEntry.T;
+      prev2Level        :Txn.Level;
+      prev2Entry        :ClientLockEntry.T;
+    BEGIN
+      CASE currentEntry.lock OF
+      | PageLock.Mode.P, PageLock.Mode.C =>
+        RAISE FatalError(ErrorSupport.Create(
+                             "ScheduledClientPage.ChainNestedTransaction",
+                             "Protocol error."));
+
+      | PageLock.Mode.O =>
+        (* nothing to do, page unused *)
+
+      | PageLock.Mode.S =>
+        prevEntry := self.locks.getEntry (currentLevel-1);
+        CASE prevEntry.lock OF
+        | PageLock.Mode.P, PageLock.Mode.C =>
+          RAISE FatalError(ErrorSupport.Create(
+                             "ScheduledClientPage.ChainNestedTransaction",
+                             "Protocol error."));
+
+        | PageLock.Mode.O =>
+          self.locks.putEntry (currentLevel-1, currentEntry);
+          changes := TRUE;
+
+        | PageLock.Mode.S, PageLock.Mode.X =>
+          (* nothing to do *)
+
+        END;
+      | PageLock.Mode.X =>
+        prevEntry := self.locks.getEntry (currentLevel-1);
+        CASE prevEntry.lock OF
+        | PageLock.Mode.P, PageLock.Mode.C =>
+          RAISE FatalError(ErrorSupport.Create(
+                             "ScheduledClientPage.ChainNestedTransaction",
+                             "Protocol error."));
+
+        | PageLock.Mode.O =>
+
+        | PageLock.Mode.X =>
+          shadowMedia := prevEntry.handle.getMedia ();
+          shadowMedia.freePageNo (prevEntry.handle.getPageNo ());
+          PageCache.RemovePage (prevEntry.handle);
+
+        | PageLock.Mode.S =>
+          prev2Entry := self.locks.getLastEntry (currentLevel-2, prev2Level);
+          IF prev2Entry.lock = PageLock.Mode.O THEN
+            PageCache.RemovePage (prevEntry.handle);
+          END;
+        END;
+
+        shadowMedia := currentEntry.handle.getMedia ();        
+        currentEntry.handle := PageCache.CopyPage (
+                                   currentEntry.handle,
+                                   shadowMedia.obtainPageNo (),
+                                   shadowMedia);
+
+        self.locks.putEntry (currentLevel-1, currentEntry);
+
+        changes := TRUE;
+      END;
+    END ChainNestedTransaction;
+
+  PROCEDURE ChainTopLevelTransaction () RAISES {FatalError}=
+    VAR
+      page              :Page.T;
+    BEGIN
+      CASE currentEntry.lock OF
+      | PageLock.Mode.P, PageLock.Mode.C =>
+        RAISE FatalError(ErrorSupport.Create(
+                             "ScheduledClientPage.ChainTopLevelTransaction",
+                             "Protocol error."));
+
+      | PageLock.Mode.O =>
+        (* nothing to do, page unused *)
+
+      | PageLock.Mode.S =>
+        IF currentEntry.handle.isLoad () THEN
+          (* place page as cached in envelope *)
+          currentEntry.lock := PageLock.Mode.C;
+          self.locks.putEntry (Txn.EnvelopeLevel, currentEntry);
+          changes := TRUE;
+        END;
+
+      | PageLock.Mode.X =>
+        IF self.newPageAge = self.scheduledFile.getTransactionNumber () THEN
+          (* set new page age *)
+          self.pageAge := self.newPageAge;
+
+          (* transfer changes back to server *)
+          page := NEW (Page.T);
+          PROCEDURE GetAll(READONLY data: PageData.T) =
+            BEGIN
+              page.data := data;
+            END GetAll;
+          BEGIN
+            currentEntry.handle.getAll (GetAll);
+          END;
+          self.scheduledFile.putData (self.logPageNo,
+                                      self.pageAge,
+                                      PageLock.Mode.C, (* server ignores C *)
+                                      page);
+          changes := TRUE;
+        END
+      END
+    END ChainTopLevelTransaction;
+
+  (* ChainTransaction *)
+  BEGIN
+    currentLevel := self.scheduledFile.getTransactionLevel ();
+    currentEntry := self.locks.getEntry (currentLevel);
+
+    IF Txn.TopLevel < currentLevel THEN
+      ChainNestedTransaction ();
+    ELSE
+      IF Txn.TopLevel # currentLevel THEN
+        RAISE FatalError(ErrorSupport.Create(
+                             "ScheduledClientPage.ChainTransaction",
+                             "Protocol error."));
+      END;
+      ChainTopLevelTransaction ();
+    END;
+
+    IF Variant.TestClientScheduler AND changes THEN
+      Journal.Add ("ScheduledClientPage.ChainTransaction  " &
+		   "page' = (" & self.fmt () & ")");
+    END;
+  END ChainTransaction;
+
+  
 PROCEDURE AbortTransaction (      self		:T) RAISES {FatalError} =
   VAR
-    currentLevel	:Transaction.Level;
+    currentLevel	:Txn.Level;
     currentEntry	:ClientLockEntry.T;
     shadowMedia		:ShadowMedia.T;
     changes		:BOOLEAN := FALSE;
 
   PROCEDURE AbortNestedTransaction () RAISES {FatalError} =
     VAR
-      prevLevel		:Transaction.Level;
+      prevLevel		:Txn.Level;
       prevEntry		:ClientLockEntry.T;
     BEGIN
       CASE currentEntry.lock OF
@@ -731,7 +987,7 @@ PROCEDURE AbortTransaction (      self		:T) RAISES {FatalError} =
         IF prevEntry.lock = PageLock.Mode.O THEN
           IF currentEntry.handle.isLoad () THEN
             currentEntry.lock := PageLock.Mode.C;
-            self.locks.putEntry (Transaction.EnvelopeLevel, currentEntry);
+            self.locks.putEntry (Txn.EnvelopeLevel, currentEntry);
           ELSE
             self.scheduledFile.putData (
                      self.logPageNo, self.pageAge, PageLock.Mode.O, page := NIL);
@@ -782,13 +1038,13 @@ PROCEDURE AbortTransaction (      self		:T) RAISES {FatalError} =
         IF currentEntry.handle.isLoad () THEN
           (* place page as cached in envelope *)
           currentEntry.lock := PageLock.Mode.C;
-          self.locks.putEntry (Transaction.EnvelopeLevel, currentEntry);
+          self.locks.putEntry (Txn.EnvelopeLevel, currentEntry);
         ELSE
           (* downgrade lock and clear envelope *)
           self.scheduledFile.putData (
                    self.logPageNo, self.pageAge, PageLock.Mode.O, page := NIL);
           PageCache.RemovePage (currentEntry.handle);
-          self.locks.putEntry (Transaction.EnvelopeLevel,
+          self.locks.putEntry (Txn.EnvelopeLevel,
                                ClientLockEntry.T {PageLock.Mode.O, NIL});
         END;
         self.locks.putEntry (currentLevel, ClientLockEntry.T{PageLock.Mode.O, NIL});
@@ -817,10 +1073,10 @@ PROCEDURE AbortTransaction (      self		:T) RAISES {FatalError} =
     currentLevel := self.scheduledFile.getTransactionLevel ();
     currentEntry := self.locks.getEntry (currentLevel);
 
-    IF Transaction.TopLevel < currentLevel THEN
+    IF Txn.TopLevel < currentLevel THEN
       AbortNestedTransaction ();
     ELSE
-      IF NOT (Transaction.TopLevel = currentLevel) THEN
+      IF NOT (Txn.TopLevel = currentLevel) THEN
         RAISE FatalError(ErrorSupport.Create(
                              "ScheduledClientPage.AbortTransaction",
                              "Protocol error."));
@@ -840,8 +1096,8 @@ PROCEDURE ReleaseCallback (       self		:T;
                                   lock		:PageLock.CallbackMode)
 			  RAISES {Access.Locked, CallbackPort.FatalError} =
   VAR
-    currentLevel	:Transaction.Level;
-    lastLevel		:Transaction.Level;
+    currentLevel	:Txn.Level;
+    lastLevel		:Txn.Level;
     lastEntry		:ClientLockEntry.T;
   BEGIN
     (*
@@ -867,7 +1123,7 @@ PROCEDURE ReleaseCallback (       self		:T;
 
     | PageLock.Mode.O =>
       (* cache locks must reside in the envelope *)
-      IF lastLevel # Transaction.EnvelopeLevel THEN
+      IF lastLevel # Txn.EnvelopeLevel THEN
         RAISE CallbackPort.FatalError(ErrorSupport.Create(
                                           "ScheduledClientPage.ReleaseCallback",
                                           "Protocol error: Transaction level."));
@@ -885,7 +1141,7 @@ PROCEDURE ReleaseCallback (       self		:T;
 
     | PageLock.Mode.C =>
       (* cache locks must reside in the envelope *)
-      IF lastLevel # Transaction.EnvelopeLevel THEN
+      IF lastLevel # Txn.EnvelopeLevel THEN
         RAISE CallbackPort.FatalError(ErrorSupport.Create(
                                           "ScheduledClientPage.ReleaseCallback",
                                           "Protocol error: Transaction level."));
@@ -933,7 +1189,7 @@ PROCEDURE PropagateCallback (     self		:T;
                                   page          :Page.T)
   RAISES {CallbackPort.FatalError} =
   VAR
-    lastLevel		:Transaction.Level;
+    lastLevel		:Txn.Level;
     envelopeEntry	:ClientLockEntry.T;
     changes		:BOOLEAN := FALSE;
   BEGIN
@@ -947,7 +1203,7 @@ PROCEDURE PropagateCallback (     self		:T;
     envelopeEntry := self.locks.getLastEntry (
                               self.scheduledFile.getTransactionLevel(), lastLevel);
     (* page data must'nt be used at all *)
-    IF NOT (lastLevel = Transaction.EnvelopeLevel) THEN
+    IF NOT (lastLevel = Txn.EnvelopeLevel) THEN
       RAISE CallbackPort.FatalError(ErrorSupport.Create(
                                         "ScheduledClientPage.PropagateCallback",
                                         "Protocol error: Page in use."));
@@ -1001,11 +1257,11 @@ PROCEDURE PropagateCallback (     self		:T;
 
         (* reset lock *)
         envelopeEntry.lock := PageLock.Mode.C;
-        self.locks.putEntry (Transaction.EnvelopeLevel, envelopeEntry);
+        self.locks.putEntry (Txn.EnvelopeLevel, envelopeEntry);
 
         IF page # NIL THEN
           (* store propagated data *)
-          envelopeEntry.handle.putData (page.getAll ());
+          envelopeEntry.handle.putData (page.data);
           envelopeEntry.handle.unmarkChanges ();
           self.pageAge := pageAge;
         ELSE
@@ -1024,7 +1280,7 @@ PROCEDURE PropagateCallback (     self		:T;
 
         envelopeEntry.lock := PageLock.Mode.O;
         envelopeEntry.handle := NIL;
-        self.locks.putEntry (Transaction.EnvelopeLevel, envelopeEntry);
+        self.locks.putEntry (Txn.EnvelopeLevel, envelopeEntry);
         changes := TRUE;
       END
     END;
@@ -1040,8 +1296,8 @@ PROCEDURE DropData	(         self		:T;
                                   handle	:PageHandle.T)
   RAISES {FatalError} =
   VAR
-    currentLevel	:Transaction.Level;
-    thisLevel		:Transaction.Level;
+    currentLevel	:Txn.Level;
+    thisLevel		:Txn.Level;
     thisEntry		:ClientLockEntry.T;
     changes		:BOOLEAN := FALSE;
   BEGIN
@@ -1072,13 +1328,13 @@ PROCEDURE DropData	(         self		:T;
       (* nothing to do, lock can't be dropped *)
 
     | PageLock.Mode.C, PageLock.Mode.P =>
-      IF NOT (thisLevel = Transaction.EnvelopeLevel) THEN
+      IF NOT (thisLevel = Txn.EnvelopeLevel) THEN
         RAISE FatalError(ErrorSupport.Create("ScheduledClientPage.DropData",
                                              "Protocol error."));
       END;
       self.scheduledFile.putData (
                self.logPageNo, self.pageAge, PageLock.Mode.O, page := NIL);
-      self.locks.putEntry (Transaction.EnvelopeLevel,
+      self.locks.putEntry (Txn.EnvelopeLevel,
                            ClientLockEntry.T {PageLock.Mode.O, NIL});
       PageCache.RemovePage (thisEntry.handle);
       changes := TRUE;

@@ -35,9 +35,13 @@ PROCEDURE WalkRef (r: REFANY;  m: Mask;  v: Visitor) RAISES ANY =
 PROCEDURE DoWalkRef (t: RT0.TypeDefn; a: ADDRESS; m: Mask; v: Visitor)
   RAISES ANY =
   BEGIN
-    IF (t.parent # NIL) THEN
-      DoWalkRef (t.parent, a, m, v);
-      INC (a, t.dataOffset);
+    IF (t.kind = ORD (RT0.TypeKind.Obj)) THEN
+      VAR tt := LOOPHOLE (t, RT0.ObjectTypeDefn); BEGIN
+        IF (tt.parent # NIL) THEN
+          DoWalkRef (tt.parent, a, m, v);
+          INC (a, tt.dataOffset);
+        END;
+      END;
     END;
     Walk (a, t.type_map, m, v);
   END DoWalkRef;
@@ -100,7 +104,7 @@ PROCEDURE Walk (x, pc: ADDRESS;  mask: Mask;  v: Visitor) RAISES ANY =
           n := RTMapOp.GetInt (pc, z);
           INC (x, n * ADRSIZE (Byte));
 
-      | Op.Ref, Op.UntracedRef, Op.Proc,
+      | Op.Ref, Op.UntracedRef, Op.TransientRef, Op.Proc,
         Op.Real, Op.Longreal, Op.Extended,
         Op.Int_1, Op.Int_2, Op.Int_4, Op.Int_8,
         Op.Word_1, Op.Word_2, Op.Word_4, Op.Word_8 =>

@@ -257,16 +257,8 @@ HandleNPS ()
 		    We also make sure the pragma isn't too large to fit in
 		       our normal token buffer.  If it is, we give up and
 		       treat it as a comment. */
-
-/* It seems that unputting two characters does not work, at least
-   on flex/bison. Disable for now the special case for recognized
-   pragmas since it currently generates a syntax error message
-   when they are encountered by m3pp. */
- 
-/*		    if (commentLevel == 0 && (tok = CheckPragma()) != -1
+		    if (commentLevel == 0 && (tok = CheckPragma()) != -1
 			&& strlen(comments[0].text) < lexbufsize - 1) {
-*/
-                    if (0) {
 			/* Save it for next time. */
 			--nComments;
 			currentCol = comments[nComments].startCol;

@@ -10,7 +10,7 @@
 MODULE CallExpr;
 
 IMPORT CG, Expr, ExprRep, Error, ProcType, Type, UserProc;
-IMPORT KeywordExpr, ESet, QualifyExpr, ErrType, Value;
+IMPORT KeywordExpr, ESet, QualifyExpr, ErrType, Value, Target;
 
 REVEAL
   MethodList = BRANDED "CallExpr.MethodList" REF RECORD
@@ -30,6 +30,7 @@ REVEAL
                  prepBR       : CompilerBR;
                  compilerBR   : CompilerBR;
                  evaluator    : Evaluator;
+                 bounder      : Bounder;
                  isWritable   : Predicate;
                  isDesignator : Predicate;
                  noteWriter   : NoteWriter;
@@ -51,7 +52,7 @@ REVEAL
         compileBR    := CompileBR;
         evaluate     := Fold;
         isEqual      := ExprRep.NeverEq;
-        getBounds    := ExprRep.NoBounds;
+        getBounds    := GetBounds;
         isWritable   := IsWritable;
         isDesignator := IsDesignator;
 	isZeroes     := ExprRep.IsNever;
@@ -107,6 +108,7 @@ PROCEDURE NewMethodList (minArgs, maxArgs: INTEGER;
                          prepBR       : CompilerBR;
 			 compilerBR   : CompilerBR;
                          evaluator    : Evaluator;
+                         bounder      : Bounder;
                          isWritable   : Predicate;
                          isDesignator : Predicate;
                          noteWriter   : NoteWriter): MethodList =
@@ -129,6 +131,7 @@ PROCEDURE NewMethodList (minArgs, maxArgs: INTEGER;
     m.prepBR       := prepBR;
     m.compilerBR   := compilerBR;
     m.evaluator    := evaluator;
+    m.bounder      := bounder;
     m.isWritable   := isWritable;
     m.isDesignator := isDesignator;
     m.noteWriter   := noteWriter;
@@ -149,6 +152,11 @@ PROCEDURE NoValue (<*UNUSED*> t: T): Expr.T =
   BEGIN
     RETURN NIL;
   END NoValue;
+
+PROCEDURE NoBounds (t: T;  VAR min, max: Target.Int) =
+  BEGIN
+    ExprRep.NoBounds (t, min, max);
+  END NoBounds;
 
 PROCEDURE NotAddressable (<*UNUSED*> t: T) =
   BEGIN
@@ -216,7 +224,7 @@ PROCEDURE TypeOf (p: T): Type.T =
   BEGIN
     Resolve (p);
     IF (p.methods = NIL) THEN
-      p.type := NIL;
+      p.type := ErrType.T;
     ELSIF (p.methods.fixedType # NIL) OR (p.methods.typeOf = NIL) THEN
       p.type := p.methods.fixedType;
     ELSE
@@ -237,8 +245,10 @@ PROCEDURE Check (p: T;  VAR cs: Expr.CheckState) =
     Expr.TypeCheck (p.proc, cs);
     Resolve (p);
     Error.Count (nErrs1, nWarns);
-    IF (p.methods = NIL) AND (nErrs0 = nErrs1) THEN
-      Error.Msg ("attempting to call a non-procedure" & ProcName (p));
+    IF (p.methods = NIL) THEN
+      IF (nErrs0 = nErrs1) AND (Expr.TypeOf (p.proc) # ErrType.T) THEN
+        Error.Msg ("attempting to call a non-procedure" & ProcName (p));
+      END;
       p.type := ErrType.T;
     END;
 
@@ -341,6 +351,18 @@ PROCEDURE Fold (p: T): Expr.T =
     IF (p.methods = NIL) THEN RETURN NIL END;
     RETURN p.methods.evaluator (p);
   END Fold;
+
+PROCEDURE GetBounds (p: T;  VAR min, max: Target.Int) =
+  VAR e := Fold (p);
+  BEGIN
+    IF (e # NIL) AND (e # p) THEN
+      Expr.GetBounds (e, min, max);
+    ELSIF (p.methods = NIL) THEN
+      ExprRep.NoBounds (p, min, max);
+    ELSE
+      p.methods.bounder (p, min, max);
+    END;
+  END GetBounds;
 
 PROCEDURE IsDesignator (p: T): BOOLEAN =
   BEGIN

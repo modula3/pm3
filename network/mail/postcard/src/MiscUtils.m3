@@ -4,8 +4,7 @@ only by permission.  *) (* OSUtils.mod *) (* Last modified on Tue Aug
 
 MODULE MiscUtils;
 
-IMPORT ASCII, Rd, Text, TextF (* REVEAL Text = BRANDED REF ARRAY OF CHAR *),
-       Thread, Wr;
+IMPORT ASCII, Rd, Text, Thread, Wr;
 
 (* *)
 (* Operations on TEXT, Rd.T and Wr.T *)
@@ -17,26 +16,26 @@ PROCEDURE ToInt(t: TEXT): INTEGER RAISES { BadFormat } =
   BEGIN
     LOOP
       IF pos >= len THEN RAISE BadFormat END;
-      IF NOT (t[pos] IN White) THEN EXIT END;
+      IF NOT (Text.GetChar(t, pos) IN White) THEN EXIT END;
       INC(pos);
     END;
-    IF t[pos] = '+' THEN INC(pos)
-    ELSIF t[pos] = '-' THEN neg := TRUE; INC(pos)
+    IF Text.GetChar(t, pos) = '+' THEN INC(pos)
+    ELSIF Text.GetChar(t, pos) = '-' THEN neg := TRUE; INC(pos)
     END;
     LOOP
       IF pos >= len THEN RAISE BadFormat END;
-      IF NOT (t[pos] IN White) THEN EXIT END;
+      IF NOT (Text.GetChar(t, pos) IN White) THEN EXIT END;
       INC(pos);
     END;
     LOOP
-      IF t[pos] >= '0' AND t[pos] <= '9' THEN
+      IF Text.GetChar(t, pos) >= '0' AND Text.GetChar(t, pos) <= '9' THEN
         IF neg THEN (* get most-negative integer correct *)
-          i := i * 10 - (ORD(t[pos]) - ORD('0'));
+          i := i * 10 - (ORD(Text.GetChar(t, pos)) - ORD('0'));
         ELSE
-          i := i * 10 + (ORD(t[pos]) - ORD('0'));
+          i := i * 10 + (ORD(Text.GetChar(t, pos)) - ORD('0'));
         END;
         INC(pos);
-      ELSIF t[pos] IN White THEN
+      ELSIF Text.GetChar(t, pos) IN White THEN
         EXIT
       ELSE
         RAISE BadFormat
@@ -56,7 +55,7 @@ PROCEDURE PutTextSub(wr: Wr.T; t: TEXT; start: CARDINAL;
                      length: CARDINAL := LAST(CARDINAL))
         RAISES { Wr.Failure, Thread.Alerted } =
   BEGIN
-    Wr.PutString(wr, SUBARRAY(t^, start, MIN(length, NUMBER(t^)-start)));
+    Wr.PutText(wr, Text.Sub(t, start, length));
   END PutTextSub;
 
 PROCEDURE Equal(t, u: TEXT; ignoreCase: BOOLEAN := FALSE): BOOLEAN =
@@ -71,7 +70,7 @@ PROCEDURE Equal(t, u: TEXT; ignoreCase: BOOLEAN := FALSE): BOOLEAN =
         RETURN FALSE
       ELSE
         FOR i := 0 TO len DO
-          IF ASCII.Lower[t[i]] # ASCII.Lower[u[i]] THEN RETURN FALSE END;
+          IF ASCII.Lower[Text.GetChar(t, i)] # ASCII.Lower[Text.GetChar(u, i)] THEN RETURN FALSE END;
         END;
         RETURN TRUE
       END
@@ -83,9 +82,10 @@ PROCEDURE Equal(t, u: TEXT; ignoreCase: BOOLEAN := FALSE): BOOLEAN =
 PROCEDURE Find(txt: TEXT; start: CARDINAL; pat: TEXT;
                ignoreCase: BOOLEAN := FALSE): INTEGER =
   VAR found: INTEGER;
+      chars := NEW(REF ARRAY OF CHAR, Text.Length(txt) - start);
   BEGIN
-    found := FindInSub(SUBARRAY(txt^, start, MAX(0,Text.Length(txt)-start)),
-                     pat, ignoreCase);
+    Text.SetChars (chars^, txt, start);
+    found := FindInSub(chars^, pat, ignoreCase);
     IF found < 0 THEN RETURN found ELSE RETURN found + start END;
   END Find;
 
@@ -100,10 +100,10 @@ PROCEDURE FindInSub(READONLY sub: ARRAY OF CHAR; pat: TEXT;
     IF len = 0 THEN RETURN 0 END;
     FOR i := 0 TO len-1 DO
       IF ignoreCase THEN
-        tbl[ASCII.Lower[pat[i]]] := len - i - 1;
-        tbl[ASCII.Upper[pat[i]]] := len - i - 1;
+        tbl[ASCII.Lower[Text.GetChar(pat, i)]] := len - i - 1;
+        tbl[ASCII.Upper[Text.GetChar(pat, i)]] := len - i - 1;
       ELSE
-        tbl[pat[i]] := len - i - 1;
+        tbl[Text.GetChar(pat, i)] := len - i - 1;
       END;
     END;
     WHILE p < txtlen DO
@@ -113,11 +113,11 @@ PROCEDURE FindInSub(READONLY sub: ARRAY OF CHAR; pat: TEXT;
           VAR j := 0; startOfMatch := p-(len-1); BEGIN
             IF ignoreCase THEN
               WHILE j # len AND
-                  ASCII.Lower[pat[j]] = ASCII.Lower[sub[startOfMatch+j]] DO
+                  ASCII.Lower[Text.GetChar(pat, j)] = ASCII.Lower[sub[startOfMatch+j]] DO
                 INC(j);
               END;
             ELSE
-              WHILE j # len AND pat[j] = sub[startOfMatch+j] DO INC(j) END;
+              WHILE j # len AND Text.GetChar(pat, j) = sub[startOfMatch+j] DO INC(j) END;
             END;
             IF j = len THEN RETURN startOfMatch ELSE INC(p) END
           END

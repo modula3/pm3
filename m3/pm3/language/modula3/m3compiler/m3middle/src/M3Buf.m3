@@ -8,7 +8,7 @@
 
 MODULE M3Buf;
 
-IMPORT TextF, Wr, Convert, Thread, Target, TInt, M3FP;
+IMPORT Wr, Convert, Text, Text8, Thread, Target, TInt, M3FP;
 
 CONST
   ChunkSize = 2 * 1024 - 3 * BYTESIZE (INTEGER);
@@ -70,8 +70,20 @@ PROCEDURE PutSub (t: T;  READONLY x: ARRAY OF CHAR) =
 
 PROCEDURE PutText (t: T;  txt: TEXT) =
   BEGIN
-    PutSub (t, SUBARRAY (txt^, 0, LAST (txt^)));
+    PutSubText (t, txt, 0, LAST (CARDINAL));
   END PutText;
+
+PROCEDURE PutSubText (t: T;  txt: TEXT;  start, len: CARDINAL) =
+  VAR
+    cnt := MIN (len, Text.Length (txt) - start);
+    buf : ARRAY [0..255] OF CHAR;
+  BEGIN
+    WHILE (cnt > 0) DO
+      Text.SetChars (buf, txt, start);
+      PutSub (t, SUBARRAY (buf, 0, MIN (NUMBER (buf), cnt)));
+      INC (start, NUMBER (buf));  DEC (cnt, NUMBER (buf));
+    END;
+  END PutSubText;
 
 CONST digits = ARRAY [0..9] OF CHAR {'0','1','2','3','4','5','6','7','8','9'};
 
@@ -145,21 +157,33 @@ PROCEDURE PutFloat (t: T;  READONLY f: Target.Float) =
   END PutFloat;
 
 PROCEDURE ToText (t: T): TEXT =
-  VAR txt := NEW (TEXT, t.nFull * ChunkSize + t.next + 1);
-  VAR c := t.head;   n := 0;
+  VAR txt: TEXT;
+  BEGIN
+    IF (t.nFull = 0)
+      THEN txt := Text.FromChars (SUBARRAY (t.head.buf, 0, t.next));
+      ELSE txt := MessyToText (t);
+    END;
+    Reset (t);
+    RETURN txt;
+  END ToText;
+
+PROCEDURE MessyToText (t: T): TEXT =
+  VAR
+    len := t.nFull * ChunkSize + t.next;
+    txt := Text8.Create (len);
+    c := t.head;
+    n := 0;
   BEGIN
     FOR i := 1 TO t.nFull DO
-      SUBARRAY (txt^, n, ChunkSize) := c.buf;
+      SUBARRAY (txt.contents^, n, ChunkSize) := c.buf;
       c := c.next;
       INC (n, ChunkSize);
     END;
     IF (t.next # 0) THEN
-      SUBARRAY (txt^, n, t.next) := SUBARRAY (c.buf, 0, t.next);
+      SUBARRAY (txt.contents^, n, t.next) := SUBARRAY (c.buf, 0, t.next);
     END;
-    txt [LAST (txt^)] := '\000';
-    Reset (t);
     RETURN txt;
-  END ToText;
+  END MessyToText;
 
 PROCEDURE ToFP (t: T): M3FP.T =
   VAR fp := M3FP.OfEmpty;

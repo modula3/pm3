@@ -455,6 +455,24 @@ decode_line_2 (struct symbol *sym_arr[], int nelts, int funfirstline,
    lack of single quotes.  FIXME: write a linespec_completer which we
    can use as appropriate instead of make_symbol_completion_list.  */
 
+static struct symtab_and_line
+find_m3_function_start_sal (funfirstline, pc)
+     int funfirstline;
+     CORE_ADDR pc;
+{
+  struct symtab_and_line sal;
+
+  if (funfirstline)
+    {
+      pc += FUNCTION_START_OFFSET;
+      SKIP_PROLOGUE (pc);
+    }
+  sal = find_pc_line (pc, 0);
+  sal.pc = pc;
+
+  return sal;
+}
+
 struct symtabs_and_lines
 decode_line_1 (char **argptr, int funfirstline, struct symtab *default_symtab,
 	       int default_line, char ***canonical)
@@ -1142,6 +1160,72 @@ decode_line_1 (char **argptr, int funfirstline, struct symtab *default_symtab,
       return values;
     }
 
+  /* ----- start Modula-3 */
+
+  /* Let's try to interpret the whole arg as an expression */
+  { struct expression *expr;
+    struct symbol *exports;
+    value_ptr val;
+    struct type *implementers;
+
+    if ((expr = (struct expression *) catch_errors ((int (*)()) parse_expression, saved_arg, (char *) 0, RETURN_MASK_ALL)) != 0
+	&& (val = (value_ptr) catch_errors ((int (*)()) evaluate_expression, expr, (char *) 0, RETURN_MASK_ALL)) != 0) {
+      pc = 0;
+      if (TYPE_CODE (VALUE_TYPE (val)) == TYPE_CODE_FUNC) {
+	/* Found a minimal symbol of the form Unit__Entry
+	   (this happens when direct calls are used, -all_direct). */
+	pc = value_as_pointer (val);
+      } else if (TYPE_CODE (VALUE_TYPE (val)) == TYPE_CODE_M3_PROC) {
+	pc = m3_unpack_pointer2 (val);
+
+	if (pc == 0 && expr->elts[1].opcode == STRUCTOP_M3_INTERFACE) {
+	  /* may be we found a procedure exported by an interface but
+	     implemented by a module with a different name, and the
+	     init code did not run yet, so the interface interface
+	     record isn't set yet.  It could also be a global var so
+	     we have to be careful. saved_arg is of the form a.b, we
+	     want to isolate a. */
+	  int interface_name_length = *argptr - saved_arg;
+	  char *interface_name = alloca (interface_name_length + 1);
+	  char foo [1000];
+	  int i;
+	  strncpy (interface_name, saved_arg, interface_name_length);
+	  interface_name [interface_name_length] = 0;
+
+	  exports = lookup_symbol ("_m3_exporters", 0, 
+				     VAR_NAMESPACE, 0, NULL);
+	  if (exports != 0
+	      && (implementers 
+		  = lookup_struct_elt_type (SYMBOL_TYPE (exports), 
+					    interface_name, 1))
+	      != 0) {
+	    for (i = 0; i < TYPE_NFIELDS (implementers); i++) {
+	      sprintf (foo, "%s%s", TYPE_FIELD_NAME (implementers, i),
+		       *argptr);
+	      if (expr = (struct expression *) catch_errors
+                     ((int (*)()) parse_expression, foo, (char *) 0, RETURN_MASK_ALL)) {
+  		if ((val = (value_ptr) catch_errors ((int (*)()) evaluate_expression,
+						 expr, (char *) 0,
+						 RETURN_MASK_ALL)) != 0) {
+		  if (TYPE_CODE (VALUE_TYPE (val)) == TYPE_CODE_M3_PROC) {
+		    pc = m3_unpack_pointer2 (val);
+		    break; }}}}}}}
+      if (pc != 0) {
+	while (**argptr != '\000') {
+	  (*argptr)++;
+	}
+	sym = 0;
+	/* Arg is the name of a function */
+	values.sals = (struct symtab_and_line *)
+	xmalloc (sizeof (struct symtab_and_line));
+	values.sals[0] = find_m3_function_start_sal (funfirstline, pc);
+	values.nelts = 1;
+
+	return values;
+      }
+    }
+  }
+  /* ----- end Modula-3 */
 
   /* Look up that token as a variable.
      If file specified, use that file's per-file block to start with.  */

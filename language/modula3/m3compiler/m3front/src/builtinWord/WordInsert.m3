@@ -24,17 +24,19 @@ PROCEDURE Check (ce: CallExpr.T;  VAR cs: Expr.CheckState) =
 PROCEDURE Compile (ce: CallExpr.T) =
   VAR t2, t3: CG.Val;  b: BOOLEAN;  max: Target.Int;
   BEGIN
-    CheckExpr.Emit (ce.args[2], TInt.Zero, Target.Integer.max);
+    CheckExpr.EmitChecks (ce.args[2], TInt.Zero, Target.Integer.max,
+                          CG.RuntimeError.ValueOutOfRange);
     t2 := CG.Pop ();
-    CheckExpr.Emit (ce.args[3], TInt.Zero, Target.Integer.max);
+    CheckExpr.EmitChecks (ce.args[3], TInt.Zero, Target.Integer.max,
+                          CG.RuntimeError.ValueOutOfRange);
     t3 := CG.Pop ();
     IF Host.doRangeChk THEN
       b := TInt.FromInt (Target.Integer.size, max);  <*ASSERT b*>
       CG.Push (t2);
       CG.Push (t3);
-      CG.Add (CG.Type.Int);
-      CG.Check_hi (max);
-      CG.Discard (CG.Type.Int);
+      CG.Add (Target.Integer.cg_type);
+      CG.Check_hi (max, CG.RuntimeError.ValueOutOfRange);
+      CG.Discard (Target.Integer.cg_type);
     END;
     Expr.Compile (ce.args[0]);
     CG.Force ();
@@ -83,6 +85,7 @@ PROCEDURE Initialize () =
                                  CallExpr.NotBoolean,
                                  CallExpr.NotBoolean,
                                  Fold,
+                                 CallExpr.NoBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

@@ -8,8 +8,11 @@ EXPORTS ScheduledServerFile, InternalScheduledServerFile;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:39  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:49  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:39  hosking
+    Import of GRAS3 1.1
 
     Revision 1.18  1998/05/19 10:21:56  roland
     Typos and "'" removed from error messages.
@@ -112,13 +115,13 @@ IMPORT
   Page,
   PageFile, PageFileSystem,
   PageCache,
-  Access, PageLock, Transaction,
+  Access, PageLock, Txn,
   CommunicationEntry, ClientInfoSeq,
   ServedClient,
   BaseScheduledServerResource,
   InternalBaseScheduledServerFile,
   ScheduledServerPage, ScheduledServerPageTbl;
-IMPORT ServedClientSetDef AS ServedClientSet;
+IMPORT ServedClientTransientSetDef AS ServedClientSet;
 
 
 REVEAL
@@ -376,7 +379,7 @@ PROCEDURE GetPage	(         self		:T;
 
 PROCEDURE CheckData	(         self		:T;
                                   client	:ServedClient.T;
-                                  end		:Transaction.End;
+                                  end		:Txn.End;
                          READONLY entry		:CommunicationEntry.T)
 			RAISES {Access.Invalid} =
   BEGIN
@@ -388,7 +391,7 @@ PROCEDURE CheckData	(         self		:T;
   
 PROCEDURE PutData	(         self		:T;
                                   client	:ServedClient.T;
-                                  end		:Transaction.End;
+                                  end		:Txn.End;
                          READONLY entry		:CommunicationEntry.T)
 			RAISES {Access.Invalid}=
   BEGIN

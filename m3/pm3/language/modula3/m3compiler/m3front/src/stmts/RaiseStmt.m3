@@ -79,8 +79,7 @@ PROCEDURE Check (p: P;  VAR cs: Stmt.CheckState) =
     ELSIF NOT Type.IsAssignable (u, t) THEN
       Error.QID (p.qid, "argument has wrong type");
     ELSE
-      (* argument is passed by reference *)
-      AssignStmt.Check (t, p.arg, cs);
+      AssignStmt.Check (u, p.arg, cs);
     END;
   END Check;
 

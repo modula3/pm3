@@ -7,8 +7,11 @@ INTERFACE ScheduledServerPage;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:39  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:49  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:39  hosking
+    Import of GRAS3 1.1
 
     Revision 1.6  1997/06/16 12:21:43  rbnix
     	Changed data on server is now stored temporary in a local
@@ -53,7 +56,7 @@ INTERFACE ScheduledServerPage;
  *)
 IMPORT
   Page,
-  PageLock, Access, Transaction,
+  PageLock, Access, Txn,
   CommunicationEntry,
   ServedClient,
   BaseScheduledServerFile;
@@ -65,7 +68,7 @@ CONST
 TYPE
   T			<: Public;
 
-  Public		= OBJECT
+  Public		= <*TRANSIENT*> ROOT OBJECT
     METHODS
       init		(         file		:BaseScheduledServerFile.T;
                                   pageNo	:CARDINAL)
@@ -79,12 +82,12 @@ TYPE
 			RAISES {Access.Invalid, Access.Locked};
 
       checkData		(         client	:ServedClient.T;
-                                  end		:Transaction.End;
+                                  end		:Txn.End;
                          READONLY entry		:CommunicationEntry.T)
 			RAISES {Access.Invalid};
 
       putData		(         client	:ServedClient.T;
-                                  end		:Transaction.End;
+                                  end		:Txn.End;
                          READONLY entry		:CommunicationEntry.T)
 			RAISES {Access.Invalid};
       

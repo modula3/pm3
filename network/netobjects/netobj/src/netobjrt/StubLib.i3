@@ -12,34 +12,35 @@
    support for marshaling and unmarshaling method calls for a 
    specific subtype of "NetObj.T".  Usually, stubs are 
    built automatically.
-<SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>NetObj.T</SPAN>
-<SPAN CLASS=INDEX.TEXT><TT>NetObj.T</TT></SPAN>
-</SPAN>
+   <SPAN CLASS=INDEX.MARK>
+   <SPAN CLASS=INDEX.KEY>NetObj.T</SPAN>
+   <SPAN CLASS=INDEX.TEXT><TT>NetObj.T</TT></SPAN>
+   </SPAN>
 
    For each "NetObj.T" subtype "T" intended to support remote method 
    invocation there must be both a client and a server stub. 
    <SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>stubs</SPAN>
-</SPAN>
+   <SPAN CLASS=INDEX.KEY>stubs</SPAN>
+   </SPAN>
 
 
    The client stub defines a subtype of "T" in which every method is 
    overridden by a procedure implementing remote method invocation. 
    Such a <I>surrogate</I> object is constructed by the network 
    object runtime whenever a reference to a non-local object 
-   is encountered.<SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>stubs</SPAN>
-<SPAN CLASS=INDEX.KEY>client</SPAN>
-</SPAN>
+   is encountered.
+   <SPAN CLASS=INDEX.MARK>
+   <SPAN CLASS=INDEX.KEY>stubs</SPAN>
+   <SPAN CLASS=INDEX.KEY>client</SPAN>
+   </SPAN>
  
 
    The server stub consists of a single procedure of type "Dispatcher"
    that is called to unmarshal and dispatch remote invocations.
    <SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>stubs</SPAN>
-<SPAN CLASS=INDEX.KEY>server</SPAN>
-</SPAN>
+   <SPAN CLASS=INDEX.KEY>stubs</SPAN>
+   <SPAN CLASS=INDEX.KEY>server</SPAN>
+   </SPAN>
 
 
    A surrogate type and null dispatcher for "NetObj.T" are defined and
@@ -50,7 +51,7 @@ INTERFACE StubLib;
 IMPORT Atom, AtomList, NetObj, Rd, Wr, Thread;
 
 TYPE
-  Conn <: ROOT;
+  Conn <: <*TRANSIENT*> ROOT;
 
 (* A remote object invocation can be viewed as an exchange of messages 
    between client and server.  The messages are exchanged via
@@ -60,10 +61,10 @@ TYPE
 
    A "Conn" is unmonitored: clients must not access it from two threads
    concurrently.
-<SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>StubLib.Conn</SPAN>
-<SPAN CLASS=INDEX.TEXT><TT>StubLib.Conn</TT></SPAN>
-</SPAN>
+   <SPAN CLASS=INDEX.MARK>
+   <SPAN CLASS=INDEX.KEY>StubLib.Conn</SPAN>
+   <SPAN CLASS=INDEX.TEXT><TT>StubLib.Conn</TT></SPAN>
+   </SPAN>
 *)
 
 TYPE
@@ -401,6 +402,11 @@ PROCEDURE OutChars(
     RAISES {Wr.Failure, Thread.Alerted};
 (* Marshal a char array in native format. *)
 
+PROCEDURE OutWideChars(
+    c: Conn; READONLY chars: ARRAY OF WIDECHAR)
+    RAISES {Wr.Failure, Thread.Alerted};
+(* Marshal a wide char array in native format. *)
+
 PROCEDURE OutBytes(
     c: Conn; READONLY bytes: ARRAY OF Byte8)
     RAISES {Wr.Failure, Thread.Alerted};
@@ -450,6 +456,12 @@ PROCEDURE InChars(
     VAR chars: ARRAY OF CHAR)
     RAISES {NetObj.Error, Rd.Failure, Thread.Alerted};
 (* Unmarshal a char array of length "NUMBER(chars)". *)
+
+PROCEDURE InWideChars(
+    c: Conn; rep: DataRep;
+    VAR chars: ARRAY OF WIDECHAR)
+    RAISES {NetObj.Error, Rd.Failure, Thread.Alerted};
+(* Unmarshal a wide char array of length "NUMBER(chars)". *)
 
 PROCEDURE InBytes(
     c: Conn; VAR bytes: ARRAY OF Byte8)

@@ -1219,6 +1219,10 @@ find_function_addr (value_ptr function, struct type **retval_type)
       funaddr = VALUE_ADDRESS (function);
       value_type = TYPE_TARGET_TYPE (ftype);
     }
+  else if (code == TYPE_CODE_M3_PROC) {
+    funaddr = value_as_pointer (function);
+    value_type = TYPE_M3_PROC_RESTYPE (ftype);}
+
   else if (code == TYPE_CODE_PTR)
     {
       funaddr = value_as_pointer (function);

@@ -8,9 +8,9 @@
 
 MODULE Exceptionz;
 
-IMPORT M3, M3ID, CG, Value, ValueRep, Type, Scope, Formal;
-IMPORT Error, Expr, Token, Decl, Text, Procedure, AssignStmt;
-IMPORT Target, RefType, ProcBody, Module, Runtime, Marker, M3Buf;
+IMPORT M3, M3ID, M3FP, CG, Value, ValueRep, Type, Scope, Formal, M3RT;
+IMPORT Error, Expr, Token, Decl, Text, Procedure, AssignStmt, Addr, Scanner;
+IMPORT Target, RefType, ProcBody, Module, RunTyme, Marker, M3Buf, Int;
 FROM Scanner IMPORT GetToken, Match, MatchID, cur;
 
 TYPE
@@ -18,6 +18,9 @@ TYPE
 	tipe    : Type.T;
         refTipe : Type.T;
         offset  : INTEGER;
+        coffset : INTEGER;
+        uid     : INTEGER;
+        implicit: BOOLEAN;
         next    : T;
       OVERRIDES
         typeCheck   := Check;
@@ -40,6 +43,8 @@ TYPE
   Raiser = ProcBody.T OBJECT
     self   : T;
     arg    : CG.Var;
+    module : CG.Var;
+    line   : CG.Var;
   OVERRIDES
     gen_decl := EmitDecl;
     gen_body := EmitBody;
@@ -49,13 +54,6 @@ PROCEDURE ParseDecl (READONLY att: Decl.Attributes) =
   TYPE TK = Token.T;
   VAR t: T; id: M3ID.T;
   BEGIN
-    IF att.isInline   THEN Error.Msg ("an exception cannot be inline"); END;
-    IF att.isExternal THEN
-      Error.Msg ("an exception cannot be external");
-    ELSIF att.callingConv # NIL THEN
-      Error.Msg ("an exception does not have a calling convention");
-    END;
-
     Match (TK.tEXCEPTION);
     WHILE (cur.token = TK.tIDENT) DO
       id := MatchID ();
@@ -67,6 +65,9 @@ PROCEDURE ParseDecl (READONLY att: Decl.Attributes) =
       t.tipe     := NIL;
       t.refTipe  := NIL;
       t.offset   := 0;
+      t.coffset  := 0;
+      t.uid      := 0;
+      t.implicit := att.isImplicit;
       IF (cur.token = TK.tLPAREN) THEN
         GetToken (); (* ( *)
         t.tipe := Type.Parse ();
@@ -83,7 +84,8 @@ PROCEDURE EmitRaise (v: Value.T;  arg: Expr.T) =
     expr_type: Type.T;
     arg_type: CG.Type;
     info: Type.Info;
-    p := Runtime.LookUpProc (Runtime.Hook.Raise);
+    p := RunTyme.LookUpProc (RunTyme.Hook.RaiseEx);
+    tmp: CG.Val;
   BEGIN
     Value.Declare (t);
     <*ASSERT t.offset # 0*>
@@ -91,55 +93,108 @@ PROCEDURE EmitRaise (v: Value.T;  arg: Expr.T) =
     IF (arg = NIL) THEN
       Procedure.StartCall (p);
       IF Target.DefaultCall.args_left_to_right THEN
-        CG.Load_addr_of (Scope.ToUnit (t), t.offset, CG.Max_alignment);
+        LoadSelf (t);
         CG.Pop_param (CG.Type.Addr);
         CG.Load_nil ();
         CG.Pop_param (CG.Type.Addr);
+        PassLocation ();
       ELSE
+        PassLocation ();
         CG.Load_nil ();
         CG.Pop_param (CG.Type.Addr);
-        CG.Load_addr_of (Scope.ToUnit (t), t.offset, CG.Max_alignment);
+        LoadSelf (t);
         CG.Pop_param (CG.Type.Addr);
       END;
-      EVAL Procedure.EmitCall (p);
+      Procedure.EmitCall (p);
     ELSIF (t.refTipe = NIL) THEN
       expr_type := Expr.TypeOf (arg);
       expr_type := Type.CheckInfo (expr_type, info);
       arg_type := info.stk_type;
       Expr.Prep (arg);
+      AssignStmt.DoEmitCheck (t.tipe, arg);
+      tmp := CG.Pop ();
       Procedure.StartCall (p);
       IF Target.DefaultCall.args_left_to_right THEN
-        CG.Load_addr_of (Scope.ToUnit (t), t.offset, CG.Max_alignment);
+        LoadSelf (t);
         CG.Pop_param (CG.Type.Addr);
-        AssignStmt.EmitCheck (t.tipe, arg);
+        CG.Push (tmp);
         IF (arg_type # CG.Type.Addr) THEN
           CG.Loophole (arg_type, CG.Type.Addr);
         END;
         CG.Pop_param (CG.Type.Addr);
+        PassLocation ();
       ELSE
-        AssignStmt.EmitCheck (t.tipe, arg);
+        PassLocation ();
+        CG.Push (tmp);
         IF (arg_type # CG.Type.Addr) THEN
           CG.Loophole (arg_type, CG.Type.Addr);
         END;
         CG.Pop_param (CG.Type.Addr);
-        CG.Load_addr_of (Scope.ToUnit (t), t.offset, CG.Max_alignment);
+        LoadSelf (t);
         CG.Pop_param (CG.Type.Addr);
       END;
-      EVAL Procedure.EmitCall (p);
+      Procedure.EmitCall (p);
+      CG.Free (tmp);
     ELSE (* large argument => call the raise procedure *)
       expr_type := Expr.TypeOf (arg);
       expr_type := Type.CheckInfo (expr_type, info);
       arg_type := info.stk_type;
       Expr.Prep (arg);
+      AssignStmt.DoEmitCheck (t.tipe, arg);
+      tmp := CG.Pop ();
       CG.Start_call_indirect (CG.Type.Void, Target.DefaultCall);
-      AssignStmt.EmitCheck (t.tipe, arg);
-      IF (arg_type # CG.Type.Addr) THEN Formal.GenCopy (expr_type) END;
-      CG.Pop_param (CG.Type.Addr);
-      CG.Load_addr (Scope.ToUnit (t), t.offset + Target.Address.pack);
-      CG.Call_indirect (CG.Type.Void, Target.DefaultCall);
-      Marker.EmitExceptionTest (Procedure.Signature (p));
+      IF Target.DefaultCall.args_left_to_right THEN
+        CG.Push (tmp);
+        IF (arg_type # CG.Type.Addr) THEN Formal.GenCopy (expr_type) END;
+        CG.Pop_param (CG.Type.Addr);
+        PassLocation ();
+      ELSE
+        PassLocation ();
+        CG.Push (tmp);
+        IF (arg_type # CG.Type.Addr) THEN Formal.GenCopy (expr_type) END;
+        CG.Pop_param (CG.Type.Addr);
+      END;
+      LoadSelf (t);
+      CG.Add_offset (M3RT.ED_SIZE);
+      CG.Boost_alignment (Target.Address.align);
+      CG.Load_indirect (CG.Type.Addr, 0, Target.Address.size);
+      CG.Gen_Call_indirect (CG.Type.Void, Target.DefaultCall);
+      EVAL Marker.EmitExceptionTest (Procedure.Signature (p), need_value := FALSE);
+      CG.Free (tmp);
     END;
   END EmitRaise;
+
+PROCEDURE LoadSelf (t: T) =
+  BEGIN
+    IF (t.imported) THEN
+      Module.LoadGlobalAddr (Scope.ToUnit (t), t.offset, is_const := FALSE);
+      CG.Load_indirect (CG.Type.Addr, 0, Target.Address.size);
+      CG.Boost_alignment (Target.Address.align);
+    ELSE
+      Module.LoadGlobalAddr (Scope.ToUnit (t), t.coffset, is_const := TRUE);
+    END;
+  END LoadSelf;
+
+PROCEDURE PassLocation () =
+  (* push the "module, linenumber" parameters *)
+  VAR
+    globals   := Module.GlobalData (is_const := FALSE);
+    this_file : TEXT;
+    this_line : INTEGER;
+  BEGIN
+    Scanner.Here (this_file, this_line);
+    IF Target.DefaultCall.args_left_to_right THEN
+      CG.Load_addr_of (globals, 0, CG.Max_alignment);
+      CG.Pop_param (CG.Type.Addr);
+      CG.Load_intt (this_line);
+      CG.Pop_param (Target.Integer.cg_type);
+    ELSE
+      CG.Load_intt (this_line);
+      CG.Pop_param (Target.Integer.cg_type);
+      CG.Load_addr_of (globals, 0, CG.Max_alignment);
+      CG.Pop_param (CG.Type.Addr);
+    END;
+  END PassLocation;
 
 PROCEDURE ArgByReference (type: Type.T): BOOLEAN =
   VAR info: Type.Info;
@@ -157,7 +212,7 @@ PROCEDURE Check (t: T;  <*UNUSED*> VAR cs: Value.CheckState) =
         Error.ID (t.name, "argument type must have fixed length");
       END;
       IF ArgByReference (t.tipe) THEN
-        t.refTipe := RefType.New (t.tipe, TRUE, NIL);
+        t.refTipe := RefType.New (t.tipe, TRUE, FALSE, NIL);
         t.refTipe := Type.Check (t.refTipe);
       END;
     END;
@@ -172,19 +227,28 @@ PROCEDURE ArgType (v: Value.T): Type.T =
     END;
   END ArgType;
 
-PROCEDURE CGOffset (v: Value.T): INTEGER =
+PROCEDURE UID (v: Value.T): INTEGER =
   BEGIN
     TYPECASE Value.Base (v) OF
     | NULL => RETURN 0;
-    | T(t) => RETURN t.offset;
+    | T(t) => <*ASSERT t.uid # 0*> RETURN t.uid;
     ELSE      RETURN 0;
     END;
-  END CGOffset;
+  END UID;
+
+PROCEDURE IsImplicit (v: Value.T): BOOLEAN =
+  BEGIN
+    TYPECASE Value.Base (v) OF
+    | NULL => RETURN FALSE;
+    | T(t) => RETURN t.implicit;
+    ELSE      RETURN FALSE;
+    END;
+  END IsImplicit;
 
 PROCEDURE Load (t: T) =
   BEGIN
     Value.Declare (t);
-    CG.Load_addr_of (Scope.ToUnit (t), t.offset, CG.Max_alignment);
+    LoadSelf (t);
   END Load;
 
 PROCEDURE SetGlobals (t: T) =
@@ -195,50 +259,78 @@ PROCEDURE SetGlobals (t: T) =
     IF (t.offset # 0) OR (t.external) THEN RETURN END;
 
     name := Value.GlobalName (t, dots := TRUE, with_module := TRUE);
-    size := Target.Address.size;
+    size := M3RT.ED_SIZE;
     IF (t.refTipe # NIL) THEN INC (size, Target.Address.size) END;
     INC (size, (Text.Length (name) + 1) * Target.Char.size);
-    t.offset := Module.Allocate (size, Target.Address.align, name);
+    t.offset := Module.Allocate (Target.Address.size, Target.Address.align,
+                                 FALSE, name);
+    t.coffset := Module.Allocate (size, Target.Address.align, TRUE, name);
+    t.uid := M3FP.ToInt (M3FP.FromText (name));
   END SetGlobals;
 
 PROCEDURE Declarer (t: T): BOOLEAN =
-  VAR name: TEXT;  unit: CG.Var;  r: Raiser;  arg_type: CG.TypeUID := 0;
+  VAR
+    name: TEXT;
+    globals, consts: CG.Var;
+    arg_type: CG.TypeUID := 0;
+    size: INTEGER;
+    proc: CG.Proc;
   BEGIN
     Type.Compile (t.tipe);
     Type.Compile (t.refTipe);
     IF (t.tipe # NIL) THEN arg_type := Type.GlobalUID (t.tipe) END;
 
     IF t.external OR t.imported THEN
-      (* force the import *)
-      EVAL Scope.ToUnit (t);
+      (* don't bother to force the import *)
     ELSE (* locally declared *)
       SetGlobals (t);
       name := Value.GlobalName (t, dots := TRUE, with_module := TRUE);
-      unit := Module.GlobalData (NIL);
-      CG.Declare_exception (t.name, arg_type, (t.refTipe#NIL), unit, t.offset);
-      CG.Declare_global_field (t.name, t.offset, Target.Address.size, 0);
-      IF (t.refTipe = NIL) THEN
-        CG.Init_var   (t.offset, unit, t.offset + Target.Address.size);
-        CG.Init_chars (t.offset + Target.Address.size, name);
-      ELSE
-        r := NEW (Raiser, self := t);
-        r.name := Value.GlobalName (t, dots := FALSE, with_module := TRUE);
-        r.name := r.name & "_RAISE";
-        r.cg_proc := CG.Declare_procedure (M3ID.Add (r.name), 1, CG.Type.Void,
-                                           lev := 0, cc := Target.DefaultCall,
-                                           exported := FALSE, parent := NIL);
-        r.arg := CG.Declare_param (M3ID.NoID, Target.Address.size,
-                       Target.Address.align, CG.Type.Addr,
-                       CG.Declare_indirect (Type.GlobalUID (t.tipe)),
-                       in_memory := FALSE, up_level := FALSE, f := CG.Always);
-        CG.Init_var (t.offset, unit, t.offset + 2 * Target.Address.size);
-        CG.Init_proc (t.offset + Target.Address.size, r.cg_proc);
-        CG.Init_chars (t.offset + 2 * Target.Address.size, name);
-        ProcBody.Schedule (r);
+      globals := Module.GlobalData (is_const := FALSE);
+      consts  := Module.GlobalData (is_const := TRUE);
+      size := M3RT.ED_SIZE;
+      IF (t.refTipe # NIL) THEN
+        INC (size, Target.Address.pack);
+        proc := DeclareRaiseProc (t);
       END;
+      CG.Declare_exception (t.name, arg_type, (t.refTipe#NIL), consts, t.coffset);
+      CG.Declare_global_field (t.name, t.offset, Target.Address.size, 0, FALSE);
+      CG.Declare_global_field (t.name, t.coffset, size, 0, TRUE);
+      CG.Init_var  (t.offset, consts, t.coffset, FALSE);
+      CG.Init_intt (t.coffset + M3RT.ED_uid, Target.Integer.size, t.uid, TRUE);
+      CG.Init_var  (t.coffset + M3RT.ED_name, consts, t.coffset + size, TRUE);
+      CG.Init_intt (t.coffset + M3RT.ED_implicit, Target.Integer.size,
+                                                       ORD (t.implicit), TRUE);
+      IF (t.refTipe # NIL) THEN
+        CG.Init_proc (t.coffset + M3RT.ED_SIZE, proc, TRUE);
+      END;
+      CG.Init_chars (t.coffset + size, name, TRUE);
     END;
     RETURN TRUE;
   END Declarer;
+
+PROCEDURE DeclareRaiseProc (t: T): CG.Proc =
+  VAR r := NEW (Raiser, self := t);
+  BEGIN
+    r.name    := Value.GlobalName (t, dots := FALSE, with_module := TRUE);
+    r.name    := r.name & "_RAISE";
+    r.cg_proc := CG.Declare_procedure (M3ID.Add (r.name), 3, CG.Type.Void,
+                      lev := 0, cc := Target.DefaultCall, exported := FALSE,
+                      parent := NIL);
+    r.arg     := CG.Declare_param (M3ID.NoID, Target.Address.size,
+                      Target.Address.align, CG.Type.Addr,
+                      CG.Declare_indirect (Type.GlobalUID (t.tipe)),
+                      in_memory := FALSE, up_level := FALSE, f := CG.Always);
+    r.module  := CG.Declare_param (M3ID.NoID, Target.Address.size,
+                      Target.Address.align, CG.Type.Addr,
+                      Type.GlobalUID (Addr.T), in_memory := FALSE,
+                      up_level := FALSE, f := CG.Always);
+    r.line    := CG.Declare_param (M3ID.NoID, Target.Integer.size,
+                      Target.Integer.align, Target.Integer.cg_type,
+                      Type.GlobalUID (Int.T), in_memory := FALSE,
+                      up_level := FALSE, f := CG.Always);
+    ProcBody.Schedule (r);
+    RETURN r.cg_proc;
+  END DeclareRaiseProc;
 
 PROCEDURE EmitDecl (<*UNUSED*> x: Raiser) =
   BEGIN
@@ -247,7 +339,6 @@ PROCEDURE EmitDecl (<*UNUSED*> x: Raiser) =
 PROCEDURE EmitBody (x: Raiser) =
   VAR
     t := x.self;
-    arg := x.arg;
     ptr: CG.Val;
     align: INTEGER;
     proc: Procedure.T;
@@ -259,34 +350,42 @@ PROCEDURE EmitBody (x: Raiser) =
     align := info.alignment;
 
     (* ptr := NEW (REF t.type) *)
-    proc := Runtime.LookUpProc (Runtime.Hook.NewTracedRef);
+    proc := RunTyme.LookUpProc (RunTyme.Hook.NewTracedRef);
     Procedure.StartCall (proc);
     Type.LoadInfo (t.refTipe, -1);
     CG.Pop_param (CG.Type.Addr);
-    ptr := Procedure.EmitCall (proc);
+    ptr := Procedure.EmitValueCall (proc);
 
     (* ptr^ := arg^ *)
     CG.Push (ptr);
     CG.Boost_alignment (align);
-    CG.Load_addr (arg);
+    CG.Load_addr (x.arg);
     CG.Boost_alignment (align);
     CG.Copy (info.size, overlap := FALSE);
 
     (* RAISE (e, ptr) *)
-    proc := Runtime.LookUpProc (Runtime.Hook.Raise);
+    proc := RunTyme.LookUpProc (RunTyme.Hook.RaiseEx);
     Procedure.StartCall (proc);
     IF Target.DefaultCall.args_left_to_right THEN
-      CG.Load_addr_of (Scope.ToUnit (t), t.offset, CG.Max_alignment);
+      LoadSelf (t);
       CG.Pop_param (CG.Type.Addr);
       CG.Push (ptr);
       CG.Pop_param (CG.Type.Addr);
+      CG.Load_addr (x.module);
+      CG.Pop_param (CG.Type.Addr);
+      CG.Load_int (x.line);
+      CG.Pop_param (Target.Integer.cg_type);
     ELSE
+      CG.Load_int (x.line);
+      CG.Pop_param (Target.Integer.cg_type);
+      CG.Load_addr (x.module);
+      CG.Pop_param (CG.Type.Addr);
       CG.Push (ptr);
       CG.Pop_param (CG.Type.Addr);
-      CG.Load_addr_of (Scope.ToUnit (t), t.offset, CG.Max_alignment);
+      LoadSelf (t);
       CG.Pop_param (CG.Type.Addr);
     END;
-    EVAL Procedure.EmitCall (proc);
+    Procedure.EmitCall (proc);
 
     CG.Free (ptr);
     CG.End_procedure (x.cg_proc);

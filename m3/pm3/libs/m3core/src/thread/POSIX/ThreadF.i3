@@ -9,15 +9,7 @@
 
 INTERFACE ThreadF;
 
-IMPORT FloatMode, Thread;
-
-(*--------------------------------------------- exception handling support --*)
-
-PROCEDURE GetCurrentHandlers(): ADDRESS;
-(* == RETURN RTThread.handlerStack *)
-
-PROCEDURE SetCurrentHandlers(h: ADDRESS);
-(* == RTThread.handlerStack := h *)
+IMPORT FloatMode, Thread, RTTxn;
 
 (*--------------------------------------------- garbage collector support ---*)
 
@@ -28,7 +20,7 @@ PROCEDURE ResumeOthers ();
 (* Resume the threads suspended by "SuspendOthers" *)
 
 PROCEDURE ProcessStacks (p: PROCEDURE (start, stop: ADDRESS));
-(* Apply p to each thread stack, with start and stop being the limits
+(* Apply p to each thread stack, with [start..stop] being the limits
    of the stack.  All other threads must be suspended.  ProcessStacks
    exists solely for the garbage collector.  *)
 
@@ -59,7 +51,7 @@ TYPE
 (* PRIVATE VAR hooks: Hooks := NIL *)
 
 TYPE
-  Hooks = OBJECT METHODS
+  Hooks = <*TRANSIENT*> ROOT OBJECT METHODS
     fork (t: Thread.T);  (* called with RT0u.inCritical > 0 *)
     die  (t: Thread.T);  (* called with RT0u.inCritical > 0 *)
   END;
@@ -76,6 +68,14 @@ PROCEDURE MyId(): Id RAISES {};
 VAR
   myId: Id;
   (* The id of the currently running thread *)
+
+VAR (* READONLY *)
+  myTxn: RTTxn.T;
+  (* The txn of the currently running thread *)
+
+PROCEDURE TxnBegin(txn: RTTxn.T);
+PROCEDURE TxnCommit();
+PROCEDURE TxnAbort();
 
 (*------------------------------------------------------------ preemption ---*)
 

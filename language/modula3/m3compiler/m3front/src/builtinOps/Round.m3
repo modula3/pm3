@@ -21,7 +21,7 @@ PROCEDURE Compile (ce: CallExpr.T) =
   VAR e := ce.args[0];
   BEGIN
     Expr.Compile (e);
-    CG.Round (Type.CGType (Expr.TypeOf (e)));
+    CG.Cvt_int (Type.CGType (Expr.TypeOf (e)), CG.Cvt.Round);
   END Compile;
 
 PROCEDURE Fold (ce: CallExpr.T): Expr.T =
@@ -47,6 +47,7 @@ PROCEDURE Initialize () =
                                  CallExpr.NotBoolean,
                                  CallExpr.NotBoolean,
                                  Fold,
+                                 CallExpr.NoBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

@@ -782,7 +782,9 @@ PROCEDURE NextMove (READONLY initial  : Solve.Layout;
     END;
     whyStop := StopReason [status];
 
-    tbl := NIL; (* give the garbage collector a chance *)
+    (* give the garbage collector a chance *)
+    EVAL tbl.init (0);
+    tbl := NIL;
     IF resultArr # NIL THEN 
       FOR i := FIRST (resultArr^) TO LAST (resultArr^) DO
         IF resultArr[i] # NIL THEN

@@ -1,5 +1,5 @@
 Module			("PageLock")
-Module			("Transaction")
+Module			("Txn")
 Module			("Access")
 Module			("Termination")
 

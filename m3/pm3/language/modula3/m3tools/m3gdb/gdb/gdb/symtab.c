@@ -984,8 +984,9 @@ lookup_partial_symbol (struct partial_symtab *pst, const char *name, int global,
 	  center = bottom + (top - bottom) / 2;
 	  if (!(center < top))
 	    internal_error (__FILE__, __LINE__, "failed internal consistency check");
-	  if (!do_linear_search
-	      && (SYMBOL_LANGUAGE (*center) == language_java))
+	  if (!do_linear_search &&
+	      ((SYMBOL_LANGUAGE (*center) == language_java) ||
+	       (SYMBOL_LANGUAGE (*center) == language_m3)))
 	    {
 	      do_linear_search = 1;
 	    }
@@ -1210,7 +1211,9 @@ lookup_block_symbol (register const struct block *block, const char *name,
 	    }
 	  inc = (inc >> 1) + bot;
 	  sym = BLOCK_SYM (block, inc);
-	  if (!do_linear_search && (SYMBOL_LANGUAGE (sym) == language_java))
+	  if (!do_linear_search &&
+	      ((SYMBOL_LANGUAGE (sym) == language_java) ||
+	       (SYMBOL_LANGUAGE (sym) == language_m3)))
 	    {
 	      do_linear_search = 1;
 	    }
@@ -2054,7 +2057,7 @@ find_function_start_sal (struct symbol *sym, int funfirstline)
 #else
   /* Check if SKIP_PROLOGUE left us in mid-line, and the next
      line is still part of the same function.  */
-  if (sal.pc != pc
+  if (sal.pc != pc && sym != NULL
       && BLOCK_START (SYMBOL_BLOCK_VALUE (sym)) <= sal.end
       && sal.end < BLOCK_END (SYMBOL_BLOCK_VALUE (sym)))
     {

@@ -7,8 +7,11 @@ MODULE VirtualPageEventPattern;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:37  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:48  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:37  hosking
+    Import of GRAS3 1.1
 
     Revision 1.1  1997/10/31 14:14:20  roland
     Subsystem introduces event and pattern types for virtual resources.
@@ -16,7 +19,7 @@ MODULE VirtualPageEventPattern;
 *)
 (***************************************************************************)
 
-IMPORT EventPattern, VirtualPageEvent, Transaction, EventType;
+IMPORT EventPattern, VirtualPageEvent, Txn, EventType;
 FROM EventType IMPORT Mismatch, Unknown;
 FROM PrivateVirtualPageEvent IMPORT TypeNumber, TypeToOp, Resource,
                                     ResourceName, Level, IsPre;
@@ -53,7 +56,7 @@ PROCEDURE SetPreEvent (p: T; ispre: BOOLEAN) RAISES {Mismatch, Unknown} =
     END;
   END SetPreEvent;
 
-PROCEDURE SetLevel (p: T; level: Transaction.Level)
+PROCEDURE SetLevel (p: T; level: Txn.Level)
   RAISES {Mismatch, Unknown} =
   VAR opno: INTEGER;
   BEGIN
@@ -97,7 +100,7 @@ PROCEDURE GetIsPreEvent (p: T): BOOLEAN RAISES {Mismatch, Unknown} =
     RETURN VirtualPageEvent.GetIsPreEvent(p);
   END GetIsPreEvent;
 
-PROCEDURE GetLevel (p: T): Transaction.Level RAISES {Mismatch, Unknown} =
+PROCEDURE GetLevel (p: T): Txn.Level RAISES {Mismatch, Unknown} =
   BEGIN
     RETURN VirtualPageEvent.GetLevel(p);
   END GetLevel;

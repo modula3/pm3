@@ -23,7 +23,7 @@ TYPE
   T <: Public;
 
   Public =
-    OBJECT
+    <*TRANSIENT*> ROOT OBJECT
     METHODS
       (**********************************************************************)
       (**                                                                   *)

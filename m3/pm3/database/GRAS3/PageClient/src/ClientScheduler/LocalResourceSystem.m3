@@ -7,8 +7,11 @@ MODULE LocalResourceSystem;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:36  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:48  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:36  hosking
+    Import of GRAS3 1.1
 
     Revision 1.1  1998/02/10 16:36:29  roland
     LocalResourceSystem offers procedures to manage the local part of
@@ -17,7 +20,7 @@ MODULE LocalResourceSystem;
 *)
 (***************************************************************************)
 
-IMPORT Pathname, TextSeq;
+IMPORT Pathname, TextTransientSeq AS TextSeq;
 IMPORT PageFile, PageFileSystem, Config;
 
 PROCEDURE DeleteEmptyDirs (dir: Pathname.T) RAISES {PageFile.NoAccess} =

@@ -3,11 +3,11 @@
 (*                                                                           *)
 (* Last modified on Fri Sep 23 09:51:12 PDT 1994 by heydon                   *)
 
-GENERIC MODULE PQueue(Priority, PQ, PQRep);
+GENERIC MODULE PQueue(Super, Priority, PQ, PQRep);
 (* where "PQ = PQueue(Priority)" and "PQRep = PQueueRep(PQ)". *)
 
 TYPE
-  EltPub = OBJECT
+  EltPub = Super.T OBJECT
     priority: Priority.T;
   END;
 
@@ -76,7 +76,7 @@ PROCEDURE DownHeap(pq: Default; start: Elt) =
 PROCEDURE Init(pq: Default; sizeHint: CARDINAL := 10): Default =
   BEGIN
     IF pq.heap = NIL OR sizeHint > LAST(pq.heap^)
-      THEN pq.heap := NEW(REF ARRAY OF Elt, sizeHint + 1)
+      THEN pq.heap := NEW(PQRep.EltsArray, sizeHint + 1)
       ELSE FOR i := 1 TO pq.sz DO pq.heap[i] := NIL END
     END;
     pq.sz := 0;
@@ -87,7 +87,7 @@ PROCEDURE FromArray(pq: Default; READONLY e: ARRAY OF Elt): Default =
 (* Build heap bottom-up. This takes "O(n)" time, where "n" is "NUMBER(e)". *)
   VAR newSz := NUMBER(e); BEGIN
     IF pq.heap = NIL OR newSz > LAST(pq.heap^)
-      THEN pq.heap := NEW(REF ARRAY OF Elt, newSz + 1)
+      THEN pq.heap := NEW(PQRep.EltsArray, newSz + 1)
       ELSE FOR i := newSz + 1 TO pq.sz DO pq.heap[i] := NIL END;
     END;
     pq.sz := newSz;
@@ -103,7 +103,7 @@ PROCEDURE Insert(pq: Default; READONLY elt: Elt) =
   BEGIN
     INC(pq.sz);
     IF pq.sz > LAST(pq.heap^) THEN
-      VAR new := NEW(REF ARRAY OF Elt, NUMBER(pq.heap^) * 2); BEGIN
+      VAR new := NEW(PQRep.EltsArray, NUMBER(pq.heap^) * 2); BEGIN
         SUBARRAY(new^, 0, NUMBER(pq.heap^)) := pq.heap^;
         pq.heap := new
       END

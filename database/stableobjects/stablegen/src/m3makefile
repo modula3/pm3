@@ -24,6 +24,8 @@ module("StablegenArgs")
 module("StablegenError")
 module("FRefRefTbl")
 implementation("Main")
+
+build_standalone ()
 Program("stablegen")
 
 import("mtex")

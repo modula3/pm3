@@ -7,13 +7,17 @@
 
 INTERFACE CheckExpr;
 
-IMPORT Expr, Target;
+IMPORT Expr, Target, CG;
 
-PROCEDURE New      (a: Expr.T;  READONLY min, max: Target.Int): Expr.T;
-PROCEDURE NewLower (a: Expr.T;  READONLY min: Target.Int): Expr.T;
-PROCEDURE NewUpper (a: Expr.T;  READONLY max: Target.Int): Expr.T;
+PROCEDURE New      (a: Expr.T;  READONLY min, max: Target.Int;
+                    err: CG.RuntimeError): Expr.T;
+PROCEDURE NewLower (a: Expr.T;  READONLY min: Target.Int;
+                    err: CG.RuntimeError): Expr.T;
+PROCEDURE NewUpper (a: Expr.T;  READONLY max: Target.Int;
+                    err: CG.RuntimeError): Expr.T;
 
-PROCEDURE Emit (e: Expr.T;  READONLY min, max: Target.Int);
+PROCEDURE EmitChecks (e: Expr.T;  READONLY min, max: Target.Int;
+                      err: CG.RuntimeError);
 (* compiles 'e' and ensures that it's contained in [min..max] *)
 
 END CheckExpr.

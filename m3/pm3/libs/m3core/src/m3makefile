@@ -18,6 +18,10 @@ include_dir ("Csupport")
 include_dir ("runtime")
 include_dir ("thread")
 
+if equal (TARGET, "OS2")
+  include_dir ("OS2")
+end
+
 if equal (OS_TYPE, "WIN32")
   include_dir ("win32")
 else if equal (OS_TYPE, "POSIX")
@@ -39,7 +43,6 @@ include_dir ("main")
 include_dir ("weakref")
 include_dir ("word")
 
-import("m3doc")
 HtmlFile("index")
 
 Library ("m3core")

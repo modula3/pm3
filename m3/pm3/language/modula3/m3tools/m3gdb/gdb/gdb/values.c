@@ -629,6 +629,9 @@ unpack_long (struct type *type, char *valaddr)
       && is_scmvalue_type (type))
     return scm_unpack (type, valaddr, TYPE_CODE_INT);
 
+  if (M3_TYPEP (code))
+    code = TYPE_CODE_INT;
+
   switch (code)
     {
     case TYPE_CODE_TYPEDEF:
@@ -1213,6 +1216,50 @@ modify_field (char *addr, LONGEST fieldval, int bitpos, int bitsize)
   store_signed_integer (addr, sizeof oword, oword);
 }
 
+
+/* Convert Modula-3 numbers into newly allocated values */
+
+value_ptr
+m3_value_from_longest (type, num)
+     struct type *type;
+     register LONGEST num;
+{
+  register value_ptr val = allocate_value (type);
+  register enum type_code code = TYPE_CODE (type);
+  register int len = TYPE_LENGTH (type);
+
+  switch (code)
+    {
+    case TYPE_CODE_M3_INTEGER:
+    case TYPE_CODE_M3_CARDINAL:
+    case TYPE_CODE_M3_CHAR:
+    case TYPE_CODE_M3_WIDECHAR:
+    case TYPE_CODE_M3_ENUM:
+    case TYPE_CODE_M3_SUBRANGE:
+    case TYPE_CODE_M3_BOOLEAN:
+      store_signed_integer (VALUE_CONTENTS_RAW (val), len, num);
+      break;
+      
+    case TYPE_CODE_M3_REFANY:
+    case TYPE_CODE_M3_TRANSIENT_REFANY:
+    case TYPE_CODE_M3_POINTER:
+    case TYPE_CODE_M3_ADDRESS:
+    case TYPE_CODE_M3_ROOT:
+    case TYPE_CODE_M3_TRANSIENT_ROOT:
+    case TYPE_CODE_M3_UN_ROOT:
+    case TYPE_CODE_M3_NULL:
+      /* This assumes that all pointers of a given length
+	 have the same form.  */
+      store_address (VALUE_CONTENTS_RAW (val), len, (CORE_ADDR) num);
+      break;
+
+    default:
+      error ("Unexpected type encountered for integer constant.");
+    }
+  return val;
+}
+
+
 /* Convert C numbers into newly allocated values */
 
 value_ptr
@@ -1235,11 +1282,24 @@ retry:
     case TYPE_CODE_ENUM:
     case TYPE_CODE_BOOL:
     case TYPE_CODE_RANGE:
+    case TYPE_CODE_M3_INTEGER:
+    case TYPE_CODE_M3_CARDINAL:
+    case TYPE_CODE_M3_CHAR:
+    case TYPE_CODE_M3_WIDECHAR:
+    case TYPE_CODE_M3_ENUM:
+    case TYPE_CODE_M3_SUBRANGE:
+    case TYPE_CODE_M3_BOOLEAN:
       store_signed_integer (VALUE_CONTENTS_RAW (val), len, num);
       break;
 
     case TYPE_CODE_REF:
     case TYPE_CODE_PTR:
+    case TYPE_CODE_M3_REFANY:
+    case TYPE_CODE_M3_POINTER:
+    case TYPE_CODE_M3_ADDRESS:
+    case TYPE_CODE_M3_ROOT:
+    case TYPE_CODE_M3_UN_ROOT:
+    case TYPE_CODE_M3_NULL:
       store_typed_address (VALUE_CONTENTS_RAW (val), type, (CORE_ADDR) num);
       break;
 

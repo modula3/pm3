@@ -17,7 +17,7 @@
 
 MODULE NewFormatter;
 
-IMPORT FBE, Text, Thread, Scheduler;
+IMPORT FBE, Text, Thread, Scheduler, Wr;
 <*FATAL Thread.Alerted *>
 
 TYPE 
@@ -264,6 +264,8 @@ PROCEDURE PutChar(t: T;  c: CHAR) RAISES {FBE.Failed} =
   BEGIN
     IF c = '\n' THEN
       NewLine(t, -FBE.MaxWidth, FALSE);
+    ELSIF c = '\r' THEN
+      (* ignore incoming carriage return characters *)
     ELSIF c = ' ' THEN
       IF t.numChars > 0 THEN AddChars(t) END;
       AddRef(t, chars[c]);
@@ -1119,7 +1121,7 @@ PROCEDURE DoNewLine(
     offset: REAL
   ): BOOLEAN RAISES {FBE.Failed} =
   BEGIN
-    IF mode = Mode.Writing THEN t.fbe.PutChar('\n',pos.font) END;
+    IF mode = Mode.Writing THEN t.fbe.PutText(Wr.EOL,pos.font) END;
     pos.c := 0.0;
     pos.b := MAX (0.0, t.indent + offset);
     pos.l := pos.l + 1;
@@ -1137,7 +1139,7 @@ PROCEDURE DoFreshLine(
   BEGIN
     b := MAX (0.0, t.indent + offset);
     IF b < pos.c + pos.b THEN
-      IF mode = Mode.Writing THEN t.fbe.PutChar('\n',pos.font) END;
+      IF mode = Mode.Writing THEN t.fbe.PutText(Wr.EOL,pos.font) END;
       pos.c := 0.0;
       pos.b := b;
       pos.l := pos.l + 1;

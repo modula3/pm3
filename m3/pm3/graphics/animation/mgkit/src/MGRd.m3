@@ -66,7 +66,7 @@ PROCEDURE FromTextPort (         tp     : TextPort.T;
     t.future := VText.CreateInterval(port, 1, LAST(INTEGER), futureIO);
     VText.SwitchInterval(t.future, VText.OnOffState.On);
     VBT.Mark(vbt);
-    t.buff := NEW(REF ARRAY OF CHAR, 1);
+    t.buff := NEW(<*TRANSIENT*> REF ARRAY OF CHAR, 1);
     t.closed := t.rd.closed;
     t.seekable := TRUE;
     t.intermittent := FALSE;

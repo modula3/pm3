@@ -48,7 +48,6 @@ PROCEDURE New (a, b: Expr.T): Expr.T =
 PROCEDURE Check (p: P;  VAR cs: Expr.CheckState) =
   VAR ta, tb: Type.T;
   BEGIN
-    INC (cs.div_ops);
     Expr.TypeCheck (p.a, cs);
     Expr.TypeCheck (p.b, cs);
     ta := Type.Base (Expr.TypeOf (p.a));
@@ -88,7 +87,7 @@ PROCEDURE Compile (p: P) =
       IF (e2 = NIL) THEN e2 := p.b; END;
       Expr.Compile (e1);
       Expr.Compile (e2);
-      CG.Div (CG.Type.Int, Expr.GetSign (e1), Expr.GetSign (e2));
+      CG.Div (Target.Integer.cg_type, Expr.GetSign (e1), Expr.GetSign (e2));
     END;
   END Compile;
 

@@ -8,8 +8,11 @@ INTERFACE ActivatedActions;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:40  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:50  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:40  hosking
+    Import of GRAS3 1.1
 
     Revision 1.1  1997/10/31 14:03:55  roland
     The RuleEngine subsystem implements an event-trigger mechanism for GRAS.
@@ -26,14 +29,14 @@ INTERFACE ActivatedActions;
 IMPORT Action, Event, ContextSet;
 
 TYPE
-  T = OBJECT
+  T = <*TRANSIENT*> ROOT OBJECT
       METHODS
         store (event   : Event.T;
                context : ContextSet.T;
                level   : CARDINAL;
                priority: CARDINAL;
                act     : Action.T;
-               userdata: REFANY        );
+               userdata: <*TRANSIENT*> REFANY        );
 
         killClient      (c: CARDINAL);
         killTransaction (level: CARDINAL);
@@ -42,7 +45,7 @@ TYPE
                  VAR context : ContextSet.T;
                  VAR level   : CARDINAL;
                  VAR action  : Action.T;
-                 VAR userdata: REFANY        ): BOOLEAN;
+                 VAR userdata: <*TRANSIENT*> REFANY        ): BOOLEAN;
 
         highest (): CARDINAL;
 

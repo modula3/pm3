@@ -7,8 +7,11 @@ MODULE LocalRuleHandler;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:39  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:50  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:39  hosking
+    Import of GRAS3 1.1
 
     Revision 1.5  1998/08/12 11:04:43  roland
     Efficiency improvement: RuleEngine notifies EventDetectors of
@@ -124,7 +127,7 @@ PROCEDURE NextTriggerId (): CARDINAL =
   END NextTriggerId;
 
 PROCEDURE RegisterTrigger (trigger : Trigger.T;
-                           userdata: REFANY;
+                           userdata: <*TRANSIENT*> REFANY;
                            id      : CARDINAL   ) =
   VAR handler: EventHandler.T;
       type: CARDINAL;
@@ -200,7 +203,7 @@ PROCEDURE GetNextAction (    tu              : CARDINAL;
                          VAR context         : ContextSet.T;
                          VAR transactionLevel: CARDINAL;
                          VAR action          : Action.T;
-                         VAR userdata        : REFANY                ):
+                         VAR userdata        : <*TRANSIENT*> REFANY ):
   BOOLEAN =
   VAR
     max        : CARDINAL;
@@ -256,7 +259,7 @@ TYPE
              END;
 
 VAR
-  Units   : REF ARRAY OF UnitInfo := NIL;
+  Units   : <*TRANSIENT*> REF ARRAY OF UnitInfo := NIL;
   FreeUnit: INTEGER               := -1;
 
 PROCEDURE NewUnit (): CARDINAL =
@@ -266,12 +269,12 @@ PROCEDURE NewUnit (): CARDINAL =
       (* extend unit array *)
       VAR
         len: CARDINAL;
-        nu : REF ARRAY OF UnitInfo;
+        nu : <*TRANSIENT*> REF ARRAY OF UnitInfo;
       BEGIN
         IF Units = NIL THEN
           (* initialization *)
           len := UnitInitLen;
-          Units := NEW(REF ARRAY OF UnitInfo, len);
+          Units := NEW(<*TRANSIENT*> REF ARRAY OF UnitInfo, len);
           FOR i := 0 TO len - 1 DO
             Units^[i] := UnitInfo{ContextSet.Empty(), FALSE, i + 1};
           END;
@@ -280,7 +283,7 @@ PROCEDURE NewUnit (): CARDINAL =
         ELSE
           (* extension *)
           len := NUMBER(Units^);
-          nu := NEW(REF ARRAY OF UnitInfo, 2 * len);
+          nu := NEW(<*TRANSIENT*> REF ARRAY OF UnitInfo, 2 * len);
           SUBARRAY(nu^, 0, len) := Units^;
           FOR i := len TO 2 * len - 1 DO
             nu^[i] := UnitInfo{ContextSet.Empty(), FALSE, i + 1};

@@ -14,41 +14,46 @@ else
   _NETOBJ_STUBGEN = format ("%s%s%s", BIN_USE, SL, "stubgen")  %% - full path
   %% _NETOBJ_STUBGEN = "stubgen"
 end
+/* _NETOBJ_STUBGEN = format("/udir/wobber/m3/stubgen/%s/stubgen", BUILD_DIR) */
 
-readonly proc _v_netobjv1(intf, type, v, useintf) is
-  local base_name = format ("%s_%s_v1", intf, type)
+readonly proc _v_netobj (intf, type, v, useintf, version) is
+  local base_name = format ("%s_%s_v%s", intf, type, version)
   local intf_pn = path_of(intf & ".i3")
+  local netobjuse = ""
+  local v_arg = "-v" & version
 
-% The generated sources are in the build directory of THIS_PACKAGE
-% 
+  if useintf
+    netobjuse = "-i"
+  end
 
+  % The generated sources are in the build directory of THIS_PACKAGE
+  % 
   derived_interface (base_name, v)
   derived_implementation (base_name)
 
-  if stale(base_name & ".i3", intf_pn)
-    generate_tfile()
-    local cmd = [ _NETOBJ_STUBGEN, "-sno", intf & "." & type]
-
-    if useintf
-      cmd += "-i"
-      cmd += useintf
+  if defined("_all") % then we're building, not cleaning or shipping
+    if stale(base_name & ".i3", intf_pn)
+      generate_tfile()
+      exec(_NETOBJ_STUBGEN, v_arg, "-sno", intf & "." & type, netobjuse, useintf,
+            M3SEARCH_TABLES)
     end
-
-    cmd += M3SEARCH_TABLES
-
-    write(cmd, CR)
-    local ret = exec(cmd)
-    if not equal(ret, 0) error("command failed with error code: ", ret) end
   end
-    
-end
+end % _v_netobj
 
 readonly proc netobjv1(intf, type) is
-  _v_netobjv1(intf, type, HIDDEN, "")
+  _v_netobj(intf, type, HIDDEN, "", "1")
 end
 
 readonly proc Netobjv1(intf, type) is
-  _v_netobjv1(intf, type, VISIBLE, "")
+  _v_netobj(intf, type, VISIBLE, "", "1")
+end
+
+readonly proc netobjv2(intf, type) is
+  _v_netobj(intf, type, HIDDEN, "", "2")
+end
+
+readonly proc Netobjv2(intf, type) is
+  _v_netobj(intf, type, VISIBLE, "", "2")
 end
 
 readonly proc Netobj(intf, type) is
@@ -60,11 +65,19 @@ readonly proc netobj(intf, type) is
 end
 
 readonly proc netobjrv1(intf, type, useintf) is
-  _v_netobjv1(intf, type, HIDDEN, useintf)
+  _v_netobj(intf, type, HIDDEN, useintf, "1")
 end
 
 readonly proc Netobjrv1(intf, type, useintf) is
-  _v_netobjv1(intf, type, VISIBLE, useintf)
+  _v_netobj(intf, type, VISIBLE, useintf, "1")
+end
+
+readonly proc netobjrv2(intf, type, useintf) is
+  _v_netobj(intf, type, HIDDEN, useintf, "2")
+end
+
+readonly proc Netobjrv2(intf, type, useintf) is
+  _v_netobj(intf, type, VISIBLE, useintf, "2")
 end
 
 readonly proc Netobjr(intf, type, useintf) is

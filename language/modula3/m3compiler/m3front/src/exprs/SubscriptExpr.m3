@@ -80,6 +80,12 @@ PROCEDURE Check (p: P;  VAR cs: Expr.CheckState) =
     ta := Type.Base (Expr.TypeOf (p.a));
     tb := Expr.TypeOf (p.b);
 
+    IF (ta = NIL) THEN
+      Error.Msg ("subscripted expression is not an array");
+      p.type := ErrType.T;
+      RETURN;
+    END;
+
     IF RefType.Is (ta) THEN
       (* auto-magic dereference *)
       p.a := DerefExpr.New (p.a);
@@ -89,7 +95,10 @@ PROCEDURE Check (p: P;  VAR cs: Expr.CheckState) =
     END;
 
     ta := Type.Check (ta);
-    IF NOT ArrayType.Split (ta, ti, te) THEN
+    IF (ta = ErrType.T) THEN
+      p.type := ErrType.T;
+      RETURN;
+    ELSIF NOT ArrayType.Split (ta, ti, te) THEN
       Error.Msg ("subscripted expression is not an array");
       p.type := ErrType.T;
       RETURN;
@@ -117,14 +126,16 @@ PROCEDURE Check (p: P;  VAR cs: Expr.CheckState) =
       END;
       IF TInt.LT (minb, mini) AND TInt.LT (maxi, maxb) THEN
         b := TInt.Subtract (maxi, mini, z);  <*ASSERT b *>
-        p.biased_b := CheckExpr.New (p.biased_b, TInt.Zero, z);
+        p.biased_b := CheckExpr.New (p.biased_b, TInt.Zero, z,
+                                     CG.RuntimeError.SubscriptOutOfRange);
         p.biased_b.origin := p.origin;
         Expr.TypeCheck (p.biased_b, cs);
       ELSIF TInt.LT (minb, mini) THEN
         IF TInt.LT (maxb, mini) THEN
           Error.Warn (2, "subscript is out of range");
         END;
-        p.biased_b := CheckExpr.NewLower (p.biased_b, TInt.Zero);
+        p.biased_b := CheckExpr.NewLower (p.biased_b, TInt.Zero,
+                                     CG.RuntimeError.SubscriptOutOfRange);
         p.biased_b.origin := p.origin;
         Expr.TypeCheck (p.biased_b, cs);
       ELSIF TInt.LT (maxi, maxb) THEN
@@ -132,7 +143,8 @@ PROCEDURE Check (p: P;  VAR cs: Expr.CheckState) =
           Error.Warn (2, "subscript is out of range");
         END;
         b := TInt.Subtract (maxi, mini, z);  <*ASSERT b *>
-        p.biased_b := CheckExpr.NewUpper (p.biased_b, z);
+        p.biased_b := CheckExpr.NewUpper (p.biased_b, z,
+                                     CG.RuntimeError.SubscriptOutOfRange);
         p.biased_b.origin := p.origin;
         Expr.TypeCheck (p.biased_b, cs);
       END;
@@ -211,7 +223,7 @@ PROCEDURE CompileLV (p: P) =
         (* range check the subscript *)
         CG.Push (t1);
         CG.Open_size (0);
-        CG.Check_index ();
+        CG.Check_index (CG.RuntimeError.SubscriptOutOfRange);
       END;
       CG.Index_bytes (elt_pack);
       CG.Boost_alignment (ArrayType.EltAlign (ta));
@@ -228,7 +240,7 @@ PROCEDURE CompileLV (p: P) =
         (* range check the subscript *)
         CG.Push (t1);
         CG.Open_size (0);
-        CG.Check_index ();
+        CG.Check_index (CG.RuntimeError.SubscriptOutOfRange);
       END;
       t2 := CG.Pop ();
 
@@ -248,7 +260,7 @@ PROCEDURE CompileLV (p: P) =
       CG.Push (t2);
       FOR i := 0 TO p.depth-2 DO
         CG.Load_int (t3, M3RT.OA_sizes + i * Target.Integer.pack);
-        CG.Multiply (CG.Type.Word);
+        CG.Multiply (Target.Word.cg_type);
       END;
       CG.Index_bytes (elt_pack);
       CG.Store_addr (t3, M3RT.OA_elt_ptr);

@@ -1,0 +1,10 @@
+NumAssmPerAssm		3
+NumCompPerAssm		3
+NumSharPerAssm		0
+NumCompPerModule	500
+NumAssmLevels		7
+TotalModules		5
+NumAtomicPerComp	20
+NumConnPerAtomic	3
+DocumentSize		2000
+ManualSize		100000

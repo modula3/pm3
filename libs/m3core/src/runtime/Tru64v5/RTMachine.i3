@@ -85,6 +85,7 @@ TYPE
   FrameInfo = RECORD
     pc  : ADDRESS;
     sp  : ADDRESS;
+    unwind : ADDRESS;
     cxt : Usignal.struct_sigcontext;
     lock: INTEGER;  (* to ensure that cxt isn't overrun!! *)
   END;

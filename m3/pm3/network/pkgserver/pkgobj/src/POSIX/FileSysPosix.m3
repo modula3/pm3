@@ -181,7 +181,7 @@ PROCEDURE GetPath(path: TEXT): Text.T RAISES {OSError.E} =
     status: int;
     done: BOOLEAN;
     newpath, sibling: Text.T;
-    de: Udir.direct_star;
+    de: Udir.struct_dirent_star;  (** Udir.direct_star; **)
     p: char_star;
   BEGIN
     newpath := "";

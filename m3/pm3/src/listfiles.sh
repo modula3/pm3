@@ -4,9 +4,5 @@
 # $2: current prefix for files
 # $3: desired prefix for files
 
-( grep install_file $1 | \
-    sed -e "s+install_file(\"\([^\"]*\)\",[ ]*\"$2\([^\"]*\)\".*+/\1 \2+" | \
-    sed -e "s+^.*/\([^/]*\) \(.*\)+$3\2/\1+" | sort | uniq; \
-  grep link_file $1 | \
-    sed -e "s+link_file(\"\([^\"]*\)\",[ ]*\"$2\([^\"]*\)\".*+$3\2+" \
-) | sed -e 's+/man\([0-9]\)/\([^/.]*\).\([0-9]\)$+/man\1/\2.\3.bz2+'
+grep install_file $1 | sed -e "s+install_file(\"\([^\"]*\)\",[ ]*\"$2\([^\"]*\)\".*+/\1 \2+" | sed -e "s+^.*/\([^/]*\) \(.*\)+$3\2/\1+" | sort | uniq
+grep link_file $1 | sed -e "s+link_file(\"\([^\"]*\)\",[ ]*\"$2\([^\"]*\)\".*+$3\2+"

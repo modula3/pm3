@@ -3,8 +3,7 @@
 (* See the file COPYRIGHT for a full description.              *)
 
 (* File: ArrayExpr.m3                                          *)
-(* Last modified on Tue Aug 27 09:42:58 PDT 1996 by heydon     *)
-(*      modified on Tue Jun 20 15:46:08 PDT 1995 by kalsow     *)
+(* Last modified on Tue Jun 20 15:46:08 PDT 1995 by kalsow     *)
 (*      modified on Thu Jun 15 12:45:06 PDT 1995 by ericv      *)
 (*      modified on Tue Mar 12 00:29:44 1991 by muller         *)
 
@@ -13,7 +12,7 @@ MODULE ArrayExpr;
 IMPORT M3, M3ID, CG, Expr, ExprRep, Error, Type, ArrayType;
 IMPORT KeywordExpr, RangeExpr, Int, OpenArrayType, Module;
 IMPORT IntegerExpr, EnumExpr, SubrangeType, Target, TInt, M3Buf;
-IMPORT AssignStmt, RefType, M3RT, Procedure, Runtime, ErrType;
+IMPORT AssignStmt, RefType, M3RT, Procedure, RunTyme, ErrType;
 
 TYPE
   Kind = {
@@ -144,7 +143,7 @@ PROCEDURE Check (p: P;  VAR cs: Expr.CheckState) =
     e, value, minE, maxE: Expr.T;
     index, element, solidElt, elt: Type.T;
     key: M3ID.T;
-    elt_info: Type.Info;
+    info, elt_info: Type.Info;
   BEGIN
     IF (p.index # NIL) THEN
       p.index := Type.Check (p.index);
@@ -215,13 +214,17 @@ PROCEDURE Check (p: P;  VAR cs: Expr.CheckState) =
       IF (solidElt # NIL) AND TInt.FromInt (LAST (p.args^), nn) THEN
         p.kind := Kind.FixedOpen;
         index := SubrangeType.New (TInt.Zero, nn, Int.T, FALSE);
-        p.solidType := ArrayType.New (index, solidElt);
+        EVAL Type.CheckInfo (p.tipe, info);
+        p.solidType :=
+            ArrayType.New (info.isTransient AND NOT elt_info.isTransient,
+                           index, solidElt);
         p.solidType := Type.CheckInfo (p.solidType, elt_info);
         element := solidElt;
       ELSE
         (* we can't determine the shape until runtime *)
         p.kind := Kind.Open;
-        p.refType := RefType.New (p.tipe, traced := TRUE, brand := NIL);
+        p.refType := RefType.New (p.tipe, traced := TRUE, transient := TRUE,
+                                  brand := NIL, warn := TRUE);
         p.refType := Type.CheckInfo (p.refType, elt_info);
       END;
     END;
@@ -277,10 +280,10 @@ PROCEDURE Compile (p: P) =
         align := MAX (Target.Address.align, Target.Integer.align);
       END;
 
-      offset := Module.Allocate (size, align, "*array*");
-      PrepLiteral (p, p.tipe);
-      GenLiteral (p, offset, p.tipe);
-      CG.Load_addr_of (Module.GlobalData (NIL), offset, align);
+      offset := Module.Allocate (size, align, TRUE, "*array*");
+      PrepLiteral (p, p.tipe, TRUE);
+      GenLiteral (p, offset, p.tipe, TRUE);
+      CG.Load_addr_of (Module.GlobalData (TRUE), offset, align);
     ELSE
       CG.Push (p.tmp);
       DEC (p.tmp_cnt);
@@ -349,7 +352,7 @@ PROCEDURE DoFixed (p: P;  element: Type.T;  elt_pack: INTEGER) =
     FOR i := 0 TO n_args-1 DO
       AssignStmt.PrepForEmit (element, p.args[i], initializing := TRUE);
       PushAddr (p, t1, i * elt_pack, align);
-      AssignStmt.Emit (element, p.args[i]);
+      AssignStmt.DoEmit (element, p.args[i]);
     END;
 
     (* fill in the '..' section *)
@@ -365,8 +368,8 @@ PROCEDURE DoFixed (p: P;  element: Type.T;  elt_pack: INTEGER) =
       ArrayType.GenIndex (p.tipe);
       PushAddr (p, t1, (n_args-1) * elt_pack, align);
       IF ArrayType.IsBitAddressed (p.tipe) THEN
-        CG.Load_indirect (CG.Type.Int, 0, elt_pack);
-        CG.Store_indirect (CG.Type.Int, 0, elt_pack);
+        CG.Load_indirect (Target.Integer.cg_type, 0, elt_pack);
+        CG.Store_indirect (Target.Integer.cg_type, 0, elt_pack);
       ELSE
         CG.Copy (elt_pack, overlap := FALSE);
       END;
@@ -374,13 +377,13 @@ PROCEDURE DoFixed (p: P;  element: Type.T;  elt_pack: INTEGER) =
       (* t2 := t2 + 1 *)
       CG.Push (t2);
       CG.Load_integer (TInt.One);
-      CG.Add (CG.Type.Int);
+      CG.Add (Target.Integer.cg_type);
       CG.Store_temp (t2);
 
       (* IF (t2 < NUMBER(ARRAY) GOTO TOP-OF-LOOP *)
       CG.Push (t2);
       CG.Load_integer (nn_elts);
-      CG.If_lt (top, CG.Type.Int, CG.Likely);
+      CG.If_compare (Target.Integer.cg_type, CG.Cmp.LT, top, CG.Likely);
 
       CG.Free (t2);
     END;
@@ -469,7 +472,7 @@ PROCEDURE DoFixedOpen (p: P;  elt_pack: INTEGER) =
     FOR i := 0 TO n_args-1 DO
       AssignStmt.PrepForEmit (element, p.args[i], initializing := TRUE);
       CG.Load_addr_of (t1, data_offs + i * elt_pack, align);
-      AssignStmt.Emit (element, p.args[i]);
+      AssignStmt.DoEmit (element, p.args[i]);
     END;
 
     (* remember the result *)
@@ -486,7 +489,7 @@ PROCEDURE DoOpen (p: P;  elt_pack, elt_align: INTEGER) =
     n_args    := NUMBER (p.args^);
     openDepth := OpenArrayType.OpenDepth (p.type);
     size      : INTEGER;
-    proc      := Runtime.LookUpProc (Runtime.Hook.NewTracedArray);
+    proc      := RunTyme.LookUpProc (RunTyme.Hook.NewTransientArray);
   BEGIN
     <*ASSERT elt_align MOD Target.Byte = 0*>
 
@@ -537,7 +540,7 @@ PROCEDURE DoOpen (p: P;  elt_pack, elt_align: INTEGER) =
       Type.LoadInfo (p.refType, -1);
       CG.Pop_param (CG.Type.Addr);
     END;
-    t3 := Procedure.EmitCall (proc);
+    t3 := Procedure.EmitValueCall (proc);
 
     (* repack the "sizes" array as a dope vector for each array element *)
     CG.Push (t3);
@@ -552,7 +555,7 @@ PROCEDURE DoOpen (p: P;  elt_pack, elt_align: INTEGER) =
     (* compute the size of each element in "elt_pack" units *)
     FOR i := 0 TO openDepth-2 DO
       CG.Load_int (t1, M3RT.OA_sizes + i * Target.Integer.pack);
-      IF (i # 0) THEN CG.Multiply (CG.Type.Int) END;
+      IF (i # 0) THEN CG.Multiply (Target.Integer.cg_type) END;
     END;
     t4 := CG.Pop ();
 
@@ -576,7 +579,7 @@ PROCEDURE DoOpen (p: P;  elt_pack, elt_align: INTEGER) =
       (* do the assignment *)
       AssignStmt.PrepForEmit (element, p.args[i], initializing := TRUE);
       CG.Load_addr (t1);
-      AssignStmt.Emit (element, p.args[i]);
+      AssignStmt.DoEmit (element, p.args[i]);
     END;
 
     (* remember the result and free the other temporaries *)
@@ -635,10 +638,10 @@ PROCEDURE GenFPLiteral (p: P;  buf: M3Buf.T) =
     M3Buf.PutChar (buf, '>');
   END GenFPLiteral;
 
-PROCEDURE PrepLiteral (p: P; <*UNUSED*> type: Type.T) =
+PROCEDURE PrepLiteral (p: P;  <*UNUSED*>type: Type.T;  is_const: BOOLEAN) =
   VAR info: Type.Info;
   BEGIN
-    PrepElements (p, p.tipe);
+    PrepElements (p, p.tipe, is_const);
 
     IF (p.kind = Kind.Fixed) OR (p.kind = Kind.EmptyOpen) THEN RETURN END;
 
@@ -647,37 +650,39 @@ PROCEDURE PrepLiteral (p: P; <*UNUSED*> type: Type.T) =
 
     IF (p.offset = 0) THEN
       EVAL Type.CheckInfo (p.solidType, info);
-      p.offset := Module.Allocate (info.size, info.alignment,
+      p.offset := Module.Allocate (info.size, info.alignment, is_const,
                                    "*open array literal*");
       CG.Declare_global_field (M3ID.Add ("_array"), p.offset, info.size,
-                               Type.GlobalUID(p.solidType));
+                               Type.GlobalUID(p.solidType), is_const);
       EVAL GenOpenLiteral (p, p.offset,
-    			   OpenArrayType.OpenDepth (p.tipe),
-    			   OpenArrayType.OpenType (p.tipe),
-    			   OpenArrayType.EltPack (p.type));
+                           OpenArrayType.OpenDepth (p.tipe),
+                           OpenArrayType.OpenType (p.tipe),
+                           OpenArrayType.EltPack (p.type),
+                           is_const);
     END;
   END PrepLiteral;
 
-PROCEDURE PrepElements (e: Expr.T;  type: Type.T) =
+PROCEDURE PrepElements (e: Expr.T;  type: Type.T;  is_const: BOOLEAN) =
   VAR index, element: Type.T;  b: BOOLEAN;
   BEGIN
     TYPECASE e OF
     | NULL => (* skip *)
     | P(p) => b := ArrayType.Split (type, index, element); <* ASSERT b *>
               FOR i := FIRST (p.args^) TO LAST (p.args^) DO
-                PrepElements (p.args[i], element);
+                PrepElements (p.args[i], element, is_const);
               END;
-    ELSE      Expr.PrepLiteral (e, type);
+    ELSE      Expr.PrepLiteral (e, type, is_const);
     END;
   END PrepElements;
 
 PROCEDURE GenOpenLiteral (e: Expr.T;  offset: INTEGER;  depth: INTEGER;
-                          elt_type: Type.T;  elt_pack: INTEGER): INTEGER =
+                          elt_type: Type.T;  elt_pack: INTEGER;
+                          is_const: BOOLEAN): INTEGER =
   VAR size, align, start: INTEGER;  info: Type.Info;  t: Type.T;
   BEGIN
     IF (depth <= 0) THEN
       (* we're out of the open-array morass *)
-      Expr.GenLiteral (e, offset, elt_type);
+      Expr.GenLiteral (e, offset, elt_type, is_const);
       RETURN elt_pack;
     END;
 
@@ -687,18 +692,19 @@ PROCEDURE GenOpenLiteral (e: Expr.T;  offset: INTEGER;  depth: INTEGER;
               align := ArrayType.EltAlign (p.tipe);
               FOR i := FIRST (p.args^) TO LAST (p.args^) DO
                 size := GenOpenLiteral (p.args[i], offset, depth-1,
-                                        elt_type, elt_pack);
+                                        elt_type, elt_pack, is_const);
                 INC (offset, (size + align - 1) DIV align * align);
               END;
               RETURN offset - start;
     ELSE      Error.Msg ("*** INTERNAL ERROR: missing open array expr? ***");
               t := Type.CheckInfo (Expr.TypeOf (e), info);
-              Expr.GenLiteral (e, offset, t);
+              Expr.GenLiteral (e, offset, t, is_const);
               RETURN info.size;
     END;
   END GenOpenLiteral;
 
-PROCEDURE GenLiteral (p: P;  offset: INTEGER; <*UNUSED*> type: Type.T) =
+PROCEDURE GenLiteral (p: P;  offset: INTEGER;  <*UNUSED*>type: Type.T;
+                      is_const: BOOLEAN) =
   VAR index, element: Type.T;  last, n_elts, elt_size: INTEGER;  b: BOOLEAN;
   BEGIN
     b := ArrayType.Split (p.tipe, index, element); <* ASSERT b *>
@@ -709,13 +715,13 @@ PROCEDURE GenLiteral (p: P;  offset: INTEGER; <*UNUSED*> type: Type.T) =
     CASE p.kind OF
     | Kind.EmptyOpen =>
         GenOpenDim (p, OpenArrayType.OpenDepth (p.tipe),
-                    offset + M3RT.OA_sizes);
+                    offset + M3RT.OA_sizes, is_const);
 
     | Kind.FixedOpen =>
-        CG.Init_var (offset + M3RT.OA_elt_ptr, Module.GlobalData (NIL),
-                      p.offset);
+        CG.Init_var (offset + M3RT.OA_elt_ptr, Module.GlobalData (is_const),
+                      p.offset, is_const);
         GenOpenDim (p, OpenArrayType.OpenDepth (p.tipe),
-                    offset + M3RT.OA_sizes);
+                    offset + M3RT.OA_sizes, is_const);
 
     | Kind.Open =>
         <* ASSERT FALSE *>  (* not a compile-time constant *)
@@ -728,13 +734,13 @@ PROCEDURE GenLiteral (p: P;  offset: INTEGER; <*UNUSED*> type: Type.T) =
         IF (NUMBER (p.args^) > 0) THEN
           elt_size := ArrayType.EltPack (p.tipe);
           FOR i := 0 TO last DO
-            Expr.GenLiteral (p.args[i], offset, element);
+            Expr.GenLiteral (p.args[i], offset, element, is_const);
             INC (offset, elt_size);
           END;
           IF (p.dots) AND (last = LAST (p.args^)) THEN
             b := TInt.ToInt (Type.Number (index), n_elts); <*ASSERT b*>
             FOR i := last+1 TO n_elts-1 DO
-              Expr.GenLiteral (p.args[last], offset, element);
+              Expr.GenLiteral (p.args[last], offset, element, is_const);
               INC (offset, elt_size);
             END;
           END;
@@ -742,7 +748,7 @@ PROCEDURE GenLiteral (p: P;  offset: INTEGER; <*UNUSED*> type: Type.T) =
     END;
   END GenLiteral;
 
-PROCEDURE GenOpenDim (e: Expr.T;  depth: INTEGER;  offset: INTEGER) =
+PROCEDURE GenOpenDim (e: Expr.T;  depth: INTEGER;  offset: INTEGER;  is_const: BOOLEAN) =
   VAR n_elts: INTEGER;
   BEGIN
     WHILE (depth > 0) DO
@@ -755,7 +761,7 @@ PROCEDURE GenOpenDim (e: Expr.T;  depth: INTEGER;  offset: INTEGER) =
                 END;
       ELSE      n_elts := 0;
       END;
-      CG.Init_intt (offset, Target.Integer.size, n_elts);
+      CG.Init_intt (offset, Target.Integer.size, n_elts, is_const);
       INC (offset, Target.Integer.pack);
       DEC (depth);
     END;

@@ -60,7 +60,7 @@ PROCEDURE Product (READONLY p, q: T) : T =
     accum := temp;
 
     (* form the 128 bit product in accum *)
-    temp[2] := p[0]; temp[3] := p[1];
+    temp[2] := p[0];  temp[3] := p[1];
     FOR j := 1 TO 0 BY -1 DO
       z := q[j];
       FOR i := 31 TO 0 BY -1 DO

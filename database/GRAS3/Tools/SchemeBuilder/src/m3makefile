@@ -1,8 +1,6 @@
-m3_option("-g")
-
 %import("GrasGraphs")
 import("HiGRAS")
-include_pkg("GrasParams")
+import("GrasParams")
 
 implementation("BuildScheme")
 Program("buildscheme")

@@ -11,7 +11,7 @@
    specification of the procedures.  Non-IEEE implementations that
    have values similar to NaNs and infinities should explain how those
    values behave in an implementation guide. (NaN is an IEEE term
-   whose informal meaning is "not a number".) *)
+   whose informal meaning is ``not a number''.) *)
 
 GENERIC INTERFACE Float(R);
 
@@ -24,15 +24,17 @@ PROCEDURE Scalb(x: T; n: INTEGER): T RAISES {FloatMode.Trap};
 
 PROCEDURE Logb(x: T): T RAISES {FloatMode.Trap};
 (* Return the exponent of "x".  More precisely, return the unique
-   integer "n" such that the ratio <MATH><MFRAC><MI>ABS(x)</MI>
+   integer <MATH><MI>n</MI></MATH> such that the ratio
+   <MATH><MFRAC><MI>ABS(x)</MI> 
    <MROW><MSUP><MI>Base</MI><MI>n</MI></MSUP></MROW></MFRAC></MATH> is in
    the half-open interval "[1..Base)", unless "x" is denormalized, in
    which case return the minimum exponent value for "T". *)
 
 PROCEDURE ILogb(x: T): INTEGER;
 (* Like "Logb", but returns an integer, never raises an exception, and
-   always returns the "n" such that ABS(x) / 
-   <MATH><MSUP><MI>Base</MI><MI>n</MI></MSUP></MATH> is in
+   always returns the <MATH><MI>n</MI></MATH> such that
+   <MATH><MFRAC><MI>ABS(x)</MI> 
+   <MROW><MSUP><MI>Base</MI><MI>n</MI></MSUP></MROW></MFRAC></MATH> is in
    the half-open interval "[1..Base)", even for denormalized numbers.
    Special cases: it returns "FIRST(INTEGER)" when "x" = 0.0,
    "LAST(INTEGER)" when "x" is plus or minus infinity, and zero when
@@ -192,7 +194,7 @@ PROCEDURE ToDecimal(x: T): DecimalApprox;
    as are necessary to convert back to binary exactly was popularized
    by Guy L.&nbsp;Steele Jr. and Jon L White
    <A REL=BIB.ENTRY HREF="../../../../html/references.html#Steele">[Steele]
-   </A>. David M. Gay
+   </A>. David M.&nbsp;Gay
    pointed out the importance, in this context, of demanding that the
    conversion to binary handle mid-point cases by a known
    rule <A REL=BIB.ENTRY HREF="../../../../html/references.html#Gay"> [Gay] 

@@ -11,10 +11,11 @@ UNSAFE MODULE Type EXPORTS Type, TypeRep;
 IMPORT M3, CG, Error, Token, Scanner, NamedType, Word;
 IMPORT ArrayType, PackedType, EnumType, ObjectType, RefType;
 IMPORT ProcType, UserProc, RecordType, SetType, SubrangeType, OpaqueType;
-IMPORT Value, Module, Host, TypeFP, TypeTbl;
-IMPORT Addr, Bool, CChar, Card, EReel, Int, LReel, Mutex, Null;
+IMPORT Value, Module, Host, TypeFP, TypeTbl, WCharr, Brand;
+IMPORT Addr, Bool, Charr, Card, EReel, Int, LReel, Mutex, Null;
 IMPORT ObjectRef, ObjectAdr, Reel, Reff, Textt, Target, TInt, TFloat;
-IMPORT Text, M3RT, TipeMap, TipeDesc, ErrType;
+IMPORT Text, M3RT, TipeMap, TipeDesc, ErrType, OpenArrayType, M3ID;
+IMPORT ObjectTransient, ReffTransient;
 
 CONST
   NOT_CHECKED = -1;
@@ -84,15 +85,16 @@ PROCEDURE Parse (): T =
   BEGIN
     CASE Scanner.cur.token OF
     | TK.tIDENT     => t := NamedType.Parse ();
-    | TK.tARRAY     => t := ArrayType.Parse ();
+    | TK.tARRAY     => t := ArrayType.Parse (transient := FALSE);
     | TK.tBITS      => t := PackedType.Parse ();
     | TK.tBRANDED   => t := RefType.Parse ();
     | TK.tLBRACE    => t := EnumType.Parse ();
     | TK.tUNTRACED  => t := RefType.Parse ();
-    | TK.tOBJECT    => t := ObjectType.Parse (NIL, TRUE, NIL);
+    | TK.tTRANSIENT => t := RefType.Parse ();
+    | TK.tOBJECT    => t := ObjectType.Parse (NIL, TRUE, FALSE, NIL);
     | TK.tCALLCONV  => t := ProcType.Parse ();
     | TK.tPROCEDURE => t := ProcType.Parse ();
-    | TK.tRECORD    => t := RecordType.Parse ();
+    | TK.tRECORD    => t := RecordType.Parse (transient := FALSE);
     | TK.tREF       => t := RefType.Parse ();
     | TK.tSET       => t := SetType.Parse ();
     | TK.tLBRACKET  => t := SubrangeType.Parse ();
@@ -101,9 +103,9 @@ PROCEDURE Parse (): T =
         t := Parse ();
         Scanner.Match (TK.tRPAREN);
         IF (Scanner.cur.token = TK.tBRANDED) THEN
-          t := ObjectType.Parse (t, FALSE, RefType.ParseBrand ());
+          t := ObjectType.Parse (t, FALSE, FALSE, Brand.Parse ());
         ELSIF (Scanner.cur.token = TK.tOBJECT) THEN
-          t := ObjectType.Parse (t, FALSE, NIL);
+          t := ObjectType.Parse (t, FALSE, FALSE, NIL);
         END;
     ELSE
         Scanner.Fail ("bad type expression");
@@ -299,6 +301,7 @@ PROCEDURE BeginSetGlobals () =
     cur.next_to_set := cur.module_types;
     cur.module := Module.Current ();
     TypeTbl.Reset (visible_cells);
+    InitPredefinedCells ();
     Module.VisitImports (NoteCells);
   END BeginSetGlobals;
 
@@ -326,16 +329,37 @@ PROCEDURE SetGlobals (origin: INTEGER) =
       t := t.next;
     END;
     cur.next_to_set := t;
-    IF (t = NIL) THEN (*done*) TypeTbl.Reset (visible_cells); END;
+    IF (t = NIL) THEN (*done*) TypeTbl.Reset (visible_cells);
+    END;
   END SetGlobals;
 
-PROCEDURE AddCell (t: T) =
-  VAR c := NEW (CellInfo);
+PROCEDURE InitPredefinedCells () =
   BEGIN
+    EVAL TypeTbl.Put (visible_cells, Check(Null.T),      Null.T);
+    EVAL TypeTbl.Put (visible_cells, Check(Addr.T),      Addr.T);
+    EVAL TypeTbl.Put (visible_cells, Check(Reff.T),      Reff.T);
+    EVAL TypeTbl.Put (visible_cells, Check(ObjectRef.T), ObjectRef.T);
+    EVAL TypeTbl.Put (visible_cells, Check(ObjectAdr.T), ObjectAdr.T);
+    EVAL TypeTbl.Put (visible_cells, Check(ReffTransient.T), ReffTransient.T);
+    EVAL TypeTbl.Put (visible_cells, Check(ObjectTransient.T), ObjectTransient.T);
+    (********** opaque types don't have typecells ************
+    EVAL TypeTbl.Put (visible_cells, Check(Textt.T),     Textt.T);
+    EVAL TypeTbl.Put (visible_cells, Check(Mutex.T),     Mutex.T);
+    **********************************************************)
+  END InitPredefinedCells;
+
+PROCEDURE AddCell (t: T) =
+  VAR c := NEW (CellInfo);  size := M3RT.TC_SIZE;  u: T;
+  BEGIN
+    IF (t.info.class = Class.Object) THEN
+      size := M3RT.OTC_SIZE;
+    ELSIF RefType.Split (t, u) AND OpenArrayType.Is (u) THEN
+      size := M3RT.ATC_SIZE;
+    END;
     c.next   := cur.full_cells;  cur.full_cells := c;
     c.type   := t;
     c.unit   := cur.module;
-    c.offset := Module.Allocate (M3RT.TC_SIZE,Target.Address.align,"typecell");
+    c.offset := Module.Allocate (size, Target.Address.align, FALSE, "typecell");
     EVAL TypeTbl.Put (visible_cells, t, c);
   END AddCell;
 
@@ -456,8 +480,13 @@ PROCEDURE IsEqual (a, b: T;  x: Assumption): BOOLEAN =
     y := LOOPHOLE (ADR (assume), Assumption);
 
     IF NOT a.isEqual (b, y) THEN RETURN FALSE END;
-    IF (a.uid = NO_UID) THEN a.fp := b.fp;  a.uid := b.uid END;
-    IF (b.uid = NO_UID) THEN b.fp := a.fp;  b.uid := a.uid END;
+
+    IF (x = NIL) THEN
+      (* with no assumptions we now know that the types are equal... *)
+      IF (a.uid = NO_UID) THEN a.fp := b.fp;  a.uid := b.uid END;
+      IF (b.uid = NO_UID) THEN b.fp := a.fp;  b.uid := a.uid END;
+    END;
+
     RETURN TRUE;
   END IsEqual;
 
@@ -583,7 +612,7 @@ PROCEDURE InitCompilation () =
     Module.VisitImports (NoteTypes);
     EVAL TypeTbl.Put (compiled, Check(Addr.T),      Addr.T);
     EVAL TypeTbl.Put (compiled, Check(Bool.T),      Bool.T);
-    EVAL TypeTbl.Put (compiled, Check(CChar.T),     CChar.T);
+    EVAL TypeTbl.Put (compiled, Check(Charr.T),     Charr.T);
     EVAL TypeTbl.Put (compiled, Check(Card.T),      Card.T);
     EVAL TypeTbl.Put (compiled, Check(EReel.T),     EReel.T);
     EVAL TypeTbl.Put (compiled, Check(Int.T),       Int.T);
@@ -591,10 +620,13 @@ PROCEDURE InitCompilation () =
     EVAL TypeTbl.Put (compiled, Check(Mutex.T),     Mutex.T);
     EVAL TypeTbl.Put (compiled, Check(Null.T),      Null.T);
     EVAL TypeTbl.Put (compiled, Check(ObjectRef.T), ObjectRef.T);
+    EVAL TypeTbl.Put (compiled, Check(ObjectTransient.T), ObjectTransient.T);
     EVAL TypeTbl.Put (compiled, Check(ObjectAdr.T), ObjectAdr.T);
     EVAL TypeTbl.Put (compiled, Check(Reel.T),      Reel.T);
     EVAL TypeTbl.Put (compiled, Check(Reff.T),      Reff.T);
+    EVAL TypeTbl.Put (compiled, Check(ReffTransient.T), ReffTransient.T);
     EVAL TypeTbl.Put (compiled, Check(Textt.T),     Textt.T);
+    EVAL TypeTbl.Put (compiled, Check(WCharr.T),    WCharr.T);
     EVAL TypeTbl.Put (compiled, Check(ErrType.T),   ErrType.T);
   END InitCompilation;
 
@@ -617,7 +649,7 @@ PROCEDURE AddCellPtr (t: T): CellPtr =
     c.next   := cur.cell_ptrs;  cur.cell_ptrs := c;
     c.type   := t;
     c.offset := Module.Allocate (2 * Target.Address.pack,
-                                 Target.Address.align, "typecell ptr");
+                                 Target.Address.align, FALSE, "typecell ptr");
     RETURN c;
   END AddCellPtr;
 
@@ -634,7 +666,7 @@ PROCEDURE FindCell (t: T): CellPtr =
 PROCEDURE LoadInfo (t: T;  offset: INTEGER;  addr: BOOLEAN := FALSE) =
   VAR
     c := FindCell (t);
-    v := Module.GlobalData (NIL);
+    v := Module.GlobalData (FALSE);
   BEGIN
     IF (offset < 0) THEN
       <*ASSERT NOT addr*>
@@ -649,7 +681,7 @@ PROCEDURE LoadInfo (t: T;  offset: INTEGER;  addr: BOOLEAN := FALSE) =
         CG.Load_indirect (CG.Type.Addr, offset, Target.Address.size);
         CG.Boost_alignment (Target.Address.align);
       ELSE
-        CG.Load_indirect (CG.Type.Int, offset, Target.Integer.size);
+        CG.Load_indirect (Target.Integer.cg_type, offset, Target.Integer.size);
       END;
     END;
   END LoadInfo;
@@ -659,12 +691,12 @@ PROCEDURE InitCost (t: T;  ifZeroed: BOOLEAN): INTEGER =
     RETURN Check (t).initCost (ifZeroed);
   END InitCost;
 
-PROCEDURE GenMap (t: T;  offset, size: INTEGER;  refs_only: BOOLEAN) =
+PROCEDURE GenMap (t: T; offset, size: INTEGER; refs_only, transient: BOOLEAN) =
   VAR u := Check (t);  nat_sz := u.info.size;
   BEGIN
     IF (size < 0) THEN size := nat_sz END;
     IF (refs_only) AND (NOT u.info.isTraced) THEN RETURN END;
-    u.mapper (offset, MIN (size, nat_sz), refs_only);
+    u.mapper (offset, MIN (size, nat_sz), refs_only, transient);
   END GenMap;
 
 PROCEDURE GenDesc (t: T) =
@@ -675,14 +707,22 @@ PROCEDURE GenDesc (t: T) =
 PROCEDURE GenTag (t: T;  tag: TEXT;  offset: INTEGER) =
   BEGIN
     (** CG.Gen_location (t.origin); **)
-    CG.Comment (offset, tag, Name (t));
+    CG.Comment (offset, FALSE, tag, Name (t));
   END GenTag;
+
+PROCEDURE LinkName (t: T;  tag: TEXT): TEXT =
+  CONST Insert = ARRAY BOOLEAN OF TEXT { "_M3", "_I3" };
+  BEGIN
+    RETURN M3ID.ToText (Module.Name (NIL))
+         & Insert[Module.IsInterface ()] & Name (t) & tag;
+  END LinkName;
 
 PROCEDURE GenCells (): INTEGER =
   VAR cell := cur.full_cells;  prev := 0;
   BEGIN
+    IF (cell = NIL) THEN RETURN -1; END;
     WHILE (cell # NIL) DO
-      CG.Comment (cell.offset, "typecell for ", Name (cell.type));
+      CG.Comment (cell.offset, FALSE, "typecell for ", Name (cell.type));
       IF (cell.type.info.class = Class.Ref)
         THEN RefType.InitTypecell (cell.type, cell.offset, prev);
         ELSE ObjectType.InitTypecell (cell.type, cell.offset, prev);
@@ -695,15 +735,16 @@ PROCEDURE GenCells (): INTEGER =
 
 PROCEDURE GenCellPtrs (): INTEGER =
   VAR
-    unit := Module.GlobalData (NIL);
+    unit := Module.GlobalData (FALSE);
     cell := cur.cell_ptrs;
     prev := 0;
   BEGIN
     (* initialize the linked list of type cell pointers *)
+    IF (cell = NIL) THEN RETURN -1; END;
     WHILE (cell # NIL) DO
-      IF (prev # 0) THEN CG.Init_var (cell.offset, unit, prev); END;
+      IF (prev # 0) THEN CG.Init_var (cell.offset, unit, prev, FALSE); END;
       CG.Init_intt (cell.offset + Target.Address.pack, Target.Integer.size,
-                      GlobalUID (cell.type));
+                      GlobalUID (cell.type), FALSE);
       prev := cell.offset;
       cell := cell.next;
     END;
@@ -756,7 +797,7 @@ PROCEDURE Zero (full_t: T) =
     CASE t.info.class OF
     | Class.Integer, Class.Subrange, Class.Enum =>
         CG.Load_integer (TInt.Zero);
-        CG.Store_indirect (u.info.stk_type(*CG.Type.Int*), 0, size);
+        CG.Store_indirect (u.info.stk_type(*Target.Integer.cg_type*), 0, size);
     | Class.Real =>
         CG.Load_float (TFloat.ZeroR);
         CG.Store_indirect (CG.Type.Reel, 0, size);
@@ -772,7 +813,7 @@ PROCEDURE Zero (full_t: T) =
     | Class.Set =>
         IF (size <= Target.Integer.size) THEN
           CG.Load_integer (TInt.Zero);
-          CG.Store_indirect (CG.Type.Int, 0, size);
+          CG.Store_indirect (Target.Integer.cg_type, 0, size);
         ELSIF (size <= 8 * Target.Integer.size) THEN
           ZeroWords (size);
         ELSE
@@ -797,7 +838,7 @@ PROCEDURE ZeroWords (size: INTEGER) =
     WHILE (size >= Target.Integer.size) DO
       CG.Push (lv);
       CG.Load_integer (TInt.Zero);
-      CG.Store_indirect (CG.Type.Int, offset, Target.Integer.size);
+      CG.Store_indirect (Target.Integer.cg_type, offset, Target.Integer.size);
       INC (offset, Target.Integer.size);
       DEC (size, Target.Integer.size);
     END;
@@ -826,12 +867,17 @@ PROCEDURE InitToZeros (t: T;  zeroed: BOOLEAN) =
     END;
   END InitToZeros;
 
-PROCEDURE GenRefMap (t: T;  offset, size: INTEGER;  refs_only: BOOLEAN) =
+PROCEDURE GenRefMap (t: T; offset, size: INTEGER;
+                     refs_only, transient: BOOLEAN) =
   VAR u := Check (t);
   BEGIN
     <*ASSERT size = Target.Address.size*>
     IF u.info.isTraced THEN
-      TipeMap.Add (offset, TipeMap.Op.Ref, 0);
+      IF u.info.isTransient OR transient THEN
+        TipeMap.Add (offset, TipeMap.Op.TransientRef, 0);
+      ELSE
+        TipeMap.Add (offset, TipeMap.Op.Ref, 0);
+      END;
     ELSIF (NOT refs_only) THEN
       TipeMap.Add (offset, TipeMap.Op.UntracedRef, 0);
     END;

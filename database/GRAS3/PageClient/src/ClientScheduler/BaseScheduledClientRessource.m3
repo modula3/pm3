@@ -9,8 +9,11 @@ UNSAFE MODULE BaseScheduledClientRessource
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:36  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:47  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:36  hosking
+    Import of GRAS3 1.1
 
     Revision 1.31  1998/08/06 08:55:15  roland
     Client now removes temporary directories also if they contain empty
@@ -187,9 +190,9 @@ UNSAFE MODULE BaseScheduledClientRessource
  *)
 IMPORT Unix, Cstdlib, M3toC, Process, Ctypes, (* causes unsafe status *)
        Uutmp, Upwd, Uugid;
-IMPORT Pathname, Thread, NetObj, TextSeq, Fmt;
+IMPORT Pathname, Thread, NetObj, TextTransientSeq AS TextSeq, Fmt;
 IMPORT Config, Variant, Journal, ErrorSupport, Page, PageCache, PageFile,
-       PageFileSystem, Access, Transaction, PageLock, CommunicationEntry,
+       PageFileSystem, Access, Txn, PageLock, CommunicationEntry,
        CommunicationSeq, EntryPort, CommunicationPort,
        RemoteFile, CommunicationSeqSupport, CallbackClient, ClientInfoSeq,
        ClientInfo, NameServer;
@@ -198,11 +201,13 @@ IMPORT LocalResourceSystem;
 REVEAL
   T = Internal BRANDED OBJECT
         dataChanged      : Thread.Condition;
-        id               : TEXT;
+        <*TRANSIENT*>
+        id		 : TEXT;
+        <*TRANSIENT*>
         baseName         : Pathname.T;
         persistentPath   : Pathname.Arcs;
         temporaryPath    : Pathname.Arcs;
-        transactionLevel : Transaction.Level;
+        transactionLevel : Txn.Level;
         transactionNumber: CARDINAL;
         communicationPort: CommunicationPort.T;
         access           : Access.Mode;
@@ -226,6 +231,7 @@ REVEAL
         startTransaction     := StartTransaction;
         abortTransaction     := AbortTransaction;
         commitTransaction    := CommitTransaction;
+        chainTransaction     := ChainTransaction;
         getTransactionLevel  := GetTransactionLevel;
         getTransactionNumber := GetTransactionNumber;
 
@@ -431,7 +437,7 @@ PROCEDURE Init (self        : T;
 
     (* other setup *)
     self.dataChanged := NEW(Thread.Condition);
-    self.transactionLevel := Transaction.EnvelopeLevel;
+    self.transactionLevel := Txn.EnvelopeLevel;
     self.transactionNumber := 0;
     self.access := access;
 
@@ -831,7 +837,7 @@ PROCEDURE GetFiles (self: T): TextSeq.T RAISES {FatalError} =
 
 PROCEDURE StartTransaction (self: T) RAISES {FatalError} =
   BEGIN
-    IF self.transactionLevel = Transaction.EnvelopeLevel THEN
+    IF self.transactionLevel = Txn.EnvelopeLevel THEN
       PageCache.EndAccess();
       TRY
         TRY
@@ -849,7 +855,7 @@ PROCEDURE StartTransaction (self: T) RAISES {FatalError} =
         | NetObj.Error (info) =>
             RAISE
               FatalError(ErrorSupport.Propagate(
-                           "BaseScheduledClientRessourceStartTransaction",
+                           "BaseScheduledClientRessource.StartTransaction",
                            "NetObj.Error", info));
         | Thread.Alerted =>
             RAISE
@@ -870,10 +876,10 @@ PROCEDURE StartTransaction (self: T) RAISES {FatalError} =
 PROCEDURE CommitTransaction (self: T)
   RAISES {FatalError, NotInTransaction} =
   BEGIN
-    IF NOT (Transaction.EnvelopeLevel < self.transactionLevel) THEN
+    IF NOT (Txn.EnvelopeLevel < self.transactionLevel) THEN
       RAISE NotInTransaction;
     END;
-    IF self.transactionLevel = Transaction.TopLevel THEN
+    IF self.transactionLevel = Txn.TopLevel THEN
       PageCache.EndAccess();
       TRY
         TRY
@@ -884,12 +890,12 @@ PROCEDURE CommitTransaction (self: T)
           IF Variant.TestClientCommunication THEN
             Journal.Add(
               "communicationPort.PutData (" & "client = " & self.id
-                & ", end = Transaction.End.Commit" & ", entries = "
+                & ", end = Txn.End.Commit" & ", entries = "
                 & CommunicationSeqSupport.Fmt(
                     self.deferedData, GetFileName) & ")");
           END;
-          self.communicationPort.putData(
-            Transaction.End.Commit, self.deferedData);
+          EVAL self.communicationPort.putData(
+                        Txn.End.Commit, self.deferedData);
         EXCEPT
         | Access.Invalid (description) => TerminateClient(description);
         | NetObj.Error (info) =>
@@ -915,14 +921,13 @@ PROCEDURE CommitTransaction (self: T)
   END CommitTransaction;
 
 
-PROCEDURE AbortTransaction (self: T)
-  RAISES {NotInTransaction, FatalError} =
+PROCEDURE ChainTransaction (self: T)
+  RAISES {FatalError, NotInTransaction} =
   BEGIN
-    IF NOT (Transaction.EnvelopeLevel < self.transactionLevel) THEN
+    IF NOT (Txn.EnvelopeLevel < self.transactionLevel) THEN
       RAISE NotInTransaction;
     END;
-
-    IF self.transactionLevel = Transaction.TopLevel THEN
+    IF self.transactionLevel = Txn.TopLevel THEN
       PageCache.EndAccess();
       TRY
         TRY
@@ -933,12 +938,68 @@ PROCEDURE AbortTransaction (self: T)
           IF Variant.TestClientCommunication THEN
             Journal.Add(
               "communicationPort.PutData (" & "client = " & self.id
-                & ", end = Transaction.End.Abort" & ", entries = "
+                & ", end = Txn.End.Chain" & ", entries = "
                 & CommunicationSeqSupport.Fmt(
                     self.deferedData, GetFileName) & ")");
           END;
-          self.communicationPort.putData(
-            Transaction.End.Abort, self.deferedData);
+          self.transactionNumber :=
+              self.communicationPort.putData(
+                       Txn.End.Chain, self.deferedData);
+          IF Variant.TestClientCommunication THEN
+            Journal.Add(
+              "communicationPort.PutData (" & "client = " & self.id
+                & ", end = Txn.End.Chain" & ", entries = "
+                & CommunicationSeqSupport.Fmt(
+                      self.deferedData, GetFileName) & ") = "
+                & Fmt.Int(self.transactionNumber));
+          END;
+        EXCEPT
+        | Access.Invalid (description) => TerminateClient(description);
+        | NetObj.Error (info) =>
+            RAISE FatalError(
+                    ErrorSupport.Propagate(
+                      "BaseScheduledClientRessource.ChainTransaction",
+                      "NetObj.Error", info));
+        | Thread.Alerted =>
+            RAISE FatalError(
+                    ErrorSupport.Create(
+                      "BaseScheduledClientRessource.ChainTransaction",
+                      "Thread.Alerted"));
+        END;
+
+        self.deferedData := NEW(CommunicationSeq.T).init();
+
+      FINALLY
+        PageCache.BeginAccess();
+      END;
+    END;
+  END ChainTransaction;
+
+
+PROCEDURE AbortTransaction (self: T)
+  RAISES {NotInTransaction, FatalError} =
+  BEGIN
+    IF NOT (Txn.EnvelopeLevel < self.transactionLevel) THEN
+      RAISE NotInTransaction;
+    END;
+
+    IF self.transactionLevel = Txn.TopLevel THEN
+      PageCache.EndAccess();
+      TRY
+        TRY
+          (* HACK: Filter the entry sequence, so that for every page
+             at most one entry exists. This must be the highest in the
+             sequence. *)
+          TransactionEndFilter(self.deferedData);
+          IF Variant.TestClientCommunication THEN
+            Journal.Add(
+              "communicationPort.PutData (" & "client = " & self.id
+                & ", end = Txn.End.Abort" & ", entries = "
+                & CommunicationSeqSupport.Fmt(
+                    self.deferedData, GetFileName) & ")");
+          END;
+          EVAL self.communicationPort.putData(
+                        Txn.End.Abort, self.deferedData);
         EXCEPT
         | Access.Invalid (description) => TerminateClient(description);
         | NetObj.Error (info) =>
@@ -964,7 +1025,7 @@ PROCEDURE AbortTransaction (self: T)
   END AbortTransaction;
 
 
-PROCEDURE GetTransactionLevel (self: T): Transaction.Level =
+PROCEDURE GetTransactionLevel (self: T): Txn.Level =
   BEGIN
     RETURN self.transactionLevel;
   END GetTransactionLevel;
@@ -1023,12 +1084,12 @@ PROCEDURE CloseRemoteFile (self: T; file: RemoteFile.T)
           IF Variant.TestClientCommunication THEN
             Journal.Add(
               "communicationPort.PutData (" & "client = " & self.id
-                & ", end = Transaction.End.No" & ", entries = "
+                & ", end = Txn.End.No" & ", entries = "
                 & CommunicationSeqSupport.Fmt(
                     self.deferedData, GetFileName) & ")");
           END;
-          self.communicationPort.putData(
-            Transaction.End.No, self.deferedData);
+          EVAL self.communicationPort.putData(
+                        Txn.End.No, self.deferedData);
           self.deferedData := NEW(CommunicationSeq.T).init();
         END;
 
@@ -1065,7 +1126,7 @@ PROCEDURE GetData (    self        : T;
   RAISES {Access.Locked, FatalError} =
   VAR result: Page.T;
   BEGIN
-    IF NOT (Transaction.EnvelopeLevel < self.transactionLevel) THEN
+    IF NOT (Txn.EnvelopeLevel < self.transactionLevel) THEN
       RAISE FatalError(
               ErrorSupport.Create("BaseScheduledClientRessource.GetData",
                                   "Not in transaction"));

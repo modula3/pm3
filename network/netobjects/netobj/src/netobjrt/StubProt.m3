@@ -27,7 +27,7 @@ REVEAL WrClass.Private <: MUTEX;
 
 TYPE ObjectStack = RECORD
     pos: CARDINAL := 0;
-    objs: REF ARRAY OF NetObj.T := NIL;
+    objs: <*TRANSIENT*> REF ARRAY OF NetObj.T := NIL;
   END;
   
 CONST DefaultObjStackSize = 8;
@@ -212,7 +212,7 @@ PROCEDURE StartResult(c: Conn)
 
 PROCEDURE OutObject (c: Conn; o: NetObj.T)
     RAISES {Wr.Failure, Thread.Alerted} =
-  VAR s: REF ARRAY OF NetObj.T;
+  VAR s: <*TRANSIENT*> REF ARRAY OF NetObj.T;
   BEGIN
     IF o = NIL THEN
       OutBytes(c, WireRep.NullT.byte);
@@ -220,10 +220,10 @@ PROCEDURE OutObject (c: Conn; o: NetObj.T)
       OutBytes(c, NetObjRT.InsertAndPin(o).byte);
       s := c.objStack.objs;
       IF s = NIL THEN
-        s := NEW(REF ARRAY OF NetObj.T, DefaultObjStackSize);
+        s := NEW(<*TRANSIENT*> REF ARRAY OF NetObj.T, DefaultObjStackSize);
         c.objStack.objs := s;
       ELSIF c.objStack.pos = NUMBER(s^) THEN
-        s := NEW(REF ARRAY OF NetObj.T, 2 * c.objStack.pos);
+        s := NEW(<*TRANSIENT*> REF ARRAY OF NetObj.T, 2 * c.objStack.pos);
         SUBARRAY(s^, 0, c.objStack.pos) := c.objStack.objs^;
         c.objStack.objs := s;
       END;

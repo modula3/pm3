@@ -14,6 +14,7 @@ FROM M3CG IMPORT Name, ByteOffset, TypeUID, CallingConvention;
 FROM M3CG IMPORT BitSize, ByteSize, Alignment, Frequency;
 FROM M3CG IMPORT Var, Proc, Label, Sign, BitOffset, No_label;
 FROM M3CG IMPORT Type, ZType, AType, RType, IType, MType;
+FROM M3CG IMPORT CompareOp, ConvertOp, RuntimeError;
 
 TYPE WrVar    = Var    OBJECT tag: INTEGER END;
 TYPE WrProc   = Proc   OBJECT tag: INTEGER END;
@@ -97,30 +98,18 @@ TYPE
         jump := jump;
         if_true  := if_true;
         if_false := if_false;
-        if_eq := if_eq;
-        if_ne := if_ne;
-        if_gt := if_gt;
-        if_ge := if_ge;
-        if_lt := if_lt;
-        if_le := if_le;
+        if_compare := if_compare;
         case_jump := case_jump;
         exit_proc := exit_proc;
         load  := load;
         store := store;
-        store_ref := store_ref;
         load_address := load_address;
         load_indirect := load_indirect;
         store_indirect := store_indirect;
-        store_ref_indirect := store_ref_indirect;
         load_nil      := load_nil;
         load_integer  := load_integer;
         load_float    := load_float;
-        eq       := eq;
-        ne       := ne;
-        gt       := gt;
-        ge       := ge;
-        lt       := lt;
-        le       := le;
+        compare  := compare;
         add      := add;
         subtract := subtract;
         multiply := multiply;
@@ -131,22 +120,14 @@ TYPE
         abs      := abs;
         max      := max;
         min      := min;
-        round    := round;
-        trunc    := trunc;
-        floor    := floor;
-        ceiling  := ceiling;
+        cvt_int  := cvt_int;
         cvt_float := cvt_float;
         set_union          := set_union;
         set_difference     := set_difference;
         set_intersection   := set_intersection;
         set_sym_difference := set_sym_difference;
         set_member         := set_member;
-        set_eq       := set_eq;
-        set_ne       := set_ne;
-        set_gt       := set_gt;
-        set_ge       := set_ge;
-        set_lt       := set_lt;
-        set_le       := set_le;
+        set_compare  := set_compare;
         set_range    := set_range;
         set_singleton := set_singleton;
         not := not;
@@ -159,6 +140,8 @@ TYPE
         rotate       := rotate;
         rotate_left  := rotate_left;
         rotate_right := rotate_right;
+        widen := widen;
+        chop := chop;
         extract := extract;
         extract_n := extract_n;
         extract_mn := extract_mn;
@@ -172,11 +155,7 @@ TYPE
         zero := zero;
         zero_n := zero_n;
         loophole := loophole;
-        assert_fault := assert_fault;
-        narrow_fault := narrow_fault;
-        return_fault := return_fault;
-        case_fault := case_fault;
-        typecase_fault := typecase_fault;
+        abort := abort;
         check_nil := check_nil;
         check_lo := check_lo;
         check_hi := check_hi;
@@ -248,15 +227,9 @@ PROCEDURE PName (u: U;  p: Proc) =
   END PName;
 
 PROCEDURE TName (u: U;  t: Type) =
-  CONST type_names = ARRAY Type OF TEXT {
-                       " Addr", " Word", " Int",
-                       " Reel", " LReel", " XReel",
-                       " Int.8", " Int.16", " Int.32", " Int.32D",
-                       " Word.8", " Word.16", " Word.32", " Word.32D",
-                       " Struct", " Void"
-                     };
   BEGIN
-    OutT (u, type_names[t]);
+    OutC (u, ' ');
+    OutT (u, Target.TypeNames[t]);
   END TName;
 
 PROCEDURE Flt (u: U;  READONLY f: Target.Float) =
@@ -679,7 +652,7 @@ PROCEDURE declare_exception (u: U;  n: Name;  arg_type: TypeUID;
   END declare_exception;
 
 (*--------------------------------------------------------- runtime hooks ---*)
-
+  
 PROCEDURE GetRuntimeHook (u: U;  n: Name): RuntimeHook =
   VAR ref: REFANY;  e: RuntimeHook;
   BEGIN
@@ -747,12 +720,13 @@ PROCEDURE import_global (u: U;  n: Name;  s: ByteSize;  a: Alignment;
     RETURN v;
   END import_global;
 
-PROCEDURE declare_segment (u: U;  n: Name;  m3t: TypeUID): Var =
+PROCEDURE declare_segment (u: U;  n: Name;  m3t: TypeUID;  is_const: BOOLEAN): Var =
   VAR v := NewVar (u);
   BEGIN
     Cmd   (u, "declare_segment");
     ZName (u, n);
     Tipe  (u, m3t);
+    Bool  (u, is_const);
     VName (u, v);
     NL    (u);
     RETURN v;
@@ -1036,88 +1010,44 @@ PROCEDURE jump (u: U; l: Label) =
     NL    (u);
   END jump;
 
-PROCEDURE if_true  (u: U; l: Label;  f: Frequency) =
-  (* IF (s0.I # 0) GOTO l ; pop *)
+PROCEDURE if_true  (u: U;  t: IType;  l: Label;  f: Frequency) =
+  (* IF (s0.t # 0) GOTO l ; pop *)
   BEGIN
     Cmd   (u, "if_true");
+    TName (u, t);
     Lab   (u, l);
     Int   (u, f);
     NL    (u);
   END if_true;
 
-PROCEDURE if_false (u: U; l: Label;  f: Frequency) =
-  (* IF (s0.I = 0) GOTO l ; pop *)
+PROCEDURE if_false (u: U;  t: IType;  l: Label;  f: Frequency) =
+  (* IF (s0.t = 0) GOTO l ; pop *)
   BEGIN
     Cmd   (u, "if_false");
+    TName (u, t);
     Lab   (u, l);
     Int   (u, f);
     NL    (u);
   END if_false;
 
-PROCEDURE if_eq (u: U;  l: Label;  t: ZType;  f: Frequency) =
-  (* IF (s1.t = s0.t) GOTO l ; pop(2) *)
+
+PROCEDURE if_compare (u: U;  t: ZType;  op: CompareOp;  l: Label;  f: Frequency) =
+  (* IF (s1.t  op  s0.t) GOTO l ; pop(2) *)
+  CONST OpName = ARRAY CompareOp OF TEXT {
+           "if_eq", "if_ne", "if_gt", "if_ge", "if_lt", "if_le" };
   BEGIN
-    Cmd   (u, "if_eq");
-    Lab   (u, l);
+    Cmd   (u, OpName [op]);
     TName (u, t);
+    Lab   (u, l);
     Int   (u, f);
     NL    (u);
-  END if_eq;
+  END if_compare;
 
-PROCEDURE if_ne (u: U;  l: Label;  t: ZType;  f: Frequency) =
-  (* IF (s1.t # s0.t) GOTO l ; pop(2) *)
-  BEGIN
-    Cmd   (u, "if_ne");
-    Lab   (u, l);
-    TName (u, t);
-    Int   (u, f);
-    NL    (u);
-  END if_ne;
-
-PROCEDURE if_gt (u: U;  l: Label;  t: ZType;  f: Frequency) =
-  (* IF (s1.t > s0.t) GOTO l ; pop(2) *)
-  BEGIN
-    Cmd   (u, "if_gt");
-    Lab   (u, l);
-    TName (u, t);
-    Int   (u, f);
-    NL    (u);
-  END if_gt;
-
-PROCEDURE if_ge (u: U;  l: Label;  t: ZType;  f: Frequency) =
-  (* IF (s1.t >= s0.t) GOTO l ; pop(2) *)
-  BEGIN
-    Cmd   (u, "if_ge");
-    Lab   (u, l);
-    TName (u, t);
-    Int   (u, f);
-    NL    (u);
-  END if_ge;
-
-PROCEDURE if_lt (u: U;  l: Label;  t: ZType;  f: Frequency) =
-  (* IF (s1.t < s0.t) GOTO l ; pop(2) *)
-  BEGIN
-    Cmd   (u, "if_lt");
-    Lab   (u, l);
-    TName (u, t);
-    Int   (u, f);
-    NL    (u);
-  END if_lt;
-
-PROCEDURE if_le (u: U;  l: Label;  t: ZType;  f: Frequency) =
-  (* IF (s1.t <= s0.t) GOTO l ; pop(2) *)
-  BEGIN
-    Cmd   (u, "if_le");
-    Lab   (u, l);
-    TName (u, t);
-    Int   (u, f);
-    NL    (u);
-  END if_le;
-
-PROCEDURE case_jump (u: U; READONLY labels: ARRAY OF Label) =
-  (* "GOTO labels[s0.I] ; pop" with no range checking on s0.I *)
+PROCEDURE case_jump (u: U;  t: IType;  READONLY labels: ARRAY OF Label) =
+  (* "GOTO labels[s0.t] ; pop" with no range checking on s0.t *)
   BEGIN
     Cmd   (u, "case_jump");
+    TName (u, t);
     Int   (u, NUMBER(labels));
     FOR i := FIRST (labels) TO LAST (labels) DO  Lab (u, labels [i]);  END;
     NL    (u);
@@ -1133,31 +1063,25 @@ PROCEDURE exit_proc (u: U; t: Type) =
 
 (*------------------------------------------------------------ load/store ---*)
 
-PROCEDURE load  (u: U;  v: Var;  o: ByteOffset;  t: MType) =
+PROCEDURE load  (u: U;  v: Var;  o: ByteOffset;  t: MType;  z: ZType) =
   BEGIN
     Cmd   (u, "load");
     VName (u, v);
     Int   (u, o);  
     TName (u, t);
+    TName (u, z);
     NL    (u);
   END load;
 
-PROCEDURE store  (u: U;  v: Var;  o: ByteOffset;  t: MType) =
+PROCEDURE store  (u: U;  v: Var;  o: ByteOffset;  t: ZType;  z: MType) =
   BEGIN
     Cmd   (u, "store");
     VName (u, v);
     Int   (u, o);  
     TName (u, t);
+    TName (u, z);
     NL    (u);
   END store;
-
-PROCEDURE store_ref (u: U;  v: Var;  o: ByteOffset) =
-  BEGIN
-    Cmd   (u, "store_ref");
-    VName (u, v);
-    Int   (u, o);
-    NL    (u);
-  END store_ref;
 
 PROCEDURE load_address (u: U;  v: Var;  o: ByteOffset) =
   BEGIN
@@ -1167,31 +1091,23 @@ PROCEDURE load_address (u: U;  v: Var;  o: ByteOffset) =
     NL    (u);
   END load_address;
 
-PROCEDURE load_indirect (u: U;  o: ByteOffset;  t: MType) =
+PROCEDURE load_indirect (u: U;  o: ByteOffset;  t: MType;  z: ZType) =
   BEGIN
     Cmd   (u, "load_indirect");
     Int   (u, o);  
     TName (u, t);
+    TName (u, z);
     NL    (u);
   END load_indirect;
 
-PROCEDURE store_indirect (u: U;  o: ByteOffset;  t: MType) =
+PROCEDURE store_indirect (u: U;  o: ByteOffset;  t: ZType;  z: MType) =
   BEGIN
     Cmd   (u, "store_indirect");
     Int   (u, o);  
     TName (u, t);
+    TName (u, z);
     NL    (u);
   END store_indirect;
-
-
-PROCEDURE store_ref_indirect (u: U;  o: ByteOffset;  var: BOOLEAN) =
-  BEGIN
-    Cmd   (u, "store_ref_indirect");
-    Int   (u, o);
-    Bool  (u, var);
-    NL    (u);
-  END store_ref_indirect;
-
 
 (*-------------------------------------------------------------- literals ---*)
 
@@ -1202,71 +1118,35 @@ PROCEDURE load_nil (u: U) =
     NL    (u);
   END load_nil;
 
-PROCEDURE load_integer  (u: U;  READONLY i: Target.Int) =
-  (* push ; s0.I := i *)
+PROCEDURE load_integer  (u: U;  t: IType;  READONLY i: Target.Int) =
+  (* push ; s0.t := i *)
   BEGIN
     Cmd   (u, "load_integer");
+    TName (u, t);
     TInt  (u, i);
     NL    (u);
   END load_integer;
 
-PROCEDURE load_float    (u: U;  READONLY f: Target.Float) =
+PROCEDURE load_float    (u: U;  t: RType;  READONLY f: Target.Float) =
   (* push ; s0.t := f *)
   BEGIN
     Cmd   (u, "load_float");
+    TName (u, t);
     Flt   (u, f);
     NL    (u);
   END load_float;
 
 (*------------------------------------------------------------ arithmetic ---*)
 
-PROCEDURE eq (u: U;  t: ZType) =
-  (* s1.I := (s1.t = s0.t)  ; pop *)
+PROCEDURE compare (u: U;  t: ZType;  z: IType;  op: CompareOp) =
+  (* s1.z := (s1.t = s0.t)  ; pop *)
+  CONST OpName = ARRAY CompareOp OF TEXT { "eq", "ne", "gt", "ge", "lt", "le" };
   BEGIN
-    Cmd   (u, "eq");
+    Cmd   (u, OpName [op]);
     TName (u, t);
+    TName (u, z);
     NL    (u);
-  END eq;
-
-PROCEDURE ne (u: U;  t: ZType) =
-  (* s1.I := (s1.t # s0.t)  ; pop *)
-  BEGIN
-    Cmd   (u, "ne");
-    TName (u, t);
-    NL    (u);
-  END ne;
-
-PROCEDURE gt (u: U;  t: ZType) =
-  (* s1.I := (s1.t > s0.t)  ; pop *)
-  BEGIN
-    Cmd   (u, "gt");
-    TName (u, t);
-    NL    (u);
-  END gt;
-
-PROCEDURE ge (u: U;  t: ZType) =
-  (* s1.I := (s1.t >= s0.t) ; pop *)
-  BEGIN
-    Cmd   (u, "ge");
-    TName (u, t);
-    NL    (u);
-  END ge;
-
-PROCEDURE lt (u: U;  t: ZType) =
-  (* s1.I := (s1.t < s0.t)  ; pop *)
-  BEGIN
-    Cmd   (u, "lt");
-    TName (u, t);
-    NL    (u);
-  END lt;
-
-PROCEDURE le (u: U;  t: ZType) =
-  (* s1.I := (s1.t <= s0.t) ; pop *)
-  BEGIN
-    Cmd   (u, "le");
-    TName (u, t);
-    NL    (u);
-  END le;
+  END compare;
 
 PROCEDURE add (u: U;  t: AType) =
   (* s1.t := s1.t + s0.t ; pop *)
@@ -1354,37 +1234,15 @@ PROCEDURE min      (u: U;  t: ZType) =
     NL    (u);
   END min;
 
-PROCEDURE round    (u: U;  t: RType) =
-  (* s0.I := ROUND (s0.t) *)
+PROCEDURE cvt_int (u: U;  t: RType;  x: IType;  op: ConvertOp) =
+  (* s0.u := op (s0.t) *)
+  CONST OpName = ARRAY ConvertOp OF TEXT { "round", "trunc", "floor", "ceiling" };
   BEGIN
-    Cmd   (u, "round");
+    Cmd   (u, OpName [op]);
     TName (u, t);
+    TName (u, x);
     NL    (u);
-  END round;
-
-PROCEDURE trunc    (u: U;  t: RType) =
-  (* s0.I := TRUNC (s0.t) *)
-  BEGIN
-    Cmd   (u, "trunc");
-    TName (u, t);
-    NL    (u);
-  END trunc;
-
-PROCEDURE floor    (u: U;  t: RType) =
-  (* s0.I := FLOOR (s0.t) *)
-  BEGIN
-    Cmd   (u, "floor");
-    TName (u, t);
-    NL    (u);
-  END floor;
-
-PROCEDURE ceiling  (u: U;  t: RType) =
-  (* s0.I := CEILING (s0.t) *)
-  BEGIN
-    Cmd   (u, "ceiling");
-    TName (u, t);
-    NL    (u);
-  END ceiling;
+  END cvt_int;
 
 PROCEDURE cvt_float (u: U;  t: AType;  x: RType) =
   (* s0.x := FLOAT (s0.t, x) *)
@@ -1429,209 +1287,196 @@ PROCEDURE set_sym_difference (u: U;  s: ByteSize) =
     NL    (u);
   END set_sym_difference;
 
-PROCEDURE set_member       (u: U;  s: ByteSize) =
-  (* s1.I := (s0.I IN s1.B) ; pop *)
+PROCEDURE set_member       (u: U;  s: ByteSize;  t: IType) =
+  (* s1.t := (s0.t IN s1.B) ; pop *)
   BEGIN
     Cmd   (u, "set_member");
     Int   (u, s);
+    TName (u, t);
     NL    (u);
   END set_member;
 
-PROCEDURE set_eq       (u: U;  s: ByteSize) =
-  (* s1.I := (s1.B = s0.B)  ; pop *)
+PROCEDURE set_compare  (u: U;  s: ByteSize;  op: CompareOp;  t: IType) =
+  (* s1.t := (s1.B  op  s0.B)  ; pop *)
+  CONST OpName = ARRAY CompareOp OF TEXT {
+                   "set_eq", "set_ne", "set_gt", "set_ge", "set_lt", "set_le" };
   BEGIN
-    Cmd   (u, "set_eq");
+    Cmd   (u, OpName [op]);
     Int   (u, s);
+    TName (u, t);
     NL    (u);
-  END set_eq;
+  END set_compare;
 
-PROCEDURE set_ne (u: U;  s: ByteSize) =
-  (* s1.I := (s1.B # s0.B)  ; pop *)
-  BEGIN
-    Cmd   (u, "set_ne");
-    Int   (u, s);
-    NL    (u);
-  END set_ne;
-
-PROCEDURE set_gt (u: U;  s: ByteSize) =
-  (* s1.I := (s1.B > s0.B)  ; pop *)
-  BEGIN
-    Cmd   (u, "set_gt");
-    Int   (u, s);
-    NL    (u);
-  END set_gt;
-
-PROCEDURE set_ge (u: U;  s: ByteSize) =
-  (* s1.I := (s1.B >= s0.B) ; pop *)
-  BEGIN
-    Cmd   (u, "set_ge");
-    Int   (u, s);
-    NL    (u);
-  END set_ge;
-
-PROCEDURE set_lt (u: U;  s: ByteSize) =
-  (* s1.I := (s1.B < s0.B)  ; pop *)
-  BEGIN
-    Cmd   (u, "set_lt");
-    Int   (u, s);
-    NL    (u);
-  END set_lt;
-
-PROCEDURE set_le (u: U;  s: ByteSize) =
-  (* s1.I := (s1.B <= s0.B) ; pop *)
-  BEGIN
-    Cmd   (u, "set_le");
-    Int   (u, s);
-    NL    (u);
-  END set_le;
-
-PROCEDURE set_range (u: U;  s: ByteSize) =
-  (* s2.A [s1.I .. s0.I] := 1's; pop(3)*)
+PROCEDURE set_range (u: U;  s: ByteSize;  t: IType) =
+  (* s2.A [s1.t .. s0.t] := 1's; pop(3)*)
   BEGIN
     Cmd   (u, "set_range");
     Int   (u, s);
+    TName (u, t);
     NL    (u);
   END set_range;
 
-PROCEDURE set_singleton (u: U;  s: ByteSize) =
-  (* s1.A [s0.I] := 1; pop(2) *)
+PROCEDURE set_singleton (u: U;  s: ByteSize;  t: IType) =
+  (* s1.A [s0.t] := 1; pop(2) *)
   BEGIN
     Cmd   (u, "set_singleton");
     Int   (u, s);
+    TName (u, t);
     NL    (u);
   END set_singleton;
 
 (*------------------------------------------------- Word.T bit operations ---*)
 
-PROCEDURE not (u: U) =
-  (* s0.I := Word.Not (s0.I) *)
+PROCEDURE not (u: U;  t: IType) =
+  (* s0.t := Word.Not (s0.t) *)
   BEGIN
     Cmd   (u, "not");
-    TName (u, Type.Int);
+    TName (u, t);
     NL    (u);
   END not;
 
-PROCEDURE and (u: U) =
-  (* s1.I := Word.And (s1.I, s0.I) ; pop *)
+PROCEDURE and (u: U;  t: IType) =
+  (* s1.t := Word.And (s1.t, s0.t) ; pop *)
   BEGIN
     Cmd   (u, "and");
-    TName (u, Type.Int);
+    TName (u, t);
     NL    (u);
   END and;
 
-PROCEDURE or  (u: U) =
-  (* s1.I := Word.Or  (s1.I, s0.I) ; pop *)
+PROCEDURE or  (u: U;  t: IType) =
+  (* s1.t := Word.Or  (s1.t, s0.t) ; pop *)
   BEGIN
     Cmd   (u, "or");
-    TName (u, Type.Int);
+    TName (u, t);
     NL    (u);
   END or;
 
-PROCEDURE xor (u: U) =
-  (* s1.I := Word.Xor (s1.I, s0.I) ; pop *)
+PROCEDURE xor (u: U;  t: IType) =
+  (* s1.t := Word.Xor (s1.t, s0.t) ; pop *)
   BEGIN
     Cmd   (u, "xor");
-    TName (u, Type.Int);
+    TName (u, t);
     NL    (u);
   END xor;
 
-PROCEDURE shift        (u: U) =
-  (* s1.I := Word.Shift  (s1.I, s0.I) ; pop *)
+PROCEDURE shift (u: U;  t: IType) =
+  (* s1.t := Word.Shift  (s1.t, s0.t) ; pop *)
   BEGIN
     Cmd   (u, "shift");
-    TName (u, Type.Int);
+    TName (u, t);
     NL    (u);
   END shift;
 
-PROCEDURE shift_left   (u: U) =
-  (* s1.I := Word.Shift  (s1.I, s0.I) ; pop *)  
+PROCEDURE shift_left (u: U;  t: IType) =
+  (* s1.t := Word.Shift  (s1.t, s0.t) ; pop *)  
   BEGIN
     Cmd   (u, "shift_left");
-    TName (u, Type.Int);
+    TName (u, t);
     NL    (u);
   END shift_left;
 
-PROCEDURE shift_right  (u: U) =
-  (* s1.I := Word.Shift  (s1.I, -s0.I) ; pop *)
+PROCEDURE shift_right  (u: U;  t: IType) =
+  (* s1.t := Word.Shift  (s1.t, -s0.t) ; pop *)
   BEGIN
     Cmd   (u, "shift_right");
-    TName (u, Type.Int);
+    TName (u, t);
     NL    (u);
   END shift_right;
 
-PROCEDURE rotate       (u: U) =
-  (* s1.I := Word.Rotate (s1.I, s0.I) ; pop *)
+PROCEDURE rotate (u: U;  t: IType) =
+  (* s1.r := Word.Rotate (s1.t, s0.t) ; pop *)
   BEGIN
     Cmd   (u, "rotate");
-    TName (u, Type.Int);
+    TName (u, t);
     NL    (u);
   END rotate;
 
-PROCEDURE rotate_left  (u: U) =
-  (* s1.I := Word.Rotate (s1.I, s0.I) ; pop *)
+PROCEDURE rotate_left  (u: U;  t: IType) =
+  (* s1.t := Word.Rotate (s1.t, s0.t) ; pop *)
   BEGIN
     Cmd   (u, "rotate_left");
-    TName (u, Type.Int);
+    TName (u, t);
     NL    (u);
   END rotate_left;
 
-PROCEDURE rotate_right (u: U) =
-  (* s1.I := Word.Rotate (s1.I, -s0.I) ; pop *)
+PROCEDURE rotate_right (u: U;  t: IType) =
+  (* s1.t := Word.Rotate (s1.t, -s0.t) ; pop *)
   BEGIN
     Cmd   (u, "rotate_right");
-    TName (u, Type.Int);
+    TName (u, t);
     NL    (u);
   END rotate_right;
 
-PROCEDURE extract (u: U;  sign: BOOLEAN) =
-  (* s2.I := Word.Extract(s2.I, s1.I, s0.I);
+PROCEDURE widen (u: U;  sign: BOOLEAN) =
+  (* s0.I64 := s0.I32;  IF sign THEN SignExtend s0;  *)
+  BEGIN
+    Cmd   (u, "widen");
+    Bool  (u, sign);
+    NL    (u);
+  END widen;
+
+PROCEDURE chop (u: U) =
+  (* s0.I32 := Word.And (s0.I64, 16_ffffffff);  *)
+  BEGIN
+    Cmd   (u, "chop");
+    NL    (u);
+  END chop;
+
+PROCEDURE extract (u: U;  t: IType;  sign: BOOLEAN) =
+  (* s2.t := Word.Extract(s2.t, s1.t, s0.t);
      IF sign THEN SignExtend s2 END; pop(2) *)
   BEGIN
     Cmd   (u, "extract");
+    TName (u, t);
     Bool  (u, sign);
     NL    (u);
   END extract;
 
-PROCEDURE extract_n (u: U;  sign: BOOLEAN;  n: INTEGER) =
-  (* s1.I := Word.Extract(s1.I, s0.I, n);
+PROCEDURE extract_n (u: U;  t: IType;  sign: BOOLEAN;  n: INTEGER) =
+  (* s1.t := Word.Extract(s1.t, s0.t, n);
      IF sign THEN SignExtend s1 END; pop(1) *)
   BEGIN
     Cmd   (u, "extract_n");
+    TName (u, t);
     Bool  (u, sign);
     Int   (u, n);
     NL    (u);
   END extract_n;
 
-PROCEDURE extract_mn (u: U;  sign: BOOLEAN;  m, n: INTEGER) =
-  (* s0.I := Word.Extract(s0.I, m, n);
+PROCEDURE extract_mn (u: U;  t: IType;  sign: BOOLEAN;  m, n: INTEGER) =
+  (* s0.t := Word.Extract(s0.t, m, n);
      IF sign THEN SignExtend s0 END; *)
   BEGIN
     Cmd   (u, "extract_mn");
+    TName (u, t);
     Bool  (u, sign);
     Int   (u, m); 
     Int   (u, n);
     NL    (u);
   END extract_mn;
 
-PROCEDURE insert  (u: U) =
-  (* s3.I := Word.Insert (s3.I, s2.I, s1.I, s0.I) ; pop(3) *)
+PROCEDURE insert  (u: U;  t: IType) =
+  (* s3.t := Word.Insert (s3.t, s2.t, s1.t, s0.t) ; pop(3) *)
   BEGIN
     Cmd   (u, "insert");
+    TName (u, t);
     NL    (u);
   END insert;
 
-PROCEDURE insert_n  (u: U;  n: INTEGER) =
-  (* s2.I := Word.Insert (s2.I, s1.I, s0.I, n) ; pop(2) *)
+PROCEDURE insert_n  (u: U;  t: IType;  n: INTEGER) =
+  (* s2.t := Word.Insert (s2.t, s1.t, s0.t, n) ; pop(2) *)
   BEGIN
     Cmd   (u, "insert_n");
+    TName (u, t);
     Int   (u, n);
     NL    (u);
   END insert_n;
 
-PROCEDURE insert_mn  (u: U;  m, n: INTEGER) =
-  (* s1.I := Word.Insert (s1.I, s0.I, m, n) ; pop(2) *)
+PROCEDURE insert_mn  (u: U;  t: IType;  m, n: INTEGER) =
+  (* s1.t := Word.Insert (s1.t, s0.t, m, n) ; pop(2) *)
   BEGIN
     Cmd   (u, "insert_mn");
+    TName (u, t);
     Int   (u, m); 
     Int   (u, n);
     NL    (u);
@@ -1656,10 +1501,11 @@ PROCEDURE pop  (u: U;  t: Type) =
     NL    (u);
   END pop;
 
-PROCEDURE copy_n (u: U;  t: MType;  overlap: BOOLEAN) =
-  (* Mem[s2.A:s0.I] := Mem[s1.A:s0.I]; pop(3)*)
+PROCEDURE copy_n (u: U;  z: IType;  t: MType;  overlap: BOOLEAN) =
+  (* Mem[s2.A:s0.z] := Mem[s1.A:s0.z]; pop(3)*)
   BEGIN
     Cmd   (u, "copy_n");
+    TName (u, z);
     TName (u, t);
     Bool  (u, overlap);
     NL    (u);
@@ -1675,10 +1521,11 @@ PROCEDURE copy (u: U;  n: INTEGER;  t: MType;  overlap: BOOLEAN) =
     NL    (u);
   END copy;
 
-PROCEDURE zero_n (u: U;  t: MType) =
-  (* Mem[s1.A:s0.I] := 0; pop(2) *)
+PROCEDURE zero_n (u: U;  z: IType;  t: MType) =
+  (* Mem[s1.A:s0.z] := 0; pop(2) *)
   BEGIN
     Cmd   (u, "zero_n");
+    TName (u, z);
     TName (u, t);
     NL    (u);
   END zero_n;
@@ -1705,86 +1552,72 @@ PROCEDURE loophole (u: U;  from, two: ZType) =
 
 (*------------------------------------------------ traps & runtime checks ---*)
 
-PROCEDURE assert_fault (u: U) =
+PROCEDURE abort (u: U;  code: RuntimeError) =
   BEGIN
-    Cmd   (u, "assert_fault");
+    Cmd   (u, "abort");
+    Int   (u, ORD (code));
     NL    (u);
-  END assert_fault;
+  END abort;
 
-PROCEDURE narrow_fault (u: U) =
-  BEGIN
-    Cmd   (u, "narrow_fault");
-    NL    (u);
-  END narrow_fault;
-
-PROCEDURE return_fault (u: U) =
-  BEGIN
-    Cmd   (u, "return_fault");
-    NL    (u);
-  END return_fault;
-
-PROCEDURE case_fault (u: U) =
-  BEGIN
-    Cmd   (u, "case_fault");
-    NL    (u);
-  END case_fault;
-
-PROCEDURE typecase_fault (u: U) =
-  (* Abort *)
-  BEGIN
-    Cmd   (u, "typecase_fault");
-    NL    (u);
-  END typecase_fault;
-
-
-PROCEDURE check_nil (u: U) =
-  (* IF (s0.A = NIL) THEN Abort *)
+PROCEDURE check_nil (u: U;  code: RuntimeError) =
+  (* IF (s0.A = NIL) THEN abort(code) *)
   BEGIN
     Cmd   (u, "check_nil");
+    Int   (u, ORD (code));
     NL    (u);
   END check_nil;
 
-PROCEDURE check_lo (u: U;  READONLY i: Target.Int) =
-  (* IF (s0.I < i) THEN Abort *)
+PROCEDURE check_lo (u: U;  t: IType;  READONLY i: Target.Int;  code: RuntimeError) =
+  (* IF (s0.t < i) THEN abort(code) *)
   BEGIN
     Cmd   (u, "check_lo");
-    TInt (u, i);
+    TName (u, t);
+    TInt  (u, i);
+    Int   (u, ORD (code));
     NL    (u);
   END check_lo;
 
-PROCEDURE check_hi (u: U;  READONLY i: Target.Int) =
-  (* IF (i < s0.I) THEN Abort *)
+PROCEDURE check_hi (u: U;  t: IType;  READONLY i: Target.Int;  code: RuntimeError) =
+  (* IF (i < s0.t) THEN abort(code) *)
   BEGIN
     Cmd   (u, "check_hi");
-    TInt (u, i);
+    TName (u, t);
+    TInt  (u, i);
+    Int   (u, ORD (code));
     NL    (u);
   END check_hi;
 
-PROCEDURE check_range (u: U;  READONLY a, b: Target.Int) =
-  (* IF (s0.I < a) OR (b < s0.I) THEN Abort *)
+PROCEDURE check_range (u: U;  t: IType;  READONLY a, b: Target.Int;  code: RuntimeError) =
+  (* IF (s0.t < a) OR (b < s0.t) THEN abort(code) *)
   BEGIN
     Cmd   (u, "check_range");
-    TInt (u, a);
-    TInt (u, b);
+    TName (u, t);
+    TInt  (u, a);
+    TInt  (u, b);
+    Int   (u, ORD (code));
     NL    (u);
   END check_range;
 
-PROCEDURE check_index (u: U) =
+PROCEDURE check_index (u: U;  t: IType;  code: RuntimeError) =
   BEGIN
     Cmd   (u, "check_index");
+    TName (u, t);
+    Int   (u, ORD (code));
     NL    (u);
   END check_index;
 
-PROCEDURE check_eq (u: U) =
-  (* IF (s0.I # s1.I) THEN Abort;  Pop (2) *)
+PROCEDURE check_eq (u: U;  t: IType;  code: RuntimeError) =
+  (* IF (s0.t # s1.t) THEN abort(code);  Pop (2) *)
   BEGIN
     Cmd   (u, "check_eq");
+    TName (u, t);
+    Int   (u, ORD (code));
     NL    (u);
   END check_eq;
 
 (*---------------------------------------------------- address arithmetic ---*)
 
-PROCEDURE add_offset (u: U; i: INTEGER) =
+PROCEDURE add_offset (u: U;  i: INTEGER) =
   (* s0.A := s0.A + i *)
   BEGIN
     Cmd   (u, "add_offset");
@@ -1792,10 +1625,11 @@ PROCEDURE add_offset (u: U; i: INTEGER) =
     NL    (u);
   END add_offset;
 
-PROCEDURE index_address (u: U;  size: INTEGER) =
-  (* s1.A := s1.A + s0.I * size ; pop *)
+PROCEDURE index_address (u: U;  t: IType;  size: INTEGER) =
+  (* s1.A := s1.A + s0.t * size ; pop *)
   BEGIN
     Cmd   (u, "index_address");
+    TName (u, t);
     Int   (u, size);
     NL    (u);
   END index_address;

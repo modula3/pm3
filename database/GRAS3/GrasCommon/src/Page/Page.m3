@@ -7,8 +7,11 @@ MODULE Page;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:27  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:44  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:27  hosking
+    Import of GRAS3 1.1
 
     Revision 1.4  1996/03/02 16:51:21  rbnix
     	Bug fixed: from argument in SUBARRAY adjusted.
@@ -36,12 +39,9 @@ IMPORT
 
 REVEAL
   T                     = Public BRANDED OBJECT
-      data		:PageData.T;
-
     OVERRIDES
       putData		:= PutData;
       getData		:= GetData;
-      getAll		:= GetAll;
       copyData		:= CopyData;
     END;
 
@@ -50,7 +50,9 @@ PROCEDURE PutData	(         self		:T;
 			 READONLY data		:PageData.Part;
 			          pos		:= FIRST (PageData.Index)) =
   BEGIN
-    SUBARRAY (self.data, pos-FIRST (self.data), NUMBER (data)) := data;
+    WITH sub = SUBARRAY (self.data, pos-FIRST (self.data), NUMBER (data)) DO
+      sub := data;
+    END;
   END PutData;
 
   
@@ -61,12 +63,6 @@ PROCEDURE GetData	(         self		:T;
     data := SUBARRAY (self.data, pos-FIRST (self.data), NUMBER (data));
   END GetData;
 
-
-PROCEDURE GetAll	(         self		:T) :PageData.T =
-  BEGIN
-    RETURN self.data;
-  END GetAll;
-  
 
 PROCEDURE CopyData      (         self          :T;
                                   source	:PageData.Index;

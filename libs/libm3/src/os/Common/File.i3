@@ -35,7 +35,7 @@ IMPORT Atom, OSError, Time;
 
 TYPE
   T <: Public;
-  Public = OBJECT METHODS
+  Public = <*TRANSIENT*> ROOT OBJECT METHODS
     read(VAR (*OUT*) b: ARRAY OF Byte;
       mayBlock: BOOLEAN := TRUE): INTEGER RAISES {OSError.E};
     write(READONLY b: ARRAY OF Byte) RAISES {OSError.E};

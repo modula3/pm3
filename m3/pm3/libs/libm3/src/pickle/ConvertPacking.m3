@@ -1,5 +1,4 @@
-(*                            -*- Mode: Modula-3 -*- 
- * 
+(*
  * For information about this program, contact Blair MacIntyre            
  * (bm@cs.columbia.edu) or Steven Feiner (feiner@cs.columbia.edu)         
  * at the Computer Science Dept., Columbia University,                    
@@ -10,24 +9,6 @@
  *
  * This file is released under the same conditions as Pickle.m3. See COPYRIGHT.
  * 
- * Author          : Blair MacIntyre
- * Created On      : Sun Jul 23 00:17:49 1995
- * Last Modified By: Blair MacIntyre
- * Last Modified On: Fri Nov  7 13:32:13 1997
- * Update Count    : 188
- * 
- * $Source$
- * $Date$
- * $Author$
- * $Revision$
- * 
- * $Log$
- * Revision 1.1  1998/02/26 16:37:33  dagenais
- * Enhanced pickler which allows communicating pickles between machines
- * with different endianess.
- *
- * 
- * HISTORY
  *)
 
 UNSAFE MODULE ConvertPacking;
@@ -359,7 +340,7 @@ PROCEDURE Convert(self: T; dest: ADDRESS; v: ReadVisitor;
     END;
     RETURN dest;
   END Convert;
- 
+
 PROCEDURE WriteData(v: WriteVisitor;  src: ADDRESS;  len: INTEGER)
   RAISES {Wr.Failure, Thread.Alerted} =
   BEGIN
@@ -454,7 +435,7 @@ PROCEDURE AppendProg(self: T; other: T) RAISES {Error} =
           WITH t = NARROW(elem, PklAction.SwapPacked),
                nt = NEW(PklAction.SwapPacked, 
                         kind := t.kind, length := t.length, size := t.size,
-                        field := NEW(REF ARRAY OF CARDINAL, 
+                        field := NEW(<*TRANSIENT*> REF ARRAY OF CARDINAL, 
                                      NUMBER(t.field^))) DO
             FOR i := FIRST(nt.field^) TO LAST(nt.field^) DO
               nt.field[i] := t.field[i];
@@ -545,7 +526,7 @@ PROCEDURE AddPackedSwapFirstField(self: T; fieldsize: INTEGER) =
       INC(self.toOffset, length);
       WITH elem = NEW(PklAction.SwapPacked, kind := PklAction.Kind.SwapPacked, 
                       length := 1, size := length DIV 8,
-                      field := NEW(REF ARRAY OF CARDINAL, 1)) DO
+                      field := NEW(<*TRANSIENT*> REF ARRAY OF CARDINAL, 1)) DO
         elem.field[0] := fieldsize;
         self.prog.addhi(elem);
       END;
@@ -592,7 +573,7 @@ PROCEDURE AddPackedSwapNextField(self: T; fieldsize: INTEGER;
           END;
         END;
 
-        WITH new_field = NEW(REF ARRAY OF CARDINAL, 
+        WITH new_field = NEW(<*TRANSIENT*> REF ARRAY OF CARDINAL, 
                              NUMBER(nelem.field^) + 1) DO
           SUBARRAY(new_field^, 0, NUMBER(nelem.field^)) := nelem.field^;
           nelem.field := new_field;
@@ -628,7 +609,8 @@ PROCEDURE AddPackedSwapArray(self: T; length: INTEGER;
         WITH nelem = NEW(PklAction.SwapPacked, 
                          kind := PklAction.Kind.SwapPacked, 
                          length := len, size := size, 
-                         field := NEW(REF ARRAY OF CARDINAL, count)) DO
+                         field := NEW(<*TRANSIENT*> REF ARRAY OF CARDINAL,
+                                      count)) DO
           FOR i := FIRST(nelem.field^) TO LAST(nelem.field^) DO
             nelem.field[i] := fieldsize;
           END;
@@ -643,7 +625,8 @@ PROCEDURE AddPackedSwapArray(self: T; length: INTEGER;
         WITH nelem = NEW(PklAction.SwapPacked, 
                          kind := PklAction.Kind.SwapPacked, 
                          length := 1, size := extraSize,
-                         field := NEW(REF ARRAY OF CARDINAL, extraCnt)) DO
+                         field := NEW(<*TRANSIENT*> REF ARRAY OF CARDINAL,
+                                      extraCnt)) DO
           FOR i := FIRST(nelem.field^) TO LAST(nelem.field^) DO
             nelem.field[i] := fieldsize;
           END;
@@ -845,7 +828,7 @@ PROCEDURE New(typecode: INTEGER; from: RTPacking.T; to: RTPacking.T;
   VAR key := PackingTypeCode.T{from := RTPacking.Encode(from), 
                                to := RTPacking.Encode(to),
                                tc := typecode};
-      ref : REFANY; 
+      ref : <*TRANSIENT*> REFANY; 
   BEGIN
     (* If we've already building this converter, return it. *)
     IF packingCache.get(key, ref) THEN
@@ -878,7 +861,7 @@ PROCEDURE Init(self: T; typecode: INTEGER; from: RTPacking.T;
   VAR key := PackingTypeCode.T{from := RTPacking.Encode(from), 
                                to := RTPacking.Encode(to),
                                tc := typecode};
-      ref : REFANY; 
+      ref : <*TRANSIENT*> REFANY;
   BEGIN
     (* If we've already building this converter, return it.  We've
        still wasted a NEW() to get here, but better than recomputing
@@ -1242,7 +1225,8 @@ PROCEDURE BuildOne(self: T; fromTipe: RTTipe.T;
         VAR fromSize, fromAlign, toSize, toAlign: INTEGER;
             fromPad, toPad: INTEGER := 0;
         BEGIN
-          IF o.super.typecode = TYPECODE(ROOT) THEN
+          IF o.super.typecode = TYPECODE(ROOT)
+           OR o.super.typecode = TYPECODE(<*TRANSIENT*> ROOT) THEN
             fromSize := 0;
             toSize := 0;
             fromAlign := o.align;

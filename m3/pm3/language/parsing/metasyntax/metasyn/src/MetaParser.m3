@@ -38,7 +38,8 @@ PROCEDURE AddClauseList(tree: SynParse.Tree; p: SynParse.T)
     END;
   END AddClauseList;
 
-PROCEDURE NewParser(swr: SynWr.T; actionTable : ActionTable; fileName: TEXT; rd: Rd.T)
+PROCEDURE NewParser(swr: SynWr.T;
+                    actionTable : ActionTable; fileName: TEXT; rd: Rd.T)
     : SynParse.T 
     RAISES {SynParse.Fail, SynScan.Fail, SynScan.NoReader} =
   VAR clauseList: SynParse.Tree; parser: SynParse.T;
@@ -73,7 +74,7 @@ PROCEDURE NewActionTable(): ActionTable =
 
 EXCEPTION Crash;
 
-PROCEDURE TableFromArray(<*NOWARN*>sourceTable : ActionProcTable;
+PROCEDURE TableFromArray(READONLY sourceTable : ActionProcTable;
                           table: ActionTable ) =
 (* transforms an array of (Text, Procedure) pairs into an actionTable *)
 VAR
@@ -104,8 +105,8 @@ BEGIN
   EVAL table.put(name,ref);
 END Register;
 
-PROCEDURE IdentifierToTree(self: SynParse.Identifier; 
-                     p: SynParse.T; name: TEXT;
+PROCEDURE IdentifierToTree(<*UNUSED*>self: SynParse.Identifier; 
+                           <*UNUSED*>p: SynParse.T; name: TEXT;
                      READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN 
@@ -114,8 +115,8 @@ PROCEDURE IdentifierToTree(self: SynParse.Identifier;
            text := name );
   END IdentifierToTree;
 
-PROCEDURE NameToTree(self: SynParse.Name; 
-                     p: SynParse.T; name: TEXT;
+PROCEDURE NameToTree(<*UNUSED*>self: SynParse.Name; 
+                     <*UNUSED*>p: SynParse.T; name: TEXT;
                      READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN 
@@ -125,8 +126,8 @@ PROCEDURE NameToTree(self: SynParse.Name;
   END NameToTree;
 
 
-PROCEDURE IntegerToTree(self: SynParse.Integer; 
-                  p: SynParse.T; int: INTEGER;
+PROCEDURE IntegerToTree(<*UNUSED*>self: SynParse.Integer; 
+                        <*UNUSED*>p: SynParse.T; int: INTEGER;
                   READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN
@@ -135,8 +136,8 @@ PROCEDURE IntegerToTree(self: SynParse.Integer;
            int := int ) ;
   END IntegerToTree;
 
-PROCEDURE RealToTree(self: SynParse.Real; 
-               p: SynParse.T; real: LONGREAL;
+PROCEDURE RealToTree(<*UNUSED*>self: SynParse.Real; 
+                     <*UNUSED*>p: SynParse.T; real: LONGREAL;
                READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN
@@ -145,8 +146,8 @@ PROCEDURE RealToTree(self: SynParse.Real;
            real := real );
   END RealToTree;
 
-PROCEDURE CharToTree(self: SynParse.QuotedChar; 
-               p: SynParse.T; char: CHAR;
+PROCEDURE CharToTree(<*UNUSED*>self: SynParse.QuotedChar; 
+                     <*UNUSED*>p: SynParse.T; char: CHAR;
                READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN
@@ -155,8 +156,8 @@ PROCEDURE CharToTree(self: SynParse.QuotedChar;
           text := Text.FromChar(char ) );
   END CharToTree;
 
-PROCEDURE StringToTree(self: SynParse.QuotedString; 
-                 p: SynParse.T; string: TEXT;
+PROCEDURE StringToTree(<*UNUSED*>self: SynParse.QuotedString; 
+                       <*UNUSED*>p: SynParse.T; string: TEXT;
                  READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN
@@ -166,8 +167,8 @@ PROCEDURE StringToTree(self: SynParse.QuotedString;
   END StringToTree;
 
 
-PROCEDURE TextToTree(self: SynParse.QuotedString; 
-                 p: SynParse.T; text: TEXT ;
+PROCEDURE TextToTree(<*UNUSED*>self: SynParse.QuotedString; 
+                     <*UNUSED*>p: SynParse.T; text: TEXT ;
                  READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN

@@ -29,7 +29,8 @@ TYPE
  (*26*) Array_1, Array_2, Array_3, Array_4, Array_5, Array_6, Array_7, Array_8,
  (*34*) Skip_1,  Skip_2,  Skip_3,  Skip_4,  Skip_5,  Skip_6,  Skip_7,  Skip_8,
  (*42*) SkipF_1, SkipF_2, SkipF_3, SkipF_4, SkipF_5, SkipF_6, SkipF_7, SkipF_8,
- (*50*) SkipB_1, SkipB_2, SkipB_3, SkipB_4, SkipB_5, SkipB_6, SkipB_7, SkipB_8
+ (*50*) SkipB_1, SkipB_2, SkipB_3, SkipB_4, SkipB_5, SkipB_6, SkipB_7, SkipB_8,
+ (*58*) TransientRef
    };
 
 TYPE
@@ -99,7 +100,8 @@ CONST (* type of scalar field identified (Proc ==> none) *)
     Kind.Proc,         (* SkipB_5 *)
     Kind.Proc,         (* SkipB_6 *)
     Kind.Proc,         (* SkipB_7 *)
-    Kind.Proc          (* SkipB_8 *)
+    Kind.Proc,         (* SkipB_8 *)
+    Kind.TransientRef  (* TransientRef *)
   };
 
 (* Note: all operands are little-endian, non-negative integers *)
@@ -163,7 +165,8 @@ CONST (* # of bytes of operand in the map *)
     5,            (* SkipB_5 *)
     6,            (* SkipB_6 *)
     7,            (* SkipB_7 *)
-    8             (* SkipB_8 *)
+    8,            (* SkipB_8 *)
+    0		  (* TransientRef *)
   };
 
 CONST (* # of bytes occupied in the referent *)
@@ -225,7 +228,8 @@ CONST (* # of bytes occupied in the referent *)
     0,                    (* SkipB_5     -> -n * Byte *)
     0,                    (* SkipB_6     -> -n * Byte *)
     0,                    (* SkipB_7     -> -n * Byte *)
-    0                     (* SkipB_8     -> -n * Byte *)
+    0,                    (* SkipB_8     -> -n * Byte *)
+    ADRSIZE(ADDRESS)	  (* TransientRef *)
   };
 
 PROCEDURE GetInt (VAR pc: ADDRESS;  size: [1..8]): INTEGER;

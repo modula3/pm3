@@ -12,13 +12,35 @@
 readonly proc Sorted_table (nm, key, value) is
   local base = nm & "Tbl"
   local tab  = "Sorted" & base
+  local rep = tab & "Rep"
   build_generic_intf (tab, "SortedTable", [key, base], VISIBLE)
-  build_generic_impl (tab, "SortedTable", [key, value, base])
+  build_generic_intf (rep, "SortedTableRep", [key, value], VISIBLE)
+  build_generic_impl (tab, "SortedTable", [key, value, base, rep])
 end
 
 readonly proc sorted_table (nm, key, value) is
   local base = nm & "Tbl"
   local tab  = "Sorted" & base
+  local rep = tab & "Rep"
   build_generic_intf (tab, "SortedTable", [key, base], HIDDEN)
-  build_generic_impl (tab, "SortedTable", [key, value, base])
+  build_generic_intf (rep, "SortedTableRep", [key, value], HIDDEN)
+  build_generic_impl (tab, "SortedTable", [key, value, base, rep])
+end
+
+readonly proc TransientSorted_table (nm, key, value) is
+  local base = nm & "Tbl"
+  local tab  = "Sorted" & base
+  local rep = tab & "Rep"
+  build_generic_intf (tab, "SortedTable", [key, base], VISIBLE)
+  build_generic_intf (rep, "SortedTableTransientRep", [key, value], VISIBLE)
+  build_generic_impl (tab, "SortedTable", [key, value, base, rep])
+end
+
+readonly proc transientSorted_table (nm, key, value) is
+  local base = nm & "Tbl"
+  local tab  = "Sorted" & base
+  local rep = tab & "Rep"
+  build_generic_intf (tab, "SortedTable", [key, base], HIDDEN)
+  build_generic_intf (rep, "SortedTableTransientRep", [key, value], HIDDEN)
+  build_generic_impl (tab, "SortedTable", [key, value, base, rep])
 end

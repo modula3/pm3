@@ -29,7 +29,7 @@
 MODULE Main;
 
 IMPORT Text, Stdio, Lex, Wr, Rd, Ide, Fmt, Thread, FloatMode,
-       TextF, M3Config;
+       Text8, M3Config;
 
 <*FATAL Thread.Alerted*>
 <*FATAL Wr.Failure*>
@@ -40,10 +40,16 @@ IMPORT Text, Stdio, Lex, Wr, Rd, Ide, Fmt, Thread, FloatMode,
 PROCEDURE ReplaceChar(in: TEXT; from, to: CHAR): TEXT =
   VAR
     len := Text.Length(in);
-    out := TextF.New(len);
+    out := Text8.Create(len);
+    in_ch: CHAR;
   BEGIN
     FOR i := 0 TO len - 1 DO
-      IF in[i] = from THEN out[i] := to; ELSE out[i] := in[i] END;
+      in_ch := Text.GetChar (in, i);
+      IF in_ch = from THEN
+        out.contents[i] := to;
+      ELSE 
+        out.contents[i] := in_ch;
+      END;
     END;
     RETURN out;
   END ReplaceChar;
@@ -163,7 +169,7 @@ CONST
   Debug = FALSE;
 
 VAR
-  intSL := M3Config.PATH_SEP[0];
+  intSL := Text.GetChar(M3Config.PATH_SEP, 0);
   extSL := '/';
   convert := intSL # extSL;
   debugFile: Wr.T;

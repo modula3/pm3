@@ -105,9 +105,9 @@ PROCEDURE Setup();
    Initializes the input stack to read from stdin. *)
 
 PROCEDURE New(swr: SynWr.T): T;
-(* A brand new scanner sending error messages to a writer. Use it 
-   single-threaded. You can use separate scanners with separate threads, 
-   concurrently. *)
+(* A brand new scanner sending error messages to a writer "swr".
+   Use it single-threaded. You can use separate scanners with separate
+   threads, concurrently. *)
 
 PROCEDURE GetWriter(sc: T): SynWr.T;
 (* Return the current writer. *)

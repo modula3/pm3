@@ -75,6 +75,7 @@ PROCEDURE Check (p: P;  VAR cs: Stmt.CheckState) =
     ELSIF Type.IsStructured (t) THEN
       p.kind := Kind.structure;
       Variable.NeedsAddress (p.var);
+      AssignStmt.Check (t, p.expr, cs);
     ELSE
       p.kind := Kind.other;
     END;
@@ -135,7 +136,7 @@ PROCEDURE Compile (p: P): Stmt.Outcomes =
           CG.Free (val);
       | Kind.structure =>
           Variable.LoadLValue (p.var);
-          AssignStmt.Emit (Value.TypeOf (p.var), p.expr);
+          AssignStmt.DoEmit (Value.TypeOf (p.var), p.expr);
       | Kind.other =>
           Variable.LoadLValue (p.var);
           CG.Push (val);

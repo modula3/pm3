@@ -837,7 +837,11 @@ PROCEDURE NextMove (<*NOWARN*> layout : Layout;
     Initialize();
     txt := GenerateBreadth(tree, whyStop);
     IF veryVerbose THEN Put(txt & "\n", flush := TRUE); END;
-    tbl := NIL; (* give the garbage collector a chance... *)
+
+    (* give the garbage collector a chance... *)
+    EVAL tbl.init (0);
+    tbl := NIL;
+
     RETURN (txt);
   END NextMove;
 

@@ -7,10 +7,8 @@
 
 UNSAFE MODULE IP;
 
-IMPORT Atom, AtomList, Herrno, M3toC, TextF,
+IMPORT Herrno, IPError, M3toC,
        Unetdb, Usocket, Unix, Uin, Utypes;
-
-EXCEPTION FatalError; <*FATAL FatalError*>
 
 VAR mu := NEW(MUTEX);
 
@@ -18,7 +16,11 @@ PROCEDURE GetHostByName(nm: TEXT; VAR (*out*) res: Address): BOOLEAN
     RAISES {Error} =
   BEGIN
     LOCK mu DO
-      VAR h := Unetdb.gethostbyname(ADR(nm[0])); BEGIN
+      VAR
+        s := M3toC.SharedTtoS(nm);
+        h := Unetdb.gethostbyname(s);
+      BEGIN
+        M3toC.FreeSharedS(nm, s);
         IF h = NIL THEN InterpretError(); RETURN FALSE; END;
         res := GetAddress(h);
       END;
@@ -29,13 +31,17 @@ PROCEDURE GetHostByName(nm: TEXT; VAR (*out*) res: Address): BOOLEAN
 PROCEDURE GetCanonicalByName(nm: TEXT): TEXT RAISES {Error} =
   BEGIN
     LOCK mu DO
-      VAR h := Unetdb.gethostbyname(ADR(nm[0])); BEGIN
+      VAR
+        s := M3toC.SharedTtoS(nm);
+        h := Unetdb.gethostbyname(s);
+      BEGIN
+        M3toC.FreeSharedS(nm, s);
         IF h # NIL THEN
           RETURN M3toC.CopyStoT(h.h_name);
         END;
+        InterpretError();
       END;
     END;
-    InterpretError();
     RETURN NIL;
   END GetCanonicalByName;
 
@@ -50,9 +56,9 @@ PROCEDURE GetCanonicalByAddr(addr: Address): TEXT RAISES {Error} =
         IF h # NIL THEN
           RETURN M3toC.CopyStoT(h.h_name);
         END;
+        InterpretError();
       END;
     END;
-    InterpretError();
     RETURN NIL;
   END GetCanonicalByAddr;
 
@@ -65,15 +71,15 @@ PROCEDURE GetAddress (ent: Unetdb.struct_hostent_star): Address =
     RETURN LOOPHOLE(ua.s_addr, Address);
   END GetAddress;
 
-PROCEDURE GetHostAddr(): Address RAISES {Error} =
+PROCEDURE GetHostAddr(): Address =
   VAR hname: ARRAY [0..255] OF CHAR;
   BEGIN
     LOCK mu DO
       IF Unix.gethostname(ADR(hname[0]), BYTESIZE(hname)) # 0 THEN
-        RAISE FatalError;
+        IPError.Die ();
       END;
       VAR h := Unetdb.gethostbyname(ADR(hname[0])); BEGIN
-        IF h = NIL THEN InterpretError(); END;
+        IF h = NIL THEN IPError.Die(); END;
         RETURN GetAddress(h);
       END;
     END;
@@ -83,14 +89,10 @@ PROCEDURE InterpretError() RAISES {Error} =
   BEGIN
     CASE Herrno.h_errno OF
     | Unetdb.TRY_AGAIN, Unetdb.NO_RECOVERY, Unetdb.NO_ADDRESS =>
-        RAISE Error(AtomList.List1(LookupFailure));
+        IPError.Raise (LookupFailure);
     ELSE
     END;
   END InterpretError;
 
 BEGIN
-  LookupFailure := Atom.FromText("IP.LookupFailure");
-  Unreachable := Atom.FromText("IP.Unreachable");
-  PortBusy := Atom.FromText("IP.PortBusy");
-  NoResources := Atom.FromText("IP.NoResources");
 END IP.

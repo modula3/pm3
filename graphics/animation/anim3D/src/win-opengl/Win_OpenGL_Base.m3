@@ -213,7 +213,9 @@ CONST
   DashDot = 2_1110010011100100;
 
 
-PROCEDURE Init (self: T; title: TEXT; x, y, w, h: INTEGER): T =
+PROCEDURE Init (self: T; title: TEXT; x, y, w, h: INTEGER): T 
+    RAISES {GraphicsBase.Failure} =
+  VAR
   BEGIN
     (*** Initialize windowThreadCV ***)
     self.windowThreadCV := NEW (Thread.Condition);
@@ -276,9 +278,11 @@ PROCEDURE Init (self: T; title: TEXT; x, y, w, h: INTEGER): T =
 PROCEDURE ChangeTitle (self: T; title : TEXT) =
   VAR
     status : WinDef.BOOL;
+    ctitle := M3toC.SharedTtoS(title);
   BEGIN
     LOCK conn DO
-      status := WinUser.SetWindowText (self.hwnd, M3toC.TtoS (title));
+      status := WinUser.SetWindowText (self.hwnd, ctitle);
+      M3toC.FreeSharedS(title, ctitle);
       <* ASSERT status = True *>
     END;
   END ChangeTitle;
@@ -2024,7 +2028,6 @@ TYPE
 
 
 PROCEDURE Apply (self: Closure): REFANY =
-  <* FATAL GraphicsBase.Failure *>
   VAR
     base  := self.base;
     status: WinDef.BOOL;
@@ -3191,7 +3194,7 @@ PROCEDURE InitConnection (self : Connection) : Connection =
     (* Initialize the various fields of "self" *)
     self.currBase := NIL;
     self.hwndMap := NEW (IntRefTbl.Default).init ();
-    self.hInst := RTLinker.info.instance;
+    self.hInst := RTLinker.instance;
     self.windowclassName := M3toC.CopyTtoS("Anim3D Window");
     self.nonclient.h := 2 * WinUser.GetSystemMetrics (WinUser.SM_CXFRAME);
     self.nonclient.v := 2 * WinUser.GetSystemMetrics (WinUser.SM_CYFRAME) +

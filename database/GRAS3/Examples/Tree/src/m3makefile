@@ -1,7 +1,7 @@
 
 import("formsvbt")
 import("HiGRAS")
-include_pkg("GrasParams")
+import("GrasParams")
 
 resource("TreePanel.fv")
 bundle("TreeBundle")

@@ -10,6 +10,7 @@ MODULE Narrow;
 
 IMPORT CG, CallExpr, Expr, ExprRep, Type, Error, TypeExpr;
 IMPORT Procedure, ObjectType, Reff, Null, M3RT, RefType;
+IMPORT Target, RunTyme;
 
 VAR Z: CallExpr.MethodList;
 
@@ -76,11 +77,12 @@ PROCEDURE Emit (tlhs, trhs: Type.T) =
 PROCEDURE EmitCore (tlhs, trhs: Type.T): CG.Val =
   VAR
     ok: CG.Label;
-    ref, tc: CG.Val;
+    ref: CG.Val;
     is_object := ObjectType.Is (tlhs);
     target: Type.T;
     align: INTEGER;
     lhs_info, info: Type.Info;
+    proc: Procedure.T;
   BEGIN
     tlhs := Type.CheckInfo (tlhs, lhs_info);
     IF is_object THEN
@@ -96,38 +98,43 @@ PROCEDURE EmitCore (tlhs, trhs: Type.T): CG.Val =
     IF Type.IsSubtype (trhs, tlhs) THEN RETURN NIL; END;
     IF (NOT is_object) AND (NOT lhs_info.isTraced) THEN RETURN NIL; END;
 
-    (* capture the right-hand side and get a couple labels *)
+    (* capture the right-hand side *)
     ref := CG.Pop ();
+    ok := CG.Next_label (1);
+
+    (* check for ref = NIL *)
     CG.Push (ref);
-    ok := CG.Next_label (2);
-
-    (* check for rhs = NIL *)
     CG.Load_nil ();
-    CG.If_eq (ok, CG.Type.Addr, CG.Maybe);
+    CG.If_compare (CG.Type.Addr, CG.Cmp.EQ, ok, CG.Maybe);
 
-    IF (Type.IsEqual (tlhs, Null.T, NIL)) THEN
-      (* no more checking is needed *)
-    ELSIF NOT is_object THEN
+    IF NOT Type.IsEqual (tlhs, Null.T, NIL) THEN
+      (* check for TYPECODE(ref) = TYPECODE(type) *)
       CG.Push (ref);
       CG.Ref_to_typecode ();
       Type.LoadInfo (tlhs, M3RT.TC_typecode);
-      CG.If_eq (ok, CG.Type.Int, CG.Always);
-    ELSE (* object *)
-      CG.Push (ref);
-      CG.Ref_to_typecode ();
-      tc := CG.Pop ();
-      CG.Push (tc);
-      Type.LoadInfo (tlhs, M3RT.TC_typecode);
-      CG.If_lt (ok+1, CG.Type.Int, CG.Never);
-      CG.Push (tc);
-      Type.LoadInfo (tlhs, M3RT.TC_lastSubTypeTC);
-      CG.If_le (ok, CG.Type.Int, CG.Always);
-      CG.Free (tc);
-      CG.Set_label (ok+1);
+      CG.If_compare (Target.Integer.cg_type, CG.Cmp.EQ, ok, CG.Always);
+
+      IF is_object THEN
+        (* finally, call the runtime to figure it out... *)
+        proc := RunTyme.LookUpProc (RunTyme.Hook.CheckIsType);
+        Procedure.StartCall (proc);
+        IF Target.DefaultCall.args_left_to_right THEN
+          CG.Push (ref);
+          CG.Pop_param (CG.Type.Addr);
+          Type.LoadInfo (tlhs, -1);
+          CG.Pop_param (CG.Type.Addr);
+        ELSE
+          Type.LoadInfo (tlhs, -1);
+          CG.Pop_param (CG.Type.Addr);
+          CG.Push (ref);
+          CG.Pop_param (CG.Type.Addr);
+        END;
+        Procedure.EmitCall (proc);
+        CG.If_true (ok, CG.Always);
+      END;
     END;
-
-    (* generate the fault and the by-pass label *)
-    CG.Narrow_fault ();
+  
+    CG.Abort (CG.RuntimeError.NarrowFailed);
     CG.Set_label (ok);
 
     RETURN ref;
@@ -156,6 +163,7 @@ PROCEDURE Initialize () =
                                  CallExpr.NotBoolean,
                                  CallExpr.NotBoolean,
                                  Fold,
+                                 CallExpr.NoBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  NoteWrites);

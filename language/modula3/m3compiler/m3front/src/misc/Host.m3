@@ -22,8 +22,6 @@ PROCEDURE Initialize (READONLY options: ARRAY OF TEXT): BOOLEAN =
     init_floats          := FALSE;
     vs_debug             := FALSE;
     load_map             := TRUE;
-    ext_direct           := TRUE;
-    all_direct           := FALSE;
     stack_walker         := TRUE;
     nested_calls         := FALSE;
     nested_procs_first   := FALSE;
@@ -39,6 +37,8 @@ PROCEDURE Initialize (READONLY options: ARRAY OF TEXT): BOOLEAN =
     doAsserts            := TRUE;
     doNilChk             := TRUE;
     doRaisesChk          := TRUE;
+    doProcChk            := FALSE;
+    doDebugs             := TRUE;
     new_adr              := FALSE;
     report_stats         := FALSE;
 
@@ -77,6 +77,8 @@ PROCEDURE ProcessArg (t: TEXT): BOOLEAN =
       errorDie := GetInt (t, 2);
     ELSIF (Text.Equal (t, "-NoAsserts")) THEN
       doAsserts := FALSE;
+    ELSIF (Text.Equal (t, "-NoDebug")) THEN
+      doDebugs := FALSE;
     ELSIF (Text.Equal (t, "-NoNarrowChk")) THEN
       doNarrowChk := FALSE;
     ELSIF (Text.Equal (t, "-NoRangeChk")) THEN
@@ -100,6 +102,7 @@ PROCEDURE ProcessArg (t: TEXT): BOOLEAN =
       doTCaseChk  := FALSE;
       doNilChk    := FALSE;
       doRaisesChk := FALSE;
+      doDebugs    := FALSE;
     ELSIF (Text.Equal (t, "-InitFloats")) THEN
       init_floats := TRUE;
     ELSIF (Text.Equal (t, "-load_map")) THEN
@@ -108,14 +111,6 @@ PROCEDURE ProcessArg (t: TEXT): BOOLEAN =
       load_map := FALSE;
     ELSIF (Text.Equal (t, "-No_stack_walker")) THEN
       stack_walker := FALSE;
-    ELSIF (Text.Equal (t, "-externals_direct")) THEN
-      ext_direct := TRUE;
-    ELSIF (Text.Equal (t, "-externals_indirect")) THEN
-      ext_direct := FALSE;
-    ELSIF (Text.Equal (t, "-all_direct")) THEN
-      all_direct := TRUE;
-    ELSIF (Text.Equal (t, "-all_indirect")) THEN
-      all_direct := FALSE;
     ELSIF (Text.Equal (t, "-nested_calls")) THEN
       nested_calls  := TRUE;
     ELSIF (Text.Equal (t, "-no_nested_calls")) THEN
@@ -141,6 +136,8 @@ PROCEDURE ProcessArg (t: TEXT): BOOLEAN =
       clean_stores  := FALSE;
     ELSIF (Text.Equal (t, "-clean_jumps")) THEN
       clean_jumps   := TRUE;
+    ELSIF (Text.Equal (t, "-check_procs")) THEN
+      doProcChk     := TRUE;
     ELSIF (Text.Equal (t, "-dirty_jumps")) THEN
       clean_jumps   := FALSE;
     ELSIF (Text.Equal (t, "-vsdebug")) THEN

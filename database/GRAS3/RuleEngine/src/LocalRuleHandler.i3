@@ -8,8 +8,11 @@ INTERFACE LocalRuleHandler;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:40  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:50  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:40  hosking
+    Import of GRAS3 1.1
 
     Revision 1.2  1998/08/12 11:04:42  roland
     Efficiency improvement: RuleEngine notifies EventDetectors of
@@ -64,7 +67,7 @@ PROCEDURE NextTriggerId (): CARDINAL;
      identifying triggers. *)
 
 PROCEDURE RegisterTrigger (trigger : Trigger.T;
-                           userdata: REFANY;
+                           userdata: <*TRANSIENT*> REFANY;
                            id      : CARDINAL   );
   (* Registers trigger with the corresponding event handler.  The id
      servers as unique identifier for this trigger. *)
@@ -97,7 +100,7 @@ PROCEDURE GetNextAction (    tu              : CARDINAL;
                          VAR context         : ContextSet.T;
                          VAR transactionLevel: CARDINAL;
                          VAR action          : Action.T;
-                         VAR userdata        : REFANY                ):
+                         VAR userdata        : <*TRANSIENT*> REFANY ):
   BOOLEAN;
   (* Returns TRUE if actions are triggered.  action then contains the
      actions triggered in mode coupling with highest priority.  If coupling

@@ -1,0 +1,3 @@
+These configuration files are not used with the CM3-based compiler.  Look in
+the directory language/modula3/m3compiler/libcm3/src/config for CM3-based
+configuration files.

@@ -2,7 +2,8 @@
 (* All rights reserved.                                        *)
 (* See the file COPYRIGHT for a full description.              *)
 (*                                                             *)
-(* Last modified on Fri Apr 29 09:55:36 PDT 1994 by kalsow     *)
+(* Last modified on Wed Jul 30 13:55:56 EST 1997 by hosking    *)
+(*      modified on Fri Apr 29 09:55:36 PDT 1994 by kalsow     *)
 (*      modified on Fri Sep 10 14:34:19 PDT 1993 by muller     *)
 
 INTERFACE Csetjmp;		(* for SOLgnu *)

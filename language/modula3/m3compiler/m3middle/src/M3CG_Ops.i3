@@ -2,8 +2,8 @@
 (* All rights reserved.                                        *)
 (* See the file COPYRIGHT for a full description.              *)
 (*                                                             *)
-(* Last modified on Tue Jun 20 16:00:46 PDT 1995 by kalsow     *)
-(*      modified on Tue May 25 14:14:24 PDT 1993 by muller     *)
+(* Portions Copyright 1996-2000, Critical Mass, Inc.           *)
+(* See file COPYRIGHT-CMASS for details.                       *)
 
 (*  Modula-3 code generator operations
 
@@ -16,8 +16,8 @@ INTERFACE M3CG_Ops;
 IMPORT Target, M3CG;
 FROM M3CG IMPORT Type, MType, IType, RType, AType, ZType, Sign;
 FROM M3CG IMPORT Name, Var, Proc, Alignment, TypeUID, Label;
-FROM M3CG IMPORT Frequency, CallingConvention;
-FROM M3CG IMPORT BitSize, ByteSize, BitOffset, ByteOffset;
+FROM M3CG IMPORT Frequency, CallingConvention, CompareOp, ConvertOp;
+FROM M3CG IMPORT BitSize, ByteSize, BitOffset, ByteOffset, RuntimeError;
 
 TYPE
   ErrorHandler = PROCEDURE (msg: TEXT);
@@ -172,11 +172,12 @@ import_global (n: Name;  s: ByteSize;  a: Alignment;  t: Type;
                m3t: TypeUID): Var;
 (* imports the specified global variable. *)
 
-declare_segment (n: Name;  m3t: TypeUID): Var;
+declare_segment (n: Name;  m3t: TypeUID;  is_const: BOOLEAN): Var;
 bind_segment (seg: Var;  s: ByteSize;  a: Alignment;  t: Type;
               exported, init: BOOLEAN);
 (* Together declare_segment and bind_segment accomplish what
-   declare_global does, but declare_segment gives the front-end a
+   declare_global("is_const = FALSE") or declare_constant("is_const=TRUE")
+   does, but declare_segment gives the front-end a
    handle on the variable before its size, type, or initial values
    are known.  Every declared segment must be bound exactly once. *)
 
@@ -320,58 +321,50 @@ set_label (l: Label;  barrier: BOOLEAN := FALSE);
 jump (l: Label);
 (* GOTO l *)
 
-if_true  (l: Label;  f: Frequency);
-(* tmp := s0.I; pop; IF (tmp # 0) GOTO l *)
+if_true  (t: IType;  l: Label;  f: Frequency);
+(* tmp := s0.t; pop; IF (tmp # 0) GOTO l *)
 
-if_false (l: Label;  f: Frequency);
-(* tmp := s0.I; pop; IF (tmp = 0) GOTO l *)
+if_false (t: IType;  l: Label;  f: Frequency);
+(* tmp := s0.t; pop; IF (tmp = 0) GOTO l *)
 
-if_eq (l: Label;  t: ZType;  f: Frequency); (*== eq(t); if_true(l,f)*)
-if_ne (l: Label;  t: ZType;  f: Frequency); (*== ne(t); if_true(l,f)*)
-if_gt (l: Label;  t: ZType;  f: Frequency); (*== gt(t); if_true(l,f)*)
-if_ge (l: Label;  t: ZType;  f: Frequency); (*== ge(t); if_true(l,f)*)
-if_lt (l: Label;  t: ZType;  f: Frequency); (*== lt(t); if_true(l,f)*)
-if_le (l: Label;  t: ZType;  f: Frequency); (*== le(t); if_true(l,f)*)
+if_compare (t: ZType;  op: CompareOp;  l: Label;  f: Frequency);
+(*== compare(t, Int32, op); if_true(Int32, l,f)*)
 
-case_jump (READONLY labels: ARRAY OF Label);
-(* tmp := s0.I; pop; GOTO labels[tmp]  (NOTE: no range checking on s0.I) *)
+case_jump (t: IType;  READONLY labels: ARRAY OF Label);
+(* tmp := s0.t; pop; GOTO labels[tmp]  (NOTE: no range checking on s0.t) *)
 
 exit_proc (t: Type);
 (* Returns s0.t if t is not Void, otherwise returns no value. *)
 
 (*------------------------------------------------------------ load/store ---*)
-(* Note: When an Int_A..Int_D value is loaded, it is sign extended to
-   full Int width.  When a Word_A..Word_D value is loaded, it is zero
-   extended to full Word width.  When an Int_A..Int_D or Word_A..Word_D
-   value is stored, it is truncated from full width to the indicated size.
+(* Note: When an Int8 or Int16 value is loaded, it is sign extended to
+   either 32 or 64 bits.  When a Word8 or Word16 value is loaded, it is zero
+   extended to either 32 or 64 bits.  When an Int8, Int16, Word8, or Word16
+   value is stored, it is truncated to the indicated size.  There
+   are no operations on 8 and 16 bit values except load/store.
+   Arithmetic on these values is carried out on the corresponding
+   sign-extended or zero-extended values.
 
    Note: all loads and stores are aligned according to the specified type.
 *)
 
-load (v: Var;  o: ByteOffset;  t: MType);
-(* push; s0.t := Mem [ ADR(v) + o ].t *)
+load (v: Var;  o: ByteOffset;  t: MType;  u: ZType);
+(* push; s0.u := Mem [ ADR(v) + o ].t ;  The only allowed (t->u) conversions
+   are {Int,Word}{8,16} -> {Int,Word}{32,64} and {Int,Word}32 -> {Int,Word}64.
+   The source type, t, determines whether the value is sign-extended or
+   zero-extended. *)
 
 load_address (v: Var;  o: ByteOffset := 0);
 (* push; s0.A := ADR(v) + o *)
 
-load_indirect (o: ByteOffset;  t: MType);
-(* s0.t := Mem [s0.A + o].t *)
+load_indirect (o: ByteOffset;  t: MType;  u: ZType);
+(* s0.u := Mem [s0.A + o].t  *)
 
+store (v: Var;  o: ByteOffset;  t: ZType;  u: MType);
+(* Mem [ ADR(v) + o : s ].u := s0.t; pop *)
 
-store (v: Var;  o: ByteOffset;  t: MType);
-(* Mem [ ADR(v) + o : s ].t := s0.t; pop *)
-
-store_indirect (o: ByteOffset;  t: MType);
-(* Mem [s1.A + o].t := s0.t; pop (2) *)
-
-
-store_ref (v: Var;  o: ByteOffset := 0);
-(* == store (v, o, Type.Addr), but also does reference counting *)
-
-store_ref_indirect (o: ByteOffset;  var: BOOLEAN);
-(* == store_indirect (o, Type.Addr), but also does reference counting.
-     If "var" is true, then reference counting depends on whether the
-     effective address is in the heap or stack. *)
+store_indirect (o: ByteOffset;  t: ZType;  u: MType);
+(* Mem [s1.A + o].u := s0.t; pop (2) *)
 
 (*----------------------------------------------------------- expressions ---*)
 
@@ -383,8 +376,8 @@ store_ref_indirect (o: ByteOffset;  var: BOOLEAN);
     or an error to be signaled.  Explicit type conversions must be used.
 
     Integer values on the stack, regardless of how they are loaded,
-    are sign-extended to full-width values.  Similarly, word values
-    on the stack are always zero-extened to full-width values.
+    are sign-extended to at least 32-bit values.  Similarly, word values
+    on the stack are always zero-extended to at least 32-bit values.
     
     The expression stack must be empty at each label, jump, or call.
     The stack must contain exactly one value prior to a conditional
@@ -398,9 +391,9 @@ store_ref_indirect (o: ByteOffset;  var: BOOLEAN);
     cause checked runtime errors depending on the particular code generator.
 
     The operators are declared below with a definition in terms of
-    what they do to the execution stack.  For example,  ceiling(Reel)
-    returns the ceiling, an integer, of the top value on the stack,
-    a real:  s0.I := CEILING (s0.R).
+    what they do to the execution stack.  For example,  ceiling(Reel, Int32)
+    returns the ceiling, a 32-bit integer, of the top value on the stack,
+    a single-precision real:  s0.Int32 := CEILING (s0.Reel).
 
     Unless otherwise indicated, operators have the same meaning as in
     the Modula-3 report.
@@ -409,21 +402,16 @@ store_ref_indirect (o: ByteOffset;  var: BOOLEAN);
 (*-------------------------------------------------------------- literals ---*)
 
 load_nil     ();                         (*push; s0.A := NIL*)
-load_integer (READONLY i: Target.Int);   (*push; s0.I := i *)
-load_float   (READONLY f: Target.Float); (*push; s0.t := f *)
+load_integer (t: IType;  READONLY i: Target.Int);   (*push; s0.t := i *)
+load_float   (t: RType;  READONLY f: Target.Float); (*push; s0.t := f *)
 
 (*------------------------------------------------------------ arithmetic ---*)
 
-(* when any of these operators is passed t=Type.Word, the operator
-   does the unsigned comparison or arithmetic, but the operands
+(* when any of these operators is passed t=Type.Word32 or Type.Word64,
+   the operator does the unsigned comparison or arithmetic, but the operands
    and the result are of type Integer *)
    
-eq       (t: ZType);   (* s1.I := (s1.t = s0.t); pop *)
-ne       (t: ZType);   (* s1.I := (s1.t # s0.t); pop *)
-gt       (t: ZType);   (* s1.I := (s1.t > s0.t); pop *)
-ge       (t: ZType);   (* s1.I := (s1.t >= s0.t); pop *)
-lt       (t: ZType);   (* s1.I := (s1.t < s0.t); pop *)
-le       (t: ZType);   (* s1.I := (s1.t <= s0.t); pop *)
+compare  (t: ZType;  u: IType;  op: CompareOp);   (* s1.u := (s1.t op s0.t); pop *)
 add      (t: AType);   (* s1.t := s1.t + s0.t; pop *)
 subtract (t: AType);   (* s1.t := s1.t - s0.t; pop *)
 multiply (t: AType);   (* s1.t := s1.t * s0.t; pop *)
@@ -432,10 +420,7 @@ negate   (t: AType);   (* s0.t := - s0.t *)
 abs      (t: AType);   (* s0.t := ABS (s0.t) (noop on Words) *)
 max      (t: ZType);   (* s1.t := MAX (s1.t, s0.t); pop *)
 min      (t: ZType);   (* s1.t := MIN (s1.t, s0.t); pop *)
-round    (t: RType);   (* s0.I := ROUND (s0.t) *)
-trunc    (t: RType);   (* s0.I := TRUNC (s0.t) *)
-floor    (t: RType);   (* s0.I := FLOOR (s0.t) *)
-ceiling  (t: RType);   (* s0.I := CEILING (s0.t) *)
+cvt_int  (t: RType;  u: IType;  op: ConvertOp);     (* s0.u := op (s0.t) *)
 cvt_float(t: AType;  u: RType);     (* s0.u := FLOAT (s0.t, u) *)
 div      (t: IType;  a, b: Sign);   (* s1.t := s1.t DIV s0.t;pop*)
 mod      (t: IType;  a, b: Sign);   (* s1.t := s1.t MOD s0.t;pop*)
@@ -450,50 +435,51 @@ set_union (s: ByteSize);          (* s2.B := s1.B + s0.B; pop(3) *)
 set_difference (s: ByteSize);     (* s2.B := s1.B - s0.B; pop(3) *)
 set_intersection (s: ByteSize);   (* s2.B := s1.B * s0.B; pop(3) *)
 set_sym_difference (s: ByteSize); (* s2.B := s1.B / s0.B; pop(3) *)
-set_member (s: ByteSize);         (* s1.I := (s0.I IN s1.B); pop *)
-set_eq (s: ByteSize);             (* s1.I := (s1.B = s0.B); pop *)
-set_ne (s: ByteSize);             (* s1.I := (s1.B # s0.B); pop *)
-set_lt (s: ByteSize);             (* s1.I := (s1.B < s0.B); pop *)
-set_le (s: ByteSize);             (* s1.I := (s1.B <= s0.B); pop *)
-set_gt (s: ByteSize);             (* s1.I := (s1.B > s0.B); pop *)
-set_ge (s: ByteSize);             (* s1.I := (s1.B >= s0.B); pop *)
-set_range (s: ByteSize);          (* s2.A[s1.I..s0.I] := 1; pop(3) *)
-set_singleton (s: ByteSize);      (* s1.A [s0.I] := 1; pop(2) *)
+set_member (s: ByteSize;  t: IType);  (* s1.t := (s0.t IN s1.B); pop *)
+set_compare (s: ByteSize;  op: CompareOp;  t: IType);  (* s1.t := (s1.B op s0.B); pop *)
+set_range (s: ByteSize;  t: IType);         (* s2.A[s1.t..s0.t] := 1; pop(3) *)
+set_singleton (s: ByteSize;  t: IType);     (* s1.A [s0.t] := 1; pop(2) *)
 
 (*------------------------------------------------- Word.T bit operations ---*)
 
-not ();  (* s0.I := Word.Not (s0.I) *)
-and ();  (* s1.I := Word.And (s1.I, s0.I); pop *)
-or  ();  (* s1.I := Word.Or  (s1.I, s0.I); pop *)
-xor ();  (* s1.I := Word.Xor (s1.I, s0.I); pop *)
+not (t: IType);  (* s0.t := Word.Not (s0.t) *)
+and (t: IType);  (* s1.t := Word.And (s1.t, s0.t); pop *)
+or  (t: IType);  (* s1.t := Word.Or  (s1.t, s0.t); pop *)
+xor (t: IType);  (* s1.t := Word.Xor (s1.t, s0.t); pop *)
 
-shift        ();  (* s1.I := Word.Shift  (s1.I, s0.I); pop *)
-shift_left   ();  (* s1.I := Word.Shift  (s1.I, s0.I); pop *)
-shift_right  ();  (* s1.I := Word.Shift  (s1.I, -s0.I); pop *)
-rotate       ();  (* s1.I := Word.Rotate (s1.I, s0.I); pop *)
-rotate_left  ();  (* s1.I := Word.Rotate (s1.I, s0.I); pop *)
-rotate_right ();  (* s1.I := Word.Rotate (s1.I, -s0.I); pop *)
+shift        (t: IType);  (* s1.t := Word.Shift  (s1.t, s0.t); pop *)
+shift_left   (t: IType);  (* s1.t := Word.Shift  (s1.t, s0.t); pop *)
+shift_right  (t: IType);  (* s1.t := Word.Shift  (s1.t, -s0.t); pop *)
+rotate       (t: IType);  (* s1.t := Word.Rotate (s1.t, s0.t); pop *)
+rotate_left  (t: IType);  (* s1.t := Word.Rotate (s1.t, s0.t); pop *)
+rotate_right (t: IType);  (* s1.t := Word.Rotate (s1.t, -s0.t); pop *)
 
-extract (sign: BOOLEAN);
-(* s2.I := Word.Extract(s2.I, s1.I, s0.I);
+widen (sign: BOOLEAN);
+(* s0.I64 := s0.I32;  IF sign THEN SignExtend s0;  *)
+
+chop ();
+(* s0.I32 := Word.And (s0.I64, 16_ffffffff);  *)
+
+extract (t: IType;  sign: BOOLEAN);
+(* s2.t := Word.Extract(s2.t, s1.t, s0.t);
    IF sign THEN SignExtend s2; pop(2) *)
 
-extract_n (sign: BOOLEAN;  n: INTEGER);
-(* s1.I := Word.Extract(s1.I, s0.I, n);
+extract_n (t: IType;  sign: BOOLEAN;  n: INTEGER);
+(* s1.t := Word.Extract(s1.t, s0.t, n);
    IF sign THEN SignExtend s1; pop(1) *)
 
-extract_mn (sign: BOOLEAN;  m, n: INTEGER);
-(* s0.I := Word.Extract(s0.I, m, n);
+extract_mn (t: IType;  sign: BOOLEAN;  m, n: INTEGER);
+(* s0.t := Word.Extract(s0.t, m, n);
    IF sign THEN SignExtend s0 *)
 
-insert ();
-(* s3.I := Word.Insert (s3.I, s2.I, s1.I, s0.I); pop(3) *)
+insert (t: IType);
+(* s3.t := Word.Insert (s3.t, s2.t, s1.t, s0.t); pop(3) *)
 
-insert_n (n: INTEGER);
-(* s2.I := Word.Insert (s2.I, s1.I, s0.I, n); pop(2) *)
+insert_n (t: IType;  n: INTEGER);
+(* s2.t := Word.Insert (s2.t, s1.t, s0.t, n); pop(2) *)
 
-insert_mn (m, n: INTEGER);
-(* s1.I := Word.Insert (s1.I, s0.I, m, n); pop(1) *)
+insert_mn (t: IType;  m, n: INTEGER);
+(* s1.t := Word.Insert (s1.t, s0.t, m, n); pop(1) *)
 
 (*------------------------------------------------ misc. stack/memory ops ---*)
 
@@ -503,8 +489,8 @@ swap (a, b: Type);
 pop (t: Type);
 (* pop(1) discard s0, not its side effects *)
 
-copy_n (t: MType;  overlap: BOOLEAN);
-(* copy s0.I units with 't's size and alignment from s1.A to s2.A; pop(3).
+copy_n (u: IType;  t: MType;  overlap: BOOLEAN);
+(* copy s0.u units with 't's size and alignment from s1.A to s2.A; pop(3).
    'overlap' is true if the source and destination may partially overlap
    (ie. you need memmove, not just memcpy). *)
 
@@ -513,8 +499,8 @@ copy (n: INTEGER;  t: MType;  overlap: BOOLEAN);
    'overlap' is true if the source and destination may partially overlap
    (ie. you need memmove, not just memcpy). *)
 
-zero_n (t: MType);
-(* zero s0.I units with 't's size and alignment starting at s1.A; pop(2) *)
+zero_n (u: IType;  t: MType);
+(* zero s0.u units with 't's size and alignment starting at s1.A; pop(2) *)
 
 zero (n: INTEGER;  t: MType);
 (* zero 'n' units with 't's size and alignment starting at s0.A; pop(1) *)
@@ -526,40 +512,36 @@ loophole (from, two: ZType);
 
 (*------------------------------------------------ traps & runtime checks ---*)
 
-assert_fault   ();
-narrow_fault   ();
-return_fault   ();
-case_fault     ();
-typecase_fault ();
-(* Abort *)
+abort (code: RuntimeError);
+(* generate a checked runtime error for "code" *)
 
-check_nil ();
-(* IF (s0.A = NIL) THEN Abort *)
+check_nil (code: RuntimeError);
+(* IF (s0.A = NIL) THEN abort(code) *)
 
-check_lo (READONLY i: Target.Int);
-(* IF (s0.I < i) THEN Abort *)
+check_lo (t: IType;  READONLY i: Target.Int;  code: RuntimeError);
+(* IF (s0.t < i) THEN abort(code) *)
 
-check_hi (READONLY i: Target.Int);
-(* IF (i < s0.I) THEN Abort *)
+check_hi (t: IType;  READONLY i: Target.Int;  code: RuntimeError);
+(* IF (i < s0.t) THEN abort(code) *)
 
-check_range (READONLY a, b: Target.Int);
-(* IF (s0.I < a) OR (b < s0.I) THEN Abort *)
+check_range (t: IType;  READONLY a, b: Target.Int;  code: RuntimeError);
+(* IF (s0.t < a) OR (b < s0.t) THEN abort(code) *)
 
-check_index ();
-(* IF NOT (0 <= s1.I < s0.I) THEN Abort END; pop
-   s0.I is guaranteed to be positive so the unsigned
+check_index (t: IType;  code: RuntimeError);
+(* IF NOT (0 <= s1.t < s0.t) THEN abort(code) END; pop
+   s0.t is guaranteed to be positive so the unsigned
    check (s0.W < s1.W) is sufficient. *)
 
-check_eq ();
-(* IF (s0.I # s1.I) THEN Abort;  Pop (2) *)
+check_eq (t: IType;  code: RuntimeError);
+(* IF (s0.t # s1.t) THEN abort(code);  Pop (2) *)
 
 (*---------------------------------------------------- address arithmetic ---*)
 
 add_offset (i: INTEGER);
 (* s0.A := s0.A + i bytes *)
 
-index_address (size: INTEGER);
-(* s1.A := s1.A + s0.I * size; pop  -- where 'size' is in bytes *)
+index_address (t: IType;  size: INTEGER);
+(* s1.A := s1.A + s0.t * size; pop  -- where 'size' is in bytes *)
 
 (*------------------------------------------------------- procedure calls ---*)
 

@@ -8,8 +8,11 @@ INTERFACE PageCache;
  |  $Revision$
  |  $Date$
  |  $Log$
- |  Revision 1.1  2003/03/27 15:25:27  hosking
- |  Initial revision
+ |  Revision 1.2  2003/04/08 21:56:44  hosking
+ |  Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+ |
+ |  Revision 1.1.1.1  2003/03/27 15:25:27  hosking
+ |  Import of GRAS3 1.1
  |
  |  Revision 1.4  1996/02/29 17:41:23  rbnix
  |  	New function GetPage added.
@@ -101,14 +104,14 @@ PROCEDURE GetPage	(         pageNo	:CARDINAL;
 
 PROCEDURE InsertPage    (         pageNo        :CARDINAL;
                                   media		:PageMedia.T;
-                         READONLY data		:PageData.T) :PageHandle.T;
+                         READONLY data		:PageData.Part) :PageHandle.T;
   <* 
     SPEC
     REQUIRES cacheUser = CURRENT
   *>
 
 PROCEDURE ReInsertPage	(         handle	:PageHandle.T;
-                         READONLY data		:PageData.T);
+                         READONLY data		:PageData.Part);
   <* 
     SPEC
     REQUIRES cacheUser = CURRENT

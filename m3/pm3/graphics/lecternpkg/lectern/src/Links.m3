@@ -9,7 +9,7 @@ MODULE Links EXPORTS Links;
 
 IMPORT AnyEvent, ASCII, Env, File, FileRd, FileWr, Fmt, FormsVBT, FS, FVTypes,
        KeyboardKey, LecternDoc, LecternOCR, ListVBT, OSError, Pathname,
-       Rd, TempFiles, Text, TextF, Thread, Time, TypeinVBT, VBT, Wr;
+       Rd, TempFiles, Text, Thread, Time, TypeinVBT, VBT, Wr;
 
 <*FATAL FormsVBT.Error*>
 <*FATAL FormsVBT.Unimplemented*>
@@ -324,7 +324,7 @@ PROCEDURE BeginsWith(a, b: TEXT): BOOLEAN =
   BEGIN
     IF Text.Length(a) < len THEN RETURN FALSE END;
     FOR i := 0 TO len-1 DO
-      IF ASCII.Lower[a[i]] # ASCII.Lower[b[i]] THEN RETURN FALSE END;
+      IF ASCII.Lower[Text.GetChar(a, i)] # ASCII.Lower[Text.GetChar(b, i)] THEN RETURN FALSE END;
     END;
     RETURN TRUE;
   END BeginsWith;

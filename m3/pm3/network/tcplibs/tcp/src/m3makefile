@@ -8,10 +8,14 @@
 %      modified on Thu Aug 18 14:16:47 PDT 1994 by kalsow
 
 import("libm3")
-import_TCP()
+import_sys_lib ("TCP")  %%% import_TCP()  --- old m3build
+
+%m3_option ("-Y6@/udir/kalsow/pkg/m3/m3staloneback/DS/m3back@-NTObj@")
+%m3_option ("-X0@-unfold_nested_procs@")
+%m3_option ("-Y7@@")
+%m3_option ("-zINT386")
 
 include_dir(OS_TYPE)
-
 include_dir("common")
 
 Library("m3tcp")

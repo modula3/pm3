@@ -8,11 +8,11 @@
 
 MODULE Null;
 
-IMPORT RefType, Constant, Tipe, AddressExpr, TextExpr, M3String, TInt;
+IMPORT RefType, Constant, Tipe, AddressExpr, Brand, TInt;
 
 PROCEDURE Initialize () =
   BEGIN
-    T := RefType.New (NIL, FALSE, TextExpr.New (M3String.Add ("$null$")));
+    T := RefType.New (NIL, FALSE, TRUE, Brand.New ("$null$"));
     Nil := AddressExpr.New (TInt.Zero);
     Tipe.Define ("NULL", T, TRUE);
     Constant.Declare ("NIL", Nil, TRUE);

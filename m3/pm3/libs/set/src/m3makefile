@@ -13,19 +13,26 @@ Generic_module ("SetList")
 
 template("set")
 
-MkSet("Atom", "Atom")
-MkSetDef("Atom", "Atom")
-MkSetList("Atom", "Atom")
-
 MkSet("Int", "Integer")
 MkSetDef("Int", "Integer")
 MkSetList("Int", "Integer")
+
+MkTransientSet("Int", "Integer")
+MkTransientSetDef("Int", "Integer")
+MkTransientSetList("Int", "Integer")
 
 MkSet("Text", "Text")
 MkSetDef("Text", "Text")
 MkSetList("Text", "Text")
 
+MkTransientSet("Text", "Text")
+MkTransientSetDef("Text", "Text")
+MkTransientSetList("Text", "Text")
+
 MkSet("Ref", "Refany")
 MkSetList("Ref", "Refany")
+
+MkTransientSet("Ref", "RefanyTransient")
+MkTransientSetList("Ref", "RefanyTransient")
 
 Library("set")

@@ -8,8 +8,11 @@ INTERFACE InternEventType;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:40  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:51  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:40  hosking
+    Import of GRAS3 1.1
 
     Revision 1.1  1997/10/31 14:06:38  roland
     The RuleEngine subsystem implements an event-trigger mechanism for GRAS.
@@ -19,7 +22,7 @@ INTERFACE InternEventType;
 *)
 (***************************************************************************)
 
-IMPORT EventType, IntSeq;
+IMPORT EventType, IntTransientSeq AS IntSeq;
 
 TYPE AttributeType = {Bool, Int, Text, RefAny};
 

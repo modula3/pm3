@@ -7,9 +7,11 @@
 %      modified on Thu Dec 15 09:33:12 PST 1994 by kalsow
 
 import ("libm3")
-import ("m3scan")
-import ("m3config")
+import ("m3tools")
+import ("parseparams")
 
+module ("Msg")
+module ("FSUtils")
 module ("FilePath")
 module ("TextDB")
 module ("DBRd")
@@ -22,6 +24,8 @@ module ("MarkUp")
 module ("M3MarkUp")
 
 implementation ("Main")
+build_standalone()
+
 Program ("m3tohtml")
 
 % man page

@@ -22,7 +22,7 @@ if defined ("_all")
   end
 end
 
-import_lib ("fl", "/usr/lib")           %-- That's where the flex stuff lives
+import_sys_lib ("FLEX-BISON")
 h_source ("lex.yy") % Insure that this dir is added in the include path
                     % such that lex.yy.c is found.
 c_source   ("y.tab")

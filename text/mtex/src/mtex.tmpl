@@ -18,15 +18,11 @@ proc MtexAtSRC (file, section) is
     % rebuild nroff and HTML versions as necessary
     if stale (man, src)
       write("generating", man, "from", src, "\n")
-      local ret = exec ([ "mtex2man" ], [ src, man ])
-      if not equal(0, ret)
-        error("generation failed with error code: ", ret) end
+      exec ("mtex2man <", src, ">", man)
     end
     if stale (html, src)
       write("generating", html, "from", src, "\n")
-      local ret = exec ([ "mtex2html" ], [ src, html ])
-      if not equal(ret, 0)
-        error("generation failed with error code: ", ret) end
+      exec ("mtex2html <", src, ">", html)
     end
 
     % copy them to source directory if they changed

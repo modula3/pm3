@@ -20,6 +20,7 @@ TYPE
         min   : Target.Int;
         max   : Target.Int;
         class : Class;
+        err   : CG.RuntimeError;
       OVERRIDES
         typeOf       := TypeOf;
         check        := Check;
@@ -42,22 +43,26 @@ TYPE
         note_write   := ExprRep.NotWritable;
       END;
 
-PROCEDURE New (a: Expr.T;  READONLY min, max: Target.Int): Expr.T =
+PROCEDURE New (a: Expr.T;  READONLY min, max: Target.Int;
+               err: CG.RuntimeError): Expr.T =
   BEGIN
-    RETURN Create (a, min, max, Class.cBOTH);
+    RETURN Create (a, min, max, Class.cBOTH, err);
   END New;
 
-PROCEDURE NewLower (a: Expr.T;  READONLY min: Target.Int): Expr.T =
+PROCEDURE NewLower (a: Expr.T;  READONLY min: Target.Int;
+                    err: CG.RuntimeError): Expr.T =
   BEGIN
-    RETURN Create (a, min, TInt.Zero, Class.cLOWER);
+    RETURN Create (a, min, TInt.Zero, Class.cLOWER, err);
   END NewLower;
 
-PROCEDURE NewUpper (a: Expr.T;  READONLY max: Target.Int): Expr.T =
+PROCEDURE NewUpper (a: Expr.T;  READONLY max: Target.Int;
+                    err: CG.RuntimeError): Expr.T =
   BEGIN
-    RETURN Create (a, TInt.Zero, max, Class.cUPPER);
+    RETURN Create (a, TInt.Zero, max, Class.cUPPER, err);
   END NewUpper;
 
-PROCEDURE Create (a: Expr.T; READONLY min, max: Target.Int; c: Class): Expr.T =
+PROCEDURE Create (a: Expr.T; READONLY min, max: Target.Int; c: Class;
+                  err: CG.RuntimeError): Expr.T =
   VAR p: P;
   BEGIN
     IF (NOT Host.doRangeChk) THEN RETURN a END;
@@ -67,6 +72,7 @@ PROCEDURE Create (a: Expr.T; READONLY min, max: Target.Int; c: Class): Expr.T =
     p.min    := min;
     p.max    := max;
     p.class  := c;
+    p.err    := err;
     p.origin := a.origin;
     RETURN p;
   END Create;
@@ -102,13 +108,14 @@ PROCEDURE Compile (p: P) =
   BEGIN
     Expr.Compile (p.expr);
     CASE p.class OF
-    | Class.cLOWER => CG.Check_lo (p.min);
-    | Class.cUPPER => CG.Check_hi (p.max);
-    | Class.cBOTH  => CG.Check_range (p.min, p.max);
+    | Class.cLOWER => CG.Check_lo (p.min, p.err);
+    | Class.cUPPER => CG.Check_hi (p.max, p.err);
+    | Class.cBOTH  => CG.Check_range (p.min, p.max, p.err);
     END;
   END Compile;
 
-PROCEDURE Emit (e: Expr.T;  READONLY min, max: Target.Int) =
+PROCEDURE EmitChecks (e: Expr.T;  READONLY min, max: Target.Int;
+                      err: CG.RuntimeError) =
   VAR minE, maxE: Target.Int;  x: Expr.T;
   BEGIN
     x := Expr.ConstValue (e);
@@ -117,20 +124,20 @@ PROCEDURE Emit (e: Expr.T;  READONLY min, max: Target.Int) =
     IF Host.doRangeChk THEN
       Expr.GetBounds (e, minE, maxE);
       IF TInt.LT (minE, min) AND TInt.LT (max, maxE) THEN
-        CG.Check_range (min, max);
+        CG.Check_range (min, max, err);
       ELSIF TInt.LT (minE, min) THEN
         IF TInt.LT (maxE, min) THEN
           Error.Warn (2, "value out of range");
         END;
-        CG.Check_lo (min);
+        CG.Check_lo (min, err);
       ELSIF TInt.LT (max, maxE) THEN
         IF TInt.LT (max, minE) THEN
           Error.Warn (2, "value out of range");
         END;
-        CG.Check_hi (max);
+        CG.Check_hi (max, err);
       END;
     END;
-  END Emit;
+  END EmitChecks;
 
 PROCEDURE Fold (p: P): Expr.T =
   VAR e: Expr.T;  i: Target.Int;  t: Type.T;

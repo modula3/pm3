@@ -24,5 +24,6 @@ module		("Storage")
 interface	("Options")
 implementation	("Main")
 
-ManPage		("DeckScape", 1)
+ManPage		("DeckScape","1")
 Program		("DeckScape")
+

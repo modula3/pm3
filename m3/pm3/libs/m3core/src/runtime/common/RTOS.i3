@@ -27,6 +27,16 @@ PROCEDURE LockHeap ();
 PROCEDURE UnlockHeap ();
 (* Leaves the critical section.  *)
 
+PROCEDURE BroadcastHeap ();
+(* Restarts all threads that called "WaitHeap" sometime after the
+   allocator/collector critical section is released.  The caller
+   must already be in the critical section. *)
+
+PROCEDURE WaitHeap ();
+(* Blocks the caller until "BroadcastHeap" has been called and
+   the allocator/collector critical section is released.   The
+   caller must not be in the critical section. *)
+
 PROCEDURE Write (a: ADDRESS;  n: INTEGER);
 (* Write the "n" bytes beginning at address "a" to the standard
    error output file or console. *)

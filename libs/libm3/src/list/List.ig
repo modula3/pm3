@@ -2,7 +2,7 @@
 (* Distributed only by permission.                           *)
 (* See the file COPYRIGHT for a full description.            *)
 (*                                                           *)
-(* Last modified on Thu Mar  7 16:55:04 PST 1996 by detlefs  *)
+(* Last modified on Mon Apr 10 16:19:34 PDT 1995 by detlefs  *)
 (*      modified on Thu Sep 22 19:31:11 PDT 1994 by heydon   *)
 (*      modified on Thu Dec  9 11:51:43 PST 1993 by mcjones  *)
 (*      modified on Wed Apr 28 18:35:21 PDT 1993 by meehan   *)
@@ -11,7 +11,7 @@
 (* The generic interface "List" provides operations on linked lists of
    arbitrary element types. *)
 
-GENERIC INTERFACE List(Elem);
+GENERIC INTERFACE List(Super, Elem);
 (* Where "Elem.T" is not an open array type and "Elem" contains
 
 | CONST Brand = <text-constant>;
@@ -26,9 +26,9 @@ GENERIC INTERFACE List(Elem);
 
  *)
 
-CONST Brand = "(List " & Elem.Brand & ")";
+CONST Brand = "(" & Super.Brand & " List " & Elem.Brand & ")";
 
-TYPE T = OBJECT head: Elem.T; tail: T END;
+TYPE T = Super.T OBJECT head: Elem.T; tail: T END;
 
 (* A "List.T" represents a linked list of items of type "Elem.T". *)
 

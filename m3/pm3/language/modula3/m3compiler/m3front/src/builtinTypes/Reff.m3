@@ -8,11 +8,11 @@
 
 MODULE Reff;
 
-IMPORT RefType, Tipe, M3String, TextExpr;
+IMPORT RefType, Tipe, Brand;
 
 PROCEDURE Initialize () =
   BEGIN
-    T := RefType.New (NIL, TRUE, TextExpr.New (M3String.Add ("$refany$")));
+    T := RefType.New (NIL, TRUE, FALSE, Brand.New ("$refany$"));
     Tipe.Define ("REFANY", T, TRUE);
   END Initialize;
 

@@ -156,11 +156,12 @@ PROCEDURE GenFPLiteral (p: P;  buf: M3Buf.T) =
     M3Buf.PutChar (buf, '>');
   END GenFPLiteral;
 
-PROCEDURE GenLiteral (p: P;  offset: INTEGER;  <*UNUSED*> type: Type.T) =
+PROCEDURE GenLiteral (p: P;  offset: INTEGER;  <*UNUSED*> type: Type.T;
+                      is_const: BOOLEAN) =
   BEGIN
     IF NOT TInt.EQ (p.value, TInt.Zero) THEN
       CG.Init_int (offset, MIN (Target.Integer.size, Target.Address.size),
-                   p.value);
+                   p.value, is_const);
     END;
   END GenLiteral;
 

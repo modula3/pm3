@@ -12,4 +12,4 @@ import("obliq")
 implementation("Main")
 
 Program("obliq-3D")
-ManPage        ("obliq-3D", 1)
+ManPage("obliq-3D",1)

@@ -31,7 +31,7 @@ CONST BufferSize = 8192;
 PROCEDURE NewRd(fd: ConnFD.T) : Rd.T =
   BEGIN
     RETURN NEW(RdT, fd := fd, 
-        buff := NEW(REF ARRAY OF CHAR, BufferSize),
+        buff := NEW(<*TRANSIENT*> REF ARRAY OF CHAR, BufferSize),
         st := 0,
         lo := 0,
         hi := 0,
@@ -44,7 +44,7 @@ PROCEDURE NewRd(fd: ConnFD.T) : Rd.T =
 PROCEDURE NewWr(fd: ConnFD.T) : Wr.T =
   BEGIN
     RETURN NEW(WrT, fd := fd,
-        buff := NEW(REF ARRAY OF CHAR, BufferSize),
+        buff := NEW(<*TRANSIENT*> REF ARRAY OF CHAR, BufferSize),
         st := 0,
         lo := 0,
         hi := 0,

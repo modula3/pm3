@@ -2,11 +2,11 @@
 (* All rights reserved.                                        *)
 (* See the file COPYRIGHT for a full description.              *)
 (*                                                             *)
-(* Portions Copyright 1996, Critical Mass, Inc.                *)
+(* Portions Copyright 1996-2000, Critical Mass, Inc.           *)
+(* See file COPYRIGHT-CMASS for details.                       *)
 (*                                                             *)
-(* Last modified on Mon Jul 15 18:08:38 PDT 1996 by bm         *)
-(*      modified on Thu Jun 27 15:47:50 PDT 1996 by kalsow     *)
-(*      modified on Thu Aug 31 14:03:19 PDT 1995 by steveg     *)
+(* Last modified on Thu Aug 31 14:03:19 PDT 1995 by steveg     *)
+(*      modified on Wed Dec 21 11:15:30 PST 1994 by kalsow     *)
 (*      modified on Thu Jul  1 08:46:40 PDT 1993 by mcjones    *)
 (*      modified on Thu May  6 13:32:07 PDT 1993 by mjordan    *)
 
@@ -14,11 +14,10 @@ UNSAFE MODULE FileWin32;
 
 IMPORT File, RegularFile, Terminal, Pipe, OSError;
 IMPORT WinDef, WinError, WinNT, WinBase, WinCon;
-IMPORT OSErrorWin32, OSWin32, TimeWin32;
+IMPORT OSErrorWin32, TimeWin32;
 
 REVEAL
   File.T = T BRANDED OBJECT
-    ds: DirectionSet; 
   OVERRIDES
     write := FileWrite;
     close := FileClose;
@@ -57,11 +56,11 @@ PROCEDURE New(handle: WinNT.HANDLE; ds: DirectionSet)
   BEGIN 
     CASE ft OF
     | WinBase.FILE_TYPE_DISK =>
-        RETURN NEW(RegularFile.T, handle := handle, ds := ds)
+      RETURN NEW(RegularFile.T, handle := handle, ds := ds)
     | WinBase.FILE_TYPE_CHAR =>
       WITH isCon = (WinCon.GetConsoleMode(handle, ADR(cm)) = 1) DO
-        (* If GetConsoleMode succeeds, assume it's a console *)
-        RETURN NEW(Terminal.T, handle := handle, ds := ds, isConsole := isCon);
+	(* If GetConsoleMode succeeds, assume it's a console *)
+	RETURN NEW(Terminal.T, handle := handle, ds := ds, isConsole := isCon);
       END;
     | WinBase.FILE_TYPE_PIPE => RETURN NewPipe(handle, ds)
     ELSE (* includes FILE_TYPE_UNKNOWN, FILE_TYPE_REMOTE *)
@@ -110,7 +109,9 @@ PROCEDURE FileStatus(h: File.T): File.Status  RAISES {OSError.E}=
         status.size := ffd.nFileSizeLow
     | WinBase.FILE_TYPE_CHAR => status.type := Terminal.FileType
     | WinBase.FILE_TYPE_PIPE => status.type := Pipe.FileType
-    ELSE (* includes FILE_TYPE_UNKNOWN, FILE_TYPE_REMOTE *)
+    | WinBase.FILE_TYPE_UNKNOWN => 
+      OSErrorWin32.Raise0(WinError.ERROR_INVALID_HANDLE);
+    ELSE (* includes FILE_TYPE_REMOTE *)
       <* ASSERT FALSE *>
     END;
     RETURN status
@@ -229,57 +230,72 @@ PROCEDURE RegularFileFlush(h: RegularFile.T) RAISES {OSError.E}=
     IF WinBase.FlushFileBuffers(h.handle) = 0 THEN OSErrorWin32.Raise() END
   END RegularFileFlush;
 
+CONST           (* should be ........... on a true 64-bit filesystem *)
+  LockLo = 16_7fffffff;  (*  16_ffffffff;  *)
+  LockHi = 0;            (*  16_7fffffff;  *)
+
 PROCEDURE RegularFileLock(h: RegularFile.T): BOOLEAN RAISES {OSError.E}=
   VAR err: INTEGER;
   BEGIN
-    IF OSWin32.Win95() THEN
-      IF WinBase.LockFile(
-             hFile := h.handle,
-             dwFileOffsetLow := 0,
-             dwFileOffsetHigh := 0,
-             nNumberOfBytesToLockLow := 1,
-             nNumberOfBytesToLockHigh := 0) = 0 THEN
-        err := WinBase.GetLastError();
-        IF err = WinError.ERROR_LOCK_VIOLATION THEN RETURN FALSE END;
-        OSErrorWin32.Raise0(err)
-      END;
-    ELSE
-      IF WinBase.LockFile(
-             hFile := h.handle,
-             dwFileOffsetLow := 0,
-             dwFileOffsetHigh := 0,
-             nNumberOfBytesToLockLow := LAST(WinDef.DWORD),
-             nNumberOfBytesToLockHigh := LAST(WinDef.DWORD)) = 0 THEN
-        err := WinBase.GetLastError();
-        IF err = WinError.ERROR_LOCK_VIOLATION THEN RETURN FALSE END;
-        OSErrorWin32.Raise0(err)
-      END;
+    IF WinBase.LockFile(
+           hFile := h.handle,
+           dwFileOffsetLow := 0,
+           dwFileOffsetHigh := 0,
+           nNumberOfBytesToLockLow := LockLo,
+           nNumberOfBytesToLockHigh := LockHi) = 0 THEN
+      err := WinBase.GetLastError();
+      IF err = WinError.ERROR_LOCK_VIOLATION THEN RETURN FALSE END;
+      OSErrorWin32.Raise0(err)
     END;
     RETURN TRUE
   END RegularFileLock;
 
 PROCEDURE RegularFileUnlock(h: RegularFile.T) RAISES {OSError.E}=
   BEGIN
-    IF OSWin32.Win95() THEN
-      IF WinBase.UnlockFile(
-             hFile := h.handle,
-             dwFileOffsetLow := 0,
-         dwFileOffsetHigh := 0,
-         nNumberOfBytesToUnlockLow := LAST(WinDef.DWORD),
-         nNumberOfBytesToUnlockHigh := LAST(WinDef.DWORD)) = 0 THEN
-        OSErrorWin32.Raise()
-      END;
-    ELSE
-      IF WinBase.UnlockFile(
-             hFile := h.handle,
-             dwFileOffsetLow := 0,
-         dwFileOffsetHigh := 0,
-         nNumberOfBytesToUnlockLow := 1,
-         nNumberOfBytesToUnlockHigh := 0) = 0 THEN
-        OSErrorWin32.Raise()
-      END;
+    IF WinBase.UnlockFile(
+           hFile := h.handle,
+           dwFileOffsetLow := 0,
+           dwFileOffsetHigh := 0,
+           nNumberOfBytesToUnlockLow := LockLo,
+           nNumberOfBytesToUnlockHigh := LockHi) = 0 THEN
+      OSErrorWin32.Raise()
     END;
   END RegularFileUnlock;
+
+(************
+PROCEDURE RegularFileLock(h: RegularFile.T): BOOLEAN RAISES {OSError.E}=
+  CONST Lo = ARRAY BOOLEAN OF INTEGER{ LAST(WinDef.DWORD), 1 };
+  CONST Hi = ARRAY BOOLEAN OF INTEGER{ LAST(WinDef.DWORD), 0 };
+  VAR err: INTEGER;  win95 := OSWin32.Win95();
+  BEGIN
+    IF WinBase.LockFile(
+           hFile := h.handle,
+           dwFileOffsetLow := 0,
+           dwFileOffsetHigh := 0,
+           nNumberOfBytesToLockLow := Lo[win95],
+           nNumberOfBytesToLockHigh := Hi[win95]) = 0 THEN
+      err := WinBase.GetLastError();
+      IF err = WinError.ERROR_LOCK_VIOLATION THEN RETURN FALSE END;
+      OSErrorWin32.Raise0(err)
+    END;
+    RETURN TRUE
+  END RegularFileLock;
+
+PROCEDURE RegularFileUnlock(h: RegularFile.T) RAISES {OSError.E}=
+  CONST Lo = ARRAY BOOLEAN OF INTEGER{ 1, LAST(WinDef.DWORD) };
+  CONST Hi = ARRAY BOOLEAN OF INTEGER{ 0, LAST(WinDef.DWORD) };
+  VAR win95 := OSWin32.Win95();
+  BEGIN
+    IF WinBase.UnlockFile(
+           hFile := h.handle,
+           dwFileOffsetLow := 0,
+           dwFileOffsetHigh := 0,
+           nNumberOfBytesToUnlockLow := Lo[win95],
+           nNumberOfBytesToUnlockHigh := Hi[win95]) = 0 THEN
+      OSErrorWin32.Raise()
+    END;
+  END RegularFileUnlock;
+***********)
 
 (*------------------------------------------------ checked runtime errors ---*)
 

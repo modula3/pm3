@@ -11,12 +11,17 @@
 
 Generic_interface("Sequence")
 Generic_interface("SequenceRep")
+Generic_interface("SequenceTransientRep")
 Generic_implementation("Sequence")
 HtmlGenericInterface("Sequence")
 
 template ("sequence")
 
-Sequence ("Atom", "Atom")
 Sequence ("Int",  "Integer")
 Sequence ("Ref",  "Refany")
 Sequence ("Text", "Text")
+
+TransientSequence ("Atom", "Atom")
+TransientSequence ("IntTransient",  "Integer")
+TransientSequence ("RefTransient",  "RefanyTransient")
+TransientSequence ("TextTransient", "Text")

@@ -41,19 +41,13 @@ TYPE (* the "global state" that is passed around during type checking *)
     raises_others : BOOLEAN;
     ok_to_raise   : ExSetList;
     no_error      : ExSetList;
-    int_ops       : INTEGER;
-    fp_ops        : INTEGER;
-    div_ops       : INTEGER;
   END;
 
 CONST
   OuterCheckState = CheckState {
     raises_others := FALSE,
     ok_to_raise   := NIL,
-    no_error      := NIL,
-    int_ops       := 0,
-    fp_ops        := 0,
-    div_ops       := 0
+    no_error      := NIL
   };
 
 (*-------------------------------------------------------- fingerprinting ---*)

@@ -50,7 +50,7 @@ module ("JoinFont")
 module ("JoinPixmap")
 module ("JoinPaintOp")
 Module ("ETAgent")
-module ("SelectQueue")
+Module ("SelectQueue")
 Module ("OverlayVBT")
 
 HtmlInterface("AnchorBtnVBT")

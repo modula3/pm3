@@ -3,8 +3,7 @@
 (* See the file COPYRIGHT for a full description.              *)
 
 (* File: SetExpr.m3                                            *)
-(* Last modified on Mon Jun  3 14:31:16 PDT 1996 by heydon     *)
-(*      modified on Fri Feb 24 16:47:18 PST 1995 by kalsow     *)
+(* Last modified on Fri Feb 24 16:47:18 PST 1995 by kalsow     *)
 (*      modified on Thu May 20 08:20:18 PDT 1993 by muller     *)
 
 MODULE SetExpr;
@@ -28,6 +27,7 @@ TYPE
         tree    : Node;
         others  : Expr.List;
         nOthers : INTEGER;
+        tmp     : CG.Var;
       OVERRIDES
         typeOf       := ExprRep.NoType;
         check        := Check;
@@ -77,6 +77,7 @@ PROCEDURE New (type: Type.T;  args: Expr.List): Expr.T =
     p.tree    := NIL;
     p.others  := NIL;
     p.nOthers := -1;
+    p.tmp     := NIL;
     RETURN p;
   END New;
 
@@ -524,11 +525,20 @@ PROCEDURE NeedsAddress (<*UNUSED*> p: P) =
   END NeedsAddress;
 
 PROCEDURE Prep (p: P) =
+  VAR info: Type.Info;
   BEGIN
     EVAL BuildMap (p, p);  (* evaluate the constants *)
     (* prep the non-constant elements *)
     FOR i := 0 TO p.nOthers-1 DO
       Expr.Prep (p.others[i]);
+    END;
+
+    EVAL Type.CheckInfo (p.tipe, info);
+    IF (info.size > Target.Integer.size) AND (p.nOthers > 0) THEN
+      (* large non-constant sets almost always turn into procedure
+         calls in the code generator, so we might as well make life
+         simpler there... *)
+      p.tmp := CompileBig (p, info);
     END;
   END Prep;
 
@@ -540,15 +550,16 @@ PROCEDURE Compile (p: P) =
       CompileSmall (p, info);
     ELSIF (p.nOthers <= 0) THEN
       (* large, constant set *)
-      offset := Module.Allocate (info.size, info.alignment, "*set*");
-      GenLiteral (p, offset, p.tipe);
-      CG.Load_addr_of (Module.GlobalData (NIL), offset, info.alignment);
+      offset := Module.Allocate (info.size, info.alignment, TRUE, "*set*");
+      GenLiteral (p, offset, p.tipe, TRUE);
+      CG.Load_addr_of (Module.GlobalData (TRUE), offset, info.alignment);
     ELSE
-      CompileBig (p, info);
+      CG.Load_addr_of_temp (p.tmp, 0, Target.Integer.align);
+      p.tmp := NIL;
     END;
   END Compile;
 
-PROCEDURE CompileBig (p: P;  VAR info: Type.Info) =
+PROCEDURE CompileBig (p: P;  VAR info: Type.Info): CG.Var =
   VAR
     range        : Type.T;
     w1, w2       : INTEGER;
@@ -627,7 +638,7 @@ PROCEDURE CompileBig (p: P;  VAR info: Type.Info) =
       END;
     END;
 
-    CG.Load_addr_of_temp (t1, 0, Target.Integer.align);
+    RETURN t1;
   END CompileBig;
 
 PROCEDURE EmitAssign (set: CG.Var;  index: INTEGER; 
@@ -640,10 +651,10 @@ PROCEDURE EmitAssign (set: CG.Var;  index: INTEGER;
 
 PROCEDURE GenElement (e: Expr.T;  READONLY min, max: Target.Int) =
   BEGIN
-    CheckExpr.Emit (e, min, max);
+    CheckExpr.EmitChecks (e, min, max, CG.RuntimeError.ValueOutOfRange);
     IF NOT TInt.EQ (min, TInt.Zero) THEN
       CG.Load_integer (min);
-      CG.Subtract (CG.Type.Int);
+      CG.Subtract (Target.Integer.cg_type);
     END;
   END GenElement;
 
@@ -727,7 +738,7 @@ PROCEDURE GenFPLiteral (p: P;  buf: M3Buf.T) =
     M3Buf.PutChar (buf, '>');
   END GenFPLiteral;
 
-PROCEDURE GenLiteral (p: P;  offset: INTEGER;  type: Type.T) =
+PROCEDURE GenLiteral (p: P;  offset: INTEGER;  type: Type.T;  is_const: BOOLEAN) =
   VAR
     range        : Type.T;
     min_T, max_T : Target.Int;
@@ -763,7 +774,7 @@ PROCEDURE GenLiteral (p: P;  offset: INTEGER;  type: Type.T) =
         (* write the mask we've accumulated *)
         IF NOT TInt.EQ (curMask, TInt.Zero) THEN
           CG.Init_int (offset + curWord*Target.Integer.pack,
-                        Target.Integer.size, curMask);
+                        Target.Integer.size, curMask, is_const);
         END;
         curWord := w1;
         curMask := TInt.Zero;
@@ -772,10 +783,10 @@ PROCEDURE GenLiteral (p: P;  offset: INTEGER;  type: Type.T) =
         (* write the full words [w1..w2-1] *)
         TWord.Or (curMask, left [b1], tmp);
         CG.Init_int (offset + w1 * Target.Integer.pack, Target.Integer.size,
-                     tmp);
+                     tmp, is_const);
         FOR i := w1 + 1 TO w2 - 1 DO
           CG.Init_int (offset + i * Target.Integer.pack, Target.Integer.size,
-                       full);
+                       full, is_const);
         END;
         curWord := w2;
         curMask := right [b2];
@@ -789,7 +800,7 @@ PROCEDURE GenLiteral (p: P;  offset: INTEGER;  type: Type.T) =
     (* write the last mask *)
     IF NOT TInt.EQ (curMask, TInt.Zero) THEN
       CG.Init_int (offset + curWord * Target.Integer.pack,
-                   Target.Integer.size, curMask);
+                   Target.Integer.size, curMask, is_const);
     END;
   END GenLiteral;
 

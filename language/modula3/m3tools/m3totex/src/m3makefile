@@ -10,10 +10,15 @@ ManPage ("m3totex", 1)
 
 import ("libm3")
 
-resource_named ("make", "Makefile")
-resource_named ("xmpl", "Example.i3")
-resource_named ("tex", "Example.tex")
-resource_named ("header", "m3totex.tex")
+source ("Makefile")
+source ("Example.i3")
+source ("Example.tex")
+source ("m3totex.tex")
+
+resource_named ("make","Makefile")
+resource_named ("xmpl","Example.i3")
+resource_named ("tex","Example.tex")
+resource_named ("header","m3totex.tex")
 
 bundle ("B")
 implementation ("m3totex")

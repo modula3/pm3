@@ -2,10 +2,13 @@
 % All rights reserved.
 % See the file COPYRIGHT for a full description.
 %
-% Last modified on Wed Mar  1 08:22:56 PST 1995 by kalsow
+% Last modified on Mon Jan 13 09:32:21 PST 1997 by mcjones
+%      modified on Thu Oct 10 16:11:15 PDT 1996 by heydon
+%      modified on Wed Mar  1 08:22:56 PST 1995 by kalsow
 %      modified on Fri May 14 10:29:31 PDT 1993 by mjordan
 %      modified on Tue Feb 11 15:10:10 PST 1992 by muller
 
+% floating-point formats
 readonly _LittleEndian = "IEEE"
 readonly _BigEndian = "IEEE"
 readonly _VAX = "VAX"
@@ -34,8 +37,8 @@ readonly _RandomPieces = {
   "NEXT"       : [ _BigEndian ],
   "NT386"      : [ _LittleEndian ],
   "NT386GNU"   : [ _LittleEndian ],
-  "NetBSDi386" : [ _LittleEndian ],
   "OKI"        : [ _LittleEndian ],
+  "OS2"        : [ _LittleEndian ],
   "SEQUENT"    : [ _LittleEndian ],
   "SOLgnu"     : [ _BigEndian ],
   "SOLsun"     : [ _BigEndian ],

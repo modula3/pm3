@@ -1,10 +1,8 @@
-m3_option("-g")
-
 %import("GrasGraphs")
 import("mgkit")
 import("formsvbt")
 import("HiGRAS")
-include_pkg("GrasParams")
+import("GrasParams")
 
 resource("indextrees.fv")
 resource("indextree.fv")

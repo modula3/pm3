@@ -8,7 +8,7 @@ GENERIC MODULE Stack(ElemType);
 
 
 TYPE
-  NodeTypePtr = BRANDED REF NodeType; (* pointer to a stack element *)
+  NodeTypePtr = <*TRANSIENT*> BRANDED REF NodeType; (* pointer to a stack element *)
 
   NodeType = RECORD              (* a stack element: *)
                Next   : NodeTypePtr;  (* - Successor *)

@@ -2,74 +2,157 @@
 (* All rights reserved.                                        *)
 (* See the file COPYRIGHT for a full description.              *)
 (*                                                             *)
-(* Last modified on Thu May 23 10:19:48 PDT 1996 by heydon     *)
-(*      modified on Tue Feb 28 15:59:51 PST 1995 by kalsow     *)
+(* Last modified on Tue Feb 28 15:59:51 PST 1995 by kalsow     *)
 
-MODULE QMachine EXPORTS QMachine, QMachRep;
+MODULE QMachine;
 
 IMPORT Atom, AtomList, IntRefTbl, Env, Fmt, Text, FileWr;
-IMPORT Wr, Thread, OSError, TextSeq, TextF, Pipe;
-IMPORT Pathname, Process, File, FS, FileRd, Rd;
-IMPORT M3ID, M3Buf, M3File, RegularFile;
-IMPORT QValue, QVal, QCode, QCompiler, QVTbl, QVSeq, QScanner, Stdio;
-FROM Quake IMPORT Error;
+IMPORT Wr, Thread, Stdio, OSError, TextTransientSeq AS TextSeq;
+IMPORT Pathname, Pipe, Process, File, FS, RTParams;
+IMPORT M3Buf, M3File, M3Process, CoffTime;
+IMPORT QIdent, QValue, QVal, QCode, QCompiler, QVTbl, QVSeq, QScanner;
+FROM Quake IMPORT Error, ID, IDMap, NoID;
+(* IMPORT IO; *)
+
+CONST
+  OnUnix = (CoffTime.EpochAdjust = 0.0d0);
 
 TYPE
   QK = QValue.Kind;
   Op = QCode.Op;
 
 REVEAL
-  T = Rep BRANDED "QMachine.T" OBJECT
-  OVERRIDES	
-    init     := Init;
-    evaluate := Evaluate;
-    get      := Get;
-    put      := Put;
-    lookup   := LookUp;
-    push     := Push;
-    pop      := Pop;
-    error    := Err;
-    cleanup  := CleanUp;
-    call     := Call;
-    cur_wr   := CurWr;
+  T = T_ BRANDED "QMachine.T" OBJECT
+    reg       : Registers;
+    scopes    : ScopeStack     := NIL;
+    stack     : ValueStack     := NIL;
+    loops     : LoopStack      := NIL;
+    output    : OutputStack    := NIL;
+    frames    : FrameStack     := NIL;
+    includes  : IncludeStack   := NIL;
+    globals   : IntRefTbl.T    := NIL;  (* ID -> QValue.Binding *)
+    tmp_files : TextSeq.T      := NIL;
+    tracing   : BOOLEAN        := FALSE;
+    do_echo   : BOOLEAN        := FALSE;
+    last_cp   : QCode.Stream   := NIL;
+    bindings  : QValue.Binding := NIL;
+    buffers   : BufStack;
+    default_wr: Wr.T;
+    shell     : TEXT         := NIL;
+    sh_option : TEXT         := NIL;
+    tmp_dir   : TEXT         := NIL;
+  OVERRIDES
+    init      := Init;
+    evaluate  := Evaluate;
+    get       := Get;
+    put       := Put;
+    lookup    := LookUp;
+    push      := Push;
+    pop       := Pop;
+    error     := Err;
+    cleanup   := CleanUp;
+    include   := Include;
+    normalize := Normalize;
+    start_call:= StartCall;
+    call_proc := CallProc;
+    cp_if     := CopyIfNew;
+    make_dir  := MakeDir;
+    cur_file  := CurFile;
+    cur_path  := CurPath;
+    cur_wr    := CurWr;
+    set_wr    := SetWr;
+    exec_echo := ExecEcho;
+  END;
+
+TYPE
+  Registers = RECORD
+    cp : QCode.Stream   := NIL; (* code pointer *)
+    pc : INTEGER        := 0;   (* program counter *)
+    xp : INTEGER        := 0;   (* scope stack pointer *)
+    sp : INTEGER        := 0;   (* value stack pointer *)
+    lp : INTEGER        := 0;   (* loop stack pointer *)
+    op : INTEGER        := 0;   (* output stack pointer *)
+    fp : INTEGER        := 0;   (* frame pointer *)
+    ln : INTEGER        := 0;   (* line number *)
+    ip : INTEGER        := 0;   (* include stack pointer *)
+    pi : QCode.ProcInfo := NIL; (* procedure info *)
+    fn : BOOLEAN        := FALSE; (* => expect return result *)
+  END;
+
+TYPE
+  ScopeStack   = REF ARRAY OF QValue.Scope;
+  ValueStack   = REF ARRAY OF QValue.T;
+  LoopStack    = REF ARRAY OF LoopInfo;
+  OutputStack  = REF ARRAY OF OutputInfo;
+  FrameStack   = REF ARRAY OF FrameInfo;
+  IncludeStack = REF ARRAY OF IncludeInfo;
+
+TYPE
+  LoopInfo = RECORD
+    iter     : QVTbl.Iterator  := NIL;
+    array    : QVSeq.T         := NIL;
+    next_elt : INTEGER         := 0;
+    variable : QValue.Binding  := NIL;
+  END;
+
+TYPE
+  OutputInfo = RECORD
+    name : TEXT := NIL;
+    wr   : Wr.T := NIL;
+  END;
+
+TYPE
+  FrameInfo = RECORD
+    proc   : QValue.Proc := NIL;
+    saved  : Registers;
+    outer  : BOOLEAN;  (* TRUE => exit eval loop when the frame is popped *)
+  END;
+
+TYPE
+  IncludeInfo = RECORD
+    file   : QCode.Stream;
+    old_cp : QCode.Stream;
+    old_pc : INTEGER;
+  END;
+
+TYPE
+  BufStack = RECORD
+    tos  : INTEGER := 0;
+    bufs : ARRAY [0..9] OF M3Buf.T;
   END;
 
 (*-------------------------------------------------------- initialization ---*)
 
-PROCEDURE Init (t: T; writer: Wr.T): T =
-  VAR b: QValue.Binding;
+PROCEDURE Init (t: T;  map: IDMap): T =
   BEGIN
-    t.scopes   := NEW (ScopeStack,  40);
-    t.stack    := NEW (ValueStack,  100);
-    t.loops    := NEW (LoopStack,   20);
-    t.output   := NEW (OutputStack, 10);
-    t.frames   := NEW (FrameStack,  40);
-    t.includes := NEW (IncludeStack, 10);
-    t.globals  := NEW (IntRefTbl.Default).init ();
+    t.map        := map;
+    t.scopes     := NEW (ScopeStack,  40);
+    t.stack      := NEW (ValueStack,  100);
+    t.loops      := NEW (LoopStack,   20);
+    t.output     := NEW (OutputStack, 10);
+    t.frames     := NEW (FrameStack,  40);
+    t.includes   := NEW (IncludeStack, 10);
+    t.globals    := NEW (IntRefTbl.Default).init ();
+    t.default_wr := Stdio.stdout;
 
-    InitBuiltins ();
-    FOR i := FIRST (Builtins) TO LAST (Builtins) DO
-      b := Builtins[i];
-      EVAL t.globals.put (b.name, b);
-    END;
+    InitOSEnv (t);
+    InitBuiltins (t);
 
     EVAL PushScope (t);  (* so that "local" variables have a place to go *)
-
-    t.writer := writer;
     RETURN t;
   END Init;
 
 (*------------------------------------------------------------ evaluation ---*)
 
 PROCEDURE Evaluate (t: T;  s: QCode.Stream)
-  RAISES {Error} =
+  RAISES {Error, Thread.Alerted} =
   BEGIN
     PushInclude (t, s, t.reg);
     Eval (t);
   END Evaluate;
 
-PROCEDURE Eval (t: T; end_on_return: BOOLEAN := FALSE)
-  RAISES {Error} =
+PROCEDURE Eval (t: T)
+  RAISES {Error, Thread.Alerted} =
   VAR
     op   : QCode.Op;
     arg  : INTEGER;
@@ -81,14 +164,12 @@ PROCEDURE Eval (t: T; end_on_return: BOOLEAN := FALSE)
     bind : QValue.Binding;
     txt  : TEXT;
     buf  : M3Buf.T;
-    sfp  : INTEGER := 0;
+    done : BOOLEAN;
   BEGIN
-    IF end_on_return THEN sfp := t.reg.fp END;
     LOOP
       IF (t.tracing) THEN TraceInstruction (t) END;
       WITH z = t.reg.cp.instrs [t.reg.pc] DO op := z.op;  arg := z.a; END;
       INC (t.reg.pc);
-
 
       CASE op OF
 
@@ -141,13 +222,16 @@ PROCEDURE Eval (t: T; end_on_return: BOOLEAN := FALSE)
           val2.ref := NIL;
 
       | Op.GetEnv =>
-          PushString (t, Env.Get (M3ID.ToText (arg)));
+          PushText (t, Env.Get (t.map.id2txt (arg)));
 
       | Op.PushProc =>
           val.kind := QK.Proc;
           val.int  := 0;
           val.ref  := NEW (QValue.Proc, info := t.reg.cp.procs [arg],
-                                        env  := t.scopes [t.reg.xp-1]);
+                           env  := t.scopes [0]);
+                         (*env  := t.scopes [t.reg.xp-1]);*)
+          (* In quake all procedures are global, and we don't want
+             dynamic scoping... *)
           Push (t, val);
           val.ref := NIL;
 
@@ -164,7 +248,7 @@ PROCEDURE Eval (t: T; end_on_return: BOOLEAN := FALSE)
           buf := GetBuf (t);
           QVal.ToBuf (t, val, buf);
           QVal.ToBuf (t, val2, buf);
-          PushString (t, M3Buf.ToText (buf));
+          PushText (t, M3Buf.ToText (buf));
           FreeBuf (t, buf);
           buf := NIL;
           val2.ref := NIL;
@@ -193,8 +277,8 @@ PROCEDURE Eval (t: T; end_on_return: BOOLEAN := FALSE)
           Pop (t, val);  int := QVal.ToID (t, val);
           Pop (t, val);  tbl := QVal.ToTable (t, val);
           IF NOT tbl.get (int, val) THEN
-            Err (t, "table does not contain entry for: \""
-                      & M3ID.ToText (int) & "\"");
+            Err (t, Fmt.F ("table does not contain entry for: \"%s\"",
+                           t.map.id2txt (int)));
           END;
           Push (t, val);
           tbl := NIL;
@@ -231,7 +315,10 @@ PROCEDURE Eval (t: T; end_on_return: BOOLEAN := FALSE)
 
       | Op.Halt =>
           PopInclude (t);
+          (**
           IF (t.reg.ip <= 0) THEN EXIT; END;
+          **)
+          EXIT;
 
       | Op.PushScope =>
           EVAL PushScope (t);
@@ -259,8 +346,10 @@ PROCEDURE Eval (t: T; end_on_return: BOOLEAN := FALSE)
           bind := LookUp (t, arg);
           IF (bind # NIL) THEN
             Push (t, bind.value);
+          ELSIF strict_variables THEN
+            Err (t, "undefined variable: " & t.map.id2txt (arg));
           ELSE
-            Err (t, "undefined variable: " & M3ID.ToText (arg));
+            PushText (t, t.map.id2txt (arg));
           END;
 
       | Op.Assign =>
@@ -268,7 +357,7 @@ PROCEDURE Eval (t: T; end_on_return: BOOLEAN := FALSE)
           IF (bind = NIL) THEN
             bind := DefineGlobal (t, arg, readonly := FALSE);
           ELSIF bind.readonly THEN
-            Err (t, "cannot assign to readonly variable: " & M3ID.ToText(arg));
+            Err (t, "cannot assign to readonly variable: " & t.map.id2txt(arg));
           END;
           Pop (t, val);
           bind.value := val;
@@ -329,10 +418,10 @@ PROCEDURE Eval (t: T; end_on_return: BOOLEAN := FALSE)
           PushFrame (t);
 
       | Op.CallProc =>
-          DoCall (t, arg, FALSE);
+          DoCall (t, arg, FALSE, FALSE);
 
       | Op.CallFunc =>
-          DoCall (t, arg, TRUE);
+          DoCall (t, arg, TRUE, FALSE);
 
       | Op.SetLine =>
           t.reg.ln := arg;
@@ -340,55 +429,58 @@ PROCEDURE Eval (t: T; end_on_return: BOOLEAN := FALSE)
       | Op.ReturnValue =>
           CheckReturn (t, TRUE);
           Pop (t, val);
-          PopFrame (t);
+          done := PopFrame (t);
           Push (t, val);
-          IF end_on_return AND sfp - 1 = t.reg.fp THEN EXIT END;
+          IF done THEN EXIT; END;
 
       | Op.Return =>
           CheckReturn (t, FALSE);
-          PopFrame (t);
-          IF end_on_return AND sfp - 1 = t.reg.fp THEN EXIT END;
+          IF PopFrame (t) THEN EXIT END;
 
       END; (* case *)
     END; (* loop *)
   END Eval;
 
-PROCEDURE TraceInstruction (t: T) =
-  <*FATAL Wr.Failure, Thread.Alerted*>
+PROCEDURE TraceInstruction (t: T)
+  RAISES {Thread.Alerted} =
+  BEGIN
+    TRY
+      PrintTrace (t);
+    EXCEPT Wr.Failure =>
+      t.tracing := FALSE;
+    END;
+  END TraceInstruction;
+
+PROCEDURE PrintTrace (t: T)
+  RAISES {Wr.Failure, Thread.Alerted} =
   VAR op: QCode.Op;  arg: INTEGER;
   BEGIN
     IF (t.last_cp # t.reg.cp) THEN
-      Wr.PutText (t.writer, "****** ");
+      Print ("****** ");
       IF (t.reg.cp # NIL) THEN
-        Wr.PutText (t.writer, M3ID.ToText (t.reg.cp.source_file));
+        Print (t.map.id2txt (t.reg.cp.source_file));
       END;
-      Wr.PutText (t.writer, " ******\n");
+      Print (" ******", Wr.EOL);
       t.last_cp := t.reg.cp;
     END;
 
     WITH z = t.reg.cp.instrs [t.reg.pc] DO op := z.op;  arg := z.a; END;
 
-    FOR i := 1 TO t.reg.xp DO  Wr.PutText (t.writer, "."); END;
-    Wr.PutText (t.writer, Fmt.Pad(Fmt.Int(t.reg.pc),4,' ',Fmt.Align.Left));
-    Wr.PutChar (t.writer, ' ');
-    Wr.PutText (t.writer, QCode.OpName[op]);
+    FOR i := 1 TO t.reg.xp DO  Print ("."); END;
+    Print (Fmt.Pad (Fmt.Int (t.reg.pc),4,' ',Fmt.Align.Left));
+    Print (" ", QCode.OpName[op]);
     CASE QCode.OpFormat [op] OF
     | 0 => (*done*)
-    | 1 => Wr.PutText (t.writer, "  ");
-           Wr.PutText (t.writer, Fmt.Int (arg));
-    | 2 => Wr.PutText (t.writer, "  (");
-           Wr.PutText (t.writer, Fmt.Int (arg));
-           Wr.PutText (t.writer, ") \"");
-           Wr.PutText (t.writer, M3ID.ToText (arg));
-           Wr.PutText (t.writer, "\"");
-    | 3 => Wr.PutText (t.writer, "  pc+(");
-           Wr.PutText (t.writer, Fmt.Int (arg));
-           Wr.PutText (t.writer, ") => ");
-           Wr.PutText (t.writer, Fmt.Int (t.reg.pc + 1 + arg));
+    | 1 => Print ("  ", Fmt.Int (arg));
+    | 2 => Print ("  (", Fmt.Int (arg), ") \"");
+           Print (t.map.id2txt (arg), "\"");
+    | 3 => Print ("  pc+(", Fmt.Int (arg), ") => ",
+                  Fmt.Int (t.reg.pc + 1 + arg));
     END;
-    Wr.PutText (t.writer, "\n");
-    Wr.Flush(t.writer);
-  END TraceInstruction;
+    Print (Wr.EOL);
+    FlushIO ();
+  END PrintTrace;
+
 (*------------------------------------------------------- procedure calls ---*)
 
 PROCEDURE PushFrame (t: T)
@@ -396,13 +488,19 @@ PROCEDURE PushFrame (t: T)
   VAR val: QValue.T;
   BEGIN
     Pop (t, val);  (* the procedure value *)
+    StartCall (t, val);
+  END PushFrame;
+
+PROCEDURE StartCall (t: T;  READONLY proc: QValue.T)
+  RAISES {Error} =
+  BEGIN
     IF (t.reg.fp >= NUMBER (t.frames^)) THEN ExpandFrames (t); END;
     WITH f = t.frames[t.reg.fp] DO
-      f.proc  := QVal.ToProc (t, val);
+      f.proc  := QVal.ToProc (t, proc);
       f.saved := t.reg;
     END;
     INC (t.reg.fp);
-  END PushFrame;
+  END StartCall;
 
 PROCEDURE ExpandFrames (t: T) =
   VAR n := NUMBER (t.frames^);  new := NEW (FrameStack, n+n);
@@ -411,15 +509,25 @@ PROCEDURE ExpandFrames (t: T) =
     t.frames := new;
   END ExpandFrames;
 
-PROCEDURE DoCall (t: T;  n_args: INTEGER;  isFunc: BOOLEAN)
-  RAISES {Error} =
+PROCEDURE CallProc (t: T;  n_args: INTEGER;  isFunc: BOOLEAN)
+  RAISES {Error, Thread.Alerted} =
+  BEGIN
+    DoCall (t, n_args, isFunc, TRUE);
+    Eval (t);
+  END CallProc;
+
+PROCEDURE DoCall (t: T;  n_args: INTEGER;  isFunc, outer: BOOLEAN)
+  RAISES {Error, Thread.Alerted} =
   VAR p: QValue.Proc;  s: QValue.Scope;  val: QValue.T;
-      normal := FALSE;
   BEGIN
     WITH f = t.frames[t.reg.fp-1] DO
+      f.outer := outer;
       p := f.proc;
       IF (p.info.n_args # n_args) AND (p.info.n_args >= 0) THEN
-        Err (t, "wrong number of parameters passed to procedure");
+        Err (t, Fmt.F ("%s to procedure %s (expected %s, received %s)",
+                       "wrong number of parameters passed",
+                       t.map.id2txt (p.info.name),
+                       Fmt.Int (p.info.n_args), Fmt.Int (n_args)));
       END;
       IF (p.info.builtin) THEN
         (* we save and restore the registers in case a builtin
@@ -434,23 +542,17 @@ PROCEDURE DoCall (t: T;  n_args: INTEGER;  isFunc: BOOLEAN)
         t.reg.cp := NIL;
         t.reg.ln := 0;
         t.reg.fn := isFunc;
-        TRY
-          p.info.handler (t, n_args);
-          normal := TRUE; (* flag that no exception has been raised *)
-        FINALLY
-          IF normal THEN
-            (* no exception raised *)
-            CheckReturn (t, p.info.isFunc);
-            IF p.info.isFunc THEN
-              Pop (t, val);
-              PopFrame (t);
-              Push (t, val);
-            ELSE
-              PopFrame (t);
-            END;
+        p.info.handler (t, n_args);
+        IF (p.info.handler = DoInclude) THEN
+          (* the builtin include() function pops its own frame! *)
+        ELSE
+          CheckReturn (t, p.info.isFunc);
+          IF p.info.isFunc THEN
+            Pop (t, val);
+            EVAL PopFrame (t);
+            Push (t, val);
           ELSE
-            (* the builtin raised an exception!!! *)
-            PopFrame (t);
+            EVAL PopFrame (t);
           END;
         END;
       ELSE
@@ -464,13 +566,26 @@ PROCEDURE DoCall (t: T;  n_args: INTEGER;  isFunc: BOOLEAN)
         t.reg.fn := isFunc;
         s := PushScope (t);
         s.parent := p.env;  (* use procedure's static link *)
+        (* scope debugging
+        VAR m := "\n"; BEGIN
+          FOR i := 0 TO t.reg.xp -1 DO
+            m := m & " s: " & Fmt.Int(t.scopes[i].id);
+            IF t.scopes[i].parent = NIL THEN
+              m := m & " p: NIL\n";
+            ELSE
+              m := m & " p: " & Fmt.Int(t.scopes[i].parent.id) & "\n";
+            END;
+          END;
+          IO.Put("scopes (DoCall):" & m);
+        END;
+        *)
         <*ASSERT s.parent # s*>
       END;
     END;
   END DoCall;
 
-PROCEDURE PopFrame (t: T)
-  RAISES {Error} =
+PROCEDURE PopFrame (t: T): BOOLEAN
+  RAISES {Error, Thread.Alerted} =
   VAR val: QValue.T;
   BEGIN
     DEC (t.reg.fp);
@@ -486,6 +601,7 @@ PROCEDURE PopFrame (t: T)
       WHILE (t.reg.sp > f.saved.sp) DO Pop (t, val);   END;
       WHILE (t.reg.lp > f.saved.lp) DO PopLoop (t);    END;
       WHILE (t.reg.op > f.saved.op) DO PopOutput (t);  END;
+      RETURN f.outer;
     END;
   END PopFrame;
 
@@ -504,34 +620,9 @@ PROCEDURE CheckReturn (t: T;  with_value: BOOLEAN)
     END;
   END CheckReturn;
 
-PROCEDURE Call(t: T; proc: QValue.Proc; args: REF ARRAY OF QValue.T;
-               isFunc: BOOLEAN) RAISES {Error}=
-  VAR arg: QValue.T;
-  BEGIN
-    arg.kind := QValue.Kind.Proc;
-    arg.int := 0;
-    arg.ref := proc;
-    t.push(arg);
-    PushFrame(t);
-    (* push the args *)
-    IF args # NIL THEN
-      FOR i := FIRST(args^) TO LAST(args^) DO
-        t.push(args[i]);
-      END;
-      DoCall(t, NUMBER(args^), isFunc);
-    ELSE
-      DoCall(t, 0, isFunc);
-    END;
-    IF NOT proc.info.builtin THEN
-      Eval(t, TRUE);
-    END;
-  END Call;
-
-
-
 (*------------------------------------------------------- global bindings ---*)
 
-PROCEDURE Get (t: T;  name: M3ID.T;  VAR(*OUT*) value: QValue.T): BOOLEAN =
+PROCEDURE Get (t: T;  name: ID;  VAR(*OUT*) value: QValue.T): BOOLEAN =
   VAR ref: REFANY;
   BEGIN
     IF t.globals.get (name, ref) THEN
@@ -542,10 +633,9 @@ PROCEDURE Get (t: T;  name: M3ID.T;  VAR(*OUT*) value: QValue.T): BOOLEAN =
     END;
   END Get;
 
-PROCEDURE Put (t: T;  name: M3ID.T;  READONLY value: QValue.T;
-               readonly: BOOLEAN := FALSE)
+PROCEDURE Put (t: T;  name: ID;  READONLY value: QValue.T)
   RAISES {Error} =
-  VAR bind := DefineGlobal (t, name, readonly := readonly);
+  VAR bind := DefineGlobal (t, name, readonly := FALSE);
   BEGIN
     bind.value := value;
   END Put;
@@ -553,19 +643,50 @@ PROCEDURE Put (t: T;  name: M3ID.T;  READONLY value: QValue.T;
 (*----------------------------------------------- scopes & local bindings ---*)
 
 PROCEDURE PushScope (t: T): QValue.Scope =
+  VAR m := "\n";
   BEGIN
     IF (t.reg.xp >= NUMBER (t.scopes^)) THEN ExpandScopes (t); END;
     WITH s = t.scopes [t.reg.xp] DO
-      s := NEW (QValue.Scope);
+      IF (s = NIL) THEN 
+        s := NEW (QValue.Scope); 
+        s.id := nextScopeId;
+        INC (nextScopeId);
+      END;
       IF (t.reg.xp > 0)
         THEN s.parent := t.scopes[t.reg.xp-1];
         ELSE s.parent := NIL;
       END;
       <*ASSERT s.parent # s*>
+      (* scope debugging
+      FOR i := 0 TO t.reg.xp DO
+        m := m & " s: " & Fmt.Int(t.scopes[i].id);
+        IF t.scopes[i].parent = NIL THEN
+          m := m & " p: NIL\n";
+        ELSE
+          m := m & " p: " & Fmt.Int(t.scopes[i].parent.id) & "\n";
+        END;
+      END;
+      IO.Put("scopes:" & m);
+      *)
+      IF s.parent # NIL THEN 
+        IF s.parent.parent = s THEN
+          TRY
+            Err (t, "loop in scopes, t.reg.xp = " & Fmt.Int(t.reg.xp) & m);
+          EXCEPT
+            Error(e) => 
+            TRY
+              Wr.PutText(Stdio.stderr, e);
+            EXCEPT ELSE END;
+          END;
+          s.parent.parent := NIL;
+        END;
+      END;
       INC (t.reg.xp);
       RETURN s;
     END;
   END PushScope;
+
+VAR nextScopeId := 0;
 
 PROCEDURE ExpandScopes (t: T) =
   VAR n := NUMBER (t.scopes^);  new := NEW (ScopeStack, n+n);
@@ -584,7 +705,7 @@ PROCEDURE PopScope (t: T) =
         (* recycle the bindings *)
         WHILE (b # NIL) DO
           b.readonly  := FALSE;
-          b.name      := M3ID.NoID;
+          b.name      := NoID;
           b.value.ref := NIL;
           last_b := b;
           b := b.next;
@@ -597,10 +718,11 @@ PROCEDURE PopScope (t: T) =
     END;
   END PopScope;
 
-PROCEDURE Define (t: T;  id: M3ID.T;  readonly: BOOLEAN): QValue.Binding
+PROCEDURE Define (t: T;  id: ID;  readonly: BOOLEAN): QValue.Binding
   RAISES {Error} =
   VAR old, new: QValue.Binding;
   BEGIN
+    (* IO.Put("Define(" & Fmt.Int(id) & ")\n"); *)
     WITH s = t.scopes [t.reg.xp-1] DO
       old := s.bindings;
       new := NewBinding (t);
@@ -609,7 +731,7 @@ PROCEDURE Define (t: T;  id: M3ID.T;  readonly: BOOLEAN): QValue.Binding
       new.readonly := readonly;
       WHILE (old # NIL) DO
         IF (old.name = id) THEN
-          Err (t, "duplicate symbol defined: " & M3ID.ToText (id));
+          Err (t, "duplicate symbol defined: " & t.map.id2txt (id));
         END;
         old := old.next;
       END;
@@ -618,7 +740,7 @@ PROCEDURE Define (t: T;  id: M3ID.T;  readonly: BOOLEAN): QValue.Binding
     RETURN new;
   END Define;
 
-PROCEDURE DefineGlobal (t: T;  id: M3ID.T;  readonly: BOOLEAN): QValue.Binding
+PROCEDURE DefineGlobal (t: T;  id: ID;  readonly: BOOLEAN): QValue.Binding
   RAISES {Error} =
   VAR ref: REFANY;  bind: QValue.Binding;
   BEGIN
@@ -631,15 +753,16 @@ PROCEDURE DefineGlobal (t: T;  id: M3ID.T;  readonly: BOOLEAN): QValue.Binding
       EVAL t.globals.put (id, bind);
     END;
     IF (bind.readonly) THEN
-      Err (t, "cannot redefine readonly global symbol: " & M3ID.ToText (id));
+      Err (t, "cannot redefine readonly global symbol: " & t.map.id2txt (id));
     END;
     bind.readonly := readonly;
     RETURN bind;
   END DefineGlobal;
 
-PROCEDURE LookUp (t: T;  id: M3ID.T): QValue.Binding =
+PROCEDURE LookUp (t: T;  id: ID): QValue.Binding =
   VAR s: QValue.Scope;  b: QValue.Binding;  ref: REFANY;
   BEGIN
+    (* IO.Put("LookUp(" & Fmt.Int(id) & ")\n"); *)
     (* try the local scopes first *)
     IF (t.reg.xp > 0) THEN
       s := t.scopes [t.reg.xp-1];
@@ -698,24 +821,70 @@ PROCEDURE Pop (t: T;  VAR(*OUT*) value: QValue.T) RAISES {Error} =
     END;
   END Pop;
 
-PROCEDURE PushString (t: T;  s: TEXT) =
+PROCEDURE PushText (t: T;  s: TEXT) =
   VAR v: QValue.T;
   BEGIN
     IF (s = NIL) THEN s := ""; END;
     v.kind := QK.String;
-    v.int  := M3ID.Add (s);
+    v.int  := t.map.txt2id (s);
     v.ref  := NIL;
     Push (t, v);
-  END PushString;
+  END PushText;
 
 PROCEDURE PushBool (t: T;  b: BOOLEAN) =
   VAR v: QValue.T;
   BEGIN
     v.kind := QK.String;
-    v.int  := QValue.BoolID [b];
+    v.int  := t.map.boolean [b];
     v.ref  := NIL;
     Push (t, v);
-  END PushBool; 
+  END PushBool;
+
+PROCEDURE PushInt (t: T;  i: INTEGER) =
+  VAR v: QValue.T;
+  BEGIN
+    v.kind := QK.Integer;
+    v.int  := i;
+    v.ref  := NIL;
+    Push (t, v);
+  END PushInt; 
+
+PROCEDURE PushID (t: T;  nm: ID) =
+  VAR v: QValue.T;
+  BEGIN
+    v.kind := QK.String;
+    v.int  := nm;
+    v.ref  := NIL;
+    Push (t, v);
+  END PushID; 
+
+PROCEDURE PopText (t: T): TEXT  RAISES {Error} =
+  VAR v: QValue.T;
+  BEGIN
+    Pop (t, v);
+    RETURN QVal.ToText (t, v);
+  END PopText;
+
+PROCEDURE PopBool (t: T): BOOLEAN  RAISES {Error} =
+  VAR v: QValue.T;
+  BEGIN
+    Pop (t, v);
+    RETURN QVal.ToBool (t, v);
+  END PopBool;
+
+PROCEDURE PopInt (t: T): INTEGER  RAISES {Error} =
+  VAR v: QValue.T;
+  BEGIN
+    Pop (t, v);
+    RETURN QVal.ToInt (t, v);
+  END PopInt; 
+
+PROCEDURE PopID (t: T): ID  RAISES {Error} =
+  VAR v: QValue.T;
+  BEGIN
+    Pop (t, v);
+    RETURN QVal.ToID (t, v);
+  END PopID; 
 
 (*---------------------------------------------------------- output stack ---*)
 
@@ -731,7 +900,7 @@ PROCEDURE PushOutput (t: T;  nm: TEXT;  append: BOOLEAN)
           ELSE o.wr := FileWr.Open (nm);
         END;
       EXCEPT OSError.E(ec) =>
-        Err (t, "unable to open \"" & nm & "\" for writing" & OSErr(ec));
+        Err (t, Fmt.F ("unable to open \"%s\" for writing%s", nm, OSErr(ec)));
       END;
     END;
     INC (t.reg.op);
@@ -745,7 +914,7 @@ PROCEDURE ExpandOutput (t: T) =
   END ExpandOutput;
 
 PROCEDURE PopOutput (t: T)
-  RAISES {Error} =
+  RAISES {Error, Thread.Alerted} =
   BEGIN
     DEC (t.reg.op);
     WITH o = t.output [t.reg.op] DO
@@ -753,11 +922,8 @@ PROCEDURE PopOutput (t: T)
         Wr.Close (o.wr);
         o.wr := NIL;
         o.name := NIL;
-      EXCEPT
-      | Wr.Failure(ec) =>
-          Err (t, "unable to close \"" & o.name & "\"" & OSErr(ec));
-      | Thread.Alerted =>
-          Err (t, "unable to close \"" & o.name & "\": interrupted");
+      EXCEPT Wr.Failure(ec) =>
+        Err (t, Fmt.F ("unable to close \"%s\"%s", o.name, OSErr(ec)));
       END;
     END;
   END PopOutput;
@@ -765,14 +931,22 @@ PROCEDURE PopOutput (t: T)
 PROCEDURE CurWr (t: T): Wr.T =
   BEGIN
     IF (t.reg.op <= 0)
-      THEN RETURN t.writer;
+      THEN RETURN t.default_wr;
       ELSE RETURN t.output [t.reg.op-1].wr;
     END;
   END CurWr;
 
+PROCEDURE SetWr (t: T;  wr: Wr.T) =
+  BEGIN
+    IF (t.reg.op <= 0)
+      THEN t.default_wr := wr;
+      ELSE t.output [t.reg.op-1].wr := wr;
+    END;
+  END SetWr;
+
 (*------------------------------------------------------------ loop stack ---*)
 
-PROCEDURE PushLoop (t: T;  nm: M3ID.T;  READONLY elts: QValue.T)
+PROCEDURE PushLoop (t: T;  nm: ID;  READONLY elts: QValue.T)
   RAISES {Error} =
   VAR tbl: QVTbl.T;  arr: QVSeq.T;
   BEGIN
@@ -865,44 +1039,84 @@ PROCEDURE PopInclude (t: T) =
     END;
   END PopInclude;
 
+(*----------------------------------------------------- OS dependent goo! ---*)
+
+PROCEDURE InitOSEnv (t: T) =
+  BEGIN
+    IF OnUnix THEN
+      t.shell     := "/bin/sh";
+      t.sh_option := "-c";
+      t.tmp_dir   := GetEnv ("TEMP", "/tmp");
+    ELSE
+      t.shell     := GetEnv ("COMSPEC", "COMMAND.COM");
+      t.sh_option := "/c";
+      t.tmp_dir   := GetEnv ("TEMP", "C:\\TEMP");
+    END;
+  END InitOSEnv;
+
+PROCEDURE GetEnv (variable, default: TEXT): TEXT =
+  VAR val := Env.Get (variable);
+  BEGIN
+    IF (val = NIL) THEN val := default; END;
+    RETURN val;
+  END GetEnv;
+
 (*---------------------------------------------------- builtin procedures ---*)
 
-VAR (*READONLY*)
-  init_done := FALSE;
-  Builtins  : ARRAY [0..17] OF QValue.Binding;
+TYPE
+  Builtin = RECORD
+    name    : TEXT;
+    proc    : QCode.BuiltinProc;
+    n_args  : INTEGER;
+    is_func : BOOLEAN;
+  END;
 
-PROCEDURE InitBuiltins () =
+CONST
+  Builtins = ARRAY OF Builtin {
+    Builtin {"arglist",     DoArgList,   2, TRUE},
+    Builtin {"cp_if",       DoCopyIfNew, 2, FALSE},
+    Builtin {"defined",     DoDefined,   1, TRUE},
+    Builtin {"empty",       DoEmpty,     1, TRUE},
+    Builtin {"equal",       DoEqual,     2, TRUE},
+    Builtin {"error",       DoError,     1, FALSE},
+    Builtin {"escape",      DoEscape,    1, TRUE},
+    Builtin {"exec",        DoExec,     -1, FALSE},
+    Builtin {"file",        DoFile,      0, TRUE},
+    Builtin {"format",      DoFormat,   -1, TRUE},
+    Builtin {"include",     DoInclude,   1, FALSE},
+    Builtin {"make_dir",    DoMakeDir,   1, FALSE},
+    Builtin {"normalize",   DoNormalize, 2, TRUE},
+    Builtin {"path",        DoPath,      0, TRUE},
+    Builtin {"stale",       DoStale,     2, TRUE},
+    Builtin {"try_exec",    DoTryExec,  -1, TRUE},
+    Builtin {"unlink_file", DoUnlink,    1, TRUE},
+    Builtin {"write",       DoWrite,    -1, FALSE},
+    Builtin {"TRACE_INSTR", DoTrace,     0, FALSE},
+    Builtin {"lookup",      DoLookUp,    2, TRUE}
+  };
+
+PROCEDURE InitBuiltins (t: T) =
+  VAR b: QValue.Binding;
   BEGIN
-    IF init_done THEN RETURN END;
-    init_done := TRUE;
-
-    Builtins [ 0] := NewBuiltin ("arglist",     DoArgList,   2, TRUE);
-    Builtins [ 1] := NewBuiltin ("cp_if",       DoCopyIfNew, 2, FALSE);
-    Builtins [ 2] := NewBuiltin ("defined",     DoDefined,   1, TRUE);
-    Builtins [ 3] := NewBuiltin ("empty",       DoEmpty,     1, TRUE);
-    Builtins [ 4] := NewBuiltin ("equal",       DoEqual,     2, TRUE);
-    Builtins [ 5] := NewBuiltin ("error",       DoError,    -1, FALSE);
-    Builtins [ 6] := NewBuiltin ("escape",      DoEscape,    1, TRUE);
-    Builtins [ 7] := NewBuiltin ("exec",        DoExec,     -1, TRUE);
-    Builtins [ 8] := NewBuiltin ("file",        DoFile,      0, TRUE);
-    Builtins [ 9] := NewBuiltin ("format",      DoFormat,   -1, TRUE);
-    Builtins [10] := NewBuiltin ("include",     DoInclude,   1, FALSE);
-    Builtins [11] := NewBuiltin ("normalize",   DoNormalize, 2, TRUE);
-    Builtins [12] := NewBuiltin ("path",        DoPath,      0, TRUE);
-    Builtins [13] := NewBuiltin ("stale",       DoStale,     2, TRUE);
-    Builtins [14] := NewBuiltin ("unlink_file", DoUnlink,    1, TRUE);
-    Builtins [15] := NewBuiltin ("write",       DoWrite,    -1, FALSE);
-    Builtins [16] := NewBuiltin ("TRACE_INSTR", DoTrace,     0, FALSE);
-    Builtins [17] := NewBuiltin ("lookup",      DoLookUp,    2, TRUE);
-
+    FOR i := FIRST (Builtins) TO LAST (Builtins) DO
+      WITH z = Builtins [i] DO
+        b := NewBuiltin (t, z.name, z.proc, z.n_args, z.is_func);
+        EVAL t.globals.put (b.name, b);
+      END;
+    END;
+    b := NewConst (t, "TRUE", t.map.boolean [TRUE]);
+    EVAL t.globals.put (b.name, b);
+    b := NewConst (t, "FALSE", t.map.boolean [FALSE]);
+    EVAL t.globals.put (b.name, b);
   END InitBuiltins;
 
-PROCEDURE NewBuiltin (nm      : TEXT;
+PROCEDURE NewBuiltin (t       : T;
+                      nm      : TEXT;
                       handler : QCode.BuiltinProc;
                       n_args  : INTEGER;
                       isFunc  : BOOLEAN): QValue.Binding =
   VAR
-    id   := M3ID.Add (nm);
+    id   := t.map.txt2id (nm);
     info := NEW (QCode.ProcInfo, name := id, isFunc := isFunc,
                    n_args := n_args, builtin := TRUE, handler := handler);
     proc := NEW (QValue.Proc, info := info, env := NIL);
@@ -914,7 +1128,19 @@ PROCEDURE NewBuiltin (nm      : TEXT;
     RETURN bind;
   END NewBuiltin;
 
-PROCEDURE DoArgList (t: T;  n_args: INTEGER) RAISES {Error} =
+PROCEDURE NewConst (t: T;  nm: TEXT;  val: ID): QValue.Binding =
+  VAR
+    id   := t.map.txt2id (nm);
+    bind := NEW (QValue.Binding, name := id, readonly := TRUE);
+  BEGIN
+    bind.value.kind := QValue.Kind.String;
+    bind.value.int  := val;
+    bind.value.ref  := NIL;
+    RETURN bind;
+  END NewConst;
+
+PROCEDURE DoArgList (t: T;  n_args: INTEGER)
+  RAISES {Error, Thread.Alerted} =
   CONST
     Max_args       = 10;
     Max_arg_length = 1024;
@@ -956,10 +1182,8 @@ PROCEDURE DoArgList (t: T;  n_args: INTEGER) RAISES {Error} =
         Wr.Close (wr);
       END;
 
-      PushString (t, prefix & file);
+      PushText (t, prefix & file);
     EXCEPT
-    | Thread.Alerted =>
-        Err (t, "interrupted");
     | Wr.Failure(ec) =>
         Err (t, "unable to write on \"" & file & "\"" & OSErr (ec));
     | OSError.E(ec) =>
@@ -969,25 +1193,32 @@ PROCEDURE DoArgList (t: T;  n_args: INTEGER) RAISES {Error} =
 
 PROCEDURE DoCopyIfNew (t: T;  n_args: INTEGER) RAISES {Error} =
   VAR val: QValue.T;  src, dest: TEXT;
-      equal:= FALSE;
   BEGIN
     <*ASSERT n_args = 2 *>
     Pop (t, val);  dest := QVal.ToText (t, val);
     Pop (t, val);  src  := QVal.ToText (t, val);
+    CopyIfNew (t, src, dest);
+  END DoCopyIfNew;
 
+PROCEDURE CopyIfNew (t: T;  src, dest: TEXT) RAISES {Error} =
+  VAR equal := FALSE;
+  BEGIN
     IF M3File.IsDirectory (dest) THEN
       dest := Pathname.Join (dest, Pathname.Last (src), NIL);
     END;
 
-    TRY equal := M3File.IsEqual (src, dest) EXCEPT
-      OSError.E => (* SKIP *)
-    END;
     TRY
-      IF NOT equal THEN M3File.Copy (src, dest) END;
-    EXCEPT OSError.E(ec) =>
-      Err (t, "unable to copy \""& src &"\" to \""& dest &"\""& OSErr (ec));
+      equal := M3File.IsEqual (src, dest);
+    EXCEPT OSError.E =>
     END;
-  END DoCopyIfNew;
+
+    TRY
+      IF NOT equal THEN M3File.Copy (src, dest); END;
+    EXCEPT OSError.E(ec) =>
+      Err (t, Fmt.F ("unable to copy \"%s\" to \"%s\"%s",
+                     src, dest, OSErr (ec)));
+    END;
+  END CopyIfNew;
 
 PROCEDURE DoDefined (t: T;  n_args: INTEGER) RAISES {Error} =
   VAR val: QValue.T;
@@ -1004,7 +1235,7 @@ PROCEDURE DoEmpty (t: T;  n_args: INTEGER) RAISES {Error} =
     Pop (t, val);
     CASE val.kind OF
     | QK.Integer => empty := FALSE;
-    | QK.String  => empty := (val.int = QValue.BoolID[FALSE]);
+    | QK.String  => empty := (val.int = t.map.boolean[FALSE]);
     | QK.Array   => empty := NARROW (val.ref, QVSeq.T).size() = 0;
     | QK.Table   => empty := NARROW (val.ref, QVTbl.T).size() = 0;
     ELSE
@@ -1033,15 +1264,11 @@ PROCEDURE DoEqual (t: T;  n_args: INTEGER) RAISES {Error} =
   END DoEqual;
 
 PROCEDURE DoError (t: T;  n_args: INTEGER) RAISES {Error} =
-  VAR buf := GetBuf(t);
+  VAR val: QValue.T;
   BEGIN
-    <*ASSERT n_args > 0 *>
-    FOR i := t.reg.sp - n_args TO t.reg.sp - 1 DO
-      QVal.ToBuf (t, t.stack[i], buf);
-      t.stack[i].ref := NIL;
-    END;
-    t.reg.sp := t.reg.sp - n_args;
-    Err (t, M3Buf.ToText (buf));
+    <*ASSERT n_args = 1 *>
+    Pop (t, val);
+    Err (t, QVal.ToText (t, val));
   END DoError;
 
 PROCEDURE DoEscape (t: T;  n_args: INTEGER) RAISES {Error} =
@@ -1071,7 +1298,7 @@ PROCEDURE DoEscape (t: T;  n_args: INTEGER) RAISES {Error} =
         out_buf [out_len] := ch;  INC (out_len);
       END;
       IF (new_ch)
-        THEN PushString (t, Text.FromChars (SUBARRAY (out_buf, 0, out_len)));
+        THEN PushText (t, Text.FromChars (SUBARRAY (out_buf, 0, out_len)));
         ELSE Push (t, val);
       END;
     ELSE
@@ -1084,205 +1311,196 @@ PROCEDURE DoEscape (t: T;  n_args: INTEGER) RAISES {Error} =
       txt := M3Buf.ToText (buf);
       FreeBuf (t, buf);
       IF (new_ch)
-        THEN PushString (t, txt);
+        THEN PushText (t, txt);
         ELSE Push (t, val);
       END;
     END;
   END DoEscape;
 
-PROCEDURE DoExec (t: T;  n_args: INTEGER) RAISES {Error} =
-  VAR 
-    cmdval: QValue.T;
-    ioval : QValue.T;
-    wdval : QValue.T;
-    envval: QValue.T;
-    cmd   : TEXT;
-    args  : REF ARRAY OF TEXT;
-    wd    : TEXT;
-    env   : REF ARRAY OF TEXT;
-    seq   : QVSeq.T;
-    size  : INTEGER;
-    stdin : TEXT;
-    stdout: TEXT;
-    stderr: TEXT;
-    ret   : INTEGER;
+PROCEDURE ExecEcho (t: T;  b: BOOLEAN): BOOLEAN =
+  VAR old := t.do_echo;
   BEGIN
-    IF (n_args < 1) THEN 
-      Err(t, "exec failed: must supply at least one argument!\n");
+    t.do_echo := b;
+    RETURN old;
+  END ExecEcho;
+
+TYPE
+  ExecInfo = RECORD
+    command       : TEXT;
+    exit_code     : INTEGER;
+    ignore_errors : BOOLEAN;
+  END;
+
+PROCEDURE DoExec (t: T;  n_args: INTEGER)
+  RAISES {Error, Thread.Alerted} =
+  VAR info := ExecCommand (t, n_args);
+  BEGIN
+    IF (info.exit_code # 0) AND NOT info.ignore_errors THEN
+      Err (t, Fmt.F("exit %s: %s", Fmt.Int(info.exit_code), info.command));
     END;
-    (* pop the right arguments *)
-    IF n_args >= 2 THEN
-      IF n_args >= 3 THEN
-        IF n_args = 4 THEN
-          Pop(t, envval);
-          seq := QVal.ToArray(t, envval);
-          size := seq.size();
-          IF size > 0 THEN
-            env := NEW(REF ARRAY OF TEXT, size);
-            FOR i := 0 TO LAST(env^) DO
-              env[i] := QVal.ToText(t, seq.get(i));
-            END;
-          END;
-        ELSIF n_args > 4 THEN
-          Err(t, "exec failed: exec takes at most 4 arguments!\n");
-        END;
-        Pop(t, wdval);
-        wd := QVal.ToText(t, wdval);
-      END;
-      Pop(t, ioval);
-      seq := QVal.ToArray(t, ioval);
-      size := seq.size();
-      IF size > 0 THEN
-        stdin := QVal.ToText(t, seq.get(0));
-        IF Text.Equal(stdin, "") THEN stdin := NIL END;
-      END;
-      IF size > 1 THEN
-        stdout := QVal.ToText(t, seq.get(1));
-        IF Text.Equal(stdout, "") THEN stdout := NIL END;
-      END;
-      IF size > 2 THEN
-        stderr := QVal.ToText(t, seq.get(2));
-        IF Text.Equal(stderr, "") THEN stderr := NIL END;
-      END;
-      IF size > 3 THEN
-        Err(t, "exec failed: the argument \"io\" must be an array of at most 3 lements!");
-      END;
-    END;
-    Pop(t, cmdval);
-    seq := QVal.ToArray(t, cmdval);
-    size := seq.size();
-    IF size < 1 THEN
-      Err(t, "exec failed: the argument \"cmd\" must be an array of at least 1 element!");
-    END;
-    cmd := QVal.ToText(t, seq.get(0));
-    args := NEW(REF ARRAY OF TEXT, size - 1);
-    FOR i := 0 TO LAST(args^) DO
-      args[i] := QVal.ToText(t, seq.get(i + 1));
-    END;
-    
-    ret := Exec(t, cmd, args, stdin, stdout, stderr, wd, env);
-    cmdval.kind := QValue.Kind.Integer;
-    cmdval.int  := ret;
-    cmdval.ref  := NIL;
-    Push(t, cmdval);
   END DoExec;
 
-PROCEDURE Exec (t: T;  cmd: TEXT; args: REF ARRAY OF TEXT;
-                stdin, stdout, stderr: TEXT := NIL;
-                wd: TEXT := NIL;
-                env: REF ARRAY OF TEXT := NIL): INTEGER RAISES {Error} =
-  VAR
-    stdin_file, stdout_file, stderr_file: File.T := NIL;
-    new_stdin, new_stdout, new_stderr: BOOLEAN := FALSE;
-    n            : INTEGER := -1;
-    handle       : Process.T;
-    buffer       : ARRAY [0 .. 4095] OF CHAR;
-    nb           : INTEGER;
-    rd           : FileRd.T;
-    hwChildOut, hrSelf : Pipe.T := NIL;
+PROCEDURE DoTryExec (t: T;  n_args: INTEGER)
+  RAISES {Error, Thread.Alerted} =
+  VAR info := ExecCommand (t, n_args);
   BEGIN
+    IF (info.ignore_errors) THEN info.exit_code := 0; END;
+    PushInt (t, info.exit_code);
+  END DoTryExec;
+
+PROCEDURE ExecCommand (t: T;  n_args: INTEGER): ExecInfo
+  RAISES {Error, Thread.Alerted} =
+  VAR
+    info         : ExecInfo;
+    echo         := TRUE;
+    first        := TRUE;
+    n            : INTEGER;
+    handle       : Process.T;
+    stdin, stdout, stderr: File.T;
+    args         : ARRAY [0..1] OF TEXT;
+    buf          : M3Buf.T;
+    n_shell_args : INTEGER;
+    quake_in     : Pipe.T;
+    process_out  : Pipe.T;
+    wr           : Wr.T := CurWr (t);
+    wd           : TEXT;
+    inbuf        : ARRAY [0..255] OF CHAR;
+  BEGIN
+    info.command := "";
+    info.exit_code := 0;
+    info.ignore_errors := FALSE;
+    IF (n_args <= 0) THEN RETURN info; END;
+
+    (* pack the arguments into a single string & pop the stack *)
+    buf   := GetBuf (t);
+    FOR i := t.reg.sp - n_args TO t.reg.sp - 1 DO
+      IF (first) THEN first := FALSE;  ELSE  M3Buf.PutChar (buf, ' ');  END;
+      QVal.ToBuf (t, t.stack[i], buf);
+      t.stack[i].ref := NIL;
+    END;
+    t.reg.sp := t.reg.sp - n_args;
+    info.command := M3Buf.ToText (buf);
+    FreeBuf (t,  buf);
+
+    (* strip the leading magic characters *)
+    n := 0;
+    WHILE n < Text.Length (info.command) DO
+      CASE Text.GetChar (info.command, n) OF
+      | '@' => echo := FALSE;
+      | '-' => info.ignore_errors := TRUE;
+      ELSE EXIT;
+      END;
+      INC (n);
+    END;
+    info.command := Text.Sub (info.command, n);
+
+    (* echo the command & flush any pending output *)
+    TRY
+      IF echo OR t.do_echo THEN
+        Wr.PutText (wr, info.command);
+        Wr.PutText (wr, Wr.EOL);
+      END;
+      FlushIO ();
+    EXCEPT Wr.Failure (ec) =>
+      Err (t, "write failed" & OSErr (ec));
+    END;
+
+    wd := ExtractInitialDir (info.command);
+
+    args [0] := t.sh_option;
+    args [1] := info.command;
+    n_shell_args := 2;
+
     (* finally, execute the command *)
     TRY
-      IF stdin # NIL THEN
-        stdin_file := FS.OpenFile(stdin, 
-                                  create := FS.CreateOption.Never,
-                                  access := FS.AccessOption.ReadOnly);
-        new_stdin := TRUE;
-      END;
-
-      IF stdout # NIL THEN
-        IF (Text.Length(stdout) >= 2 AND Text.GetChar(stdout, 0) = '>') 
-          AND (Text.GetChar(stdout, 1) = '>') THEN
-          stdout_file := FS.OpenFile(Text.Sub(stdout, 2), FALSE);
-          EVAL NARROW(stdout_file, RegularFile.T).seek(RegularFile.Origin.End, 
-                                                     0);
-        ELSE
-          stdout_file := FS.OpenFile(stdout);
+      Process.GetStandardFileHandles (stdin, stdout, stderr);
+      Pipe.Open (hr := quake_in, hw := process_out);
+      TRY
+        (* fire up the subprocess *)
+        handle := Process.Create (t.shell, SUBARRAY (args, 0, n_shell_args),
+                                 stdin := stdin, stdout := process_out,
+                                 stderr := process_out, wd := wd);
+        (* close our copy of the writing end of the output pipe *)
+        process_out.close ();
+        LOOP (* send anything coming through the pipe to the quake output file *)
+          n := M3File.Read (quake_in, inbuf, NUMBER (inbuf));
+          IF (n <= 0) THEN EXIT; END;
+          Wr.PutString (wr, SUBARRAY (inbuf, 0, n));
         END;
-        new_stdout := TRUE;
+      FINALLY
+        quake_in.close ();
+        FlushIO ();
       END;
-
-      IF stderr # NIL THEN
-        IF (Text.Length(stderr) >= 2 AND Text.GetChar(stderr, 0) = '>') 
-          AND (Text.GetChar(stderr, 1) = '>') THEN
-          stderr_file := FS.OpenFile(Text.Sub(stderr, 2), FALSE);
-          EVAL NARROW(stderr_file, RegularFile.T).seek(RegularFile.Origin.End,
-                                                      0);
-        ELSE
-          stderr_file := FS.OpenFile(stderr);
-        END;
-        new_stderr := TRUE;
-      END;
-
-      (* One of the output files is unspecified. Redirect to stdout if this
-         is where the current output is going. Otherwise create a pipe
-         to connect it to the current output writer. *)
-
-      IF stdout_file = NIL OR stderr_file = NIL THEN
-        IF t.writer = Stdio.stdout THEN
-          VAR dumb: File.T; 
-          BEGIN
-            IF stdout_file = NIL THEN
-              Process.GetStandardFileHandles(dumb, stdout_file, dumb);
-            END;
-            IF stderr_file = NIL THEN
-              Process.GetStandardFileHandles(dumb, dumb, stderr_file);
-            END;
-          END;
-        ELSE
-          Pipe.Open (hr := hrSelf,  hw := hwChildOut);
-          IF stdout_file = NIL THEN
-            stdout_file := hwChildOut;
-            new_stdout := TRUE;
-          END;
-          IF stderr_file = NIL THEN
-            stderr_file := hwChildOut;
-            new_stderr := TRUE;
-          END;
-        END;
-      END;
-
-      handle := Process.Create(cmd, args^, env, wd, stdin_file, stdout_file,
-                               stderr_file);
-
-      (* Close the file handles created *)
-
-      IF new_stdin THEN stdin_file.close()  END;
-      IF new_stdout THEN stdout_file.close() END;
-      IF new_stderr AND stderr_file # stdout_file THEN stderr_file.close() END;
-
-      (* If a pipe was created, pump its content to the output writer *)
-
-      IF hrSelf # NIL THEN
-        rd := NEW(FileRd.T).init(hrSelf);
-        LOOP
-          nb := Rd.GetSub(rd, buffer);
-          IF nb = NUMBER(buffer) THEN
-            Wr.PutString(t.writer, buffer);
-          ELSE
-            Wr.PutString(t.writer, SUBARRAY(buffer, 0, nb));
-            EXIT;
-          END;
-        END;
-        Rd.Close(rd);
-        Wr.Flush(t.writer);
-      END;
-      n := Process.Wait(handle);
-
-    EXCEPT 
-      | OSError.E (ec) =>
-        Err (t, "exec failed" & OSErr (ec) & " *** " & cmd);
-      | Wr.Failure, Thread.Alerted, Rd.Failure => (* ignore *)
+    EXCEPT
+    | Thread.Alerted =>
+        KillProcess (handle);
+        RAISE Thread.Alerted;
+    | Wr.Failure (ec) =>
+        KillProcess (handle);
+        Err (t, "write failed" & OSErr (ec));
+    | OSError.E (ec) =>
+        KillProcess (handle);
+        Err (t, Fmt.F ("exec failed%s *** %s", OSErr (ec), info.command));
     END;
-    RETURN n;
-  END Exec;
+
+    (* wait for everything to shutdown... *)
+    info.exit_code := Process.Wait (handle);
+    RETURN info;
+  END ExecCommand;
+
+PROCEDURE ExtractInitialDir (VAR cmd: TEXT): TEXT =
+  (* search for "cd <dir> |" or "cd <dir> ;" prefix in "cmd".
+     If it's found, return "<dir>" and remove the prefix from "cmd".
+     Otherwise, return "NIL". *)
+  VAR
+    len := Text.Length (cmd);
+    buf : ARRAY [0..99] OF CHAR;
+    start, stop: INTEGER;
+    dir: TEXT;
+  BEGIN
+    IF (len < 5) THEN RETURN NIL; END;
+    Text.SetChars (buf, cmd);
+    start := 0;
+    WHILE (start < len) AND (buf[start] = ' ') DO INC (start); END;
+    IF (start+4 >= len)     THEN RETURN NIL; END;
+    IF (buf[start]   # 'c') THEN RETURN NIL; END;
+    IF (buf[start+1] # 'd') THEN RETURN NIL; END;
+    IF (buf[start+2] # ' ') THEN RETURN NIL; END;
+    INC (start, 3);
+    WHILE (start < len) AND (buf[start] = ' ') DO INC (start); END;
+    stop := start;
+    WHILE (stop < len) AND (buf[stop] # ' ')
+      AND (buf[stop] # '|') AND (buf[stop] # ';') DO INC (stop); END;
+    IF (stop <= start) THEN RETURN NIL; END;
+    dir := Text.FromChars (SUBARRAY (buf, start, stop - start));
+    WHILE (stop < len) AND (buf[stop] = ' ') DO INC (stop); END;
+    IF (stop >= len) THEN RETURN NIL; END;
+    IF (buf[stop] # '|') AND (buf[stop] # ';') THEN RETURN NIL; END;
+    cmd := Text.Sub (cmd, stop+1);
+    RETURN dir;
+  END ExtractInitialDir;
+
+PROCEDURE KillProcess (handle: Process.T) =
+  BEGIN
+    IF (handle # NIL) THEN
+      TRY
+        M3Process.Interrupt (handle);
+      EXCEPT OSError.E =>
+        (* ignore *)
+      END;
+    END;
+  END KillProcess;
 
 PROCEDURE DoFile (t: T;  n_args: INTEGER) =
-  VAR path := M3ID.ToText (t.includes[t.reg.ip-1].file.source_file);
   BEGIN
     <*ASSERT n_args = 0 *>
-    PushString (t, path);
+    PushText (t, CurFile (t));
   END DoFile;
+
+PROCEDURE CurFile (t: T): TEXT =
+  BEGIN
+    RETURN t.map.id2txt (t.includes[t.reg.ip-1].file.source_file);
+  END CurFile;
 
 PROCEDURE DoFormat (t: T;  n_args: INTEGER) RAISES {Error} =
   VAR
@@ -1300,52 +1518,94 @@ PROCEDURE DoFormat (t: T;  n_args: INTEGER) RAISES {Error} =
     DEC (t.reg.sp, n_args - 1);
     Pop (t, val);
     format := QVal.ToText (t, val);
-    PushString (t, Fmt.FN (format, strings^));
+    PushText (t, Fmt.FN (format, strings^));
   END DoFormat;
 
-PROCEDURE DoInclude (t: T;  n_args: INTEGER) RAISES {Error} =
+PROCEDURE DoInclude (t: T;  n_args: INTEGER) RAISES {Error, Thread.Alerted} =
   VAR path: TEXT;  val: QValue.T;
   BEGIN
     <*ASSERT n_args = 1 *>
     Pop (t, val);  path := QVal.ToText (t, val);
-    Include(t, path);
+    IncludeFile (t, path, from_code := TRUE);
   END DoInclude;
 
-PROCEDURE Include (t: T;  path: TEXT) RAISES {Error} =
+PROCEDURE Include (t: T;  path: TEXT) RAISES {Error, Thread.Alerted} =
+  BEGIN
+    IncludeFile (t, path, from_code := FALSE);
+  END Include;
+
+PROCEDURE IncludeFile (t: T;  path: TEXT;  from_code: BOOLEAN)
+  RAISES {Error, Thread.Alerted} =
   VAR old_path: TEXT;  code: QCode.Stream;
   BEGIN
     IF NOT Pathname.Absolute (path) THEN
-      old_path := M3ID.ToText (t.includes[t.reg.ip-1].file.source_file);
+      old_path := CurFile (t);
       path := Pathname.Join (Pathname.Prefix (old_path), path, NIL);
       TRY
         path := Pathname.Compose(CanonicalizePath(Pathname.Decompose(path)));
       EXCEPT
-      | Pathname.Invalid => Err(t,"invalid path in include");
+      | Pathname.Invalid => Err(t, "invalid path in include");
       END;
     END;
 
     TRY
-      code := QCompiler.CompileFile (path);
+      code := QCompiler.CompileFile (path, t.map);
     EXCEPT Error(msg) =>
       Err (t, msg);
     END;
 
+    (****
     WITH f = t.frames [t.reg.fp-1] DO
       PushInclude (t, code, f.saved);
       t.reg.ip := f.saved.ip;
     END;
-  END Include;
+    ****)
+
+    IF (from_code) THEN
+      EVAL PopFrame (t); (* pop the call to "include()" *)
+    END;
+    PushInclude (t, code, t.reg);
+    Eval (t);
+  END IncludeFile;
+
+PROCEDURE DoMakeDir (t: T;  n_args: INTEGER) RAISES {Error} =
+  VAR val: QValue.T;  dir: TEXT;
+  BEGIN
+    <*ASSERT n_args = 1 *>
+    Pop (t, val);  dir := QVal.ToText (t, val);
+    MakeDir (t, dir);
+  END DoMakeDir;
+
+PROCEDURE MakeDir (t: T;  dir: TEXT)  RAISES {Error} =
+  VAR parent: TEXT;
+  BEGIN
+    IF dir = NIL THEN RETURN END;
+    IF M3File.IsDirectory (dir) THEN RETURN END;
+
+    parent := Pathname.Prefix (dir);
+    IF (parent # NIL) AND NOT PathEqual (parent, dir) THEN
+      MakeDir (t, parent);
+    END;
+
+    TRY
+      FS.CreateDirectory (dir);
+    EXCEPT OSError.E (ec) =>
+      Err (t, Fmt.F ("unable to create directory \"%s\"%s", dir, OSErr (ec)));
+    END;
+  END MakeDir;
 
 PROCEDURE DoNormalize (t: T;  n_args: INTEGER) RAISES {Error} =
-  VAR
-    val: QValue.T;
-    unfixed, prefix: TEXT;
-    unfixedArcs, prefixArcs: Pathname.Arcs;
+  VAR val: QValue.T;  unfixed, prefix: TEXT;
   BEGIN
     <*ASSERT n_args = 2 *>
     Pop (t, val);  unfixed := QVal.ToText (t, val);
     Pop (t, val);  prefix  := QVal.ToText (t, val);
+    PushText (t, Normalize (t, prefix, unfixed));
+  END DoNormalize;
 
+PROCEDURE Normalize (t: T;  prefix, unfixed: TEXT): TEXT  RAISES {Error} =
+  VAR unfixedArcs, prefixArcs: Pathname.Arcs;
+  BEGIN
     TRY
       unfixedArcs := Pathname.Decompose(unfixed);
     EXCEPT Pathname.Invalid =>
@@ -1359,19 +1619,25 @@ PROCEDURE DoNormalize (t: T;  n_args: INTEGER) RAISES {Error} =
     END;
 
     TRY
-      PushString (t, Pathname.Compose(StripPrefix(t, prefixArcs,
-                                           CanonicalizePath(unfixedArcs))));
+      RETURN Pathname.Compose (StripPrefix (t, prefixArcs,
+                                   CanonicalizePath (unfixedArcs)));
     EXCEPT Pathname.Invalid =>
-      Err (t, "invalid path in normalize");
+      Err (t, Fmt.F ("invalid path in normalize(\"%s\", \"%s\")",
+                     prefix, unfixed));
     END;
-  END DoNormalize;
+    RETURN NIL;
+  END Normalize;
 
 PROCEDURE DoPath (t: T;  n_args: INTEGER) =
-  VAR path := M3ID.ToText (t.includes[t.reg.ip-1].file.source_file);
   BEGIN
     <*ASSERT n_args = 0 *>
-    PushString (t, Pathname.Prefix (path));
+    PushText (t, CurPath (t));
   END DoPath;
+
+PROCEDURE CurPath (t: T): TEXT =
+  BEGIN
+    RETURN Pathname.Prefix (CurFile (t));
+  END CurPath;
 
 PROCEDURE DoStale (t: T;  n_args: INTEGER) RAISES {Error} =
   VAR
@@ -1428,20 +1694,22 @@ PROCEDURE DoUnlink (t: T;  n_args: INTEGER) RAISES {Error} =
     PushBool (t, ok);
   END DoUnlink;
 
-PROCEDURE DoWrite (t: T;  n_args: INTEGER) RAISES {Error} =
-  VAR wr := CurWr (t);  buf := GetBuf (t);
+PROCEDURE DoWrite (t: T;  n_args: INTEGER)
+  RAISES {Error, Thread.Alerted} =
+  VAR wr := CurWr (t);  buf := GetBuf (t);  txt: TEXT;
   BEGIN
-    M3Buf.AttachDrain (buf, wr);
-    (* write the arguments & pop the stack *)
+    (* write the arguments to an internal buffer & pop the stack *)
     FOR i := t.reg.sp - n_args TO t.reg.sp - 1 DO
       QVal.ToBuf (t, t.stack[i], buf);
       t.stack[i].ref := NIL;
     END;
     t.reg.sp := t.reg.sp - n_args;
-    M3Buf.Flush (buf, wr);
-    M3Buf.AttachDrain (buf, NIL);
+    txt := M3Buf.ToText (buf);
     FreeBuf (t, buf);
-    Wr.Flush(wr);
+
+    TRY Wr.PutText (wr, txt);
+    EXCEPT Wr.Failure (ec) => Err (t, "write failed" & OSErr (ec));
+    END;
   END DoWrite;
 
 PROCEDURE DoTrace (t: T;  n_args: INTEGER) =
@@ -1507,28 +1775,10 @@ PROCEDURE CleanUp (t: T) =
     END;
   END CleanUp;
 
-PROCEDURE Root (): TEXT =
-  VAR root : TEXT := NIL;
+PROCEDURE UniqueTempFile (t: T): TEXT =
+  VAR root, file: TEXT;  seq := 0;
   BEGIN
-    root := Env.Get ("TEMP");
-    IF root = NIL THEN
-      root := "/tmp/";
-    ELSE
-      root := root & "\\";
-    END;
-    root := root & "qk";
-    RETURN root;
-  END Root;
-
-PROCEDURE UniqueTempFile (t: T): TEXT RAISES {Error} =
-  VAR root : TEXT := NIL;
-      file := root;  seq := 0;
-  BEGIN
-    root := Root();
-    IF root = NIL THEN
-      Err (t, "Unable to create a temporary file");
-    END;
-
+    root := Pathname.Join (t.tmp_dir, "qk", NIL);
     file := root;
     LOOP
       TRY
@@ -1547,27 +1797,57 @@ PROCEDURE UniqueTempFile (t: T): TEXT RAISES {Error} =
 (*------------------------------------------------------------------ misc ---*)
 
 PROCEDURE Err (t: T;  msg: TEXT) RAISES {Error} =
-  VAR buf := GetBuf (t);  txt: TEXT;
+  VAR buf := GetBuf (t);  txt: TEXT;  line: INTEGER;
   BEGIN
-    M3Buf.PutText (buf, "quake error: ");   (* Added, Jerome Collin 08/08/6 *)
-    M3Buf.PutText (buf, "runtime error: ");
+    IF FindErrorFile (t, txt, line) THEN
+      M3Buf.PutText (buf, "\"");
+      M3Buf.PutText (buf, txt);
+      M3Buf.PutText (buf, "\", line ");
+      M3Buf.PutInt  (buf, line);
+      M3Buf.PutText (buf, ": ");
+    END;
+    M3Buf.PutText (buf, "quake runtime error: ");
     M3Buf.PutText (buf, msg);
-    M3Buf.PutText (buf, "\n");
-    M3Buf.PutText (buf, "\n--procedure--  -line-  -file---\n");
-    DumpFrame (buf, t.reg);
+    M3Buf.PutText (buf, Wr.EOL);
+    M3Buf.PutText (buf, Wr.EOL);
+    M3Buf.PutText (buf, "--procedure--  -line-  -file---");
+    M3Buf.PutText (buf, Wr.EOL);
+    DumpFrame (t, buf, t.reg);
     FOR i := t.reg.fp-1 TO 0 BY -1 DO
-      DumpFrame (buf, t.frames[i].saved);
+      DumpFrame (t, buf, t.frames[i].saved);
     END;
     txt := M3Buf.ToText (buf);
     FreeBuf (t, buf);
     RAISE Error (txt);
   END Err;
 
-PROCEDURE DumpFrame (buf: M3Buf.T;  READONLY reg: Registers) =
+PROCEDURE FindErrorFile (t: T;  VAR(*OUT*) file: TEXT;
+                                VAR(*OUT*) line: INTEGER): BOOLEAN =
+  BEGIN
+    IF FindErrorFrame (t, t.reg, file, line) THEN RETURN TRUE; END;
+    FOR i := t.reg.fp-1 TO 0 BY -1 DO
+      IF FindErrorFrame (t, t.frames[i].saved, file, line) THEN RETURN TRUE; END;
+    END;
+    RETURN FALSE;
+  END FindErrorFile;
+
+PROCEDURE FindErrorFrame (t    : T;
+                 READONLY reg  : Registers;
+               VAR(*OUT*) file : TEXT;
+               VAR(*OUT*) line : INTEGER): BOOLEAN =
+  BEGIN
+    IF reg.cp = NIL THEN RETURN FALSE; END;
+    (* else, we're executing in user-written quake code *)
+    file := t.map.id2txt (reg.cp.source_file);
+    line := MAX (1, reg.ln);
+    RETURN TRUE;
+  END FindErrorFrame;
+
+PROCEDURE DumpFrame (t: T;  buf: M3Buf.T;  READONLY reg: Registers) =
   BEGIN
     IF (reg.pi = NIL)
       THEN Out (buf, "", 13);
-      ELSE Out (buf, M3ID.ToText (reg.pi.name), 13);
+      ELSE Out (buf, t.map.id2txt (reg.pi.name), 13);
     END;
     M3Buf.PutText (buf, "  ");
     IF (reg.ln > 0)
@@ -1577,9 +1857,9 @@ PROCEDURE DumpFrame (buf: M3Buf.T;  READONLY reg: Registers) =
     M3Buf.PutText (buf, "  ");
     IF (reg.cp = NIL)
       THEN M3Buf.PutText (buf, "<builtin>");
-      ELSE M3Buf.PutText (buf, M3ID.ToText (reg.cp.source_file));
+      ELSE M3Buf.PutText (buf, t.map.id2txt (reg.cp.source_file));
     END;
-    M3Buf.PutChar (buf, '\n');
+    M3Buf.PutText (buf, Wr.EOL);
   END DumpFrame;
 
 PROCEDURE Out (buf: M3Buf.T;  txt: TEXT;  width: INTEGER) =
@@ -1612,8 +1892,9 @@ PROCEDURE CanonicalizePath (path: Pathname.Arcs): Pathname.Arcs =
   BEGIN
     FOR i := 0 TO path.size () - 1 DO
       arc := path.get (i);
-      IF Text.Equal (arc, Pathname.Current)
-        OR Text.Equal (arc, Pathname.Parent) THEN
+      IF (arc # NIL) AND
+        (PathEqual (arc, Pathname.Current)
+          OR PathEqual (arc, Pathname.Parent)) THEN
         found := TRUE;
         EXIT;
       END;
@@ -1625,9 +1906,11 @@ PROCEDURE CanonicalizePath (path: Pathname.Arcs): Pathname.Arcs =
     pending := 0;
     FOR i := 0 TO path.size() - 1 DO
       arc := path.get(i);
-      IF Text.Equal (arc, Pathname.Current) THEN
+      IF (arc = NIL) THEN
+        new.addhi (arc);  (* leave the NIL arcs in place (?) *)
+      ELSIF PathEqual(arc, Pathname.Current) THEN
         (* skip it *)
-      ELSIF Text.Equal(arc, Pathname.Parent) THEN
+      ELSIF PathEqual(arc, Pathname.Parent) THEN
         IF pending > 0 THEN
           DEC(pending);
           EVAL new.remhi();
@@ -1645,32 +1928,69 @@ PROCEDURE CanonicalizePath (path: Pathname.Arcs): Pathname.Arcs =
 
 PROCEDURE StripPrefix (t: T;  prefix, path: Pathname.Arcs): Pathname.Arcs
   RAISES {Error} =
+  VAR
+    path_sz, prefix_sz: INTEGER;
+    path_txt, prefix_txt: TEXT;
+    result: Pathname.Arcs;
   BEGIN
     TRY
-      IF NOT Pathname.Absolute(Pathname.Compose(path))
-           OR NOT Pathname.Absolute(Pathname.Compose(prefix)) THEN
+      path_txt   := Pathname.Compose (path);
+      prefix_txt := Pathname.Compose (prefix);
+      path_sz    := path.size ();
+      prefix_sz  := prefix.size ();
+
+      IF PathEqual (path_txt, prefix_txt) THEN
+        result := NEW (Pathname.Arcs).init (1);
+        result.addhi (NIL);
+        RETURN result;
+      END;
+
+      IF NOT Pathname.Absolute(path_txt)
+      OR NOT Pathname.Absolute(prefix_txt) THEN
         RETURN path;
       END;
     EXCEPT Pathname.Invalid =>
       Err (t, "internal error: invalid pathname in StripPrefix");
     END;
 
-    (* check whether prefix is  a prefix of path *)
-    IF prefix.size() > path.size() THEN RETURN path; END;
-
-    FOR i := 0 TO prefix.size() - 1 DO
-      IF NOT Text.Equal(prefix.get(i), path.get(i)) THEN
-        (* This is not a prefix *)
+    (* make sure "prefix" really is a prefix of "path" *)
+    IF (prefix_sz > path_sz) THEN RETURN path; END;
+    FOR i := 0 TO prefix_sz - 1 DO
+      IF NOT PathEqual (prefix.get(i), path.get(i)) THEN
         RETURN path;
       END;
     END;
 
-    VAR sub := TextSeq.Sub(path, prefix.size());
-    BEGIN
-      sub.addlo(NIL);           (* make relative *)
-      RETURN sub;
-    END;
+    result := TextSeq.Sub (path, prefix_sz);
+    result.addlo (NIL);  (* make it a relative path *)
+    RETURN result;
   END StripPrefix;
+
+PROCEDURE PathEqual (a, b: TEXT): BOOLEAN =
+  BEGIN
+    IF Text.Equal (a, b) THEN RETURN TRUE; END;
+    IF OnUnix THEN RETURN FALSE; END;
+    RETURN CIEqual (a, b);
+  
+  END PathEqual;
+
+PROCEDURE CIEqual (a, b: TEXT): BOOLEAN =
+  (* on Win32, try a case-insensitive match... *)
+  VAR len, nxt: INTEGER;  buf_a, buf_b: ARRAY [0..127] OF CHAR;
+  BEGIN
+    len := Text.Length (a);
+    IF (len # Text.Length (b)) THEN RETURN FALSE; END;
+    nxt := 0;
+    WHILE (nxt < len) DO
+      Text.SetChars (buf_a, a, nxt);
+      Text.SetChars (buf_b, b, nxt);
+      FOR i := 0 TO MIN (NUMBER (buf_a), len-nxt) - 1 DO
+        IF lcase[buf_a[i]] # lcase[buf_b[i]] THEN RETURN FALSE; END;
+      END;
+      INC (nxt, NUMBER (buf_a));
+    END;
+    RETURN TRUE;
+  END CIEqual;
 
 PROCEDURE SplitArgs (txt: TEXT): TextSeq.T =
   VAR
@@ -1680,13 +2000,38 @@ PROCEDURE SplitArgs (txt: TEXT): TextSeq.T =
     start : INTEGER;
   BEGIN
     WHILE i < len DO
-      WHILE i < len AND QScanner.WhiteSpace [txt [i]] DO INC(i); END;
+      WHILE i < len AND QScanner.WhiteSpace [Text.GetChar (txt, i)] DO INC(i); END;
       start := i;
-      WHILE i < len AND NOT QScanner.WhiteSpace [txt [i]] DO INC(i); END;
+      WHILE i < len AND NOT QScanner.WhiteSpace [Text.GetChar (txt, i)] DO INC(i); END;
       IF i > start THEN seq.addhi (Text.Sub (txt, start, i - start)); END;
     END;
     RETURN seq;
   END SplitArgs;
 
+PROCEDURE Print (a, b, c, d: TEXT := NIL)
+  RAISES {Wr.Failure, Thread.Alerted} =
+  VAR wr := Stdio.stdout;
+  BEGIN
+    IF (wr = NIL) THEN (*try...*) wr := Stdio.stderr; END;
+    IF (a # NIL) THEN Wr.PutText (wr, a); END;
+    IF (b # NIL) THEN Wr.PutText (wr, b); END;
+    IF (c # NIL) THEN Wr.PutText (wr, c); END;
+    IF (d # NIL) THEN Wr.PutText (wr, d); END;
+  END Print;
+
+PROCEDURE FlushIO ()
+  RAISES {Wr.Failure, Thread.Alerted} =
+  BEGIN
+    IF (Stdio.stdout # NIL) THEN Wr.Flush (Stdio.stdout); END;
+    IF (Stdio.stderr # NIL) THEN Wr.Flush (Stdio.stderr); END;
+  END FlushIO;
+
+VAR
+  strict_variables := NOT RTParams.IsPresent ("oldquake");
+  lcase : ARRAY CHAR OF CHAR;
 BEGIN
+  FOR c := FIRST (lcase) TO LAST (lcase) DO lcase[c] := c; END;
+  FOR c := 'A' TO 'Z' DO
+    lcase[c] := VAL (ORD (c) - ORD ('A') + ORD ('a'), CHAR);
+  END;
 END QMachine.

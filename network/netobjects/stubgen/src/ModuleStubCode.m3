@@ -9,11 +9,12 @@
 
 MODULE ModuleStubCode;
 
-IMPORT Atom, CodeForType, Fmt, Formatter, RefList, Protocol, AtomRefTbl,
+IMPORT Atom, CodeForType, Fmt, Formatter, RefList, Protocol,
+       AtomRefTransientTbl AS AtomRefTbl,
        StubCode, StubUtils, Text, Type, Value, Wr;
 IMPORT TextRefTbl AS TextSet;
 
-<* FATAL Wr.Failure, StubUtils.Error *>
+<* FATAL Wr.Failure *>
 
 CONST PerfComment = "  (* Performance Monitoring  *)"; 
 
@@ -28,7 +29,7 @@ PROCEDURE Header(modWr: Formatter.T;
   BEGIN
     Formatter.PutText(modWr, "MODULE " & StubUtils.FileName(typeName) & 
       " EXPORTS " &  Atom.ToText(objName.intf) & ", " & 
-       StubUtils.FileName(typeName) & ";\n\n");
+       StubUtils.FileName(typeName) & ";" & Wr.EOL & Wr.EOL);
     CodeForType.ProduceImports(modWr, objName, importList);
     CodeForType.ImportSuperStubs(modWr, methods, lastNewMethod, typeName);
     IF StubUtils.perfMon THEN
@@ -36,8 +37,8 @@ PROCEDURE Header(modWr: Formatter.T;
       Formatter.NewLine(modWr, freshLine := FALSE);
     END;
     Formatter.PutText(modWr, 
-      "CONST Protocol: StubLib.StubProtocol = " & Fmt.Int(Protocol.Version)
-      & ";\n\n"); 
+      "CONST Protocol: StubLib.StubProtocol = " & Fmt.Int(Protocol.version)
+      & ";" & Wr.EOL & Wr.EOL); 
     Formatter.PutText(modWr, "TYPE "); 
     Formatter.Begin(modWr, 1);
     Formatter.NewLine(modWr, freshLine := FALSE);
@@ -86,7 +87,7 @@ PROCEDURE Header(modWr: Formatter.T;
           END;
         END;
       END;
-      Formatter.PutText(modWr, "};\n");
+      Formatter.PutText(modWr, "};" & Wr.EOL);
       Formatter.End(modWr);
     END EnumerateReturnCodes;
 
@@ -262,21 +263,21 @@ PROCEDURE Dispatcher(modWr: Formatter.T;
       ename: TEXT;
       l: RefList.T;
   BEGIN
-    Formatter.PutText(modWr, "\nPROCEDURE Invoke(");
-    Formatter.PutText(modWr, "\n    c: StubLib.Conn;");
-    Formatter.PutText(modWr, "\n    obj: NetObj.T;");
-    Formatter.PutText(modWr, "\n    rep: StubLib.DataRep;");
-    Formatter.PutText(modWr, "\n    stubProt: StubLib.StubProtocol)");
-    Formatter.PutText(modWr, "\n    RAISES {NetObj.Error, Rd.Failure,");
-    Formatter.PutText(modWr, "\n            Wr.Failure, Thread.Alerted} =");
-    Formatter.PutText(modWr, "\n  VAR t := NARROW(obj, " & 
+    Formatter.PutText(modWr, Wr.EOL & "PROCEDURE Invoke(");
+    Formatter.PutText(modWr, Wr.EOL & "    c: StubLib.Conn;");
+    Formatter.PutText(modWr, Wr.EOL & "    obj: NetObj.T;");
+    Formatter.PutText(modWr, Wr.EOL & "    rep: StubLib.DataRep;");
+    Formatter.PutText(modWr, Wr.EOL & "    stubProt: StubLib.StubProtocol)");
+    Formatter.PutText(modWr, Wr.EOL & "    RAISES {NetObj.Error, Rd.Failure,");
+    Formatter.PutText(modWr, Wr.EOL & "            Wr.Failure, Thread.Alerted} =");
+    Formatter.PutText(modWr, Wr.EOL & "  VAR t := NARROW(obj, " & 
                               CodeForType.ToText(t) & ");");
-    Formatter.PutText(modWr, "\n  BEGIN");
-    Formatter.PutText(modWr, "\n    IF stubProt # Protocol" & 
+    Formatter.PutText(modWr, Wr.EOL & "  BEGIN");
+    Formatter.PutText(modWr, Wr.EOL & "    IF stubProt # Protocol" & 
       " THEN StubLib.RaiseUnmarshalFailure() END;");
-    Formatter.PutText(modWr, "\n    TRY");
+    Formatter.PutText(modWr, Wr.EOL & "    TRY");
     Formatter.Begin(modWr, -1); 
-    Formatter.PutText(modWr, "\n      CASE StubLib.InInt32(c, rep) OF");
+    Formatter.PutText(modWr, Wr.EOL & "      CASE StubLib.InInt32(c, rep) OF");
     FOR i := FIRST(methods^) TO LAST(methods^) DO
       Formatter.NewLine(modWr, freshLine := FALSE);
       Formatter.PutText(modWr,"| ORD(Methods." & Atom.ToText(methods[i].name) &
@@ -288,10 +289,10 @@ PROCEDURE Dispatcher(modWr: Formatter.T;
         Atom.ToText(methods[i].name) & "(t, c, rep);");
     END;
     Formatter.End(modWr);
-    Formatter.PutText(modWr, "\n      ELSE");
-    Formatter.PutText(modWr, "\n        StubLib.RaiseUnmarshalFailure();");
-    Formatter.PutText(modWr, "\n      END;");
-    Formatter.PutText(modWr, "\n    EXCEPT");
+    Formatter.PutText(modWr, Wr.EOL & "      ELSE");
+    Formatter.PutText(modWr, Wr.EOL & "        StubLib.RaiseUnmarshalFailure();");
+    Formatter.PutText(modWr, Wr.EOL & "      END;");
+    Formatter.PutText(modWr, Wr.EOL & "    EXCEPT");
     l := returnCodes;
     IF l = NIL THEN
       PutLine(modWr, "");
@@ -300,24 +301,24 @@ PROCEDURE Dispatcher(modWr: Formatter.T;
       e := NARROW(l.head, Type.Exception);
       l := l.tail;
       ename :=  QidToText(e.qid, "_");
-      Formatter.PutText(modWr, "\n    | " & QidToText(e.qid, ".") );
+      Formatter.PutText(modWr, Wr.EOL & "    | " & QidToText(e.qid, ".") );
       IF e.arg # NIL THEN
         Formatter.PutText(modWr, "(arg)");        
       END; 
       Formatter.PutText(modWr, " => ");
-      Formatter.PutText(modWr, "\n        StubLib.StartResult(c);");
+      Formatter.PutText(modWr, Wr.EOL & "        StubLib.StartResult(c);");
       Formatter.PutText(modWr, 
-                        "\n        StubLib.OutInt32(c, ORD(ReturnCodes." 
+                        Wr.EOL & "        StubLib.OutInt32(c, ORD(ReturnCodes." 
                         & ename & "));");
       IF e.arg # NIL THEN 
-        Formatter.PutText(modWr, "\n        ");
+        Formatter.PutText(modWr, Wr.EOL & "        ");
         MarshalTypedVal(modWr, "arg", e.arg, Direction.Out, calling := FALSE);
       ELSE
         PutLine(modWr, "");
       END
     END;
     Formatter.PutText(modWr, "    END;");
-    Formatter.PutText(modWr, "\n  END Invoke;\n\n");
+    Formatter.PutText(modWr, Wr.EOL & "  END Invoke;" & Wr.EOL & Wr.EOL);
   END Dispatcher;
 
 PROCEDURE OwnerStubs(modWr: Formatter.T; 
@@ -331,7 +332,7 @@ PROCEDURE OwnerStubs(modWr: Formatter.T;
              "Stub_" & Atom.ToText(methods[i].name), 
              StubCode.SigForStub(methods[i].sig),
              StubCode.PragmasForStub());
-      Formatter.PutText(modWr, "=\n");
+      Formatter.PutText(modWr, "=" & Wr.EOL);
       WITH sig = methods[i].sig DO
         IF NUMBER(sig.formals^) > 0 OR sig.result # NIL THEN
           Formatter.Begin(modWr, 6);
@@ -396,7 +397,7 @@ PROCEDURE OwnerStubs(modWr: Formatter.T;
         END;
         Formatter.End(modWr);  Formatter.NewLine(modWr);
         Formatter.PutText(modWr, "  END " & "Stub_" & 
-                     Atom.ToText(methods[i].name) & ";\n\n");
+                     Atom.ToText(methods[i].name) & ";" & Wr.EOL & Wr.EOL);
       END;
     END;
   END OwnerStubs;
@@ -414,6 +415,8 @@ PROCEDURE MarshalTypedVal(fmtWr: Formatter.T;
     TYPECASE t OF
     | Type.Char (ch) => 
           Enumeration(fmtWr, varName, ch, d, 0, ORD(LAST(CHAR)));
+    | Type.WideChar (wch) => 
+          Enumeration(fmtWr, varName, wch, d, 0, ORD(LAST(WIDECHAR)));
     | Type.UserDefined (ud) => 
           Enumeration(fmtWr, varName, t, d, 0, LAST(ud.elts^));
     | Type.Subrange (sub) => 
@@ -497,7 +500,7 @@ PROCEDURE MarshalTypedVal(fmtWr: Formatter.T;
         StubUtils.Message("Can't have a procedure as argument or result " &
           "of a network object method.");
         RAISE StubUtils.Failure;
-    ELSE  RAISE StubUtils.Error("Run time error -- shouldn't occur");
+    ELSE  StubUtils.Die("ModuleStubCode.MarshalTypedVal: attempt to marshal unsupported type");
     END;
   END MarshalTypedVal;         
 
@@ -514,7 +517,7 @@ PROCEDURE SubRange(fmtWr: Formatter.T;
       TYPECASE t.base OF
       | Type.Enumeration => Enumeration(fmtWr, varName, t.base, d, min, max);
       | Type.Subrange => SubRange(fmtWr, varName, t.base, d, min, max);
-      ELSE RAISE StubUtils.Error("Run time error -- shouldn't occur");
+      ELSE StubUtils.Die("ModuleStubCode.SubRange: unsupported subrange type");
       END;
     END;
   END SubRange;

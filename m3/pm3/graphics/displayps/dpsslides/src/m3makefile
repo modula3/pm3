@@ -20,4 +20,4 @@ import ("dps")
 
 implementation ("DPSSlides")
 Program ("dpsslides")
-ManPage ("dpsslides", 1)
+ManPage ("dpsslides","1")

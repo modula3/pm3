@@ -8,7 +8,7 @@
 
 MODULE M3String;
 
-IMPORT M3Buf, Text, TextF, Word, CG, Target;
+IMPORT M3Buf, Text, Word, CG, Target;
 
 CONST
   NO_UID = -1;
@@ -37,13 +37,14 @@ CONST
 
 VAR
   hashMask  : INTEGER   := 511; (* == 2^9-1 == 9 bits on *)
-  hashTable : HashTable := NEW (HashTable, 512);
+  hashTable : HashTable := NIL;
   next_t    : T         := NIL;
   nStrings  : INTEGER   := 0;
 
 (*-------------------------------------------------------------- exported ---*)
 
 PROCEDURE Add (x: TEXT): T =
+  VAR buf: ARRAY [0..255] OF CHAR;  ref: REF ARRAY OF CHAR;
   BEGIN
     IF (next_t = NIL) THEN next_t := NEW (T) END;
     next_t.prefix := NIL;
@@ -51,7 +52,14 @@ PROCEDURE Add (x: TEXT): T =
     next_t.body   := x;
     next_t.length := Text.Length (x);
     next_t.uid    := NO_UID;
-    RETURN Intern (SUBARRAY (x^, 0, next_t.length));
+    IF (next_t.length <= NUMBER (buf)) THEN
+      Text.SetChars (buf, x);
+      RETURN Intern (SUBARRAY (buf, 0, next_t.length));
+    ELSE
+      ref := NEW (REF ARRAY OF CHAR, next_t.length);
+      Text.SetChars (ref^, x);
+      RETURN Intern (ref^);
+    END;
   END Add;
 
 PROCEDURE FromStr (READONLY buf: Buf;  length: INTEGER): T =
@@ -82,13 +90,21 @@ PROCEDURE Concat (a, b: T): T =
   END Concat;
 
 PROCEDURE ToText (t: T): TEXT =
-  VAR x: TEXT;
+  VAR
+    buf : ARRAY [0..255] OF CHAR;
+    ref : REF ARRAY OF CHAR;
   BEGIN
-    IF (t = NIL) THEN RETURN NIL END;
-    IF (t.body = NIL) THEN
-      x := TextF.New (t.length);
-      Flatten (t, x^, 0);
-      t.body := x;
+    IF (t = NIL) THEN
+      RETURN NIL;
+    ELSIF (t.body # NIL) THEN
+      (* already done. *)
+    ELSIF (t.length <= NUMBER (buf)) THEN
+      Flatten (t, buf, 0);
+      t.body := Text.FromChars (SUBARRAY (buf, 0, t.length));
+    ELSE
+      ref := NEW (REF ARRAY OF CHAR, t.length);
+      Flatten (t, ref^, 0);
+      t.body := Text.FromChars (ref^);
     END;
     RETURN t.body;
   END ToText;
@@ -98,22 +114,22 @@ PROCEDURE Put (wr: M3Buf.T;  t: T) =
     IF (t = NIL) THEN
       (* done *)
     ELSIF (t.body # NIL) THEN
-      FOR i := 0 TO t.length-1 DO EmitChar (wr, t.body[i]) END;
+      FOR i := 0 TO t.length-1 DO EmitChar (wr, Text.GetChar (t.body, i)) END;
     ELSE
       Put (wr, t.prefix);
       Put (wr, t.suffix);
     END;
   END Put;
 
-PROCEDURE Init_chars (offset: INTEGER;  t: T) =
+PROCEDURE Init_chars (offset: INTEGER;  t: T;  is_const: BOOLEAN) =
   BEGIN
     IF (t = NIL) THEN
       (* done *)
     ELSIF (t.body # NIL) THEN
-      CG.Init_chars (offset, t.body);
+      CG.Init_chars (offset, t.body, is_const);
     ELSE
-      Init_chars (offset, t.prefix);
-      Init_chars (offset + t.prefix.length * Target.Char.size, t.suffix);
+      Init_chars (offset, t.prefix, is_const);
+      Init_chars (offset + t.prefix.length * Target.Char.size, t.suffix, is_const);
     END;
   END Init_chars;
 
@@ -207,7 +223,7 @@ PROCEDURE InternHash (t: T;  hash: INTEGER;  READONLY buf: Buf): INTEGER =
 
     IF (t.body # NIL) THEN
       FOR i := 0 TO t.length - 1 DO
-        hash := Word.Plus (Word.Times (2, hash), ORD (t.body[i]));
+        hash := Word.Plus (Word.Times (2, hash), ORD (Text.GetChar (t.body, i)));
       END;
     ELSIF (t.prefix # NIL) THEN
       (* a concatentation *)
@@ -244,7 +260,7 @@ PROCEDURE GetCh (t: T;  READONLY buf: Buf;  i: INTEGER): CHAR =
     END;
 
     IF (t.body # NIL)
-      THEN RETURN t.body[i];
+      THEN RETURN Text.GetChar (t.body, i);
       ELSE RETURN buf[i];
     END;
   END GetCh;
@@ -254,7 +270,7 @@ PROCEDURE Flatten (t: T;  VAR buf: Buf;  start: INTEGER) =
     IF (t = NIL) THEN
       (* done *)
     ELSIF (t.body # NIL) THEN
-      SUBARRAY (buf, start, t.length) := SUBARRAY (t.body^, 0, t.length);
+      Text.SetChars (SUBARRAY (buf, start, t.length), t.body);
     ELSE
       WHILE (t # NIL) AND (t.body = NIL) DO
         Flatten (t.suffix, buf, start + Length (t.prefix));
@@ -282,6 +298,8 @@ PROCEDURE EmitChar (wr: M3Buf.T;  c: CHAR) =
 
 PROCEDURE Initialize () =
   BEGIN
+    <*ASSERT hashTable = NIL*>
+    hashTable := NEW (HashTable, hashMask+1);
     FOR i := 0 TO LAST (hashTable^) DO hashTable[i] := NIL; END;
   END Initialize;
 

@@ -31,14 +31,21 @@ PROCEDURE New(wr: Wr.T; width: CARDINAL:=75): T =
                fmt:=Formatter.New(wr, width), silent:=0, open:=TRUE);
   END New;
 
-<* FATAL Wr.Failure *>
+PROCEDURE UnderlyingWr (swr: T): Wr.T =
+  BEGIN
+    LOCK swr.mu DO
+      RETURN Formatter.UnderlyingWr(swr.fmt);
+    END;
+  END UnderlyingWr;
 
 PROCEDURE Beg(swr: T; indent: INTEGER:=0; loud:=FALSE) =
 BEGIN 
   LOCK swr.mu DO
     IF swr.open AND ((swr.silent = 0) OR loud) THEN
-      Formatter.Begin(swr.fmt, indent);
-      INC(swr.nesting);
+      TRY
+        Formatter.Begin(swr.fmt, indent);
+        INC(swr.nesting);
+      EXCEPT Wr.Failure => END;
     END;
   END;
 END Beg;
@@ -47,7 +54,9 @@ PROCEDURE Break(swr: T; loud:=FALSE) =
 BEGIN 
   LOCK swr.mu DO
     IF swr.open AND ((swr.silent = 0) OR loud) THEN
-      Formatter.UnitedBreak(swr.fmt); 
+      TRY
+        Formatter.UnitedBreak(swr.fmt); 
+      EXCEPT Wr.Failure => END;
     END;
   END;
 END Break;
@@ -56,7 +65,9 @@ PROCEDURE FlatBreak(swr: T; loud:=FALSE) =
 BEGIN 
   LOCK swr.mu DO
     IF swr.open AND ((swr.silent = 0) OR loud) THEN
-      Formatter.Break(swr.fmt); 
+      TRY
+        Formatter.Break(swr.fmt); 
+      EXCEPT Wr.Failure => END;
     END;
   END;
 END FlatBreak;
@@ -66,8 +77,10 @@ BEGIN
   LOCK swr.mu DO
     IF swr.open AND ((swr.silent = 0) OR loud) THEN
       IF swr.nesting > 0 THEN
-        DEC(swr.nesting);
-        Formatter.End(swr.fmt);
+        TRY
+          DEC(swr.nesting);
+          Formatter.End(swr.fmt);
+        EXCEPT Wr.Failure => END;
       END;
     END;
   END;
@@ -77,7 +90,9 @@ PROCEDURE Char(swr: T; c: CHAR; loud:=FALSE) =
 BEGIN
   LOCK swr.mu DO
     IF swr.open AND ((swr.silent = 0) OR loud) THEN
-      Formatter.PutChar(swr.fmt, c); 
+      TRY
+        Formatter.PutChar(swr.fmt, c); 
+      EXCEPT Wr.Failure => END;
    END;
   END;
 END Char;
@@ -86,7 +101,9 @@ PROCEDURE Text(swr: T; t: TEXT; loud:=FALSE) =
 BEGIN 
   LOCK swr.mu DO
     IF swr.open AND ((swr.silent = 0) OR loud) THEN
-      Formatter.PutText(swr.fmt, t); 
+      TRY
+        Formatter.PutText(swr.fmt, t); 
+      EXCEPT Wr.Failure => END;
     END;
   END;
 END Text;
@@ -95,7 +112,9 @@ PROCEDURE NewLine(swr: T; loud:=FALSE) =
 BEGIN 
   LOCK swr.mu DO
     IF swr.open AND ((swr.silent = 0) OR loud) THEN
-      Formatter.NewLine(swr.fmt); 
+      TRY
+        Formatter.NewLine(swr.fmt); 
+      EXCEPT Wr.Failure => END;
     END;
   END;
 END NewLine;
@@ -104,8 +123,10 @@ PROCEDURE Flush(swr: T; loud:=FALSE) =
 BEGIN 
   LOCK swr.mu DO
     IF swr.open AND ((swr.silent = 0) OR loud) THEN
-      Formatter.Flush(swr.fmt);
-      swr.nesting := 0;
+      TRY
+        Formatter.Flush(swr.fmt);
+        swr.nesting := 0;
+      EXCEPT Wr.Failure => END;
     END;
   END;
 END Flush;
@@ -115,7 +136,9 @@ BEGIN
   LOCK swr.mu DO
     swr.open := FALSE;
     swr.nesting := 0;
-    Formatter.Close(swr.fmt);
+    TRY
+      Formatter.Close(swr.fmt);
+    EXCEPT Wr.Failure => END;
   END;
 END Close;
 

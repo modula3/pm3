@@ -1791,7 +1791,7 @@ emit_block_move (x, y, size, align)
       /* Now we have to build up the CALL_EXPR itself.  */
       call_expr = build1 (ADDR_EXPR, build_pointer_type (TREE_TYPE (fn)), fn);
       call_expr = build (CALL_EXPR, TREE_TYPE (TREE_TYPE (fn)),
-			 call_expr, arg_list, NULL_TREE);
+			 call_expr, arg_list, NULL_TREE, NULL_TREE);
       TREE_SIDE_EFFECTS (call_expr) = 1;
 
       retval = expand_expr (call_expr, NULL_RTX, VOIDmode, 0);
@@ -2557,7 +2557,7 @@ clear_storage (object, size, align)
 	  call_expr = build1 (ADDR_EXPR,
 			      build_pointer_type (TREE_TYPE (fn)), fn);
 	  call_expr = build (CALL_EXPR, TREE_TYPE (TREE_TYPE (fn)),
-			     call_expr, arg_list, NULL_TREE);
+			     call_expr, arg_list, NULL_TREE, NULL_TREE);
 	  TREE_SIDE_EFFECTS (call_expr) = 1;
 
 	  retval = expand_expr (call_expr, NULL_RTX, VOIDmode, 0);
@@ -10141,7 +10141,8 @@ expand_builtin_apply (function, arguments, argsize)
     }
 
   /* All arguments and registers used for the call are set up by now!  */
-  function = prepare_call_address (function, NULL_TREE, &call_fusage, 0);
+  function = prepare_call_address (function, NULL_TREE, &call_fusage, 0,
+				   NULL_TREE);
 
   /* Ensure address is valid.  SYMBOL_REF is already valid, so no need,
      and we don't want to load it into a register as an optimization,

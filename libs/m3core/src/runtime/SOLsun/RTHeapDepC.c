@@ -82,6 +82,16 @@
 #include <sys/acl.h>
 #include <sys/wait.h>
 
+#if defined(SYS_lwp_mutex_init)
+#define SOL_VERSION	20700
+#elif defined(SYS_ntp_adjtime)
+#define SOL_VERSION	20600
+#elif defined(SYS_install_utrap)
+#define SOL_VERSION	20501
+#else
+#define SOL_VERSION	20500
+#endif
+
 extern int RT0u__inCritical;
 #define ENTER_CRITICAL RT0u__inCritical++
 #define EXIT_CRITICAL  RT0u__inCritical--
@@ -541,8 +551,10 @@ int gettimeofday(struct timeval *tp, void *tzp)
    * Some callers pass an invalid second argument
    * e.g., InitTimes in libXt
    */
-  if (RTHeapRep_Fault) RTHeapRep_Fault(tzp); /* make it readable */
-  if (RTHeapRep_Fault) RTHeapRep_Fault(tzp); /* make it writable */
+  if (tzp != null) {
+    if (RTHeapRep_Fault) RTHeapRep_Fault(tzp, 1); /* make it readable */
+    if (RTHeapRep_Fault) RTHeapRep_Fault(tzp, 2); /* make it writable */
+  }
   result = _gettimeofday(tp, tzp);
   EXIT_CRITICAL;
   return result;
@@ -574,8 +586,8 @@ int ioctl(int fildes, int request, ...)
   va_start(args, request);
   argp = va_arg(args, int);
   va_end(args);
-  if (RTHeapRep_Fault) RTHeapRep_Fault(argp); /* make it readable */
-  if (RTHeapRep_Fault) RTHeapRep_Fault(argp); /* make it writable */
+  if (RTHeapRep_Fault) RTHeapRep_Fault(argp, 1); /* make it readable */
+  if (RTHeapRep_Fault) RTHeapRep_Fault(argp, 2); /* make it writable */
   result = _ioctl(fildes, request, argp);
   EXIT_CRITICAL;
   return result;
@@ -616,7 +628,11 @@ int lstat(const char *path, struct stat *buf)
   return result;
 }
 
+#if SOL_VERSION >= 20700
+int _lwp_create(ucontext_t *contextp, unsigned int flags, lwpid_t *new_lwp)
+#else
 int _lwp_create(ucontext_t *contextp, unsigned long flags, lwpid_t *new_lwp)
+#endif
 {
   int result;
 
@@ -1004,7 +1020,11 @@ ssize_t read(int fildes, void *buf, size_t nbyte)
   return result;
 }
 
+#if SOL_VERSION >= 20600
 int readlink(const char *path, char *buf, size_t bufsiz)
+#else
+int readlink(const char *path, void *buf, int bufsiz)
+#endif
 {
   int result;
 
@@ -1016,7 +1036,11 @@ int readlink(const char *path, char *buf, size_t bufsiz)
   return result;
 }
 
+#if SOL_VERSION >= 20600
 ssize_t readv(int fildes, const struct iovec *iov, int iovcnt)
+#else
+ssize_t readv(int fildes, struct iovec *iov, int iovcnt)
+#endif
 {
   ssize_t result;
 
@@ -1119,6 +1143,9 @@ int setauid(const au_id_t *auid)
   return result;
 }
 
+/*
+Seems this is already wrapper.
+
 int setcontext(ucontext_t *ucp)
 {
   int result;
@@ -1131,6 +1158,7 @@ int setcontext(ucontext_t *ucp)
       return result;
   }
 }
+*/
 
 int setgroups(int ngroups, const gid_t *grouplist)
 {
@@ -1143,7 +1171,13 @@ int setgroups(int ngroups, const gid_t *grouplist)
   return result;
 }
 
-int setitimer(int which, struct itimerval *value, struct itimerval *ovalue)
+#if SOL_VERSION >= 20600
+int setitimer(int which, struct itimerval *value,
+	      struct itimerval *ovalue)
+#else
+int setitimer(int which, const struct itimerval *value,
+	      struct itimerval *ovalue)
+#endif
 {
   int result;
 
@@ -1553,7 +1587,11 @@ int utime(const char *path, const struct utimbuf *times)
   return result;
 }
 
+#if SOL_VERSION >= 20700
+int utimes(const char *file, const struct timeval *tvp)
+#else
 int utimes(char *file, struct timeval *tvp)
+#endif
 {
   int result;
 

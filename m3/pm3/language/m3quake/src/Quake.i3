@@ -2,11 +2,12 @@
 (* All rights reserved.                                        *)
 (* See the file COPYRIGHT for a full description.              *)
 (*                                                             *)
-(* Last modified on Wed Feb 22 13:07:43 PST 1995 by kalsow     *)
+(* Portions Copyright 1996-2000, Critical Mass, Inc.           *)
+(* See file COPYRIGHT-CMASS for details.                       *)
 
 INTERFACE Quake;
 
-IMPORT Wr;
+IMPORT Thread;
 
 EXCEPTION
   Error (TEXT);
@@ -14,15 +15,23 @@ EXCEPTION
 TYPE
   CodeStream <: REFANY;
   Machine    <: REFANY;
+  IDMap      <: REFANY;
+  ID          = INTEGER;
+  
+CONST
+  NoID: ID = 0;
 
-PROCEDURE NewMachine (writer: Wr.T): Machine;
+PROCEDURE NewIDMap (str2id : PROCEDURE (READONLY x: ARRAY OF CHAR): ID;
+                    txt2id : PROCEDURE (t: TEXT): ID;
+                    id2txt : PROCEDURE (i: ID): TEXT                   ): IDMap;
 
-PROCEDURE RunSourceFile (m: Machine;  source_file: TEXT)       RAISES {Error};
+PROCEDURE NewMachine (id_map: IDMap): Machine;
 
-PROCEDURE CompileSourceFile (source_file: TEXT): CodeStream    RAISES {Error};
-PROCEDURE RunCodeStream (m: Machine;  code_stream: CodeStream) RAISES {Error};
+PROCEDURE Run (m: Machine;  source_file: TEXT) RAISES {Error, Thread.Alerted};
 
 PROCEDURE Define (m: Machine;  symbol, value: TEXT) RAISES {Error};
+
+PROCEDURE LookUp (m: Machine;  symbol: TEXT): TEXT RAISES {Error};
 
 PROCEDURE Done (m: Machine) RAISES {Error};
 

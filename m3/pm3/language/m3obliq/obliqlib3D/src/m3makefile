@@ -23,7 +23,6 @@ Module ("ObColor")
 Module ("ObShape")
 Module ("ObKeySym")
 Module ("ObPoint")
-
 resource ("Time.hlp")
 Module   ("ObTime")
 

@@ -7,8 +7,11 @@ INTERFACE BasePageHandle;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:27  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:44  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:27  hosking
+    Import of GRAS3 1.1
 
     Revision 1.3  1996/03/06 14:00:55  rbnix
     	New method fmt added to get a formatted representation of the
@@ -31,6 +34,7 @@ INTERFACE BasePageHandle;
  *)
 
 IMPORT
+  Page,
   PageData;
 
 
@@ -42,8 +46,10 @@ TYPE
       isLoad            () :BOOLEAN;
 
       isChanged		() :BOOLEAN;
+      markChanged	();
       unmarkChanges	();
 
+      getPage		() :Page.T;
 
       putData           (READONLY data		:PageData.Part;
 			          pos		:= FIRST (PageData.Index));
@@ -51,17 +57,19 @@ TYPE
       getData           (VAR      data		:PageData.Part;
 			          pos		:= FIRST (PageData.Index));
 
-      getAll		() :PageData.T;
+
+      putAll		(         unswizzler    :PageData.Unswizzler);
+                         	  
+      getAll            (	  swizzler	:PageData.Swizzler);
 
       copyData		(         source	:PageData.Index;
                                   destination	:PageData.Index;
                                   length	:PageData.Index);
 
-
       fmt		() :TEXT;
     END;
 
-  Private		<: ROOT;
+  Private		<: <*TRANSIENT*> ROOT;
 
 
 END BasePageHandle.

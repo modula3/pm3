@@ -41,11 +41,12 @@ PROCEDURE Real (r: Random.T): REAL =
     END;
 
     (* Repack as REAL: *)
-    LOOPHOLE (result, RealRep.T) := RealRep.T {
-      significand := Word.Shift (Word.And (frac, 16_7fffffff), 
-                                   -(WordSize - 1 - FractionBits)),
-      exponent := exp,
-      sign := 0};
+    WITH r = LOOPHOLE (result, RealRep.T) DO
+      r.sign := 0;
+      r.exponent := exp;
+      r.significand := Word.Shift (Word.And (frac, 16_7fffffff), 
+                                   -(WordSize - 1 - FractionBits));
+    END;
     RETURN result;
   END Real;
 
@@ -76,13 +77,13 @@ PROCEDURE Longreal (r: Random.T): LONGREAL =
     END;
 
     (* Repack as LONGREAL: *)
-    LOOPHOLE (result, LongRealRep.T) := LongRealRep.T {
-      significand1 := r.integer (min := -16_7fffffff-1, max :=16_7fffffff),
-      significand0 := Word.Shift (
-                        Word.And (frac, 16_7fffffff),
-                        -(WordSize - 1 - FractionBits)),
-      exponent := exp,
-      sign := 0};
+    WITH lr = LOOPHOLE (result, LongRealRep.T) DO
+      lr.sign := 0;
+      lr.exponent := exp;
+      lr.significand0 := Word.Shift (Word.And (frac, 16_7fffffff),
+                                      -(WordSize - 1 - FractionBits));
+      lr.significand1 := r.integer (min := -16_7fffffff-1, max :=16_7fffffff);
+    END;
     RETURN result;
   END Longreal;
 

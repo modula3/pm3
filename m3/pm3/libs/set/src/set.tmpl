@@ -9,15 +9,27 @@
 %  Quake functions to instantiate a generic table.
 %
 
-readonly proc MkSet (nm, elem) is
+readonly proc MkSet(nm, elem) is
   local set = nm & "Set"
-  build_generic_intf (set, "Set", [elem], VISIBLE)
+  build_generic_intf (set, "Set", ["Root", elem], VISIBLE)
   build_generic_impl (set, "Set", [elem])
 end
 
-readonly proc mkSet (nm, elem) is
+readonly proc mkSet(nm, elem) is
   local set = nm & "Set"
-  build_generic_intf (set, "Set", [elem], HIDDEN)
+  build_generic_intf (set, "Set", ["Root", elem], HIDDEN)
+  build_generic_impl (set, "Set", [elem])
+end
+
+readonly proc MkTransientSet(nm, elem) is
+  local set = nm & "TransientSet"
+  build_generic_intf (set, "Set", ["RootTransient", elem], VISIBLE)
+  build_generic_impl (set, "Set", [elem])
+end
+
+readonly proc mkTransientSet(nm, elem) is
+  local set = nm & "TransientSet"
+  build_generic_intf (set, "Set", ["RootTransient", elem], HIDDEN)
   build_generic_impl (set, "Set", [elem])
 end
 
@@ -30,7 +42,7 @@ readonly proc MkSetDef (nm, elem) is
   local setDef = nm & "SetDef"
   local elemRefTbl = nm & "RefTbl"
   build_generic_intf (setDef, "SetDef", [set], VISIBLE)
-  build_generic_impl (setDef, "SetDef", [elem, set, elemRefTbl])
+  build_generic_impl (setDef, "SetDef", [elem, set, elemRefTbl, "Refany"])
 end
 
 readonly proc mkSetDef (nm, elem) is
@@ -38,7 +50,23 @@ readonly proc mkSetDef (nm, elem) is
   local setDef = nm & "SetDef"
   local elemRefTbl = nm & "RefTbl"
   build_generic_intf (setDef, "SetDef", [set], HIDDEN)
-  build_generic_impl (setDef, "SetDef", [elem, set, elemRefTbl])
+  build_generic_impl (setDef, "SetDef", [elem, set, elemRefTbl, "Refany"])
+end
+
+readonly proc MkTransientSetDef (nm, elem) is
+  local set = nm & "TransientSet"
+  local setDef = nm & "TransientSetDef"
+  local elemRefTbl = nm & "RefTransientTbl"
+  build_generic_intf (setDef, "SetDef", [set], VISIBLE)
+  build_generic_impl (setDef, "SetDef", [elem, set, elemRefTbl, "RefanyTransient"])
+end
+
+readonly proc mkTransientSetDef (nm, elem) is
+  local set = nm & "TransientSet"
+  local setDef = nm & "TransientSetDef"
+  local elemRefTbl = nm & "RefTransientTbl"
+  build_generic_intf (setDef, "SetDef", [set], HIDDEN)
+  build_generic_impl (setDef, "SetDef", [elem, set, elemRefTbl, "RefanyTransient"])
 end
 
 %
@@ -57,6 +85,22 @@ readonly proc mkSetList (nm, elem) is
   local set = nm & "Set"
   local setList = nm & "SetList"
   local elemList = nm & "List"
+  build_generic_intf (setList, "SetList", [set], HIDDEN)
+  build_generic_impl (setList, "SetList", [elem, set, elemList])
+end
+
+readonly proc MkTransientSetList (nm, elem) is
+  local set = nm & "TransientSet"
+  local setList = nm & "TransientSetList"
+  local elemList = nm & "TransientList"
+  build_generic_intf (setList, "SetList", [set], VISIBLE)
+  build_generic_impl (setList, "SetList", [elem, set, elemList])
+end
+
+readonly proc mkTransientSetList (nm, elem) is
+  local set = nm & "TransientSet"
+  local setList = nm & "TransientSetList"
+  local elemList = nm & "TransientList"
   build_generic_intf (setList, "SetList", [set], HIDDEN)
   build_generic_impl (setList, "SetList", [elem, set, elemList])
 end

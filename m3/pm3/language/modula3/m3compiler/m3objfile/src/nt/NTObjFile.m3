@@ -9,6 +9,7 @@ MODULE NTObjFile;
 IMPORT Text, Wr, Word, IntIntTbl, TextIntTbl;
 IMPORT M3ObjFile, M3ID, CoffTime, Target;
 FROM M3CG IMPORT Name, BitOffset, BitSize, ByteOffset, ByteSize, TypeUID;
+IMPORT RTError;
 
 TYPE
   Seg = M3ObjFile.Seg;
@@ -528,7 +529,11 @@ PROCEDURE NewSym (t: T;  id: M3ID.T): INTEGER =
       t.symtab.map := NEW (IntIntTbl.Default).init();
     END;
 
-    IF t.symtab.map.get (id, x) THEN <*ASSERT FALSE*>(*duplicate symbol *) END;
+    IF t.symtab.map.get (id, x) THEN
+      (*duplicate symbol *)
+      RTError.Msg ("NTObjFile.m3", 534, "duplicate symbol: " & M3ID.ToText (id));
+      <*ASSERT FALSE*>
+    END;
 
     x := NextSym (t);
     EVAL t.symtab.map.put (id, x);

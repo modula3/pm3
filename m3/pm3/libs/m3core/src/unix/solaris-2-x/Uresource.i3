@@ -2,12 +2,13 @@
 (* All rights reserved.                                       *)
 (* See the file COPYRIGHT for a full description.             *)
 
-(* Last modified on Mon Oct 24 15:45:17 PDT 1994 by kalsow        *)
+(* Last modified on Wed Jul 30 13:55:56 EST 1997 by hosking       *)
+(*      modified on Mon Oct 24 15:45:17 PDT 1994 by kalsow        *)
 (*      modified on Wed Mar 25 16:45:58 PST 1992 by muller        *)
 
 INTERFACE Uresource;
 
-FROM Ctypes IMPORT int, long;
+FROM Ctypes IMPORT int, long, unsigned_long;
 IMPORT Utime;
 
 (*** <sys/resource.h> ***)
@@ -50,22 +51,26 @@ TYPE
 (* Resource limits *)
 
 CONST
-  RLIMIT_CPU   = 0;		(* cpu time in milliseconds *)
-  RLIMIT_FSIZE = 1;		(* maximum file size *)
-  RLIMIT_DATA  = 2;		(* data size *)
-  RLIMIT_STACK = 3;		(* stack size *)
-  RLIMIT_CORE  = 4;		(* core file size *)
-  RLIMIT_NOFILE= 5;		(* maximum descriptor index + 1 *)
+  RLIMIT_CPU   = 0;          (* cpu time in milliseconds *)
+  RLIMIT_FSIZE = 1;          (* maximum file size *)
+  RLIMIT_DATA  = 2;          (* data size *)
+  RLIMIT_STACK = 3;          (* stack size *)
+  RLIMIT_CORE  = 4;          (* core file size *)
+  RLIMIT_NOFILE= 5;          (* maximum descriptor index + 1 *)
+  RLIMIT_VMEM  = 6;          (* maximum mapped memory *)
+  RLIMIT_AS    = RLIMIT_VMEM;
 
-  RLIM_NLIMITS = 7;		(* number of resource limits *)
+  RLIM_NLIMITS = 7;          (* number of resource limits *)
 
-  RLIM_INFINITY	= 16_7fffffff;
+  RLIM_INFINITY = 16_7fffffff;
 
 TYPE
+  rlim_t = unsigned_long;
+
   struct_rlimit = RECORD
-	            rlim_cur: int;     (* current (soft) limit *)
- 	            rlim_max: int;     (* maximum value for rlim_cur *)
-                    END;
+    rlim_cur: rlim_t;     (* current (soft) limit *)
+    rlim_max: rlim_t;     (* maximum value for rlim_cur *)
+  END;
 
 
 (*** getpriority(2), setpriority(2) - get/set program scheduling priority ***)
@@ -84,7 +89,7 @@ TYPE
 
 (*** getrusage(2) - get information about resource utilization ***)
 
-<*EXTERNAL*> PROCEDURE getrusage (who: int; rus: struct_rusage_star): int;
+<*EXTERNAL*> PROCEDURE getrusage (who: int; VAR rus: struct_rusage): int;
 
 
 (*** nice(3) - set program priority ***)

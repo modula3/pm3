@@ -11,6 +11,7 @@ implementation ("ShowHeap")
 
 HtmlFile("index")
 
+build_standalone()
 Program ("showheap")
 
-ManPage ("showheap", 1)
+ManPage ("showheap","1")

@@ -6,12 +6,13 @@
 (*      modified on Wed Dec 23 17:24:54 PST 1992 by jdd       *)
 (*      modified on Thu Nov 12 10:50:07 PST 1992 by muller    *)
 
-UNSAFE MODULE RTThread;
+UNSAFE MODULE RTThread EXPORTS RTThread, RTHooks;
 
 IMPORT Usignal;
 
 CONST 
   SP_pos = 3;
+  SP_copy_pos = 23;  (* gcc uses r31 for stack ops *)
 
 PROCEDURE SP (READONLY s: State): ADDRESS =
   BEGIN
@@ -44,6 +45,7 @@ PROCEDURE FlushStackCache () =
 PROCEDURE UpdateStateForNewSP (VAR s: State; offset: INTEGER) =
   BEGIN
     INC (s [SP_pos], offset);
+    INC (s [SP_copy_pos], offset);
   END UpdateStateForNewSP;
 
 PROCEDURE UpdateFrameForNewSP (<*UNUSED*> a: ADDRESS; 
@@ -88,6 +90,33 @@ PROCEDURE disallow_sigvtalrm () =
   BEGIN
     EVAL Usignal.sigprocmask(Usignal.SIG_BLOCK, ThreadSwitchSignal, i)
   END disallow_sigvtalrm;
+
+(*--------------------------------------------- exception handling support --*)
+
+PROCEDURE GetCurrentHandlers (): ADDRESS=
+  BEGIN
+    RETURN handlerStack;
+  END GetCurrentHandlers;
+
+PROCEDURE SetCurrentHandlers (h: ADDRESS)=
+  BEGIN
+    handlerStack := h;
+  END SetCurrentHandlers;
+
+(*RTHooks.PushEFrame*)
+PROCEDURE PushEFrame (frame: ADDRESS) =
+  TYPE Frame = UNTRACED REF RECORD next: ADDRESS END;
+  VAR f := LOOPHOLE (frame, Frame);
+  BEGIN
+    f.next := handlerStack;
+    handlerStack := f;
+  END PushEFrame;
+
+(*RTHooks.PopEFrame*)
+PROCEDURE PopEFrame (frame: ADDRESS) =
+  BEGIN
+    handlerStack := frame;
+  END PopEFrame;
 
 BEGIN
   mask_sigvtalrm(ThreadSwitchSignal);

@@ -3,15 +3,14 @@
 (* See the file COPYRIGHT for a full description.              *)
 
 (* File: Formal.m3                                             *)
-(* Last modified on Mon Jan 22 09:23:19 PST 1996 by heydon     *)
-(*      modified on Tue May 23 15:42:16 PDT 1995 by kalsow     *)
+(* Last modified on Tue May 23 15:42:16 PDT 1995 by kalsow     *)
 (*      modified on Fri Nov  9 20:39:07 1990 by muller         *)
 
 MODULE Formal;
 
 IMPORT M3, M3ID, CG, Value, ValueRep, Type, Error, Expr, ProcType;
 IMPORT KeywordExpr, OpenArrayType, RefType, CheckExpr;
-IMPORT ArrayType, Host, Narrow, M3Buf, Tracer;
+IMPORT ArrayType, Host, NarrowExpr, M3Buf, Tracer;
 IMPORT Procedure, UserProc, Target, M3RT;
 
 TYPE
@@ -120,7 +119,6 @@ PROCEDURE EmitDeclaration (formal: Value.T;  types_only, param: BOOLEAN) =
         size  := info.size;
         align := info.alignment;
         mtype := info.mem_type;
-        IF Type.IsStructured(type) THEN mtype := CG.Type.Struct; END;
       ELSE
         size  := Target.Address.size;
         align := Target.Address.align;
@@ -186,7 +184,8 @@ PROCEDURE Check (t: T;  VAR cs: Value.CheckState) =
     END;
 
     IF (t.mode = Mode.mVALUE) AND OpenArrayType.Is (Type.Base (t.tipe)) THEN
-      t.refType := RefType.New (t.tipe, traced := TRUE, brand := NIL);
+      t.refType := RefType.New (t.tipe, traced := TRUE, transient := TRUE,
+                                brand := NIL, warn := TRUE);
       t.refType := Type.Check (t.refType);
     END;
 
@@ -376,6 +375,21 @@ PROCEDURE DoCheckArgs (VAR cs       : Value.CheckState;
               (* we'll make a copy when it's generated *)
             END;
         END; (*case*)
+
+        (* check to see if this value needs an implicit NARROW,
+           which may generate a nested procedure call... *)
+        IF (ok) AND Host.doNarrowChk
+                AND ((tt.kind = Type.Class.Ref)
+                  OR (tt.kind = Type.Class.Object)
+                  OR (tt.kind = Type.Class.Opaque)) THEN
+          IF NOT Type.IsSubtype (te, t) THEN
+            (* This reference value needs an implicit NARROW *)
+            e := NarrowExpr.New (e, t);
+            slots[i].actual := e;
+            Expr.TypeCheck (e, cs);
+          END;
+        END;
+
       END; (* if got actual & formal *)
     END; (* for *)
 
@@ -473,12 +487,12 @@ PROCEDURE GenOrdinal (t: T;  actual: Expr.T) =
     EVAL Type.GetBounds (t.tipe, min, max);
     CASE t.mode OF
     | Mode.mVALUE =>
-        CheckExpr.Emit (actual, min, max);
+        CheckExpr.EmitChecks (actual, min, max, CG.RuntimeError.ValueOutOfRange);
     | Mode.mVAR =>
         Expr.CompileAddress (actual);
     | Mode.mCONST =>
         IF NOT Type.IsEqual (t.tipe, Expr.TypeOf (actual), NIL) THEN
-          CheckExpr.Emit (actual, min, max);
+          CheckExpr.EmitChecks (actual, min, max, CG.RuntimeError.ValueOutOfRange);
           GenCopy (t.tipe);
         ELSIF Expr.IsDesignator (actual) THEN
           Expr.CompileAddress (actual);
@@ -512,13 +526,11 @@ PROCEDURE GenReference (t: T;  actual: Expr.T) =
     CASE t.mode OF
     | Mode.mVALUE =>
         Expr.Compile (actual);
-        IF Host.doNarrowChk THEN Narrow.Emit (t.tipe, t_actual) END;
     | Mode.mVAR =>
         Expr.CompileAddress (actual);
     | Mode.mCONST =>
         IF NOT Type.IsEqual (t.tipe, t_actual, NIL) THEN
           Expr.Compile (actual);
-          IF Host.doNarrowChk THEN Narrow.Emit (t.tipe, t_actual) END;
           GenCopy (t.tipe);
         ELSIF Expr.IsDesignator (actual) THEN
           Expr.CompileAddress (actual);
@@ -699,7 +711,7 @@ PROCEDURE ReshapeArray (tlhs, trhs: Type.T) =
         CG.Push (rhs);
         CG.Open_size (i);
         CG.Load_integer (Type.Number (index));
-        CG.Check_eq ();
+        CG.Check_eq (CG.RuntimeError.IncompatibleArrayShape);
       END;
 
       (* leave the old dope vector as the result *)

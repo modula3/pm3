@@ -137,6 +137,7 @@ PROCEDURE ReplaceExt(pn: T; ext: TEXT): T =
     RETURN Text.Sub(pn, 0, baseUpb) & ExtSepText & ext
   END ReplaceExt;
 
+
 (* Internal procedures. *)
 
 PROCEDURE ParsePosixPathname(pn: T; visit: Visit): BOOLEAN RAISES {Invalid} =

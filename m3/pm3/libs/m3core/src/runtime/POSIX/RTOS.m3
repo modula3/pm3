@@ -6,7 +6,7 @@
 
 UNSAFE MODULE RTOS;
 
-IMPORT Unix, Uuio, Cstdlib, RT0u;
+IMPORT Unix, Uuio, Cstdlib, RT0u, Thread;
 
 (*--------------------------------------------------- process termination ---*)
 
@@ -61,11 +61,6 @@ PROCEDURE GetMemory (size: INTEGER): ADDRESS =
    However, it must be possible to call it from anywhere in the
    collector. *)
 
-PROCEDURE LockHeap () =
-  BEGIN
-    INC(RT0u.inCritical);
-  END LockHeap;
-
 (* UnlockHeap() leaves the critical section.  It could be written at user
    level as:
 
@@ -78,10 +73,38 @@ PROCEDURE LockHeap () =
    However, it must be possible to call it from anywhere inside the
    collector. *)
 
-PROCEDURE UnlockHeap () =
+VAR
+  lock_cnt  := 0;      (* LL = RT0u.inCritical *)
+  do_signal := FALSE;  (* LL = RT0u.inCritical *)
+  mutex     := NEW(MUTEX);
+  condition := NEW(Thread.Condition);
+
+PROCEDURE LockHeap () =
   BEGIN
+    INC(RT0u.inCritical);
+    INC(lock_cnt);
+  END LockHeap;
+
+PROCEDURE UnlockHeap () =
+  VAR sig := FALSE;
+  BEGIN
+    DEC(lock_cnt);
+    IF (lock_cnt = 0) AND (do_signal) THEN sig := TRUE; do_signal := FALSE; END;
     DEC(RT0u.inCritical);
+    IF (sig) THEN Thread.Broadcast(condition); END;
   END UnlockHeap;
+
+PROCEDURE WaitHeap () =
+  (* LL = 0 *)
+  BEGIN
+    LOCK mutex DO Thread.Wait(mutex, condition); END;
+  END WaitHeap;
+
+PROCEDURE BroadcastHeap () =
+  (* LL = RT0u.inCritical *)
+  BEGIN
+    do_signal := TRUE;
+  END BroadcastHeap;
 
 (*------------------------------------------------------------------- I/O ---*)
 

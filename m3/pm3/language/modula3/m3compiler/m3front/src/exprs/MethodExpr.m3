@@ -84,11 +84,11 @@ PROCEDURE Compile (p: P) =
     Type.Compile (p.object);
     Method.SplitX (p.method, method);
 
-    Type.LoadInfo (p.object, M3RT.TC_defaultMethods, addr := TRUE);
+    Type.LoadInfo (p.object, M3RT.OTC_defaultMethods, addr := TRUE);
     IF (x >= 0) THEN
       INC (method.offset, x);
     ELSE (* runtime offset to methods *)
-      Type.LoadInfo (p.holder, M3RT.TC_methodOffset);
+      Type.LoadInfo (p.holder, M3RT.OTC_methodOffset);
       CG.Index_bytes (Target.Byte);
     END;
     CG.Boost_alignment (Target.Address.align);
@@ -104,7 +104,7 @@ PROCEDURE GenFPLiteral (p: P;  buf: M3Buf.T) =
     M3Buf.PutChar (buf, '>');
   END GenFPLiteral;
 
-PROCEDURE GenLiteral (p: P;  offset: INTEGER;  type: Type.T) =
+PROCEDURE GenLiteral (p: P;  offset: INTEGER;  type: Type.T;  is_const: BOOLEAN) =
   VAR m_name := Value.GlobalName (p.method, dots := FALSE, with_module :=TRUE);
   VAR t_name := Type.Name (p.object);
   VAR name   := t_name & "_" & m_name;
@@ -112,10 +112,10 @@ PROCEDURE GenLiteral (p: P;  offset: INTEGER;  type: Type.T) =
   VAR var    := CG.Import_global (M3ID.Add (name), Target.Address.size,
                                   Target.Address.align, CG.Type.Addr, uid);
   BEGIN
-    CG.Init_var (offset, var, 0);
+    CG.Init_var (offset, var, 0, is_const);
     Type.Compile (type);
     Error.ID (p.name,
-    "SRC Modula-3 restriction: default method is not a compile-time constant");
+    "CM3 restriction: default method is not a compile-time constant");
   END GenLiteral;
 
 BEGIN

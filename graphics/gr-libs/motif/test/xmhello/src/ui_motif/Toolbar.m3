@@ -14,8 +14,7 @@ FROM Xmacro IMPORT
   XtVaSetValues, XtVaCreateManagedWidget,XtVaCreateWidget,
   MenuItem,BuildMenuItem;
 
-FROM M3toC IMPORT
-  TtoS,StoT;
+FROM M3toC IMPORT SharedTtoS, FreeSharedS, FlatTtoS;
 
 IMPORT AppModel,UI,MainWindow;
 
@@ -31,20 +30,20 @@ PROCEDURE init(parent:Xt.Widget)=
 VAR
   
 BEGIN
-  toolbar:=XtVaCreateWidget(TtoS("toolbar"),
+  toolbar:=XtVaCreateWidget(FlatTtoS("toolbar"),
     Xmw.xmRowColumnWidgetClass,parent,
     XmN.orientation,        IntVal(Xm.HORIZONTAL),
     end:=NIL);
 
   hello:=BuildMenuItem(
     parent:=toolbar,
-    label:="Hello",
+    label:=FlatTtoS("Hello"),
     class:=Xmw.xmPushButtonWidgetClass,
     callback:=hello_callback);
 
   goodbye:=BuildMenuItem(
     parent:=toolbar,
-    label:="Goodbye",
+    label:=FlatTtoS("Goodbye"),
     class:=Xmw.xmPushButtonWidgetClass,
     callback:=goodbye_callback);
 
@@ -56,12 +55,14 @@ PROCEDURE hello_callback(widget:Xt.Widget;
                        call_data:Xt.Pointer)=
 CONST ftn = "hello_callback";
 VAR
-  txt:TEXT;
-  str:Xm.String;
+  txt := AppModel.app.hello();
+  str,hello:Xm.String;
 BEGIN
   debug(ftn,"begin"); 
   Xt.UnmanageChild(MainWindow.main_label);
-  str:=Xm.StringCreateSimple(TtoS(AppModel.app.hello()));
+  hello := SharedTtoS(txt);
+  str:=Xm.StringCreateSimple(hello);
+  FreeSharedS(txt,hello);
   XtVaSetValues(MainWindow.main_label,
      XmN.labelString,  str);
   Xt.ManageChild(MainWindow.main_label);      

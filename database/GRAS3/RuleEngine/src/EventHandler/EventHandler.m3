@@ -7,8 +7,11 @@ MODULE EventHandler EXPORTS EventHandler, EventHandlerClass;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:40  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:50  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:40  hosking
+    Import of GRAS3 1.1
 
     Revision 1.3  1998/08/12 11:05:00  roland
     Efficiency improvement: RuleEngine notifies EventDetectors of
@@ -49,7 +52,7 @@ PROCEDURE Init (eh: T; ts: TriggerStorage.T): T =
   CONST InitialLength = 10;
   BEGIN
     eh.ts := ts;
-    eh.aa := NEW(REF ARRAY OF ActionStorage, InitialLength);
+    eh.aa := NEW(<*TRANSIENT*> REF ARRAY OF ActionStorage, InitialLength);
     RETURN eh;
   END Init;
 
@@ -58,7 +61,7 @@ PROCEDURE NewTransactionUnit (eh: T; tu: CARDINAL) =
     WHILE tu > LAST(eh.aa^) DO
       VAR
         len := NUMBER(eh.aa^);
-        n   := NEW(REF ARRAY OF ActionStorage, 2 * len);
+        n   := NEW(<*TRANSIENT*> REF ARRAY OF ActionStorage, 2 * len);
       BEGIN
         SUBARRAY(n^, 0, len) := eh.aa^;
         FOR i := len TO 2 * len - 1 DO
@@ -82,7 +85,7 @@ PROCEDURE DelTransactionUnit (eh: T; tu: CARDINAL) =
     eh.aa^[tu][Trigger.CouplingMode.Decoupled] := NIL;
   END DelTransactionUnit;
 
-PROCEDURE StoreTrigger (eh: T; t: Trigger.T; userdata: REFANY; id: CARDINAL) =
+PROCEDURE StoreTrigger (eh: T; t: Trigger.T; userdata: <*TRANSIENT*> REFANY; id: CARDINAL) =
   BEGIN
     eh.ts.storeTrigger(t, userdata, id);
   END StoreTrigger;
@@ -101,7 +104,7 @@ PROCEDURE Handle (eh              : T;
     a       : Action.T;
     p       : CARDINAL;
     c       : Trigger.CouplingMode;
-    userdata: REFANY;
+    userdata: <*TRANSIENT*> REFANY;
   BEGIN
     eh.ts.notifyEvent(e, context);
     WHILE eh.ts.getNextAction(a, c, p, userdata) DO
@@ -116,7 +119,7 @@ PROCEDURE GetNextAction (    eh              : T;
                          VAR context         : ContextSet.T;
                          VAR transactionLevel: CARDINAL;
                          VAR action          : Action.T;
-                         VAR userdata        : REFANY                ):
+                         VAR userdata        : <*TRANSIENT*> REFANY ):
   BOOLEAN =
   BEGIN
     RETURN eh.aa^[tu][coupling].get(

@@ -13,8 +13,7 @@ FROM Xmacro IMPORT
   TextVal,CharVal,IntVal,
   XtVaSetValues, XtVaCreateManagedWidget,XtVaCreateWidget;
 
-FROM M3toC IMPORT
-  TtoS,StoT;
+FROM M3toC IMPORT StoT, FlatTtoS;
 
 FROM AppModel IMPORT app;
 FROM UI IMPORT ui;
@@ -35,7 +34,7 @@ PROCEDURE init(parent:Xt.Widget)=
 BEGIN
   menubar:=Xmw.CreateMenuBar(
         parent:=parent,
-        name:=TtoS("menubar"),
+        name:=FlatTtoS("menubar"),
         args:=NIL,
         argCount:=0);
 
@@ -55,27 +54,27 @@ BEGIN
   file_menu:=Xmacro.MakeMenu(
         parent:=menubar,
         menu_type:=Xm.MENU_PULLDOWN,
-        menu_title:="File",
+        menu_title:=FlatTtoS("File"),
         menu_mnemonic:='F',
         cascade:=file_csb);
 
   new_btn:=Xmacro.BuildMenuItem(
         parent     := file_menu,
         class      := Xmw.xmPushButtonWidgetClass,
-        label      := "New",
+        label      := FlatTtoS("New"),
         mnemonic   := 'N',
         callback   := new_callback);
 
   open_btn:=Xmacro.BuildMenuItem(
         parent     := file_menu,
         class      := Xmw.xmPushButtonWidgetClass,
-        label      := "Open",
+        label      := FlatTtoS("Open"),
         mnemonic   := 'O',
         callback   := open_callback);
 
   open_dialog:=Xmw.CreateFileSelectionDialog(
       parent:=MainWindow.topLevel,
-      name:= TtoS("open_dialog"),
+      name:= FlatTtoS("open_dialog"),
       args:=NIL,
       argCount:=0);
   Xt.AddCallback(open_dialog,XmN.okCallback,open_ok_callback);
@@ -85,19 +84,19 @@ BEGIN
   save_btn:=Xmacro.BuildMenuItem(
         parent     := file_menu,
         class      := Xmw.xmPushButtonWidgetClass,
-        label      := "Save",
+        label      := FlatTtoS("Save"),
         mnemonic   := 'S',
         callback   := save_callback);
 
   saveas_btn:=Xmacro.BuildMenuItem(
         parent     := file_menu,
         class      := Xmw.xmPushButtonWidgetClass,
-        label      := "Save As",
+        label      := FlatTtoS("Save As"),
         mnemonic   := 'A',
         callback   := saveas_callback);
   saveas_dialog:=Xmw.CreateFileSelectionDialog(
       parent:=MainWindow.topLevel,
-      name:= TtoS("saveas_dialog"),
+      name:= FlatTtoS("saveas_dialog"),
       args:=NIL,
       argCount:=0);
   Xt.AddCallback(saveas_dialog,XmN.okCallback,saveas_ok_callback);
@@ -110,7 +109,7 @@ BEGIN
   print_btn:=Xmacro.BuildMenuItem(
         parent     := file_menu,
         class      := Xmw.xmPushButtonWidgetClass,
-        label      := "Print",
+        label      := FlatTtoS("Print"),
         mnemonic   := 'P',
         callback   := print_callback);
 
@@ -121,7 +120,7 @@ BEGIN
   exit_btn:=Xmacro.BuildMenuItem(
         parent     := file_menu,
         class      := Xmw.xmPushButtonWidgetClass,
-        label      := "Exit",
+        label      := FlatTtoS("Exit"),
         mnemonic   := 'x',
         callback   := exit_callback);
 
@@ -158,7 +157,7 @@ VAR
   value:TEXT; 
 BEGIN
   debug(ftn,"begin");
-  EVAL Xm.StringGetLtoR(cbs.value,TtoS(""),str);
+  EVAL Xm.StringGetLtoR(cbs.value,FlatTtoS(""),str);
   value:=StoT(str);
   app.file_open(value);
   Xt.UnmanageChild(widget);
@@ -201,7 +200,7 @@ VAR
   value:TEXT; 
 BEGIN
   debug(ftn,"begin");
-  EVAL Xm.StringGetLtoR(cbs.value,TtoS(""),str);
+  EVAL Xm.StringGetLtoR(cbs.value,FlatTtoS(""),str);
   value:=StoT(str);
   app.file_saveas(value);
   Xt.UnmanageChild(widget);
@@ -246,14 +245,14 @@ BEGIN
   edit_menu:=Xmacro.MakeMenu(
         parent:=menubar,
         menu_type:=Xm.MENU_PULLDOWN,
-        menu_title:="Edit",
+        menu_title:=FlatTtoS("Edit"),
         menu_mnemonic:='E',
         cascade:=edit_csb);
 
   copy_btn:=Xmacro.BuildMenuItem(
         parent     := edit_menu,
         class      := Xmw.xmPushButtonWidgetClass,
-        label      := "Copy",
+        label      := FlatTtoS("Copy"),
         mnemonic   := 'C',
         accelerator:= "Ctrl<Key>C",
         accel_text := "Ctrl C",
@@ -262,7 +261,7 @@ BEGIN
   cut_btn:=Xmacro.BuildMenuItem(
         parent     := edit_menu,
         class      := Xmw.xmPushButtonWidgetClass,
-        label      := "Cut",
+        label      := FlatTtoS("Cut"),
         mnemonic   := 'u',
         accelerator:= "Ctrl<Key>X",
         accel_text := "Ctrl X",
@@ -271,7 +270,7 @@ BEGIN
   paste_btn:=Xmacro.BuildMenuItem(
         parent     := edit_menu,
         class      := Xmw.xmPushButtonWidgetClass,
-        label      := "Paste",
+        label      := FlatTtoS("Paste"),
         mnemonic   := 'P',
         accelerator:= "Ctrl<Key>P",
         accel_text := "Ctrl P",
@@ -319,7 +318,7 @@ BEGIN
   help_menu:=Xmacro.MakeMenu(
         parent:=menubar,
         menu_type:=Xm.MENU_PULLDOWN,
-        menu_title:="Help",
+        menu_title:=FlatTtoS("Help"),
         menu_mnemonic:='H',
         cascade:=help_csb);
 
@@ -330,13 +329,13 @@ BEGIN
   about_btn:=Xmacro.BuildMenuItem(
         parent     := help_menu,
         class      := Xmw.xmPushButtonWidgetClass,
-        label      := "About",
+        label      := FlatTtoS("About"),
         callback   := about_callback);
 
-  str:=Xm.StringCreateSimple(TtoS("Hello World, in Modula3"));
+  str:=Xm.StringCreateSimple(FlatTtoS("Hello World, in Modula3"));
   about_dialog:=Xmw.CreateInformationDialog(
       parent:=about_btn,
-      name:= TtoS("about_dialog"),
+      name:= FlatTtoS("about_dialog"),
       args:=Args(args,ArgArray{
         XmN.messageString,    str,
         NIL,..},argCount),

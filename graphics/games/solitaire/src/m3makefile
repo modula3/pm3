@@ -13,6 +13,8 @@ module ("Tree")
 sequence ("Tree", "Tree")
 implementation ("Solitaire")
 
+m3_option ("-gui")
+build_standalone()
 Program ("solitaire")
-ManPage ("solitaire", 6)
+ManPage ("solitaire","6")
 

@@ -10,7 +10,7 @@
 MODULE AssignStmt;
 
 IMPORT CG, Stmt, StmtRep, Expr, Type, Error, Module, Target, TInt;
-IMPORT Token, Scanner, CallStmt, Addr, CheckExpr;
+IMPORT Token, Scanner, CallStmt, Addr, CheckExpr, ErrType;
 IMPORT M3ID, Value, NamedExpr, ArrayType, ConsExpr;
 IMPORT QualifyExpr, Variable, Procedure, OpenArrayType;
 IMPORT ProcExpr, ProcType, ObjectType, CallExpr, Host, Narrow;
@@ -69,7 +69,7 @@ PROCEDURE Compile (p: P): Stmt.Outcomes =
     Expr.PrepLValue (p.lhs);
     PrepForEmit (tlhs, p.rhs, initializing := FALSE);
     Expr.CompileLValue (p.lhs);
-    Emit (tlhs, p.rhs);
+    DoEmit (tlhs, p.rhs);
     Expr.NoteWrite (p.lhs);
     RETURN Stmt.Outcomes {Stmt.Outcome.FallThrough};
   END Compile;
@@ -95,7 +95,9 @@ PROCEDURE Check (tlhs: Type.T;  rhs: Expr.T;  VAR cs: Stmt.CheckState) =
     Expr.TypeCheck (rhs, cs);
 
     IF NOT Type.IsAssignable (tlhs, trhs) THEN
-      Error.Msg ("types are not assignable");
+      IF (tlhs # ErrType.T) AND (trhs # ErrType.T) THEN
+        Error.Msg ("types are not assignable");
+      END;
 
     ELSIF (Type.IsOrdinal (t)) THEN
       CheckOrdinal (tlhs, rhs);
@@ -131,16 +133,16 @@ PROCEDURE CheckOrdinal (tlhs: Type.T;  rhs: Expr.T) =
 PROCEDURE CheckReference (tlhs, trhs: Type.T;  READONLY lhs_info: Type.Info) =
   BEGIN
     IF Type.IsSubtype (trhs, tlhs) THEN
-      (* ok *)
+      (*ok*)
     ELSIF NOT Type.IsSubtype (tlhs, trhs) THEN
       Error.Msg ("types are not assignable");
     ELSIF Type.IsEqual (trhs, Addr.T, NIL) THEN 
       (* that is legal only in UNSAFE modules *)
-      IF Module.IsSafe() THEN Error.Msg ("unsafe implicit NARROW") END;
+      IF Module.IsSafe() THEN Error.Msg ("unsafe implicit NARROW"); END;
     ELSIF ObjectType.Is (trhs) THEN
-      (* ok *)
+      (*ok*)
     ELSIF lhs_info.isTraced THEN
-      (* ok *)
+      (*ok*)
     ELSE
       Error.Msg ("types are not assignable");
     END;
@@ -149,7 +151,7 @@ PROCEDURE CheckReference (tlhs, trhs: Type.T;  READONLY lhs_info: Type.Info) =
 PROCEDURE CheckProcedure (rhs: Expr.T) =
   BEGIN
     IF NeedsClosureCheck (rhs, TRUE) THEN
-      (* may generate more detailed message *)
+      (* may generate a more detailed message *)
     END;
   END CheckProcedure;
 
@@ -253,7 +255,7 @@ PROCEDURE CanAvoidCopy (tlhs: Type.T;  rhs: Expr.T;  initializing: BOOLEAN): BOO
     RETURN FALSE;
   END CanAvoidCopy;
 
-PROCEDURE Emit (tlhs: Type.T;  rhs: Expr.T) =
+PROCEDURE DoEmit (tlhs: Type.T;  rhs: Expr.T) =
   (* on entry the lhs is compiled and the rhs is prepped,
      preferrably using PrepForEmit() above. *)
   VAR
@@ -288,14 +290,14 @@ PROCEDURE Emit (tlhs: Type.T;  rhs: Expr.T) =
         AssignSet (tlhs, rhs, lhs_info);
     ELSE <* ASSERT FALSE *>
     END;
-  END Emit;
+  END DoEmit;
 
 PROCEDURE AssignOrdinal (tlhs: Type.T;  rhs: Expr.T;
                          READONLY lhs_info: Type.Info) =
   VAR min, max : Target.Int;
   BEGIN
     EVAL Type.GetBounds (tlhs, min, max);
-    CheckExpr.Emit (rhs, min, max);
+    CheckExpr.EmitChecks (rhs, min, max, CG.RuntimeError.ValueOutOfRange);
     CG.Store_indirect (lhs_info.stk_type, 0, lhs_info.size);
   END AssignOrdinal;
 
@@ -331,7 +333,7 @@ PROCEDURE AssignProcedure (rhs: Expr.T;  READONLY lhs_info: Type.Info) =
       t1 := CG.Pop ();
       ok := CG.Next_label ();
       CG.If_closure (t1, CG.No_label, ok, CG.Always);
-      CG.Narrow_fault ();
+      CG.Abort (CG.RuntimeError.NarrowFailed);
       CG.Set_label (ok);
       CG.Push (t1);  CG.Free (t1);
       CG.Push (lhs);
@@ -450,18 +452,18 @@ PROCEDURE GenOpenArraySizeChecks (READONLY lhs, rhs: CG.Val;
         CG.Push (rhs);
         CG.Open_size (n);
         CG.Load_integer (Type.Number (ilhs));
-        CG.Check_eq ();
+        CG.Check_eq (CG.RuntimeError.IncompatibleArrayShape);
       ELSIF (irhs # NIL) THEN
         CG.Push (lhs);
         CG.Open_size (n);
         CG.Load_integer (Type.Number (irhs));
-        CG.Check_eq ();
+        CG.Check_eq (CG.RuntimeError.IncompatibleArrayShape);
       ELSE (* both arrays are open *)
         CG.Push (lhs);
         CG.Open_size (n);
         CG.Push (rhs);
         CG.Open_size (n);
-        CG.Check_eq ();
+        CG.Check_eq (CG.RuntimeError.IncompatibleArrayShape);
       END;
       INC (n);
       tlhs := elhs;
@@ -479,7 +481,7 @@ PROCEDURE GenOpenArrayCopy (READONLY rhs: CG.Val;  tlhs, trhs: Type.T) =
     FOR i := 0 TO MIN (lhs_depth, rhs_depth) - 1 DO
       CG.Push (rhs);
       CG.Open_size (i);
-      IF (i # 0) THEN CG.Multiply (CG.Type.Word) END;
+      IF (i # 0) THEN CG.Multiply (Target.Word.cg_type) END;
     END;
 
     IF (lhs_depth < rhs_depth)
@@ -490,7 +492,7 @@ PROCEDURE GenOpenArrayCopy (READONLY rhs: CG.Val;  tlhs, trhs: Type.T) =
 
 (*---------------------------------------- code generation: checking only ---*)
 
-PROCEDURE EmitCheck (tlhs: Type.T;  rhs: Expr.T) =
+PROCEDURE DoEmitCheck (tlhs: Type.T;  rhs: Expr.T) =
   (* on entry the lhs is compiled and the rhs is prepped. *)
   VAR
     t := Type.Base (tlhs); (* strip renaming and packing *)
@@ -516,13 +518,13 @@ PROCEDURE EmitCheck (tlhs: Type.T;  rhs: Expr.T) =
         DoCheckSet (tlhs, rhs);
     ELSE <* ASSERT FALSE *>
     END;
-  END EmitCheck;
+  END DoEmitCheck;
 
 PROCEDURE DoCheckOrdinal (tlhs: Type.T;  rhs: Expr.T) =
   VAR min, max : Target.Int;
   BEGIN
     EVAL Type.GetBounds (tlhs, min, max);
-    CheckExpr.Emit (rhs, min, max);
+    CheckExpr.EmitChecks (rhs, min, max, CG.RuntimeError.ValueOutOfRange);
   END DoCheckOrdinal;
 
 PROCEDURE DoCheckFloat (rhs: Expr.T) =
@@ -548,7 +550,7 @@ PROCEDURE DoCheckProcedure (rhs: Expr.T) =
       t1 := CG.Pop ();
       ok := CG.Next_label ();
       CG.If_closure (t1, CG.No_label, ok, CG.Always);
-      CG.Narrow_fault ();
+      CG.Abort (CG.RuntimeError.NarrowFailed);
       CG.Set_label (ok);
       CG.Push (t1);  CG.Free (t1);
     END;
@@ -617,7 +619,7 @@ PROCEDURE GenOpenArraySizeChk (READONLY rhs: CG.Val;  tlhs, trhs: Type.T) =
       CG.Push (rhs);
       CG.Open_size (n);
       CG.Load_integer (Type.Number (ilhs));
-      CG.Check_eq ();
+      CG.Check_eq (CG.RuntimeError.IncompatibleArrayShape);
 
       INC (n);
       tlhs := elhs;

@@ -9,12 +9,10 @@ IMPORT M3Context, M3CId, M3CUnit, M3Conventions, M3CConcTypeSpec, M3AST_AS;
 IMPORT M3CGo;
 IMPORT M3Args, M3CFETool;
 IMPORT M3AST_AS_F, M3AST_SM_F, M3AST_FE_F;
-IMPORT AstToType, StubUtils, Type;
+IMPORT AstToType, StubUtils, Protocol, Type;
 IMPORT Atom, Stdio, Text;
 
-<* FATAL StubUtils.Error *>
-
-CONST Version = "1-Oct-92";
+CONST Version = "1-Oct-96";
 
 TYPE
   Extension = M3CGo.Extension OBJECT
@@ -33,6 +31,8 @@ PROCEDURE GetArgs(tool: M3Args.T)=
       found: BOOLEAN;
       perfMon: BOOLEAN;
   BEGIN
+    IF M3Args.GetFlag(tool, StubGen_V1_Arg) THEN Protocol.version := 1; END;
+    IF M3Args.GetFlag(tool, StubGen_V2_Arg) THEN Protocol.version := 2; END;
     perfMon := M3Args.GetFlag(tool, StubGenPerf_Arg);
     StubUtils.SetPerfMon(perfMon);
     strings := M3Args.GetStringList(tool, StubGenTypes_Arg);
@@ -146,7 +146,7 @@ PROCEDURE Set(context: M3Context.T; cu: M3AST_AS.Compilation_Unit)=
         RETURN
     | M3AST_AS.UNIT_NORMAL =>
         IF cu = M3Context.Standard() THEN RETURN END;
-    ELSE RAISE StubUtils.Error("Run time error -- should not occur");
+    ELSE StubUtils.Die("StubGenTool.Set: unknown AST root type");
     END;
  
     (* No reason to look at MODULEs *)
@@ -165,6 +165,8 @@ BEGIN
                "Generate stubs for network objects", Version,
                master := TRUE);
   M3Args.RegisterFlag(tool_g, StubGen_Arg, "stub generate");
+  M3Args.RegisterFlag(tool_g, StubGen_V1_Arg, "protocol version 1");
+  M3Args.RegisterFlag(tool_g, StubGen_V2_Arg, "protocol version 2");
   M3Args.RegisterStringList(tool_g, StubGenTypes_Arg, "list of types");
   M3Args.RegisterStringList(tool_g, StubGenExists_Arg,
                             "list of existing types");

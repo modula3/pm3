@@ -44,11 +44,7 @@ readonly proc _stableobj(intf, reveals, v) is  % e.g. intf = "Data"
   if defined("_all")
     if stale(implname & ".m3", intffilelist)
       generate_tfile()  % generate the import table
-      local cmd = [ _STABLEGEN, "-i", intflist[0], "-o", intf, 
-                    M3SEARCH_TABLES ]
-      write (cmd, CR)
-      local ret = exec(cmd)
-      if not equal(ret, 0) error("command failed with error code: ", ret) end
+      exec(_STABLEGEN, "-i", intflist[0], "-o", intf, M3SEARCH_TABLES)
     end
   end
 

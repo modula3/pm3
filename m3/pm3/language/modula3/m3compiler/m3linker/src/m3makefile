@@ -14,10 +14,7 @@ Module ("MxIn")
 Module ("MxOut")
 Module ("MxMerge")
 Module ("MxCheck")
-Interface ("MxGen")
-Module ("MxGenRep")
-Module ("MxGenC")
-Module ("MxGenCG")
+Module ("MxGen")
 Module ("MxVS")
 
 module ("MxRep")
@@ -26,5 +23,6 @@ module ("MxSet")
 module ("MxVSSet")
 module ("MxIO")
 
+%build_standalone ()
 Library ("m3link")
 

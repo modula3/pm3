@@ -1,0 +1,15 @@
+INTERFACE Bench;
+
+PROCEDURE insert1();
+PROCEDURE delete1();
+PROCEDURE traverse7(): INTEGER;
+PROCEDURE query1():    INTEGER;
+PROCEDURE query2():    INTEGER;
+PROCEDURE query3():    INTEGER;
+PROCEDURE query4():    INTEGER;
+PROCEDURE query5():    INTEGER;
+PROCEDURE query6():    INTEGER;
+PROCEDURE query7():    INTEGER;
+PROCEDURE query8():    INTEGER;
+
+END Bench.

@@ -5,10 +5,6 @@
 % Last modified on Mon Mar 21 23:12:40 PST 1994 by luca  
 %      modified on Wed Dec 22 15:13:36 PST 1993 by kalsow
 
-if defined("AT_SRC") m3_option("-O") end
-remove_m3_option("-w1")
-m3_option("-w2")
-
 import("formsvbt")
 import("synloc")
 import("obliqrt")
@@ -17,6 +13,6 @@ Module ("ObLibUI")
 
 Library("obliqlibui")
 
-/* ManPage("obliqlibui", ?) */
+/* ManPage(obliqlibui,?) */
 
 

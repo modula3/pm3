@@ -18,14 +18,12 @@ PROCEDURE TypeOf (ce: CallExpr.T): Type.T =
     RETURN Type.Base (Expr.TypeOf (ce.args[0]));
   END TypeOf;
 
-PROCEDURE Check (ce: CallExpr.T;  VAR cs: Expr.CheckState) =
+PROCEDURE Check (ce: CallExpr.T;  <*UNUSED*> VAR cs: Expr.CheckState) =
   VAR t := TypeOf (ce);
   BEGIN
     ce.type := t;
-    IF (t = Int.T) THEN
-      INC (cs.int_ops);
-    ELSIF (t = Reel.T) OR (t = LReel.T) OR (t = EReel.T) THEN
-      INC (cs.fp_ops);
+    IF (t = Int.T) OR (t = Reel.T) OR (t = LReel.T) OR (t = EReel.T) THEN
+      (* ok *)
     ELSE
       Error.Msg ("ABS: wrong argument type");
     END;
@@ -57,6 +55,12 @@ PROCEDURE Fold (ce: CallExpr.T): Expr.T =
     END;
   END Fold;
 
+PROCEDURE GetBounds (ce: CallExpr.T;  VAR min, max: Target.Int) =
+  BEGIN
+    Expr.GetBounds (ce.args[0], min, max);
+    IF TInt.LT (min, TInt.Zero) THEN min := TInt.Zero; END;
+  END GetBounds;
+
 PROCEDURE Initialize () =
   BEGIN
     Z := CallExpr.NewMethodList (1, 1, TRUE, FALSE, TRUE, NIL,
@@ -70,6 +74,7 @@ PROCEDURE Initialize () =
                                  CallExpr.NotBoolean,
                                  CallExpr.NotBoolean,
                                  Fold,
+                                 GetBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

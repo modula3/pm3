@@ -2,14 +2,13 @@
 (* All rights reserved.                                        *)
 (* See the file COPYRIGHT for a full description.              *)
 (*                                                             *)
-(* Last modified on Tue Aug 27 09:14:56 PDT 1996 by najork     *)
-(*      modified on Tue Oct 11 14:32:39 PDT 1994 by isard      *)
+(* Last modified on Tue Oct 11 14:32:39 PDT 1994 by isard      *)
 (*      modified on Fri Nov 19 09:30:31 PST 1993 by kalsow     *)
 (*      modified on Mon Apr 13 09:55:12 PDT 1992 by muller     *)
 
 INTERFACE Codex86;
 
-IMPORT M3CG, M3ObjFile;
+IMPORT M3CG, M3ObjFile, TFloat;
 
 FROM M3CG IMPORT MType, Label, ByteOffset, Alignment;
 FROM M3CG_Ops IMPORT ErrorHandler;
@@ -20,10 +19,9 @@ FROM M3x86Rep IMPORT Operand, NRegs, MVar, x86Var, x86Proc, Regno;
 
 TYPE T <: Public;
 TYPE Public = OBJECT
-        wr            : Wrx86.T := NIL;
-        reg           : ARRAY [0 .. NRegs] OF Operand;
-        ftop_inmem    := FALSE;
-        internalvar   : x86Var;
+        wr         : Wrx86.T := NIL;
+        reg        : ARRAY [0 .. NRegs] OF Operand;
+        ftop_inmem := FALSE;
       METHODS
         wrFlush ();
         set_obj (obj: M3ObjFile.T);
@@ -49,7 +47,7 @@ TYPE Public = OBJECT
         fstack_pop (READONLY mvar: MVar);
         fstack_swap ();
         fstack_discard ();
-        f_loadlit (READONLY flarr: ARRAY OF INTEGER; type: MType);
+        f_loadlit (READONLY flarr: FloatBytes; type: MType);
         immOp (op: Op; READONLY dest: Operand; imm: INTEGER);
         binOp (op: Op; READONLY dest, src: Operand);
         tableOp (op: Op; READONLY dest, index: Operand; scale: INTEGER;
@@ -93,9 +91,10 @@ TYPE Public = OBJECT
         end ();
       END;
 
-TYPE IntnlVar = { Lowset_table, Highset_table };
-
 TYPE Cond = { Z, NZ, E, NE, G, GE, L, LE, A, AE, B, BE, Always };
+
+CONST CondName = ARRAY Cond OF TEXT { "Z", "NZ", "E", "NE", "G", "GE",
+                                      "L", "LE", "A", "AE", "B", "BE", "*" };
 
 CONST revcond = ARRAY Cond OF Cond
   { Cond.Z, Cond.NZ, Cond.E, Cond.NE, Cond.L, Cond.LE,
@@ -148,6 +147,9 @@ CONST condopcode = ARRAY Cond OF CondOpCode
     CondOpCode { "",      -1    } };
 
 TYPE
+  FloatBytes = ARRAY [0..7] OF TFloat.Byte;
+
+TYPE
   FOpCode = RECORD
     name: TEXT;
     m32, m64, memop, stbase, stmodrm,
@@ -192,6 +194,9 @@ TYPE
   END;
 
 TYPE FIm = { ONE, L2T, L2E, PI, LG2, LN2, Z };
+
+CONST FImName = ARRAY FIm OF TEXT { "1.0", "Log2(10)", "Log2(e)", "pi",
+                                    "Log10(2)", "LogE(2)", "0.0" };
 
 CONST imcode = ARRAY FIm OF FImOp
   { FImOp { "FLD1",   16_D9E8 },

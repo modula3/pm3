@@ -13,6 +13,7 @@ IMPORT M3CG, M3ID;
 FROM M3CG IMPORT ByteOffset, ByteSize, Alignment;
 FROM M3CG IMPORT Var, Proc, Name;
 FROM M3CG IMPORT Type, MType, TypeUID;
+FROM M3ObjFile IMPORT Seg;
 
 TYPE U <: Public;
 TYPE Public = M3CG.T OBJECT
@@ -33,6 +34,7 @@ TYPE
     s: ByteSize;
     a: Alignment;
     exported := FALSE;
+    seg: Seg;
     symbol: INTEGER;
     offset: ByteOffset;
     loc: VLoc;
@@ -99,6 +101,9 @@ TYPE Force = {any, mem, anydword, anytemp, anyregimm, anyreg, regset};
 CONST NRegs: INTEGER = 7;
 
 TYPE Regno = [-1 .. NRegs];
+
+CONST RegName = ARRAY Regno OF TEXT { "*NOREG*", "EAX", "ECX", "EDX",
+                                      "EBX", "ESP", "EBP", "ESI", "EDI" };
 
 TYPE RegSet = SET OF Regno;
 

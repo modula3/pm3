@@ -1,7 +1,13 @@
 (*| Copyright (C) 1990, Digital Equipment Corporation       *)
 (*| All rights reserved.                                    *)
 (*| See the file COPYRIGHT for a full description.          *)
-
+(*|                                                         *)
+(*| Portions Copyright 1996-2000, Critical Mass, Inc.       *)
+(*| See file COPYRIGHT-CMASS for details.                   *)
+(*|                                                         *)
+(*| Portions Copyright 1998-2002, Purdue Research           *)
+(*| Foundation                                              *)
+(*|                                                         *)
 (*| Last modified on Wed Oct 12 14:30:51 PDT 1994 by kalsow *)
 (*|      modified on Tue Jun  1 13:03:23 PDT 1993 by muller *)
 (*|      modified on Tue Mar  9 08:44:09 PST 1993 by jdd    *)
@@ -15,7 +21,7 @@ UNSAFE INTERFACE RTHeapRep;
    garbage collector.  Some items here should be made private or moved
    elsewhere. *)
 
-IMPORT RT0, RTHeapDep;
+IMPORT RT0, RTHeapDep, RTDB;
 FROM RT0 IMPORT Typecode;
 
 (* The allocator and collector maintain two heaps of objects.  One heap is
@@ -53,7 +59,15 @@ CONST
 
 VAR p0, p1: Page := Nil;
 
-VAR desc: UNTRACED REF ARRAY OF Desc;
+VAR
+  desc: UNTRACED REF ARRAY OF Desc;
+  map : UNTRACED REF ARRAY OF RTDB.Page;
+
+VAR max_heap_size: INTEGER := -1;
+(** If "max_heap_size" is non-negative, the traced heap will not be
+    extended beyond "max_heap_size" bytes.  If "max_heap_size" is
+    negative, the traced heap will be allowed to grow until the
+    underlying OS refuses to provide more memory.  *)
 
 TYPE
   Desc = RECORD
@@ -62,10 +76,17 @@ TYPE
            pure      : BITS 1 FOR BOOLEAN;
            note      : BITS 3 FOR Note;
            gray      : BITS 1 FOR BOOLEAN;
-           protected : BITS 1 FOR BOOLEAN;
+           mode      : BITS 2 FOR Mode;
            continued : BITS 1 FOR BOOLEAN;
+           resident  : BITS 1 FOR BOOLEAN;
+           dirty     : BITS 1 FOR BOOLEAN;
            link: BITS BITSIZE(ADDRESS) - LogAdrPerPage FOR Page := Nil;
          END;
+
+TYPE Mode = { ReadWrite, ReadOnly, NoAccess };
+CONST
+  Readable = ARRAY Mode OF BOOLEAN { TRUE, TRUE, FALSE };
+  Writable = ARRAY Mode OF BOOLEAN { TRUE, FALSE, FALSE };
 
 TYPE Space = {Unallocated, Free, Previous, Current};
 
@@ -73,6 +94,7 @@ TYPE Space = {Unallocated, Free, Previous, Current};
    state.  This is usually used for performance monitoring. *)
 
 TYPE
+  Notes = SET OF Note;
   Note = {OlderGeneration,       (* page promoted to current space because
                                     it it contained the older generation
                                     from the previous space *)
@@ -83,6 +105,8 @@ TYPE
                                     it contains a single accessible object,
                                     so no garbage would be collected by
                                     copying the object *)
+          Persistent,            (* page promoted to current space because
+                                    it is persistent *)
           Frozen,                (* page contains frozen ref *)
           Allocated,             (* page was allocated in current space *)
           Copied};               (* page contains elements that were copied
@@ -150,12 +174,99 @@ PROCEDURE UnsafeGetShape (    r          : REFANY;
 
 (****** LOW-LEVEL ALLOCATOR/COLLECTOR *****)
 
-PROCEDURE AllocForNew (size, alignment: CARDINAL): ADDRESS;
-(* Return the address of "size" bytes of traced storage on an
-   "alignment" byte boundary.  The storage is not zeroed. *)
+PROCEDURE AllocUntraced (size: INTEGER): ADDRESS;
+(* Return the address of "size" bytes of untraced, un-zeroed storage,
+   if possible.  Otherwise, return "NIL".  *)
 
-PROCEDURE Malloc (size: INTEGER): ADDRESS;
-(* Return the address of "size" bytes of untraced, zeroed storage *)
+PROCEDURE AllocTraced (size, alignment: CARDINAL;  VAR pool: AllocPool): ADDRESS;
+(* Return the address of "size" bytes of traced storage on an
+   "alignment" byte boundary from the allocation pool "pool".
+   The storage is not zeroed.  If the request cannot be satisfied,
+   "NIL" is returned.  LL >= RTOS.LockHeap. *)
+
+(* Objects in the traced heap are allocated from one of three "pools".
+   A pool is collection of pages with similar properties.  The "newPool"
+   contains NEWed objects.  The "pureCopy" pool contains objects that
+   were copied by the collector into new space, but that contain no
+   internal REFs.  Similarly, the "impureCopy" pool is for copied
+   objects that contain REFs.  *)
+
+TYPE
+  AllocPool = RECORD
+    desc       : Desc;           (* descriptor for new pages in this pool *)
+    notAfter   : Notes;          (* if possible avoid following these pages *)
+    page       : Page    := Nil; (* current allocation page of the pool *)
+    stack      : Page    := Nil; (* linked list of new pages from this pool *)
+    next       : ADDRESS := NIL; (* address of next available byte *)
+    limit      : ADDRESS := NIL; (* address of first unavailable byte *)
+    n_small    : INTEGER := 0;   (* # of "small" pages allocated via this pool *)
+    n_big      : INTEGER := 0;   (* # of "big" and "continued" pages allocated *)
+    db: RTDB.T := NIL;
+  END;
+
+VAR (* LL >= RTOS.HeapLock *)
+  newPool := AllocPool {
+    desc := Desc {space := Space.Current, generation := Generation.Younger,
+                  pure := FALSE, note := Note.Allocated, gray := FALSE,
+                  mode := Mode.ReadWrite, continued := FALSE,
+                  resident := TRUE, dirty := TRUE },
+    notAfter := Notes {Note.Copied} };
+
+VAR (* LL >= RTOS.HeapLock *)
+  newTransient := AllocPool {
+    desc := Desc {space := Space.Current, generation := Generation.Younger,
+                  pure := FALSE, note := Note.Allocated, gray := FALSE,
+                  mode := Mode.ReadWrite, continued := FALSE,
+                  resident := TRUE, dirty := TRUE },
+    notAfter := Notes {Note.Copied} };
+
+VAR (* LL >= RTOS.HeapLock *)
+  pureCopy := AllocPool {
+    desc := Desc {space := Space.Current, generation := Generation.Younger,
+                  pure := TRUE, note := Note.Copied, gray := FALSE,
+                  mode := Mode.ReadWrite, continued := FALSE,
+                  resident := TRUE, dirty := FALSE },
+    notAfter := Notes {Note.Allocated} };
+
+VAR (* LL >= RTOS.HeapLock *)
+  pureTransient := AllocPool {
+    desc := Desc {space := Space.Current, generation := Generation.Younger,
+                  pure := TRUE, note := Note.Copied, gray := FALSE,
+                  mode := Mode.ReadWrite, continued := FALSE,
+                  resident := TRUE, dirty := FALSE },
+    notAfter := Notes {Note.Allocated} };
+
+VAR (* LL >= RTOS.HeapLock *)
+  pureStabilize := AllocPool {
+    desc := Desc {space := Space.Current, generation := Generation.Younger,
+                  pure := TRUE, note := Note.Copied, gray := TRUE,
+                  mode := Mode.ReadWrite, continued := FALSE,
+                  resident := TRUE, dirty := FALSE },
+    notAfter := Notes {Note.Allocated} };
+
+VAR (* LL >= RTOS.HeapLock *)
+  impureCopy := AllocPool {
+    desc := Desc {space := Space.Current, generation := Generation.Younger,
+                  pure := FALSE, note := Note.Copied, gray := TRUE,
+                  mode := Mode.ReadWrite, continued := FALSE,
+                  resident := TRUE, dirty := TRUE },
+    notAfter := Notes {Note.Allocated} };
+
+VAR (* LL >= RTOS.HeapLock *)
+  impureTransient := AllocPool {
+    desc := Desc {space := Space.Current, generation := Generation.Younger,
+                  pure := FALSE, note := Note.Copied, gray := TRUE,
+                  mode := Mode.ReadWrite, continued := FALSE,
+                  resident := TRUE, dirty := TRUE },
+    notAfter := Notes {Note.Allocated} };
+
+VAR (* LL >= RTOS.HeapLock *)
+  impureStabilize := AllocPool {
+    desc := Desc {space := Space.Current, generation := Generation.Younger,
+                  pure := FALSE, note := Note.Copied, gray := TRUE,
+                  mode := Mode.ReadWrite, continued := FALSE,
+                  resident := TRUE, dirty := TRUE },
+    notAfter := Notes {Note.Allocated} };
 
 (****** MODULE OBJECTS ******)
 
@@ -196,17 +307,8 @@ PROCEDURE Crash (): BOOLEAN;
    collection.  If Crash returns TRUE, the current collection, if any,
    successfully completed. *)
 
-(* We maintain counts of pages in the current pace allocated by "NEW", by
-   copying, and by promotion, for pages for small objects and for large
-   objects. *)
-
-VAR
-  smallNewPages, largeNewPages            : CARDINAL := 0;
-  smallCopyPages, largeCopyPages          : CARDINAL := 0;
-  smallPromotionPages, largePromotionPages: CARDINAL := 0;
-
 TYPE
-  MonitorClosure <: OBJECT
+  MonitorClosure <: <*TRANSIENT*> ROOT OBJECT
                     METHODS
                       before ();
                       after  ();
@@ -227,7 +329,7 @@ PROCEDURE InvokeMonitors (before: BOOLEAN);
 
 (*** VM support ***)
 
-PROCEDURE Fault (addr: ADDRESS): BOOLEAN;
+PROCEDURE Fault (addr: ADDRESS; mode := Mode.NoAccess): BOOLEAN;
 
 (* Fault is called from the RTHeapDep when a VM fault occurs.  If Fault
    returns TRUE, protection has been changed and the operation should be
@@ -240,7 +342,7 @@ PROCEDURE Fault (addr: ADDRESS): BOOLEAN;
    the objects on the heap. *)
 
 TYPE
-  RefVisitor = OBJECT
+  RefVisitor = <*TRANSIENT*> ROOT OBJECT
                METHODS
                  visit (tc: Typecode; r: REFANY; size: CARDINAL): BOOLEAN;
                  (* returns TRUE to continue *)
@@ -252,10 +354,6 @@ PROCEDURE VisitAllRefs (proc: RefVisitor);
    you should refrain from allocating memory in proc. *)
 
 (****** INITIALIZATION ******)
-
-PROCEDURE CheckTypes ();
-(* called after type registration to let the allocator sanity check the
-   typecells. *)
 
 PROCEDURE Init();
 (* MUST be called to initialize allocator/collector state *)

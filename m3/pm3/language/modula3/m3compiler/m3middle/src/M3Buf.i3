@@ -22,12 +22,13 @@ TYPE T <: REFANY;
 
 PROCEDURE New (): T;
 
-PROCEDURE PutChar  (t: T;  ch: CHAR);
-PROCEDURE PutText  (t: T;  txt: TEXT);
-PROCEDURE PutInt   (t: T;  i: INTEGER);
-PROCEDURE PutIntt  (t: T;  READONLY i: Target.Int);
-PROCEDURE PutFloat (t: T;  READONLY f: Target.Float);
-PROCEDURE PutSub   (t: T;  READONLY x: ARRAY OF CHAR);
+PROCEDURE PutChar    (t: T;  ch: CHAR);
+PROCEDURE PutText    (t: T;  txt: TEXT);
+PROCEDURE PutInt     (t: T;  i: INTEGER);
+PROCEDURE PutIntt    (t: T;  READONLY i: Target.Int);
+PROCEDURE PutFloat   (t: T;  READONLY f: Target.Float);
+PROCEDURE PutSub     (t: T;  READONLY x: ARRAY OF CHAR);
+PROCEDURE PutSubText (t: T;  txt: TEXT;  start, len: CARDINAL);
 
 PROCEDURE ToText   (t: T): TEXT;
 PROCEDURE ToFP     (t: T): M3FP.T;

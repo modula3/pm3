@@ -5,19 +5,19 @@
 (* Last modified on Mon Nov 21 11:28:44 PST 1994 by kalsow     *)
 (*      modified on Tue May  4 18:49:28 PDT 1993 by muller     *)
 
-UNSAFE MODULE RTThread;
+UNSAFE MODULE RTThread EXPORTS RTThread, RTHooks;
 
-IMPORT Usignal, Unix, Umman, RTMisc, Word;
+IMPORT Usignal, Unix, RTMisc, Umman, Word;
 
 PROCEDURE SP (READONLY s: State): ADDRESS =
   BEGIN
     RETURN LOOPHOLE (s.sp, ADDRESS);
   END SP;
 
-(*--------------------------------------------------------- thread stacks ---*)
-
 VAR page_bytes : CARDINAL := 0;
 VAR stack_slop : CARDINAL;
+
+(*--------------------------------------------------------- thread stacks ---*)
 
 PROCEDURE NewStack (size: INTEGER;  VAR(*OUT*)s: Stack) =
   VAR i: INTEGER; start: ADDRESS;
@@ -30,6 +30,10 @@ PROCEDURE NewStack (size: INTEGER;  VAR(*OUT*)s: Stack) =
     (* allocate enough so that we're guaranteed to get a full, aligned page *)
     INC (size, stack_slop);
     s.words := NEW (StackSpace, size);
+    (* 
+    s.first := ADR (s.words[0]);
+    s.last  := s.first + size * ADRSIZE (s.words[0]);
+    *)
 
     (* find the aligned page and unmap it *)
     start := RTMisc.Align (ADR (s.words[0]), page_bytes);
@@ -103,6 +107,33 @@ PROCEDURE disallow_sigvtalrm () =
 
 VAR
   sigvtalrmMask: Usignal.sigset_t;
+
+(*--------------------------------------------- exception handling support --*)
+
+PROCEDURE GetCurrentHandlers (): ADDRESS=
+  BEGIN
+    RETURN handlerStack;
+  END GetCurrentHandlers;
+
+PROCEDURE SetCurrentHandlers (h: ADDRESS)=
+  BEGIN
+    handlerStack := h;
+  END SetCurrentHandlers;
+
+(*RTHooks.PushEFrame*)
+PROCEDURE PushEFrame (frame: ADDRESS) =
+  TYPE Frame = UNTRACED REF RECORD next: ADDRESS END;
+  VAR f := LOOPHOLE (frame, Frame);
+  BEGIN
+    f.next := handlerStack;
+    handlerStack := f;
+  END PushEFrame;
+
+(*RTHooks.PopEFrame*)
+PROCEDURE PopEFrame (frame: ADDRESS) =
+  BEGIN
+    handlerStack := frame;
+  END PopEFrame;
 
 BEGIN
   sigvtalrmMask.val[0] := Usignal.sigmask(Usignal.SIGVTALRM);

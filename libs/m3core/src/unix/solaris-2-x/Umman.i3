@@ -2,7 +2,8 @@
 (* All rights reserved.                                                      *)
 (* See the file COPYRIGHT for a full description.                            *)
 (*                                                                           *)
-(* Last modified on Sat Jul 11 20:44:19 PDT 1992 by muller                   *)
+(* Last modified on Wed Jul 30 13:55:56 EST 1997 by hosking                  *)
+(*      modified on Sat Jul 11 20:44:19 PDT 1992 by muller                   *)
 
 INTERFACE Umman;
 
@@ -11,7 +12,6 @@ FROM Utypes IMPORT caddr_t, size_t, off_t;
 
 (*** sys/mman.h ***)
 
-CONST
   (*
     Protections are chosen from these bits, or-ed together.
     Note - not all implementations literally provide all possible
@@ -21,6 +21,7 @@ CONST
     where PROT_WRITE has not been set.  Also, no implementation will
     allow any access to succeed where prot is specified as PROT_NONE.
   *)
+CONST
   PROT_NONE  = 0;			 (* pages cannot be accessed *)
   PROT_READ  = 1;			 (* pages can be read *)
   PROT_WRITE = 2;			 (* pages can be written *)
@@ -50,7 +51,6 @@ CONST
   MS_SYNC       = 0;			 (* wait for msync *)
   MS_ASYNC      = 1;			 (* return immediately *)
   MS_INVALIDATE = 2;			 (* invalidate caches *)
-
 
 <*EXTERNAL*>
 PROCEDURE madvise (addr: caddr_t; len: size_t; behav: int): int;

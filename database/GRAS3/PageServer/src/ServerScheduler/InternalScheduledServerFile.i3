@@ -7,8 +7,11 @@ INTERFACE InternalScheduledServerFile;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:38  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:49  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:38  hosking
+    Import of GRAS3 1.1
 
     Revision 1.6  1997/06/16 12:21:40  rbnix
     	Changed data on server is now stored temporary in a local
@@ -56,7 +59,7 @@ INTERFACE InternalScheduledServerFile;
 IMPORT
   Page,
   PageFile,
-  Access, PageLock, Transaction,
+  Access, PageLock, Txn,
   CommunicationEntry, ClientInfoSeq,
   ServedClient,
   ScheduledServerFile;
@@ -91,12 +94,12 @@ TYPE
 			:ClientInfoSeq.T;
 
       checkData         (         client        :ServedClient.T;
-                                  end		:Transaction.End;
+                                  end		:Txn.End;
                          READONLY entry		:CommunicationEntry.T)
 			RAISES {Access.Invalid};
       
       putData		(         client	:ServedClient.T;
-                                  end		:Transaction.End;
+                                  end		:Txn.End;
                          READONLY entry		:CommunicationEntry.T)
 			RAISES {Access.Invalid};
 

@@ -7,8 +7,11 @@ MODULE EntryServer;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:38  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:49  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:38  hosking
+    Import of GRAS3 1.1
 
     Revision 1.18  1998/01/30 13:19:34  roland
     Lock on PageCache must not be hold after raising an exception.
@@ -88,7 +91,8 @@ MODULE EntryServer;
 
 *)
 (***************************************************************************)
-IMPORT Thread, NetObj, Pathname, Fmt, TextSeq, Config, Variant, Journal,
+IMPORT Thread, NetObj, Pathname, Fmt,
+       TextTransientSeq AS TextSeq, Config, Variant, Journal,
        PageFile, PageCache, Access, Termination, CallbackPort,
        CommunicationPort, ClientInfo, ClientInfoSeq, ServerScheduler,
        CommunicationServer, NameServer, Uugid, Text;

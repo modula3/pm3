@@ -9,7 +9,7 @@
 MODULE IsType;
 
 IMPORT CG, CallExpr, Expr, ExprRep, Type, Error, TypeExpr, Reff, RefType;
-IMPORT Procedure, Bool, ObjectType, Null, TInt, M3RT;
+IMPORT Procedure, Bool, ObjectType, Null, TInt, M3RT, Target, RunTyme;
 
 VAR Z: CallExpr.MethodList;
 
@@ -38,8 +38,9 @@ PROCEDURE Prep (ce: CallExpr.T) =
   VAR
     e := ce.args[0];
     t, u: Type.T;
-    ptr, tc: CG.Val;
+    ptr: CG.Val;
     true: CG.Label;
+    proc: Procedure.T;
   BEGIN
     IF NOT TypeExpr.Split (ce.args[1], t) THEN
       t := Expr.TypeOf (e);
@@ -49,19 +50,21 @@ PROCEDURE Prep (ce: CallExpr.T) =
     u := Expr.TypeOf (e);
 
     Expr.Prep (ce.args[0]);
-    Expr.Compile (ce.args[0]);
     IF Type.IsSubtype (u, t) THEN
       (* the test succeeds statically *)
+      Expr.Compile (ce.args[0]);
       CG.Discard (CG.Type.Addr);
       CG.Load_integer (TInt.One);
       ce.tmp := CG.Pop ();
 
     ELSIF Type.IsEqual (t, Null.T, NIL) THEN
+      Expr.Compile (ce.args[0]);
       CG.Load_nil ();
-      CG.Eq (CG.Type.Addr);
+      CG.Compare (CG.Type.Addr, CG.Cmp.EQ);
       ce.tmp := CG.Pop ();
 
     ELSIF RefType.Is (t) THEN
+      Expr.Compile (ce.args[0]);
       true := CG.Next_label ();
       ptr := CG.Pop ();
       CG.Load_integer (TInt.One);
@@ -69,12 +72,12 @@ PROCEDURE Prep (ce: CallExpr.T) =
       ce.tmp := CG.Pop_temp ();
       CG.Push (ptr);
       CG.Load_nil ();
-      CG.If_eq (true, CG.Type.Addr, CG.Maybe);
+      CG.If_compare (CG.Type.Addr, CG.Cmp.EQ, true, CG.Maybe);
 
       CG.Push (ptr);
       CG.Ref_to_typecode ();
       Type.LoadInfo (t, M3RT.TC_typecode);
-      CG.If_eq (true, CG.Type.Int, CG.Always);
+      CG.If_compare (Target.Integer.cg_type, CG.Cmp.EQ, true, CG.Always);
 
       CG.Load_integer (TInt.Zero);
       CG.Store_temp (ce.tmp);
@@ -83,33 +86,20 @@ PROCEDURE Prep (ce: CallExpr.T) =
       CG.Free (ptr);
 
     ELSE (* general object type *)
-      true := CG.Next_label (2);
-      ptr := CG.Pop ();
-      CG.Load_integer (TInt.One);
-      ce.tmp := CG.Pop_temp ();
-      CG.Push (ptr);
-      CG.Load_nil ();
-      CG.If_eq (true, CG.Type.Addr, CG.Maybe);
-      
-      CG.Push (ptr);
-      CG.Ref_to_typecode ();
-      tc := CG.Pop ();
-
-      CG.Push (tc);
-      Type.LoadInfo (t, M3RT.TC_typecode);
-      CG.If_lt (true+1, CG.Type.Int, CG.Never);
-
-      CG.Push (tc);
-      Type.LoadInfo (t, M3RT.TC_lastSubTypeTC);
-      CG.If_le (true, CG.Type.Int, CG.Never);
-
-      CG.Set_label (true+1);
-      CG.Load_integer (TInt.Zero);
-      CG.Store_temp (ce.tmp);
-      CG.Set_label (true);
-
-      CG.Free (ptr);
-      CG.Free (tc);
+      proc := RunTyme.LookUpProc (RunTyme.Hook.CheckIsType);
+      Procedure.StartCall (proc);
+      IF Target.DefaultCall.args_left_to_right THEN
+        Expr.Compile (ce.args[0]);
+        CG.Pop_param (CG.Type.Addr);
+        Type.LoadInfo (t, -1);
+        CG.Pop_param (CG.Type.Addr);
+      ELSE
+        Type.LoadInfo (t, -1);
+        CG.Pop_param (CG.Type.Addr);
+        Expr.Compile (ce.args[0]);
+        CG.Pop_param (CG.Type.Addr);
+      END;
+      ce.tmp := Procedure.EmitValueCall (proc);
     END;
   END Prep;
 
@@ -126,8 +116,8 @@ PROCEDURE PrepBR (ce: CallExpr.T;  true, false: CG.Label;  freq: CG.Frequency)=
     e := ce.args[0];
     t, u: Type.T;
     ptr: CG.Val;
-    tc: CG.Val;
     skip: CG.Label;
+    proc: Procedure.T;
   BEGIN
     IF NOT TypeExpr.Split (ce.args[1], t) THEN
       t := Expr.TypeOf (e);
@@ -137,9 +127,9 @@ PROCEDURE PrepBR (ce: CallExpr.T;  true, false: CG.Label;  freq: CG.Frequency)=
     u := Expr.TypeOf (e);
 
     Expr.Prep (ce.args[0]);
-    Expr.Compile (ce.args[0]);
     IF Type.IsSubtype (u, t) THEN
       (* the test succeeds statically *)
+      Expr.Compile (ce.args[0]);
       CG.Discard (CG.Type.Addr);
       IF (true # CG.No_label)
         THEN CG.Jump (true);
@@ -147,62 +137,47 @@ PROCEDURE PrepBR (ce: CallExpr.T;  true, false: CG.Label;  freq: CG.Frequency)=
       END;
 
     ELSIF Type.IsEqual (t, Null.T, NIL) THEN
+      Expr.Compile (ce.args[0]);
       CG.Load_nil ();
-      IF (true # CG.No_label)
-        THEN CG.If_eq (true, CG.Type.Addr, freq);
-        ELSE CG.If_ne (false, CG.Type.Addr, freq);
-      END;
+      CG.If_then (CG.Type.Addr, CG.Cmp.EQ, true, false, freq);
 
     ELSIF RefType.Is (t) THEN
+      Expr.Compile (ce.args[0]);
       skip := CG.Next_label ();
       ptr := CG.Pop ();
       CG.Push (ptr);
       CG.Load_nil ();
       IF (true # CG.No_label)
-        THEN CG.If_eq (true, CG.Type.Addr, CG.Maybe);
-        ELSE CG.If_eq (skip, CG.Type.Addr, CG.Maybe);
+        THEN CG.If_compare (CG.Type.Addr, CG.Cmp.EQ, true, CG.Maybe);
+        ELSE CG.If_compare (CG.Type.Addr, CG.Cmp.EQ, skip, CG.Maybe);
       END;
 
       CG.Push (ptr);
       CG.Ref_to_typecode ();
       Type.LoadInfo (t, M3RT.TC_typecode);
-      IF (true # CG.No_label)
-        THEN CG.If_eq (true, CG.Type.Int, freq);
-        ELSE CG.If_ne (false, CG.Type.Int, freq);  CG.Set_label (skip);
-      END;
+      CG.If_then (Target.Integer.cg_type, CG.Cmp.EQ, true, false, freq);
+      CG.Set_label (skip);
       CG.Free (ptr);
 
     ELSE (* general object type *)
-      skip := CG.Next_label ();
-      ptr := CG.Pop ();
-      CG.Push (ptr);
-      CG.Load_nil ();
-      IF (true # CG.No_label)
-        THEN CG.If_eq (true, CG.Type.Addr, CG.Maybe);
-        ELSE CG.If_eq (skip, CG.Type.Addr, CG.Maybe);
+      proc := RunTyme.LookUpProc (RunTyme.Hook.CheckIsType);
+      Procedure.StartCall (proc);
+      IF Target.DefaultCall.args_left_to_right THEN
+        Expr.Compile (ce.args[0]);
+        CG.Pop_param (CG.Type.Addr);
+        Type.LoadInfo (t, -1);
+        CG.Pop_param (CG.Type.Addr);
+      ELSE
+        Type.LoadInfo (t, -1);
+        CG.Pop_param (CG.Type.Addr);
+        Expr.Compile (ce.args[0]);
+        CG.Pop_param (CG.Type.Addr);
       END;
-
-      CG.Push (ptr);
-      CG.Ref_to_typecode ();
-      tc := CG.Pop ();
-
-      CG.Push (tc);
-      Type.LoadInfo (t, M3RT.TC_typecode);
+      Procedure.EmitCall (proc);
       IF (true # CG.No_label)
-        THEN CG.If_lt (skip, CG.Type.Int, CG.Always - freq);
-        ELSE CG.If_lt (false, CG.Type.Int, CG.Always - freq);
+        THEN CG.If_true (true, CG.Always);
+        ELSE CG.If_false (false, CG.Never);
       END;
-
-      CG.Push (tc);
-      Type.LoadInfo (t, M3RT.TC_lastSubTypeTC);
-      IF (true # CG.No_label)
-        THEN CG.If_le (true, CG.Type.Int, freq);
-        ELSE CG.If_gt (false, CG.Type.Int, freq);
-      END;
-
-      CG.Set_label (skip);
-      CG.Free (ptr);
-      CG.Free (tc);
     END;
   END PrepBR;
 
@@ -219,6 +194,7 @@ PROCEDURE Initialize () =
                                  PrepBR,
                                  CallExpr.NoBranch,
                                  CallExpr.NoValue, (* fold *)
+                                 CallExpr.NoBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

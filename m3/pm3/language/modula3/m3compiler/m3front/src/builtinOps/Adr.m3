@@ -17,7 +17,7 @@ PROCEDURE TypeOf (ce: CallExpr.T): Type.T =
   VAR t := Addr.T;
   BEGIN
     IF Host.new_adr THEN
-      t := RefType.New (Expr.TypeOf (ce.args[0]), FALSE, NIL);
+      t := RefType.New (Expr.TypeOf (ce.args[0]), FALSE, FALSE, NIL);
     END;
     RETURN t;
   END TypeOf;
@@ -27,7 +27,7 @@ PROCEDURE Check (ce: CallExpr.T;  <*UNUSED*> VAR cs: Expr.CheckState) =
   BEGIN
     IF ce.type = NIL THEN ce.type := TypeOf (ce); END;
     ce.type := Type.Check (ce.type);
-    IF Module.IsSafe () THEN Error.Msg ("unsafe operation") END;
+    IF Module.IsSafe () THEN Error.Msg ("unsafe operation"); END;
     IF Expr.IsDesignator (e)
       THEN Expr.NeedsAddress (e);
       ELSE Error.Msg ("ADR: argument must be a designator");
@@ -58,6 +58,7 @@ PROCEDURE Initialize () =
                                  CallExpr.NotBoolean,
                                  CallExpr.NotBoolean,
                                  CallExpr.NoValue,
+                                 CallExpr.NoBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

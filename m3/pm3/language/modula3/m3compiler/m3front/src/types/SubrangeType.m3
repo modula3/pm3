@@ -10,7 +10,7 @@ MODULE SubrangeType;
 
 IMPORT M3, CG, Type, TypeRep, Int, Expr, Token, Card, M3Buf;
 IMPORT Error, IntegerExpr, EnumExpr, Word, TipeMap, TipeDesc;
-IMPORT Target, TInt, TargetMap;
+IMPORT Target, TInt, TWord, TargetMap;
 FROM Scanner IMPORT Match;
 
 TYPE 
@@ -18,7 +18,7 @@ TYPE
         baseType   : Type.T;
         minE, maxE : Expr.T;
         min,  max  : Target.Int;
-        rep        : Rep;
+        rep        : CG.Type;
         builtin    : BOOLEAN;  (* => CARDINAL *)
         sealed     : BOOLEAN;
       OVERRIDES
@@ -33,9 +33,6 @@ TYPE
         gen_desc   := GenDesc;
         fprint     := FPrinter;
       END;
-
-TYPE
-  Rep = [FIRST (TargetMap.Int_types) .. LAST (TargetMap.Int_types)];
 
 PROCEDURE Parse (): Type.T =
   TYPE TK = Token.T;
@@ -84,17 +81,34 @@ PROCEDURE SetRep (p: P) =
     IF TInt.LT (p.max, p.min) THEN  
       p.min := TInt.Zero;
       p.max := TInt.MOne;
-      p.rep := FIRST (Rep);
+      p.rep := Target.Integer.cg_type;
       RETURN;
     END;
 
-    FOR i := FIRST (TargetMap.Int_types) TO LAST (TargetMap.Int_types) DO
-      IF TInt.LE (TargetMap.Int_types[i].min, p.min)
-        AND TInt.LE (p.max, TargetMap.Int_types[i].max) THEN
-        p.rep := i; RETURN;
+    IF TInt.LE (TInt.Zero, p.min) THEN
+      (* look for an unsigned type *)
+      FOR i := FIRST (TargetMap.Word_types) TO LAST (TargetMap.Word_types) DO
+        WITH z = TargetMap.Word_types[i] DO
+          IF (z.size <= Target.Word.size)
+            AND TWord.LE (p.max, z.max) THEN
+            p.rep := z.cg_type; RETURN;
+          END;
+        END;
+      END;
+    ELSE
+      (* look for a signed type *)
+      FOR i := FIRST (TargetMap.Integer_types) TO LAST (TargetMap.Integer_types) DO
+        WITH z = TargetMap.Integer_types[i] DO
+          IF (z.size <= Target.Integer.size)
+            AND TInt.LE (z.min, p.min)
+            AND TInt.LE (p.max, z.max) THEN
+            p.rep := z.cg_type; RETURN;
+          END;
+        END;
       END;
     END;
-    p.rep := LAST (Rep);
+
+    p.rep := Target.Integer.cg_type;
   END SetRep;
 
 PROCEDURE Seal (p: P) =
@@ -152,21 +166,25 @@ PROCEDURE Check (p: P) =
     IF NOT TInt.ToInt (p.max, i) THEN i := 23 END;
     hash := Word.Plus (Word.Times (hash, 487), i);
 
-    p.info.size      := TargetMap.Int_types[p.rep].size;
+    p.info.size      := TargetMap.CG_Size[p.rep];
     p.info.min_size  := MinSize (p);
-    p.info.alignment := TargetMap.Int_types[p.rep].align;
-    p.info.mem_type  := TargetMap.Int_types[p.rep].cg_type;
-    p.info.stk_type  := TargetMap.CG_Base [p.info.mem_type];
+    p.info.alignment := TargetMap.CG_Align[p.rep];
+    p.info.mem_type  := p.rep;
+    IF Target.SignedType [p.rep]
+      THEN p.info.stk_type := Target.Integer.cg_type;
+      ELSE p.info.stk_type := Target.Word.cg_type;
+    END;
     p.info.class     := Type.Class.Subrange;
     p.info.isTraced  := FALSE;
     p.info.isSolid   := TRUE;
     p.info.isEmpty   := TInt.LT (p.max, p.min);
     p.info.hash      := hash;
+    p.info.isTransient := TRUE;
   END Check;
 
 PROCEDURE CheckAlign (p: P;  offset: INTEGER): BOOLEAN =
   VAR
-    sz := TargetMap.Int_types[p.rep].size;
+    sz := TargetMap.CG_Size[p.rep];
     z0 := offset DIV Target.Integer.align * Target.Integer.align;
   BEGIN
     RETURN (offset + sz) <= (z0 + Target.Integer.size);
@@ -176,7 +194,7 @@ PROCEDURE Compiler (p: P) =
   BEGIN
     Type.Compile (p.baseType);
     CG.Declare_subrange (Type.GlobalUID (p), Type.GlobalUID (p.baseType),
-                         p.min, p.max, TargetMap.Int_types[p.rep].size);
+                         p.min, p.max, TargetMap.CG_Size[p.rep]);
   END Compiler;
 
 PROCEDURE Base (t: Type.T): Type.T =
@@ -260,23 +278,38 @@ PROCEDURE BuildPowerTables () =
   END BuildPowerTables;
 
 PROCEDURE InitCoster (p: P;  zeroed: BOOLEAN): INTEGER =
+  VAR rep_min, rep_max: Target.Int;
   BEGIN
     Seal (p);
+
     IF zeroed AND TInt.LE (p.min, TInt.Zero)
       AND TInt.LE (TInt.Zero, p.max) THEN
       RETURN 0;
-    ELSIF NOT TInt.EQ (p.min, TargetMap.Int_types[p.rep].min) THEN
-      RETURN 1;
-    ELSIF NOT TInt.EQ (p.max, TargetMap.Int_types[p.rep].max) THEN
-      RETURN 1;
-    ELSIF (TargetMap.Int_types[p.rep].size = Target.Integer.size)
+    END;
+
+    IF (TargetMap.CG_Size[p.rep] = Target.Integer.size)
       AND NOT (TInt.EQ (p.min, Target.Integer.min)
                AND TInt.EQ (p.max, Target.Integer.max)) THEN
       (* this rep uses a full integer word, but doesn't actually
          use all possible bit patterns => unsigned word =>  CARDINAL *)
       RETURN 1;
-    ELSE
-      RETURN 0;
+    END;
+
+    CASE p.rep OF
+    | CG.Type.Word8  => rep_min := Target.Word8.min;  rep_max := Target.Word8.max;
+    | CG.Type.Word16 => rep_min := Target.Word16.min; rep_max := Target.Word16.max;
+    | CG.Type.Word32 => rep_min := Target.Word32.min; rep_max := Target.Word32.max;
+    | CG.Type.Word64 => rep_min := Target.Word64.min; rep_max := Target.Word64.max;
+    | CG.Type.Int8   => rep_min := Target.Int8.min;   rep_max := Target.Int8.max;
+    | CG.Type.Int16  => rep_min := Target.Int16.min;  rep_max := Target.Int16.max;
+    | CG.Type.Int32  => rep_min := Target.Int32.min;  rep_max := Target.Int32.max;
+    | CG.Type.Int64  => rep_min := Target.Int64.min;  rep_max := Target.Int64.max;
+    ELSE                rep_min := TInt.Zero;         rep_max := TInt.MOne;
+    END;
+
+    IF TInt.EQ (p.min, rep_min) AND TInt.EQ (p.max, rep_max)
+      THEN RETURN 0;
+      ELSE RETURN 1;
     END;
   END InitCoster;
 
@@ -296,7 +329,8 @@ PROCEDURE GenInit (p: P;  zeroed: BOOLEAN) =
     END;
   END GenInit;
 
-PROCEDURE GenMap (p: P;  offset, size: INTEGER;  refs_only: BOOLEAN) =
+PROCEDURE GenMap (p: P;  offset, size: INTEGER;  refs_only: BOOLEAN;
+                  <*UNUSED*> transient: BOOLEAN) =
   VAR bit_offset := offset MOD Target.Byte;  op: TipeMap.Op;
   BEGIN
     IF refs_only THEN RETURN END;

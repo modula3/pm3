@@ -7,7 +7,7 @@
 
 UNSAFE MODULE RTSignal;
 
-IMPORT RTMisc, RTProcess, Csignal, Usignal, Uprocess;
+IMPORT RTError, RTProcess, Csignal, Usignal, Uprocess;
 FROM Ctypes IMPORT int;
 
 VAR
@@ -23,7 +23,7 @@ PROCEDURE InstallHandlers () =
     SetHandler (0, Usignal.SIGHUP,  Shutdown);
     SetHandler (1, Usignal.SIGINT,  Interrupt);
     SetHandler (2, Usignal.SIGQUIT, Quit);
-    SetHandler (3, Usignal.SIGSEGV, SegV);
+    SetHandler (3, Usignal.SIGSEGV, LOOPHOLE (SegV, Csignal.Handler));
     SetHandler (4, Usignal.SIGPIPE, IgnoreSignal);
     SetHandler (5, Usignal.SIGTERM, Shutdown);
   END InstallHandlers;
@@ -71,15 +71,19 @@ PROCEDURE Interrupt (sig: int) =
     END;
   END Interrupt;
 
+(*** TEMPORARY: should map these to runtime exceptions  *****)
+
 PROCEDURE Quit (<*UNUSED*> sig: int) =
   BEGIN
-    RTMisc.FatalErrorI ("aborted", 0);
+    RTError.Msg (NIL, 0, "aborted");
   END Quit;
 
-PROCEDURE SegV (<*UNUSED*> sig: int) =
+PROCEDURE SegV (<*UNUSED*> sig  : int;
+                <*NOWARN*> scp  : Usignal.struct_sigcontext;
+                <*UNUSED*> code : int) =
   BEGIN
-    RTMisc.FatalErrorI (
-      "Segmentation violation - possible attempt to dereference NIL", 0);
+    RTError.MsgPC (scp.eip,
+      "Segmentation violation - possible attempt to dereference NIL");
   END SegV;
 
 BEGIN

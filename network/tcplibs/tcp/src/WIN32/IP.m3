@@ -11,15 +11,47 @@
 
 UNSAFE MODULE IP;
 
-IMPORT Atom, AtomList, M3toC, Process, TextF, WinSock;
+IMPORT IPError, M3toC, Process, WinSock;
 
 VAR mu := NEW(MUTEX);
 
+(************
 PROCEDURE GetHostByName(nm: TEXT; VAR (*out*) res: Address): BOOLEAN
     RAISES {Error} =
   BEGIN
     LOCK mu DO
-      VAR h := WinSock.gethostbyname(ADR(nm[0])); BEGIN
+      VAR
+        s := M3toC.SharedTtoS(nm);
+        h := WinSock.gethostbyname(s);
+      BEGIN
+        M3toC.FreeSharedS(nm, s);
+        IF h = NIL THEN InterpretError(); RETURN FALSE; END;
+        res := GetAddress(h);
+      END;
+    END;
+    RETURN TRUE;
+  END GetHostByName;
+**************)
+
+PROCEDURE GetHostByName(nm: TEXT; VAR (*out*) res: Address): BOOLEAN
+    RAISES {Error} =
+  (* Apparently WinSock "gethostbyname" does not resolve names
+     that happen to be dotted IP addresses (e.g. "123.33.44.44").
+     This function does. *)
+  VAR
+    s := M3toC.SharedTtoS(nm);
+    a := WinSock.inet_addr(s);
+    h : WinSock.struct_hostent_star;
+  BEGIN
+    IF a # WinSock.INADDR_NONE THEN
+      (* the name is already a dotted IP address *)
+      M3toC.FreeSharedS(nm, s);
+      res := LOOPHOLE (a, Address);
+    ELSE
+      (* the name is not a dotted IP address *)
+      LOCK mu DO
+        h := WinSock.gethostbyname(s);
+        M3toC.FreeSharedS(nm, s);
         IF h = NIL THEN InterpretError(); RETURN FALSE; END;
         res := GetAddress(h);
       END;
@@ -27,17 +59,46 @@ PROCEDURE GetHostByName(nm: TEXT; VAR (*out*) res: Address): BOOLEAN
     RETURN TRUE;
   END GetHostByName;
 
+(*************
 PROCEDURE GetCanonicalByName(nm: TEXT): TEXT RAISES {Error} =
   BEGIN
     LOCK mu DO
-      VAR h := WinSock.gethostbyname(ADR(nm[0])); BEGIN
+      VAR
+        s := M3toC.SharedTtoS(nm);
+        h := WinSock.gethostbyname(s);
+      BEGIN
+        M3toC.FreeSharedS (nm, s);
         IF h # NIL THEN
           RETURN M3toC.CopyStoT(h.h_name);
         END;
+        InterpretError();
       END;
     END;
-    InterpretError();
     RETURN NIL;
+  END GetCanonicalByName;
+************)
+
+PROCEDURE GetCanonicalByName(nm: TEXT): TEXT RAISES {Error} =
+  (* Apparently WinSock "gethostbyname" does not resolve names
+     that happen to be dotted IP addresses (e.g. "123.33.44.44").
+     This function does. *)
+  VAR
+    s := M3toC.SharedTtoS(nm);
+    a := WinSock.inet_addr(s);
+    h : WinSock.struct_hostent_star;
+  BEGIN
+    LOCK mu DO
+      IF a = WinSock.INADDR_NONE THEN
+        (* the name is not a dotted IP address *)
+        h := WinSock.gethostbyname(s);
+      ELSE
+        (* the name is a dotted IP address *)
+        h := WinSock.gethostbyaddr(ADR(a), BYTESIZE(a), WinSock.PF_INET);
+      END;
+      M3toC.FreeSharedS(nm, s);
+      IF h = NIL THEN  InterpretError();  RETURN NIL;  END;
+      RETURN M3toC.CopyStoT(h.h_name);
+    END;
   END GetCanonicalByName;
 
 PROCEDURE GetCanonicalByAddr(addr: Address): TEXT RAISES {Error} =
@@ -52,8 +113,8 @@ PROCEDURE GetCanonicalByAddr(addr: Address): TEXT RAISES {Error} =
           RETURN M3toC.CopyStoT(h.h_name);
         END;
       END;
+      InterpretError();
     END;
-    InterpretError();
     RETURN NIL;
   END GetCanonicalByAddr;
 
@@ -71,7 +132,7 @@ PROCEDURE GetHostAddr(): Address =
   BEGIN
     LOCK mu DO
       IF WinSock.gethostname(ADR(hname[0]), BYTESIZE(hname)) # 0 THEN
-        Die();
+        IPError.Die();
       END;
       RETURN GetAddress(WinSock.gethostbyname(ADR(hname[0])));
     END;
@@ -82,7 +143,7 @@ PROCEDURE InterpretError() RAISES {Error} =
   BEGIN
     CASE err OF
     | WinSock.TRY_AGAIN, WinSock.NO_RECOVERY, WinSock.NO_ADDRESS =>
-        RAISE Error(AtomList.List1(LookupFailure));
+        IPError.Raise(LookupFailure);
     ELSE
     END;
   END InterpretError;
@@ -92,7 +153,9 @@ CONST WinSockVersion = 16_0101;       (* App version 1.1 *)
 PROCEDURE Init() =
   VAR data: WinSock.WSAData;
   BEGIN
-    IF WinSock.WSAStartup(WinSockVersion, ADR(data)) # 0 THEN Die(); END;
+    IF WinSock.WSAStartup(WinSockVersion, ADR(data)) # 0 THEN
+      IPError.Die();
+    END;
     Process.RegisterExitor(Exitor);
   END Init;
 
@@ -101,18 +164,6 @@ PROCEDURE Exitor() =
     EVAL WinSock.WSACleanup();
   END Exitor;
 
-EXCEPTION FatalError;
-
-PROCEDURE Die() RAISES {} =
-  <* FATAL FatalError *>
-  BEGIN
-    RAISE FatalError;
-  END Die;
-
 BEGIN
-  LookupFailure := Atom.FromText("IP.LookupFailure");
-  Unreachable := Atom.FromText("IP.Unreachable");
-  PortBusy := Atom.FromText("IP.PortBusy");
-  NoResources := Atom.FromText("IP.NoResources");
   Init();
 END IP.

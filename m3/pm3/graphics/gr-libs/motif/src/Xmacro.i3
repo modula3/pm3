@@ -13,7 +13,6 @@ UNSAFE INTERFACE Xmacro;
 IMPORT Word,Xt,ASCII,RefSeq;
 FROM Ctypes IMPORT 
   char_star,short,unsigned_short,unsigned_long;
-IMPORT M3toC;
 
 (*------------------------*)
 (* X level                *)
@@ -32,8 +31,10 @@ PROCEDURE AddrVal(value:ADDRESS):Xt.ArgVal;
 PROCEDURE CharVal(value:CHAR):Xt.ArgVal;
 PROCEDURE IntVal(value:INTEGER):Xt.ArgVal;
 PROCEDURE ShortVal(value:short):Xt.ArgVal;
-PROCEDURE TextVal(value:TEXT):Xt.ArgVal;
 PROCEDURE UShortVal(value:unsigned_short):Xt.ArgVal;
+
+PROCEDURE TextVal(value:TEXT;  VAR(*OUT*) str: char_star):Xt.ArgVal;
+(* The caller is responsible for freeing the C-string "str" *)
 
 PROCEDURE Args(args:Xt.ArgList;
                READONLY arr:ArgArray; 
@@ -98,7 +99,6 @@ PROCEDURE XtVaCreateWidget(name:char_star;
 (*------------------*)
 (* Strings          *)
 (*------------------*)
-CONST String = M3toC.TtoS;
 PROCEDURE XtNewString(str:char_star):char_star;
 
 (*----------------------*)
@@ -129,7 +129,7 @@ PROCEDURE BuildMenu(
 are not readily known to the program as a whole*)
                     parent:Xt.Widget;
                     menu_type:INTEGER;
-                    menu_title:TEXT;
+                    menu_title:Xt.String;
                     menu_mnemonic:CHAR:=ASCII.NUL;
                     items:RefSeq.T:=NIL (*seq of REF MenuItem*)
                     ):Xt.Widget;
@@ -138,7 +138,7 @@ are not readily known to the program as a whole*)
 PROCEDURE MakeMenu(
                     parent:Xt.Widget;
                     menu_type:INTEGER;
-                    menu_title:TEXT;
+                    menu_title:Xt.String;
                     menu_mnemonic:CHAR:=ASCII.NUL;
                     VAR cascade:Xt.Widget;
                     ):Xt.Widget;
@@ -149,7 +149,7 @@ PROCEDURE MakeMenu(
 PROCEDURE BuildMenuItem(
     parent:Xt.Widget;
     class:      Xt.WidgetClass:=NIL;
-    label:      TEXT:=NIL;
+    label:      Xt.String:=NIL;
     mnemonic:   CHAR:=ASCII.NUL;
     accelerator:TEXT:=NIL;
     accel_text: TEXT:=NIL;

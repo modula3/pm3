@@ -31,25 +31,22 @@ PROCEDURE CheckBody (t: T;  VAR cs: Value.CheckState);
 PROCEDURE IsEqual    (a, b: Value.T): BOOLEAN;
 PROCEDURE NoteExport (impl, intf: Value.T);
 
-PROCEDURE CGName (t: T;  VAR proc: CG.Proc;
-                         VAR unit: CG.Var;  VAR offset: INTEGER);
-(* return the back-end address of the procedure.  If known, 'proc'
-   is returned.  Otherwise, 'proc' is NIL and 'unit' and 'offset'
-   are set. *)
+PROCEDURE CGName (t: T): CG.Proc;
+(* return a back-end reference to the procedure 't'. *)
 
 PROCEDURE LoadStaticLink (t: T);
-(* generate code to load the static link needed to call t *)
-
-PROCEDURE CaptureResult (result: CG.Type): CG.Val;
-(* generate code to capture a procedure's return result of type "result"
-   in a temporary.  Return the temporary.  If the procedure doesn't
-   have a result, return NIL *)
+(* generate code to load the static link needed to call 't' *)
 
 PROCEDURE StartCall (t: T);
-PROCEDURE EmitCall (t: T): CG.Val;
-(* generate code to start and finish a procedure call.  "EmitCall"
-   returns the temporary that holds "t"s return result;  "NIL" if
-   "t" doesn't have a result. *)
+(* generate code the start a procedure call *)
+
+PROCEDURE EmitValueCall (t: T): CG.Val;
+(* generate code to finish a procedure call and return the procedure's result
+   in a temporary. *)
+
+PROCEDURE EmitCall (t: T);
+(* generate code to finish a procedure call and leave any return result
+   on the stack. *)
    
 PROCEDURE Reset ();
 

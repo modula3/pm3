@@ -51,6 +51,13 @@ CONST
 CONST
   VMHeap = TRUE;
 
+(* If "VMHeap" is true, "AtomicWrappers" indicates whether the wrappers
+   that validate parameters passed to system calls are atomic with
+   respect to the collector.  *)
+
+CONST
+  AtomicWrappers = TRUE;
+
 (*** hooks for the C wrapper functions ***)
 
 <*EXTERNAL*> VAR RTHeapRep_Fault: ADDRESS;  (* => RTHeapRep.Fault *)
@@ -85,6 +92,7 @@ TYPE
   FrameInfo = RECORD
     pc  : ADDRESS;
     sp  : ADDRESS;
+    unwind : ADDRESS;
     cxt : Usignal.struct_sigcontext;
     lock: INTEGER;  (* to ensure that cxt isn't overrun!! *)
   END;

@@ -7,8 +7,11 @@ INTERFACE LogEventPattern;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:29  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:45  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:29  hosking
+    Import of GRAS3 1.1
 
     Revision 1.1  1997/12/02 17:56:39  roland
     New event types and event contexts for user recovery operations
@@ -17,7 +20,7 @@ INTERFACE LogEventPattern;
 *)
 (***************************************************************************)
 
-IMPORT EventPattern, LogEvents, Transaction;
+IMPORT EventPattern, LogEvents, Txn;
 FROM EventType IMPORT Unknown, Mismatch;
 
 TYPE
@@ -34,7 +37,7 @@ PROCEDURE SetPool (p: T; pool: REFANY) RAISES {Unknown, Mismatch};
 PROCEDURE SetGraphNumber (p: T; number: CARDINAL) RAISES {Unknown, Mismatch};
 PROCEDURE SetGraph (p: T; graph: REFANY) RAISES {Unknown, Mismatch};
 PROCEDURE SetPreEvent (p: T; ispre: BOOLEAN) RAISES {Unknown, Mismatch};
-PROCEDURE SetLevel (p: T; level: Transaction.Level)
+PROCEDURE SetLevel (p: T; level: Txn.Level)
   RAISES {Unknown, Mismatch};
 
 (* redoIth patterns *)
@@ -48,7 +51,7 @@ PROCEDURE GetPool (p: T): REFANY RAISES {Mismatch, Unknown};
 PROCEDURE GetGraphNo (p: T): CARDINAL RAISES {Mismatch, Unknown};
 PROCEDURE GetGraph (p: T): REFANY RAISES {Mismatch, Unknown};
 PROCEDURE GetIsPreEvent (p: T): BOOLEAN RAISES {Mismatch, Unknown};
-PROCEDURE GetLevel (p: T): Transaction.Level RAISES {Mismatch, Unknown};
+PROCEDURE GetLevel (p: T): Txn.Level RAISES {Mismatch, Unknown};
 
 (* redoIth patterns *)
 PROCEDURE GetSonNo (p: T): CARDINAL RAISES {Mismatch, Unknown};

@@ -4,25 +4,39 @@
 
 /* Last modified on Fri May 24 08:43:02 PDT 1996 by mcjones */
 
-implementation("LecternClientWin32")
-implementation("LecternServerWin32")
+% readonly proc simple_c_program(nm) is
+%   local SRCFILE = path_of(nm & ".c")
+%   local EXEFILE = nm & ".EXE"
+%
+%   if stale(EXEFILE, SRCFILE)
+%     exec (DEV_BIN & "cl /Fe" & EXEFILE, SRCFILE)
+%   end
+%
+%   deriveds(EXEFILE, [nm & ".OBJ"])
+% end
+
 
 readonly proc simple_c_program(nm) is
   local src = path_of (nm & ".c")
-  local obj = nm & NAMING_CONVENTIONS[13] % .o
-  local pgm = nm & NAMING_CONVENTIONS[20] % .exe
-  local ret = 0
+  local obj = nm & ".obj"
+  local pgm = program_name (nm)
+  local toss = 0
 
-  if stale(pgm, src)
-    ret = m3_compile_c(src,obj,[])
-    if not equal(ret, 0) error("command failed with error code: ", ret) end
-    ret = m3_link(pgm,[obj],[])
-    if not equal(ret, 0) error("command failed with error code: ", ret) end
+  if defined ("_all")
+    if stale (pgm, src)
+      toss = compile_c (src, obj, [], FALSE, FALSE)
+      toss = m3_link (pgm, [], obj, SYSTEM_LIBS{"LIBC"}, FALSE)
+    end
   end
 
-  deriveds(pgm, [NAMING_CONVENTIONS[17]])
+  deriveds("", [ obj, pgm ])
+  BindExport (pgm)
 end
 
-%setCommands("","")
-%simple_c_program("LecternClient")
-%BindExport("LecternClient")
+simple_c_program("LecternClient")
+
+implementation("LecternClientWin32")
+implementation("LecternServerWin32")
+
+
+

@@ -8,6 +8,7 @@
 
 #include <setjmp.h>
 
+void
 RTThread__Transfer (from, to)
 jmp_buf *from, *to;
 {

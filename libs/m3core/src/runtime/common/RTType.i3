@@ -60,6 +60,9 @@ PROCEDURE Supertype(tc: Typecode): Typecode;
 PROCEDURE IsTraced(tc: Typecode): BOOLEAN;
 (* Return "TRUE" iff the type corresponding to "tc" is traced. *)
 
+PROCEDURE IsTransient(tc: Typecode): BOOLEAN;
+(* Return "TRUE" iff the type corresponding to "tc" is transient. *)
+
 PROCEDURE Get(tc: Typecode): RT0.TypeDefn;
 (* Return a pointer to the typecell with typecode "tc".  It is a
    checked runtime error to pass an improper typecode. *)

@@ -7,8 +7,11 @@ MODULE Server EXPORTS Main;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:38  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:49  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:38  hosking
+    Import of GRAS3 1.1
 
     Revision 1.24  1998/02/17 16:24:16  roland
     Introduced explicit garbage collection on regular intervalls.
@@ -245,7 +248,6 @@ PROCEDURE CheckClients (<* UNUSED *> self: Thread.Closure): REFANY =
   BEGIN
     loopCount := 0;
     LOOP
-      PageCache.BeginAccess();
       EVAL i1.init();
       killedClients := NEW(ServedClientTbl.Default).init();
 
@@ -273,6 +275,8 @@ PROCEDURE CheckClients (<* UNUSED *> self: Thread.Closure): REFANY =
           END
         END;
       END;
+
+      PageCache.BeginAccess();
 
       (* finally kill and remove collected clients *)
       i2 := killedClients.iterate();

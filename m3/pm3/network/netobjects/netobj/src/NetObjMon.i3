@@ -9,7 +9,7 @@
 
 INTERFACE NetObjMon;
 
-IMPORT NetObj, RefList, Thread;
+IMPORT NetObj, RefTransientList AS RefList, Thread;
 
 TYPE
   (* a "NetObjMon.T" is used to query the state of the network object
@@ -17,7 +17,7 @@ TYPE
      program instances *)
 
   T = NetObj.T OBJECT METHODS
-    dump (): REFANY  (* NGCMonitor.Dump *)
+    dump (): <*TRANSIENT*> REFANY  (* NGCMonitor.Dump *)
       RAISES {NetObj.Error, Thread.Alerted};
     dumpNames (): RefList.T (* of NGCMonitor.NDump *)
       RAISES {NetObj.Error, Thread.Alerted};

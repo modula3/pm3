@@ -7,6 +7,7 @@
 
 INTERFACE Protocol;
 
-CONST Version = 1; (* Protocol version number *)
+VAR (*READONLY*)
+  version := 1; (* Protocol version number *)
 
 END Protocol.

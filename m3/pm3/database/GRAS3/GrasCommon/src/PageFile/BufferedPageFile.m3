@@ -7,8 +7,11 @@ MODULE BufferedPageFile;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:28  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:44  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:28  hosking
+    Import of GRAS3 1.1
 
     Revision 1.3  1998/07/29 15:14:10  roland
     Increasing stack sizes.
@@ -156,8 +159,8 @@ PROCEDURE Flush		(         <* UNUSED *>
 
 
 PROCEDURE GetData	(         self		:T;
-                                  pageNo        :CARDINAL)
-			:PageData.T =
+                                  pageNo        :CARDINAL;
+                              VAR data          :PageData.T) =
   BEGIN
     <* ASSERT (self.isOpen ()) *>
 
@@ -166,13 +169,14 @@ PROCEDURE GetData	(         self		:T;
       FOR i := self.queue.size () -1 TO 0 BY -1 DO
         WITH currentPage = self.queue.get (i) DO
           IF pageNo = currentPage.getNumber () THEN
-            RETURN currentPage.getAll ();
+            currentPage.getData (data);
+            RETURN;
           END
         END
       END;
 
       (* page not in queue, read it from file *)
-      RETURN Super.T.getData (self, pageNo);
+      Super.T.getData (self, pageNo, data);
     END;
   END GetData;
 
@@ -217,7 +221,7 @@ PROCEDURE WriteBack	(         self		:BackgroundClosure)
 
         IF 1 <= self.file.queue.size () THEN
           page := self.file.queue.remlo ();
-          Super.T.putData (self.file, page.getNumber (), page.getAll ());
+          Super.T.putData (self.file, page.getNumber (), page.data);
           Thread.Signal (self.file.notFull);
 
           IF 0 < self.file.queue.size () THEN

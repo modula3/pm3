@@ -8,8 +8,11 @@ MODULE RuleEngine;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:40  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:50  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:40  hosking
+    Import of GRAS3 1.1
 
     Revision 1.5  1998/08/12 11:04:47  roland
     Efficiency improvement: RuleEngine notifies EventDetectors of
@@ -188,7 +191,7 @@ PROCEDURE ExecuteRemoteActions () =
 
 PROCEDURE RegisterTrigger (trigger : Trigger.T;
                            interest: Interest;
-                           userdata: REFANY      := NIL): CARDINAL =
+                           userdata: <*TRANSIENT*> REFANY := NIL): CARDINAL =
   TYPE InterestSet = SET OF Interest;
   CONST
     LocalInterests  = InterestSet{Interest.Self, Interest.All};
@@ -327,6 +330,24 @@ PROCEDURE PostCommitTransaction (tu: CARDINAL) =
     END;
   END PostCommitTransaction;
 
+PROCEDURE NotifyChainTransaction (tu: CARDINAL) =
+  (* Executes all deferred actions, except when action execution is
+     delayed. *)
+  BEGIN
+    IF UnitLevel(tu) > 0 THEN
+      IF IsDelayed(tu) AND DelayLevel(tu) >= UnitLevel(tu) THEN
+        ReleaseUnit(tu);
+      END;
+      IF NOT IsDelayed(tu) THEN
+        IF NOT ExecutingActions() THEN
+          InitExecution();
+          DeferredExecutionCycle(tu);
+          FinishExecution();
+        END;
+      END;
+    END;
+  END NotifyChainTransaction;
+
 PROCEDURE NotifyAbortTransaction (tu: CARDINAL) =
   (* Cancels all actions which were triggered by this or any nested
      transaction *)
@@ -364,7 +385,7 @@ PROCEDURE ImmediateExecutionCycle (tu: CARDINAL) =
     context : ContextSet.T;
     level   : CARDINAL;
     action  : Action.T;
-    userdata: REFANY;
+    userdata: <*TRANSIENT*> REFANY;
   BEGIN
     WHILE LocalRuleHandler.GetNextAction(tu, 
             immediate, event, context, level, action, userdata) DO
@@ -379,7 +400,7 @@ PROCEDURE DeferredExecutionCycle (tu: CARDINAL) =
     context : ContextSet.T;
     level   : CARDINAL;
     action  : Action.T;
-    userdata: REFANY;
+    userdata: <*TRANSIENT*> REFANY;
   BEGIN
     ImmediateExecutionCycle(tu);
     WHILE LocalRuleHandler.GetNextAction(
@@ -396,7 +417,7 @@ PROCEDURE DecoupledExecutionCycle (tu: CARDINAL) =
     context : ContextSet.T;
     level   : CARDINAL;
     action  : Action.T;
-    userdata: REFANY;
+    userdata: <*TRANSIENT*> REFANY;
   BEGIN
     LOOP
       IF LocalRuleHandler.GetNextAction(
@@ -417,7 +438,7 @@ PROCEDURE RemoteExecutionCycle () =
     event   : Event.T;
     context : ContextSet.T;
     action  : Action.T;
-    userdata: REFANY;
+    userdata: <*TRANSIENT*> REFANY;
   BEGIN
     LOOP
       ImmediateExecutionCycle(RemoteUnit);
@@ -432,7 +453,7 @@ PROCEDURE RemoteExecutionCycle () =
 PROCEDURE ExecuteOneAction (action  : Action.T;
                             event   : Event.T;
                             context : ContextSet.T;
-                            userdata: REFANY;
+                            userdata: <*TRANSIENT*> REFANY;
                             local   : BOOLEAN       ) =
   BEGIN
     TYPECASE action OF
@@ -456,12 +477,13 @@ TYPE
       delayed: BOOLEAN;   (* action execution *)
     END;
 
-VAR TUnits := NEW(REF ARRAY OF TransactionUnitInfo, TUnitsInitLen);
+VAR TUnits := NEW(<*TRANSIENT*> REF ARRAY OF TransactionUnitInfo,
+                  TUnitsInitLen);
 
 PROCEDURE ExtendTUnits () =
   VAR
     len := NUMBER(TUnits^);
-    n   := NEW(REF ARRAY OF TransactionUnitInfo, 2 * len);
+    n   := NEW(<*TRANSIENT*> REF ARRAY OF TransactionUnitInfo, 2 * len);
   BEGIN
     SUBARRAY(n^, 0, len) := TUnits^;
     FOR i := len TO 2*len - 1 DO

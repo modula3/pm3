@@ -86,7 +86,7 @@ PROCEDURE Compile (p: P) =
   BEGIN
     Expr.Compile (p.a);
     IF (p.offset < 0) OR (EasyCheck <= p.offset) THEN
-      CG.Check_nil ();
+      CG.Check_nil (CG.RuntimeError.BadMemoryReference);
     END;
   END Compile;
 

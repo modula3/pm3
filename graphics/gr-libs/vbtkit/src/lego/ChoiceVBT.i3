@@ -51,7 +51,7 @@ TYPE
    an initial state of "FALSE". It is added to the radio group
    "group". *)
 
-TYPE Group <: ROOT;
+TYPE Group <: <*TRANSIENT*> ROOT;
 
 (* A "Group" is a set of "ChoiceVBT"s.
 

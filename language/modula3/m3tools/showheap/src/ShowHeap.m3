@@ -15,7 +15,7 @@ IMPORT VBT, Wr;
 
 IMPORT RTHeapEvent, RTHeapRep;
 
-FROM RTHeapRep IMPORT Desc, Generation, Note, Page, Space;
+FROM RTHeapRep IMPORT Desc, Generation, Note, Page, Space, Mode;
 
 <*FATAL ANY*>
 
@@ -27,7 +27,7 @@ VAR
   lastPage   : Page    := 0;
   desc                 := NEW(UNTRACED REF ARRAY OF Desc, 0);
 
-TYPE Counter = {None, New, Copied, Immobile, Older};
+TYPE Counter = {None, New, Copied, Immobile, Older, Persistent};
 
 VAR
   count := ARRAY Counter OF CARDINAL{0, ..};
@@ -36,7 +36,8 @@ VAR
 PROCEDURE CounterOf (d: Desc): Counter =
   BEGIN
     RETURN counterOf[
-             d.space, d.generation, d.pure, d.note, d.gray, d.protected];
+             d.space, d.generation, d.pure, d.note, d.gray, d.mode,
+             d.resident, d.dirty];
   END CounterOf;
 
 (*---------------------------------------------------------------- colors ---*)
@@ -62,14 +63,17 @@ PROCEDURE CounterOf (d: Desc): Counter =
 
 VAR
   rgb: ARRAY Space, Generation, BOOLEAN (* pure *), Note,
-         BOOLEAN (* gray *), BOOLEAN (* protected *) OF
-         Color.T;
+         BOOLEAN (* gray *), Mode,
+         BOOLEAN (* resident *),
+         BOOLEAN (* dirty *) OF Color.T;
   tint: ARRAY Space, Generation, BOOLEAN (* pure *), Note,
-          BOOLEAN (* gray *), BOOLEAN (* protected *) OF
-          PaintOp.T;
+          BOOLEAN (* gray *), Mode,
+          BOOLEAN (* resident *),
+          BOOLEAN (* dirty *) OF PaintOp.T;
   counterOf: ARRAY Space, Generation, BOOLEAN (* pure *), Note,
-          BOOLEAN (* gray *), BOOLEAN (* protected *) OF
-          Counter;
+          BOOLEAN (* gray *), Mode,
+          BOOLEAN (* resident *),
+          BOOLEAN (* dirty *) OF Counter;
   mapBackGround := ComputeColor("LightLightGray");
   red           := ComputeColor("Red");
   black         := ComputeColor("Black");
@@ -92,94 +96,117 @@ PROCEDURE InitColors () =
         FOR pure := FIRST(BOOLEAN) TO LAST(BOOLEAN) DO
           FOR note := FIRST(Note) TO LAST(Note) DO
             FOR gray := FIRST(BOOLEAN) TO LAST(BOOLEAN) DO
-              FOR protected := FIRST(BOOLEAN) TO LAST(BOOLEAN) DO
+              FOR access := FIRST(Mode) TO LAST(Mode) DO
+              FOR resident := FIRST(BOOLEAN) TO LAST(BOOLEAN) DO
+              FOR dirty := FIRST(BOOLEAN) TO LAST(BOOLEAN) DO
                 CASE space OF
                 | Space.Unallocated =>
-                    rgb[space, generation, pure, note, gray, protected] :=
-                      Color.T{0.0, 0.0, 0.0};
+                    rgb[space, generation, pure, note, gray, access,
+                        resident, dirty] :=
+                            Color.T{0.0, 0.0, 0.0};
                     counterOf[
-                      space, generation, pure, note, gray, protected] :=
-                      Counter.None;
+                      space, generation, pure, note, gray, access,
+                      resident, dirty] := Counter.None;
                 | Space.Free =>
-                    rgb[space, generation, pure, note, gray, protected] :=
-                      Color.T{1.0, 1.0, 1.0};
+                    rgb[space, generation, pure, note, gray, access,
+                        resident, dirty] :=
+                            Color.T{1.0, 1.0, 1.0};
                     counterOf[
-                      space, generation, pure, note, gray, protected] :=
-                      Counter.None;
+                      space, generation, pure, note, gray, access,
+                      resident, dirty] := Counter.None;
                 | Space.Previous =>
-                    rgb[space, generation, pure, note, gray, protected] :=
-                      Color.T{0.25, 0.25, 0.25};
+                    rgb[space, generation, pure, note, gray, access,
+                        resident, dirty] :=
+                            Color.T{0.25, 0.25, 0.25};
                     counterOf[
-                      space, generation, pure, note, gray, protected] :=
-                      Counter.None;
+                      space, generation, pure, note, gray, access,
+                      resident, dirty] := Counter.None;
                 | Space.Current =>
                     CASE note OF
                     | Note.Allocated =>
-                        rgb[space, generation, pure, note, gray, protected] :=
-                          Color.T{0.730, 0.730, 1.0};
+                        rgb[space, generation, pure, note, gray, access,
+                            resident, dirty] :=
+                                Color.T{0.730, 0.730, 1.0};
                         counterOf[
-                          space, generation, pure, note, gray, protected] :=
-                          Counter.New;
+                          space, generation, pure, note, gray, access,
+                          resident, dirty] := Counter.New;
                     | Note.Copied, Note.Large =>
                         IF gray THEN
-                          rgb[
-                            space, generation, pure, note, gray, protected] :=
-                            Color.T{1.0, 0.343, 0.343};
+                          rgb[space, generation, pure, note, gray, access,
+                              resident, dirty] :=
+                                  Color.T{1.0, 0.343, 0.343};
                         ELSE
-                          rgb[
-                            space, generation, pure, note, gray, protected] :=
-                            Color.T{0.75, 0.421, 0.421};
+                          rgb[space, generation, pure, note, gray, access,
+                              resident, dirty] :=
+                                  Color.T{0.75, 0.421, 0.421};
                         END;
                         counterOf[
-                          space, generation, pure, note, gray, protected] :=
-                          Counter.Copied;
+                          space, generation, pure, note, gray, access,
+                          resident, dirty] := Counter.Copied;
                     | Note.AmbiguousRoot =>
                         IF gray THEN
-                          rgb[
-                            space, generation, pure, note, gray, protected] :=
-                            Color.T{0.0, 0.812, 0.0};
+                          rgb[space, generation, pure, note, gray, access,
+                              resident, dirty] :=
+                                  Color.T{0.0, 0.812, 0.0};
                         ELSE
-                          rgb[
-                            space, generation, pure, note, gray, protected] :=
-                            Color.T{0.275, 0.676, 0.275};
+                          rgb[space, generation, pure, note, gray, access,
+                              resident, dirty] :=
+                                  Color.T{0.275, 0.676, 0.275};
                         END;
                         counterOf[
-                          space, generation, pure, note, gray, protected] :=
-                          Counter.Immobile;
+                          space, generation, pure, note, gray, access,
+                          resident, dirty] := Counter.Immobile;
                     | Note.Frozen =>
                         IF gray THEN
-                          rgb[
-                            space, generation, pure, note, gray, protected] :=
-                            Color.T{0.0, 0.812, 0.0};
+                          rgb[space, generation, pure, note, gray, access,
+                              resident, dirty] :=
+                                  Color.T{0.0, 0.812, 0.0};
                         ELSE
-                          rgb[
-                            space, generation, pure, note, gray, protected] :=
-                            Color.T{0.275, 0.676, 0.275};
+                          rgb[space, generation, pure, note, gray, access,
+                              resident, dirty] :=
+                                  Color.T{0.275, 0.676, 0.275};
                         END;
                         counterOf[
-                          space, generation, pure, note, gray, protected] :=
-                          Counter.Immobile;
+                          space, generation, pure, note, gray, access,
+                          resident, dirty] := Counter.Immobile;
                     | Note.OlderGeneration =>
                         IF gray THEN
-                          rgb[
-                            space, generation, pure, note, gray, protected] :=
-                            Color.T{1.0, 0.198, 1.0};
+                          rgb[space, generation, pure, note, gray, access,
+                              resident, dirty] :=
+                                  Color.T{1.0, 0.198, 1.0};
                         ELSE
-                          rgb[
-                            space, generation, pure, note, gray, protected] :=
-                            Color.T{0.725, 0.225, 0.725};
+                          rgb[space, generation, pure, note, gray, access,
+                              resident, dirty] :=
+                                  Color.T{0.725, 0.225, 0.725};
                         END;
                         counterOf[
-                          space, generation, pure, note, gray, protected] :=
-                          Counter.Older;
+                          space, generation, pure, note, gray, access,
+                          resident, dirty] := Counter.Older;
+                    | Note.Persistent =>
+                        IF gray THEN
+                          rgb[space, generation, pure, note, gray, access,
+                              resident, dirty] :=
+                                  Color.T{1.0, 0.75, 0.0};
+                        ELSE
+                          rgb[space, generation, pure, note, gray, access,
+                              resident, dirty] :=
+                                  Color.T{1.0, 0.75, 0.0};
+                        END;
+                        counterOf[
+                          space, generation, pure, note, gray, access,
+                          resident, dirty] :=
+                              Counter.Persistent;
                     END;
                 END;
-                WITH rgb = rgb[space, generation, pure, note, gray,
-                               protected] DO
-                  tint[space, generation, pure, note, gray, protected] :=
-                    PaintOp.FromRGB(rgb.r, rgb.g, rgb.b);
+                WITH rgb = rgb[space, generation, pure, note, gray, access,
+                               resident, dirty] DO
+                  tint[space, generation, pure, note, gray, access,
+                       resident, dirty] :=
+                           PaintOp.FromRGB(rgb.r, rgb.g, rgb.b);
                 END;
-              END;
+              END
+              END
+              END
             END;
           END;
         END;
@@ -217,6 +244,15 @@ PROCEDURE InitColors () =
     BEGIN
       countVBT[Counter.Older] := TextVBT.New("", bgFg := quad);
       countTextVBT[Counter.Older] := TextVBT.New("older", bgFg := quad);
+    END;
+    VAR
+      rgb := Color.T{1.0, 0.75, 0.0};
+      quad := PaintOp.MakeColorQuad(
+                PaintOp.FromRGB(rgb.r, rgb.g, rgb.b), PaintOp.Bg);
+    BEGIN
+      countVBT[Counter.Persistent] := TextVBT.New("", bgFg := quad);
+      countTextVBT[Counter.Persistent] := TextVBT.New("persistent", 
+                                                      bgFg := quad);
     END;
   END InitColors;
 
@@ -298,7 +334,8 @@ PROCEDURE RepaintHeapMap (                    self: HeapMapVBT;
             IF NOT d.continued THEN INC(sq.west, 2); END;
             VBT.PaintTint(self, square, white);
             VBT.PaintTint(self, sq, tint[d.space, d.generation, d.pure,
-                                         d.note, d.gray, d.protected]);
+                                         d.note, d.gray, d.mode, d.resident,
+                                         d.dirty]);
           END;
         END;
         INC(p);
@@ -327,7 +364,8 @@ PROCEDURE RepaintOnePage (self: HeapMapVBT; page: Page) =
     VBT.PaintTint(self, square, white);
     VAR
       d := desc[p];
-      t := tint[d.space, d.generation, d.pure, d.note, d.gray, d.protected];
+      t := tint[d.space, d.generation, d.pure, d.note, d.gray, d.mode,
+                d.resident, d.dirty];
       sq := square;
     BEGIN
       INC(sq.north, 1);
@@ -407,7 +445,8 @@ PROCEDURE SetupVBT () =
       control, countVBT[Counter.New], countTextVBT[Counter.New],
       countVBT[Counter.Copied], countTextVBT[Counter.Copied],
       countVBT[Counter.Immobile], countTextVBT[Counter.Immobile],
-      countVBT[Counter.Older], countTextVBT[Counter.Older]);
+      countVBT[Counter.Older], countTextVBT[Counter.Older],
+      countVBT[Counter.Persistent], countTextVBT[Counter.Persistent]);
     Split.AddChild(
       control, ShowValueVBT("gcs = ", gcs), ShowValueVBT("off = ", off));
     Split.AddChild(control, ActionVBT("start", StartAction),

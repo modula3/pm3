@@ -43,6 +43,11 @@ PROCEDURE Fold (ce: CallExpr.T): Expr.T =
     END;
   END Fold;
 
+PROCEDURE GetBounds (ce: CallExpr.T;  VAR min, max: Target.Int) =
+  BEGIN
+    Expr.GetBounds (ce.args[0], min, max);
+  END GetBounds;
+
 PROCEDURE Initialize () =
   BEGIN
     Z := CallExpr.NewMethodList (1, 1, TRUE, FALSE, TRUE, Int.T,
@@ -56,6 +61,7 @@ PROCEDURE Initialize () =
                                  CallExpr.NotBoolean,
                                  CallExpr.NotBoolean,
                                  Fold,
+                                 GetBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

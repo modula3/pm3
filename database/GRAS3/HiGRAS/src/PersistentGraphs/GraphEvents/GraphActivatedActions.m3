@@ -7,8 +7,11 @@ MODULE GraphActivatedActions;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:32  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:46  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:32  hosking
+    Import of GRAS3 1.1
 
     Revision 1.2  1998/01/21 14:07:45  roland
     Bugfixes in KillTransaction. ClientMap and LevelMap were mixed up.
@@ -24,7 +27,7 @@ MODULE GraphActivatedActions;
 
 IMPORT Event, Action, ContextSet, GraphActiveActionPQueue,
        GraphActiveAction, GraphEvents, EventType;
-IMPORT Node, Transaction, DeletedNodes;
+IMPORT Node, Txn, DeletedNodes;
 
 REVEAL
   T = Public BRANDED OBJECT
@@ -126,7 +129,7 @@ PROCEDURE KillTransaction (aa: T; level: CARDINAL) =
     aa.maxLevel := MAX(0, level - 1);
   END KillTransaction;
 
-PROCEDURE NotifyNodeDeletion (aa: T; level: Transaction.Level; node: Node.T) =
+PROCEDURE NotifyNodeDeletion (aa: T; level: Txn.Level; node: Node.T) =
   BEGIN
     IF NOT aa.actions.isEmpty() THEN
       INC(aa.time);
@@ -139,7 +142,7 @@ PROCEDURE Get (    aa      : T;
                VAR context : ContextSet.T;
                VAR level   : CARDINAL;
                VAR action  : Action.T;
-               VAR userdata: REFANY        ): BOOLEAN =
+               VAR userdata: <*TRANSIENT*> REFANY): BOOLEAN =
   CONST
     EdgeOps = SET OF
                 GraphEvents.Operation{GraphEvents.Operation.CreateEdge,
@@ -210,7 +213,7 @@ PROCEDURE GetNextFromQueue (    aa       : T;
                             VAR context  : ContextSet.T;
                             VAR level    : CARDINAL;
                             VAR action   : Action.T;
-                            VAR userdata : REFANY;
+                            VAR userdata : <*TRANSIENT*> REFANY;
                             VAR time     : CARDINAL      ): BOOLEAN =
   VAR
     act      : GraphActiveAction.T;

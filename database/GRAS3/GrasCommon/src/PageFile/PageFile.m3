@@ -7,8 +7,11 @@ MODULE PageFile;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:28  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:44  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:28  hosking
+    Import of GRAS3 1.1
 
     Revision 1.10  1998/09/14 08:14:35  roland
     Modified code to remove compiler warnings.
@@ -73,6 +76,7 @@ REVEAL
   T                     = Public BRANDED OBJECT
       opened		:BOOLEAN;
       reallyOpen        :BOOLEAN;
+      <*TRANSIENT*>
       fileName		:Pathname.T;
       new		:BOOLEAN;
       file		:RegularFile.T;
@@ -167,10 +171,10 @@ PROCEDURE Flush			(         self		:T) =
   
 
 PROCEDURE GetData		(         self		:T;
-                                          pageNo	:CARDINAL) :PageData.T =
+                                          pageNo	:CARDINAL;
+                                      VAR data          :PageData.T) =
   <* FATAL OSError.E *>
   VAR
-    result			:PageData.T;
     bytes			:INTEGER;
   BEGIN
     <* ASSERT (self.isOpen ()) *>
@@ -178,11 +182,11 @@ PROCEDURE GetData		(         self		:T;
     EnsureOpen(self);
     EVAL self.file.seek (RegularFile.Origin.Beginning,
                          BYTESIZE (PageData.T)*pageNo);
-    bytes := self.file.read (result);
-    <* ASSERT ((bytes = BYTESIZE (PageData.T)) OR (bytes = 0)) *>
-    RETURN result;
+    bytes := self.file.read (data);
+    <* ASSERT ((bytes = BYTESIZE (data)) OR (bytes = 0)) *>
+    RETURN;
   END GetData;
-  
+
 
 PROCEDURE PutData		(         self		:T;
                                           pageNo        :CARDINAL;

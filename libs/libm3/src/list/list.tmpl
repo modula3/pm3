@@ -10,13 +10,25 @@
 
 readonly proc List (nm, elt) is
   local list = nm & "List"
-  build_generic_intf (list, "List", [elt], VISIBLE)
+  build_generic_intf (list, "List", ["Root", elt], VISIBLE)
   build_generic_impl (list, "List", [elt])
 end
 
 readonly proc list (nm, elt) is
   local list = nm & "List"
-  build_generic_intf (list, "List", [elt], HIDDEN)
+  build_generic_intf (list, "List", ["Root", elt], HIDDEN)
+  build_generic_impl (list, "List", [elt])
+end
+
+readonly proc TransientList (nm, elt) is
+  local list = nm & "List"
+  build_generic_intf (list, "List", ["RootTransient", elt], VISIBLE)
+  build_generic_impl (list, "List", [elt])
+end
+
+readonly proc transientList (nm, elt) is
+  local list = nm & "List"
+  build_generic_intf (list, "List", ["RootTransient", elt], HIDDEN)
   build_generic_impl (list, "List", [elt])
 end
 
@@ -29,6 +41,20 @@ end
 readonly proc list_sort (nm, elt) is
   local list = nm & "ListSort"
   build_generic_intf (list, "ListSort", [elt, nm & "List"], HIDDEN)
+  build_generic_impl (list, "ListSort", [elt])
+end
+
+readonly proc TransientList_sort (nm, elt) is
+  local list = nm & "ListSort"
+  local eltlist = nm & "List"
+  build_generic_intf (list, "ListSort", [elt, eltlist], VISIBLE)
+  build_generic_impl (list, "ListSort", [elt])
+end
+
+readonly proc transientList_sort (nm, elt) is
+  local list = nm & "ListSort"
+  local eltlist = nm & "List"
+  build_generic_intf (list, "ListSort", [elt, eltlist], HIDDEN)
   build_generic_impl (list, "ListSort", [elt])
 end
 

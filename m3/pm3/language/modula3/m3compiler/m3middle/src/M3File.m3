@@ -3,24 +3,30 @@
 (* See the file COPYRIGHT for a full description.              *)
 (*                                                             *)
 (* File: M3File.m3                                             *)
-(* Last modified on Sun Mar  3 17:54:04 PST 1996 by heydon     *)
-(*      modified on Mon Apr 17 09:01:53 PDT 1995 by kalsow     *)
+(* Last modified on Mon Apr 17 09:01:53 PDT 1995 by kalsow     *)
 
 UNSAFE MODULE M3File;
 
-IMPORT FS, File, OSError, Text;
+IMPORT CoffTime, FS, File, OSError, Text;
 
 TYPE
   BufPtr = UNTRACED REF ARRAY BufferLength OF File.Byte;
+
+CONST
+  OnUnix = (CoffTime.EpochAdjust = 0.0d0);
+  (* We need to preserve permission bits on Unix.  On Win32 it's
+     too hard (Win95 doesn't have security, and WinNT w/o NTFS
+     is broken too!), so we don't bother.  *)
 
 PROCEDURE Read (f: File.T; VAR(*OUT*)buf: Buffer; len: BufferLength): INTEGER
   RAISES {OSError.E} =
   VAR ptr: BufPtr;
   BEGIN
-    IF (NUMBER (buf) <= 0 OR len <= 0) THEN RETURN 0 END;
+    IF (NUMBER (buf) <= 0) THEN RETURN 0 END;
     ptr := LOOPHOLE (ADR (buf[0]), BufPtr);
-    RETURN f.read (SUBARRAY (ptr^, 0, MIN (len, NUMBER (buf))),
-                   mayBlock := TRUE);
+    len := MIN (len, NUMBER (buf));
+    IF (len <= 0) THEN RETURN 0; END;
+    RETURN f.read (SUBARRAY (ptr^, 0, len), mayBlock := TRUE);
   END Read;
 
 PROCEDURE Copy (src, dest: TEXT) RAISES {OSError.E} =
@@ -31,7 +37,7 @@ PROCEDURE Copy (src, dest: TEXT) RAISES {OSError.E} =
   BEGIN
     TRY
       rd := FS.OpenFileReadonly (src);
-      wr := FS.OpenFile (dest);
+      wr := OpenDestination (dest, rd);
       LOOP
         len := rd.read (buf);
         IF (len <= 0) THEN EXIT; END;
@@ -58,7 +64,7 @@ PROCEDURE CopyText (src, dest: TEXT;  eol: TEXT) RAISES {OSError.E} =
     FOR i := 0 TO eol_last DO eol_buf[i] := ORD(Text.GetChar (eol, i)); END;
     TRY
       rd := FS.OpenFileReadonly (src);
-      wr := FS.OpenFile (dest);
+      wr := OpenDestination (dest, rd);
       out_len := 0;
       LOOP
         in_len := rd.read (in_buf);
@@ -93,6 +99,27 @@ PROCEDURE CopyText (src, dest: TEXT;  eol: TEXT) RAISES {OSError.E} =
     END;
   END CopyText;
 
+PROCEDURE OpenDestination (dest: TEXT;  src: File.T): File.T RAISES {OSError.E} =
+  BEGIN
+    IF NOT OnUnix THEN
+      (* File permissions on Windows are broken... *)
+      src := NIL;
+    END;
+
+    TRY RETURN FS.OpenFile (dest, template := src);
+    EXCEPT OSError.E => (* nope. *)
+    END;
+
+    (* If we can't open the file for writing, try deleting it first
+       and then opening it, sometimes that'll work instead... *)
+
+    TRY FS.DeleteFile (dest);
+    EXCEPT OSError.E => (* doesn't look very hopeful *)
+    END;
+
+    RETURN FS.OpenFile (dest, template := src);
+  END OpenDestination;
+
 PROCEDURE IsEqual (a, b: TEXT): BOOLEAN RAISES {OSError.E} =
   VAR
     f1, f2     : File.T := NIL;
@@ -102,6 +129,7 @@ PROCEDURE IsEqual (a, b: TEXT): BOOLEAN RAISES {OSError.E} =
     TRY
       f1 := FS.OpenFileReadonly (a);
       f2 := FS.OpenFileReadonly (b);
+      IF (f1 = NIL) OR (f2 = NIL) THEN RETURN FALSE; END;
       IF (f1.status().size # f2.status().size) THEN RETURN FALSE; END;
       LOOP
         len1 := f1.read (buf1);
@@ -113,8 +141,8 @@ PROCEDURE IsEqual (a, b: TEXT): BOOLEAN RAISES {OSError.E} =
         END;
       END;
     FINALLY
-      IF f1 # NIL THEN f1.close () END;
-      IF f2 # NIL THEN f2.close () END;
+      IF (f1 # NIL) THEN f1.close (); END;
+      IF (f2 # NIL) THEN f2.close (); END;
     END;
   END IsEqual;
 

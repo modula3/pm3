@@ -7,8 +7,11 @@ INTERFACE ServerScheduler;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:39  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:49  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:39  hosking
+    Import of GRAS3 1.1
 
     Revision 1.7  1996/11/21 07:56:08  roland
     New resources getResourceUser, getFileUser, and getGraphUser
@@ -51,7 +54,7 @@ INTERFACE ServerScheduler;
  | ------------------------------------------------------------------------
  *)
 IMPORT
-  Pathname, TextSeq,
+  Pathname, TextTransientSeq AS TextSeq,
   Access, PageFile, Termination,
   ServedClient,
   ScheduledServerResource,

@@ -1,4 +1,4 @@
 module			("EntryServer")
 module			("CommunicationServer")
 implementation		("Server")
-manPage                 ("g3server", "1")
+ManPage                 ("g3server", "1")

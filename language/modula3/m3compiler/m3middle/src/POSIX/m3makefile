@@ -5,4 +5,6 @@
 % Last modified on Wed Sep 14 16:41:21 PDT 1994 by kalsow
 
 Module ("CoffTime")
+implementation ("M3Process")
+
 

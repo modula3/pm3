@@ -1,4 +1,5 @@
-(* Copyright (C) 1996, Critical Mass, Inc.   All rights reserved.            *)
+(* Copyright (C) 1996-2000, Critical Mass, Inc.   All rights reserved. *)
+(* See file COPYRIGHT-CMASS for details. *)
 
 INTERFACE WinMsg;
 
@@ -17,5 +18,6 @@ CONST (* Trestle extensions to the standard Windows messages *)
   ICONIZE_VBT          = WinUser.WM_USER + 6;
   OVERLAP_VBT          = WinUser.WM_USER + 7;
   RETITLE_VBT          = WinUser.WM_USER + 8;
+  PAINTBATCH_VBT       = WinUser.WM_USER + 9;
 
 END WinMsg.

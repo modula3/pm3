@@ -113,11 +113,11 @@ PROCEDURE GenFPLiteral (p: P;  buf: M3Buf.T) =
     M3Buf.PutChar (buf, '>');
   END GenFPLiteral;
 
-PROCEDURE GenLiteral (p: P;  offset: INTEGER;  type: Type.T) =
+PROCEDURE GenLiteral (p: P;  offset: INTEGER;  type: Type.T;  is_const: BOOLEAN) =
   VAR info: Type.Info;
   BEGIN
     EVAL Type.CheckInfo (type, info);
-    CG.Init_int (offset, info.size, p.value);
+    CG.Init_int (offset, info.size, p.value, is_const);
   END GenLiteral;
 
 BEGIN

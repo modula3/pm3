@@ -86,6 +86,7 @@ PROCEDURE Initialize () =
                                  CallExpr.PrepNoBranch,
                                  CallExpr.NoBranch,
                                  CallExpr.NoValue, (*fold*)
+                                 CallExpr.NoBounds,
                                  IsWritable,
                                  IsDesignator,
                                  NoteWrites);

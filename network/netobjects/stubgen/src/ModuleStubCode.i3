@@ -8,7 +8,8 @@
 
 INTERFACE ModuleStubCode;
 
-IMPORT Atom, Formatter, RefList, AtomRefTbl, StubCode, StubUtils, Type;
+IMPORT Atom, Formatter, RefList, AtomRefTransientTbl AS AtomRefTbl, StubCode,
+       StubUtils, Type;
 
 PROCEDURE Header(modWr: Formatter.T; 
                  t: Type.Object; 

@@ -9,7 +9,7 @@
 
 INTERFACE CallExpr;
 
-IMPORT CG, Expr, Type;
+IMPORT CG, Expr, Type, Target;
 
 PROCEDURE New (proc: Expr.T;  args: Expr.List): Expr.T;
 
@@ -32,6 +32,7 @@ TYPE
   Visitor     = PROCEDURE (t: T);
   TypeChecker = PROCEDURE (t: T;  VAR cs: Expr.CheckState);
   Evaluator   = PROCEDURE (t: T): Expr.T;
+  Bounder     = PROCEDURE (t: T;  VAR min, max: Target.Int);
   Predicate   = PROCEDURE (t: T): BOOLEAN;
   Compiler    = PROCEDURE (t: T);
   CompilerLV  = PROCEDURE (t: T);
@@ -55,6 +56,7 @@ PROCEDURE NewMethodList
    prepBR       : CompilerBR;
    compilerBR   : CompilerBR;
    evaluator    : Evaluator;
+   bounder      : Bounder;
    isWritable   : Predicate;
    isDesignator : Predicate;
    noteWriter   : NoteWriter): MethodList;
@@ -65,6 +67,7 @@ PROCEDURE IsUserProc (e: Expr.T): BOOLEAN;
 PROCEDURE IsNever        (t: T): BOOLEAN;
 PROCEDURE IsAlways       (t: T): BOOLEAN;
 PROCEDURE NoValue        (t: T): Expr.T;
+PROCEDURE NoBounds       (t: T;  VAR min, max: Target.Int);
 PROCEDURE NotAddressable (t: T);
 PROCEDURE PrepArgs       (t: T);
 PROCEDURE NoLValue       (t: T);

@@ -9,36 +9,49 @@
 %      modified on Fri Nov 28 09:37:24 1986 by mcvl
 
 
-sources = [ "file", "inttable", "strlib", "varrayptr", "err", "llscan" ]
+% c_source ("file")
+% c_source ("inttable")
+% c_source ("strlib")
+% c_source ("varrayptr")
+% c_source ("err")
+% c_source ("llscan")
 
-c_files = [ ] 
-o_files = [ ] 
+% if defined ("_all")
+%   local prog = "llscan"
+%   local form = format ("-DDEFAULT_FORM=\\\"%s%sscan.llscan\\\"", LIB_USE, SL)
+%   if stale (prog, COMPILE_SOURCES)
+%     exec (CC, "-I../src -D_BSD", form, "-o", prog, COMPILE_SOURCES)
+%   end
+%   BindExport (prog)
+% end
 
-foreach s in sources
-  c_source (s)
-  c_files += format("..%ssrc%s%s%s", SL, SL, s, ".c" )
-  o_files += format("%s%s", s, ".o" )
-end
+readonly proc simple_c_program(nm, c_sources) is
+  local toss = 0
+  local pgm = program_name (nm)
+  local objects = []
+  local sources = []
+  local options = [ "-I" & path_of (""), "-D_BSD",
+    format ("-DDEFAULT_FORM=\\\"%s%sscan.llscan\\\"", LIB_USE, SL) ]
 
-if defined ("_all")
-  local prog = "llscan"
-  local form = format ("-DDEFAULT_FORM=\"%s%sscan.llscan\"", LIB_USE, SL)
-  local ret = 0
-
-  % What if CC is "gcc -c"?
-  % local compile = [ CC, "-I../src", "-D_BSD", form, "-o", prog, c_files ]
-  local compile = [ CC, "-c", "-I../src", "-D_BSD", form, c_files ]
-  local link = [ LINK, "-o", prog, o_files ]
-  if stale (prog, c_files)
-    write(compile, "\n")
-    ret = exec (compile)
-    if not equal(ret, 0) error("command failed with error code: ", ret) end
-    write(link, "\n")
-    ret = exec (link)
-    if not equal(ret, 0) error("command failed with error code: ", ret) end
+  foreach f in c_sources
+    sources += path_of (f & ".c")
+    objects += f & ".o"
   end
-  BindExport (prog)
+
+  if defined ("_all")
+    if stale (pgm, sources)
+      toss = compile_c (sources, [], options, FALSE, FALSE)
+      GCWRAPFLAGS=""
+      toss = m3_link (pgm, [], objects, SYSTEM_LIBS {"LIBC"}, FALSE)
+    end
+  end
+
+  deriveds("", [ objects, pgm ])
+  BindExport (pgm)
 end
+
+simple_c_program ("llscan", [ "file", "inttable", "strlib",
+                              "varrayptr", "err", "llscan" ])
 
 ManPage ("llscan", 1)
 LibExport ("scan.llscan")

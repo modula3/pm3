@@ -7,8 +7,11 @@ INTERFACE ScheduledClientRessource;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:37  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:48  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:37  hosking
+    Import of GRAS3 1.1
 
     Revision 1.6  1997/10/31 14:13:27  roland
     Adapted to new RuleEngine.
@@ -54,7 +57,7 @@ IMPORT
   ScheduledClientFile;
 
 TYPE
-  Notifier = OBJECT
+  Notifier = <*TRANSIENT*> ROOT OBJECT
              METHODS
                notify() := NIL;
              END;
@@ -87,6 +90,7 @@ TYPE
       (* transaction support *)
       startTransaction	() RAISES {FatalError};
       commitTransaction	() RAISES {NotInTransaction, FatalError};
+      chainTransaction	() RAISES {NotInTransaction, FatalError};
       abortTransaction	() RAISES {NotInTransaction, FatalError};
 
     END;

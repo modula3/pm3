@@ -9,7 +9,9 @@
 %
 % Makefile for tcp library (WIN32)
 
-Module("WinSock")
 Interface("TCPWin32")
 implementation("IP")
+implementation("IPErrorWin32")
 implementation("TCP")
+implementation("TCPExtras")
+implementation("TCPPeer")

@@ -7,8 +7,11 @@ MODULE TypedGraph;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:35  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:46  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:35  hosking
+    Import of GRAS3 1.1
 
     Revision 1.16  1998/06/10 10:57:06  kluck
     Definition of type LogMode from ChgMgmtGraph repeated.
@@ -90,7 +93,7 @@ IMPORT ErrorSupport;
 IMPORT ChgMgmtGraph AS Super;
 IMPORT PersistentGraph, NodeTypeRelationStack;
 IMPORT Scheme, InternScheme, AttributeValue, TypedGraphPool,
-       InternTypedGraphPool, Transaction;
+       InternTypedGraphPool, Txn;
 IMPORT Word, Text;
 IMPORT TypeCache;
 
@@ -330,7 +333,7 @@ PROCEDURE CloseAndFlush (graph: T; keepLog: BOOLEAN)
   BEGIN
     depth := 0;
     TRY
-      WHILE graph.pool.getTransactionLevel() >= Transaction.TopLevel DO
+      WHILE graph.pool.getTransactionLevel() >= Txn.TopLevel DO
         graph.pool.commitTransaction();
         INC(depth);
       END;

@@ -17,18 +17,18 @@
    surrogate stream.  Surrogate streams are free-standing entities,
    valid beyond the scope of the remote call that produced them.
    Data can be transmitted on a surrogate stream at close to the
-   bandwidth supported by the underlying transport.  <SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>buffered
-   streams</SPAN>
-</SPAN>
-<SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>Rd.T</SPAN>
-<SPAN CLASS=INDEX.TEXT><TT>Rd.T</TT></SPAN>
-</SPAN>
-<SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>Wr.T</SPAN>
-<SPAN CLASS=INDEX.TEXT><TT>Wr.T</TT></SPAN>
-</SPAN>
+   bandwidth supported by the underlying transport.
+   <SPAN CLASS=INDEX.MARK>
+   <SPAN CLASS=INDEX.KEY>buffered streams</SPAN>
+   </SPAN>
+   <SPAN CLASS=INDEX.MARK>
+   <SPAN CLASS=INDEX.KEY>Rd.T</SPAN>
+   <SPAN CLASS=INDEX.TEXT><TT>Rd.T</TT></SPAN>
+   </SPAN>
+   <SPAN CLASS=INDEX.MARK>
+   <SPAN CLASS=INDEX.KEY>Wr.T</SPAN>
+   <SPAN CLASS=INDEX.TEXT><TT>Wr.T</TT></SPAN>
+   </SPAN>
 
    The initial position of the surrogate reader or writer equals the
    position of the corresponding concrete stream at the time it was
@@ -77,10 +77,10 @@ PROCEDURE ReleaseRd(rd: Rd.T)
    resources associated with "rd", discard all buffered data,
    close "rd", but do not close the concrete reader for "rd".
    This procedure is a no-op if "rd" is not a surrogate.
-<SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>NetStream.ReleaseRd</SPAN>
-<SPAN CLASS=INDEX.TEXT><TT>NetStream.ReleaseRd</TT></SPAN>
-</SPAN>
+   <SPAN CLASS=INDEX.MARK>
+   <SPAN CLASS=INDEX.KEY>NetStream.ReleaseRd</SPAN>
+   <SPAN CLASS=INDEX.TEXT><TT>NetStream.ReleaseRd</TT></SPAN>
+   </SPAN>
 *)
 
 PROCEDURE ReleaseWr(wr: Wr.T)
@@ -89,10 +89,10 @@ PROCEDURE ReleaseWr(wr: Wr.T)
    all network resources associated with "wr", close "wr",
    but do not close the concrete writer for "wr".
    This procedure is a no-op if "wr" is not a surrogate.
-<SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>NetStream.ReleaseWr</SPAN>
-<SPAN CLASS=INDEX.TEXT><TT>NetStream.ReleaseWr</TT></SPAN>
-</SPAN>
+   <SPAN CLASS=INDEX.MARK>
+   <SPAN CLASS=INDEX.KEY>NetStream.ReleaseWr</SPAN>
+   <SPAN CLASS=INDEX.TEXT><TT>NetStream.ReleaseWr</TT></SPAN>
+   </SPAN>
 *)
 
 END NetStream.

@@ -7,8 +7,11 @@ INTERFACE CommunicationPort;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:27  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:43  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:27  hosking
+    Import of GRAS3 1.1
 
     Revision 1.8  1997/04/24 11:54:36  roland
     Added parameter (access) mode for opening a remote file. If a resource
@@ -71,7 +74,7 @@ INTERFACE CommunicationPort;
  Including currently freed locks it isn't possible to hold
  exclusive locks (PageLock.Mode.X). Furthermore it is only valid to return
  changed data if a transaction is terminated with success
- (end = Transaction.End.Commit) in the same call. To minimize the amount of
+ (end = Txn.End.Commit) in the same call. To minimize the amount of
  communication it is possible to free locks when demanding data. At least
  access to a remote file must be prepended by startTransaction as first
  call. Transactions may not be nested. 
@@ -79,11 +82,11 @@ INTERFACE CommunicationPort;
  *)
 
 IMPORT
-  Pathname, TextSeq,
+  Pathname, TextTransientSeq AS TextSeq,
   Thread, NetObj,
   Page,
   PageFile,
-  PageLock, Access, Transaction, 
+  PageLock, Access, Txn, 
   RemoteFile, CommunicationSeq, ClientInfoSeq;
 
 
@@ -164,8 +167,9 @@ TYPE
 			RAISES {Thread.Alerted, NetObj.Error,
                                 Access.Invalid, Access.Locked};
 
-      putData		(         end		:Transaction.End;
+      putData		(         end		:Txn.End;
                                   entries       :CommunicationSeq.T)
+                        :CARDINAL
 			RAISES {Thread.Alerted, NetObj.Error, Access.Invalid};
 
 

@@ -7,8 +7,11 @@ MODULE GraphTriggerStorage;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:32  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:46  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:32  hosking
+    Import of GRAS3 1.1
 
     Revision 1.3  1998/08/12 11:04:17  roland
     Efficiency improvement: RuleEngine notifies EventDetectors of
@@ -50,7 +53,8 @@ PROCEDURE Init (ts: T): T =
     RETURN ts;
   END Init;
 
-PROCEDURE StoreTrigger (ts: T; t: Trigger.T; userdata: REFANY; id: CARDINAL) =
+PROCEDURE StoreTrigger (ts: T; t: Trigger.T; userdata: <*TRANSIENT*> REFANY;
+                        id: CARDINAL) =
   VAR
     new      : REF ListElement;
     map, list: CARDINAL;

@@ -9,7 +9,10 @@ INTERFACE QCompiler;
 
 IMPORT Quake;
 
-PROCEDURE CompileFile (path: TEXT): Quake.CodeStream
+PROCEDURE CompileFile (path: TEXT;  map: Quake.IDMap): Quake.CodeStream
+  RAISES {Quake.Error};
+
+PROCEDURE CompileText (name, value: TEXT;  map: Quake.IDMap): Quake.CodeStream
   RAISES {Quake.Error};
 
 END QCompiler.

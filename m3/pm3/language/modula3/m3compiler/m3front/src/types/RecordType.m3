@@ -12,6 +12,7 @@ MODULE RecordType;
 IMPORT M3, M3ID, CG, Type, TypeRep, Scope, Expr, Value, Token;
 IMPORT Error, Field, Ident, PackedType, Target, TipeDesc;
 IMPORT Word, AssignStmt, M3Buf;
+IMPORT Scanner;
 FROM Scanner IMPORT Match, GetToken, cur;
 
 TYPE
@@ -19,6 +20,7 @@ TYPE
         fields     : Scope.T;
         recSize    : INTEGER := 0;
         align      : INTEGER := 0;
+        transient  : BOOLEAN;
       OVERRIDES
         check      := Check;
         check_align:= CheckAlign;
@@ -32,7 +34,7 @@ TYPE
         fprint     := FPrinter;
       END;
 
-PROCEDURE Parse (): Type.T =
+PROCEDURE Parse (transient: BOOLEAN): Type.T =
   VAR p := NEW (P);
   BEGIN
     TypeRep.Init (p, Type.Class.Record);
@@ -42,6 +44,7 @@ PROCEDURE Parse (): Type.T =
     ParseFieldList ();
     Match (Token.T.tEND);
     Scope.PopNew ();
+    p.transient := transient;
 
     RETURN p;
   END Parse;
@@ -54,7 +57,13 @@ PROCEDURE ParseFieldList () =
     nFields := 0;
   BEGIN
     info.offset := 0;
-    WHILE (cur.token = TK.tIDENT) DO
+    LOOP
+      info.transient := FALSE;
+      IF cur.token = TK.tTRANSIENT THEN
+        GetToken (); Match (TK.tENDPRAGMA); (* <*TRANSIENT*> *)
+        info.transient := TRUE;
+      END;
+      IF cur.token # TK.tIDENT THEN EXIT; END;
       n := Ident.ParseList ();
       info.type := NIL;
       IF (cur.token = TK.tCOLON) THEN
@@ -74,10 +83,15 @@ PROCEDURE ParseFieldList () =
         Error.Msg ("fields must include a type or default value");
       END;
       j := Ident.top - n;
-      FOR i := 0 TO n - 1 DO
-        info.name  := Ident.stack [j + i];
-        info.index := nFields;  INC (nFields);
-        Scope.Insert (Field.New (info));
+      VAR save := Scanner.offset;
+      BEGIN
+        FOR i := 0 TO n - 1 DO
+          info.name  := Ident.stack [j + i];
+          Scanner.offset := Ident.offset [j + i];
+          info.index := nFields;  INC (nFields);
+          Scope.Insert (Field.New (info));
+        END;
+        Scanner.offset := save;
       END;
       DEC (Ident.top, n);
       IF (cur.token # TK.tSEMI) THEN EXIT END;
@@ -129,6 +143,7 @@ PROCEDURE Check (p: P) =
     p.info.isTraced := FALSE;
     p.info.isEmpty  := FALSE;
     p.info.isSolid  := is_solid;
+    p.info.isTransient := TRUE;
     hash := Word.Plus (Word.Times (943, p.recSize), p.align);
     o := Scope.ToList (p.fields);
     WHILE (o # NIL) DO
@@ -136,10 +151,17 @@ PROCEDURE Check (p: P) =
       EVAL Type.CheckInfo (field.type, info);
       p.info.isTraced := p.info.isTraced OR info.isTraced;
       p.info.isEmpty  := p.info.isEmpty  OR info.isEmpty;
+      p.info.isTransient :=
+          p.info.isTransient AND (info.isTransient OR field.transient);
       hash := Word.Plus (Word.Times (hash, 41), M3ID.Hash (field.name));
       hash := Word.Plus (Word.Times (hash, 37), info.size);
       o := o.next;
     END;
+
+    IF p.transient AND p.info.isTransient THEN
+      Error.Warn (1, "record type already transient, <*TRANSIENT*> ignored");
+    END;
+    p.info.isTransient := p.transient OR p.info.isTransient;
 
     p.info.hash      := hash;
     p.info.size      := p.recSize;
@@ -215,16 +237,14 @@ PROCEDURE SizeAndAlignment (fields: Scope.T;
     IF (newSize > 0) THEN
       (* find the largest possible alignment that doesn't change the size
          of the record... *)
-      WITH z = Target.Int_D.align DO
+      VAR z: CARDINAL; BEGIN
+        z := Target.Integer.align;  (* Int64 or Int32 *)
         IF (z > newAlign) AND (newSize MOD z = 0) THEN  newAlign := z;  END;
-      END;
-      WITH z = Target.Int_C.align DO
+        z := Target.Int32.align;
         IF (z > newAlign) AND (newSize MOD z = 0) THEN  newAlign := z;  END;
-      END;
-      WITH z = Target.Int_B.align DO
+        z := Target.Int16.align;
         IF (z > newAlign) AND (newSize MOD z = 0) THEN  newAlign := z;  END;
-      END;
-      WITH z = Target.Int_A.align DO
+        z := Target.Int8.align;
         IF (z > newAlign) AND (newSize MOD z = 0) THEN  newAlign := z;  END;
       END;
     END;
@@ -232,17 +252,20 @@ PROCEDURE SizeAndAlignment (fields: Scope.T;
     (************************
     (* find an alignment (and hence a size) that's some reasonable
        number of machine addressable units *)
-    IF newSize <= Target.Int_A.size THEN
-      newAlign := MAX (newAlign, Target.Int_A.align);
-    ELSIF newSize <= Target.Int_B.size THEN
-      newAlign := MAX (newAlign, Target.Int_B.align);
-    ELSIF newSize <= Target.Int_C.size THEN
-      newAlign := MAX (newAlign, Target.Int_C.align);
+    IF newSize <= Target.Int8.size THEN
+      newAlign := MAX (newAlign, Target.Int8.align);
+    ELSIF newSize <= Target.Int16.size THEN
+      newAlign := MAX (newAlign, Target.Int16.align);
+    ELSIF newSize <= Target.Int32.size THEN
+      newAlign := MAX (newAlign, Target.Int32.align);
     ELSE
-      newAlign := MAX (newAlign, Target.Int_D.align);
+      newAlign := MAX (newAlign, Target.Int64.align);
     END;
     **************************)
 
+    IF (newSize < 0) THEN
+      Error.Msg ("CM3 restriction: record or object type is too large");
+    END;
     recSize  := newSize;
     recAlign := newAlign;
   END SizeAndAlignment;
@@ -305,6 +328,10 @@ PROCEDURE Compiler (p: P) =
   END Compiler;
 
 PROCEDURE EqualChk (a: P;  t: Type.T;  x: Type.Assumption): BOOLEAN =
+  (* Note: it is important to do the surface syntax checks before
+     checking the types of the fields.  Otherwise, we will add "a = t"
+     to the current set of assumptions and may decide that
+     other types are equal when they are not! *)
   VAR b: P := t;  va, vb: Value.T;
   BEGIN
     (******* too sleazy!  since it depends on type checking ...
@@ -316,15 +343,16 @@ PROCEDURE EqualChk (a: P;  t: Type.T;  x: Type.Assumption): BOOLEAN =
     END;
     ********************************************************)
 
-    (* compare the fields *)
     va := Scope.ToList (a.fields);
     vb := Scope.ToList (b.fields);
-    WHILE (va # NIL) AND (vb # NIL) DO
-      IF NOT Field.IsEqual (va, vb, x) THEN RETURN FALSE END;
-      va := va.next;  vb := vb.next;
-    END;
 
-    RETURN (va = NIL) AND (vb = NIL);
+    (* check the field names and offsets *)
+    IF NOT Field.IsEqualList (va, vb, x, types := FALSE) THEN RETURN FALSE; END;
+
+    (* check the field types and default values *)
+    IF NOT Field.IsEqualList (va, vb, x, types := TRUE) THEN RETURN FALSE; END;
+
+    RETURN TRUE;
   END EqualChk;
 
 PROCEDURE InitCoster (p: P;  zeroed: BOOLEAN): INTEGER =
@@ -367,7 +395,7 @@ PROCEDURE GenInit (p: P;  zeroed: BOOLEAN) =
         CG.Push (ptr);
         CG.Boost_alignment (p.align);
         CG.Add_offset (field.offset);
-        AssignStmt.Emit (field.type, field.dfault);
+        AssignStmt.DoEmit (field.type, field.dfault);
       END;
       v := v.next;
     END;
@@ -375,12 +403,13 @@ PROCEDURE GenInit (p: P;  zeroed: BOOLEAN) =
   END GenInit;
 
 PROCEDURE GenMap (p: P;  offset: INTEGER;  <*UNUSED*> size: INTEGER;
-                  refs_only: BOOLEAN) =
+                  refs_only, transient: BOOLEAN) =
   VAR v := Scope.ToList (p.fields);  field: Field.Info;
   BEGIN
     WHILE (v # NIL) DO
       Field.Split (v, field);
-      Type.GenMap (field.type, offset + field.offset, -1, refs_only);
+      Type.GenMap (field.type, offset + field.offset, -1, refs_only,
+                   p.transient OR field.transient OR transient);
       v := v.next;
     END;
   END GenMap;

@@ -14,16 +14,15 @@
 %
 
 if defined ("_all")
-  if   stale ("y.tab.o", ".." & SL & "src" & SL & "lex-yacc" & SL & "y.tab.c")
-    or stale ("y.tab.o", ".." & SL & "src" & SL & "lex-yacc" & SL & "lex.yy.c")
-    or stale ("y.tab.o", ".." & SL & "src" & SL & "hash.h")
-    or stale ("y.tab.o", ".." & SL & "src" & SL & "lex_help.h")
+  if   stale ("y.tab.o", "../src/lex-yacc/y.tab.c")
+    or stale ("y.tab.o", "../src/lex-yacc/lex.yy.c")
+    or stale ("y.tab.o", "../src/hash.h")
+    or stale ("y.tab.o", "../src/lex_help.h")
     delete_file ("y.tab.o")
   end
 end
 
-import_lib ("l", "/usr/lib")            %-- That's where the lex stuff lives
-h_source   ("lex.yy")                   % ugly but it works
+import_sys_lib ("LEX-YACC")
 c_source   ("y.tab")
 
 

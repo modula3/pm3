@@ -7,8 +7,11 @@ MODULE WaitForGraph;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:39  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:49  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:39  hosking
+    Import of GRAS3 1.1
 
     Revision 1.3  1996/10/17 11:23:51  rbnix
     	New method deleteNode added.
@@ -28,7 +31,7 @@ MODULE WaitForGraph;
  | ------------------------------------------------------------------------
  *)
 IMPORT
-  ServedClient, ServedClientRefTbl;
+  ServedClient, ServedClientRefTransientTbl AS ServedClientRefTbl;
 
 
 REVEAL
@@ -83,7 +86,7 @@ PROCEDURE GetNode	(         self		:T;
                                   client	:ServedClient.T)
 			:Node =
   VAR
-    node		:REFANY;
+    node		:<*TRANSIENT*> REFANY;
   BEGIN
     IF self.nodes.get (client, node) THEN
       RETURN node;
@@ -110,7 +113,7 @@ PROCEDURE DeleteNode	(         self		:T;
                                   client	:ServedClient.T) =
   VAR
     i			:NodeIterator;
-    node		:REFANY;
+    node		:<*TRANSIENT*> REFANY;
     found		:BOOLEAN;
     otherNode		:Node;
     otherClient		:ServedClient.T;
@@ -201,7 +204,7 @@ PROCEDURE Next		(         self		:NodeIterator;
                          VAR      client	:ServedClient.T)
 			:BOOLEAN =
   VAR
-    ref			:REFANY;
+    ref			:<*TRANSIENT*> REFANY;
     found		:BOOLEAN;
   BEGIN
     found := self.i.next (client, ref);

@@ -135,7 +135,7 @@ PROCEDURE HomeProc (            fv: FormsVBT.T;
                    <* UNUSED *> cl: REFANY;
                    <* UNUSED *> t : VBT.TimeStamp) =
   BEGIN
-    LoadURL(fv, HomeURL ())
+    LoadURL(fv, HomeURL ());
   END HomeProc;
    
 PROCEDURE BackProc (            fv: FormsVBT.T;                    
@@ -369,7 +369,7 @@ PROCEDURE NewForm (): Form =
     FormsVBT.AttachProc(fv, "openpaste", OpenPasteProc);
 
     LOCK VBT.mu DO 
-      LoadURL (fv, HomeURL ()) 
+      LoadURL(fv, HomeURL ()) 
     END;
     RETURN fv
   END NewForm;

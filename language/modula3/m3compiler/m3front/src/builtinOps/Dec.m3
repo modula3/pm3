@@ -18,7 +18,8 @@ PROCEDURE Check (ce: CallExpr.T;  VAR cs: Expr.CheckState) =
     DoCheck ("DEC", ce, cs);
   END Check;
 
-PROCEDURE DoCheck (name: TEXT;  ce: CallExpr.T;  VAR cs: Expr.CheckState) =
+PROCEDURE DoCheck (name: TEXT;  ce: CallExpr.T;
+                   <*UNUSED*> VAR cs: Expr.CheckState) =
   VAR t: Type.T; e: Expr.T;  nm: M3ID.T;
   BEGIN
     e := ce.args[0];
@@ -46,7 +47,6 @@ PROCEDURE DoCheck (name: TEXT;  ce: CallExpr.T;  VAR cs: Expr.CheckState) =
       END;
     END;
     ce.type := NIL;
-    INC (cs.int_ops);
   END DoCheck;
 
 PROCEDURE Prep (ce: CallExpr.T) =
@@ -90,14 +90,14 @@ PROCEDURE Compile (ce: CallExpr.T) =
 
     IF (info.stk_type = CG.Type.Addr)
       THEN CG.Index_bytes (-Target.Byte);  check := 0;
-      ELSE CG.Subtract (CG.Type.Int);
+      ELSE CG.Subtract (Target.Integer.cg_type);
     END;
 
     CASE check OF
     | 0 => (* no range checking *)
-    | 1 => CG.Check_lo (bmin);
-    | 2 => CG.Check_hi (bmax);
-    | 3 => CG.Check_range (bmin, bmax);
+    | 1 => CG.Check_lo (bmin, CG.RuntimeError.ValueOutOfRange);
+    | 2 => CG.Check_hi (bmax, CG.RuntimeError.ValueOutOfRange);
+    | 3 => CG.Check_range (bmin, bmax, CG.RuntimeError.ValueOutOfRange);
     END;
 
     CG.Store_indirect (info.stk_type, 0, info.size);
@@ -117,7 +117,8 @@ PROCEDURE Initialize () =
                                  CallExpr.NoLValue,
                                  CallExpr.NotBoolean,
                                  CallExpr.NotBoolean,
-                                 CallExpr.NoValue, 
+                                 CallExpr.NoValue,
+                                 CallExpr.NoBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

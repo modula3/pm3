@@ -7,8 +7,11 @@ INTERFACE RuleEngineCallback;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:28  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:44  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:28  hosking
+    Import of GRAS3 1.1
 
     Revision 1.1  1997/10/31 14:09:26  roland
     Communication interfaces for the rule engine.
@@ -17,7 +20,9 @@ INTERFACE RuleEngineCallback;
 (***************************************************************************)
 
 IMPORT NetObj, Thread;
-IMPORT IntIntTbl, IntTextTbl, TextSeq;
+IMPORT IntIntTransientTbl AS IntIntTbl,
+       IntTextTransientTbl AS IntTextTbl,
+       TextTransientSeq AS TextSeq;
 
 CONST
   ImmediateCoupling = 0;

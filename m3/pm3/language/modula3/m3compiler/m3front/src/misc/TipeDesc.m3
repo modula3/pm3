@@ -42,21 +42,21 @@ PROCEDURE Finish (a, b, c, d: TEXT := NIL): INTEGER =
     AddI (n_types);
 
     (* allocate space *)
-    base := Module.Allocate (n_bytes * Target.Int_A.size,
-                             Target.Int_A.align, "type_desc");
-    CG.Comment (base, a, b, c, d);
+    base := Module.Allocate (n_bytes * Target.Int8.size,
+                             Target.Int8.align, TRUE, "type_desc");
+    CG.Comment (base, TRUE, a, b, c, d);
 
     (* emit the op count *)
     offset := base;
     FOR i := n_data_bytes TO n_bytes-1 DO
-      CG.Init_intt (offset, Target.Int_A.size, bytes[i]);
-      INC (offset, Target.Int_A.size);
+      CG.Init_intt (offset, Target.Int8.size, bytes[i], is_const := TRUE);
+      INC (offset, Target.Int8.size);
     END;
 
     (* generate the bytes *)
     FOR i := 0 TO n_data_bytes-1 DO
-      CG.Init_intt (offset, Target.Int_A.size, bytes[i]);
-      INC (offset, Target.Int_A.size);
+      CG.Init_intt (offset, Target.Int8.size, bytes[i], is_const := TRUE);
+      INC (offset, Target.Int8.size);
     END;
 
     busy := FALSE;
@@ -135,10 +135,10 @@ PROCEDURE AddX (READONLY i: Target.Int) =
   VAR x: INTEGER;
   BEGIN
     IF    TInt.ToInt (i, x)             THEN AddI (x);
-    ELSIF TInt.EQ (i, Target.Int_C.max) THEN Stuff (16_7e);
-    ELSIF TInt.EQ (i, Target.Int_C.min) THEN Stuff (16_fe);
-    ELSIF TInt.EQ (i, Target.Int_D.max) THEN Stuff (16_7f);
-    ELSIF TInt.EQ (i, Target.Int_D.min) THEN Stuff (16_ff);
+    ELSIF TInt.EQ (i, Target.Int32.max) THEN Stuff (16_7e);
+    ELSIF TInt.EQ (i, Target.Int32.min) THEN Stuff (16_fe);
+    ELSIF TInt.EQ (i, Target.Int64.max) THEN Stuff (16_7f);
+    ELSIF TInt.EQ (i, Target.Int64.min) THEN Stuff (16_ff);
     ELSE  AddBigX (i);
     END;
   END AddX;

@@ -59,9 +59,9 @@ PROCEDURE ID (id: M3ID.T;  msg: TEXT) =
 PROCEDURE Txt (id, msg: TEXT) =
   VAR wr := Header ();
   BEGIN
-    Out (wr, id);
-    Out (wr, ": ");
     Out (wr, msg);
+    Out (wr, ": ");
+    Out (wr, id);
     Trailer (wr);
   END Txt;
 

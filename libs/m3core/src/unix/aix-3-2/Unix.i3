@@ -2,8 +2,7 @@
 (* All rights reserved.                                        *)
 (* See the file COPYRIGHT for a full description.              *)
 
-(* Last modified on Wed Jun 12 08:47:53 PDT 1996 by heydon     *)
-(*      modified on Wed Aug 17 15:48:58 PDT 1994 by kalsow     *)
+(* Last modified on Wed Aug 17 15:48:58 PDT 1994 by kalsow     *)
 (*      modified on Tue Jun  8 16:25:52 PDT 1993 by mcjones    *)
 (*      modified on Thu Nov 12 11:46:08 PST 1992 by muller     *)
 (*      modified on Sat Oct  6 02:53:40 1990 by orgass@ibm.com *)

@@ -55,9 +55,10 @@ PROCEDURE ShortVal(value:short):Xt.ArgVal=
 ****************************************)
 
 (*-----------------*)
-PROCEDURE TextVal(value:TEXT):Xt.ArgVal=
+PROCEDURE TextVal(value:TEXT;  VAR(*OUT*) str: char_star):Xt.ArgVal=
 BEGIN
-  RETURN LOOPHOLE(M3toC.TtoS(value), Xt.ArgVal);
+  str := M3toC.CopyTtoS(value);
+  RETURN LOOPHOLE(str, Xt.ArgVal);
 END TextVal;
 
 (*-----------------*)
@@ -79,7 +80,6 @@ PROCEDURE Args(args:Xt.ArgList;
                VAR count:CARDINAL
              ):Xt.ArgList=
 (*arr must be provided in pairs*)
-CONST ftn = "Args";
 VAR
   name,value:ADDRESS;
 BEGIN
@@ -134,34 +134,31 @@ END MakeMask;
 
 PROCEDURE BuildMenu(parent:Xt.Widget;
                     menu_type:INTEGER;
-                    menu_title:TEXT;
+                    menu_title:Xt.String;
                     menu_mnemonic:CHAR:=ASCII.NUL;
                     items:RefSeq.T:=NIL):Xt.Widget=
-CONST ftn = "BuildMenu";
 VAR
   menu,cascade,widget:Xt.Widget;
-  str: Xm.String;
-  menu_title_str:=String(menu_title);
+  str, acc: Xm.String;
   args:=NEW(Xt.ArgList);
   argCount:CARDINAL;
-  i:INTEGER;
   callback_type:char_star;
 BEGIN
   IF (menu_type = Xm.MENU_PULLDOWN) OR (menu_type = Xm.MENU_OPTION) THEN
-    menu:=Xmw.CreatePulldownMenu(parent,String("_pulldown"),NIL,0);
+    menu:=Xmw.CreatePulldownMenu(parent,M3toC.FlatTtoS("_pulldown"),NIL,0);
   ELSIF (menu_type = Xm.MENU_POPUP) THEN
-    menu:=Xmw.CreatePopupMenu(parent,String("_popup"),NIL,0);
+    menu:=Xmw.CreatePopupMenu(parent,M3toC.FlatTtoS("_popup"),NIL,0);
   ELSE
-    Xt.Warning(String("Invalid menu type passed to " & ftn));
+    Xt.Warning(M3toC.FlatTtoS("Invalid menu type passed to BuildMenu"));
     RETURN NIL;
   END;
 
   (*---pulldowns need a cascade button---*)
   IF  (menu_type = Xm.MENU_PULLDOWN) THEN
-    str:=Xm.StringCreateSimple(menu_title_str);
+    str:=Xm.StringCreateSimple(menu_title);
     cascade:=Xmw.CreateCascadeButton(
         parent:=parent,
-        name:=menu_title_str,
+        name:=menu_title,
         args:=Args(args,ArgArray{
              XmN.subMenuId,     menu,
              XmN.labelString,   str,
@@ -172,10 +169,10 @@ BEGIN
      Xt.ManageChild(cascade);
 
   ELSIF menu_type = Xm.MENU_OPTION THEN
-    str:=Xm.StringCreateSimple(menu_title_str);
+    str:=Xm.StringCreateSimple(menu_title);
     cascade:=Xmw.CreateOptionMenu(
         parent:=parent,
-        name:=menu_title_str,
+        name:=menu_title,
         args:=Args(args,ArgArray{
              XmN.subMenuId,     menu,
              XmN.labelString,   str,
@@ -193,20 +190,24 @@ BEGIN
       (*call recursively as needed*)
       IF item.subitems#NIL THEN
         IF menu_type = Xm.MENU_OPTION THEN
-          Xt.Warning(String("You cannot have submenus from option menu"));
+          Xt.Warning(M3toC.FlatTtoS("You cannot have submenus from option menu"));
         ELSE
+          str:=M3toC.SharedTtoS(item.label);
           widget:=BuildMenu(menu,Xm.MENU_PULLDOWN,
-                  menu_title   :=item.label,
+                  menu_title   :=str,
                   menu_mnemonic:=item.mnemonic,
                   items        :=item.subitems);
+          M3toC.FreeSharedS(item.label, str);
         END;
       ELSE (*no subitems...end of recursion*)
+        str:=M3toC.SharedTtoS(item.label);
         widget:=Xt.CreateManagedWidget(
-              name:=String(item.label),
+              name:=str,
               widget_class:=item.class,
               parent:=menu,
               args:=NIL,
               num_args:=0);
+        M3toC.FreeSharedS(item.label, str);
       END; 
   
       (*---mnemonic---*)
@@ -216,12 +217,16 @@ BEGIN
      
       (*---accelerator---*)
       IF item.accelerator # NIL THEN
-        str:=Xm.StringCreateSimple(String(item.accel_text));
+        acc:=M3toC.SharedTtoS(item.accel_text);
+        str:=Xm.StringCreateSimple(acc);
+        M3toC.FreeSharedS(item.accel_text, acc);
+	acc:=M3toC.SharedTtoS(item.accelerator);
         XtVaSetValues(widget,
-           XmN.accelerator,     TextVal(item.accelerator),
+           XmN.accelerator, acc,
            XmN.acceleratorText, str,
            NIL);
-         Xm.StringFree(str);
+	M3toC.FreeSharedS(item.accelerator, acc);
+        Xm.StringFree(str);
       END;
    
       (*---callback---*)
@@ -254,33 +259,31 @@ END BuildMenu;
 PROCEDURE MakeMenu(
                     parent:Xt.Widget;
                     menu_type:INTEGER;
-                    menu_title:TEXT;
+                    menu_title:Xt.String;
                     menu_mnemonic:CHAR:=ASCII.NUL;
                     VAR cascade:Xt.Widget;
                     ):Xt.Widget=
-CONST ftn = "MakeMenu";
 VAR
-  menu,widget:Xt.Widget;
+  menu:Xt.Widget;
   str: Xm.String;
-  menu_title_str:=String(menu_title);
   args:=NEW(Xt.ArgList);
   argCount:CARDINAL;
 BEGIN
   IF (menu_type = Xm.MENU_PULLDOWN) OR (menu_type = Xm.MENU_OPTION) THEN
-    menu:=Xmw.CreatePulldownMenu(parent,String("_pulldown"),NIL,0);
+    menu:=Xmw.CreatePulldownMenu(parent,M3toC.FlatTtoS("_pulldown"),NIL,0);
   ELSIF (menu_type = Xm.MENU_POPUP) THEN
-    menu:=Xmw.CreatePopupMenu(parent,String("_popup"),NIL,0);
+    menu:=Xmw.CreatePopupMenu(parent,M3toC.FlatTtoS("_popup"),NIL,0);
   ELSE
-    Xt.Warning(String("Invalid menu type passed to " & ftn));
+    Xt.Warning(M3toC.FlatTtoS("Invalid menu type passed to MakeMenu"));
     RETURN NIL;
   END;
 
   (*---pulldowns need a cascade button---*)
   IF  (menu_type = Xm.MENU_PULLDOWN) THEN
-    str:=Xm.StringCreateSimple(menu_title_str);
+    str:=Xm.StringCreateSimple(menu_title);
     cascade:=Xmw.CreateCascadeButton(
         parent:=parent,
-        name:=menu_title_str,
+        name:=menu_title,
         args:=Args(args,ArgArray{
              XmN.subMenuId,     menu,
              XmN.labelString,   str,
@@ -291,10 +294,10 @@ BEGIN
      Xt.ManageChild(cascade);
 
   ELSIF menu_type = Xm.MENU_OPTION THEN
-    str:=Xm.StringCreateSimple(menu_title_str);
+    str:=Xm.StringCreateSimple(menu_title);
     cascade:=Xmw.CreateOptionMenu(
         parent:=parent,
-        name:=menu_title_str,
+        name:=menu_title,
         args:=Args(args,ArgArray{
              XmN.subMenuId,     menu,
              XmN.labelString,   str,
@@ -315,7 +318,7 @@ END MakeMenu;
 PROCEDURE BuildMenuItem(
     parent:Xt.Widget;
     class:      Xt.WidgetClass:=NIL;
-    label:      TEXT:=NIL;
+    label:      Xt.String:=NIL;
     mnemonic:   CHAR:=ASCII.NUL;
     accelerator:TEXT:=NIL;
     accel_text: TEXT:=NIL;
@@ -324,13 +327,11 @@ PROCEDURE BuildMenuItem(
                 ):Xt.Widget=
 VAR
   widget:Xt.Widget;
-  str: Xm.String;
-  args:=NEW(Xt.ArgList);
-  argCount:CARDINAL;
+  str, acc: Xm.String;
   callback_type:char_star;
 BEGIN
   widget:=Xt.CreateManagedWidget(
-        name:=String(label),
+        name:=label,
         widget_class:=class,
         parent:=parent,
         args:=NIL,
@@ -349,12 +350,16 @@ BEGIN
  
   (*---accelerator---*)
   IF accelerator # NIL THEN
-    str:=Xm.StringCreateSimple(String(accel_text));
+    acc:=M3toC.SharedTtoS(accel_text);
+    str:=Xm.StringCreateSimple(acc);
+    M3toC.FreeSharedS(accel_text, acc);
+    acc:=M3toC.SharedTtoS(accelerator);
     XtVaSetValues(widget,
-       XmN.accelerator,     TextVal(accelerator),
+       XmN.accelerator, acc,
        XmN.acceleratorText, str,
        NIL);
-     Xm.StringFree(str);
+    M3toC.FreeSharedS(accelerator, acc);
+    Xm.StringFree(str);
   END;
    
   (*---callback---*)

@@ -119,7 +119,7 @@ extern int RT0u__inCritical;
 #define ENTER_CRITICAL RT0u__inCritical++
 #define EXIT_CRITICAL  RT0u__inCritical--
 
-void (*RTHeapRep_Fault)(char*);
+void (*RTHeapRep_Fault)();
 void (*RTCSRC_FinishVM)();
 
 static char RTHeapDepC__c;
@@ -256,7 +256,7 @@ char *tokenp, *argv[];
   
   { char *t, **a;
 
-    for (t = tokenp, a = argv; t; t++, a++) {
+    for (t = tokenp, a = argv; *t; t++, a++) {
       if (A_TOKEN_PTR(*t)) {
         MAKE_READABLE(*a);
       }
@@ -564,7 +564,7 @@ int grouplist[];
   return result;
 }
 
-int getitimer(__itimer_which_t which, struct itimerval *value)
+int getitimer(int which, struct itimerval *value)
 { int result;
 
   ENTER_CRITICAL;
@@ -610,12 +610,12 @@ int getpeername(int sockfd, struct sockaddr *addr, socklen_t *paddrlen)
   return result;
 }
 
-int getrlimit(__rlimit_resource_t resource, struct rlimit *rlp)
+int getrlimit(int resource, struct rlimit *rlim)
 { int result;
 
   ENTER_CRITICAL;
-  MAKE_WRITABLE(rlp);
-  result = syscall(SYS_getrlimit, resource, rlp);
+  MAKE_WRITABLE(rlim);
+  result = syscall(SYS_getrlimit, resource, rlim);
   EXIT_CRITICAL;
   return result;
 }
@@ -713,8 +713,8 @@ char *argp;
 { int result;
 
   ENTER_CRITICAL;
-  if (RTHeapRep_Fault) RTHeapRep_Fault(argp); /* make it readable */
-  if (RTHeapRep_Fault) RTHeapRep_Fault(argp); /* make it writable */
+  if (RTHeapRep_Fault) RTHeapRep_Fault(argp, 1); /* make it readable */
+  if (RTHeapRep_Fault) RTHeapRep_Fault(argp, 2); /* make it writable */
   result = syscall(SYS_ioctl, d, request, argp);
   EXIT_CRITICAL;
   return result;
@@ -1272,8 +1272,9 @@ int namelen;
   return result;
 }
 
-int setitimer(__itimer_which_t which, const struct itimerval *value, 
-   struct itimerval *ovalue)
+int setitimer(int which,
+	      const struct itimerval *value,
+	      struct itimerval *ovalue)
 { int result;
 
   ENTER_CRITICAL;
@@ -1299,12 +1300,12 @@ char *file;
 }
 */
 
-int setrlimit(__rlimit_resource_t resource, const struct rlimit *rlp)
+int setrlimit(int resource, const struct rlimit *rlim)
 { int result;
 
   ENTER_CRITICAL;
-  MAKE_READABLE(rlp);
-  result = syscall(SYS_setrlimit, resource, rlp);
+  MAKE_READABLE(rlim);
+  result = syscall(SYS_setrlimit, resource, rlim);
   EXIT_CRITICAL;
   return result;
 }

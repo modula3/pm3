@@ -17,6 +17,7 @@ IMPORT SynWr, Text, ObLib, ObCommand, Bundle, ObliqBdl, ObliqBdl2,
     ObLib.RegisterHelp("text", HelpText);
     ObLib.RegisterHelp("array", HelpArray);
     ObLib.RegisterHelp("net", HelpNet);
+    ObLib.RegisterHelp("replica", HelpReplica);
     
     ObCommand.Register(ObLib.helpCommandSet,
       NEW(ObCommand.T, name:="syntax", sortingName:="syntax", 
@@ -39,7 +40,7 @@ IMPORT SynWr, Text, ObLib, ObCommand, Bundle, ObliqBdl, ObliqBdl2,
         Exec:=PrintHelpEnv));
   END Setup;
 
-PROCEDURE PrintHelpSyntax(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL) =
+PROCEDURE PrintHelpSyntax(self: ObCommand.T; arg: TEXT; <*UNUSED*>data: REFANY:=NIL) =
     BEGIN
       IF Text.Equal(arg, "!") THEN
         SynWr.Text(SynWr.out, 
@@ -62,7 +63,7 @@ PROCEDURE PrintHelpSyntax(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL) =
       END;
     END PrintHelpSyntax;
 
-PROCEDURE PrintHelpFlags(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL) =
+PROCEDURE PrintHelpFlags(self: ObCommand.T; arg: TEXT; <*UNUSED*>data: REFANY:=NIL) =
     BEGIN
       IF Text.Equal(arg, "!") THEN
         SynWr.Text(SynWr.out, 
@@ -79,7 +80,7 @@ PROCEDURE PrintHelpFlags(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL) =
       END;
     END PrintHelpFlags;
 
-PROCEDURE PrintHelpHelp(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL) =
+PROCEDURE PrintHelpHelp(self: ObCommand.T; arg: TEXT; <*UNUSED*>data: REFANY:=NIL) =
     BEGIN
       IF Text.Equal(arg, "!") OR Text.Equal(arg, "?") THEN
         SynWr.Text(SynWr.out, "Say 'help <topic>;' or 'help <topic> <subtopic>;'\n");
@@ -117,7 +118,7 @@ PROCEDURE PrintPkgList(pkg: ObLib.Env; name: TEXT; env: Obliq.Env) =
     END;
   END PrintPkgList;
 
-PROCEDURE PrintHelpLibrary(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL) =
+PROCEDURE PrintHelpLibrary(<*UNUSED*>self: ObCommand.T; arg: TEXT; data: REFANY:=NIL) =
     VAR libEnv: ObLib.Env; sep: TEXT; 
     BEGIN
       IF Text.Equal(arg, "!") THEN
@@ -185,7 +186,7 @@ PROCEDURE PrintHelpEnv(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL) =
 
 (* ================== *)
 
-  PROCEDURE HelpOnline(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL) =
+  PROCEDURE HelpOnline(self: ObCommand.T; arg: TEXT; <*UNUSED*>data: REFANY:=NIL) =
     BEGIN
       IF Text.Equal(arg, "!") THEN
         SynWr.Text(SynWr.out, "  sysOnline         (the built-in system library, online extension)\n");
@@ -198,7 +199,7 @@ PROCEDURE PrintHelpEnv(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL) =
       END;
     END HelpOnline;
 
-  PROCEDURE HelpSys(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL)  =
+  PROCEDURE HelpSys(self: ObCommand.T; arg: TEXT; <*UNUSED*>data: REFANY:=NIL)  =
     BEGIN
       IF Text.Equal(arg, "!") THEN
         SynWr.Text(SynWr.out, "  sys               (the built-in system library)\n");
@@ -211,7 +212,7 @@ PROCEDURE PrintHelpEnv(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL) =
       END;
     END HelpSys;
 
-  PROCEDURE HelpBool(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL)  =
+  PROCEDURE HelpBool(self: ObCommand.T; arg: TEXT; <*UNUSED*>data: REFANY:=NIL)  =
     BEGIN
       IF Text.Equal(arg, "!") THEN
         SynWr.Text(SynWr.out, "  bool              (the built-in boolean library)\n");
@@ -225,7 +226,7 @@ PROCEDURE PrintHelpEnv(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL) =
       END;
     END HelpBool;
 
-  PROCEDURE HelpInt(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL)  =
+  PROCEDURE HelpInt(self: ObCommand.T; arg: TEXT; <*UNUSED*>data: REFANY:=NIL)  =
     BEGIN
       IF Text.Equal(arg, "!") THEN
         SynWr.Text(SynWr.out, "  int               (the built-in integer library)\n");
@@ -239,7 +240,7 @@ PROCEDURE PrintHelpEnv(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL) =
       END;
     END HelpInt;
 
-  PROCEDURE HelpReal(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL)  =
+  PROCEDURE HelpReal(self: ObCommand.T; arg: TEXT; <*UNUSED*>data: REFANY:=NIL)  =
     BEGIN
       IF Text.Equal(arg, "!") THEN
         SynWr.Text(SynWr.out, "  real              (the built-in real library, with int overloading)\n");
@@ -253,7 +254,7 @@ PROCEDURE PrintHelpEnv(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL) =
       END;
     END HelpReal;
 
-  PROCEDURE HelpMath(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL)  =
+  PROCEDURE HelpMath(self: ObCommand.T; arg: TEXT; <*UNUSED*>data: REFANY:=NIL)  =
     BEGIN
       IF Text.Equal(arg, "!") THEN
         SynWr.Text(SynWr.out, "  math              (the built-in math library)\n");
@@ -267,7 +268,7 @@ PROCEDURE PrintHelpEnv(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL) =
       END;
     END HelpMath;
 
-  PROCEDURE HelpAscii(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL)  =
+  PROCEDURE HelpAscii(self: ObCommand.T; arg: TEXT; <*UNUSED*>data: REFANY:=NIL)  =
     BEGIN
       IF Text.Equal(arg, "!") THEN
         SynWr.Text(SynWr.out, "  ascii             (the built-in ascii library)\n");
@@ -281,7 +282,7 @@ PROCEDURE PrintHelpEnv(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL) =
       END;
     END HelpAscii;
 
-  PROCEDURE HelpText(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL)  =
+  PROCEDURE HelpText(self: ObCommand.T; arg: TEXT; <*UNUSED*>data: REFANY:=NIL)  =
     BEGIN
       IF Text.Equal(arg, "!") THEN
         SynWr.Text(SynWr.out, "  text              (the built-in text library)\n");
@@ -294,7 +295,7 @@ PROCEDURE PrintHelpEnv(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL) =
       END;
     END HelpText;
 
-  PROCEDURE HelpArray(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL)  =
+  PROCEDURE HelpArray(self: ObCommand.T; arg: TEXT; <*UNUSED*>data: REFANY:=NIL)  =
     BEGIN
       IF Text.Equal(arg, "!") THEN
         SynWr.Text(SynWr.out, "  array             (the built-in array library)\n");
@@ -308,7 +309,7 @@ PROCEDURE PrintHelpEnv(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL) =
       END;
     END HelpArray;
 
-  PROCEDURE HelpNet(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL)  =
+  PROCEDURE HelpNet(self: ObCommand.T; arg: TEXT; <*UNUSED*>data: REFANY:=NIL)  =
     BEGIN
       IF Text.Equal(arg, "!") THEN
         SynWr.Text(SynWr.out, "  net               (the built-in network library)\n");
@@ -321,6 +322,21 @@ PROCEDURE PrintHelpEnv(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL) =
 	SynWr.NewLine(SynWr.out);
       END;
     END HelpNet;
+
+  PROCEDURE HelpReplica(self: ObCommand.T; arg: TEXT; 
+                       <*UNUSED*>data: REFANY:=NIL)  =
+    BEGIN
+      IF Text.Equal(arg, "!") THEN
+        SynWr.Text(SynWr.out, "  replica           (the built-in replicated object library)\n");
+      ELSIF Text.Equal(arg, "?") THEN
+        SynWr.Text(SynWr.out, Bundle.Get(ObliqBdl2.Get(),"ObliqHelpReplica"));
+        SynWr.NewLine(SynWr.out);
+      ELSE
+	SynWr.Text(SynWr.out, "Command " & self.name 
+	  & ": bad argument: " & arg);
+	SynWr.NewLine(SynWr.out);
+      END;
+    END HelpReplica; 
 
 BEGIN
 END ObLibOnlineHelp.

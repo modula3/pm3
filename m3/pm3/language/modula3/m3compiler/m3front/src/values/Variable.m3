@@ -9,7 +9,7 @@
 
 MODULE Variable;
 
-IMPORT M3, M3ID, CG, Value, ValueRep, Type, Expr, Error, Runtime;
+IMPORT M3, M3ID, CG, Value, ValueRep, Type, Expr, Error, RunTyme;
 IMPORT Scope, AssignStmt, Formal, M3RT, IntegerExpr, TipeMap, M3String;
 IMPORT OpenArrayType, Target, TInt, Token, Ident, Module, CallExpr;
 IMPORT Decl, Null, Int, Fmt, Procedure, Tracer, TextExpr, NamedExpr;
@@ -31,6 +31,7 @@ REVEAL
         bounds      : BoundPair;
         cg_var      : CG.Var;
         bss_var     : CG.Var;
+        next_cg_var : T;
         init_var    : INTEGER;
         offset      : INTEGER;
         size        : INTEGER;
@@ -73,6 +74,24 @@ TYPE
     max : Target.Int;
   END;
 
+VAR
+  all_cg_vars: T := NIL;
+  (* variables with attached M3CG values *)
+
+PROCEDURE Reset () =
+  VAR t, u: T;
+  BEGIN
+    (* release any M3CG nodes that we've created *)
+    t := all_cg_vars;
+    WHILE (t # NIL) DO
+      u := t;  t := t.next_cg_var;
+      u.cg_var      := NIL;
+      u.bss_var     := NIL;
+      u.next_cg_var := NIL;
+    END;
+    all_cg_vars := NIL;
+  END Reset;
+
 PROCEDURE ParseDecl (READONLY att: Decl.Attributes) =
   TYPE TK = Token.T;
   VAR
@@ -83,8 +102,6 @@ PROCEDURE ParseDecl (READONLY att: Decl.Attributes) =
     trace : Tracer.T;
     alias : M3ID.T;
   BEGIN
-    IF att.isInline THEN Error.Msg ("a variable cannot be inline"); END;
-
     Match (TK.tVAR);
     WHILE (cur.token = TK.tIDENT) DO
       n := Ident.ParseList ();
@@ -330,54 +347,61 @@ PROCEDURE Check (t: T;  VAR cs: Value.CheckState) =
   END Check;
 
 PROCEDURE Load (t: T) =
-  VAR v: CG.Var;  align: INTEGER;
   BEGIN
     t.used := TRUE;
     Value.Declare (t);
     IF (t.initPending) THEN ForceInit (t); END;
-    v := t.cg_var;
-    align := t.cg_align;
-    IF (v = NIL) THEN v := Scope.ToUnit (t); align := CG.Max_alignment END;
     IF Type.IsStructured (t.tipe) THEN
-      (* the runtime representation is an address *)
+      (* the RunTyme representation is an address *)
       IF (t.bss_var # NIL) THEN
-        CG.Load_addr_of (t.bss_var, 0, align);
+        CG.Load_addr_of (t.bss_var, 0, t.cg_align);
+      ELSIF (t.cg_var = NIL) THEN (* => global *)
+        Module.LoadGlobalAddr (Scope.ToUnit (t), t.offset, is_const := FALSE);
+        CG.Boost_alignment (t.align);
       ELSIF (t.indirect) THEN
-        CG.Load_addr (v, t.offset);
+        CG.Load_addr (t.cg_var, t.offset);
         CG.Boost_alignment (t.align);
       ELSE
-        CG.Load_addr_of (v, t.offset, align);
+        CG.Load_addr_of (t.cg_var, t.offset, t.cg_align);
       END;
     ELSE (* simple scalar *)
       IF (t.bss_var # NIL) THEN
-        CG.Load (t.bss_var, 0, t.size, align, t.stk_type);
+        CG.Load (t.bss_var, 0, t.size, t.cg_align, t.stk_type);
+      ELSIF (t.cg_var = NIL) THEN (* => global *)
+        Module.LoadGlobalAddr (Scope.ToUnit (t), t.offset, is_const := FALSE);
+        IF (t.indirect) THEN
+          CG.Load_indirect (CG.Type.Addr, 0, Target.Address.size);
+        END;
+        CG.Boost_alignment (t.align);
+        CG.Load_indirect (t.stk_type, 0, t.size);
       ELSIF (t.indirect) THEN
-        CG.Load_addr (v, t.offset);
+        CG.Load_addr (t.cg_var, t.offset);
         CG.Boost_alignment (t.align);
         CG.Load_indirect (t.stk_type, 0, t.size);
       ELSE
-        CG.Load (v, t.offset, t.size, align, t.stk_type);
+        CG.Load (t.cg_var, t.offset, t.size, t.cg_align, t.stk_type);
       END;
     END;
   END Load;
 
 PROCEDURE LoadLValue (t: T) =
-  VAR v: CG.Var;  align: INTEGER;
   BEGIN
     t.used := TRUE;
     Value.Declare (t);
     IF (t.initPending) THEN ForceInit (t); END;
-    v := t.cg_var;
-    align := t.cg_align;
-    IF (v = NIL) THEN v := Scope.ToUnit (t); align := CG.Max_alignment END;
     IF (t.bss_var # NIL) THEN
-      CG.Load_addr_of (t.bss_var, 0, align);
+      CG.Load_addr_of (t.bss_var, 0, t.cg_align);
+    ELSIF (t.cg_var = NIL) THEN (* => global variable *)
+      Module.LoadGlobalAddr (Scope.ToUnit (t), t.offset, is_const := FALSE);
+      IF (t.indirect) THEN
+        CG.Load_indirect (CG.Type.Addr, 0, Target.Address.size);
+      END;
     ELSIF (t.indirect) THEN
-      CG.Load_addr (v, t.offset);
-      CG.Boost_alignment (t.align);
+      CG.Load_addr (t.cg_var, t.offset);
     ELSE
-      CG.Load_addr_of (v, t.offset, align);
+      CG.Load_addr_of (t.cg_var, t.offset, t.cg_align);
     END;
+    CG.Boost_alignment (t.align);
   END LoadLValue;
 
 PROCEDURE SetLValue (t: T) =
@@ -388,22 +412,26 @@ PROCEDURE SetLValue (t: T) =
     IF (t.initPending) THEN t.initPending := FALSE; END;
     v := t.cg_var;
     align := t.cg_align;
-    IF (v = NIL) THEN v := Scope.ToUnit (t); align := CG.Max_alignment END;
+    IF (v = NIL) THEN
+      v := Module.GlobalData (is_const := FALSE);
+      align := CG.Max_alignment;
+    END;
     <*ASSERT t.indirect *>
-    CG.Boost_alignment (t.align);
+    CG.Boost_alignment (align);
     CG.Store_addr (v, t.offset);
   END SetLValue;
 
-PROCEDURE CGName (t: T;  VAR unit: CG.Var;  VAR offset: INTEGER) =
+PROCEDURE LocalCGName (t: T;  VAR unit: CG.Var;  VAR offset: INTEGER) =
   BEGIN
     t.used := TRUE;
     Value.Declare (t);
     IF (t.initPending) THEN ForceInit (t); END;
+    <*ASSERT NOT t.imported*>
     IF (t.cg_var = NIL)
-      THEN unit := Scope.ToUnit (t);   offset := t.offset;
-      ELSE unit := t.cg_var;           offset := 0;
+      THEN unit := Module.GlobalData (FALSE);  offset := t.offset;
+      ELSE unit := t.cg_var;                   offset := 0;
     END;
-  END CGName;
+  END LocalCGName;
 
 PROCEDURE SetBounds (t: T;  READONLY min, max: Target.Int) =
   BEGIN
@@ -442,7 +470,7 @@ PROCEDURE SetGlobals (t: T) =
     END;
 
     (* declare the actual variable *)
-    t.offset := Module.Allocate (size, align, id := t.name);
+    t.offset := Module.Allocate (size, align, FALSE, id := t.name);
   END SetGlobals;
 
 PROCEDURE Declare (t: T): BOOLEAN =
@@ -473,6 +501,7 @@ PROCEDURE Declare (t: T): BOOLEAN =
     IF (t.external) THEN
       name := Value.GlobalName (t, dots := FALSE, with_module := FALSE);
       extern_name := M3ID.Add (name);
+      t.next_cg_var := all_cg_vars;  all_cg_vars := t;
       t.cg_var := CG.Import_global (extern_name, size, align,
                                     mtype, 0(*no mangling*));
       t.cg_align := align;
@@ -482,15 +511,16 @@ PROCEDURE Declare (t: T): BOOLEAN =
 
     ELSIF (t.global) THEN
       <*ASSERT t.offset # 0*>
-      CG.Declare_global_field (t.name, t.offset, size, type);
+      CG.Declare_global_field (t.name, t.offset, size, type, FALSE);
       IF (t.initZero) THEN t.initDone := TRUE END;
       t.cg_align := align;
       IF (t.indirect) THEN
         t.cg_align := t.align;
+        t.next_cg_var := all_cg_vars;  all_cg_vars := t;
         t.bss_var := CG.Declare_global (M3ID.NoID, t.size, t.cg_align,
                               CG.Type.Struct, Type.GlobalUID (t.tipe),
                               exported := FALSE, init := FALSE);
-        CG.Init_var (t.offset, t.bss_var, 0);
+        CG.Init_var (t.offset, t.bss_var, 0, FALSE);
       END;
 
     ELSIF (t.formal = NIL) THEN
@@ -501,25 +531,47 @@ PROCEDURE Declare (t: T): BOOLEAN =
         size  := Target.Address.pack
                   + OpenArrayType.OpenDepth(t.tipe) * Target.Integer.pack;
       END;
+      (** align := FindAlignment (align, size); **)
       t.cg_align := align;
+      t.next_cg_var := all_cg_vars;  all_cg_vars := t;
       t.cg_var := CG.Declare_local (t.name, size, align, mtype, type,
                                     t.need_addr, t.up_level, CG.Maybe);
 
     ELSIF (t.indirect) THEN
       (* formal passed by reference => param is an address *)
       t.cg_align := align;
+      t.next_cg_var := all_cg_vars;  all_cg_vars := t;
       t.cg_var := CG.Declare_param (t.name, size, align, mtype, type,
                                     t.need_addr, t.up_level, CG.Maybe);
 
     ELSE
       (* simple parameter *)
+      (** align := FindAlignment (align, size); **)
       t.cg_align := align;
+      t.next_cg_var := all_cg_vars;  all_cg_vars := t;
       t.cg_var := CG.Declare_param (t.name, size, align, mtype, type,
                                     t.need_addr, t.up_level, CG.Maybe);
     END;
 
     RETURN TRUE;
   END Declare;
+
+(** -- this doesn't work with the current gcc-based backend.  It
+       chokes on  VAR v: BITS 32 FOR CHAR := 'X' -- 10/9/96 WKK
+PROCEDURE FindAlignment (align: AlignVal;  size: INTEGER): AlignVal =
+  (* Fix the alignment of small local variables and parameters
+     with BITS FOR types *)
+  BEGIN
+    IF    size < 0                  THEN (*don't mess with open array alignments*)
+    ELSIF size >= Target.Int_D.size THEN align := MAX (align, Target.Int_D.align);
+    ELSIF size <= Target.Int_A.size THEN align := MAX (align, Target.Int_A.align);
+    ELSIF size <= Target.Int_B.size THEN align := MAX (align, Target.Int_B.align);
+    ELSIF size <= Target.Int_C.size THEN align := MAX (align, Target.Int_C.align);
+    ELSE                                 align := MAX (align, Target.Int_D.align);
+    END;
+    RETURN align;
+  END FindAlignment;
+**)
 
 PROCEDURE ConstInit (t: T) =
   VAR
@@ -544,12 +596,12 @@ PROCEDURE ConstInit (t: T) =
       (* declare the holder for the initial value *)
       name := "_INIT_" & M3ID.ToText (t.name);
       init_name := M3ID.Add (name);
-      t.init_var := Module.Allocate (size, align, "initial value for ",t.name);
-      CG.Declare_global_field (init_name, t.init_var, size, type);
-      CG.Comment (t.init_var, "init expr for ", Value.GlobalName(t,TRUE,TRUE));
+      t.init_var := Module.Allocate (size, align, TRUE,"initial value for ",t.name);
+      CG.Declare_global_field (init_name, t.init_var, size, type, TRUE);
+      CG.Comment (t.init_var, TRUE, "init expr for ",Value.GlobalName(t,TRUE,TRUE));
       init_expr := Expr.ConstValue (t.init);
-      Expr.PrepLiteral (init_expr, t.tipe);
-      Expr.GenLiteral (init_expr, t.init_var, t.tipe);
+      Expr.PrepLiteral (init_expr, t.tipe, TRUE);
+      Expr.GenLiteral (init_expr, t.init_var, t.tipe, TRUE);
     END;
 
     IF (t.global) THEN
@@ -560,8 +612,8 @@ PROCEDURE ConstInit (t: T) =
         init_expr := Expr.ConstValue (t.init);
       END;
       IF (init_expr # NIL) THEN
-        Expr.PrepLiteral (init_expr, t.tipe);
-        Expr.GenLiteral (init_expr, t.offset, t.tipe);
+        Expr.PrepLiteral (init_expr, t.tipe, FALSE);
+        Expr.GenLiteral (init_expr, t.offset, t.tipe, FALSE);
         t.initDone := TRUE;
       END;
     END;
@@ -658,7 +710,7 @@ PROCEDURE CopyOpenArray (t: T;  ref: Type.T) =
     CG.Store_int (sizes, M3RT.OA_size_0);
         
     (* allocate the storage *)
-    proc := Runtime.LookUpProc (Runtime.Hook.NewTracedArray);
+    proc := RunTyme.LookUpProc (RunTyme.Hook.NewTransientArray);
     Procedure.StartCall (proc);
     IF Target.DefaultCall.args_left_to_right THEN
       Type.LoadInfo (ref, -1);
@@ -671,7 +723,7 @@ PROCEDURE CopyOpenArray (t: T;  ref: Type.T) =
       Type.LoadInfo (ref, -1);
       CG.Pop_param (CG.Type.Addr);
     END;
-    ptr := Procedure.EmitCall (proc);
+    ptr := Procedure.EmitValueCall (proc);
 
     (* load the destination and source addresses *)
     CG.Push (ptr);
@@ -686,7 +738,7 @@ PROCEDURE CopyOpenArray (t: T;  ref: Type.T) =
     FOR i := 0 TO depth - 1 DO
       Load (t); (* CG.Load_addr (sizes, M3RT.OA_elt_ptr); *)
       CG.Open_size (i);
-      IF (i # 0) THEN CG.Multiply (CG.Type.Word) END;
+      IF (i # 0) THEN CG.Multiply (Target.Word.cg_type) END;
     END;
 
     (* copy the actual argument into the new storage *)
@@ -713,13 +765,13 @@ PROCEDURE UserInit (t: T) =
       ELSIF (t.init_var # 0) THEN
         t.initPending := FALSE;
         LoadLValue (t);
-        CG.Load_addr_of (Scope.ToUnit (t), t.init_var, CG.Max_alignment);
+        Module.LoadGlobalAddr (Scope.ToUnit (t), t.init_var, is_const := TRUE);
         CG.Copy (t.size, overlap := FALSE);
       ELSE
         t.initPending := FALSE;
         AssignStmt.PrepForEmit (t.tipe, t.init, initializing := TRUE);
         LoadLValue (t);
-        AssignStmt.Emit (t.tipe, t.init);
+        AssignStmt.DoEmit (t.tipe, t.init);
       END;
       t.initDone := TRUE;
       Tracer.Schedule (t.trace);
@@ -745,11 +797,13 @@ PROCEDURE GenGlobalMap (s: Scope.T): INTEGER =
                      Value.Declare (t);
                      IF (t.indirect) THEN
                        TipeMap.Add (t.offset, TipeMap.Op.PushPtr, 0);
-                       Type.GenMap (t.tipe, 0, -1, refs_only := TRUE);
+                       Type.GenMap (t.tipe, 0, -1, refs_only := TRUE,
+                                    transient := FALSE);
                        TipeMap.Add (t.size, TipeMap.Op.Return, 0);
                        TipeMap.SetCursor (t.offset + Target.Address.size);
                      ELSE
-                       Type.GenMap (t.tipe, t.offset, -1, refs_only := TRUE);
+                       Type.GenMap (t.tipe, t.offset, -1, refs_only := TRUE,
+                                    transient := FALSE);
                      END;
                    END;
                  END;
@@ -819,7 +873,7 @@ PROCEDURE BindTrace (t: T;  xx: Tracer.T) =
 
     (* build the trace procedure call *)
     args := NEW (Expr.List, 2);
-    args[0] := TextExpr.New (z);
+    args[0] := TextExpr.New8 (z);
     args[1] := NamedExpr.FromValue (t);
     x.call  := CallExpr.New (x.handler, args);
 

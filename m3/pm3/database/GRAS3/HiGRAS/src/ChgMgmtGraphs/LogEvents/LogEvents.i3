@@ -7,8 +7,11 @@ INTERFACE LogEvents;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:29  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:45  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:29  hosking
+    Import of GRAS3 1.1
 
     Revision 1.1  1997/12/02 17:56:41  roland
     New event types and event contexts for user recovery operations
@@ -17,7 +20,7 @@ INTERFACE LogEvents;
 *)
 (***************************************************************************)
 
-IMPORT Event, Transaction;
+IMPORT Event, Txn;
 FROM EventType IMPORT Mismatch, Unknown;
 
 
@@ -74,7 +77,7 @@ PROCEDURE SignalCheckpoint (transUnit : CARDINAL;
                             graphNo   : CARDINAL;
                             graph     : REFANY;
                             isPreEvent: BOOLEAN;
-                            level     : Transaction.Level);
+                            level     : Txn.Level);
 
 PROCEDURE SignalUndo (transUnit : CARDINAL;
                       poolName  : TEXT;
@@ -82,7 +85,7 @@ PROCEDURE SignalUndo (transUnit : CARDINAL;
                       graphNo   : CARDINAL;
                       graph     : REFANY;
                       isPreEvent: BOOLEAN;
-                      level     : Transaction.Level);
+                      level     : Txn.Level);
 
 
 PROCEDURE SignalRedo (transUnit : CARDINAL;
@@ -91,7 +94,7 @@ PROCEDURE SignalRedo (transUnit : CARDINAL;
                       graphNo   : CARDINAL;
                       graph     : REFANY;
                       isPreEvent: BOOLEAN;
-                      level     : Transaction.Level);
+                      level     : Txn.Level);
 
 
 PROCEDURE SignalRedoNext (transUnit : CARDINAL;
@@ -100,7 +103,7 @@ PROCEDURE SignalRedoNext (transUnit : CARDINAL;
                           graphNo   : CARDINAL;
                           graph     : REFANY;
                           isPreEvent: BOOLEAN;
-                          level     : Transaction.Level);
+                          level     : Txn.Level);
 
 
 PROCEDURE SignalRedoPrev (transUnit : CARDINAL;
@@ -109,7 +112,7 @@ PROCEDURE SignalRedoPrev (transUnit : CARDINAL;
                           graphNo   : CARDINAL;
                           graph     : REFANY;
                           isPreEvent: BOOLEAN;
-                          level     : Transaction.Level);
+                          level     : Txn.Level);
 
 
 PROCEDURE SignalRedoIth (transUnit : CARDINAL;
@@ -118,7 +121,7 @@ PROCEDURE SignalRedoIth (transUnit : CARDINAL;
                          graphNo   : CARDINAL;
                          graph     : REFANY;
                          isPreEvent: BOOLEAN;
-                         level     : Transaction.Level;
+                         level     : Txn.Level;
                          son       : CARDINAL           );
 
 
@@ -128,7 +131,7 @@ PROCEDURE SignalBackstep (transUnit : CARDINAL;
                           graphNo   : CARDINAL;
                           graph     : REFANY;
                           isPreEvent: BOOLEAN;
-                          level     : Transaction.Level);
+                          level     : Txn.Level);
 
 
 PROCEDURE SignalForstep (transUnit : CARDINAL;
@@ -137,7 +140,7 @@ PROCEDURE SignalForstep (transUnit : CARDINAL;
                          graphNo   : CARDINAL;
                          graph     : REFANY;
                          isPreEvent: BOOLEAN;
-                         level     : Transaction.Level);
+                         level     : Txn.Level);
 
 
 (* Queries for event attributes.*)
@@ -147,7 +150,7 @@ PROCEDURE GetPool (ev: T): REFANY RAISES {Mismatch, Unknown};
 PROCEDURE GetGraphNo (ev: T): CARDINAL RAISES {Mismatch, Unknown};
 PROCEDURE GetGraph (ev: T): REFANY RAISES {Mismatch, Unknown};
 PROCEDURE GetIsPreEvent (ev: T): BOOLEAN RAISES {Mismatch, Unknown};
-PROCEDURE GetLevel (ev: T): Transaction.Level RAISES {Mismatch, Unknown};
+PROCEDURE GetLevel (ev: T): Txn.Level RAISES {Mismatch, Unknown};
 
 (* RedoIth *)
 PROCEDURE GetSonNo (ev: T): CARDINAL RAISES {Mismatch, Unknown};

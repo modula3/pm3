@@ -1,7 +1,8 @@
 (* Copyright (C) 1992, Xerox                                                 *)
 (* All rights reserved.                                                      *)
 
-(* Last modified on Thu Jan 26 13:48:02 PST 1995 by kalsow                   *)
+(* Last modified on Wed Jul 30 13:55:56 EST 1997 by hosking                  *)
+(*      modified on Thu Jan 26 13:48:02 PST 1995 by kalsow                   *)
 (*      modified on Thu May 13 09:10:35 PDT 1993 by mcjones                  *)
 (*      modified on Wed Mar  4 23:35:36 PST 1992 by muller                   *)
 
@@ -12,7 +13,7 @@ UNSAFE MODULE FloatMode;
    thread *)
 
 (*
- * Unsafe because TtoS is potentially unsafe, however it is not in
+ * Unsafe because FlatTtoS is potentially unsafe, however it is not in
  * our use of it.
  *)
 FROM FPU IMPORT ieee_flags;
@@ -181,7 +182,6 @@ PROCEDURE HandleFPE (<* UNUSED *> sig : Ctypes.int;
 
       (* should never get here *)
     | Usignal.FPE_INTOVF => RAISE Trap(Flag.IntOverflow);
-
     | Usignal.FPE_INTDIV => RAISE Trap(Flag.IntDivByZero);
     | Usignal.FPE_FLTSUB => RAISE Trap(Flag.Subscript);
     END;
@@ -202,10 +202,10 @@ PROCEDURE BuildConversionArrays () =
 
   BEGIN
     FOR i := FIRST(rndModes) TO LAST(rndModes) DO
-      rndModeToSunOs[i] := M3toC.TtoS(rndModes[i]);
+      rndModeToSunOs[i] := M3toC.FlatTtoS(rndModes[i]);
     END;
     FOR i := FIRST(flags) TO LAST(flags) DO
-      flagToSunOs[i] := M3toC.TtoS(flags[i]);
+      flagToSunOs[i] := M3toC.FlatTtoS(flags[i]);
     END;
   END BuildConversionArrays;
 
@@ -215,12 +215,12 @@ VAR
   rndModeToSunOs: ARRAY RoundingMode OF Ctypes.char_star;
   flagToSunOs: ARRAY Flag OF Ctypes.char_star;
 BEGIN
-  setStr := M3toC.TtoS("set");
-  directionStr := M3toC.TtoS("direction");
-  getStr := M3toC.TtoS("get");
-  exceptionStr := M3toC.TtoS("exception");
-  nullStr := M3toC.TtoS("");
-  clearStr := M3toC.TtoS("clear");
+  setStr := M3toC.FlatTtoS("set");
+  directionStr := M3toC.FlatTtoS("direction");
+  getStr := M3toC.FlatTtoS("get");
+  exceptionStr := M3toC.FlatTtoS("exception");
+  nullStr := M3toC.FlatTtoS("");
+  clearStr := M3toC.FlatTtoS("clear");
 
   BuildConversionArrays();
 

@@ -24,7 +24,8 @@ PROCEDURE Compile (ce: CallExpr.T) =
   BEGIN
     Expr.Compile (ce.args[0]);
     Expr.Compile (ce.args[1]);
-    CG.Div (CG.Type.Word, Expr.GetSign (ce.args[0]), Expr.GetSign (ce.args[1]));
+    CG.Div (Target.Word.cg_type, Expr.GetSign (ce.args[0]),
+                                 Expr.GetSign (ce.args[1]));
   END Compile;
 
 PROCEDURE Fold (ce: CallExpr.T): Expr.T =
@@ -53,6 +54,7 @@ PROCEDURE Initialize () =
                                  CallExpr.NotBoolean,
                                  CallExpr.NotBoolean,
                                  Fold,
+                                 CallExpr.NoBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

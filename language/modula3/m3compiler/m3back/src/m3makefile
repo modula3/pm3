@@ -19,5 +19,6 @@ end
 
 module    ("Wrx86")
 
+%build_standalone ()
 Library ("m3back")
 

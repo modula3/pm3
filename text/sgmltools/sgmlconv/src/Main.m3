@@ -22,8 +22,9 @@
 MODULE Main;
 
 IMPORT SGML, SGMLPrint, Stdio, Params, Text, Wr, Rd, Thread, TextIntTbl, 
-    TextWr, TextRd, Fmt, Lex, OSError, FileRd, FileWr, TextSeq, IntSeq, 
-    Pathname, Process, FS, File, RegularFile;
+    TextWr, TextRd, Fmt, Lex, OSError, FileRd, FileWr,
+    TextTransientSeq AS TextSeq, IntSeq, Pathname, Process, FS, File,
+    RegularFile;
 
 TYPE
   Translate = SGML.Application OBJECT
@@ -2022,7 +2023,8 @@ PROCEDURE StartElementCheck(self: HTMLCheck;
     END;
   END StartElementCheck;
 
-PROCEDURE EndElementCheck(self: Filter; READONLY e: SGML.EndElementEvent) =
+PROCEDURE EndElementCheck(self: Filter;
+                          <*UNUSED*> READONLY e: SGML.EndElementEvent) =
   BEGIN
     DEC(self.depth);
   END EndElementCheck;

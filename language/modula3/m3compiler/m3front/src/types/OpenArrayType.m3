@@ -18,6 +18,7 @@ TYPE
         depth      : INTEGER;
         elt_align  : INTEGER;
         elt_pack   : INTEGER;
+        transient  : BOOLEAN;
       OVERRIDES
         check      := Check;
         check_align:= CheckAlign;
@@ -31,7 +32,7 @@ TYPE
         fprint     := FPrinter;
       END;
 
-PROCEDURE New (element: Type.T): Type.T =
+PROCEDURE New (transient: BOOLEAN; element: Type.T): Type.T =
   VAR p: P;
   BEGIN
     p := NEW (P);
@@ -40,6 +41,7 @@ PROCEDURE New (element: Type.T): Type.T =
     p.baseElt    := NIL;
     p.depth      := -1;
     p.elt_pack   := 0;
+    p.transient  := transient;
     RETURN p;
   END New;
 
@@ -111,10 +113,15 @@ PROCEDURE Check (p: P) =
 
     align := MAX (align, MinAlign); (* == whole array alignment *)
     IF (p.elt_pack MOD Target.Byte) # 0 THEN
-      Error.Msg ("SRC Modula-3 restriction: open array elements must be byte-aligned");
+      Error.Msg ("CM3 restriction: open array elements must be byte-aligned");
     ELSIF NOT Type.IsAlignedOk (p, align) THEN
-      Error.Msg ("SRC Modula-3 restriction: scalars in packed array elements cannot cross word boundaries");
+      Error.Msg ("CM3 restriction: scalars in packed array elements cannot cross word boundaries");
     END;
+
+    IF p.transient AND elt_info.isTransient THEN
+      Error.Warn (1, "array type already transient, <*TRANSIENT*> ignored");
+    END;
+    p.info.isTransient := p.transient OR elt_info.isTransient;
 
     p.info.size      := -1;
     p.info.min_size  := -1;
@@ -189,7 +196,7 @@ PROCEDURE Subtyper (a: P;  tb: Type.T): BOOLEAN =
     (* peel off the fixed dimensions as long as the sizes are equal *)
     WHILE ArrayType.Split (ta, ia, ea) AND ArrayType.Split (tb, ib, eb) DO
       IF NOT TInt.EQ (Type.Number (ia), Type.Number (ib)) THEN
-        RETURN FALSE
+        RETURN FALSE;
       END;
       ta := ea;
       tb := eb;
@@ -231,7 +238,7 @@ PROCEDURE GenInit (p: P;  zeroed: BOOLEAN) =
     FOR i := 0 TO depth-1 DO
       CG.Push (array);
       CG.Open_size (i);
-      IF (i # 0) THEN CG.Multiply (CG.Type.Word) END;
+      IF (i # 0) THEN CG.Multiply (Target.Word.cg_type) END;
     END;
     max := CG.Pop ();
 
@@ -257,14 +264,14 @@ PROCEDURE GenInit (p: P;  zeroed: BOOLEAN) =
     (* cnt := cnt + 1 *)
     CG.Push (cnt);
     CG.Load_integer (TInt.One);
-    CG.Add (CG.Type.Int);
+    CG.Add (Target.Integer.cg_type);
     CG.Store_temp (cnt);
 
     (* IF (cnt < NUMBER(ARRAY) GOTO TOP-OF-LOOP *)
     CG.Set_label (top+1);
     CG.Push (cnt);
     CG.Push (max);
-    CG.If_lt (top, CG.Type.Int, CG.Likely);
+    CG.If_compare (Target.Integer.cg_type, CG.Cmp.LT, top, CG.Likely);
 
     (* release the temps *)
     CG.Free (cnt);
@@ -273,12 +280,13 @@ PROCEDURE GenInit (p: P;  zeroed: BOOLEAN) =
   END GenInit;
 
 PROCEDURE GenMap (p: P;  offset: INTEGER;  <*UNUSED*> size: INTEGER;
-                  refs_only: BOOLEAN) =
+                  refs_only, transient: BOOLEAN) =
   VAR a: INTEGER;
   BEGIN
     TipeMap.Add (offset, TipeMap.Op.OpenArray_1, OpenDepth (p));
     a := TipeMap.GetCursor ();
-    Type.GenMap (OpenType (p), a, p.elt_pack, refs_only);
+    Type.GenMap (OpenType (p), a, p.elt_pack, refs_only,
+                 p.transient OR transient);
     TipeMap.Add (a + p.elt_pack, TipeMap.Op.Stop, 0);
   END GenMap;
 

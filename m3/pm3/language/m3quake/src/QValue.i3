@@ -7,7 +7,7 @@
 
 INTERFACE QValue;
 
-IMPORT QCode, M3ID;
+IMPORT Quake, QCode;
 
 CONST
   Brand = "QValue.T";
@@ -21,9 +21,9 @@ TYPE
 
 TYPE
   Kind = {    (*    int         ref     *)
-    Var,      (*    M3ID.T      Binding *)
+    Var,      (*    Quake.ID    Binding *)
     Integer,  (*    value       ----    *)
-    String,   (*    M3ID.T      ----    *)
+    String,   (*    Quake.ID    ----    *)
     Table,    (*    ------      QVTbl.T *)
     Array,    (*    ------      QVSeq.T *)
     Proc      (*    ------      Proc    *)
@@ -38,19 +38,17 @@ TYPE
 
 TYPE
   Scope = REF RECORD
+    id         : INTEGER;
     bindings   : Binding := NIL;
     parent     : Scope   := NIL;
   END;
 
 TYPE
   Binding = REF RECORD
-    next     : Binding := NIL;
-    readonly : BOOLEAN := FALSE;
-    name     : M3ID.T  := M3ID.NoID;
+    next     : Binding  := NIL;
+    readonly : BOOLEAN  := FALSE;
+    name     : Quake.ID := Quake.NoID;
     value    : T;
   END;
-
-VAR (*READONLY*)
-  BoolID: ARRAY BOOLEAN OF M3ID.T;
 
 END QValue.

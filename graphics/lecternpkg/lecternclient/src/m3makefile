@@ -7,10 +7,11 @@
 import("libm3")
 import("mtex")
 
+include_dir(OS_TYPE)
+
 Interface("LecternClient")
 Interface("LecternServer")
 
-include_dir(OS_TYPE)
 
 Library("lecternserver")
 Mtex("LecternClient", 1) /* manpage */

@@ -10,12 +10,32 @@
 
 readonly proc Table (nm, key, value) is
   local tab = nm & "Tbl"
-  build_generic_intf (tab, "Table", [key, value], VISIBLE)
-  build_generic_impl (tab, "Table", [key, value])
+  local tabrep = nm & "TblRep"
+  build_generic_intf (tab, "Table", ["Root", key, value], VISIBLE)
+  build_generic_intf (tabrep, "TableRep", [key, value], VISIBLE)
+  build_generic_impl (tab, "Table", [key, value, tabrep])
 end
 
 readonly proc table (nm, key, value) is
   local tab = nm & "Tbl"
-  build_generic_intf (tab, "Table", [key, value], HIDDEN)
-  build_generic_impl (tab, "Table", [key, value])
+  local tabrep = nm & "TblRep"
+  build_generic_intf (tab, "Table", ["Root", key, value], HIDDEN)
+  build_generic_intf (tabrep, "TableRep", [key, value], HIDDEN)
+  build_generic_impl (tab, "Table", [key, value, tabrep])
+end
+
+readonly proc TransientTable (nm, key, value) is
+  local tab = nm & "Tbl"
+  local tabrep = nm & "TblRep"
+  build_generic_intf (tab, "Table", ["RootTransient", key, value], VISIBLE)
+  build_generic_intf (tabrep, "TableTransientRep", [key, value], VISIBLE)
+  build_generic_impl (tab, "Table", [key, value, tabrep])
+end
+
+readonly proc transientTable (nm, key, value) is
+  local tab = nm & "Tbl"
+  local tabrep = nm & "TblRep"
+  build_generic_intf (tab, "Table", ["RootTransient", key, value], HIDDEN)
+  build_generic_intf (tabrep, "TableTransientRep", [key, value], HIDDEN)
+  build_generic_impl (tab, "Table", [key, value, tabrep])
 end

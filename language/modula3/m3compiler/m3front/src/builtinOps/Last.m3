@@ -46,7 +46,7 @@ PROCEDURE Compile (ce: CallExpr.T) =
       Expr.Compile (e);
       CG.Open_size (0);
       CG.Load_integer (TInt.One);
-      CG.Subtract (CG.Type.Int);
+      CG.Subtract (Target.Integer.cg_type);
     ELSIF Type.GetBounds (t, min, max) THEN (* ordinal type *)
       CG.Load_integer (max);
     ELSIF Type.IsEqual (t, Reel.T, NIL) THEN
@@ -115,6 +115,7 @@ PROCEDURE Initialize () =
                                  CallExpr.PrepNoBranch,
                                  CallExpr.NoBranch,
                                  Fold,
+                                 CallExpr.NoBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

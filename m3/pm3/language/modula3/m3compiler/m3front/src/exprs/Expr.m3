@@ -198,20 +198,20 @@ PROCEDURE IsEqual (a, b: T;  x: M3.EqAssumption): BOOLEAN =
     RETURN a.isEqual (b, x);
   END IsEqual;
 
-PROCEDURE PrepLiteral (t: T;  type: Type.T) =
+PROCEDURE PrepLiteral (t: T;  type: Type.T;  is_const: BOOLEAN) =
   BEGIN
     IF (t = NIL) THEN RETURN END;
     <* ASSERT t.checked *>
     Type.Compile (t.type);
-    t.prepLiteral (type);
+    t.prepLiteral (type, is_const);
   END PrepLiteral;
 
-PROCEDURE GenLiteral (t: T;  offset: INTEGER;  type: Type.T) =
+PROCEDURE GenLiteral (t: T;  offset: INTEGER;  type: Type.T;  is_const: BOOLEAN) =
   BEGIN
     IF (t = NIL) THEN RETURN END;
     <* ASSERT t.checked *>
     Type.Compile (t.type);
-    t.genLiteral (offset, type);
+    t.genLiteral (offset, type, is_const);
   END GenLiteral;
 
 PROCEDURE GenFPLiteral (t: T;  mbuf: M3Buf.T) =
@@ -280,13 +280,16 @@ PROCEDURE NeverEq (<*UNUSED*> a, b: T;
     RETURN FALSE;
   END NeverEq;
 
-PROCEDURE NoPrepLiteral (<*UNUSED*> t: T;  <*UNUSED*> type: Type.T) =
+PROCEDURE NoPrepLiteral (<*UNUSED*> t: T;
+                         <*UNUSED*> type: Type.T;
+                         <*UNUSED*> is_const: BOOLEAN) =
   BEGIN
   END NoPrepLiteral;
 
 PROCEDURE NoLiteral (<*UNUSED*> t: T; 
                      <*UNUSED*> offset: INTEGER;
-                     <*UNUSED*> type: Type.T) =
+                     <*UNUSED*> type: Type.T;
+                     <*UNUSED*> is_const: BOOLEAN) =
   BEGIN
     <* ASSERT FALSE *>
   END NoLiteral;

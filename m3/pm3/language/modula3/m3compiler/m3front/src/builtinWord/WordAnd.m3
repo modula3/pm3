@@ -9,7 +9,7 @@
 MODULE WordAnd;
 
 IMPORT CG, CallExpr, Expr, ExprRep, Procedure, ProcType;
-IMPORT Int, IntegerExpr, Formal, Value, WordPlus, Target, TWord;
+IMPORT Int, IntegerExpr, Formal, Value, WordPlus, Target, TWord, TInt;
 
 VAR Z: CallExpr.MethodList;
 VAR formals: Value.T;
@@ -36,6 +36,33 @@ PROCEDURE Fold (ce: CallExpr.T): Expr.T =
     END;
   END Fold;
 
+PROCEDURE GetBounds (ce: CallExpr.T;  VAR min, max: Target.Int) =
+  VAR min_a, max_a, min_b, max_b : Target.Int;
+  BEGIN
+    Expr.GetBounds (ce.args[0], min_a, max_a);
+    Expr.GetBounds (ce.args[1], min_b, max_b);
+    IF TInt.LT (min_a, TInt.Zero) OR TInt.LT (max_a, TInt.Zero) THEN
+      (* "a" could be 16_ffff...  => any bits from "b" can survive *)
+      IF TInt.LT (min_b, TInt.Zero) OR TInt.LT (max_b, TInt.Zero) THEN
+        (* too complicated *)
+        min := Target.Integer.min;
+        max := Target.Integer.max;
+      ELSE
+        (* "b" is non-negative, but "a" could be 16_ffff... *)
+        min := TInt.Zero;  (* no bits in common *)
+        max := max_b;
+      END;
+    ELSIF TInt.LT (min_b, TInt.Zero) OR TInt.LT (max_b, TInt.Zero) THEN
+      (* "a" is non-negative, but "b" could be 16_ffff... *)
+      min := TInt.Zero;  (* no bits in common *)
+      max := max_a;
+    ELSE
+      (* both a and b are non-negative *)
+      min := TInt.Zero;  (* no bits in common *)
+      TWord.And (max_a, max_b, max);
+    END;
+  END GetBounds;
+
 PROCEDURE Initialize () =
   VAR
     x0 := Formal.NewBuiltin ("x", 0, Int.T);
@@ -53,6 +80,7 @@ PROCEDURE Initialize () =
                                  CallExpr.NotBoolean,
                                  CallExpr.NotBoolean,
                                  Fold,
+                                 GetBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

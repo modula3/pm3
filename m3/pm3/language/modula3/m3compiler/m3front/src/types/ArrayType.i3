@@ -10,9 +10,9 @@ INTERFACE ArrayType;
 
 IMPORT Type;
 
-PROCEDURE Parse (): Type.T;
+PROCEDURE Parse (transient: BOOLEAN): Type.T;
 
-PROCEDURE New (index, element: Type.T): Type.T;
+PROCEDURE New (transient: BOOLEAN; index, element: Type.T): Type.T;
 
 PROCEDURE Split (array: Type.T; VAR index, element: Type.T): BOOLEAN;
 (* If 'array' is an array type, returns TRUE and sets index and element

@@ -45,7 +45,7 @@ PROCEDURE New (a: Expr.T): Expr.T =
 
 PROCEDURE TypeOf (p: P): Type.T =
   BEGIN
-    RETURN Expr.TypeOf (p.a);
+    RETURN Type.Base (Expr.TypeOf (p.a));
   END TypeOf;
 
 PROCEDURE Check (p: P;  VAR cs: Expr.CheckState) =

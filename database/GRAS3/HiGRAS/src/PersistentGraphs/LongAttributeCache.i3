@@ -10,8 +10,11 @@ INTERFACE LongAttributeCache;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:31  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:46  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:31  hosking
+    Import of GRAS3 1.1
 
     Revision 1.1  1997/03/26 11:39:11  roland
     Subsystem PersistentGraph adapted to handle graph boundary crossing
@@ -49,6 +52,7 @@ TYPE
   T <: Public;
 
   Public =
+    <*TRANSIENT*> ROOT
     OBJECT
     METHODS
       init (resource: VirtualResource.T): T;

@@ -82,8 +82,8 @@ PROCEDURE Compare (a, b: Expr.T;  VAR sign: INTEGER): BOOLEAN =
   BEGIN
     IF NOT SplitPair (a, b, x, y) THEN RETURN FALSE END;
     IF    TInt.LT (x, y) THEN  sign := -1
-    ELSIF TInt.LT (y, x) THEN  sign := 1
-    ELSE                            sign := 0
+    ELSIF TInt.LT (y, x) THEN  sign := +1
+    ELSE                       sign :=  0
     END;
     RETURN TRUE;
   END Compare;
@@ -189,11 +189,11 @@ PROCEDURE GenFPLiteral (p: P;  buf: M3Buf.T) =
     M3Buf.PutChar (buf, '>');
   END GenFPLiteral;
 
-PROCEDURE GenLiteral (p: P;  offset: INTEGER;  type: Type.T) =
+PROCEDURE GenLiteral (p: P;  offset: INTEGER;  type: Type.T;  is_const: BOOLEAN) =
   VAR info: Type.Info;
   BEGIN
     EVAL Type.CheckInfo (type, info);
-    CG.Init_int (offset, info.size, p.value);
+    CG.Init_int (offset, info.size, p.value, is_const);
   END GenLiteral;
 
 BEGIN

@@ -70,11 +70,11 @@ PROCEDURE Check (p: P;  VAR cs: Expr.CheckState) =
     ta := Type.Base (Expr.TypeOf (p.a));
     tb := Type.Base (Expr.TypeOf (p.b));
     IF    (tb = Reel.T)  AND (ta = Reel.T)  THEN
-      p.class := cREAL;  INC (cs.fp_ops);
+      p.class := cREAL;
     ELSIF (tb = LReel.T) AND (ta = LReel.T) THEN
-      p.class := cLONG;  INC (cs.fp_ops);
+      p.class := cLONG;
     ELSIF (tb = EReel.T) AND (ta = EReel.T) THEN
-      p.class := cEXTND;  INC (cs.fp_ops);
+      p.class := cEXTND;
     ELSIF (ta = ErrType.T) OR (tb = ErrType.T) THEN
       p.class := cREAL; (* there's already an error *)
       ta := ErrType.T;

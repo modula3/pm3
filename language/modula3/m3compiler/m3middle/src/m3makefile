@@ -23,16 +23,20 @@ Module ("M3Buf")
 Module ("M3ID")
 Module ("M3Timers")
 Module ("M3File")
+Interface ("M3Process")
 
 Module ("M3CG")
 Interface ("M3CG_Ops")
 
 Module ("M3CG_Check")
-Module ("M3CG_Clean")
 Module ("M3CG_Rd")
 Module ("M3CG_Wr")
+Module ("M3CG_Binary")
+Module ("M3CG_BinRd")
+Module ("M3CG_BinWr")
 Module ("M3RT")
 
+%build_standalone ()
 Library ("m3middle")
 
 

@@ -1,0 +1,38 @@
+/* Copyright (C) 1992, Digital Equipment Corporation                         */
+/* All rights reserved.                                                      */
+/* See the file COPYRIGHT for a full description.                            */
+
+/* Last modified on Mon Jul 25 11:52:51 PDT 1994 by detlefs                  */
+/*      modified on Tue Feb 11 20:48:28 PST 1992 by muller                   */
+
+import("libm3")
+
+Generic_module ("Bag")
+Generic_module ("BagDef")
+Generic_module ("BagList")
+
+template("bag")
+
+MkBag("Int", "Integer")
+MkBagDef("Int", "Integer")
+MkBagList("Int", "Integer")
+
+MkTransientBag("Int", "Integer")
+MkTransientBagDef("Int", "Integer")
+MkTransientBagList("Int", "Integer")
+
+MkBag("Text", "Text")
+MkBagDef("Text", "Text")
+MkBagList("Text", "Text")
+
+MkTransientBag("Text", "Text")
+MkTransientBagDef("Text", "Text")
+MkTransientBagList("Text", "Text")
+
+MkBag("Ref", "Refany")
+MkBagList("Ref", "Refany")
+
+MkTransientBag("Ref", "RefanyTransient")
+MkTransientBagList("Ref", "RefanyTransient")
+
+Library("bag")

@@ -10,8 +10,11 @@ GENERIC INTERFACE CursorList(Element);
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:26  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:43  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:26  hosking
+    Import of GRAS3 1.1
 
     Revision 1.4  1996/08/06 16:22:33  roland
     Merge of PAGESERVER and main branch.
@@ -40,7 +43,7 @@ TYPE
   T <: Public;
 
   Public =
-    OBJECT
+    <*TRANSIENT*> ROOT OBJECT
     METHODS
       (**********************************************************************)
       (**                                                                   *)

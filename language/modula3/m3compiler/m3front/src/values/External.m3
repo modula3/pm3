@@ -8,8 +8,7 @@
 MODULE External;
 
 IMPORT M3, M3ID, Value, ValueRep, Token, Scope, Module, Error;
-IMPORT Type, Expr, Variable, Ident, Scanner, Runtime, CG, Host;
-IMPORT M3Compiler;
+IMPORT Type, Expr, Variable, Ident, Scanner, RunTyme, CG, Host;
 FROM Scanner IMPORT GetToken, Match, MatchID, cur;
 
 TYPE TK = Token.T;
@@ -85,9 +84,9 @@ PROCEDURE NoteImport (s: Set;  im: Module.T;  name: M3ID.T) =
 PROCEDURE ParseImports (s: Set;  self: Module.T) =
   VAR runtime: Module.T;  name: M3ID.T;
   BEGIN
-    (* parse the "magic" m3base import *)
-    Runtime.Import ();
-    Runtime.Bind (self, runtime, name);
+    (* parse the "magic" runtime import *)
+    RunTyme.Import ();
+    RunTyme.Bind (self, runtime, name);
     IF (runtime # NIL) THEN
       NoteImport (s, runtime, name);
       s.last_obj.used := TRUE; (* so the user doesn't get any warnings *)
@@ -339,7 +338,7 @@ PROCEDURE GenInitLinks (p: Port;  imported: BOOLEAN;
       y := p;
       LOOP
         IF (x = y) THEN
-          EVAL Module.GlobalData (x.module);
+          Module.ImportInterface (x.module);
           Host.env.note_interface_use (x.module.name, imported);
           note (x.module.name);
           EXIT;
@@ -361,43 +360,7 @@ PROCEDURE GenImports (s: Set) =
     END;
   END GenImports;
 
-PROCEDURE GetImports (s: Set): M3Compiler.IDList =
-  VAR p : Port;
-      list : M3Compiler.IDList:= NIL;
-  BEGIN
-    p := s.imports;
-    WHILE (p # NIL) DO
-      list := NEW(M3Compiler.IDList, interface := p.module.name, next := list);
-      p := p.next;
-    END;
-    RETURN list;
-  END GetImports;
-
 (*---------------------------------------------------------------------------*)
-
-
-PROCEDURE NeedGlobalInit (s: Set): BOOLEAN =
-  VAR x := s.exports;
-  BEGIN
-    WHILE (x # NIL) DO
-      IF NeedExportInit (x.module) THEN RETURN TRUE; END;
-      x := x.next;
-    END;
-    RETURN FALSE;
-  END NeedGlobalInit;
-
-PROCEDURE NeedExportInit (interface: Module.T): BOOLEAN =
-  VAR o: Value.T;
-  BEGIN
-    o := Scope.ToList (Module.ExportScope (interface));
-    WHILE (o # NIL) DO
-      IF (o.exported) AND (Value.ClassOf (o) = Value.Class.Var) THEN
-        IF Variable.NeedGlobalInit (o) THEN RETURN TRUE END;
-      END;
-      o := o.next;
-    END;
-    RETURN FALSE;
-  END NeedExportInit;
 
 PROCEDURE InitGlobals (s: Set) =
   VAR x := s.exports;

@@ -9,11 +9,17 @@
 %      modified on Fri Feb 19 15:47:54 PST 1993 by owicki
 %      modified on Thu Sep 17 16:24:58 PDT 1992 by evers
 
-if defined("AT_SRC") m3_option("-O") end
+if defined ("AT_SRC") m3_option("-O") end
+
+% m3_option ("-verbose")
+% m3_option ("-keep")
 
 import("libm3")
 import("tcp")
 
+if defined("_NETOBJ_OVERRIDE")
+  template("netobj-ov")
+end
 template("netobj")
 
 include_dir("netobjrt")

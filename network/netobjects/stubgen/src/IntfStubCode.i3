@@ -9,7 +9,7 @@
 
 INTERFACE IntfStubCode;
 
-IMPORT Atom, Formatter, Type, AtomRefTbl, StubCode;
+IMPORT Atom, Formatter, Type, AtomRefTransientTbl AS AtomRefTbl, StubCode;
 
 PROCEDURE Header(t: Type.Object; 
                  intWr: Formatter.T; 

@@ -1,0 +1,5 @@
+import("libpm3")
+import("OO7")
+
+implementation ("GenDB")
+Program ("gendb")

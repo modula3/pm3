@@ -6,11 +6,13 @@
 % Last modified on Tue Dec  6 09:07:22 PST 1994 by kalsow
 %      modified on Tue May 25 14:21:52 PDT 1993 by muller
 
+Module ("M3Front")
 Module ("M3Compiler")
 
 module ("M3")
 module ("M3Header")
 module ("M3String")
+module ("M3WString")
 module ("Token")
 module ("Error")
 module ("Host")
@@ -21,8 +23,9 @@ module ("Coverage")
 module ("ESet")
 module ("ProcBody")
 module ("CG")
-module ("Runtime")
+module ("RunTyme")
 module ("TipeMap")
 module ("TipeDesc")
 module ("Tracer")
 module ("WebInfo")
+

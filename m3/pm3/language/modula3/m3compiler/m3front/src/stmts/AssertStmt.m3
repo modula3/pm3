@@ -10,10 +10,12 @@ MODULE AssertStmt;
 
 IMPORT CG, Expr, Token, Scanner, Stmt, StmtRep, Error;
 IMPORT Host, EnumExpr, Type, Bool, Target, TInt, ErrType;
+IMPORT Textt, Procedure, NarrowExpr, Module, AssignStmt, RunTyme;
 
 TYPE
   P = Stmt.T OBJECT
-        e: Expr.T;
+        cond : Expr.T;
+        msg  : Expr.T;
       OVERRIDES
         check       := Check;
 	compile     := Compile;
@@ -26,7 +28,13 @@ PROCEDURE Parse (): Stmt.T =
     p := NEW (P);
     StmtRep.Init (p);
     Scanner.Match (Token.T.tASSERT);
-    p.e := Expr.Parse ();
+    p.cond := Expr.Parse ();
+    p.msg  := NIL;
+    IF (Scanner.cur.token = Token.T.tWITH)
+      OR (Scanner.cur.token = Token.T.tCOMMA) THEN
+      Scanner.GetToken ();  (* "," or "WITH" *)
+      p.msg := Expr.Parse ();
+    END;
     IF (Scanner.cur.token # Token.T.tENDPRAGMA) THEN
       Scanner.Fail ("missing \'*>\'");
     END;
@@ -37,28 +45,50 @@ PROCEDURE Parse (): Stmt.T =
 PROCEDURE Check (p: P;  VAR cs: Stmt.CheckState) =
   VAR t: Type.T;
   BEGIN
-    Expr.TypeCheck (p.e, cs);
-    t := Type.Base (Expr.TypeOf(p.e));
+    Expr.TypeCheck (p.cond, cs);
+    t := Type.Base (Expr.TypeOf (p.cond));
     IF (t # Bool.T) AND (t # ErrType.T) THEN
       Error.Msg ("ASSERT condition must be a BOOLEAN");
     END;
+    IF (p.msg # NIL) THEN
+      Expr.TypeCheck (p.msg, cs);
+      t := Type.Base (Expr.TypeOf (p.msg));
+      IF Type.IsAssignable (Textt.T, t) THEN
+        p.msg := CheckArg (Textt.T, t, p.msg, cs);
+      ELSE
+        Error.Msg ("ASSERT message must be assignable to TEXT");
+      END;
+    END;
   END Check;
+
+PROCEDURE CheckArg (tlhs, trhs: Type.T;  e: Expr.T;
+                    VAR cs: Stmt.CheckState): Expr.T =
+  BEGIN
+    AssignStmt.Check (tlhs, e, cs);
+    IF Host.doNarrowChk AND NOT Type.IsSubtype (trhs, tlhs) THEN
+      e := NarrowExpr.New (e, tlhs);
+      Expr.TypeCheck (e, cs);
+    END;
+    RETURN e;
+  END CheckArg;
 
 PROCEDURE Compile (p: P): Stmt.Outcomes =
   VAR v: Expr.T;  i: Target.Int;  u: Type.T;   skip: CG.Label;
   BEGIN
     IF Host.doAsserts THEN
       i := TInt.MOne;
-      v := Expr.ConstValue (p.e);
+      v := Expr.ConstValue (p.cond);
       IF (v = NIL) THEN
         skip := CG.Next_label ();
-        Expr.PrepBranch (p.e, skip, CG.No_label, CG.Always);
-        Expr.CompileBranch (p.e, skip, CG.No_label, CG.Always);
-        CG.Assert_fault ();
+        IF (p.msg # NIL) THEN Expr.Prep (p.msg); END;
+        Expr.PrepBranch (p.cond, skip, CG.No_label, CG.Always);
+        Expr.CompileBranch (p.cond, skip, CG.No_label, CG.Always);
+        Crash (p);
         CG.Set_label (skip);
       ELSIF EnumExpr.Split (v, i, u) AND TInt.EQ (i, TInt.Zero) THEN
         (* ASSERT (FALSE) *)
-        CG.Assert_fault ();
+        IF (p.msg # NIL) THEN Expr.Prep (p.msg); END;
+        Crash (p);
         RETURN Stmt.Outcomes {};
       ELSE <* ASSERT TInt.EQ (i, TInt.One) *>
         (* ASSERT (TRUE) *)
@@ -66,6 +96,41 @@ PROCEDURE Compile (p: P): Stmt.Outcomes =
     END;
     RETURN Stmt.Outcomes {Stmt.Outcome.FallThrough};
   END Compile;
+
+PROCEDURE Crash (p: P) =
+  VAR proc: Procedure.T;  this_file: TEXT;  this_line: INTEGER;
+  BEGIN
+    IF (p.msg = NIL) THEN
+      CG.Abort (CG.RuntimeError.AssertFailed);
+      RETURN;
+    END;
+
+    Scanner.Here (this_file, this_line);
+    proc := RunTyme.LookUpProc (RunTyme.Hook.AssertFailed);
+    Procedure.StartCall (proc);
+    IF Target.DefaultCall.args_left_to_right THEN
+      (* module data pointer *)
+        CG.Load_addr_of (Module.GlobalData (FALSE), 0, CG.Max_alignment);
+        CG.Pop_param (CG.Type.Addr);
+      (* line number *)
+        CG.Load_intt (this_line);
+        CG.Pop_param (Target.Integer.cg_type);
+      (* message *)
+        Expr.Compile (p.msg);
+        CG.Pop_param (CG.Type.Addr);
+    ELSE
+      (* message *)
+        Expr.Compile (p.msg);
+        CG.Pop_param (CG.Type.Addr);
+      (* line number *)
+        CG.Load_intt (this_line);
+        CG.Pop_param (Target.Integer.cg_type);
+      (* module data pointer *)
+        CG.Load_addr_of (Module.GlobalData (FALSE), 0, CG.Max_alignment);
+        CG.Pop_param (CG.Type.Addr);
+    END;
+    Procedure.EmitCall (proc);
+  END Crash;
 
 PROCEDURE GetOutcome (<*UNUSED*> p: P): Stmt.Outcomes =
   BEGIN

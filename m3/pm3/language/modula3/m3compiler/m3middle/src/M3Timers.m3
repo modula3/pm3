@@ -7,7 +7,7 @@
 
 MODULE M3Timers;
 
-IMPORT ETimer, Wr;
+IMPORT ETimer, Stdio;
 
 PROCEDURE Start () =
   (* note: we allocate the timers in reverse order of printout *)
@@ -41,9 +41,9 @@ PROCEDURE Start () =
     ETimer.Enable ();
   END Start;
 
-PROCEDURE Stop (wr: Wr.T) =
+PROCEDURE Stop () =
   BEGIN
-    IF (pass_0 # NIL) THEN ETimer.Dump (wr) END;
+    IF (pass_0 # NIL) THEN ETimer.Dump (Stdio.stdout) END;
   END Stop;
 
 BEGIN

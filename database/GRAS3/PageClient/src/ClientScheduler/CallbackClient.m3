@@ -7,8 +7,11 @@ MODULE CallbackClient;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:36  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:47  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:36  hosking
+    Import of GRAS3 1.1
 
     Revision 1.6  1997/03/25 12:06:32  rbnix
     	Bug fixed: full pair of PageCache.BeginAccess and
@@ -41,7 +44,7 @@ MODULE CallbackClient;
  *)
 IMPORT
   PageCache,
-  PageLock, Access, Transaction,
+  PageLock, Access, Txn,
   CommunicationSeq, RemoteFile,
   InternalBaseScheduledClientRessource,
   ScheduledClientRessource, InternalScheduledClientRessource,
@@ -86,7 +89,7 @@ PROCEDURE ReleaseData   (         self		:T;
 
 
 PROCEDURE PropagateData	(         self		:T;
-                                  end		:Transaction.End;
+                                  end		:Txn.End;
                                   entries       :CommunicationSeq.T)
   RAISES {CallbackPort.FatalError} =
   BEGIN

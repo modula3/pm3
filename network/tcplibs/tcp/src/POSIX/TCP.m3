@@ -7,9 +7,9 @@
 (*      modified on Sun Jan 12 16:16:54 PST 1992 by meehan *)
 (*      modified on Sat Jan 11 16:55:00 PST 1992 by gnelson *)
 
-UNSAFE MODULE TCP EXPORTS TCP, TCPSpecial, Uin;
+UNSAFE MODULE TCP EXPORTS TCP, TCPSpecial;
 
-IMPORT Atom, AtomList, ConnFD, IP, Rd, Wr, Thread;
+IMPORT Atom, AtomList, ConnFD, IP, IPError, Rd, Wr, Thread;
 IMPORT Usocket, Cerrno, Uerror, Uin, Unix, Uuio, Utypes,
        TCPHack, TCPPosix, SchedulerPosix, Fmt, Word;
 FROM Ctypes IMPORT char, int;
@@ -39,9 +39,6 @@ CONST TCP_NODELAY = 1;
 
 CONST Sin_Zero = ARRAY [0 .. 7] OF char{VAL(0, char), ..};
 
-VAR Unexpected: Atom.T;
-    ClosedErr: AtomList.T;
-
 PROCEDURE NewConnector (ep: IP.Endpoint): Connector RAISES {IP.Error} =
   VAR
     res                := NEW(Connector, ep := ep);
@@ -52,9 +49,9 @@ PROCEDURE NewConnector (ep: IP.Endpoint): Connector RAISES {IP.Error} =
     res.fd := Usocket.socket(Usocket.AF_INET, Usocket.SOCK_STREAM, 0 (* TCP*));
     IF res.fd = -1 THEN
       IF Cerrno.errno = Uerror.EMFILE OR Cerrno.errno = Uerror.ENFILE THEN
-        Raise(IP.NoResources);
+        IPError.Raise(IP.NoResources);
       ELSE
-        RaiseUnexpected();
+        IPError.RaiseUnexpected();
       END
     END;
     MakeNonBlocking (res.fd);
@@ -68,12 +65,12 @@ PROCEDURE NewConnector (ep: IP.Endpoint): Connector RAISES {IP.Error} =
     status := Usocket.bind(res.fd, ADR(name), BYTESIZE(SockAddrIn));
     IF status # 0 THEN
       IF Cerrno.errno = Uerror.EADDRINUSE THEN
-        Raise(IP.PortBusy);
+        IPError.Raise(IP.PortBusy);
       ELSE
-        RaiseUnexpected();
+        IPError.RaiseUnexpected();
       END
     END;
-    IF Usocket.listen(res.fd, 8) # 0 THEN RaiseUnexpected(); END;
+    IF Usocket.listen(res.fd, 8) # 0 THEN IPError.RaiseUnexpected(); END;
     RETURN res
   END NewConnector;
 
@@ -81,7 +78,6 @@ PROCEDURE GetEndPoint(c: Connector): IP.Endpoint =
   VAR
     namelen  : INTEGER;
     name  : SockAddrIn;
-  <*FATAL IP.Error*>
   BEGIN
     IF c.ep.addr = IP.NullAddress THEN
       c.ep.addr := IP.GetHostAddr();
@@ -89,7 +85,7 @@ PROCEDURE GetEndPoint(c: Connector): IP.Endpoint =
     IF c.ep.port = IP.NullPort THEN
       namelen := BYTESIZE(SockAddrIn);
       IF Usocket.getsockname(c.fd, ADR(name), ADR(namelen)) # 0 THEN
-        Die()
+        IPError.Die()
       END;
       c.ep.port := Uin.ntohs(name.sin_port);
     END;
@@ -120,9 +116,9 @@ PROCEDURE StartConnect(ep: IP.Endpoint): T
     fd := Usocket.socket(Usocket.AF_INET, Usocket.SOCK_STREAM, 0 (* TCP*));
     IF fd < 0 THEN
       IF Cerrno.errno = Uerror.EMFILE OR Cerrno.errno = Uerror.ENFILE THEN
-        Raise(IP.NoResources);
+        IPError.Raise(IP.NoResources);
       ELSE
-        RaiseUnexpected();
+        IPError.RaiseUnexpected();
       END;
     END;
     InitFD(fd);
@@ -174,14 +170,13 @@ PROCEDURE CheckConnect(fd: INTEGER; ep: IP.Endpoint) : BOOLEAN
     | Uerror.EISCONN => RETURN TRUE;
     | Uerror.EADDRNOTAVAIL,  Uerror.ECONNREFUSED, Uerror.EINVAL,
                Uerror.ECONNRESET, Uerror.EBADF =>
-        Raise(Refused);
+        IPError.Raise(Refused);
     | Uerror.ETIMEDOUT =>
-        Raise(Timeout);
+        IPError.Raise(Timeout);
     | Uerror.ENETUNREACH, Uerror.EHOSTUNREACH,  Uerror.EHOSTDOWN, Uerror.ENETDOWN =>
-        Raise(IP.Unreachable);
-    | <*NOWARN*> Uerror.EWOULDBLOCK, Uerror.EAGAIN,  Uerror.EINPROGRESS, 
-        Uerror.EALREADY =>
-    ELSE RaiseUnexpected();
+        IPError.Raise(IP.Unreachable);
+    | <*NOWARN*> Uerror.EWOULDBLOCK, Uerror.EAGAIN,  Uerror.EINPROGRESS, Uerror.EALREADY =>
+    ELSE IPError.RaiseUnexpected();
     END;
     RETURN FALSE;
   END CheckConnect;
@@ -195,28 +190,33 @@ PROCEDURE Accept (c: Connector): T
   BEGIN
     LOOP
       LOCK c DO
-        IF c.closed THEN RaiseNoEC(Closed); END;
+        IF c.closed THEN IPError.Raise(Closed); END;
         fd := Usocket.accept(c.fd, ADR(name), ADR(nameSize));
       END;
       IF fd >= 0 THEN
         EXIT
       ELSIF Cerrno.errno = Uerror.EMFILE OR Cerrno.errno = Uerror.ENFILE THEN
-        Raise(IP.NoResources);
+        IPError.Raise(IP.NoResources);
       ELSIF
         Cerrno.errno = Uerror.EWOULDBLOCK OR Cerrno.errno = Uerror.EAGAIN
         THEN
         EVAL SchedulerPosix.IOAlertWait(c.fd, TRUE);
       ELSE
-        RaiseUnexpected();
+        IPError.RaiseUnexpected();
       END
     END;
     InitFD(fd);
     RETURN NEW(T, fd := fd, ep := IP.NullEndPoint);
   END Accept;
 
-PROCEDURE CloseConnector(<*UNUSED*> c: Connector) =
+PROCEDURE CloseConnector(c: Connector) =
   BEGIN
-    Die();
+    LOCK c DO
+      IF NOT c.closed THEN
+        EVAL Unix.close(c.fd);
+        c.closed := TRUE;
+      END;
+    END;
   END CloseConnector;
   
 
@@ -265,7 +265,7 @@ PROCEDURE MakeNonBlocking(fd: INTEGER) =
     IF Unix.fcntl(fd, Unix.F_SETFL, 
         Word.Or(Unix.fcntl(fd, Unix.F_GETFL, 0), Unix.M3_NONBLOCK)) # 0
     THEN
-      Die();
+      IPError.Die();
     END;
   END MakeNonBlocking;
   
@@ -275,7 +275,7 @@ PROCEDURE Close(t: T) =
       IF NOT t.closed THEN
         EVAL Unix.close(t.fd);
         t.closed := TRUE;
-        t.error := ClosedErr;
+        t.error := IPError.ClosedErr;
       END;
     END;
   END Close;
@@ -307,7 +307,7 @@ PROCEDURE GetBytesFD(
               RAISE ConnFD.TimedOut;
             END;
         ELSE
-            SetError(t,Unexpected);
+            SetError(t, IPError.Unexpected);
         END;
       END;
     END;
@@ -335,7 +335,7 @@ PROCEDURE PutBytesFD(t: T; READONLY arr: ARRAY OF CHAR)
              EVAL SchedulerPosix.IOAlertWait(t.fd, FALSE);
              (* IF Thread.TestAlert() THEN RAISE Thread.Alerted END *)
         ELSE
-            SetError(t,Unexpected);
+            SetError(t, IPError.Unexpected);
         END
       END
     END;
@@ -373,36 +373,7 @@ PROCEDURE ShutdownOut(t: T) RAISES {Wr.Failure} =
     END;
   END ShutdownOut;
 
-PROCEDURE Raise(a: Atom.T) RAISES {IP.Error} =
-  BEGIN
-    RAISE IP.Error(AtomList.List2(a, Atom.FromText(Fmt.Int(Cerrno.errno))));
-  END Raise;
-
-PROCEDURE RaiseUnexpected() RAISES {IP.Error} =
-  BEGIN
-    Raise(Unexpected);
-  END RaiseUnexpected;
-
- PROCEDURE RaiseNoEC(a: Atom.T) RAISES {IP.Error} =
-  BEGIN
-    RAISE IP.Error(AtomList.List1(a));
-  END RaiseNoEC;
-  
-EXCEPTION FatalError;
-
-PROCEDURE Die() RAISES {} =
-  <* FATAL FatalError *>
-  BEGIN
-    RAISE FatalError;
-  END Die;
-
 BEGIN
-  Refused := Atom.FromText("TCP.Refused");
-  Closed := Atom.FromText("TCP.Closed");
-  Timeout := Atom.FromText("TCP.Timeout");
-  ConnLost := Atom.FromText("TCP.ConnLost");
-  Unexpected := Atom.FromText("TCP.Unexpected");
-  ClosedErr := AtomList.List1(Closed);
 END TCP.
 
-    
+

@@ -87,8 +87,15 @@ TYPE
   LPCTSTR = LPCSTR;
   LP      = LPWSTR;
 
-  HANDLE = WinBaseTypes.HANDLE;
+  PSHORT  = WinBaseTypes.PSHORT;
+  PLONG   = WinBaseTypes.PLONG;
+
+  HANDLE  = WinBaseTypes.HANDLE;
   PHANDLE = WinBaseTypes.PHANDLE;
+
+  LCID    = DWORD;
+  PLCID   = PDWORD;
+  LANGID  = WORD;
 
 CONST
   APPLICATION_ERROR_MASK       = 16_20000000;
@@ -276,12 +283,17 @@ CONST
   TIME_ZONE_ID_STANDARD = 1;
   TIME_ZONE_ID_DAYLIGHT = 2;
 
-  PROCESSOR_INTEL_386  = 386;
-  PROCESSOR_INTEL_486  = 486;
-  PROCESSOR_INTEL_860  = 860;
-  PROCESSOR_MIPS_R2000 = 2000;
-  PROCESSOR_MIPS_R3000 = 3000;
-  PROCESSOR_MIPS_R4000 = 4000;
+  PROCESSOR_INTEL_386     = 386;
+  PROCESSOR_INTEL_486     = 486;
+  PROCESSOR_INTEL_PENTIUM = 586;
+  PROCESSOR_MIPS_R4000    = 4000;
+  PROCESSOR_ALPHA_21064   = 21064;
+
+  PROCESSOR_ARCHITECTURE_INTEL   = 0;
+  PROCESSOR_ARCHITECTURE_MIPS    = 1;
+  PROCESSOR_ARCHITECTURE_ALPHA   = 2;
+  PROCESSOR_ARCHITECTURE_PPC     = 3;
+  PROCESSOR_ARCHITECTURE_UNKNOWN = 16_FFFF;
 
 TYPE
   PMEMORY_BASIC_INFORMATION = UNTRACED REF MEMORY_BASIC_INFORMATION;
@@ -790,7 +802,7 @@ TYPE
     SidStart: DWORD;
   END;
 
-  PACCESS_DENIED_ACE = UNTRACED REF PACCESS_DENIED_ACE;
+  PACCESS_DENIED_ACE = UNTRACED REF ACCESS_DENIED_ACE;
   ACCESS_DENIED_ACE = RECORD
     Header  : ACE_HEADER;
     Mask    : ACCESS_MASK;
@@ -1058,7 +1070,7 @@ CONST
 TYPE
   SECURITY_IMPERSONATION_LEVEL = [0 .. 3];
   PSECURITY_IMPERSONATION_LEVEL =
-    UNTRACED REF PSECURITY_IMPERSONATION_LEVEL;
+    UNTRACED REF SECURITY_IMPERSONATION_LEVEL;
 
 CONST
   SecurityAnonymous      = 0;
@@ -1180,7 +1192,7 @@ CONST
 
 TYPE
   TOKEN_USER = RECORD User: SID_AND_ATTRIBUTES;  END;
-  PTOKEN_USER = UNTRACED REF PTOKEN_USER;
+  PTOKEN_USER = UNTRACED REF TOKEN_USER;
 
 
   PTOKEN_GROUPS = UNTRACED REF TOKEN_GROUPS;
@@ -1270,8 +1282,18 @@ CONST
   RTL_CRITSECT_TYPE = 0;
   RTL_RESOURCE_TYPE = 1;
 
+(* NOTE: "PRTL_CRITICAL_SECTION" is declared as a Modula-3 opaque
+   type and then immediately revealed so that "EnterCriticalSection()"
+   and "LeaveCriticalSection()" won't require checks by the GC wrapper
+   routines.  Clearly, if a Windows critical section is inside an M3
+   traced ref (which moves!) the system is going to crash.  Hence, the
+   extra GC check isn't needed. *)
+
+TYPE   PRTL_CRITICAL_SECTION <: ADDRESS;
+REVEAL PRTL_CRITICAL_SECTION = UNTRACED BRANDED "WinNT.PRTL_CRITICAL_SECTION"
+                               REF RTL_CRITICAL_SECTION;
+
 TYPE
-  PRTL_CRITICAL_SECTION = UNTRACED REF RTL_CRITICAL_SECTION;
   RTL_CRITICAL_SECTION = RECORD
     DebugInfo: PRTL_CRITICAL_SECTION_DEBUG;
 
@@ -1282,12 +1304,11 @@ TYPE
     (* *)
     *)
 
-    LockCount     : LONG;
-    RecursionCount: LONG;
-    OwningThread: HANDLE;     (* from the thread's
-    ClientId->UniqueThread *)
-    LockSemaphore: HANDLE;
-    Reserved     : DWORD;
+    LockCount      : LONG;
+    RecursionCount : LONG;
+    OwningThread   : HANDLE;  (* from the thread's ClientId->UniqueThread *)
+    LockSemaphore  : HANDLE;
+    Reserved       : DWORD;
   END;
 
 CONST
@@ -2016,7 +2037,7 @@ CONST
 (* Symbol format. *)
 
 TYPE
-  PIMAGE_SYMBOL = <* UNALIGNED *> UNTRACED REF PIMAGE_SYMBOL;
+  PIMAGE_SYMBOL = <* UNALIGNED *> UNTRACED REF IMAGE_SYMBOL;
   IMAGE_SYMBOL = RECORD
     N: ARRAY [0 .. 7] OF BYTE;
     (*???
@@ -2029,11 +2050,11 @@ TYPE
         PBYTE   LongName[2];
     } N;
     *)
-    Value: DWORD;
-    SectionNumber: SHORT;
-    Type: WORD;
-    StorageClass: BYTE;
-    NumberOfAuxSymbols: BYTE;
+    Value              : DWORD;
+    SectionNumber      : SHORT;
+    Type               : WORD;
+    StorageClass       : BYTE;
+    NumberOfAuxSymbols : BYTE;
   END;
 
 CONST IMAGE_SIZEOF_SYMBOL = 18;
@@ -2330,21 +2351,18 @@ VAR                             (* !!!  CONST *)
   IMAGE_ARCHIVE_END          : Ctypes.char_star; (* := TtoS("`\n")*)
   IMAGE_ARCHIVE_PAD          : Ctypes.char_star; (* := TtoS("\n")*)
   IMAGE_ARCHIVE_LINKER_MEMBER: Ctypes.char_star; (* := TtoS("/ ")*)
-  IMAGE_ARCHIVE_LONGNAMES_MEMBER: Ctypes.char_star; (* := TtoS("(* ")*) *)
+  IMAGE_ARCHIVE_LONGNAMES_MEMBER: Ctypes.char_star; (* := TtoS("// ")*)
 
 TYPE
   PIMAGE_ARCHIVE_MEMBER_HEADER = UNTRACED REF IMAGE_ARCHIVE_MEMBER_HEADER;
   IMAGE_ARCHIVE_MEMBER_HEADER = RECORD
-    Name: ARRAY [0 .. 16 - 1] OF BYTE;  (* File member name - `/'
-                                             terminated. *)
-      Date: ARRAY [0 .. 12 - 1] OF BYTE;  (* File member date - decimal. *)
-    UserID: ARRAY [0 .. 6 - 1] OF BYTE;  (* File member user id -
-                                              decimal. *)
-    GroupID: ARRAY [0 .. 6 - 1] OF BYTE;  (* File member group id -
-                                               decimal. *)
-    Mode: ARRAY [0 .. 8 - 1] OF BYTE;   (* File member mode - octal. *)
-    Size: ARRAY [0 .. 10 - 1] OF BYTE;  (* File member size - decimal. *)
-    EndHeader: ARRAY [0 .. 2 - 1] OF BYTE;  (* String to end header. *)
+    Name     : ARRAY [0 .. 15] OF BYTE;  (* member name - `/' terminated. *)
+    Date     : ARRAY [0 .. 11] OF BYTE;  (* member date - decimal secs since 1970 *)
+    UserID   : ARRAY [0 .. 5]  OF BYTE;  (* member user id - decimal. *)
+    GroupID  : ARRAY [0 .. 5]  OF BYTE;  (* member group id - decimal. *)
+    Mode     : ARRAY [0 .. 7]  OF BYTE;  (* member mode - octal. *)
+    Size     : ARRAY [0 .. 9]  OF BYTE;  (* member size - decimal. *)
+    EndHeader: ARRAY [0 .. 1]  OF BYTE;  (* String to end header. *)
   END;
 
 CONST IMAGE_SIZEOF_ARCHIVE_MEMBER_HDR = 60;

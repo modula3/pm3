@@ -3,8 +3,7 @@
 (* See the file COPYRIGHT for a full description.              *)
 (*                                                             *)
 (* File: ModExpr.m3                                            *)
-(* Last modified on Fri Feb 16 10:38:32 PST 1996 by heydon     *)
-(*      modified on Thu Dec 15 14:01:22 PST 1994 by kalsow     *)
+(* Last modified on Thu Dec 15 14:01:22 PST 1994 by kalsow     *)
 (*      modified on Thu Nov 29 03:31:49 1990 by muller         *)
 
 MODULE ModExpr;
@@ -17,8 +16,8 @@ TYPE
 
 CONST
   CGType = ARRAY Class OF CG.Type {
-             CG.Type.Int,   CG.Type.Reel, CG.Type.LReel,
-             CG.Type.XReel, CG.Type.Word };
+             CG.Type.Void,   CG.Type.Reel, CG.Type.LReel,
+             CG.Type.XReel,  CG.Type.Void };
 
 TYPE
   P = ExprRep.Tab BRANDED "ModExpr.P" OBJECT
@@ -37,7 +36,7 @@ TYPE
         compileBR    := ExprRep.NotBoolean;
         evaluate     := Fold;
         isEqual      := ExprRep.EqCheckAB;
-        getBounds    := ExprRep.NoBounds;
+        getBounds    := GetBounds;
         isWritable   := ExprRep.IsNever;
         isDesignator := ExprRep.IsNever;
 	isZeroes     := ExprRep.IsNever;
@@ -68,13 +67,13 @@ PROCEDURE Check (p: P;  VAR cs: Expr.CheckState) =
     ta := Type.Base (Expr.TypeOf (p.a));
     tb := Type.Base (Expr.TypeOf (p.b));
     IF    (ta = Int.T)   AND (tb = Int.T)   THEN
-      p.class := Class.cINT;  INC (cs.div_ops);
+      p.class := Class.cINT;
     ELSIF (ta = Reel.T)  AND (tb = Reel.T)  THEN
-      p.class := Class.cREAL;  INC (cs.fp_ops);
+      p.class := Class.cREAL;
     ELSIF (ta = LReel.T) AND (tb = LReel.T) THEN
-      p.class := Class.cLONG;  INC (cs.fp_ops);
+      p.class := Class.cLONG;
     ELSIF (ta = EReel.T) AND (tb = EReel.T) THEN
-      p.class := Class.cEXTND;  INC (cs.fp_ops);
+      p.class := Class.cEXTND;
     ELSE p.class := Class.cERR;  ta := Int.T;
       ta := Expr.BadOperands ("MOD", ta, tb);
     END;
@@ -125,7 +124,7 @@ PROCEDURE Compile (p: P) =
         IF (log = 0) THEN
           (* mod 1 => zero *)
           Expr.Compile (e1);
-          CG.Discard (CG.Type.Int);
+          CG.Discard (Target.Integer.cg_type);
           CG.Load_integer (TInt.Zero);
         ELSE
           EVAL TInt.Subtract (divisor, TInt.One, mask);
@@ -138,7 +137,7 @@ PROCEDURE Compile (p: P) =
         IF (e2 = NIL) THEN e2 := p.b; END;
         Expr.Compile (e1);
         Expr.Compile (e2);
-        CG.Mod (CG.Type.Int, Expr.GetSign (e1), Expr.GetSign (e2));
+        CG.Mod (Target.Integer.cg_type, Expr.GetSign (e1), Expr.GetSign (e2));
       END;
     ELSE
       (* floating point: x MOD y == x - y * FLOOR (x / y)  *)
@@ -150,8 +149,8 @@ PROCEDURE Compile (p: P) =
       CG.Load (p.tmp1, 0, sz, align, cg_type);
       CG.Load (p.tmp2, 0, sz, align, cg_type);
       CG.Divide (cg_type);
-      CG.Floor (cg_type);
-      CG.Cvt_float (CG.Type.Int, cg_type);
+      CG.Cvt_int (cg_type, CG.Cvt.Floor);
+      CG.Cvt_float (Target.Integer.cg_type, cg_type);
       CG.Load (p.tmp2, 0, sz, align, cg_type);
       CG.Multiply (cg_type);
       CG.Load (p.tmp1, 0, sz, align, cg_type);
@@ -177,6 +176,24 @@ PROCEDURE Fold (p: P): Expr.T =
     END;
     RETURN e3;
   END Fold;
+
+PROCEDURE GetBounds (p: P;  VAR min, max: Target.Int) =
+  VAR min_b, max_b: Target.Int;
+  BEGIN
+    IF (p.class = Class.cINT) THEN
+      Expr.GetBounds (p.b, min_b, max_b);
+      IF TInt.LT (min_b, TInt.Zero) OR TInt.LT (max_b, TInt.Zero) THEN
+        ExprRep.NoBounds (p, min, max);
+      ELSE
+        min := TInt.Zero;
+        IF NOT TInt.Subtract (max_b, TInt.One, max) THEN
+          max := Target.Integer.max;
+        END;
+      END;
+    ELSE
+      ExprRep.NoBounds (p, min, max);
+    END;
+  END GetBounds;
 
 BEGIN
 END ModExpr.

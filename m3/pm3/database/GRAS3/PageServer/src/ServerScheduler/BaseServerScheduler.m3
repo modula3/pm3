@@ -7,8 +7,11 @@ MODULE BaseServerScheduler;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:38  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:49  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:38  hosking
+    Import of GRAS3 1.1
 
     Revision 1.14  1998/08/04 16:44:40  roland
     Server now tolerates empty sub-directories below a resource path.
@@ -91,7 +94,7 @@ MODULE BaseServerScheduler;
 
  | ------------------------------------------------------------------------
  *)
-IMPORT Thread, Fmt, Pathname, TextSeq;
+IMPORT Thread, Fmt, Pathname, TextTransientSeq AS TextSeq;
 IMPORT Config, Variant, Journal,
        PageFile, PageFileSystem, PageCache, Access, PageLock, ServedClient,
        ServerLockTable, ServerWaitEntry, ServerWaitTbl, DeadlockDetection;

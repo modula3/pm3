@@ -8,7 +8,7 @@
 
 MODULE Int;
 
-IMPORT M3, Type, Target, Tipe, TypeRep, CG, TipeMap, TipeDesc;
+IMPORT M3, Type, Target, Tipe, TypeRep, TipeMap, TipeDesc;
 
 TYPE
   P = Type.T BRANDED "Int.T" OBJECT
@@ -30,13 +30,14 @@ PROCEDURE Check (p: P) =
     p.info.size      := Target.Integer.size;
     p.info.min_size  := Target.Integer.size;
     p.info.alignment := Target.Integer.align;
-    p.info.mem_type  := CG.Type.Int;
-    p.info.stk_type  := CG.Type.Int;
+    p.info.mem_type  := Target.Integer.cg_type;
+    p.info.stk_type  := Target.Integer.cg_type;
     p.info.class     := Type.Class.Integer;
     p.info.isTraced  := FALSE;
     p.info.isEmpty   := FALSE;
     p.info.isSolid   := TRUE;
     p.info.hash      := 5;
+    p.info.isTransient := TRUE;
   END Check;
 
 PROCEDURE Compiler (<*UNUSED*> p: P) =
@@ -55,7 +56,8 @@ PROCEDURE FPrinter (<*UNUSED*> t: Type.T;  VAR x: M3.FPInfo) =
     x.n_nodes := 0;
   END FPrinter;
 
-PROCEDURE GenMap (<*UNUSED*> p: P; offset, size: INTEGER; refs_only: BOOLEAN) =
+PROCEDURE GenMap (<*UNUSED*> p: P; offset, size: INTEGER; refs_only: BOOLEAN;
+                  <*UNUSED*> transient: BOOLEAN) =
   VAR IntBytes := Target.Integer.bytes;
   BEGIN
     <*ASSERT size = Target.Integer.size*>

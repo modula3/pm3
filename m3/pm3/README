@@ -1,0 +1,51 @@
+The PM3 distribution of Modula-3.
+
+This distribution is based on a merge of the Polytechnique Montreal
+Distribution of Modula-3 with the public release of CM3, plus enhancements for
+persistence by Antony Hosking, Jiawan Chen and Adam Welc at Purdue University,
+and packages (libraries, programs and documentation) from other sources.
+
+The Polytechnique Montreal Distribution of Modula-3 is based on DEC SRC
+Modula-3 release 3.6 with enhancements by Louis Dubeau, Jerome Collin and
+Michel Dagenais, and several packages (libraries, programs, and documentation)
+from other sources. The online documentation may be accessed before the build
+by pointing your favourite WWW browser to intro/src/index.html.
+
+This file is normally part of a source code + bootstrap distribution.
+To compile the bootstrap program, and compile and install the Modula-3
+source, the following steps are required.
+
+- Ensure that you have the usual development tools (make, gcc, ar).
+
+  NOTE: There appear to be bugs in some versions of gcc on some platforms
+  (e.g., ALPHA_OSF).  The build is known to work with gcc 2.95.3 on at least
+  ALPHA_OSF, SOLgnu and LINUXLIBC6.  If in doubt, try to use the C compiler
+  from the gcc source code that comes with this distribution -- in
+  ./language/modula3/m3compiler/m3cc/gcc.
+
+- Check, and modify if needed, the configuration for your platform. This
+  determines where the Modula-3 programs, libraries and documentation will be
+  installed and used, as well as default options for various needed tools.
+  Typically you only need to change the INSTALL_ROOT variable if the default
+  does not suit you.  The configuration file is located in cm3-PLATFORM.cfg
+  (e.g., cm3-LINUXLIBC5.cfg).
+
+- Copy the file cm3-PLATFORM.cfg to the file cm3.cfg in the directory that was
+  defined as the location of the installed executables (i.e., the value of the
+  variable BIN_INSTALL, usually INSTALL_ROOT/bin).  Set the environment
+  variable M3CONFIG to refer to this installed configuration file:
+  BIN_INSTALL/cm3.cfg.
+
+- The file src/m3makefile is used in the following steps to build all the
+  packages. By default, almost all the available packages are built.
+  You may comment out some of these in src/m3makefile to save build time
+  and disk space.
+
+- Run "make", which will execute the commands in Makefile. It will build
+  bootstrap versions of "cm3", the Modula-3 compiler, and then use it to
+  rebuild and install all the libraries and programs in the distribution.
+
+  NOTE: If you downloaded bootstraps for several platforms, the Makefile is
+  the last one you downloaded. In that case, you can use the correct
+  platform-specific Makefile as Makefile.PLATFORM (e.g. Makefile.LINUXELF) and
+  use it with "make -f Makefile.PLATFORM".

@@ -5,6 +5,6 @@
 % Last modified on Tue Jun 15 21:53:44 PDT 1993 by harrison
 %      modified on Tue May  4 10:16:00 PDT 1993 by mjordan
 
-include_dir("Common")
-include_dir("Portable")
-include_dir(OS_TYPE)
+include_dir ("Common")
+include_dir ("Portable")
+include_dir (OS_TYPE)

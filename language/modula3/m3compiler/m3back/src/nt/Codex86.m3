@@ -2,24 +2,23 @@
 (* All rights reserved.                                        *)
 (* See the file COPYRIGHT for a full description.              *)
 (*                                                             *)
-(* Last modified on Tue Aug 27 09:23:28 PDT 1996 by najork     *)
-(*      modified on Mon Oct 31 11:00:15 PST 1994 by isard      *)
+(* Last modified on Mon Oct 31 11:00:15 PST 1994 by isard      *)
 (*      modified on Fri Nov 19 09:30:31 PST 1993 by kalsow     *)
 (*      modified on Mon Apr 13 09:55:12 PDT 1992 by muller     *)
 
 MODULE Codex86;
 
-IMPORT TargetMap, M3x86Rep, M3ID, M3CG_Ops, Word, M3ObjFile, Wrx86, Target;
+IMPORT Fmt, TargetMap, M3x86Rep, M3ID, M3CG_Ops, Word, M3ObjFile, Wrx86, Target;
 IMPORT TInt AS TargetInt;
 
 FROM TargetMap IMPORT CG_Bytes;
 
-FROM M3CG IMPORT ByteOffset, ByteSize;
+FROM M3CG IMPORT ByteOffset, ByteSize, No_label;
 FROM M3CG IMPORT Type, MType, Label, Alignment;
 FROM M3CG_Ops IMPORT ErrorHandler;
 
 FROM M3x86Rep IMPORT Operand, MVar, Regno, OLoc, VLoc, x86Var, x86Proc, NRegs;
-FROM M3x86Rep IMPORT RegSet;
+FROM M3x86Rep IMPORT RegSet, RegName;
 
 FROM M3ObjFile IMPORT Seg;
 
@@ -46,8 +45,9 @@ REVEAL T = Public BRANDED "Codex86.T" OBJECT
         next_label_id := 0;
         f_litlist     : FLiteral := NIL;
         abscall_list  : AbsCall := NIL;
-        internal_list : Internal := NIL;
         flitvar       : x86Var := NIL;
+        n_tags        : INTEGER := 0;
+        tags          : ARRAY [0..19] OF TEXT;
       OVERRIDES
         init := init;
         end := end;
@@ -114,32 +114,26 @@ REVEAL T = Public BRANDED "Codex86.T" OBJECT
       END;
 
 TYPE FLiteral = REF RECORD
-  arr: ARRAY [0 .. 1] OF INTEGER;
+  arr: FloatBytes;
   size: INTEGER;
   loc: ByteOffset;
   link: FLiteral;
 END;
 
-TYPE Internal = REF RECORD
-  ivar: IntnlVar;
-  loc: ByteOffset;
-  link: Internal;
-END;
-
 PROCEDURE intCall (t: T; l: Label) =
-  VAR rel: INTEGER;
+  VAR ins: Instruction;
   BEGIN
     check_label(t, l, "intCall");
     WITH lab = t.labarr[l], curs = t.obj.cursor(Seg.Text) DO
-      IF lab.no_address THEN
-        rel := 0;
-      ELSE
-        rel := lab.offset - (curs + 5);
+
+      ins.opcode := 16_E8;
+      ins.dsize := 4;
+      IF NOT lab.no_address THEN
+        ins.disp := lab.offset - (curs + 5);
       END;
 
-      Mn(t, "CALL rel32");
-
-      writecode(t, FALSE, 16_E8, 0, FALSE, 0, FALSE, rel, 4, 0, 0);
+      Mn(t, "CALL");  MnLabel(t, l);
+      writecode(t, ins);
 
       IF lab.no_address THEN
         log_unknown_label(t, l, t.obj.cursor(Seg.Text) - 4, FALSE);
@@ -148,9 +142,13 @@ PROCEDURE intCall (t: T; l: Label) =
   END intCall;
 
 PROCEDURE relCall (t: T; rel: INTEGER) =
+  VAR ins: Instruction;
   BEGIN
-    Mn(t, "CALL rel32");
-    writecode(t, FALSE, 16_E8, 0, FALSE, 0, FALSE, rel, 4, 0, 0);
+    ins.opcode := 16_E8;
+    ins.disp   := rel;
+    ins.dsize  := 4;
+    Mn(t, "CALL PC +");  MnImm(t, rel);
+    writecode(t, ins);
   END relCall;
 
 TYPE AbsCall = REF RECORD
@@ -160,20 +158,26 @@ TYPE AbsCall = REF RECORD
 END;
 
 PROCEDURE absCall (t: T; p: x86Proc) =
+  VAR ins: Instruction;
   BEGIN
-    Mn(t, "CALL rel32");
-    writecode(t, FALSE, 16_FF, 16_15, TRUE, 0, FALSE, 0, 4, 0, 0);
+    ins.opcode  := 16_FF;
+    ins.modrm   := 16_15;
+    ins.mrmpres := TRUE;
+    ins.dsize   := 4;
+    Mn(t, "CALL");  MnProc(t, p);
+    writecode(t, ins);
     t.abscall_list := NEW(AbsCall, loc := t.obj.cursor(Seg.Text) - 4,
                           sym := p.symbol, link := t.abscall_list);
   END absCall;
 
 PROCEDURE rmCall (t: T; READONLY op: Operand) =
-  VAR modrm, disp, dsize: INTEGER;
+  VAR ins: Instruction;
   BEGIN
     <* ASSERT op.loc = OLoc.register OR op.loc = OLoc.mem *>
-    Mn(t, "CALL r/m32");
-    build_modrm(t, op, t.opcode[2], modrm, disp, dsize);
-    writecode(t, FALSE, 16_FF, modrm, TRUE, 0, FALSE, disp, dsize, 0, 0);
+    ins.opcode := 16_FF;
+    Mn(t, "CALL r/m32");  MnOp(t, op);
+    build_modrm(t, op, t.opcode[2], ins);
+    writecode(t, ins);
 
     IF op.loc = OLoc.mem THEN
       log_global_var(t, op.mvar, -4);
@@ -181,49 +185,51 @@ PROCEDURE rmCall (t: T; READONLY op: Operand) =
   END rmCall;
 
 PROCEDURE cleanretOp (t: T; psize: INTEGER) =
+  VAR ins: Instruction;
   BEGIN
     <* ASSERT psize < 16_8000 *>
-    writecode(t, FALSE, 16_C2, 0, FALSE, 0, FALSE, 0, 0, psize, 2);
+    Mn(t, "RET");  MnImm(t, psize);
+    ins.opcode := 16_C2;
+    ins.imm    := psize;
+    ins.imsize := 2;
+    writecode(t, ins);
   END cleanretOp;
 
 PROCEDURE brOp (t: T; br: Cond; l: Label) =
-  VAR rel: ByteOffset := 0;
+  VAR ins: Instruction;
   BEGIN
     check_label(t, l, "brOp");
     WITH lab = t.labarr[l], curs = t.obj.cursor(Seg.Text) DO
-      IF lab.no_address THEN
-        rel := 0;
-      ELSE
-        rel := lab.offset - (curs + 2);
+      IF NOT lab.no_address THEN
+        ins.disp := lab.offset - (curs + 2);
       END;
 
-      IF rel > 16_7F OR rel < -16_80 OR lab.no_address AND NOT lab.short THEN
-        IF lab.no_address THEN
-          rel := 0;
-        ELSE
-          rel := lab.offset - (curs + 5);
+      IF ins.disp > 16_7F OR ins.disp < -16_80
+        OR lab.no_address AND NOT lab.short THEN
+        IF lab.no_address
+          THEN ins.disp := 0;
+          ELSE ins.disp := lab.offset - (curs + 5);
         END;
 
-        Mn(t, bropcode[br].name, " rel32");
+        Mn(t, bropcode[br].name);  MnLabel(t, l);
 
         IF br # Cond.Always THEN
-          DEC(rel);
-          writecode(t, FALSE, 16_0F, 0, FALSE, 0, FALSE, 0, 0, 0, 0);
-          writecode(t, FALSE, bropcode[br].rel8 + 16_10, 0, FALSE, 0, FALSE,
-                    rel, 4, 0, 0);
+          DEC(ins.disp);
+          ins.escape := TRUE;
+          ins.opcode := bropcode[br].rel8 + 16_10;
         ELSE
-          writecode(t, FALSE, 16_E9, 0, FALSE, 0, FALSE, rel, 4,
-                    0, 0);
-        END
+          ins.opcode := 16_E9;
+        END;
+        ins.dsize := 4;
+        writecode (t, ins);
       ELSE
-        Mn(t, bropcode[br].name, " rel8");
-        IF br # Cond.Always THEN
-          writecode(t, FALSE, bropcode[br].rel8, 0, FALSE, 0, FALSE, rel, 1,
-                    0, 0);
-        ELSE
-          writecode(t, FALSE, 16_EB, 0, FALSE, 0, FALSE, rel, 1,
-                    0, 0);
-        END
+        Mn(t, bropcode[br].name, " rel8");  MnLabel(t, l);
+        IF br # Cond.Always
+          THEN ins.opcode := bropcode[br].rel8;
+          ELSE ins.opcode := 16_EB;
+        END;
+        ins.dsize  := 1;
+        writecode (t, ins);
       END;
 
       IF lab.no_address THEN
@@ -237,7 +243,7 @@ PROCEDURE brOp (t: T; br: Cond; l: Label) =
   END brOp;
 
 PROCEDURE setccOp (t: T; READONLY op: Operand; cond: Cond) =
-  VAR modrm, disp, dsize: INTEGER;
+  VAR ins: Instruction;
   BEGIN
     <* ASSERT (op.loc = OLoc.register AND
                op.reg IN RegSet { EAX, EBX, ECX, EDX } ) OR
@@ -245,11 +251,11 @@ PROCEDURE setccOp (t: T; READONLY op: Operand; cond: Cond) =
     IF op.loc = OLoc.register THEN
       movImm(t, op, 0);
     END;
-    build_modrm(t, op, t.opcode[0], modrm, disp, dsize);
-    Mn(t, "SETCC ");
-    writecode(t, FALSE, 16_0F, 0, FALSE, 0, FALSE, 0, 0, 0, 0);
-    writecode(t, FALSE, condopcode[cond].opc, modrm, TRUE, 0, FALSE, disp,
-              dsize, 0, 0);
+    build_modrm(t, op, t.opcode[0], ins);
+    ins.escape := TRUE;
+    ins.opcode := condopcode[cond].opc;
+    Mn(t, "SETCC ", CondName[cond]);  MnOp(t, op);
+    writecode(t, ins);
     IF op.loc = OLoc.mem THEN
       log_global_var(t, op.mvar, -4);
     END
@@ -283,129 +289,129 @@ PROCEDURE prepare_stack (t: T; op: FOp; forcenomem := FALSE) =
   END prepare_stack;
 
 PROCEDURE noargFOp (t: T; op: FOp) =
+  VAR ins: Instruction;
   BEGIN
     prepare_stack(t, op);
     Mn(t, fopcode[op].name);
-    writecode(t, FALSE, fopcode[op].stbase, fopcode[op].stmodrm, TRUE,
-              0, FALSE, 0, 0, 0, 0);
+    ins.opcode  := fopcode[op].stbase;
+    ins.modrm   := fopcode[op].stmodrm;
+    ins.mrmpres := TRUE;
+    writecode(t, ins);
     INC(t.fstacksize, fopcode[op].stackdiff);
     INC(t.fstackloaded, fopcode[op].stackdiff);
   END noargFOp;
 
 PROCEDURE immFOp (t: T; op: FOp; im: FIm) =
+  VAR ins: Instruction;
   BEGIN
     prepare_stack(t, op, TRUE);
-    Mn(t, imcode[im].name);
-    writecode(t, FALSE, imcode[im].opcode, 0, FALSE, 0, FALSE, 0, 0, 0, 0);
+    Mn(t, imcode[im].name, " ", FImName[im]); 
+    ins.opcode := imcode[im].opcode;
+    writecode(t, ins);
     Mn(t, fopcode[op].name, " ST1");
-    writecode(t, FALSE, fopcode[op].stbase, fopcode[op].stmodrm+1, TRUE,
-              0, FALSE, 0, 0, 0, 0);
+    ins.opcode := fopcode[op].stbase;
+    ins.modrm  := fopcode[op].stmodrm+1;
+    ins.mrmpres := TRUE;
+    writecode(t, ins);
     INC(t.fstacksize, fopcode[op].stackdiff);
     INC(t.fstackloaded, fopcode[op].stackdiff);
   END immFOp;
 
 PROCEDURE binFOp (t: T; op: FOp; st: INTEGER) =
-  VAR modrm, disp, dsize, opc: INTEGER;
+  VAR mem, ins: Instruction;
   BEGIN
     <* ASSERT st < 8 *>
     prepare_stack(t, op);
     IF t.ftop_inmem THEN
-      Mn(t, fopcode[op].name, " ST, ");
-      IF t.ftop_mem.t = Type.Reel THEN
-        IF t.debug THEN
-          t.wr.OutT("m32real");
-        END;
-        opc := fopcode[op].m32;
-      ELSE
-        IF t.debug THEN
-          t.wr.OutT("m64real");
-        END;
-        opc := fopcode[op].m64;
+      Mn(t, fopcode[op].name, " ST");  MnMVar(t, t.ftop_mem);
+      IF t.ftop_mem.t = Type.Reel
+        THEN mem.opcode := fopcode[op].m32;
+        ELSE mem.opcode := fopcode[op].m64;
       END;
       build_modrm(t, Operand {loc := OLoc.mem, mvar := t.ftop_mem},
-                  t.opcode[fopcode[op].memop], modrm, disp, dsize);
-      writecode(t, FALSE, opc, modrm, TRUE, 0, FALSE, disp, dsize,
-                0, 0);
+                  t.opcode[fopcode[op].memop], mem);
+      writecode(t, mem);
       log_global_var(t, t.ftop_mem, -4);
       INC(t.fstacksize, fopcode[op].stackdiff);
       INC(t.fstackloaded, fopcode[op].memdiff);
       t.ftop_inmem := FALSE;
       RETURN;
     END;
-    IF t.debug THEN
-      Mn(t, fopcode[op].name, "P ST, ST");
-      t.wr.Int(st);
-    END;
 
-    writecode(t, FALSE, fopcode[op].stbase, fopcode[op].stmodrm+st, TRUE,
-              0, FALSE, 0, 0, 0, 0);
+    IF t.debug THEN
+      Mn(t, fopcode[op].name, "P ST, ST", Fmt.Int(st));
+    END;
+    ins.opcode  := fopcode[op].stbase;
+    ins.modrm   := fopcode[op].stmodrm + st;
+    ins.mrmpres := TRUE;
+    writecode(t, ins);
+
     INC(t.fstacksize, fopcode[op].stackdiff);
     INC(t.fstackloaded, fopcode[op].stackdiff);
   END binFOp;
 
 PROCEDURE memFOp (t: T; op: FOp; mvar: MVar) =
-  VAR modrm, disp, dsize: INTEGER;
+  VAR ins: Instruction;
   BEGIN
     prepare_stack(t, op);
 
-    Mn(t, fopcode[op].name, " m");
+    Mn(t, fopcode[op].name, " m");  MnMVar(t, mvar);
     build_modrm(t, Operand {loc := OLoc.mem, mvar := mvar},
-                t.opcode[fopcode[op].memop], modrm, disp, dsize);
-    writecode(t, FALSE, fopcode[op].m32, modrm, TRUE, 0, FALSE, disp, dsize,
-              0, 0);
+                t.opcode[fopcode[op].memop], ins);
+    ins.opcode := fopcode[op].m32;
+    writecode(t, ins);
     log_global_var(t, mvar, -4);
     INC(t.fstacksize, fopcode[op].memdiff);
     INC(t.fstackloaded, fopcode[op].memdiff);
   END memFOp;
 
 PROCEDURE noargOp (t: T; op: Op) =
+  VAR ins: Instruction;
   BEGIN
     Mn(t, opcode[op].name);
-    writecode(t, FALSE, opcode[op].imm32, 0, FALSE, 0, FALSE, 0, 0,
-              0, 0);
+    ins.opcode := opcode[op].imm32;
+    writecode(t, ins);
   END noargOp;
 
 PROCEDURE immOp (t: T; op: Op; READONLY dest: Operand; imm: INTEGER) =
-  VAR modrm, disp, dsize: INTEGER;
-      imsize := 4;
+  VAR ins: Instruction;
   BEGIN
     <* ASSERT dest.loc = OLoc.register OR dest.loc = OLoc.mem *>
-    IF imm < 16_80 AND imm > -16_81 THEN
-      imsize := 1;
+    ins.imm := imm;
+    IF imm < 16_80 AND imm > -16_81
+      THEN ins.imsize := 1;
+      ELSE ins.imsize := 4;
     END;
 
+    Mn(t, opcode[op].name);  MnOp(t, dest);  MnImm(t, imm);
+
     IF dest.loc = OLoc.register AND dest.reg = EAX
-       AND imsize = 4 THEN
-      Mn(t, opcode[op].name, " EAX,Aimm32");
-      writecode(t, FALSE, opcode[op].Aimm32, 0, FALSE, 0, FALSE, 0, 0,
-                imm, imsize);
+       AND ins.imsize = 4 THEN
+      ins.opcode := opcode[op].Aimm32;
+      writecode(t, ins);
     ELSE
-      build_modrm(t, dest, t.opcode[opcode[op].immop],
-                  modrm, disp, dsize);
-      IF imsize = 1 THEN
+      build_modrm(t, dest, t.opcode[opcode[op].immop], ins);
+      IF ins.imsize = 1 THEN
         IF dest.loc = OLoc.mem AND CG_Bytes[dest.mvar.t] = 1 THEN
-          Mn(t, opcode[op].name, " r/m8, imm8");
-          writecode(t, FALSE, opcode[op].imm32 - 1, modrm, TRUE, 0, FALSE,
-                    disp, dsize, imm, 1);
+          ins.opcode := opcode[op].imm32 - 1;
+          writecode(t, ins);
           log_global_var(t, dest.mvar, -5);
         ELSIF dest.loc = OLoc.mem AND CG_Bytes[dest.mvar.t] = 2 THEN
-          Mn(t, opcode[op].name, " r/m16, imm8");
-          writecode(t, TRUE, opcode[op].imm8, modrm, TRUE, 0, FALSE,
-                    disp, dsize, imm, 1);
+          ins.prefix := TRUE;
+          ins.opcode := opcode[op].imm8;
+          writecode(t, ins);
           log_global_var(t, dest.mvar, -5);
         ELSE
-          Mn(t, opcode[op].name, " r/m32,imm8");
-          writecode(t, FALSE, opcode[op].imm8, modrm, TRUE, 0, FALSE,
-                    disp, dsize, imm, 1);
+          ins.opcode := opcode[op].imm8;
+          writecode(t, ins);
           IF dest.loc = OLoc.mem THEN
             log_global_var(t, dest.mvar, -5);
           END
         END
       ELSE
         <* ASSERT dest.loc # OLoc.mem OR CG_Bytes[dest.mvar.t] = 4 *>
-        Mn(t, opcode[op].name, " r/m32,imm32");
-        writecode(t, FALSE, opcode[op].imm32, modrm, TRUE, 0, FALSE,
-                  disp, dsize, imm, 4);
+        ins.opcode := opcode[op].imm32;
+        writecode(t, ins);
         IF dest.loc = OLoc.mem THEN
           log_global_var(t, dest.mvar, -8);
         END
@@ -414,35 +420,25 @@ PROCEDURE immOp (t: T; op: Op; READONLY dest: Operand; imm: INTEGER) =
   END immOp;
 
 PROCEDURE binOp (t: T; op: Op; READONLY dest, src: Operand) =
-  VAR modrm, disp, dsize, opc: INTEGER;
-      mnemonic: TEXT := NIL;
+  VAR ins: Instruction;
   BEGIN
     <* ASSERT dest.loc = OLoc.register OR dest.loc = OLoc.mem *>
     IF src.loc = OLoc.imm THEN
       immOp(t, op, dest, src.imm);
-
       RETURN;
     END;
 
     IF dest.loc = OLoc.register THEN
-      build_modrm(t, src, dest, modrm, disp, dsize);
-      opc := opcode[op].rrm + 1;
-      IF src.loc = OLoc.mem THEN
-        <* ASSERT CG_Bytes[src.mvar.t] = 4 *>
-        mnemonic := "rm32";
-      ELSE
-        mnemonic := "rr32";
-      END
+      build_modrm(t, src, dest, ins);
+      ins.opcode := opcode[op].rrm + 1;
+      IF src.loc = OLoc.mem THEN <* ASSERT CG_Bytes[src.mvar.t] = 4 *> END
     ELSE
       <* ASSERT src.loc = OLoc.register AND CG_Bytes[src.mvar.t] = 4 *>
-      build_modrm(t, dest, src, modrm, disp, dsize);
-      opc := opcode[op].rmr + 1;
-      mnemonic := "mr32";
+      build_modrm(t, dest, src, ins);
+      ins.opcode := opcode[op].rmr + 1;
     END;
-    Mn(t, opcode[op].name, mnemonic);
-    varloc(t, dest);
-    varloc(t, src);
-    writecode(t, FALSE, opc, modrm, TRUE, 0, FALSE, disp, dsize, 0, 0);
+    Mn(t, opcode[op].name);  MnOp(t, dest);  MnOp(t, src);
+    writecode(t, ins);
     IF dest.loc = OLoc.mem THEN
       log_global_var(t, dest.mvar, -4);
     ELSIF src.loc = OLoc.mem THEN      
@@ -452,96 +448,76 @@ PROCEDURE binOp (t: T; op: Op; READONLY dest, src: Operand) =
 
 PROCEDURE tableOp (t: T; op: Op; READONLY dest, index: Operand;
                    scale: INTEGER; table: MVar) =
-  VAR offset, modrm, sib, disp, dsize: INTEGER;
-      fully_known := FALSE;
+  VAR ins: Instruction;  fully_known := FALSE;
   BEGIN
     <* ASSERT dest.loc = OLoc.register AND index.loc = OLoc.register *>
 
-    IF table.var = t.internalvar THEN
-      offset := Word.Shift(table.o, -16);
-      table.o := Word.And(table.o, 16_FFFF);
-    ELSE
-      offset := table.o;
-    END;
-
+    ins.disp := table.o;
     IF table.var.loc = VLoc.temp THEN
       <* ASSERT table.var.parent = t.current_proc *>
-      INC(offset, table.var.offset);
+      INC(ins.disp, table.var.offset);
       fully_known := TRUE;
     END;
-    IF (NOT fully_known) OR
-       (offset > 16_7f) OR (offset < -16_80) THEN
-      disp := offset;
-      dsize := 4;
-      IF NOT fully_known THEN
-        modrm := dest.reg*8 + 4;
-      ELSE
-        modrm := 16_80 + dest.reg*8 + 4;
-      END;
+
+    ins.mrmpres := TRUE;
+    IF (NOT fully_known) OR (ins.disp > 16_7f) OR (ins.disp < -16_80) THEN
+      ins.dsize := 4;
+      ins.modrm := dest.reg*8 + 4;
+      IF fully_known THEN INC (ins.modrm, 16_80); END;
     ELSE
-      disp := offset;
-      dsize := 1;
-      modrm := 16_40 + dest.reg*8 + 4;
+      ins.dsize := 1;
+      ins.modrm := 16_40 + dest.reg*8 + 4;
     END;
 
+    ins.sibpres := TRUE;
     CASE scale OF
-      1 => sib := 0;
-    | 2 => sib := 16_40;
-    | 4 => sib := 16_80;
-    | 8 => sib := 16_C0;
-    ELSE
-      t.Err("tableOp called with invalid scale parameter");
+    | 1 => ins.sib := 0;
+    | 2 => ins.sib := 16_40;
+    | 4 => ins.sib := 16_80;
+    | 8 => ins.sib := 16_C0;
+    ELSE t.Err("tableOp called with invalid scale parameter");
     END;
+    INC(ins.sib, index.reg*8);
+    INC(ins.sib, 5);
 
-    INC(sib, index.reg*8);
-    INC(sib, 5);
+    Mn(t, opcode[op].name);  MnOp(t, dest); MnMVar(t, table);
+    Mn(t, "::["); MnOp(t, index); Mn(t, " *"); MnImm (t, scale);
+    Mn(t, " +");  MnImm(t, ins.disp);  Mn(t, " ]");
 
-    Mn(t, opcode[op].name, " r32, table[r32*scale]");
-    writecode(t, FALSE, opcode[op].rrm+1, modrm, TRUE, sib, TRUE, disp, dsize,
-              0, 0);
+    ins.opcode := opcode[op].rrm+1;
+    writecode(t, ins);
     log_global_var(t, table, -4);
   END tableOp;
 
 PROCEDURE swapOp (t: T; READONLY dest, src: Operand) =
-  VAR modrm, disp, dsize: INTEGER;
-      mnemonic: TEXT := NIL;
-      otherreg: Regno;
+  VAR xchg, ins: Instruction;  otherreg: Regno;
   BEGIN
     <* ASSERT (dest.loc = OLoc.register OR dest.loc = OLoc.mem) AND
               (src.loc = OLoc.register OR src.loc = OLoc.mem) *>
-    IF dest.loc = OLoc.register AND src.loc = OLoc.register AND
-       (dest.reg = EAX OR src.reg = EAX) THEN
-      IF dest.reg = EAX THEN
-        otherreg := src.reg;
-      ELSE
-        otherreg := dest.reg;
+
+    IF dest.loc = OLoc.register AND src.loc = OLoc.register
+      AND (dest.reg = EAX OR src.reg = EAX) THEN
+      IF dest.reg = EAX
+        THEN otherreg := src.reg;
+        ELSE otherreg := dest.reg;
       END;
-      Mn(t, "XCHG ");
-      varloc(t, dest);
-      varloc(t, src);
-      writecode(t, FALSE, 16_90 + otherreg, 0, FALSE,
-                0, FALSE, 0, 0, 0, 0);
+      Mn(t, "XCHG ");  MnOp(t, dest);   MnOp(t, src);
+      xchg.opcode := 16_90 + otherreg;
+      writecode (t, xchg);
       RETURN;
     END;
 
     IF dest.loc = OLoc.register THEN
-      <* ASSERT CG_Bytes[src.mvar.t] = 4 *>
-      build_modrm(t, src, dest, modrm, disp, dsize);
-      IF src.loc # OLoc.register THEN
-        mnemonic := "rm32";
-      ELSE
-        mnemonic := "rr";
-      END
+      <* ASSERT src.loc = OLoc.register OR CG_Bytes[src.mvar.t] = 4 *>
+      build_modrm(t, src, dest, ins);
     ELSE
       <* ASSERT src.loc = OLoc.register *>
-      <* ASSERT CG_Bytes[dest.mvar.t] = 4 *>
-      build_modrm(t, dest, src, modrm, disp, dsize);
-      mnemonic := "mr32";
+      <* ASSERT dest.loc = OLoc.register OR CG_Bytes[dest.mvar.t] = 4 *>
+      build_modrm (t, dest, src, ins);
     END;
-    Mn(t, "XCHG ", mnemonic);
-    varloc(t, dest);
-    varloc(t, src);
-    writecode(t, FALSE, 16_87, modrm, TRUE, 0, FALSE, disp, dsize, 0, 0);
+    Mn(t, "XCHG ");  MnOp(t, dest);  MnOp(t, src);
+    ins.opcode := 16_87;
+    writecode(t, ins);
     IF dest.loc = OLoc.mem THEN
       log_global_var(t, dest.mvar, -4);
     ELSIF src.loc = OLoc.mem THEN
@@ -549,28 +525,31 @@ PROCEDURE swapOp (t: T; READONLY dest, src: Operand) =
     END;
   END swapOp;
 
+CONST
+  MOVSW = Instruction { prefix := TRUE, opcode := 16_A5 };
+  STOSW = Instruction { prefix := TRUE, opcode := 16_AB };
+  CBW   = Instruction { prefix := TRUE, opcode := 16_98 };
+
 PROCEDURE MOVSWOp (t: T) =
   BEGIN
     Mn(t, "MOVSW");
-    writecode(t, TRUE, 16_A5, 0, FALSE, 0, FALSE, 0, 0, 0, 0);
+    writecode (t, MOVSW);
   END MOVSWOp;
 
 PROCEDURE STOSWOp (t: T) =
   BEGIN
     Mn(t, "STOSW");
-    writecode(t, TRUE, 16_AB, 0, FALSE, 0, FALSE, 0, 0, 0, 0);
+    writecode(t, STOSW);
   END STOSWOp;
 
 PROCEDURE CBWOp (t: T) =
   BEGIN
     Mn(t, "CBW");
-    writecode(t, TRUE, 16_98, 0, FALSE, 0, FALSE, 0, 0, 0, 0);
+    writecode(t, CBW);
   END CBWOp;
 
 PROCEDURE movOp (t: T; READONLY dest, src: Operand) =
-  VAR modrm, disp, dsize, opcode: INTEGER;
-      mnemonic: TEXT := NIL;
-      prefix := FALSE;
+  VAR ins: Instruction;  mnemonic: TEXT := NIL;
   BEGIN
     <* ASSERT dest.loc = OLoc.register OR dest.loc = OLoc.mem *>
     IF src.loc = OLoc.imm THEN
@@ -581,21 +560,23 @@ PROCEDURE movOp (t: T; READONLY dest, src: Operand) =
     IF dest.loc = OLoc.register AND dest.reg = EAX AND
        src.loc = OLoc.mem AND CG_Bytes[src.mvar.t] = 4 AND
        src.mvar.var.loc = VLoc.global THEN
-      opcode := 16_A1;
-      mnemonic := "MOV EAX,moffs32";
-      Mn(t, mnemonic);
-      writecode(t, prefix, opcode, 0, FALSE, 0, FALSE, src.mvar.o, 4, 0, 0);
+      Mn(t, "MOV");  MnOp(t, dest);  MnOp(t, src);
+      ins.opcode := 16_A1;
+      ins.disp   := src.mvar.o;
+      ins.dsize  := 4;
+      writecode (t, ins);
       log_global_var(t, src.mvar, -4);
       RETURN;
     END;
 
     IF src.loc = OLoc.register AND src.reg = EAX AND
        dest.loc = OLoc.mem AND dest.mvar.var.loc = VLoc.global THEN
-      opcode := 16_A2;
-      mnemonic := "MOV moffs";
-      get_op_size(t, dest.mvar.t, opcode, prefix);
-      Mn(t, mnemonic, ",EAX");
-      writecode(t, prefix, opcode, 0, FALSE, 0, FALSE, dest.mvar.o, 4, 0, 0);
+      Mn(t, "MOV");  MnOp(t, dest);  MnOp(t, src);
+      ins.opcode := 16_A2;
+      get_op_size(dest.mvar.t, ins);
+      ins.disp := dest.mvar.o;
+      ins.dsize := 4;
+      writecode(t, ins);
       log_global_var(t, dest.mvar, -4);
       RETURN;
     END;
@@ -603,52 +584,44 @@ PROCEDURE movOp (t: T; READONLY dest, src: Operand) =
     IF dest.loc = OLoc.register AND src.loc = OLoc.mem AND
        CG_Bytes[src.mvar.t] # 4 THEN
       CASE src.mvar.t OF
-        Type.Word_A => opcode := 16_8A;
-                       mnemonic := "MOV r32, m8";
+      | Type.Word8  => ins.opcode := 16_8A;
+                       mnemonic := "MOV";
                        binOp(t, Op.oXOR, t.reg[dest.reg], t.reg[dest.reg]);
-      | Type.Word_B => opcode := 16_8B;
-                       prefix := TRUE;
-                       mnemonic := "MOV r32, m16";
+      | Type.Word16 => ins.opcode := 16_8B;  ins.prefix := TRUE;
+                       mnemonic := "MOV";
                        binOp(t, Op.oXOR, t.reg[dest.reg], t.reg[dest.reg]);
-      | Type.Int_A  => opcode := 16_BE;
-                       mnemonic := "MOVSX r32, m8";
-                       writecode(t, FALSE, 16_0F, 0, FALSE, 0, FALSE,
-                                 0, 0, 0, 0);
-      | Type.Int_B  => opcode := 16_BF;
-                       mnemonic := "MOVSX r32, m16";
-                       writecode(t, FALSE, 16_0F, 0, FALSE, 0, FALSE,
-                                 0, 0, 0, 0);
+      | Type.Int8   => ins.opcode := 16_BE;  ins.escape := TRUE;
+                       mnemonic := "MOVSX";
+      | Type.Int16  => ins.opcode := 16_BF;  ins.escape := TRUE;
+                       mnemonic := "MOVSX";
       ELSE
         t.Err("Unknown type of size other than dword in movOp");
       END;
-      build_modrm(t, src, dest, modrm, disp, dsize);
-      Mn(t, mnemonic);
-      writecode(t, prefix, opcode, modrm, TRUE, 0, FALSE, disp, dsize, 0, 0);
+      build_modrm(t, src, dest, ins);
+      Mn(t, mnemonic);  MnOp(t, dest);  MnOp(t, src);
+      writecode(t, ins);
       log_global_var(t, src.mvar, -4);
       RETURN;
     END;
 
     IF dest.loc = OLoc.register THEN
-      build_modrm(t, src, dest, modrm, disp, dsize);
-      opcode := 16_8A;
+      build_modrm(t, src, dest, ins);
+      ins.opcode := 16_8A;
       IF src.loc # OLoc.register THEN
-        mnemonic := "rm";
-        get_op_size(t, src.mvar.t, opcode, prefix);
+        get_op_size(src.mvar.t, ins);
       ELSE
-        mnemonic := "rr";
-        INC(opcode);
+        INC(ins.opcode);
       END
     ELSE
       <* ASSERT src.loc = OLoc.register *>
-      build_modrm(t, dest, src, modrm, disp, dsize);
-      opcode := 16_88;
-      mnemonic := "mr";
-      get_op_size(t, dest.mvar.t, opcode, prefix);
+      build_modrm(t, dest, src, ins);
+      ins.opcode := 16_88;
+      get_op_size(dest.mvar.t, ins);
     END;
-    Mn(t, "MOV ", mnemonic);
-    varloc(t, dest);
-    varloc(t, src);
-    writecode(t, prefix, opcode, modrm, TRUE, 0, FALSE, disp, dsize, 0, 0);
+
+    Mn(t, "MOV");  MnOp(t, dest);  MnOp(t, src);
+    writecode(t, ins);
+
     IF dest.loc = OLoc.mem THEN
       log_global_var(t, dest.mvar, -4);
     ELSIF src.loc = OLoc.mem THEN
@@ -657,53 +630,59 @@ PROCEDURE movOp (t: T; READONLY dest, src: Operand) =
   END movOp;
 
 PROCEDURE movDummyReloc(t: T; READONLY dest: Operand; sym: INTEGER) =
+  VAR ins: Instruction;
   BEGIN
     <* ASSERT dest.loc = OLoc.register *>
-    Mn(t, "MOV reg32, imm32");
-    writecode(t, FALSE, 16_B8 + dest.reg, 0, FALSE, 0, FALSE, 0, 0, 0, 4);
+    Mn(t, "MOV");  MnOp(t, dest);  Mn (t, " imm32");
+    ins.opcode := 16_B8 + dest.reg;
+    ins.imm    := 0;
+    ins.imsize := 4;
+    writecode(t, ins);
     t.obj.relocate(t.textsym, t.obj.cursor(Seg.Text) - 4, sym);
   END movDummyReloc;
 
 PROCEDURE movImm (t: T; READONLY dest: Operand; imm: INTEGER) =
-  VAR modrm, disp, dsize: INTEGER;
-      prefix := FALSE;
-      mnemonic := "m";
-      opcode := 16_C6;
+  VAR ins: Instruction;
   BEGIN
-    IF dest.loc = OLoc.register THEN
-      IF imm = 0 THEN
-        binOp(t, Op.oXOR, dest, dest);
-      ELSE
-        Mn(t, "MOV reg32, imm32");
-        writecode(t, FALSE, 16_B8 + dest.reg, 0, FALSE, 0, FALSE,
-                  0, 0, imm, 4);
-      END
-    ELSE
+    IF dest.loc # OLoc.register THEN
       <* ASSERT dest.loc = OLoc.mem *>
-      get_op_size(t, dest.mvar.t, opcode, prefix);
-      build_modrm(t, dest, t.opcode[0], modrm, disp, dsize);
-      Mn(t, "MOV ", mnemonic, " imm");
-      writecode(t, prefix, opcode, modrm, TRUE, 0, FALSE, disp, dsize,
-                imm, CG_Bytes[dest.mvar.t]);
+      ins.opcode := 16_C6;
+      get_op_size(dest.mvar.t, ins);
+      build_modrm(t, dest, t.opcode[0], ins);
+      Mn(t, "MOV");  MnOp(t, dest);  MnImm(t, imm);
+      ins.imm    := imm;
+      ins.imsize := CG_Bytes[dest.mvar.t];
+      writecode(t, ins);
       log_global_var(t, dest.mvar, -4 - CG_Bytes[dest.mvar.t]);
-    END
+    ELSIF imm = 0 THEN
+      binOp(t, Op.oXOR, dest, dest);
+    ELSE
+      ins.opcode := 16_B8 + dest.reg;
+      ins.imm    := imm;
+      ins.imsize := 4;
+      Mn(t, "MOV");  MnOp(t, dest);  MnImm(t, imm);
+      writecode(t, ins);
+    END;
   END movImm;
 
 PROCEDURE pushOp (t: T; READONLY src: Operand) =
-  VAR modrm, disp, dsize: INTEGER;
+  VAR ins: Instruction;
   BEGIN
+    Mn(t, "PUSH");  MnOp(t, src);
     CASE src.loc OF
-      OLoc.imm =>
-        Mn(t, "PUSH imm32");
-        writecode(t, FALSE, 16_68, 0, FALSE, 0, FALSE, 0, 0, src.imm, 4);
+    | OLoc.imm =>
+        ins.opcode := 16_68;
+        ins.imm    := src.imm;
+        ins.imsize := 4;
+        writecode(t, ins);
     | OLoc.register =>
-        Mn(t, "PUSH r32");
-        writecode(t, FALSE, 16_50 + src.reg, 0, FALSE, 0, FALSE, 0, 0, 0, 0);
+        ins.opcode := 16_50 + src.reg;
+        writecode(t, ins);
     | OLoc.mem =>
         <* ASSERT CG_Bytes[src.mvar.t] = 4 *>
-        Mn(t, "PUSH m32");
-        build_modrm(t, src, t.opcode[6], modrm, disp, dsize);
-        writecode(t, FALSE, 16_FF, modrm, TRUE, 0, FALSE, disp, dsize, 0, 0);
+        build_modrm(t, src, t.opcode[6], ins);
+        ins.opcode := 16_FF;
+        writecode(t, ins);
         log_global_var(t, src.mvar, -4);
     ELSE
       t.Err("Tried to push an fstack element to the integer stack");
@@ -711,19 +690,20 @@ PROCEDURE pushOp (t: T; READONLY src: Operand) =
   END pushOp;
 
 PROCEDURE popOp (t: T; READONLY dest: Operand) =
-  VAR modrm, disp, dsize: INTEGER;
+  VAR ins: Instruction;
   BEGIN
+    Mn(t, "POP");  MnOp(t, dest);
     CASE dest.loc OF
-      OLoc.imm =>
+    | OLoc.imm =>
         t.Err("Tried to pop into an immediate stack element");
     | OLoc.register =>
-        Mn(t, "POP r32");
-        writecode(t, FALSE, 16_58 + dest.reg, 0, FALSE, 0, FALSE, 0, 0, 0, 0);
+        ins.opcode := 16_58 + dest.reg;
+        writecode(t, ins);
     | OLoc.mem =>
         <* ASSERT CG_Bytes[dest.mvar.t] = 4 *>
-        Mn(t, "POP m32");
-        build_modrm(t, dest, t.opcode[6], modrm, disp, dsize);
-        writecode(t, FALSE, 16_FF, modrm, TRUE, 0, FALSE, disp, dsize, 0, 0);
+        build_modrm(t, dest, t.opcode[6], ins);
+        ins.opcode := 16_FF;
+        writecode(t, ins);
         log_global_var(t, dest.mvar, -4);
     ELSE
       t.Err("Tried to pop an fstack element from the integer stack");
@@ -731,39 +711,37 @@ PROCEDURE popOp (t: T; READONLY dest: Operand) =
   END popOp;
 
 PROCEDURE decOp (t: T; READONLY op: Operand) =
-  VAR modrm, disp, dsize: INTEGER;
+  VAR ins: Instruction;
   BEGIN
+    Mn(t, "DEC");  MnOp(t, op);
     <* ASSERT op.loc = OLoc.mem OR op.loc = OLoc.register *>
     IF op.loc = OLoc.register THEN
-      Mn(t, "DEC r32");
-      writecode(t, FALSE, 16_48 + op.reg, 0, FALSE, 0, FALSE, 0, 0, 0, 0);
+      ins.opcode := 16_48 + op.reg;
+      writecode(t, ins);
     ELSE
       <* ASSERT op.loc = OLoc.mem AND CG_Bytes[op.mvar.t] = 4 *>
-      Mn(t, "DEC m32");
-      build_modrm(t, op, t.opcode[1], modrm, disp, dsize);
-      writecode(t, FALSE, 16_FF, modrm, TRUE, 0, FALSE, disp, dsize, 0, 0);
+      build_modrm(t, op, t.opcode[1], ins);
+      ins.opcode := 16_FF;
+      writecode(t, ins);
       log_global_var(t, op.mvar, -4);
     END
   END decOp;
 
 PROCEDURE unOp (t: T; op: Op; READONLY dest: Operand) =
-  VAR modrm, disp, dsize: INTEGER;
-      prefix := FALSE;
-      opc := opcode[op].imm32;
-      mnemonic := "rm";
+  VAR ins: Instruction;
   BEGIN
+    ins.opcode := opcode[op].imm32;
     IF dest.loc = OLoc.mem THEN
-      get_op_size(t, dest.mvar.t, opc, prefix);
+      get_op_size(dest.mvar.t, ins);
     ELSE
       <* ASSERT dest.loc = OLoc.register *>
-      INC(opc);
-      mnemonic := "rm32";
+      INC(ins.opcode);
     END;
 
-    build_modrm(t, dest, t.opcode[opcode[op].immop], modrm, disp, dsize);
+    build_modrm(t, dest, t.opcode[opcode[op].immop], ins);
 
-    Mn(t, opcode[op].name, mnemonic);
-    writecode(t, prefix, opc, modrm, TRUE, 0, FALSE, disp, dsize, 0, 0);
+    Mn(t, opcode[op].name);  MnOp(t, dest);
+    writecode(t, ins);
 
     IF dest.loc = OLoc.mem THEN
       log_global_var(t, dest.mvar, -4);
@@ -771,173 +749,146 @@ PROCEDURE unOp (t: T; op: Op; READONLY dest: Operand) =
   END unOp;
 
 PROCEDURE mulOp (t: T; READONLY src: Operand) =
-  VAR modrm, disp, dsize: INTEGER;
+  VAR ins: Instruction;
   BEGIN
     <* ASSERT src.loc = OLoc.register OR (src.loc = OLoc.mem AND
               CG_Bytes[src.mvar.t] = 4) *>
-    build_modrm(t, src, t.opcode[4], modrm, disp, dsize);
-    Mn(t, "MUL r32, rm32");
-    writecode(t, FALSE, 16_F7, modrm, TRUE, 0, FALSE, disp, dsize, 0, 0);
+    build_modrm(t, src, t.opcode[4], ins);
+    Mn(t, "MUL EAX");  MnOp(t, src);
+    ins.opcode := 16_F7;
+    writecode(t, ins);
     IF src.loc = OLoc.mem THEN
       log_global_var(t, src.mvar, -4);
     END
   END mulOp;
 
 PROCEDURE imulOp (t: T; READONLY dest, src: Operand) =
-  VAR modrm, disp, dsize: INTEGER;
-      imsize := 0;
+  VAR ins: Instruction;
   BEGIN
     <* ASSERT dest.loc = OLoc.register *>
     <* ASSERT src.loc # OLoc.mem OR CG_Bytes[src.mvar.t] = 4 *>
+    Mn(t, "IMUL");  MnOp(t, dest);  MnOp(t, src);
     IF src.loc = OLoc.imm THEN
-      build_modrm(t, t.reg[dest.reg], dest, modrm, disp, dsize);
-      Mn(t, "IMUL r32, imm32");
-      imsize := 4;
-      writecode(t, FALSE, 16_69, modrm, TRUE, 0, FALSE, disp, dsize,
-                src.imm, imsize);
+      build_modrm(t, t.reg[dest.reg], dest, ins);
+      ins.opcode := 16_69;
+      ins.imm := src.imm;
+      ins.imsize := 4;
+      writecode(t, ins);
     ELSE
-      build_modrm(t, src, dest, modrm, disp, dsize);
-      Mn(t, "IMUL r32, rm32");
-      writecode(t, FALSE, 16_0F, 0, FALSE, 0, FALSE, 0, 0, 0, 0);
-      writecode(t, FALSE, 16_AF, modrm, TRUE, 0, FALSE, disp, dsize, 0, 0);
+      build_modrm(t, src, dest, ins);
+      ins.escape := TRUE;
+      ins.opcode := 16_AF;
+      writecode(t, ins);
     END;
 
     IF src.loc = OLoc.mem THEN
-      log_global_var(t, src.mvar, -4 - imsize);
+      log_global_var(t, src.mvar, -4 - ins.imsize);
     END
   END imulOp;
 
 PROCEDURE imulImm (t: T; READONLY dest, src: Operand; imm, imsize: INTEGER) =
-  VAR modrm, disp, dsize, opc: INTEGER;
+  VAR ins: Instruction;
   BEGIN
     <* ASSERT dest.loc = OLoc.register *>
     <* ASSERT src.loc # OLoc.mem OR CG_Bytes[src.mvar.t] = 4 *>
-    build_modrm(t, src, dest, modrm, disp, dsize);
-    Mn(t, "IMUL r32, rm32, imm");
-    IF imsize = 1 THEN
-      opc := 16_6B;
-    ELSE
-      opc := 16_69;
+    build_modrm(t, src, dest, ins);
+    Mn(t, "IMUL");  MnOp(t, dest);  MnOp(t, src);  MnImm(t, imm);
+    IF imsize = 1
+      THEN ins.opcode := 16_6B;
+      ELSE ins.opcode := 16_69;
     END;
-    writecode(t, FALSE, opc, modrm, TRUE, 0, FALSE, disp, dsize, imm,
-              imsize);
+    ins.imm := imm;
+    ins.imsize := imsize;
+    writecode(t, ins);
     IF src.loc = OLoc.mem THEN
       log_global_var(t, src.mvar, -4 - imsize);
     END
   END imulImm;
 
 PROCEDURE divOp (t: T; READONLY divisor: Operand) =
-  VAR modrm, disp, dsize: INTEGER;
+  VAR ins: Instruction;
   BEGIN
     <* ASSERT divisor.loc = OLoc.register OR (divisor.loc = OLoc.mem
               AND CG_Bytes[divisor.mvar.t] = 4) *>
-    build_modrm(t, divisor, t.opcode[6], modrm, disp, dsize);
-    Mn(t, "DIV EAX, rm32");
-    writecode(t, FALSE, 16_F7, modrm, TRUE, 0, FALSE, disp, dsize, 0, 0);
+    build_modrm(t, divisor, t.opcode[6], ins);
+    Mn(t, "DIV EAX");  MnOp(t, divisor);
+    ins.opcode := 16_F7;
+    writecode(t, ins);
     IF divisor.loc = OLoc.mem THEN
       log_global_var(t, divisor.mvar, -4);
     END
   END divOp;
 
 PROCEDURE idivOp (t: T; READONLY divisor: Operand) =
-  VAR modrm, disp, dsize: INTEGER;
+  VAR ins: Instruction;
   BEGIN
     <* ASSERT divisor.loc = OLoc.register OR (divisor.loc = OLoc.mem
               AND CG_Bytes[divisor.mvar.t] = 4) *>
-    build_modrm(t, divisor, t.opcode[7], modrm, disp, dsize);
-    Mn(t, "IDIV EAX, rm32");
-    writecode(t, FALSE, 16_F7, modrm, TRUE, 0, FALSE, disp, dsize, 0, 0);
+    build_modrm(t, divisor, t.opcode[7], ins);
+    Mn(t, "IDIV EAX");  MnOp(t, divisor);
+    ins.opcode := 16_F7;
+    writecode(t, ins);
     IF divisor.loc = OLoc.mem THEN
       log_global_var(t, divisor.mvar, -4);
     END
   END idivOp;
 
 PROCEDURE diffdivOp (t: T; READONLY divisor: Operand; apos: BOOLEAN) =
-  VAR diffsignlab, endlab: Label;
-  BEGIN
-    <* ASSERT divisor.loc = OLoc.register *>
+  VAR
     diffsignlab := reserve_labels(t, 1, TRUE);
     endlab := reserve_labels(t, 1, TRUE);
-
-    movOp(t, t.reg[EDX], t.reg[EAX]);
-    (*                                                     MOV EDX, EAX      *)
-    binOp(t, Op.oXOR, t.reg[EDX], divisor);
-    (*                                                     XOR EDX, divisor  *)
-    brOp(t, Cond.L, diffsignlab);
-    (*                                                     JL  diffsignlab   *)
-    IF apos THEN
-      binOp(t, Op.oXOR, t.reg[EDX], t.reg[EDX]);
-    ELSE (*                                                XOR EDX, EDX      *)
-      noargOp(t, Op.oCDQ);
+  BEGIN
+    <* ASSERT divisor.loc = OLoc.register *>
+    movOp(t, t.reg[EDX], t.reg[EAX]);                 (*   MOV EDX, EAX      *)
+    binOp(t, Op.oXOR, t.reg[EDX], divisor);           (*   XOR EDX, divisor  *)
+    brOp(t, Cond.L, diffsignlab);                     (*   JL  diffsignlab   *)
+    IF apos
+      THEN binOp(t, Op.oXOR, t.reg[EDX], t.reg[EDX]); (*   XOR EDX, EDX      *)
+      ELSE noargOp(t, Op.oCDQ);                       (*   CDQ               *)
     END;
-    (*                                                     CDQ               *)
-    idivOp(t, divisor);
-    (*                                                     IDIV EAX, divisor *)
-    brOp(t, Cond.Always, endlab);
-    (*                                                     JMP endlab        *)
-    set_label(t, diffsignlab);
-    (*                                                 .diffsignlab          *)
-    noargOp(t, Op.oCDQ);
-    (*                                                     CDQ               *)
-    idivOp(t, divisor);
-    (*                                                     IDIV EAX, divisor *)
-    immOp(t, Op.oCMP, t.reg[EDX], 0);
-    (*                                                     CMP EDX, #0       *)
-    brOp(t, Cond.E, endlab);
-    (*                                                     JE  endlab        *)
-    decOp(t, t.reg[EAX]);
-    (*                                                     DEC EAX           *)
-    set_label(t, endlab);
-    (*                                                 .endlab               *)
+    idivOp(t, divisor);                               (*   IDIV EAX, divisor *)
+    brOp(t, Cond.Always, endlab);                     (*   JMP endlab        *)
+    set_label(t, diffsignlab);                        (* .diffsignlab        *)
+    noargOp(t, Op.oCDQ);                              (*   CDQ               *)
+    idivOp(t, divisor);                               (*   IDIV EAX, divisor *)
+    immOp(t, Op.oCMP, t.reg[EDX], 0);                 (*   CMP EDX, #0       *)
+    brOp(t, Cond.E, endlab);                          (*   JE  endlab        *)
+    decOp(t, t.reg[EAX]);                             (*   DEC EAX           *)
+    set_label(t, endlab);                             (* .endlab             *)
   END diffdivOp;
 
 PROCEDURE diffmodOp (t: T; READONLY divisor: Operand; apos: BOOLEAN) =
-  VAR diffsignlab, endlab: Label;
-  BEGIN
-    <* ASSERT divisor.loc = OLoc.register *>
+  VAR
     diffsignlab := reserve_labels(t, 1, TRUE);
     endlab := reserve_labels(t, 1, TRUE);
+  BEGIN
+    <* ASSERT divisor.loc = OLoc.register *>
 
-    movOp(t, t.reg[EDX], t.reg[EAX]);
-    (*                                                     MOV EDX, EAX      *)
-    binOp(t, Op.oXOR, t.reg[EDX], divisor);
-    (*                                                     XOR EDX, divisor  *)
-    brOp(t, Cond.L, diffsignlab);
-    (*                                                     JL  diffsignlab   *)
-    IF apos THEN
-      binOp(t, Op.oXOR, t.reg[EDX], t.reg[EDX]);
-    ELSE (*                                                XOR EDX, EDX      *)
-      noargOp(t, Op.oCDQ);
+    movOp(t, t.reg[EDX], t.reg[EAX]);                 (*    MOV EDX, EAX      *)
+    binOp(t, Op.oXOR, t.reg[EDX], divisor);           (*    XOR EDX, divisor  *)
+    brOp(t, Cond.L, diffsignlab);                     (*    JL  diffsignlab   *)
+    IF apos
+      THEN binOp(t, Op.oXOR, t.reg[EDX], t.reg[EDX]); (*    XOR EDX, EDX      *)
+      ELSE noargOp(t, Op.oCDQ);                       (*    CDQ               *)
     END;
-    (*                                                     CDQ               *)
-    idivOp(t, divisor);
-    (*                                                     IDIV EAX, divisor *)
-    brOp(t, Cond.Always, endlab);
-    (*                                                     JMP endlab        *)
-    set_label(t, diffsignlab);
-    (*                                                 .diffsignlab          *)
-    noargOp(t, Op.oCDQ);
-    (*                                                     CDQ               *)
-    idivOp(t, divisor);
-    (*                                                     IDIV EAX, divisor *)
-    immOp(t, Op.oCMP, t.reg[EDX], 0);
-    (*                                                     CMP EDX, #0       *)
-    brOp(t, Cond.E, endlab);
-    (*                                                     JE  endlab        *)
-    binOp(t, Op.oADD, t.reg[EDX], divisor);
-    (*                                                     ADD EDX, divisor  *)
-    set_label(t, endlab);
-    (*                                                 .endlab               *)
+    idivOp(t, divisor);                               (*    IDIV EAX, divisor *)
+    brOp(t, Cond.Always, endlab);                     (*    JMP endlab        *)
+    set_label(t, diffsignlab);                        (* .diffsignlab         *)
+    noargOp(t, Op.oCDQ);                              (*    CDQ               *)
+    idivOp(t, divisor);                               (*    IDIV EAX, divisor *)
+    immOp(t, Op.oCMP, t.reg[EDX], 0);                 (*    CMP EDX, #0       *)
+    brOp(t, Cond.E, endlab);                          (*    JE  endlab        *)
+    binOp(t, Op.oADD, t.reg[EDX], divisor);           (*    ADD EDX, divisor  *)
+    set_label(t, endlab);                             (* .endlab              *)
   END diffmodOp;
 
-PROCEDURE must_extend (<*UNUSED*> t: T; READONLY src: Operand):
-          BOOLEAN =
+PROCEDURE must_extend (<*UNUSED*> t: T; READONLY src: Operand): BOOLEAN =
   BEGIN
     IF src.loc # OLoc.mem THEN
       RETURN FALSE;
     END;
-    IF src.mvar.t = Type.Word_A OR src.mvar.t = Type.Word_B OR
-       src.mvar.t = Type.Int_A OR src.mvar.t = Type.Int_B THEN
+    IF src.mvar.t = Type.Word8 OR src.mvar.t = Type.Word16 OR
+       src.mvar.t = Type.Int8 OR src.mvar.t = Type.Int16 THEN
       RETURN TRUE;
     ELSE
       RETURN FALSE;
@@ -963,33 +914,47 @@ PROCEDURE get_addsize (<*UNUSED*> t: T; READONLY op: Operand): INTEGER =
     END
   END get_addsize;
 
-PROCEDURE get_op_size (<*UNUSED*> t: T; type: MType;
-                       VAR opcode: INTEGER;
-                       VAR prefix: BOOLEAN) =
+TYPE
+  Instruction = RECORD
+    escape  : BOOLEAN := FALSE;
+    prefix  : BOOLEAN := FALSE;
+    mrmpres : BOOLEAN := FALSE;
+    sibpres : BOOLEAN := FALSE;
+    opcode  : INTEGER := 0;
+    modrm   : INTEGER := 0;
+    sib     : INTEGER := 0;
+    disp    : INTEGER := 0;
+    dsize   : INTEGER := 0;
+    imm     : INTEGER := 0;
+    imsize  : INTEGER := 0;
+  END;
+
+PROCEDURE get_op_size (type: MType;  VAR ins: Instruction) =
   BEGIN
-    <* ASSERT opcode # -1 *>
+    <* ASSERT ins.opcode # -1 *>
     CASE type OF
-      Type.Int_A, Type.Word_A =>
-        prefix := FALSE;
-    | Type.Int_B, Type.Word_B =>
-        INC(opcode);
-        prefix := TRUE;
+    | Type.Int8, Type.Word8 =>
+        ins.prefix := FALSE;
+    | Type.Int16, Type.Word16 =>
+        INC (ins.opcode);
+        ins.prefix := TRUE;
     ELSE
-        INC(opcode);
-        prefix := FALSE;
+        INC (ins.opcode);
+        ins.prefix := FALSE;
     END
   END get_op_size;
 
-PROCEDURE build_modrm (t: T; READONLY mem, reg: Operand;
-                      VAR modrm, disp, dsize: INTEGER) =
+PROCEDURE build_modrm (t: T; READONLY mem, reg: Operand;  VAR ins: Instruction) =
   VAR offset: ByteOffset;
       fully_known := FALSE;
   BEGIN
+    ins.mrmpres := TRUE;
+
     <* ASSERT reg.loc = OLoc.register *>
     IF mem.loc = OLoc.register THEN
-      disp := 0;
-      dsize := 0;
-      modrm := 16_C0 + reg.reg*8 + mem.reg;
+      ins.disp := 0;
+      ins.dsize := 0;
+      ins.modrm := 16_C0 + reg.reg*8 + mem.reg;
       RETURN;
     END;
 
@@ -1004,102 +969,94 @@ PROCEDURE build_modrm (t: T; READONLY mem, reg: Operand;
       INC(offset, mem.mvar.var.offset);
       fully_known := TRUE;
     END;
-    IF (NOT fully_known) OR
-       (offset > 16_7f) OR (offset < -16_80) THEN
-      disp := offset;
-      dsize := 4;
-      IF NOT fully_known THEN
-        modrm := reg.reg*8 + 5;
-      ELSE
-        modrm := 16_80 + reg.reg*8 + EBP;
+    IF (NOT fully_known) OR (offset > 16_7f) OR (offset < -16_80) THEN
+      ins.disp := offset;
+      ins.dsize := 4;
+      IF NOT fully_known
+        THEN ins.modrm := reg.reg*8 + 5;
+        ELSE ins.modrm := 16_80 + reg.reg*8 + EBP;
       END;
     ELSE
-      disp := offset;
-      dsize := 1;
-      modrm := 16_40 + reg.reg*8 + EBP;
+      ins.disp := offset;
+      ins.dsize := 1;
+      ins.modrm := 16_40 + reg.reg*8 + EBP;
     END;
   END build_modrm;
 
-PROCEDURE varloc(t: T; READONLY op: Operand) =
+PROCEDURE debugcode (t: T;  READONLY ins: Instruction) =
+  VAR len := 0;
   BEGIN
-    IF t.debug THEN
-      CASE op.loc OF
-        OLoc.fstack => t.wr.OutT(" FST");
-      | OLoc.mem => t.wr.VName(op.mvar.var);
-      | OLoc.register => t.wr.OutT(" r"); t.wr.OutI(op.reg);
-      | OLoc.imm => t.wr.OutT(" i"); t.wr.OutI(op.imm);
-      END
-    END
-  END varloc;
+    (* generate the PC label *)
+    t.wr.OutC(' ');
+    HexBE(t, t.obj.cursor(Seg.Text), 4);
+    t.wr.OutT(": ");
 
-PROCEDURE writecode (t: T; prefix: BOOLEAN; opcode, modrm: INTEGER;
-                     mrmpres: BOOLEAN; sib: INTEGER; sibpres: BOOLEAN;
-                     disp, dsize, imm, imsize: INTEGER) =
+    (* generate the instruction bytes *)
+    IF ins.escape     THEN  Byte(t, 16_0F);       INC(len); END;
+    IF ins.prefix     THEN  Byte(t, 16_66);       INC(len); END;
+                            Byte(t, ins.opcode);  INC(len);
+    IF ins.mrmpres    THEN  Byte(t, ins.modrm);   INC(len); END;
+    IF ins.sibpres    THEN  Byte(t, ins.sib);     INC(len); END;
+    IF ins.dsize # 0  THEN  HexLE(t, ins.disp, ins.dsize); INC(len,ins.dsize); END;
+    IF ins.imsize # 0 THEN  HexLE(t, ins.imm, ins.imsize); INC(len,ins.imsize); END;
+
+    (* finally, generate the instruction mnemonic info *)
+    WHILE (len < 9) DO  t.wr.OutT("  ");  INC(len); END;
+    t.wr.OutT ("  ");
+    FOR i := 0 TO t.n_tags-1 DO
+      t.wr.OutT (t.tags[i]);
+      t.tags[i] := NIL;
+    END;
+    t.n_tags := 0;
+
+    t.wr.NL();
+  END debugcode;
+
+PROCEDURE writecode (t: T; READONLY ins: Instruction) =
   BEGIN
-    IF t.debug THEN
-      t.wr.OutT(" ");
+    IF t.debug THEN debugcode (t, ins); END;
 
-      IF prefix THEN
-        Byte(t, 16_66);
-      END;
-
-      Byte(t, opcode);
-
-      IF mrmpres THEN
-        Byte(t, modrm);
-      END;
-
-      IF sibpres THEN
-        Byte(t, sib);
-      END;
-
-      IF dsize # 0 THEN
-        Hexbe(t, disp, dsize);
-        t.wr.OutT(" ");
-      END;
-
-      IF imsize # 0 THEN
-        Hexbe(t, imm, imsize);
-        t.wr.OutT(" ");
-      END;
-
-      t.wr.NL();
+    IF ins.escape THEN
+      t.obj.append(Seg.Text, 16_0F, 1);
     END;
 
-    <* ASSERT dsize = 0 OR dsize = 1 OR dsize = 4 *>
-    IF prefix THEN
+    IF ins.prefix THEN
       t.obj.append(Seg.Text, 16_66, 1);
     END;
 
-    <* ASSERT opcode >= 0 AND opcode <= 255 *>
-    t.obj.append(Seg.Text, opcode, 1);
+    <* ASSERT ins.opcode >= 0 AND ins.opcode <= 255 *>
+    t.obj.append(Seg.Text, ins.opcode, 1);
 
-    IF mrmpres THEN
-      t.obj.append(Seg.Text, modrm, 1);
+    IF ins.mrmpres THEN
+      t.obj.append(Seg.Text, ins.modrm, 1);
     END;
 
-    IF sibpres THEN
-      t.obj.append(Seg.Text, sib, 1);
+    IF ins.sibpres THEN
+      t.obj.append(Seg.Text, ins.sib, 1);
     END;
 
-    IF dsize # 0 THEN
-      t.obj.append(Seg.Text, disp, dsize);
+    IF ins.dsize # 0 THEN
+      <* ASSERT ins.dsize = 1 OR ins.dsize = 4 *>
+      t.obj.append(Seg.Text, ins.disp, ins.dsize);
     END;
 
-    IF imsize # 0 THEN
-      t.obj.append(Seg.Text, imm, imsize);
+    IF ins.imsize # 0 THEN
+      t.obj.append(Seg.Text, ins.imm, ins.imsize);
     END;
   END writecode;
 
 (*--------------------------------------------------------- jump routines ---*)
 
 PROCEDURE case_jump (t: T; index: Operand; READONLY labels: ARRAY OF Label) =
+  VAR ins: Instruction;
   BEGIN
     <* ASSERT index.loc = OLoc.register *>
     WITH curs = t.obj.cursor(Seg.Text) DO
-      writecode(t, FALSE, 16_FF, 16_24, TRUE, 16_85 + index.reg * 8, TRUE,
-                curs + 7, 4, 0, 0); (* Jump to abs address indexed by
-                                       register 'index'*4 *)
+      ins.opcode  := 16_FF;
+      ins.modrm   := 16_24;                   ins.mrmpres := TRUE;
+      ins.sib     := 16_85 + index.reg * 8;   ins.sibpres := TRUE;
+      ins.disp    := curs + 7;                ins.dsize   := 4;
+      writecode(t, ins); (* Jump to abs address indexed by register 'index'*4 *)
       t.obj.relocate(t.textsym, curs + 3, t.textsym);
       FOR i := 0 TO NUMBER(labels) - 1 DO
         check_label(t, labels[i], "case_jump");
@@ -1118,195 +1075,147 @@ PROCEDURE case_jump (t: T; index: Operand; READONLY labels: ARRAY OF Label) =
 
 PROCEDURE load_ind (t: T; r: Regno; READONLY ind: Operand; o: ByteOffset;
                     type: MType) =
-  VAR opcode := 16_8B;
-      mnemonic := "MOV r32, m32";
-      modrm, dsize: INTEGER;
-      prefix := FALSE;
+  VAR ins: Instruction;
+      mnemonic := "MOV";
   BEGIN
     <* ASSERT ind.loc = OLoc.register *>
+    ins.opcode := 16_8B;
     IF CG_Bytes[type] # 4 THEN
       CASE type OF
-        Type.Word_A => opcode := 16_8A;
-                       mnemonic := "MOV r32, m8";
+      | Type.Word8  => ins.opcode := 16_8A;
+                       mnemonic := "MOV";
                        binOp(t, Op.oXOR, t.reg[r], t.reg[r]);
-      | Type.Word_B => opcode := 16_8B;
-                       prefix := TRUE;
-                       mnemonic := "MOV r32, m16";
+      | Type.Word16 => ins.opcode := 16_8B;  ins.prefix := TRUE;
+                       mnemonic := "MOV";
                        binOp(t, Op.oXOR, t.reg[r], t.reg[r]);
-      | Type.Int_A  => opcode := 16_BE;
-                       mnemonic := "MOVSX r32, m8";
-                       writecode(t, FALSE, 16_0F, 0, FALSE, 0, FALSE,
-                                 0, 0, 0, 0);
-      | Type.Int_B  => opcode := 16_BF;
-                       mnemonic := "MOVSX r32, m16";
-                       writecode(t, FALSE, 16_0F, 0, FALSE, 0, FALSE,
-                                 0, 0, 0, 0);
+      | Type.Int8   => ins.opcode := 16_BE;  ins.escape := TRUE;
+                       mnemonic := "MOVSX";
+      | Type.Int16  => ins.opcode := 16_BF;  ins.escape := TRUE;
+                       mnemonic := "MOVSX";
       ELSE
         t.Err("Unknown type of size other than dword in load_ind");
       END;
     END;
-    Mn(t, mnemonic);
+    Mn(t, mnemonic, " ", RegName[r]);  MnPtr(t, ind, o, type);
+    ins.mrmpres := TRUE;
+    ins.disp := o;
     IF o > -16_81 AND o < 16_80 THEN
-      modrm := 16_40 + r * 8 + ind.reg;
-      dsize := 1;
+      ins.modrm := 16_40 + r * 8 + ind.reg;
+      ins.dsize := 1;
     ELSE
-      modrm := 16_80 + r * 8 + ind.reg;
-      dsize := 4;
+      ins.modrm := 16_80 + r * 8 + ind.reg;
+      ins.dsize := 4;
     END;
-
-    IF ind.reg = ESP THEN
-      writecode(t, prefix, opcode, modrm, TRUE, 16_24, TRUE, o, dsize, 0, 0);
-    ELSE
-      writecode(t, prefix, opcode, modrm, TRUE, 0, FALSE, o, dsize, 0, 0);
-    END
+    IF ind.reg = ESP THEN  ins.sib := 16_24; ins.sibpres := TRUE;  END;
+    writecode (t, ins);
   END load_ind;
 
 PROCEDURE fast_load_ind (t: T; r: Regno; READONLY ind: Operand; o: ByteOffset;
                     size: INTEGER) =
-  VAR opcode := 16_8B;
-      mnemonic := "MOV r32, m32";
-      modrm, dsize: INTEGER;
-      prefix := FALSE;
+  VAR ins: Instruction;  type := Type.Int32;
   BEGIN
     <* ASSERT ind.loc = OLoc.register *>
+    ins.opcode := 16_8B;
     CASE size OF
-        1 => opcode := 16_8A;
-             mnemonic := "MOV r32, m8";
-      | 2 => opcode := 16_8B;
-             prefix := TRUE;
-             mnemonic := "MOV r32, m16";
-      | 4 => opcode := 16_8B;
-             mnemonic := "MOV r32, m32";
-    ELSE
-      t.Err("Illegal size in fast_load_ind");
+    | 1 => ins.opcode := 16_8A;  type := Type.Int8;
+    | 2 => ins.opcode := 16_8B;  ins.prefix := TRUE;  type := Type.Int16;
+    | 4 => ins.opcode := 16_8B;  type := Type.Int32;
+    ELSE   t.Err("Illegal size in fast_load_ind");
     END;
 
-    Mn(t, mnemonic);
+    Mn(t, "MOV ", RegName[r]);  MnPtr(t, ind, o, type);
+    ins.mrmpres := TRUE;
+    ins.disp := o;
     IF o > -16_81 AND o < 16_80 THEN
-      modrm := 16_40 + r * 8 + ind.reg;
-      dsize := 1;
+      ins.modrm := 16_40 + r * 8 + ind.reg;
+      ins.dsize := 1;
     ELSE
-      modrm := 16_80 + r * 8 + ind.reg;
-      dsize := 4;
+      ins.modrm := 16_80 + r * 8 + ind.reg;
+      ins.dsize := 4;
     END;
-
-    IF ind.reg = ESP THEN
-      writecode(t, prefix, opcode, modrm, TRUE, 16_24, TRUE, o, dsize, 0, 0);
-    ELSE
-      writecode(t, prefix, opcode, modrm, TRUE, 0, FALSE, o, dsize, 0, 0);
-    END
+    IF ind.reg = ESP THEN  ins.sib := 16_24;  ins.sibpres := TRUE;  END;
+    writecode (t, ins);
   END fast_load_ind;
 
 PROCEDURE store_ind (t: T; READONLY val, ind: Operand; o: ByteOffset;
                      type: MType) =
-  VAR opcode := 16_88;
-      mnemonic := "mr";
-      prefix := FALSE;
-      modrm, dsize: INTEGER;
-      imm := 0;
-      immsize := 0;
+  VAR ins: Instruction;
   BEGIN
     <* ASSERT ind.loc = OLoc.register AND val.loc # OLoc.mem *>
+
+    ins.opcode := 16_88;
     IF val.loc = OLoc.imm THEN
-      opcode := 16_C6;
-      imm := val.imm;
-      immsize := CG_Bytes[type];
+      ins.opcode := 16_C6;
+      ins.imm := val.imm;
+      ins.imsize := CG_Bytes[type];
     END;
 
-    get_op_size(t, type, opcode, prefix);
-    Mn(t, "MOV ", mnemonic);
+    get_op_size(type, ins);
+    Mn(t, "MOV");  MnPtr(t, ind, o, type);  MnOp(t, val);
 
+    ins.mrmpres := TRUE;
+    ins.disp := o;
     IF o >= -16_80 AND o <= 16_7F THEN
-      dsize := 1;
-      modrm := 16_40 + ind.reg;
+      ins.dsize := 1;
+      ins.modrm := 16_40 + ind.reg;
     ELSE
-      dsize := 4;
-      modrm := 16_80 + ind.reg;
+      ins.dsize := 4;
+      ins.modrm := 16_80 + ind.reg;
     END;
 
     IF val.loc # OLoc.imm THEN
-      INC(modrm, val.reg * 8);
+      INC(ins.modrm, val.reg * 8);
     END;
-
-    IF ind.reg = ESP THEN
-      writecode(t, prefix, opcode, modrm, TRUE, 16_24, TRUE, o, dsize,
-                imm, immsize);
-    ELSE
-      writecode(t, prefix, opcode, modrm, TRUE, 0, FALSE, o, dsize,
-                imm, immsize);
-    END
+    IF ind.reg = ESP THEN  ins.sib := 16_24;  ins.sibpres := TRUE;  END;
+    writecode (t, ins);
   END store_ind;
 
 PROCEDURE f_loadind (t: T; READONLY ind: Operand; o: ByteOffset; type: MType) =
-  VAR opcode, modrm, dsize: INTEGER;
+  VAR ins: Instruction;
   BEGIN
     <* ASSERT ind.loc = OLoc.register *>
     prepare_stack(t, FOp.fLD, TRUE);
-    Mn(t, "FLD ");
-    IF type = Type.Reel THEN
-      IF t.debug THEN
-        t.wr.OutT("m32real");
-      END;
-      opcode := fopcode[FOp.fLD].m32;
-    ELSE
-      <* ASSERT type = Type.LReel OR type = Type.XReel *>
-      IF t.debug THEN
-        t.wr.OutT("m64real");
-      END;
-      opcode := fopcode[FOp.fLD].m64;
+    Mn(t, "FLD");  MnPtr(t, ind, o, type);
+    IF type = Type.Reel
+      THEN ins.opcode := fopcode[FOp.fLD].m32;
+      ELSE ins.opcode := fopcode[FOp.fLD].m64;
     END;
-    IF o >= -16_80 AND o <= 16_7F THEN
-      dsize := 1;
-      modrm := 16_40 + fopcode[FOp.fLD].memop * 8 + ind.reg;
-    ELSE
-      dsize := 4;
-      modrm := 16_80 + fopcode[FOp.fLD].memop * 8 + ind.reg;
+    ins.modrm := 16_40 + fopcode[FOp.fLD].memop * 8 + ind.reg;
+    ins.mrmpres := TRUE;
+    ins.disp := o;
+    IF o >= -16_80 AND o <= 16_7F
+      THEN ins.dsize := 1;
+      ELSE ins.dsize := 4;  INC (ins.modrm, 16_40);
     END;
-    IF ind.reg = ESP THEN
-      writecode(t, FALSE, opcode, modrm, TRUE, 16_24, TRUE, o, dsize, 0, 0);
-    ELSE
-      writecode(t, FALSE, opcode, modrm, TRUE, 0, FALSE, o, dsize, 0, 0);
-    END;
-
+    IF ind.reg = ESP THEN  ins.sib := 16_24;  ins.sibpres := TRUE;  END;
+    writecode (t, ins);
     INC(t.fstacksize);
     INC(t.fstackloaded);
   END f_loadind;
 
 PROCEDURE f_storeind (t: T; READONLY ind: Operand; o: ByteOffset;
                       type: MType) =
-  VAR opcode, modrm, dsize: INTEGER;
+  VAR ins: Instruction;
   BEGIN
     <* ASSERT ind.loc = OLoc.register *>
     fstack_check(t, 1, "f_storeind");
     IF t.ftop_inmem THEN
       fstack_loadtop(t);
     END;
-    Mn(t, "FSTP ");
-    IF type = Type.Reel THEN
-      IF t.debug THEN
-        t.wr.OutT("m32real");
-      END;
-      opcode := fopcode[FOp.fSTP].m32;
-    ELSE
-      <* ASSERT type = Type.LReel OR type = Type.XReel *>
-      IF t.debug THEN
-        t.wr.OutT("m64real");
-      END;
-      opcode := fopcode[FOp.fSTP].m64;
+    Mn(t, "FSTP");  MnPtr(t, ind, o, type);
+    IF type = Type.Reel
+      THEN ins.opcode := fopcode[FOp.fSTP].m32;
+      ELSE ins.opcode := fopcode[FOp.fSTP].m64;
     END;
-    IF o >= -16_80 AND o <= 16_7F THEN
-      dsize := 1;
-      modrm := 16_40 + fopcode[FOp.fSTP].memop * 8 + ind.reg;
-    ELSE
-      dsize := 4;
-      modrm := 16_80 + fopcode[FOp.fSTP].memop * 8 + ind.reg;
+    ins.modrm := 16_40 + fopcode[FOp.fSTP].memop * 8 + ind.reg;
+    ins.mrmpres := TRUE;
+    ins.disp := o;
+    IF o >= -16_80 AND o <= 16_7F
+      THEN ins.dsize := 1;
+      ELSE ins.dsize := 4;  INC (ins.modrm, 16_40);
     END;
-    IF ind.reg = ESP THEN
-      writecode(t, FALSE, opcode, modrm, TRUE, 16_24, TRUE, o, dsize, 0, 0);
-    ELSE
-      writecode(t, FALSE, opcode, modrm, TRUE, 0, FALSE, o, dsize, 0, 0);
-    END;
-
+    IF ind.reg = ESP THEN  ins.sib := 16_24;  ins.sibpres := TRUE;  END;
+    writecode (t, ins);
     DEC(t.fstacksize);
     DEC(t.fstackloaded);
   END f_storeind;
@@ -1369,12 +1278,12 @@ PROCEDURE log_label_init (t: T; var: x86Var; o: ByteOffset; lab: Label) =
     t.obj.relocate(var.symbol, o, t.textsym);
 
     IF t.labarr[lab].no_address THEN
-      t.labarr[lab].usage := NEW(LabList, seg := Seg.Data,
-                                 offs := t.obj.cursor(Seg.Data), abs := TRUE,
+      t.labarr[lab].usage := NEW(LabList, seg := var.seg,
+                                 offs := t.obj.cursor(var.seg), abs := TRUE,
                                  link := t.labarr[lab].usage);
-      t.obj.append(Seg.Data, 0, 4);
+      t.obj.append(var.seg, 0, 4);
     ELSE
-      t.obj.append(Seg.Data, t.labarr[lab].offset, 4);
+      t.obj.append(var.seg, t.labarr[lab].offset, 4);
     END;
   END log_label_init;
 
@@ -1443,27 +1352,19 @@ PROCEDURE fill_in_label_thread (t: T; ptr: LabList; val: INTEGER;
 (*-------------------------------------------------- floating stack stuff ---*)
 
 PROCEDURE fstack_loadtop (t: T) =
-  VAR modrm, disp, dsize, opc: INTEGER;
+  VAR ins: Instruction;
   BEGIN
     <* ASSERT t.ftop_inmem *>
     fstack_ensure(t, 0); (* ensure will allow an extra space for the item
                             in memory, so height can be 0 not 1 *)
-    Mn(t, "FLD ST, ");
-    IF t.ftop_mem.t = Type.Reel THEN
-      IF t.debug THEN
-        t.wr.OutT("m32real");
-      END;
-      opc := fopcode[FOp.fLD].m32;
-    ELSE
-      IF t.debug THEN
-        t.wr.OutT("m64real");
-      END;
-      opc := fopcode[FOp.fLD].m64;
+    Mn(t, "FLD ST");  MnMVar(t, t.ftop_mem);
+    IF t.ftop_mem.t = Type.Reel
+      THEN ins.opcode := fopcode[FOp.fLD].m32;
+      ELSE ins.opcode := fopcode[FOp.fLD].m64;
     END;
     build_modrm(t, Operand {loc := OLoc.mem, mvar := t.ftop_mem},
-                t.opcode[fopcode[FOp.fLD].memop], modrm, disp, dsize);
-    writecode(t, FALSE, opc, modrm, TRUE, 0, FALSE, disp, dsize,
-              0, 0);
+                t.opcode[fopcode[FOp.fLD].memop], ins);
+    writecode(t, ins);
     log_global_var(t, t.ftop_mem, -4);
     t.ftop_inmem := FALSE;
     INC(t.fstackloaded);
@@ -1516,7 +1417,7 @@ PROCEDURE fstack_push (t: T; READONLY mvar: MVar; nomem := FALSE) =
   END fstack_push;
 
 PROCEDURE fstack_pop (t: T; READONLY mvar: MVar) =
-  VAR modrm, disp, dsize, opc: INTEGER;
+  VAR ins: Instruction;
   BEGIN
     IF t.ftop_inmem THEN
       IF mvar = t.ftop_mem THEN
@@ -1526,23 +1427,14 @@ PROCEDURE fstack_pop (t: T; READONLY mvar: MVar) =
       END;
       fstack_loadtop(t);
     END;
-    Mn(t, "FSTP ST, ");
-    IF mvar.t = Type.Reel THEN
-      IF t.debug THEN
-        t.wr.OutT("m32real");
-      END;
-      opc := fopcode[FOp.fSTP].m32;
-    ELSE
-      <* ASSERT mvar.t = Type.LReel OR mvar.t = Type.XReel *>
-      IF t.debug THEN
-        t.wr.OutT("m64real");
-      END;
-      opc := fopcode[FOp.fSTP].m64;
+    Mn(t, "FSTP ST");  MnMVar(t, mvar);
+    IF mvar.t = Type.Reel
+      THEN ins.opcode := fopcode[FOp.fSTP].m32;
+      ELSE ins.opcode := fopcode[FOp.fSTP].m64;
     END;
     build_modrm(t, Operand {loc := OLoc.mem, mvar:= mvar},
-                t.opcode[fopcode[FOp.fSTP].memop], modrm, disp, dsize);
-    writecode(t, FALSE, opc, modrm, TRUE, 0, FALSE, disp, dsize,
-              0, 0);
+                t.opcode[fopcode[FOp.fSTP].memop], ins);
+    writecode(t, ins);
     log_global_var(t, mvar, -4);
     DEC(t.fstacksize);
     DEC(t.fstackloaded);
@@ -1550,26 +1442,22 @@ PROCEDURE fstack_pop (t: T; READONLY mvar: MVar) =
   END fstack_pop;
 
 PROCEDURE fstack_swap (t: T) =
-  VAR modrm, disp, dsize: INTEGER;
+  VAR ins: Instruction;
   BEGIN
-    IF t.ftop_inmem THEN
-      fstack_loadtop(t);
-    END;
+    IF t.ftop_inmem THEN fstack_loadtop(t); END;
 
     get_temp(t);
     get_temp(t);
 
     Mn(t, "FLD ST, m80real");
-    build_modrm(t, t.fstackspill[t.fspilltop-2], t.opcode[5],
-                modrm, disp, dsize);
-    writecode(t, FALSE, 16_DB, modrm, TRUE, 0, FALSE, disp, dsize,
-              0, 0);
+    build_modrm(t, t.fstackspill[t.fspilltop-2], t.opcode[5], ins);
+    ins.opcode := 16_DB;
+    writecode(t, ins);
 
     Mn(t, "FLD ST, m80real");
-    build_modrm(t, t.fstackspill[t.fspilltop-1], t.opcode[5],
-                modrm, disp, dsize);
-    writecode(t, FALSE, 16_DB, modrm, TRUE, 0, FALSE, disp, dsize,
-              0, 0);
+    build_modrm(t, t.fstackspill[t.fspilltop-1], t.opcode[5], ins);
+    ins.opcode := 16_DB;
+    writecode(t, ins);
 
     DEC(t.fspilltop, 2);
   END fstack_swap;
@@ -1587,7 +1475,7 @@ PROCEDURE fstack_discard (t: T) =
     DEC(t.fstacksize);
   END fstack_discard;
 
-PROCEDURE f_loadlit (t: T; READONLY flarr: ARRAY OF INTEGER; type: MType) =
+PROCEDURE f_loadlit (t: T; READONLY flarr: FloatBytes; type: MType) =
   BEGIN
     IF t.ftop_inmem THEN
       fstack_loadtop(t);
@@ -1659,46 +1547,129 @@ PROCEDURE fstack_wipeup(t: T; wipeup: INTEGER) =
 
 (*------------------------------------------------------- code writing i/o---*)
 
+PROCEDURE MnPtr(t: T;  READONLY op: Operand;  disp: INTEGER;  type: Type) =
+  BEGIN
+    IF t.debug THEN
+      MnOp (t, op);
+      Mn (t, "^[", Fmt.Int (disp));
+      IF (type # Type.Int32) AND (type # Type.Word32) THEN
+        Mn (t, ":", Target.TypeNames[type]);
+      END;
+      Mn (t, "]");
+    END;
+  END MnPtr;
+
+PROCEDURE MnOp(t: T; READONLY op: Operand) =
+  BEGIN
+    IF t.debug THEN
+      CASE op.loc OF
+        OLoc.fstack   => Mn (t, " FST");
+      | OLoc.register => Mn (t, " ", RegName[op.reg]);
+      | OLoc.imm      => Mn (t, " $", Fmt.Int (op.imm));
+      | OLoc.mem      => MnMVar (t, op.mvar);
+      END
+    END
+  END MnOp;
+
+PROCEDURE MnMVar(t: T;  READONLY mvar: MVar) =
+  BEGIN
+    IF t.debug THEN
+      MnVar (t, mvar.var);
+      IF mvar.o # 0 THEN  Mn(t, "+", Fmt.Int(mvar.o)); END;
+      IF (mvar.t # Type.Int32) AND (mvar.t # Type.Word32) THEN
+        Mn (t, ":", Target.TypeNames[mvar.t]);
+      END;
+    END;
+  END MnMVar;
+
+PROCEDURE MnVar(t: T;  READONLY v: x86Var) =
+  CONST VTag = ARRAY VLoc OF TEXT { " gv.", " tv." };
+  BEGIN
+    IF t.debug THEN
+      IF v = NIL THEN
+        Mn(t, " *");
+      ELSE
+        Mn (t, VTag[v.loc], Fmt.Int(v.tag));
+        IF v.name # M3ID.NoID THEN
+          Mn (t, "[", M3ID.ToText(v.name), "]");
+        END;
+      END;
+    END;
+  END MnVar;
+
+PROCEDURE MnLabel(t: T;  l: Label) =
+  BEGIN
+    IF t.debug THEN
+      IF (l = No_label)
+        THEN Mn(t, " *");
+        ELSE Mn(t, " L.", Fmt.Int (l));
+      END;
+    END;
+  END MnLabel;
+
+PROCEDURE MnProc(t: T;  p: x86Proc) =
+  BEGIN
+    IF t.debug THEN
+      IF (p = NIL) THEN
+        Mn(t, " *");
+      ELSE
+        Mn(t, " p.", Fmt.Int(p.tag));
+        IF p.name # M3ID.NoID THEN
+          Mn (t, "[", M3ID.ToText(p.name), "]");
+        END;
+      END;
+    END;
+  END MnProc;
+
+PROCEDURE MnImm(t: T;  imm: INTEGER) =
+  BEGIN
+    IF t.debug THEN
+      Mn(t, " $", Fmt.Int (imm));
+    END;
+  END MnImm;
+
 PROCEDURE Mn (t: T; mn1, mn2, mn3: TEXT := NIL) =
   BEGIN
     IF t.debug THEN
-      Hexbe(t, t.obj.cursor(Seg.Text), 4);
-      t.wr.OutT(":");
-      IF mn1 # NIL THEN t.wr.OutT(mn1); END;
-      IF mn2 # NIL THEN t.wr.OutT(mn2); END;
-      IF mn3 # NIL THEN t.wr.OutT(mn3); END;
+      IF (mn1 # NIL) AND (t.n_tags < NUMBER (t.tags)) THEN
+        t.tags[t.n_tags] := mn1;  INC (t.n_tags);
+      END;
+      IF (mn2 # NIL) AND (t.n_tags < NUMBER (t.tags)) THEN
+        t.tags[t.n_tags] := mn2;  INC (t.n_tags);
+      END;
+      IF (mn3 # NIL) AND (t.n_tags < NUMBER (t.tags)) THEN
+        t.tags[t.n_tags] := mn3;  INC (t.n_tags);
+      END;
     END;
   END Mn;
 
-PROCEDURE Hexbe (t: T; val: INTEGER; size: INTEGER) =
+PROCEDURE HexBE (t: T; val: INTEGER; size: INTEGER) =
   BEGIN
-    t.wr.OutT(" ");
-    Hexberec(t, val, size);
-  END Hexbe;
-
-PROCEDURE Hexberec (t: T; val: INTEGER; size: INTEGER) =
-(* Output a hex value as a single number (high byte first)*)
-  BEGIN
-    <* ASSERT size>0 *>
-    IF size # 1 THEN
-      Hexbe(t, val DIV 16_100, size-1);
+    FOR i := size-1 TO 0 BY -1 DO
+      Byte(t, Word.Extract(val, i*8, 8));
     END;
-    Byte(t, Word.And(val,16_ff));
-  END Hexberec;
+  END HexBE;
+
+PROCEDURE HexLE (t: T; val: INTEGER; size: INTEGER) =
+  BEGIN
+    FOR i := 0 TO size-1 DO
+      Byte(t, Word.Extract(val, i*8, 8));
+    END;
+  END HexLE;
 
 PROCEDURE Byte (t: T; val: INTEGER) =
-  CONST Digits = ARRAY [0 .. 15] OF TEXT
-    {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A",
-     "B", "C", "D", "E", "F"};
+  CONST Digits = ARRAY [0 .. 15] OF CHAR
+      {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A',
+       'B', 'C', 'D', 'E', 'F'};
   BEGIN
-    t.wr.OutT(Digits[val DIV 16_10]);
-    t.wr.OutT(Digits[Word.And(val,16_f)]);
+    t.wr.OutC(Digits[Word.Extract(val, 4, 4)]);
+    t.wr.OutC(Digits[Word.And(val,16_f)]);
   END Byte;
 
 (*--------------------------------------------------- temporary var stuff ---*)
 
 PROCEDURE get_temp (t: T) =
-  VAR modrm, disp, dsize: INTEGER;
+  VAR ins: Instruction;
   BEGIN
     IF t.fspilltop = t.fspilllimit THEN
       expand_spill(t);
@@ -1710,23 +1681,23 @@ PROCEDURE get_temp (t: T) =
         INC (t.fspillhigh);
       END;
       Mn(t, "FSTP ST, m80real");
-      build_modrm(t, spill, t.opcode[7], modrm, disp, dsize);
-      writecode(t, FALSE, 16_DB, modrm, TRUE, 0, FALSE, disp, dsize,
-                0, 0);
+      build_modrm(t, spill, t.opcode[7], ins);
+      ins.opcode := 16_DB;
+      writecode(t, ins);
     END;
     INC(t.fspilltop);
   END get_temp;
 
 PROCEDURE retrieve_temp (t: T) =
-  VAR modrm, disp, dsize: INTEGER;
+  VAR ins: Instruction;
   BEGIN
     <* ASSERT t.fspilltop > 0 *>
     DEC(t.fspilltop);
     WITH spill = t.fstackspill[t.fspilltop] DO
       Mn(t, "FLD ST, m80real");
-      build_modrm(t, spill, t.opcode[5], modrm, disp, dsize);
-      writecode(t, FALSE, 16_DB, modrm, TRUE, 0, FALSE, disp, dsize,
-                0, 0);
+      build_modrm(t, spill, t.opcode[5], ins);
+      ins.opcode := 16_DB;
+      writecode(t, ins);
     END;
   END retrieve_temp;
 
@@ -1754,27 +1725,22 @@ PROCEDURE aligned (<*UNUSED*> t: T; READONLY var: MVar;
 
 (*---------------------------------------------- future update list stuff ---*)
 
-PROCEDURE log_global_var (t: T; var: MVar; reltocurs: INTEGER) =
+PROCEDURE log_global_var (t: T; mvar: MVar; reltocurs: INTEGER) =
+  VAR patch_loc: INTEGER;
   BEGIN
-    IF var.var.loc # VLoc.global THEN
+    IF mvar.var.loc # VLoc.global THEN
       RETURN;
     END;
 
-    IF var.var = t.flitvar THEN
-      <* ASSERT t.f_litlist # NIL AND t.f_litlist.loc = 0 AND
-                t.f_litlist.size = CG_Bytes[var.t] AND
-                (var.t = Type.Reel OR var.t = Type.LReel OR
-                 var.t = Type.XReel) *>
-      t.f_litlist.loc := t.obj.cursor(Seg.Text) + reltocurs;
-    ELSIF var.var = t.internalvar THEN
-      t.internal_list := NEW(Internal, ivar := VAL(var.o, IntnlVar),
-                             loc := t.obj.cursor(Seg.Text) + reltocurs,
-                             link := t.internal_list);
+    patch_loc := t.obj.cursor(Seg.Text) + reltocurs;
+    IF mvar.var = t.flitvar THEN
+      <* ASSERT t.f_litlist # NIL AND t.f_litlist.loc = 0 *>
+      <* ASSERT t.f_litlist.size = CG_Bytes[mvar.t] *>
+      <* ASSERT mvar.t = Type.Reel OR mvar.t = Type.LReel OR mvar.t = Type.XReel *>
+      t.f_litlist.loc := patch_loc;
     ELSE
-      t.obj.patch(Seg.Text, t.obj.cursor(Seg.Text) + reltocurs,
-                  var.o + var.var.offset, 4);
-      t.obj.relocate(t.textsym, t.obj.cursor(Seg.Text) + reltocurs,
-                     var.var.symbol);
+      t.obj.patch(Seg.Text, patch_loc, mvar.o + mvar.var.offset, 4);
+      t.obj.relocate(t.textsym, patch_loc, mvar.var.symbol);
     END
   END log_global_var;
 
@@ -1802,12 +1768,9 @@ PROCEDURE init (t: T) =
 
     t.f_litlist := NIL;
     t.abscall_list := NIL;
-    t.internal_list := NIL;
 
     t.flitvar := t.parent.NewVar(Type.Struct, 0, 0, 4);
     t.flitvar.loc := VLoc.global;
-    t.internalvar := t.parent.NewVar(Type.Struct, 0, 0, 4);
-    t.internalvar.loc := VLoc.global;
 
     t.current_proc := NIL;
 
@@ -1824,13 +1787,15 @@ TYPE LocList = REF RECORD
   link: LocList;
 END;
 
-PROCEDURE find_flit (<*UNUSED*> t: T; flarr: ARRAY [0 .. 1] OF INTEGER;
+PROCEDURE find_flit (<*UNUSED*> t: T;  READONLY flarr: FloatBytes;
                      size: INTEGER;
                      used: FLiteral; VAR loc: ByteOffset): BOOLEAN =
+  VAR i: CARDINAL;
   BEGIN
     WHILE used # NIL DO
-      IF flarr[0] = used.arr[0] AND
-         (size = 4 OR (flarr[1] = used.arr[1])) THEN
+      i := 0;
+      WHILE (i < size) AND (flarr[i] = used.arr[i]) DO INC (i); END;
+      IF (i = size) THEN
         loc := used.loc;
         RETURN TRUE;
       END;
@@ -1856,38 +1821,20 @@ PROCEDURE find_abscall (<*UNUSED *> t: T; internal: INTEGER;
     RETURN FALSE;
   END find_abscall;
 
-PROCEDURE find_internal (<*UNUSED *> t: T; internal: IntnlVar;
-                         used: Internal; VAR loc: ByteOffset): BOOLEAN =
-  BEGIN
-    WHILE used # NIL DO
-      IF internal = used.ivar THEN
-        loc := used.loc;
-        RETURN TRUE;
-      END;
-
-      used := used.link;
-    END;
-
-    RETURN FALSE;
-  END find_internal;
-
 PROCEDURE tidy_internals (t: T) =
   VAR internal_size := 0;
       fl_used: FLiteral;
       abscall_used: AbsCall;
-      int_used: Internal;
-      fl_locs, abscall_locs, int_locs: LocList;
+      fl_locs, abscall_locs: LocList;
       intvar: x86Var;
       flptr := t.f_litlist;
       abscallptr := t.abscall_list;
-      intptr := t.internal_list;
   BEGIN
     fl_used := log_flit_use(t, internal_size, fl_locs);
     abscall_used := log_abscall_use(t, internal_size, abscall_locs);
-    int_used := log_int_use(t, internal_size, int_locs);
 
     IF internal_size # 0 THEN
-      intvar := init_intvar(t, internal_size, fl_used, abscall_used, int_used);
+      intvar := init_intvar(t, internal_size, fl_used, abscall_used);
 
       WHILE flptr # NIL DO
         t.obj.patch(Seg.Text, flptr.loc, fl_locs.loc, 4);
@@ -1906,15 +1853,6 @@ PROCEDURE tidy_internals (t: T) =
       END;
 
       <* ASSERT abscall_locs = NIL *>
-
-      WHILE intptr # NIL DO
-        t.obj.patch(Seg.Text, intptr.loc, int_locs.loc, 4);
-        t.obj.relocate(t.textsym, intptr.loc, intvar.symbol);
-        int_locs := int_locs.link;
-        intptr := intptr.link;
-      END;
-
-      <* ASSERT int_locs = NIL *>
     END
   END tidy_internals;
 
@@ -1993,45 +1931,7 @@ PROCEDURE log_abscall_use (t: T; VAR internal_size: INTEGER;
     RETURN abscall;
   END log_abscall_use;
 
-PROCEDURE log_int_use (t: T; VAR internal_size: INTEGER; VAR inloc: LocList):
-            Internal =
-  VAR intptr := t.internal_list;
-      int, inttail: Internal := NIL;
-      inloctail: LocList := NIL;
-      intloc: ByteOffset;
-  BEGIN
-    WHILE intptr # NIL DO
-      IF NOT find_internal(t, intptr.ivar, int, intloc) THEN
-        intloc := internal_size;
-        IF inttail = NIL THEN
-          inttail := NEW(Internal, ivar := intptr.ivar, loc := intloc,
-                         link := NIL);
-          int := inttail;
-        ELSE
-          inttail.link := NEW(Internal, ivar := intptr.ivar,
-                              loc := intloc, link := NIL);
-          inttail := inttail.link;
-        END;
-
-        INC(internal_size, InternalSize[intptr.ivar]);
-      END;
-
-      IF inloctail = NIL THEN
-        inloctail := NEW(LocList, loc := intloc, link := NIL);
-        inloc := inloctail;
-      ELSE
-        inloctail.link := NEW(LocList, loc := intloc, link := NIL);
-        inloctail := inloctail.link;
-      END;
-
-      intptr := intptr.link;
-    END;
-
-    RETURN int;
-  END log_int_use;
-
-PROCEDURE init_intvar (t: T; size: ByteSize; f_lit: FLiteral; abscall: AbsCall;
-                       int: Internal):
+PROCEDURE init_intvar (t: T; size: ByteSize; f_lit: FLiteral; abscall: AbsCall):
             x86Var =
   VAR intvar: x86Var;
       tint: Target.Int;
@@ -2041,56 +1941,23 @@ PROCEDURE init_intvar (t: T; size: ByteSize; f_lit: FLiteral; abscall: AbsCall;
     t.parent.begin_init(intvar);
 
     WHILE f_lit # NIL DO
-      EVAL TargetInt.FromInt(f_lit.arr[0], tint);
-      t.parent.init_int(f_lit.loc, tint, Type.Int);
-      IF f_lit.size = 8 THEN
-        EVAL TargetInt.FromInt(f_lit.arr[1], tint);
-        t.parent.init_int(f_lit.loc + 4, tint, Type.Int);
+      FOR i := 0 TO f_lit.size-1 DO
+        EVAL TargetInt.FromInt(f_lit.arr[i], tint);
+        t.parent.init_int(f_lit.loc + i, tint, Type.Word8);
       END;
 
       f_lit := f_lit.link;
     END;
 
     WHILE abscall # NIL DO
-      t.parent.init_int(abscall.loc, TargetInt.Zero, Type.Int);
+      t.parent.init_int(abscall.loc, TargetInt.Zero, Type.Int32);
       t.obj.relocate(intvar.symbol, abscall.loc, abscall.sym);
       abscall := abscall.link;
-    END;
-
-    WHILE int # NIL DO
-      init_internal(t, int.ivar, int.loc);
-      int := int.link;
     END;
 
     t.parent.end_init(intvar);
     RETURN intvar;
   END init_intvar;
-
-CONST InternalSize = ARRAY IntnlVar OF ByteSize
-  { 33 * 4, 33 * 4 };
-
-PROCEDURE init_internal(t: T; internal: IntnlVar; o: ByteOffset) =
-  VAR tint: Target.Int;
-      mask: Word.T;
-  BEGIN
-    CASE internal OF
-      IntnlVar.Lowset_table =>
-        mask := 0;
-        FOR i := 0 TO 32 DO
-          EVAL TargetInt.FromInt(mask, tint);
-          mask := Word.Shift(mask, 1);
-          mask := Word.Or(mask, 1);
-          t.parent.init_int(o + i * 4, tint, Type.Word);
-        END;
-    | IntnlVar.Highset_table =>
-        mask := 16_FFFFFFFF;
-        FOR i := 0 TO 32 DO
-          EVAL TargetInt.FromInt(mask, tint);
-          t.parent.init_int(o + i * 4, tint, Type.Word);
-          mask := Word.Shift(mask, 1);
-        END
-    END
-  END init_internal;
 
 PROCEDURE set_current_proc (t: T; p: x86Proc) =
   BEGIN

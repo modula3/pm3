@@ -6,7 +6,7 @@
 
 import ("formsvbt")
 
-ManPage ("fisheye", 1)
+ManPage ("fisheye","1")
 
 include_dir ("fisheye.resources")
 include_dir ("fisheye.datafiles")

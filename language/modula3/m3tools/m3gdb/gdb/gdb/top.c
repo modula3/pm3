@@ -64,7 +64,7 @@
 /* Default command line prompt.  This is overriden in some configs. */
 
 #ifndef DEFAULT_PROMPT
-#define DEFAULT_PROMPT	"(gdb) "
+#define DEFAULT_PROMPT	"(m3gdb) "
 #endif
 
 /* Initialization file name for gdb.  This is overridden in some configs.  */

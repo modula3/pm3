@@ -17,7 +17,7 @@ import ("webvbt")
 include_dir     ("resources")
 
 /* 
-ManExport       ("Postcard", 1)
+ManExport       ("Postcard", "1")
 */
 
 /* General-purpose modules */

@@ -51,8 +51,6 @@ TYPE
     tm_wday:  int;     (* day of week (Sunday = 0) *)
     tm_yday:  int;     (* day of year (0 - 365) *)
     tm_isdst: int;     (* flag: daylight savings time in effect *)
-    tm_gmtoff:long;    (* offset from GMT in seconds *)
-    tm_zone:  char_star; (* abbreviation of timezone name *)
   END;
 
   struct_tm_star = UNTRACED REF struct_tm;
@@ -153,6 +151,13 @@ PROCEDURE setitimer (which: int;
 <*EXTERNAL*> PROCEDURE gmtime    (clock: long_star): struct_tm_star;
 <*EXTERNAL*> PROCEDURE asctime   (tm: struct_tm_star): char_star;
 
+(* Reentrant equivalents *)
+
+PROCEDURE ctime_r (clock: long_star; buf: char_star; buflen: int): char_star;
+PROCEDURE localtime_r (clock: long_star; res: struct_tm_star): struct_tm_star;
+PROCEDURE gmtime_r (clock: long_star; res: struct_tm_star): struct_tm_star;
+PROCEDURE asctime_r(tm: struct_tm_star; buf: char_star; buflen: int):char_star;
+
 (*** mktime(3) - convert a struct_tm to a time_t ***)
 <*EXTERNAL*> PROCEDURE mktime (tm: struct_tm_star): time_t;
 
@@ -167,5 +172,12 @@ PROCEDURE setitimer (which: int;
 <*EXTERNAL*> PROCEDURE nl_cxtime     (clock: long_star; format: char_star)
 							: char_star;
 
+<*EXTERNAL*> VAR timezone: time_t;
+<*EXTERNAL "timezone" *> VAR altzone: time_t;
+<*EXTERNAL*> VAR daylight: int;
+<*EXTERNAL*> VAR tzname: ARRAY [0..1] OF char_star;
+
+<*EXTERNAL*> PROCEDURE tzset	 ();
+<*EXTERNAL "tzset" *> PROCEDURE tzsetwall ();
 
 END Utime.

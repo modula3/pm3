@@ -1,0 +1,12 @@
+readonly proc _build_bptree(nm, key, value, vis) is
+  local tbl = nm & "Tbl"
+  local stbl = "Sorted" & tbl
+  local bpt = nm & "BPlusTree"
+
+  build_generic_intf (bpt, "BPlusTree", [key, value, stbl], vis)
+  build_generic_impl (bpt, "BPlusTree", [key, value, tbl, stbl])
+end
+
+readonly proc BPlus_tree (nm, key, value) is
+  _build_bptree(nm, key, value, VISIBLE)
+end

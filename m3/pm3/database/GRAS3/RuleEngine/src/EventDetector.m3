@@ -7,8 +7,11 @@ MODULE EventDetector;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:40  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:50  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:40  hosking
+    Import of GRAS3 1.1
 
     Revision 1.1  1998/08/12 11:04:41  roland
     Efficiency improvement: RuleEngine notifies EventDetectors of
@@ -18,7 +21,7 @@ MODULE EventDetector;
 *)
 (***************************************************************************)
 
-IMPORT CardSeq, IntIntTbl;
+IMPORT CardSeq, IntIntTransientTbl AS IntIntTbl;
 
 REVEAL T = Public BRANDED Brand OBJECT
              counters: IntIntTbl.T;

@@ -22,32 +22,32 @@ BEGIN
   MetaParser.TableFromArray(sourceTable,table);
 END LinkInSelects;
 
-PROCEDURE Fetch1(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-                            READONLY info: SynLocation.Info): SynParse.Tree =
+PROCEDURE Fetch1(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
+                 <*UNUSED*>READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN p.stack[base+1];
   END Fetch1;
 
-PROCEDURE Fetch2(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-                            READONLY info: SynLocation.Info): SynParse.Tree =
+PROCEDURE Fetch2(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
+                 <*UNUSED*>READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN p.stack[base+2];
   END Fetch2;
 
-PROCEDURE Fetch3(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-                            READONLY info: SynLocation.Info): SynParse.Tree =
+PROCEDURE Fetch3(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
+                 <*UNUSED*>READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN p.stack[base+3];
   END Fetch3;
 
-PROCEDURE Fetch4(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-                            READONLY info: SynLocation.Info): SynParse.Tree =
+PROCEDURE Fetch4(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
+                 <*UNUSED*>READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN p.stack[base+4];
   END Fetch4;
 
-PROCEDURE Fetch5(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-                            READONLY info: SynLocation.Info): SynParse.Tree =
+PROCEDURE Fetch5(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
+                 <*UNUSED*>READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN p.stack[base+5];
   END Fetch5;

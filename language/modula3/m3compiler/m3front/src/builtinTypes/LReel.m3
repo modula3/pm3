@@ -37,6 +37,7 @@ PROCEDURE Check (p: P) =
     p.info.isEmpty   := FALSE;
     p.info.isSolid   := TRUE;
     p.info.hash      := 2;
+    p.info.isTransient := TRUE;
   END Check;
 
 PROCEDURE Compiler (<*UNUSED*> p: P) =
@@ -55,7 +56,8 @@ PROCEDURE FPrinter (<*UNUSED*>t: Type.T;  VAR x: M3.FPInfo) =
     x.n_nodes := 0;
   END FPrinter;
 
-PROCEDURE GenMap (<*UNUSED*> p: P; offset, size: INTEGER; refs_only: BOOLEAN) =
+PROCEDURE GenMap (<*UNUSED*> p: P; offset, size: INTEGER; refs_only: BOOLEAN;
+                  <*UNUSED*> transient: BOOLEAN) =
   BEGIN
     <*ASSERT size = Target.Longreal.size*>
     IF NOT refs_only THEN

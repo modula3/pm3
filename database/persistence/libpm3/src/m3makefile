@@ -1,0 +1,43 @@
+import ("libm3")
+import ("set")
+
+if SYSTEM_LIBS contains "DB"
+    include_dir ("Berkeley")
+else
+    include_dir ("GRAS3")
+end
+
+Module("Address")
+
+Generic_module ("BPlusTree")
+
+template ("bplustree")
+
+BPlus_tree ("IntInt",  "Integer", "Integer")
+BPlus_tree ("IntRef",  "Integer", "Refany")
+BPlus_tree ("IntText", "Integer", "Text")
+
+BPlus_tree ("RefInt",  "Refany", "Integer")
+BPlus_tree ("RefRef",  "Refany", "Refany")
+BPlus_tree ("RefText", "Refany", "Text")
+
+BPlus_tree ("TextInt",  "Text", "Integer")
+BPlus_tree ("TextRef",  "Text", "Refany")
+BPlus_tree ("TextText", "Text", "Text")
+
+TransientTable("TransientFPRef", "Fingerprint", "Refany")
+TransientTable("TransientFPAdr", "Fingerprint", "Address")
+TransientSorted_table("TransientFPRef", "Fingerprint", "Refany")
+TransientSorted_table("TransientFPAdr", "Fingerprint", "Address")
+
+Interface("Database")
+Interface("DBPage")
+Interface("Transaction")
+
+Module("BaseDatabase")
+Module("BaseDBPage")
+Module("BaseTransaction")
+
+Module("ODMG")
+
+Library("pm3")

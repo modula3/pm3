@@ -144,6 +144,7 @@ PROCEDURE Initialize () =
                                  CallExpr.PrepNoBranch,
                                  CallExpr.NoBranch,
                                  Fold,
+                                 CallExpr.NoBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

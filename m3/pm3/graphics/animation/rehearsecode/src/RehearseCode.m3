@@ -50,7 +50,7 @@ PROCEDURE NewWriter (ts: TextEditVBT.T): Writer =
   BEGIN
     RETURN
       NEW (Writer, typescript := ts, lo := 0, cur := 0, hi := BufferSize,
-           st := 0, buff := NEW (REF ARRAY OF CHAR, BufferSize),
+           st := 0, buff := NEW (<*TRANSIENT*> REF ARRAY OF CHAR, BufferSize),
            closed := FALSE, seekable := FALSE, buffered := FALSE);
   END NewWriter;
 

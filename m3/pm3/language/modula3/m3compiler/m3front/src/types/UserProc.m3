@@ -10,12 +10,13 @@ MODULE UserProc;
 
 IMPORT M3ID, CG, Type, Expr, ExprRep, ProcType, Formal;
 IMPORT Procedure, NamedExpr, Variable, QualifyExpr, Value;
-IMPORT CallExpr, ProcExpr, Marker;
+IMPORT CallExpr, ProcExpr, Marker, ErrType;
 
 PROCEDURE TypeOf (ce: CallExpr.T): Type.T =
   VAR t: Type.T;  proc := ce.proc;
   BEGIN
     t := Expr.TypeOf (proc);
+    IF (t = ErrType.T) THEN RETURN t; END;
     IF (t = NIL) THEN t := QualifyExpr.MethodType (proc) END;
     RETURN ProcType.Result (Type.Base (t));
   END TypeOf;
@@ -142,16 +143,15 @@ PROCEDURE Prep (ce: CallExpr.T) =
 
     (* generate the call *)
     IF (p_value # NIL) THEN
-      ce.tmp := Procedure.EmitCall (p_value);
+      ce.tmp := Procedure.EmitValueCall (p_value);
     ELSIF CouldBeClosure (proc) THEN
       ce.tmp := GenClosureCall (p_temp, cg_result, p_type, callConv);
       CG.Free (p_temp);
     ELSE
       CG.Push (p_temp);
-      CG.Call_indirect (cg_result, callConv);
-      ce.tmp := Procedure.CaptureResult (cg_result);
+      CG.Gen_Call_indirect (cg_result, callConv);
+      ce.tmp := Marker.EmitExceptionTest (p_type, need_value := TRUE);
       CG.Free (p_temp);
-      Marker.EmitExceptionTest (p_type);
     END;
 
     ce.align := align_result;
@@ -194,9 +194,7 @@ PROCEDURE GenResultArg (lhs: CG.Val;  tmp: CG.Var;  align: CG.Alignment) =
 
 PROCEDURE GenClosureCall (p_temp: CG.Val;  result: CG.Type;
                           sig: Type.T;  cc: CG.CallingConvention): CG.Val =
-  VAR
-    skip := CG.Next_label ();
-    tmp: CG.Val;
+  VAR skip := CG.Next_label ();
   BEGIN
     CG.If_closure (p_temp, CG.No_label, skip, CG.Maybe);
     CG.Push (p_temp);
@@ -207,10 +205,8 @@ PROCEDURE GenClosureCall (p_temp: CG.Val;  result: CG.Type;
     CG.Store_temp (p_temp);
     CG.Set_label (skip);
     CG.Push (p_temp);
-    CG.Call_indirect (result, cc);
-    tmp := Procedure.CaptureResult (result);
-    Marker.EmitExceptionTest (sig);
-    RETURN tmp;
+    CG.Gen_Call_indirect (result, cc);
+    RETURN Marker.EmitExceptionTest (sig, need_value := TRUE);
   END GenClosureCall;
 
 PROCEDURE CouldBeClosure (proc: Expr.T): BOOLEAN =
@@ -256,6 +252,7 @@ PROCEDURE Initialize () =
                                  CallExpr.PrepNoBranch,
                                  CallExpr.NoBranch,
                                  CallExpr.NoValue,
+                                 CallExpr.NoBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

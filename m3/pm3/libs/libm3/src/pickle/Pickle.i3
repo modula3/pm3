@@ -128,7 +128,7 @@ TYPE
 
 TYPE
   Writer <: WriterPublic;
-  WriterPublic = OBJECT
+  WriterPublic = <*TRANSIENT*> ROOT OBJECT
       wr: Wr.T;
     METHODS
       write(r: REFANY) RAISES
@@ -195,7 +195,7 @@ TYPE
 TYPE
   Reader <: ReaderPublic;
   RefID = INTEGER;
-  ReaderPublic = OBJECT
+  ReaderPublic = <*TRANSIENT*> ROOT OBJECT
       rd: Rd.T;
     METHODS
       read(): REFANY RAISES
@@ -309,7 +309,7 @@ TYPE
   could use mixtures of these techniques. *)
 
 TYPE
-  SpecialPublic = OBJECT
+  SpecialPublic = <*TRANSIENT*> ROOT OBJECT
       prev: SpecialPublic := NIL;
       sc: TypeCode; 
     METHODS

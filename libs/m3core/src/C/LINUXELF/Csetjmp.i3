@@ -20,6 +20,6 @@ TYPE
 <*EXTERNAL*> PROCEDURE longjmp (VAR env: jmp_buf; val: int);
 
 <*EXTERNAL "__setjmp" *>  PROCEDURE usetjmp (VAR env: jmp_buf): int;
-<*EXTERNAL "_longjmp" *> PROCEDURE ulongjmp (VAR env: jmp_buf; val: int);
+<*EXTERNAL "__longjmp" *> PROCEDURE ulongjmp (VAR env: jmp_buf; val: int);
 
 END Csetjmp.

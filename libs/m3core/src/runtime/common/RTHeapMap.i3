@@ -12,12 +12,15 @@ INTERFACE RTHeapMap;
 
 IMPORT RT0;
 
-TYPE Visitor <: V_;  V_ = OBJECT METHODS apply (a: ADDRESS) END;
+TYPE Visitor <: V_;
+     V_ = <*TRANSIENT*> ROOT OBJECT METHODS apply (a: ADDRESS) END;
 TYPE ObjectPtr = UNTRACED REF RT0.RefHeader;
 
 PROCEDURE WalkRef (h: ObjectPtr;  v: Visitor);
 (* For each traced reference at address 'x' in the object referenced by 'h',
    call 'v(x)'. *)
+
+PROCEDURE DoWalkRef (t: RT0.TypeDefn; A: ADDRESS; v: Visitor);
 
 PROCEDURE WalkGlobals (v: Visitor);
 (* For each traced reference at address 'x' in a global var, call 'v(x)'. *)
@@ -27,4 +30,3 @@ PROCEDURE WalkModuleGlobals (v: Visitor;  m: CARDINAL);
    module 'm' (RTModule.Get(m)), call 'v(x)' *)
   
 END RTHeapMap.
-

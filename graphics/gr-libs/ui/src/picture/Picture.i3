@@ -19,7 +19,7 @@ EXCEPTION
 
 <*PRAGMA LL *>
 
-TYPE T <: ROOT;
+TYPE T <: <*TRANSIENT*> ROOT;
 
 PROCEDURE New (st: VBT.ScreenType; width, height: CARDINAL): T
   RAISES {ScreenTypeNotSupported, TrestleFail};

@@ -14,6 +14,8 @@ PROCEDURE Parse (): Type.T;
 
 PROCEDURE New (nElts: INTEGER;  elts: Scope.T): Type.T;
 
+PROCEDURE Build (READONLY elts: ARRAY OF TEXT): Type.T;
+
 PROCEDURE Is (t: Type.T): BOOLEAN;
 
 PROCEDURE LookUp (t: Type.T;  name: M3ID.T;  VAR value: Value.T): BOOLEAN;

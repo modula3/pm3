@@ -14,7 +14,7 @@ EXCEPTION Error(AtomList.T);
 
 TYPE
   T <: Public;
-  Private <: ROOT;
+  Private <: <*TRANSIENT*> ROOT;
   Public =
     Private OBJECT
     METHODS

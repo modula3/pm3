@@ -137,10 +137,13 @@ PROCEDURE Declare_subrange (t, domain: TypeUID;  READONLY min, max: Target.Int;
     NL ();
   END Declare_subrange;
 
-PROCEDURE Declare_pointer (t, target: TypeUID;  brand: TEXT; traced: BOOLEAN) =
-  CONST Tag = ARRAY BOOLEAN OF CHAR { 'O', 'P' };
+PROCEDURE Declare_pointer (t, target: TypeUID;  brand: TEXT;
+                           traced, transient: BOOLEAN) =
+  CONST Tag = ARRAY BOOLEAN, BOOLEAN OF CHAR
+    { ARRAY BOOLEAN OF CHAR { 'O', 'O' },
+      ARRAY BOOLEAN OF CHAR { 'P', 'p' } };
   BEGIN
-    OutX (t, Tag [traced]);
+    OutX (t, Tag [traced, transient]);
     OutU (target);
     IF (brand # NIL) THEN
       OutC (' ');
@@ -181,11 +184,15 @@ PROCEDURE Declare_raises (n: Name) =
     NL ();
   END Declare_raises;
 
-PROCEDURE Declare_object (t, super: TypeUID;  brand: TEXT;  traced: BOOLEAN;
-                n_fields, n_methods, n_overrides: INTEGER;  field_size: Size) =
-  CONST Tag = ARRAY BOOLEAN OF CHAR { 'U', 'V' };
+PROCEDURE Declare_object (t, super: TypeUID;  brand: TEXT;
+                          traced, transient: BOOLEAN;
+                          n_fields, n_methods, n_overrides: INTEGER;
+                          field_size: Size) =
+  CONST Tag = ARRAY BOOLEAN, BOOLEAN OF CHAR
+    { ARRAY BOOLEAN OF CHAR { 'U', 'U' },
+      ARRAY BOOLEAN OF CHAR { 'V', 'v' } };
   BEGIN
-    OutX (t, Tag[traced]);
+    OutX (t, Tag[traced, transient]);
     OutU (super);
     OutI (n_fields);
     OutI (n_methods);

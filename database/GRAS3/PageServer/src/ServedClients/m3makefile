@@ -1,5 +1,5 @@
 
 Module			("ServedClient")
 interface		("InternalServedClient")
-Table			("ServedClient", "Text", "ServedClient")
+TransientTable		("ServedClient", "Text", "ServedClient")
 Module			("ServedClientTable")

@@ -80,8 +80,14 @@ PROCEDURE ToChars (READONLY f: Float;  VAR buf: ARRAY OF CHAR): INTEGER;
 (* converts 'f' to a printable string in 'buf'.  Returns the
    number of characters in the string.  Returns -1 if 'buf' is too short. *)
 
-PROCEDURE ToInts (READONLY f: Float;  VAR buf: ARRAY OF INTEGER): INTEGER;
-(* converts 'f' to an array of host integers in 'buf'.  Returns the
-   number of integers in 'buf'.  Returns -1 if 'buf' is too short. *)
+TYPE Byte = [0..255];
+
+PROCEDURE ToBytes (READONLY f: Float;  VAR buf: ARRAY OF Byte): INTEGER;
+(* converts 'f' to an array of bytes in 'buf'.  Returns the
+   number of bytes in 'buf'.  Returns -1 if 'buf' is too short. *)
+
+PROCEDURE FromBytes (READONLY buf: ARRAY OF Byte; p: Precision; VAR f: Float);
+(* converts the array of bytes in 'buf' to a float 'f' with
+   precision 'p'. *)
 
 END TFloat.

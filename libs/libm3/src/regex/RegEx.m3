@@ -21,7 +21,7 @@
 
 UNSAFE MODULE RegEx;
 
-IMPORT TextF, Text, Word, Wr, Fmt, ASCII, Stdio, Thread, TextWr;
+IMPORT Text, Word, Wr, Fmt, ASCII, Stdio, Thread, TextWr;
 IMPORT Cstring;
 FROM Wr IMPORT PutChar, PutText;
 
@@ -390,13 +390,14 @@ PROCEDURE Decompile (READONLY pat: Pattern): TEXT =
   END Decompile;
 
 PROCEDURE Execute (READONLY pat    : Pattern;
-                            str    : TEXT;
+                            txt    : TEXT;
                             start  : CARDINAL := 0;
                             len    : CARDINAL := LAST(CARDINAL);
                             usr_mem: REF Memory := NIL           ):
   INTEGER =
   VAR
     mem    : Memory;
+    str    : REF ARRAY OF CHAR;
     str_max: CARDINAL;
     str_idx: INTEGER;
 
@@ -549,10 +550,12 @@ PROCEDURE Execute (READONLY pat    : Pattern;
     END Advance;
 
   BEGIN
-    WITH textlen = Text.Length(str) DO
+    WITH textlen = Text.Length(txt) DO
       IF start > textlen THEN
         RETURN -1; (* not found *)
       ELSE
+        str := NEW(REF ARRAY OF CHAR, textlen);
+        Text.SetChars(str^, txt);
         str_idx := start;
         str_max := MIN(start + len, textlen)
       END;

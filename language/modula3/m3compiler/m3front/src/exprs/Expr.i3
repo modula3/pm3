@@ -50,7 +50,7 @@ PROCEDURE GetSign (t: T): CG.Sign;
 (* returns the best guess of t's sign *)
 
 PROCEDURE NeedsAddress (t: T);
-(* marks t as needing an L-value (ie. a memory address). *)
+(* marks t as needing a memory address *)
 
 PROCEDURE SupportsDirectAssignment (t: T): BOOLEAN;
 (* returns "TRUE" if "t" supports direct assignments. *)
@@ -96,13 +96,13 @@ PROCEDURE IsEqual (a, b: T;  x: M3.EqAssumption): BOOLEAN;
 (* TRUE iff (value(a) = value(b)), assuming a constant global store
    and the type equalities represented by 'x'.  *)
 
-PROCEDURE PrepLiteral (t: T;  type: M3.Type);
+PROCEDURE PrepLiteral (t: T;  type: M3.Type;  is_const: BOOLEAN);
 (* prepares constant values for GenLiteral *)
 
-PROCEDURE GenLiteral (t: T;  offset: INTEGER;  type: M3.Type);
-(* initializes the global storage at ADR(x)+offset to the
-   constant value t.  For any expression t, PrepLiteral(t) must
-   be called before GenLiteral (t).  *)
+PROCEDURE GenLiteral (t: T;  offset: INTEGER;  type: M3.Type;  is_const: BOOLEAN);
+(* initializes the global storage at ADR(x)+offset in the global data segment
+   or constant pool to the constant value t.  For any expression t, PrepLiteral(t)
+   must be called before GenLiteral (t).  *)
 
 PROCEDURE GenFPLiteral (t: T;  mbuf: M3Buf.T);
 (* add the string denoting the literal value of 't' to 'mbuf' *)

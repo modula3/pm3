@@ -9,7 +9,7 @@ INTERFACE RTTipe;
 IMPORT RT0, RTPacking;
 
 TYPE
-  T = OBJECT kind: Kind;  size, align: INTEGER := 0; END;
+  T = <*TRANSIENT*> ROOT OBJECT kind: Kind;  size, align: INTEGER := 0; END;
 
 TYPE
   Kind = {
@@ -36,7 +36,9 @@ TYPE
   Set       = T OBJECT n_elts: INTEGER; END;
   Subrange  = T OBJECT min, max: INTEGER; END;
 
-  Field = REF RECORD type: T;  next: Field;  offset: INTEGER := 0; END;
+  Field = <*TRANSIENT*> REF RECORD
+    type: T;  next: Field;  offset: INTEGER := 0;
+  END;
 
 PROCEDURE Get (typecode: INTEGER;  READONLY packing: RTPacking.T): T;
 (* Returns the type bound to 'typecode' if it is traced.

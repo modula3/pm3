@@ -61,7 +61,8 @@ PROCEDURE Declare_set (t, domain: TypeUID;  s: Size);
 PROCEDURE Declare_subrange (t, domain: TypeUID;  READONLY min, max: Target.Int;
                    s: Size);
 
-PROCEDURE Declare_pointer (t, target: TypeUID;  brand: TEXT;  traced: BOOLEAN);
+PROCEDURE Declare_pointer (t, target: TypeUID; brand: TEXT;
+                           traced, transient: BOOLEAN);
 
 PROCEDURE Declare_indirect (t, target: TypeUID);
 
@@ -70,8 +71,10 @@ PROCEDURE Declare_proctype (t: TypeUID; n_formals: INTEGER;
 PROCEDURE Declare_formal (n: Name;  t: TypeUID);
 PROCEDURE Declare_raises (n: Name);
 
-PROCEDURE Declare_object (t, super: TypeUID;  brand: TEXT;  traced: BOOLEAN;
-                 n_fields, n_methods, n_overrides: INTEGER;  field_size: Size);
+PROCEDURE Declare_object (t, super: TypeUID;  brand: TEXT;
+                          traced, transient: BOOLEAN;
+                          n_fields, n_methods, n_overrides: INTEGER;
+                          field_size: Size);
 PROCEDURE Declare_method (n: Name;  signature: TypeUID;  dfault: M3.Expr);
 PROCEDURE Declare_override (n: Name;  dfault: M3.Expr);
 PROCEDURE Declare_opaque (t, super: TypeUID);

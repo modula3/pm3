@@ -21,10 +21,17 @@ extern struct runtime_pdr _procedure_table [];
 #define PSIZE ((int) _procedure_table_size)
 extern char _procedure_string_table[];
 
-/* TYPE Frame = RECORD pc, sp: ADDRESS;  cxt: Usignal.struct_sigcontext END; */
+/*
+ * TYPE
+ *   Frame = RECORD
+ *     pc, sp, unwind: ADDRESS;
+ *     cxt: Usignal.struct_sigcontext
+ *   END;
+ */
 typedef struct {
   unsigned long pc;
   unsigned long sp;
+  unsigned long unwind;
   struct sigcontext cxt;
   long lock;
 } Frame;
@@ -117,6 +124,9 @@ RTStack__PrevFrame (Frame* callee, Frame* caller)
   if (callee->lock != FrameLock) abort ();
   *caller = *callee;
 
+  /* unwind directly to handler */
+  caller->unwind = 0;
+
   /* see if the unwind has any chance of working... */
   proc = (PRUNTIME_FUNCTION) __exc_lookup_function_entry (caller->cxt.sc_pc);
   if (proc == 0) {
@@ -142,6 +152,7 @@ RTStack__PrevFrame (Frame* callee, Frame* caller)
 void RTStack__Unwind (Frame *target)
 {
   if (target->lock != FrameLock) abort ();
+  target->cxt.sc_pc = target->pc;
   longjmp (& target->cxt, 1);    /* do a full longjmp to destination */
 }
 

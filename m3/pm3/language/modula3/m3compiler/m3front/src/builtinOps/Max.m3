@@ -74,6 +74,21 @@ PROCEDURE Fold (ce: CallExpr.T): Expr.T =
     END;
   END Fold;
 
+PROCEDURE GetBounds (ce: CallExpr.T;  VAR min, max: Target.Int) =
+  VAR min_a, max_a, min_b, max_b : Target.Int;
+  BEGIN
+    Expr.GetBounds (ce.args[0], min_a, max_a);
+    Expr.GetBounds (ce.args[1], min_b, max_b);
+    IF TInt.LT (min_a, min_b)
+      THEN min := min_b;
+      ELSE min := min_a;
+    END;
+    IF TInt.LT (max_a, max_b)
+      THEN max := max_b;
+      ELSE max := max_a;
+    END;
+  END GetBounds;
+
 PROCEDURE Initialize () =
   BEGIN
     Z := CallExpr.NewMethodList (2, 2, TRUE, FALSE, TRUE, NIL,
@@ -87,6 +102,7 @@ PROCEDURE Initialize () =
                                  CallExpr.PrepNoBranch,
                                  CallExpr.NoBranch,
                                  Fold,
+                                 GetBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

@@ -8,9 +8,6 @@
 /*                                                             */
 /* Makefile for Lectern                                        */
 
-if defined("AT_SRC") and equal (OS_TYPE, "POSIX")
-  import         ("cmon")
-end
 import         ("formsvbt")
 import         ("images")
 import         ("tempfiles")
@@ -27,10 +24,5 @@ Module         ("Find")
 implementation ("Lectern")
 /* **** the BuildLectern(1) man page is in the cra/virtualpaper package */
 
-/* For ETP tracing, we use "Cmon_prog" instead of "Program" */
-if defined("AT_SRC") and equal (OS_TYPE, "POSIX")
-  Cmon_prog      ("Lectern", "-machine newport -a -be Lectern__PauseAndLog -F -f ../cmon/etpfilelist", "-machine src-server2 -a -be Lectern__PauseAndLog -F -f ../cmon/etpfilelist")
-else
-  Program        ("Lectern")
-end
+Program        ("Lectern")
 Mtex           ("Lectern", 1) /* manpage */

@@ -8,7 +8,8 @@
 
 UNSAFE MODULE M3ID;
 
-IMPORT M3Buf, TextF, Word, Cstring, Ctypes;
+IMPORT Cstring, Ctypes, Text, Word;
+IMPORT M3Buf, IO;
 
 CONST
   MaxLength   = 8192 - BYTESIZE(ADDRESS) (* allocator goo *);
@@ -46,8 +47,17 @@ VAR
 (*-------------------------------------------------------------- exported ---*)
 
 PROCEDURE Add (x: TEXT;  class: [0..255]): T =
-  VAR t := FromStr (x^, LAST (x^));
+  VAR
+    t   : T;
+    len := Text.Length (x);
+    buf : ARRAY [0..1024] OF CHAR;
   BEGIN
+    IF len > NUMBER(buf) THEN
+      IO.Put(x);
+    END;
+    <*ASSERT len <= NUMBER (buf) *>
+    Text.SetChars (buf, x);
+    t := FromStr (buf, len);
     IF (class # 0) THEN classes [t] := class; END;
     IF (ids[t].text = NIL) THEN ids[t].text := x; END;
     RETURN t;
@@ -57,7 +67,6 @@ PROCEDURE FromStr (READONLY buf: ARRAY OF CHAR;  length: INTEGER): T =
   VAR hash, n: INTEGER;  bucket: CARDINAL;  t: T;  p0, p1: StrPtr;
   BEGIN
     length := MIN (length, NUMBER (buf));
-    p0 := ADR (buf[0]);
     hash := 0;
     FOR i := 0 TO length - 1 DO
       hash := Word.Plus (Word.Times (17, hash), ORD (buf[i]));
@@ -68,7 +77,7 @@ PROCEDURE FromStr (READONLY buf: ARRAY OF CHAR;  length: INTEGER): T =
       t := hashTable[bucket];
       IF (t = NoID) THEN (* empty! *) EXIT; END;
       IF (ids[t].hash = hash) THEN
-        p0 := ADR (buf[0]);
+        IF (length > 0) THEN p0 := ADR (buf[0]); END;
         p1 := ids[t].start;
         n  := length;
         WHILE (n > 0) AND (p0^ = p1^) DO
@@ -115,8 +124,7 @@ PROCEDURE ToText (t: T): TEXT =
     IF (x = NIL) THEN
       ptr := ids[t].start;
       len := Cstring.strlen (LOOPHOLE (ptr, Ctypes.char_star));
-      x   := TextF.New (len);
-      EVAL Cstring.memcpy (ADR (x[0]), ptr, len+1);
+      x   := Text.FromChars (SUBARRAY (LOOPHOLE (ptr, CharBuffer)^, 0, len));
       ids[t].text := x;
     END;
     RETURN x;

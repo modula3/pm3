@@ -1,0 +1,66 @@
+./bench oo7.config.small3 5 t1 one > /home/chenj/tt/output/m1
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 t4 one > /home/chenj/tt/output/m4
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 t5do one > /home/chenj/tt/output/m5do
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 t5undo one > /home/chenj/tt/output/m5undo
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 t6 one > /home/chenj/tt/output/m6
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 t7 one > /home/chenj/tt/output/m7
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 t8 one > /home/chenj/tt/output/m8
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 t9 one > /home/chenj/tt/output/m9
+./NfsPurge  /u/u83/chenj/junk
+
+
+./bench oo7.config.small3 5 t1 many > /home/chenj/tt/output/m1m
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 t4 many > /home/chenj/tt/output/m4m
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 t5do many > /home/chenj/tt/output/m5dom
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 t5undo many > /home/chenj/tt/output/m5undom
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 t6 many > /home/chenj/tt/output/m6m
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 t7 many > /home/chenj/tt/output/m7m
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 t8 many > /home/chenj/tt/output/m8m
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 t9 many > /home/chenj/tt/output/m9m
+./NfsPurge  /u/u83/chenj/junk
+
+
+./bench oo7.config.small3 5 t2a one > /home/chenj/tt/output/m2a
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 t2b one > /home/chenj/tt/output/m2b
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 t2c one > /home/chenj/tt/output/m2c
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 t3a one > /home/chenj/tt/output/m3a
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 t3b one > /home/chenj/tt/output/m3b
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 t3c one > /home/chenj/tt/output/m3c
+./NfsPurge  /u/u83/chenj/junk
+
+./bench oo7.config.small3 5 t2a many > /home/chenj/tt/output/m2am
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 t2b many > /home/chenj/tt/output/m2bm
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 t2c many > /home/chenj/tt/output/m2cm
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 t3a many > /home/chenj/tt/output/m3am
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 t3b many > /home/chenj/tt/output/m3bm
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 t3c many > /home/chenj/tt/output/m3cm
+
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 wu one > /home/chenj/tt/output/mwu
+./NfsPurge  /u/u83/chenj/junk
+./bench oo7.config.small3 5 wu many > /home/chenj/tt/output/mwum
+

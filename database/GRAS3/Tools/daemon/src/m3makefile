@@ -1,3 +1,4 @@
+import("libm3")
 interface("Setsid")
 Module("Daemon")
-
+Library("Daemon")

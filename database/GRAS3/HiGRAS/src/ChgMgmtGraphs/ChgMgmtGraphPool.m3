@@ -7,8 +7,11 @@ MODULE ChgMgmtGraphPool EXPORTS ChgMgmtGraphPool, InternChgMgmtGraphPool;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:29  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:45  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:29  hosking
+    Import of GRAS3 1.1
 
     Revision 1.20  1998/09/14 08:14:46  roland
     Modified code to remove compiler warnings.
@@ -84,7 +87,7 @@ IMPORT Pathname, Text, IntIntTbl;
 
 
 IMPORT ChgMgmtNames, Names, ChgMgmtOpenGraphs;
-IMPORT TextCursorSet, PageFile, Access, Transaction;
+IMPORT TextCursorSet, PageFile, Access, Txn;
 IMPORT ClientInfoSeq, VersionDelta, Delta;
 IMPORT PersistentGraphPool AS Super;
 IMPORT PersistentGraph, Log, LogStack, VolatileLog, DeltaList,
@@ -282,7 +285,7 @@ PROCEDURE Close (pool: T) RAISES {InternalError} =
 
 <* FATAL LogStack.Full, LogStack.Undefined *>
 
-PROCEDURE GetTransactionLevel (pool: T): Transaction.Level =
+PROCEDURE GetTransactionLevel (pool: T): Txn.Level =
   BEGIN
     RETURN pool.chgMgmtTransactionDepth;
   END GetTransactionLevel;

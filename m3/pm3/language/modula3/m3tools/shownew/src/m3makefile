@@ -13,6 +13,7 @@ implementation ("ShowNew")
 
 HtmlFile("index")
 
+build_standalone ()
 Program ("shownew")
 
-ManPage ("shownew", 1)
+ManPage ("shownew","1")

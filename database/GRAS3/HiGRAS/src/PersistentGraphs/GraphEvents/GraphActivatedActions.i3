@@ -8,8 +8,11 @@ INTERFACE GraphActivatedActions;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:32  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:46  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:32  hosking
+    Import of GRAS3 1.1
 
     Revision 1.1  1997/11/12 15:23:51  roland
     Specialized event handler subsystem for PersistentGraphs
@@ -25,7 +28,7 @@ INTERFACE GraphActivatedActions;
    from the storage.  Respects dependencies of actions on deleted nodes. *)
 
 IMPORT Action, Event, ContextSet;
-IMPORT Node, Transaction;
+IMPORT Node, Txn;
 IMPORT ActivatedActions AS Super;
 
 TYPE
@@ -44,7 +47,7 @@ TYPE
                     act      : Action.T;
                     userdata : REFANY        );
 
-             notifyNodeDeletion (level: Transaction.Level; node: Node.T);
+             notifyNodeDeletion (level: Txn.Level; node: Node.T);
 
            END;
 

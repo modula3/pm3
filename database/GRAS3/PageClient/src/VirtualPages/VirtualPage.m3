@@ -7,8 +7,11 @@ UNSAFE MODULE VirtualPage EXPORTS VirtualPage, InternalVirtualPage;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:37  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:48  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:37  hosking
+    Import of GRAS3 1.1
 
     Revision 1.6  1997/11/19 17:59:45  roland
     Removed grouping of page accesses.
@@ -74,7 +77,7 @@ REVEAL
 
       putAll		:= PutAll;
       getAll		:= GetAll;
-
+      peekAll		:= PeekAll;
     END;
 
 
@@ -86,10 +89,11 @@ PROCEDURE PutArray	(         self		:T;
                                   pos           :PageData.Index;
                          READONLY value		:PageData.Part)
 			RAISES {Access.Locked, FatalError} =
+  VAR pageAge: CARDINAL;
   BEGIN
     PageCache.BeginAccess ();
     TRY
-      self.writeAccess ().putData (value, pos);
+      self.writeAccess (pageAge).putData (value, pos);
     FINALLY
       PageCache.EndAccess ();
     END;
@@ -99,10 +103,11 @@ PROCEDURE GetArray	(         self		:T;
                                   pos           :PageData.Index;
 			 VAR      value		:PageData.Part)
 			RAISES {Access.Locked, FatalError} =
+  VAR pageAge: CARDINAL;
   BEGIN
     PageCache.BeginAccess ();
     TRY
-      self.readAccess ().getData (value, pos);
+      self.readAccess (pageAge).getData (value, pos);
     FINALLY
       PageCache.EndAccess ();
     END;
@@ -113,42 +118,54 @@ PROCEDURE CopyArray	(         self		:T;
                                   destination	:PageData.Index;
                                   length	:PageData.Index)
 			RAISES {Access.Locked, FatalError} =
+  VAR pageAge: CARDINAL;
   BEGIN
     PageCache.BeginAccess ();
     TRY
-      self.writeAccess ().copyData (source,destination, length);
+      self.writeAccess (pageAge).copyData (source,destination, length);
     FINALLY
       PageCache.EndAccess ();
     END;
   END CopyArray;
 
 PROCEDURE PutAll	(         self		:T;
-                         READONLY value         :PageData.T)
+                                  unswizzler    :PageData.Unswizzler)
 			RAISES {Access.Locked, FatalError} =
+  VAR pageAge: CARDINAL;
   BEGIN
     PageCache.BeginAccess ();
     TRY
-      self.writeAccess ().putData (value);
+      self.writeAccess (pageAge).putAll (unswizzler);
     FINALLY
       PageCache.EndAccess ();
     END;
   END PutAll;
 
-PROCEDURE GetAll	(         self		:T)
-			:PageData.T
+PROCEDURE GetAll	(         self		:T;
+                                  swizzler      :PageData.Swizzler)
 			RAISES {Access.Locked, FatalError} =
-  VAR
-    data		:PageData.T;
+  VAR pageAge: CARDINAL;
   BEGIN
     PageCache.BeginAccess ();
     TRY
-      data := self.readAccess ().getAll ();
+      self.readAccess (pageAge).getAll (swizzler);
     FINALLY
       PageCache.EndAccess ();
     END;
-
-    RETURN data;
   END GetAll;
+
+
+PROCEDURE PeekAll	(         self		:T;
+                                  swizzler      :PageData.Swizzler)
+			RAISES {FatalError} =
+  BEGIN
+    PageCache.BeginAccess ();
+    TRY
+      self.peekAccess ().getAll (swizzler);
+    FINALLY
+      PageCache.EndAccess ();
+    END;
+  END PeekAll;
 
 
 (*
@@ -306,7 +323,7 @@ PROCEDURE GetText	(         self		:T;
 
     RETURN Text.FromChars (chars^);
   END GetText;
-
+  
 
 BEGIN
 END VirtualPage.

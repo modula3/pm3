@@ -172,8 +172,10 @@ PROCEDURE GArgs(p: SynParse.T; loc: INTEGER):SynParse.Args
     RETURN ret;
   END GArgs;
 
-PROCEDURE Ide(self: SynParse.Identifier; p: SynParse.T; name: TEXT;
-              READONLY info: SynLocation.Info): SynParse.Tree =
+PROCEDURE Ide(<*UNUSED*>self: SynParse.Identifier;
+              <*UNUSED*>p: SynParse.T; 
+              name: TEXT;
+              <*UNUSED*>READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN NEW(MetaParser.TextNode, text:=name);
   END Ide;
@@ -187,13 +189,14 @@ PROCEDURE Ide2(<*UNUSED*> self: SynParse.Action;
       Ide(NIL, p, MetaParser.GText(p, base+1), info);
   END Ide2;
 
-PROCEDURE Name(self: SynParse.Name; p: SynParse.T; name: TEXT;
-              READONLY info: SynLocation.Info): SynParse.Tree =
+PROCEDURE Name(<*UNUSED*>self: SynParse.Name; 
+               <*UNUSED*>p: SynParse.T; name: TEXT;
+               <*UNUSED*>READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN NEW(MetaParser.TextNode, text:=name);
   END Name;
   
-PROCEDURE Name2(self: SynParse.Action; 
+PROCEDURE Name2(<*UNUSED*>self: SynParse.Action; 
                p: SynParse.T; base: INTEGER; 
                READONLY info: SynLocation.Info): SynParse.Tree
                RAISES {SynParse.Fail}=
@@ -203,8 +206,8 @@ PROCEDURE Name2(self: SynParse.Action;
   END Name2;
 
   
-PROCEDURE Grammar(self:SynParse.Action; p: SynParse.T; base: INTEGER;
-                  READONLY info: SynLocation.Info)
+PROCEDURE Grammar(<*UNUSED*>self:SynParse.Action; p: SynParse.T; base: INTEGER;
+                  <*UNUSED*>READONLY info: SynLocation.Info)
                   : SynParse.Tree 
                   RAISES {SynParse.Fail} =
   BEGIN
@@ -214,8 +217,10 @@ PROCEDURE Grammar(self:SynParse.Action; p: SynParse.T; base: INTEGER;
   
 
 
-PROCEDURE ClauseList(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-                     READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
+PROCEDURE ClauseList(<*UNUSED*>self: SynParse.Action; 
+                     p: SynParse.T; base: INTEGER;
+                     READONLY info: SynLocation.Info): SynParse.Tree
+  RAISES {SynParse.Fail} =
   VAR 
     clauseExtends: ClauseExtends;
   BEGIN
@@ -233,47 +238,57 @@ PROCEDURE ClauseList(self: SynParse.Action; p: SynParse.T; base: INTEGER;
           rest:=GClauseList(p, base+4));
   END ClauseList;
   
-PROCEDURE ClauseExtendsChoice(self: SynParse.Action; p: SynParse.T; 
-                              base: INTEGER;
-                              READONLY info: SynLocation.Info): SynParse.Tree =
+PROCEDURE ClauseExtendsChoice(<*UNUSED*>self: SynParse.Action; 
+                              <*UNUSED*>p: SynParse.T; 
+                              <*UNUSED*>base: INTEGER;
+                              <*UNUSED*>READONLY info: SynLocation.Info): 
+  SynParse.Tree =
   BEGIN
     RETURN NEW(ClauseExtends, extend:=TRUE, iter:=FALSE,
                iterPosPresent:=FALSE, iterPos:=0);
   END ClauseExtendsChoice;
   
-PROCEDURE ClauseExtendsIterPos(self: SynParse.Action; p: SynParse.T; 
+PROCEDURE ClauseExtendsIterPos(<*UNUSED*>self: SynParse.Action; p: SynParse.T; 
                                base: INTEGER;
-                               READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
+                               <*UNUSED*>READONLY info: SynLocation.Info): 
+  SynParse.Tree RAISES {SynParse.Fail} =
   BEGIN
     RETURN NEW(ClauseExtends, extend:=TRUE, iter:=TRUE,
                iterPosPresent:=TRUE, 
                iterPos:=MetaParser.GInt(p, base+3));
   END ClauseExtendsIterPos;
   
-PROCEDURE ClauseExtendsIterNoPos(self: SynParse.Action; p: SynParse.T; 
-                                 base: INTEGER;
-                                 READONLY info: SynLocation.Info): SynParse.Tree =
+PROCEDURE ClauseExtendsIterNoPos(<*UNUSED*>self: SynParse.Action; 
+                                 <*UNUSED*>p: SynParse.T; 
+                                 <*UNUSED*>base: INTEGER;
+                                 <*UNUSED*>READONLY info: SynLocation.Info): 
+  SynParse.Tree =
   BEGIN
     RETURN NEW(ClauseExtends, extend:=TRUE, iter:=TRUE,
                iterPosPresent:=FALSE, iterPos:=0);
   END ClauseExtendsIterNoPos;
   
-PROCEDURE ClauseExtendsIter(self: SynParse.Action; p: SynParse.T; 
+PROCEDURE ClauseExtendsIter(<*UNUSED*>self: SynParse.Action; p: SynParse.T; 
                             base: INTEGER;
-                            READONLY info: SynLocation.Info): SynParse.Tree =
+                            <*UNUSED*>READONLY info: SynLocation.Info): 
+  SynParse.Tree =
   BEGIN
     RETURN p.stack[base+2];
   END ClauseExtendsIter;
   
-PROCEDURE ClauseExtendsNo(self: SynParse.Action; p: SynParse.T; 
-                          base: INTEGER;
-                          READONLY info: SynLocation.Info): SynParse.Tree =
+PROCEDURE ClauseExtendsNo(<*UNUSED*>self: SynParse.Action; 
+                          <*UNUSED*>p: SynParse.T; 
+                          <*UNUSED*>base: INTEGER;
+                          <*UNUSED*>READONLY info: SynLocation.Info): 
+  SynParse.Tree =
   BEGIN
     RETURN NEW(ClauseExtends, extend:=FALSE, iter:=FALSE);
   END ClauseExtendsNo;
   
-PROCEDURE ClauseExtendsYes(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-                           READONLY info: SynLocation.Info): SynParse.Tree =
+PROCEDURE ClauseExtendsYes(<*UNUSED*>self: SynParse.Action; 
+                           p: SynParse.T; base: INTEGER;
+                           <*UNUSED*>READONLY info: SynLocation.Info): 
+  SynParse.Tree =
   BEGIN
     RETURN p.stack[base+1];
   END ClauseExtendsYes;
@@ -294,7 +309,8 @@ PROCEDURE GramIdeCm(name: TEXT;args: SynParse.Args;
   END GramIdeCm;
 
   
-PROCEDURE GramIde2(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+PROCEDURE GramIde2(<*UNUSED*>self: SynParse.Action; 
+                   p: SynParse.T; base: INTEGER;
                    READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
   BEGIN
     RETURN
@@ -303,10 +319,10 @@ PROCEDURE GramIde2(self: SynParse.Action; p: SynParse.T; base: INTEGER;
 
 
 
-  PROCEDURE GramString(self: SynParse.QuotedString; p: SynParse.T; 
-        string: TEXT;
-	READONLY info: SynLocation.Info)
-      : SynParse.Tree RAISES {SynParse.Fail} =
+  PROCEDURE GramString(<*UNUSED*>self: SynParse.QuotedString; p: SynParse.T; 
+                       string: TEXT;
+                       READONLY info: SynLocation.Info)
+    : SynParse.Tree RAISES {SynParse.Fail} =
     VAR name: TEXT;
     BEGIN
       IF Text.Length(string)=0 THEN 
@@ -366,78 +382,81 @@ PROCEDURE GramString(self: SynParse.QuotedString;
   END GramString;
 *)  
 
-PROCEDURE GramString2(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-                   READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
+PROCEDURE GramString2(<*UNUSED*>self: SynParse.Action; 
+                      p: SynParse.T; base: INTEGER;
+                      READONLY info: SynLocation.Info): 
+  SynParse.Tree RAISES {SynParse.Fail} =
   BEGIN
     RETURN
       GramString(NIL,p, MetaParser.GText(p, base+1),info);
   END GramString2;
 
 
-PROCEDURE GramKeyIde(self: SynParse.GivenKeyword; p: SynParse.T; 
-                     READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
+PROCEDURE GramKeyIde(<*UNUSED*>self: SynParse.GivenKeyword; 
+                     <*UNUSED*>p: SynParse.T; 
+                     READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN NEW(SynParse.Identifier, 
                location:=SynLocation.NewLineLocation(info),
                Build:=MetaParser.IdentifierToTree);
   END GramKeyIde;
   
-PROCEDURE GramKeyIde2(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-                      READONLY info: SynLocation.Info): SynParse.Tree 
-    RAISES {SynParse.Fail} =
+PROCEDURE GramKeyIde2(<*UNUSED*>self: SynParse.Action; p: SynParse.T; 
+                      <*UNUSED*>base: INTEGER;
+                      READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN
       GramKeyIde(NIL, p, info);
   END GramKeyIde2 ;
 
 
-PROCEDURE GramKeyName(self: SynParse.GivenKeyword; p: SynParse.T; 
-                     READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
+PROCEDURE GramKeyName(<*UNUSED*>self: SynParse.GivenKeyword; 
+                      <*UNUSED*>p: SynParse.T; 
+                      READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN NEW(SynParse.Name, 
                location:=SynLocation.NewLineLocation(info),
                Build:=MetaParser.NameToTree);
   END GramKeyName;
   
-PROCEDURE GramKeyName2(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-                      READONLY info: SynLocation.Info): SynParse.Tree 
-    RAISES {SynParse.Fail} =
+PROCEDURE GramKeyName2(<*UNUSED*>self: SynParse.Action; p: SynParse.T;
+                       <*UNUSED*>base: INTEGER;
+                       READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN
       GramKeyName(NIL, p, info);
   END GramKeyName2 ;
 
 
-PROCEDURE GramKeyInt(self: SynParse.GivenKeyword; p: SynParse.T; 
-                     READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
+PROCEDURE GramKeyInt(<*UNUSED*>self: SynParse.GivenKeyword; 
+                     <*UNUSED*>p: SynParse.T; 
+                     READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN NEW(SynParse.Integer, 
                location:=SynLocation.NewLineLocation(info),
                Build:=MetaParser.IntegerToTree);
   END GramKeyInt;
 
-PROCEDURE GramKeyInt2(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-                      READONLY info: SynLocation.Info): SynParse.Tree 
-    RAISES {SynParse.Fail} =
+PROCEDURE GramKeyInt2(<*UNUSED*>self: SynParse.Action; p: SynParse.T;
+                      <*UNUSED*>base: INTEGER;
+                      READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN
       GramKeyInt(NIL, p, info);
   END GramKeyInt2 ;
 
-
-  
-PROCEDURE GramKeyReal(self: SynParse.GivenKeyword; p: SynParse.T; 
-                      READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
+PROCEDURE GramKeyReal(<*UNUSED*>self: SynParse.GivenKeyword; 
+                      <*UNUSED*>p: SynParse.T; 
+                      READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN NEW(SynParse.Real, 
                location:=SynLocation.NewLineLocation(info),
                Build:=MetaParser.RealToTree);
   END GramKeyReal;
 
-
-PROCEDURE GramKeyReal2(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-                      READONLY info: SynLocation.Info): SynParse.Tree 
-    RAISES {SynParse.Fail} =
+PROCEDURE GramKeyReal2(<*UNUSED*>self: SynParse.Action; p: SynParse.T;
+                       <*UNUSED*>base: INTEGER;
+                       READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN
       GramKeyReal(NIL, p, info);
@@ -445,8 +464,9 @@ PROCEDURE GramKeyReal2(self: SynParse.Action; p: SynParse.T; base: INTEGER;
 
 
   
-PROCEDURE GramKeyChar(self: SynParse.GivenKeyword; p: SynParse.T; 
-                      READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
+PROCEDURE GramKeyChar(<*UNUSED*>self: SynParse.GivenKeyword; 
+                      <*UNUSED*>p: SynParse.T; 
+                      READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN NEW(SynParse.QuotedChar, 
                location:=SynLocation.NewLineLocation(info),
@@ -454,9 +474,9 @@ PROCEDURE GramKeyChar(self: SynParse.GivenKeyword; p: SynParse.T;
   END GramKeyChar;
   
 
-PROCEDURE GramKeyChar2(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-                      READONLY info: SynLocation.Info): SynParse.Tree 
-    RAISES {SynParse.Fail} =
+PROCEDURE GramKeyChar2(<*UNUSED*>self: SynParse.Action; p: SynParse.T;
+                       <*UNUSED*>base: INTEGER;
+                      READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN      
       GramKeyChar(NIL, p, info);
@@ -464,8 +484,9 @@ PROCEDURE GramKeyChar2(self: SynParse.Action; p: SynParse.T; base: INTEGER;
 
 
 
-PROCEDURE GramKeyString(self: SynParse.GivenKeyword; p: SynParse.T; 
-                        READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
+PROCEDURE GramKeyString(<*UNUSED*>self: SynParse.GivenKeyword; 
+                        <*UNUSED*>p: SynParse.T; 
+                        READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN NEW(SynParse.QuotedString, 
                location:=SynLocation.NewLineLocation(info),
@@ -473,26 +494,27 @@ PROCEDURE GramKeyString(self: SynParse.GivenKeyword; p: SynParse.T;
   END GramKeyString;
 
 
-PROCEDURE GramKeyString2(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-                      READONLY info: SynLocation.Info): SynParse.Tree 
-    RAISES {SynParse.Fail} =
+PROCEDURE GramKeyString2(<*UNUSED*>self: SynParse.Action; p: SynParse.T;
+                         <*UNUSED*>base: INTEGER;
+                         READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN      
       GramKeyString(NIL, p, info);
   END GramKeyString2 ;
 
 
-PROCEDURE GramKeyEof(self: SynParse.GivenKeyword; p: SynParse.T; 
-                     READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
+PROCEDURE GramKeyEof(<*UNUSED*>self: SynParse.GivenKeyword; 
+                     <*UNUSED*>p: SynParse.T; 
+                     READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN NEW(SynParse.Eof, 
                location:=SynLocation.NewLineLocation(info));
   END GramKeyEof;
   
 
-PROCEDURE GramKeyEof2(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-                      READONLY info: SynLocation.Info): SynParse.Tree 
-    RAISES {SynParse.Fail} =
+PROCEDURE GramKeyEof2(<*UNUSED*>self: SynParse.Action; p: SynParse.T; 
+                      <*UNUSED*>base: INTEGER;
+                      READONLY info: SynLocation.Info): SynParse.Tree =
   BEGIN
     RETURN      
       GramKeyEof(NIL, p, info);
@@ -504,7 +526,7 @@ PROCEDURE GramKeyEof2(self: SynParse.Action; p: SynParse.T; base: INTEGER;
 
 
 PROCEDURE GramActionString(self: SynParse.Action;
-                           p: SynParse.T; base: INTEGER;
+                           p: SynParse.T; <*UNUSED*>base: INTEGER;
                            READONLY info: SynLocation.Info)
                            :SynParse.Tree=
   BEGIN
@@ -513,16 +535,16 @@ PROCEDURE GramActionString(self: SynParse.Action;
   END GramActionString;
 
 PROCEDURE GramActionProc(self: SynParse.Action;
-                         p: SynParse.T; base: INTEGER;
-                         READONLY info: SynLocation.Info)
-                         :SynParse.Tree RAISES {SynParse.Fail}=
+                         <*UNUSED*>p: SynParse.T; <*UNUSED*>base: INTEGER;
+                         <*UNUSED*>READONLY info: SynLocation.Info)
+                         :SynParse.Tree =
   BEGIN
     RETURN
       NARROW(self,ProcAction).proc;
   END GramActionProc;    
   
 PROCEDURE GramActionInteger(self: SynParse.Action;
-                           p: SynParse.T; base: INTEGER;
+                           p: SynParse.T; <*UNUSED*>base: INTEGER;
                            READONLY info: SynLocation.Info)
                            :SynParse.Tree=
   BEGIN
@@ -535,7 +557,8 @@ PROCEDURE GramActionInteger(self: SynParse.Action;
   
   
   
-PROCEDURE GramList(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+PROCEDURE GramList(<*UNUSED*>self: SynParse.Action; p: SynParse.T; 
+                   base: INTEGER;
                    READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
   BEGIN
     RETURN 
@@ -545,7 +568,8 @@ PROCEDURE GramList(self: SynParse.Action; p: SynParse.T; base: INTEGER;
           rest:=GGramList(p, base+2));
   END GramList;
   
-PROCEDURE Storage(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+PROCEDURE Storage(<*UNUSED*>self: SynParse.Action; 
+                  p: SynParse.T; base: INTEGER;
                   READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
   BEGIN
     RETURN NEW(SynParse.Storage, 
@@ -554,7 +578,8 @@ PROCEDURE Storage(self: SynParse.Action; p: SynParse.T; base: INTEGER;
                item:=GGrammar(p, base+1));
   END Storage;
   
-PROCEDURE GramExpSequence(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+PROCEDURE GramExpSequence(<*UNUSED*>self: SynParse.Action; 
+                          p: SynParse.T; base: INTEGER;
                           READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
   BEGIN
     RETURN NEW(SynParse.Sequence, 
@@ -562,7 +587,8 @@ PROCEDURE GramExpSequence(self: SynParse.Action; p: SynParse.T; base: INTEGER;
                items:=GGramList(p, base+1));
   END GramExpSequence;
   
-PROCEDURE GramExpChoice(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+PROCEDURE GramExpChoice(<*UNUSED*>self: SynParse.Action; 
+                        p: SynParse.T; base: INTEGER;
                         READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
   BEGIN
     RETURN NEW(SynParse.Choice, 
@@ -570,25 +596,32 @@ PROCEDURE GramExpChoice(self: SynParse.Action; p: SynParse.T; base: INTEGER;
                choice:=GGramList(p, base+1));
   END GramExpChoice;
   
-PROCEDURE GramExpParens(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-                        READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
+PROCEDURE GramExpParens(<*UNUSED*>self: SynParse.Action; 
+                        p: SynParse.T; base: INTEGER;
+                        <*UNUSED*>READONLY info: SynLocation.Info): 
+  SynParse.Tree =
   BEGIN
     RETURN p.stack[base+6];
   END GramExpParens;
   
-PROCEDURE GramExpBase(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-                      READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
+PROCEDURE GramExpBase(<*UNUSED*>self: SynParse.Action; 
+                      p: SynParse.T; base: INTEGER;
+                      <*UNUSED*>READONLY info: SynLocation.Info): 
+  SynParse.Tree =
   BEGIN
     RETURN p.stack[base+1];
   END GramExpBase;
   
-PROCEDURE GramExpIter(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-                      READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
+PROCEDURE GramExpIter(<*UNUSED*>self: SynParse.Action; 
+                      p: SynParse.T; base: INTEGER;
+                      <*UNUSED*>READONLY info: SynLocation.Info): 
+  SynParse.Tree =
   BEGIN
     RETURN p.stack[base+5];
   END GramExpIter;
   
-PROCEDURE GramExpIterNoPos(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+PROCEDURE GramExpIterNoPos(<*UNUSED*>self: SynParse.Action; 
+                           p: SynParse.T; base: INTEGER;
                            READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
   BEGIN
     RETURN NEW(SynParse.Iter, location:=SynLocation.NewLineLocation(info),
@@ -598,7 +631,8 @@ PROCEDURE GramExpIterNoPos(self: SynParse.Action; p: SynParse.T; base: INTEGER;
                accumPosition:=0);
   END GramExpIterNoPos;
   
-PROCEDURE GramExpIterPos(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+PROCEDURE GramExpIterPos(<*UNUSED*>self: SynParse.Action; 
+                         p: SynParse.T; base: INTEGER;
                          READONLY info: SynLocation.Info): SynParse.Tree RAISES {SynParse.Fail} =
   BEGIN
     RETURN NEW(SynParse.Iter, location:=SynLocation.NewLineLocation(info),
@@ -610,7 +644,8 @@ PROCEDURE GramExpIterPos(self: SynParse.Action; p: SynParse.T; base: INTEGER;
   
 
   (* added following procedure for generating constant strings *)
-PROCEDURE ActionString(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+PROCEDURE ActionString(<*UNUSED*>self: SynParse.Action; 
+                       p: SynParse.T; base: INTEGER;
                        READONLY info: SynLocation.Info): 
                        SynParse.Tree RAISES {SynParse.Fail} =
   BEGIN
@@ -624,7 +659,8 @@ PROCEDURE ActionString(self: SynParse.Action; p: SynParse.T; base: INTEGER;
 
 
   (* added following procedure for generating constant integers *)
-PROCEDURE ActionInteger(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+PROCEDURE ActionInteger(<*UNUSED*>self: SynParse.Action; 
+                        p: SynParse.T; base: INTEGER;
                        READONLY info: SynLocation.Info): 
                        SynParse.Tree RAISES {SynParse.Fail} =
   BEGIN
@@ -667,7 +703,8 @@ PROCEDURE LookupAction(p: SynParse.T; base: INTEGER;
   END LookupAction;
 
 
-PROCEDURE AntiquotedAction(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+PROCEDURE AntiquotedAction(<*UNUSED*>self: SynParse.Action; 
+                           p: SynParse.T; base: INTEGER;
                            READONLY info: SynLocation.Info): 
                            SynParse.Tree RAISES {SynParse.Fail} =
   BEGIN
@@ -683,7 +720,7 @@ PROCEDURE AntiquotedAction(self: SynParse.Action; p: SynParse.T; base: INTEGER;
   END AntiquotedAction;
 
   (* following procedure for generating actions *)
-PROCEDURE Action(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+PROCEDURE Action(<*UNUSED*>self: SynParse.Action; p: SynParse.T; base: INTEGER;
                  READONLY info: SynLocation.Info): 
                  SynParse.Tree RAISES {SynParse.Fail} =
 
@@ -695,19 +732,22 @@ PROCEDURE Action(self: SynParse.Action; p: SynParse.T; base: INTEGER;
           Build := LookupAction(p, base, info));
   END Action;
 
-  PROCEDURE Single(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-	READONLY info: SynLocation.Info): SynParse.Tree =
+  PROCEDURE Single(<*UNUSED*>self: SynParse.Action; 
+                   p: SynParse.T; base: INTEGER;
+                   <*UNUSED*>READONLY info: SynLocation.Info): SynParse.Tree =
     BEGIN
       RETURN p.stack[base+1];
     END Single;
 
-  PROCEDURE GramExp(self: SynParse.Action; p: SynParse.T; base: INTEGER;
-	READONLY info: SynLocation.Info): SynParse.Tree =
+  PROCEDURE GramExp(<*UNUSED*>self: SynParse.Action; 
+                    p: SynParse.T; base: INTEGER;
+                    <*UNUSED*>READONLY info: SynLocation.Info): SynParse.Tree =
     BEGIN
       RETURN p.stack[base+2];
     END GramExp;
 
-PROCEDURE ConsParam(self: SynParse.Action; p: SynParse.T; base: INTEGER;
+PROCEDURE ConsParam(<*UNUSED*>self: SynParse.Action; 
+                    p: SynParse.T; base: INTEGER;
                READONLY info: SynLocation.Info): SynParse.Tree=
   BEGIN
     RETURN NEW(Params,  

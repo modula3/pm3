@@ -144,7 +144,7 @@ PROCEDURE FontList (orc: FontOracle; pat: TEXT; maxResults: INTEGER):
     TRY
       TrestleOnX.Enter(orc.st.trsl);
       TRY
-        s := M3toC.TtoS(pat);
+        s := M3toC.SharedTtoS(pat);
         VAR
           xcount: Ctypes.int;
           fonts := X.XListFonts(orc.st.trsl.dpy, s, MIN(maxResults, 32767),
@@ -153,6 +153,7 @@ PROCEDURE FontList (orc: FontOracle; pat: TEXT; maxResults: INTEGER):
           fp                       := fonts;
           res  : REF ARRAY OF TEXT;
         BEGIN
+          M3toC.FreeSharedS(pat, s);
           IF fonts = NIL THEN RETURN NIL END;
           res := NEW(REF ARRAY OF TEXT, count);
           FOR i := 0 TO count - 1 DO
@@ -204,9 +205,10 @@ PROCEDURE FontLookup (orc: FontOracle; name: TEXT): ScrnFont.T
     TRY
       uname := FindUnscaled(orc.st.trsl.dpy, name); (* Prefer unscaled font *)
       IF uname = NIL THEN uname := name END;
-      s := M3toC.TtoS(uname);
+      s := M3toC.SharedTtoS(uname);
       VAR xfs := X.XLoadQueryFont(orc.st.trsl.dpy, s);
       BEGIN
+        M3toC.FreeSharedS(uname, s);
         IF xfs = NIL THEN RAISE ScrnFont.Failure END;
         RETURN FontFromXStruct(orc, xfs)
       END
@@ -219,7 +221,7 @@ PROCEDURE FontLookup (orc: FontOracle; name: TEXT): ScrnFont.T
 PROCEDURE FindUnscaled(dpy: X.DisplayStar; pat: TEXT): TEXT RAISES {X.Error} =
   (* Return the first matching unscaled font, if any.  Otherwise return NIL. *)
   VAR
-    s := M3toC.TtoS(pat);
+    s := M3toC.SharedTtoS(pat);
     xcount: Ctypes.int;
     fonts := X.XListFonts(dpy, s, 32767, ADR(xcount));
     fp := fonts;
@@ -227,6 +229,7 @@ PROCEDURE FindUnscaled(dpy: X.DisplayStar; pat: TEXT): TEXT RAISES {X.Error} =
     xmatch: Ctypes.char_star := NIL;
     match: TEXT := NIL;
   BEGIN
+    M3toC.FreeSharedS(pat, s);
     IF count = 0 THEN
       IF fonts # NIL THEN X.XFreeFontNames(fonts) END;
       RETURN NIL;
@@ -306,7 +309,7 @@ PROCEDURE FontBuiltIn (orc: FontOracle; id: Font.Predefined): ScrnFont.T =
           FOR i := FIRST(BuiltInNames) TO LAST(BuiltInNames) DO
             VAR s: Ctypes.char_star;
             BEGIN
-              s := M3toC.TtoS(BuiltInNames[i]);
+              s := M3toC.FlatTtoS(BuiltInNames[i]);
               xfont := X.XLoadQueryFont(dpy, s);
             END;
             IF xfont # NIL THEN RETURN FontFromXStruct(orc, xfont) END

@@ -8,11 +8,11 @@
 
 MODULE Mutex;
 
-IMPORT ObjectRef, Tipe;
+IMPORT ObjectTransient, Tipe;
 
 PROCEDURE Initialize () =
   BEGIN
-    T := Tipe.DefineOpaque ("MUTEX", ObjectRef.T);
+    T := Tipe.DefineOpaque ("MUTEX", ObjectTransient.T);
   END Initialize;
 
 BEGIN

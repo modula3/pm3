@@ -18,11 +18,11 @@ PROCEDURE Check (ce: CallExpr.T;  VAR cs: Expr.CheckState) =
     DoCheck ("CEILING", ce, cs);
   END Check;
 
-PROCEDURE DoCheck (name: TEXT;  ce: CallExpr.T;  VAR cs: Expr.CheckState) =
+PROCEDURE DoCheck (name: TEXT;  ce: CallExpr.T;
+                   <*UNUSED*> VAR cs: Expr.CheckState) =
   VAR t: Type.T;
   BEGIN
     t := Type.Base (Expr.TypeOf (ce.args[0]));
-    INC (cs.fp_ops);
     IF (t # Reel.T) AND (t # LReel.T) AND (t # EReel.T) THEN
       Error.Txt (name, "argument not REAL, LONGREAL or EXTENDED");
     END;
@@ -33,7 +33,7 @@ PROCEDURE Compile (ce: CallExpr.T) =
   VAR e := ce.args[0];
   BEGIN
     Expr.Compile (e);
-    CG.Ceiling (Type.CGType (Expr.TypeOf (e)));
+    CG.Cvt_int (Type.CGType (Expr.TypeOf (e)), CG.Cvt.Ceiling);
   END Compile;
 
 PROCEDURE Fold (ce: CallExpr.T): Expr.T =
@@ -59,6 +59,7 @@ PROCEDURE Initialize () =
                                  CallExpr.NotBoolean,
                                  CallExpr.NotBoolean,
                                  Fold,
+                                 CallExpr.NoBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

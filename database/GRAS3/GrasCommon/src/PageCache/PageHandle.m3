@@ -7,8 +7,11 @@ MODULE PageHandle EXPORTS PageHandle, InternalPageHandle;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:28  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:44  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:28  hosking
+    Import of GRAS3 1.1
 
     Revision 1.5  1996/03/08 10:29:49  rbnix
     	PageHandles are now tagged by an internal id. Therefore the
@@ -40,15 +43,17 @@ MODULE PageHandle EXPORTS PageHandle, InternalPageHandle;
 IMPORT BasePageHandle AS Super;
 IMPORT Fmt AS StdFmt;
 IMPORT
+  Page,
   PageData,
   InternalBasePageHandle,
   BasePageMedia,
+  PageMedia,
   InternalPageCache;
 
 REVEAL
   T                     = Internal BRANDED OBJECT
       pageNo		:CARDINAL;
-      media             :BasePageMedia.T;
+      media             :PageMedia.T;
 
     OVERRIDES
       (* PageHandle *)
@@ -59,10 +64,16 @@ REVEAL
       setPageNo		:= SetPageNo;
       getPageNo		:= GetPageNo;
 
+      loadData          := LoadData;
+      dropData		:= DropData;
+
+      accessPage	:= AccessPage;
+
       (* BasePageHandle *)
       putData		:= PutData;
       getData		:= GetData;
       getAll		:= GetAll;
+      putAll		:= PutAll;
       copyData		:= CopyData;
       fmt		:= Fmt;
     END;
@@ -100,11 +111,24 @@ PROCEDURE GetPageNo	(        self		:T) :CARDINAL =
   END GetPageNo;
 
 
+PROCEDURE LoadData      (         self          :T) =
+  BEGIN
+    self.media.loadData (self, self.getPage().data);
+  END LoadData;
+
+
+PROCEDURE DropData      (         self          :T) =
+  BEGIN
+    self.media.dropData (self, self.getPage().data);
+    self.unmarkChanges ();
+  END DropData;
+
+
 PROCEDURE PutData	(         self		:T;
 			 READONLY data		:PageData.Part;
 			          pos		:= FIRST (PageData.Index)) =
   BEGIN
-    IF self.getPage () = NIL THEN
+    IF NOT self.isLoad () THEN
       InternalPageCache.LoadPage (self);
     ELSE
       InternalPageCache.RecognizeAccess (self);
@@ -117,7 +141,7 @@ PROCEDURE GetData	(         self		:T;
 			 VAR      data		:PageData.Part;
 			          pos		:= FIRST (PageData.Index)) =
   BEGIN
-    IF self.getPage () = NIL THEN
+    IF NOT self.isLoad () THEN
       InternalPageCache.LoadPage (self);
     ELSE
       InternalPageCache.RecognizeAccess (self);
@@ -126,15 +150,28 @@ PROCEDURE GetData	(         self		:T;
   END GetData;
 
 
-PROCEDURE GetAll	(         self		:T) :PageData.T =
+PROCEDURE GetAll	(         self		:T;
+                                  swizzler      :PageData.Swizzler := NIL) =
   BEGIN
-    IF self.getPage () = NIL THEN
+    IF NOT self.isLoad () THEN
       InternalPageCache.LoadPage (self);
     ELSE
       InternalPageCache.RecognizeAccess (self);
     END;
-    RETURN Super.T.getAll (self);
+    Super.T.getAll (self, swizzler);
   END GetAll;
+
+
+PROCEDURE PutAll	(         self		:T;
+                                  unswizzler    :PageData.Unswizzler := NIL) =
+  BEGIN
+    IF NOT self.isLoad () THEN
+      InternalPageCache.LoadPage (self);
+    ELSE
+      InternalPageCache.RecognizeAccess (self);
+    END;
+    Super.T.putAll (self, unswizzler);
+  END PutAll;
 
 
 PROCEDURE CopyData	(         self		:T;
@@ -142,14 +179,26 @@ PROCEDURE CopyData	(         self		:T;
                                   destination	:PageData.Index;
                                   length	:PageData.Index) =
   BEGIN
-    IF self.getPage () = NIL THEN
+    IF NOT self.isLoad () THEN
       InternalPageCache.LoadPage (self);
     ELSE
       InternalPageCache.RecognizeAccess (self);
     END;
     Super.T.copyData (self, source, destination, length);
   END CopyData;
-  
+
+
+PROCEDURE AccessPage	(	  self		:T)
+			:Page.T =
+  BEGIN
+    IF NOT self.isLoad() THEN
+      InternalPageCache.LoadPage (self);
+    ELSE
+      InternalPageCache.RecognizeAccess (self);
+    END;
+    RETURN self.getPage ();
+  END AccessPage;
+
 
 PROCEDURE Fmt		(         self		:T) :TEXT =
   BEGIN

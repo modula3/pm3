@@ -7,8 +7,11 @@ MODULE VirtualLocalFile;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:37  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:48  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:37  hosking
+    Import of GRAS3 1.1
 
     Revision 1.6  1998/03/17 14:14:39  kluck
     Necessary adaptions to use local graphs. (MK)
@@ -53,11 +56,14 @@ IMPORT
 REVEAL
   T			= Public BRANDED OBJECT
       media		:SimpleMedia.T;
+      <*TRANSIENT*>
       fileName		:Pathname.T;
+      <*TRANSIENT*>
       baseName          :Pathname.T;
 
     OVERRIDES
       open		:= Open;
+      flush		:= Flush;
       close		:= Close;
       createPage	:= CreatePage;
       getBaseName       := GetBaseName;
@@ -127,6 +133,14 @@ PROCEDURE Close		(         self		:T)
     self.media.getFile ().close ();
     self.getResource ().unregisterLocalFile (self.fileName);
   END Close;
+
+
+PROCEDURE Flush		(         self		:T) =
+  BEGIN
+    PageCache.BeginAccess ();
+    PageCache.FlushPages (self.media);
+    PageCache.EndAccess ();
+  END Flush; 
 
 
 PROCEDURE CreatePage	(         self		:T;

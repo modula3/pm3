@@ -9,8 +9,8 @@
 
 MODULE IntfStubCode;
 
-IMPORT Atom, CodeForType, Formatter, AtomRefTbl, StubCode, 
-       StubUtils, Type, Wr;
+IMPORT Atom, CodeForType, Formatter, AtomRefTransientTbl AS AtomRefTbl,
+       StubCode, StubUtils, Type, Wr;
 
 <* FATAL Wr.Failure *>
 
@@ -23,7 +23,7 @@ PROCEDURE Header(t: Type.Object;
                  imports: AtomRefTbl.T) = 
   BEGIN
     Formatter.PutText(intWr, "INTERFACE " & StubUtils.FileName(typeName) & 
-      ";\n\n");
+      ";" & Wr.EOL & Wr.EOL);
     CodeForType.ProduceImports(intWr, objName, imports);
     CodeForType.ImportSuperStubs(intWr, methods, lastNewMethod, typeName);
     Formatter.PutText(intWr, "TYPE "); 
@@ -52,14 +52,14 @@ PROCEDURE Header(t: Type.Object;
     FOR i := 0 TO lastNewMethod DO
       CodeForType.ProcHeader(intWr, t,
              "Surrogate_" & Atom.ToText(methods[i].name), methods[i].sig);
-      Formatter.PutText(intWr, ";\n\n");
+      Formatter.PutText(intWr, ";" & Wr.EOL & Wr.EOL);
     END;
      (* Output procedure headers for owner stubs *)
     FOR i := 0 TO lastNewMethod DO
       CodeForType.ProcHeader(intWr, t,
              "Stub_" & Atom.ToText(methods[i].name), 
              StubCode.SigForStub(methods[i].sig));
-      Formatter.PutText(intWr, ";\n\n");
+      Formatter.PutText(intWr, ";" & Wr.EOL & Wr.EOL);
     END;
   END Header;
   

@@ -1,5 +1,6 @@
 /* Definitions of target machine for GNU compiler, for DEC Alpha on OSF/1.
-   Copyright (C) 1992, 93, 94, 95, 96, 97, 1998 Free Software Foundation, Inc.
+   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2001
+   Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@vlsi1.ultra.nyu.edu)
 
 This file is part of GNU CC.
@@ -73,19 +74,22 @@ Boston, MA 02111-1307, USA.  */
   ASM_OUTPUT_SOURCE_FILENAME (FILE, main_input_filename);	\
 }
 
-/* No point in running CPP on our assembler output.  */
-#if ((TARGET_DEFAULT | TARGET_CPU_DEFAULT) & MASK_GAS) != 0
-/* Don't pass -g to GNU as, because some versions don't accept this option.  */
-#define ASM_SPEC "%{malpha-as:-g} -nocpp %{pg}"
-#else
+/* Tru64 UNIX V5.1 requires a special as flag.  Empty by default.  */
+
+#define ASM_OLDAS_SPEC ""
+
 /* In OSF/1 v3.2c, the assembler by default does not output file names which
    causes mips-tfile to fail.  Passing -g to the assembler fixes this problem.
    ??? Strictly speaking, we need -g only if the user specifies -g.  Passing
    it always means that we get slightly larger than necessary object files
    if the user does not specify -g.  If we don't pass -g, then mips-tfile
    will need to be fixed to work in this case.  Pass -O0 since some
-   optimization are broken and don't help us anyway.  */
-#define ASM_SPEC "%{!mgas:-g} -nocpp %{pg} -O0"
+   optimization are broken and don't help us anyway.  Pass -nocpp because
+   there's no point in running CPP on our assembler output.  */
+#if ((TARGET_DEFAULT | TARGET_CPU_DEFAULT) & MASK_GAS) != 0
+#define ASM_SPEC "%{malpha-as:-g %(asm_oldas) -nocpp %{pg} -O0}"
+#else
+#define ASM_SPEC "%{!mgas:-g %(asm_oldas) -nocpp %{pg} -O0}"
 #endif
 
 /* Specify to run a post-processor, mips-tfile after the assembler
@@ -114,6 +118,10 @@ Boston, MA 02111-1307, USA.  */
 
 #endif
 
+#undef SUBTARGET_EXTRA_SPECS
+#define SUBTARGET_EXTRA_SPECS		\
+  { "asm_oldas", ASM_OLDAS_SPEC }
+
 /* Indicate that we have a stamp.h to use.  */
 #ifndef CROSS_COMPILE
 #define HAVE_STAMP_H 1
@@ -122,10 +130,13 @@ Boston, MA 02111-1307, USA.  */
 /* Attempt to turn on access permissions for the stack.  */
 
 #define TRANSFER_FROM_TRAMPOLINE					\
+extern void __enable_execute_stack PARAMS ((void *));			\
+									\
 void									\
 __enable_execute_stack (addr)						\
      void *addr;							\
 {									\
+  extern int mprotect PARAMS ((const void *, size_t, int));		\
   long size = getpagesize ();						\
   long mask = ~(size-1);						\
   char *page = (char *) (((long) addr) & mask);				\

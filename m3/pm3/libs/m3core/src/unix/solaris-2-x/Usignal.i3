@@ -2,7 +2,8 @@
 (* All rights reserved.                                       *)
 (* See the file COPYRIGHT for a full description.             *)
 
-(* Last modified on Mon Oct 31 14:56:36 PST 1994 by kalsow        *)
+(* Last modified on Wed Jul 30 13:55:56 EST 1997 by hosking       *)
+(*      modified on Mon Oct 31 14:56:36 PST 1994 by kalsow        *)
 (*      modified on Thu Nov 12 11:38:20 PST 1992 by muller        *)
 
 INTERFACE Usignal;
@@ -120,36 +121,32 @@ CONST
   (* this is only valid for SIGWAITING *)
   SA_WAITSIG    = 16_10000;   (* send SIGWAITING if all lwps block *)
 
+
 (*** kill(2) - send signal to a process ***)
 
 <*EXTERNAL*>
 PROCEDURE kill (pid, sig: int): int;
-
 
 (*** killpg(2) - send signal to a process or process group ***)
 
 <*EXTERNAL*>
 PROCEDURE killpg (pgrp, sig: int): int;
 
-
 (*** sigpending(2) - examine pending signals ***)
 
 <*EXTERNAL*>
 PROCEDURE sigpending (VAR set: sigset_t): int;
-
 
 (*** sigaction(2) - detailed signal management ***)
 
 <*EXTERNAL*>
 PROCEDURE sigaction (sig: int; VAR act, oact: struct_sigaction): int;
 
-
 (*** sigprocmask(2) - change and/or examine calling process's signal mask ***)
 
 <*EXTERNAL*>
 PROCEDURE sigprocmask (how: int; READONLY set: sigset_t;
                        oset: UNTRACED REF sigset_t := NIL): int;
-
 
 (*** sigsetops(3C) (sigemptyset,  sigfillset,  sigaddset,  sigdelset,
      sigismember) - manipulate sets of signals ***)

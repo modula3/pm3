@@ -8,7 +8,7 @@
 
 INTERFACE Scope;
 
-IMPORT M3, M3ID, M3Buf, Value, CG;
+IMPORT M3, M3ID, M3Buf, Value;
 
 TYPE
   T = M3.Scope;
@@ -41,7 +41,7 @@ PROCEDURE InitValues (t: T);
 PROCEDURE Exit       (t: T);
 
 PROCEDURE ModuleName (v: Value.T): M3ID.T;
-PROCEDURE ToUnit     (v: Value.T): CG.Var;
+PROCEDURE ToUnit     (v: Value.T): M3.Value (* == Module.T *);
 
 TYPE
   IDStack = RECORD

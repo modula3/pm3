@@ -2,8 +2,7 @@
 (* Distributed only by permission.                          *)
 (* See the file COPYRIGHT for a full description.           *)
 (*                                                          *)
-(* Last modified on Thu Mar 10 16:10:31 PST 1994
- by kalsow  *)
+(* Last modified on Thu Mar 10 16:10:31 PST 1994 by kalsow  *)
 (*      modified on Tue Apr 13 11:19:38 PDT 1993 by mcjones *)
 
 MODULE Atom;
@@ -11,8 +10,8 @@ MODULE Atom;
 IMPORT Text, AtomAtomTbl;
 
 REVEAL
-  T = BRANDED Brand REF RECORD
-        text : TEXT;
+  T = <*TRANSIENT*> BRANDED Brand REF RECORD
+        <*TRANSIENT*> text : TEXT;
         hash : INTEGER;
       END;
 

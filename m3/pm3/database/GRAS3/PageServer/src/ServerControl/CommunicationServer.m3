@@ -7,8 +7,11 @@ MODULE CommunicationServer;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:38  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:49  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:38  hosking
+    Import of GRAS3 1.1
 
     Revision 1.14  1997/06/13 16:14:44  roland
     Slightly changed log message.
@@ -82,12 +85,12 @@ MODULE CommunicationServer;
 *)
 (***************************************************************************)
 IMPORT
-  Pathname, Fmt, TextSeq,
+  Pathname, Fmt, TextTransientSeq AS TextSeq,
   Variant, Journal,
   Page,
   PageFile,
   PageCache,
-  Access, PageLock, Transaction, 
+  Access, PageLock, Txn, 
   RemoteFile, CallbackPort, ClientInfo, ClientInfoSeq,
   CommunicationSeq, CommunicationSeqSupport,
   ServedClientTable, ServedClient,
@@ -480,24 +483,28 @@ PROCEDURE GetData		(         self		:T;
 
 
 PROCEDURE PutData		(         self		:T;
-                                          end		:Transaction.End;
+                                          end		:Txn.End;
 	                                  entries       :CommunicationSeq.T)
+				:CARDINAL
 				RAISES {Access.Invalid} =
+  VAR transactionNumber		:CARDINAL;
   BEGIN
     PageCache.BeginAccess ();
     IF Variant.TestServerCommunication THEN
       Journal.Add ("CommunicationServer.PutData (" &
                    "client = " & self.client.getID () &
-                   ", end = " & Transaction.FmtEnd (end) &
+                   ", end = " & Txn.FmtEnd (end) &
                    ", entries = " &
                    CommunicationSeqSupport.Fmt (entries, GetFileName) & ")");
     END;
 
     TRY
-      self.resource.putData (self.client, end, entries);
+      transactionNumber := self.resource.putData (self.client, end, entries);
     FINALLY
       PageCache.EndAccess ();
     END;
+
+    RETURN transactionNumber;
   END PutData;
 
 

@@ -11,9 +11,9 @@ INTERFACE NetObjRep;
 IMPORT NetObj, WireRep;
 
 REVEAL
-  NetObj.T = BRANDED "NetObj.T" OBJECT
+  NetObj.T = <*TRANSIENT*> ROOT BRANDED "NetObj.T" OBJECT
     w: WireRep.T := WireRep.NullT;
-    r: REFANY;
+    r: <*TRANSIENT*> REFANY;
   END;
 
 END NetObjRep.

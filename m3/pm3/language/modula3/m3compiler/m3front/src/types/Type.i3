@@ -38,6 +38,7 @@ TYPE
     isTraced  : M3.Flag;
     isEmpty   : M3.Flag;
     isSolid   : M3.Flag;
+    isTransient : M3.Flag;
   END;
 
 (*** phase 0 ***)
@@ -142,7 +143,7 @@ PROCEDURE Zero (t: T);
 PROCEDURE InitCost (t: T;  ifZeroed: BOOLEAN): INTEGER;
 (* the cost of initializing a 't'.  (0 IFF no init required) *)
 
-PROCEDURE GenMap (t: T;  offset, size: INTEGER;  refs_only: BOOLEAN);
+PROCEDURE GenMap (t: T; offset, size: INTEGER; refs_only, transient: BOOLEAN);
 (* emits the type map for type 't' occupying 'size' bits at 'offset'. *)
 
 PROCEDURE GenDesc (t: T);
@@ -150,6 +151,10 @@ PROCEDURE GenDesc (t: T);
 
 PROCEDURE GenTag (t: T;  tag: TEXT;  offset: INTEGER);
 (* generate a comment with 'tag' and 't's name *)
+
+PROCEDURE LinkName (t: T;  tag: TEXT): TEXT;
+(* Return a name for "t" that includes "tag" and will be unique
+   to this compilation unit. *)
 
 (*** phase 5 ***)
 

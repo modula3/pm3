@@ -1,22 +1,22 @@
-(* Copyright (C) 1989, Digital Equipment Corporation        *)
-(* All rights reserved.                                     *)
-(* See the file COPYRIGHT for a full description.           *)
-(*                                                          *)
-(* Last modified on Fri Apr  7 09:06:48 PDT 1995 by kalsow  *)
-(*      modified on Mon Mar 21 17:40:31 PST 1994 by wobber  *)
-(*      modified on Sat Jun 26 17:07:03 PDT 1993 by gnelson *)
-(*      modified on Fri May 14 16:15:26 PDT 1993 by mjordan *)
-(*      modified on Wed Apr 21 16:35:05 PDT 1993 by mcjones *)
-(*      modified On Mon Apr  5 14:51:30 PDT 1993 by muller  *)
-(*      modified on Mon Feb 22 10:08:49 PST 1993 by jdd     *)
+(*| Copyright (C) 1989, Digital Equipment Corporation        *)
+(*| All rights reserved.                                     *)
+(*| See the file COPYRIGHT for a full description.           *)
+(*|                                                          *)
+(*| Last modified on Fri Apr  7 09:06:48 PDT 1995 by kalsow  *)
+(*|      modified on Mon Mar 21 17:40:31 PST 1994 by wobber  *)
+(*|      modified on Sat Jun 26 17:07:03 PDT 1993 by gnelson     *)
+(*|      modified on Fri May 14 16:15:26 PDT 1993 by mjordan *)
+(*|      modified on Wed Apr 21 16:35:05 PDT 1993 by mcjones *)
+(*|      modified On Mon Apr  5 14:51:30 PDT 1993 by muller  *)
+(*|      modified on Mon Feb 22 10:08:49 PST 1993 by jdd     *)
 
 UNSAFE MODULE ThreadPosix EXPORTS Thread, ThreadF, Scheduler, SchedulerPosix,
-    RTThreadInit, RTHooks;
+    RTThreadInit;
 
-IMPORT Cerrno, Cstring, FloatMode,
-       RT0u, RTMisc, RTParams, RTPerfTool, RTProcedureSRC, RTProcess, 
+IMPORT Cerrno, Cstring, FloatMode, MutexRep,
+       RT0u, RTError, RTMisc, RTParams, RTPerfTool, RTProcedureSRC, RTProcess, 
        RTThread, RTIO, ThreadEvent, Time, TimePosix,
-       Unix, Usignal, Utime, Word;
+       Unix, Usignal, Utime, Word, RTTxn, RTHeapDB;
 
 REVEAL
   (* Remember, the report (p 43-44) says that MUTEX is predeclared and <: ROOT;
@@ -26,9 +26,12 @@ REVEAL
      waiting for the mutex to be released so that they can acquire it (the list
      is continued in the nextWaitingForMutex field of the threads) *)
 
-  MUTEX = BRANDED "Mutex Posix-1.0" OBJECT
+  MUTEX = MutexRep.Public BRANDED "Mutex Posix-1.0" OBJECT
     holder       : T := NIL;
     waitingForMe : T := NIL;
+  OVERRIDES
+    acquire := LockMutex;
+    release := UnlockMutex;
   END; 
 
 
@@ -36,7 +39,7 @@ REVEAL
      which is continued in the nextWaitingForCondition field of the waiting
      threads. *)
 
-  Condition = BRANDED "Thread.Condition Posix-1.0" OBJECT
+  Condition = <*TRANSIENT*> ROOT BRANDED "Thread.Condition Posix-1.0" OBJECT
                 waitingForMe: T := NIL; END;
 
 TYPE SelectRec = RECORD
@@ -66,13 +69,13 @@ TYPE SelectRec = RECORD
    Eric Muller, 3/16/94
 *)
 REVEAL
-  T = BRANDED "Thread.T Posix-1.6" OBJECT
+  T = <*TRANSIENT*> ROOT BRANDED "Thread.T Posix-1.6" OBJECT
         state: State;
 	id: Id;
 
         (* our work and its result *)
         closure : Closure;
-        result : REFANY := NIL;
+        <*TRANSIENT*> result : REFANY := NIL;
 
         (* the threads are organized in a circular list *)
         previous, next: T;
@@ -99,6 +102,9 @@ REVEAL
         (* true if somebody alerted us and we did not TestAlert *)
         alertPending : BOOLEAN := FALSE;
 
+        (* true if somebody aborted us and we did not TestAbort *)
+        abortPending : BOOLEAN := FALSE;
+
         (* This condition is signaled then the thread terminates;
            other threads that want to join can just wait for it *)
         endCondition: Condition;
@@ -112,6 +118,9 @@ REVEAL
 
         (* state that is available to the floating point routines *)
         floatState : FloatMode.ThreadState;
+
+        (* transaction support *)
+        txn: RTTxn.T;
       END;
 
 TYPE
@@ -261,6 +270,9 @@ PROCEDURE Fork (cl: Closure): T =
       self.next.previous := t;
       self.next := t;
 
+      (* and link into transaction *)
+      t.txn := self.txn;
+
       InitContext (t.context, stack_size);
       CanRun (t);
 
@@ -388,21 +400,21 @@ PROCEDURE Self (): T =
   END Self;
 
 (*--------------------------------------------------------------- MUTEXes ---*)
-(* Note: RTHooks.{Unlock,Lock}Mutex are the routines called directly by
+(* Note: {Unlock,Lock}Mutex are the routines called directly by
    the compiler.  Acquire and Release are the routines exported through
    the Thread interface *)
          
 PROCEDURE Acquire (m: Mutex) =
   BEGIN
-    LockMutex (m);
+    m.acquire ();
   END Acquire;
 
 PROCEDURE Release (m: Mutex) =
   BEGIN
-    UnlockMutex (m);
+    m.release ();
   END Release;
 
-PROCEDURE (*RTHooks.*)LockMutex (m: Mutex) =
+PROCEDURE LockMutex (m: Mutex) =
   <*FATAL Alerted*>
   BEGIN
     LOOP
@@ -432,10 +444,10 @@ PROCEDURE ImpossibleAcquire (m: Mutex) =
     OutT (" is trying to reacquire mutex ");
     OutA (m, 0);
     OutT (" which it already holds.\n");
-    RTMisc.FatalError ("Thread.m3", 435, "impossible Thread.Acquire");
+    RTError.Msg ("ThreadPosix.m3", 447, "impossible Thread.Acquire");
   END ImpossibleAcquire;
 
-PROCEDURE (*RTHooks.*)UnlockMutex (m: Mutex) =
+PROCEDURE UnlockMutex (m: Mutex) =
   <*FATAL Alerted*>
   VAR waiters: BOOLEAN;
   BEGIN
@@ -483,33 +495,8 @@ PROCEDURE SleazyRelease (m: Mutex) =
       OutI (m.holder.id, 0);
       OutT (".\n");
     END;
-    RTMisc.FatalError ("Thread.m3", 381, "illegal Thread.Release");
+    RTError.Msg ("Thread.m3", 498, "illegal Thread.Release");
   END SleazyRelease;
-
-(*--------------------------------------------- exception handling support --*)
-
-PROCEDURE GetCurrentHandlers (): ADDRESS=
-  BEGIN
-    RETURN RTThread.handlerStack;
-  END GetCurrentHandlers;
-
-PROCEDURE SetCurrentHandlers (h: ADDRESS)=
-  BEGIN
-    RTThread.handlerStack := h;
-  END SetCurrentHandlers;
-
-PROCEDURE PushEFrame (frame: ADDRESS) =
-  TYPE Frame = UNTRACED REF RECORD next: ADDRESS END;
-  VAR f := LOOPHOLE (frame, Frame);
-  BEGIN
-    f.next := RTThread.handlerStack;
-    RTThread.handlerStack := f;
-  END PushEFrame;
-
-PROCEDURE PopEFrame (frame: ADDRESS) =
-  BEGIN
-    RTThread.handlerStack := frame;
-  END PopEFrame;
 
 (*--------------------------------------------- garbage collector support ---*)
 
@@ -568,7 +555,7 @@ CONST FDSetSize = BITSIZE(INTEGER);
 
 TYPE
   FDSet = SET OF [0 .. FDSetSize-1];
-  FDS = REF ARRAY OF FDSet;
+  FDS = <*TRANSIENT*> REF ARRAY OF FDSet;
 
 VAR
   gMaxActiveFDSet, gMaxFDSet: CARDINAL := 1;
@@ -814,6 +801,7 @@ VAR t, from: T;
     now          : UTime;
     earliest     : UTime;
     selectResult := 0;
+    do_abort     : BOOLEAN;
     do_alert     : BOOLEAN;
     did_delete   : BOOLEAN;
 
@@ -835,7 +823,7 @@ BEGIN
     LOOP
       CASE t.state OF 
         | State.waiting =>
-            IF t.alertable AND t.alertPending THEN
+            IF t.alertable AND t.alertPending OR t.abortPending THEN
               WITH c = t.waitingForCondition DO
                 IF c.waitingForMe = t THEN
                   c.waitingForMe := t.nextWaiting;
@@ -848,9 +836,12 @@ BEGIN
 
         | State.locking =>
             <*ASSERT NOT t.alertable*>
+            IF t.abortPending THEN
+              CanRun (t);
+              EXIT; END;
 
         | State.pausing  =>
-            IF t.alertable AND t.alertPending THEN
+            IF t.alertable AND t.alertPending OR t.abortPending THEN
               CanRun (t);
               EXIT;
 
@@ -866,7 +857,7 @@ BEGIN
               earliest := t.waitingForTime; END; 
   
         | State.blocking =>
-            IF t.alertable AND t.alertPending THEN
+            IF t.alertable AND t.alertPending OR t.abortPending THEN
               CanRun (t); 
               EXIT;
 
@@ -936,6 +927,7 @@ BEGIN
             (* remove this guy from the ring *)
             IF perfOn THEN PerfDeleted (t.id); END;
       	    IF hooks # NIL THEN hooks.die (t) END;
+            t.txn := NIL;
             VAR tmp := t.previous; BEGIN
               IF (t = from) THEN from := tmp END;
               t.next.previous := tmp;
@@ -964,10 +956,18 @@ BEGIN
       (* At least one thread wants to run; transfer to it *)
       Transfer (self.context, t.context, t);
       IF (dead_stacks # NIL) THEN FreeDeadStacks () END;
-      do_alert := self.alertable AND self.alertPending;
-      self.alertable := FALSE;
-      IF do_alert THEN self.alertPending := FALSE END;
+      do_abort := self.abortPending;
+      IF do_abort THEN
+        self.abortPending := FALSE;
+        self.alertable := FALSE;
+        self.alertPending := FALSE;
+      ELSE
+        do_alert := self.alertable AND self.alertPending;
+        self.alertable := FALSE;
+        IF do_alert THEN self.alertPending := FALSE END;
+      END;
       DEC (RT0u.inCritical);
+      IF do_abort THEN RAISE Aborted END;
       IF do_alert THEN RAISE Alerted END;
       RETURN;
 
@@ -1000,7 +1000,7 @@ BEGIN
     ELSE
       IF perfOn THEN PerfRunning (-1); END;
       DumpEverybody ();
-      RTMisc.FatalError (NIL, 0, "Deadlock !");
+      RTError.Msg (NIL, 0, "Deadlock !");
     END;
   END;
 END InternalYield;
@@ -1060,17 +1060,23 @@ VAR
      closure).
 *)
 
-PROCEDURE InitTopContext (VAR c: Context) =
+PROCEDURE InitTopContext (VAR c: Context;  stackbase: ADDRESS) =
+  CONST STACK_SLOP = 8 * ADRSIZE (INTEGER);
   VAR env: RTThread.State;
   BEGIN
     (* The first thread runs on the original stack, we don't want any checks *)
     c.stack.words := NIL;
-    c.stack.first := top_of_stack;
-    c.stack.last  := bottom_of_stack;
-    c.stackTop    := top_of_stack;
-    c.stackBottom := bottom_of_stack;
+    c.stack.first := NIL;
+    c.stack.last  := NIL;
     c.handlers    := NIL;
     c.errno       := 0;
+    IF stack_grows_down THEN
+      c.stackTop    := NIL;
+      c.stackBottom := stackbase + STACK_SLOP;
+    ELSE
+      c.stackTop    := LOOPHOLE (LAST (INTEGER), ADDRESS);
+      c.stackBottom := stackbase - STACK_SLOP;
+    END;
     
     (* determine what should go in the stack of future threads *)
     WITH i = RTThread.Save (env) DO
@@ -1118,7 +1124,6 @@ PROCEDURE DetermineContext (oldSP: ADDRESS) =
     ELSE 
       (* we are starting the execution of a forked thread *)
       RTThread.handlerStack := self.context.handlers;
-      top_of_stack := self.context.stackTop;
       Cerrno.errno := self.context.errno;
       RTThread.allow_sigvtalrm ();
       DEC (RT0u.inCritical);
@@ -1208,10 +1213,13 @@ PROCEDURE Transfer (VAR from, to: Context;  new_self: T) =
       RTThread.disallow_sigvtalrm ();
       from.handlers := RTThread.handlerStack;
       from.errno := Cerrno.errno;
+      IF new_self.txn # NIL AND self.txn # new_self.txn THEN
+        RTHeapDB.Transfer(self.txn, new_self.txn);
+      END;
       self := new_self;
       myId := new_self.id;
+      myTxn := new_self.txn;
       RTThread.Transfer (from.buf, to.buf);
-      top_of_stack := from.stackTop;
       RTThread.handlerStack := from.handlers;
       Cerrno.errno := from.errno;
       RTThread.allow_sigvtalrm ();
@@ -1225,7 +1233,7 @@ PROCEDURE SmashedStack (t: T) =
     OutI (t.id, 0);
     OutT ("'s stack overflowed its limits.\n");
     OutT ("*** Use Thread.IncDefaultStackSize to get bigger stacks.\n");
-    RTMisc.FatalError ("ThreadPosix.m3", 1230, "corrupt thread stack");
+    RTError.Msg ("ThreadPosix.m3", 1236, "corrupt thread stack");
   END SmashedStack;
 
 PROCEDURE Tos (READONLY c: Context; VAR start, stop: ADDRESS) =
@@ -1264,7 +1272,7 @@ PROCEDURE DumpEverybody () =
       OutT ("\n\n*****************************");
       OutT ("**********************************\n");
       OutT ("  id    Thread.T     closure root");
-      OutT ("                A* waiting for\n");
+      OutT ("                X A* waiting for\n");
       t := self;
       REPEAT
         IF (t = NIL) THEN
@@ -1308,7 +1316,7 @@ PROCEDURE DumpThread (t: T) =
     OutT (" ");
     pc := NIL;
     co := LOOPHOLE (t.closure, ClosureObject);
-    IF (co # NIL) AND (co^ # NIL) THEN pc := co^^[1] END;
+    IF (co # NIL) AND (co^ # NIL) THEN pc := co^^[0] END;
     IF (co = NIL) THEN
       OutT ("*main program*      ");
     ELSE
@@ -1319,6 +1327,12 @@ PROCEDURE DumpThread (t: T) =
         RTIO.PutString (name);
         Pad (20, Cstring.strlen (name));
       END;
+    END;
+
+    (* abort status *)
+    IF (t.abortPending)
+      THEN OutT ("x ");
+      ELSE OutT ("  ");
     END;
 
     (* alert status *)
@@ -1448,7 +1462,7 @@ PROCEDURE RegisterHooks(h: Hooks; init := TRUE): Hooks RAISES {}=
       	t := self;
       	REPEAT 
       	  hooks.fork (t);
-      	  t := t.next;
+          t := t.next;
       	UNTIL (t = self);
       END;
     DEC (RT0u.inCritical);
@@ -1460,7 +1474,66 @@ PROCEDURE MyId(): Id RAISES {}=
     RETURN self.id;
   END MyId;
 
+(*------------------------------------------------------------- Txn hooks ---*)
+
+PROCEDURE TxnBegin(txn: RTTxn.T) =
+  BEGIN
+    INC (RT0u.inCritical);
+    BEGIN
+      txn.parent := self.txn;
+      self.txn := txn;
+      myTxn := self.txn;
+    END;
+    RTHeapDB.Transfer(txn.parent, txn);
+    DEC (RT0u.inCritical);
+  END TxnBegin;
+
+PROCEDURE TxnCommit() =
+  VAR t: T;
+  BEGIN
+    INC (RT0u.inCritical);
+    BEGIN
+      t := self.next;
+      WHILE t # self DO
+        IF t.txn = self.txn THEN
+          t.txn := t.txn.parent;
+        END;
+        t := t.next;
+      END;
+      self.txn := self.txn.parent;
+      myTxn := self.txn;
+    END;
+    DEC (RT0u.inCritical);
+  END TxnCommit;
+
+PROCEDURE TxnAbort() =
+  VAR t: T;
+  BEGIN
+    INC (RT0u.inCritical);
+    BEGIN
+      t := self.next;
+      WHILE t # self DO
+        VAR txn := t.txn;
+        BEGIN
+          WHILE txn # NIL DO
+            IF txn = self.txn THEN
+              t.txn := txn.parent;
+              t.abortPending := TRUE;
+              EXIT;
+            END;
+            txn = txn.parent;
+          END;
+        END;
+        t := t.next;
+      END;
+      self.txn := self.txn.parent;
+      myTxn := self.txn;
+    END;
+    DEC (RT0u.inCritical);
+  END TxnAbort;
+
 (*-------------------------------------------------------- initialization ---*)
+
 PROCEDURE Init()=
   VAR xx: INTEGER;
   BEGIN
@@ -1471,9 +1544,10 @@ PROCEDURE Init()=
       INC (nextId);
     
       stack_grows_down := ADR (xx) > QQ();
-      InitTopContext (topThread.context);
+      InitTopContext (topThread.context, ADR(xx));
       self := topThread;
       myId := self.id;
+      myTxn := self.txn;
 
       pausedThreads := NIL;
 

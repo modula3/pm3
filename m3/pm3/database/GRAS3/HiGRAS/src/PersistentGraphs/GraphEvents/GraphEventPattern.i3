@@ -7,8 +7,11 @@ INTERFACE GraphEventPattern;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:32  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:46  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:32  hosking
+    Import of GRAS3 1.1
 
     Revision 1.3  1997/11/21 09:37:13  roland
     New GraphEvents PutAttribute and TruncateAttribute replace ModifyAttribute
@@ -25,7 +28,7 @@ INTERFACE GraphEventPattern;
 *)
 (***************************************************************************)
 
-IMPORT EventPattern, GraphEvents, Transaction, Node;
+IMPORT EventPattern, GraphEvents, Txn, Node;
 FROM EventType IMPORT Unknown, Mismatch;
 
 TYPE
@@ -42,7 +45,7 @@ PROCEDURE SetPool (p: T; pool: REFANY) RAISES {Unknown, Mismatch};
 PROCEDURE SetGraphNumber (p: T; number: CARDINAL) RAISES {Unknown, Mismatch};
 PROCEDURE SetGraph (p: T; graph: REFANY) RAISES {Unknown, Mismatch};
 PROCEDURE SetPreEvent (p: T; ispre: BOOLEAN) RAISES {Unknown, Mismatch};
-PROCEDURE SetLevel (p: T; level: Transaction.Level)
+PROCEDURE SetLevel (p: T; level: Txn.Level)
   RAISES {Unknown, Mismatch};
 
 (* node events *)
@@ -74,7 +77,7 @@ PROCEDURE GetPool (p: T): REFANY RAISES {Mismatch, Unknown};
 PROCEDURE GetGraphNo (p: T): CARDINAL RAISES {Mismatch, Unknown};
 PROCEDURE GetGraph (p: T): REFANY RAISES {Mismatch, Unknown};
 PROCEDURE GetIsPreEvent (p: T): BOOLEAN RAISES {Mismatch, Unknown};
-PROCEDURE GetLevel (p: T): Transaction.Level RAISES {Mismatch, Unknown};
+PROCEDURE GetLevel (p: T): Txn.Level RAISES {Mismatch, Unknown};
 
 (* node events *)
 PROCEDURE GetNode (p: T): Node.T RAISES {Mismatch, Unknown};

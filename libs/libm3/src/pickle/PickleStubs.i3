@@ -1,5 +1,4 @@
-(*                            -*- Mode: Modula-3 -*- 
- * 
+(*
  * For information about this program, contact Blair MacIntyre            
  * (bm@cs.columbia.edu) or Steven Feiner (feiner@cs.columbia.edu)         
  * at the Computer Science Dept., Columbia University,                    
@@ -9,25 +8,7 @@
  * City of New York.  Blair MacIntyre, Computer Science Department.       
  *
  * This file is released under the same conditions as Pickle.m3. See COPYRIGHT.
- * 
- * Author          : Blair MacIntyre
- * Created On      : Wed Jul 26 14:19:18 1995
- * Last Modified By: Blair MacIntyre
- * Last Modified On: Wed Oct 23 10:12:22 1996
- * Update Count    : 17
- * 
- * $Source$
- * $Date$
- * $Author$
- * $Revision$
- * 
- * $Log$
- * Revision 1.1  1998/02/26 16:37:34  dagenais
- * Enhanced pickler which allows communicating pickles between machines
- * with different endianess.
  *
- * 
- * HISTORY
  *)
 
 INTERFACE PickleStubs;
@@ -64,7 +45,11 @@ PROCEDURE OutChars (writer: Pickle.Writer; READONLY chars: ARRAY OF CHAR)
   RAISES {Wr.Failure, Thread.Alerted};
 (* Marshal a char array in native format. *)
 
-PROCEDURE OutText (writer: Pickle.Writer; READONLY t: TEXT)
+PROCEDURE OutWideChars(writer: Pickle.Writer; READONLY arr: ARRAY OF WIDECHAR)
+    RAISES {Wr.Failure, Thread.Alerted};
+(* Marshal a wide char array in native format. *)
+
+PROCEDURE OutText (writer: Pickle.Writer; t: TEXT)
   RAISES {Wr.Failure, Thread.Alerted};
 (* Marshal a TEXT. *)
 
@@ -107,6 +92,10 @@ PROCEDURE OutCardinal (writer: Pickle.Writer; card: CARDINAL)
 PROCEDURE InChars (reader: Pickle.Reader; VAR chars: ARRAY OF CHAR)
   RAISES {Pickle.Error, Rd.Failure, Thread.Alerted};
 (* Unmarshal a char array of length "NUMBER(chars)". *)
+
+PROCEDURE InWideChars(reader: Pickle.Reader; VAR chars: ARRAY OF WIDECHAR)
+    RAISES {Pickle.Error, Rd.Failure, Thread.Alerted};
+(* Unmarshal a wide char array of length "NUMBER(chars)". *)
 
 PROCEDURE InText(reader: Pickle.Reader) : TEXT
    RAISES {Pickle.Error, Rd.Failure, Thread.Alerted};

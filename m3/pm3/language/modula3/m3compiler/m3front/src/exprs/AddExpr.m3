@@ -16,9 +16,8 @@ TYPE
   Class = { cINT, cREAL, cLONG, cEXTND, cADDR, cSET };
 
 CONST
-  CGType = ARRAY Class OF CG.AType {
-            CG.Type.Int,   CG.Type.Reel, CG.Type.LReel,
-            CG.Type.XReel, CG.Type.Word, CG.Type.Word };
+  FPType = ARRAY [Class.cREAL .. Class.cEXTND] OF CG.AType {
+             CG.Type.Reel, CG.Type.LReel, CG.Type.XReel };
 
 TYPE
   P = ExprRep.Tab BRANDED "AddExpr.P" OBJECT
@@ -74,13 +73,13 @@ PROCEDURE Check (p: P;  VAR cs: Expr.CheckState) =
     ta := Type.Base (Expr.TypeOf (p.a));
     tb := Type.Base (Expr.TypeOf (p.b));
     IF    (ta = Int.T)   AND (tb = Int.T)   THEN
-      p.class := Class.cINT;  INC (cs.int_ops);
+      p.class := Class.cINT;
     ELSIF (ta = Reel.T)  AND (tb = Reel.T)  THEN
-      p.class := Class.cREAL;  INC (cs.fp_ops);
+      p.class := Class.cREAL;
     ELSIF (ta = LReel.T) AND (tb = LReel.T) THEN
-      p.class := Class.cLONG;  INC (cs.fp_ops);
+      p.class := Class.cLONG;
     ELSIF (ta = EReel.T) AND (tb = EReel.T) THEN
-      p.class := Class.cEXTND;  INC (cs.fp_ops);
+      p.class := Class.cEXTND;
     ELSIF (ta = ErrType.T) OR (tb = ErrType.T) THEN
       p.class := Class.cINT; (* there's already an error *)
       ta := ErrType.T;
@@ -120,24 +119,29 @@ PROCEDURE Prep (p: P) =
 PROCEDURE Compile (p: P) =
   VAR info: Type.Info;
   BEGIN
-    IF (p.class = Class.cSET) THEN
-      EVAL Type.CheckInfo (p.type, info);
-      IF (info.size > Target.Integer.size) THEN
-        CG.Load_addr_of_temp (p.tmp, 0, Target.Integer.align);
-        p.tmp := NIL;
-      ELSE
+    CASE p.class OF
+    | Class.cSET =>
+        EVAL Type.CheckInfo (p.type, info);
+        IF (info.size > Target.Integer.size) THEN
+          CG.Load_addr_of_temp (p.tmp, 0, Target.Integer.align);
+          p.tmp := NIL;
+        ELSE
+          Expr.Compile (p.a);
+          Expr.Compile (p.b);
+          CG.Set_union (info.size);
+        END;
+    | Class.cADDR =>
         Expr.Compile (p.a);
         Expr.Compile (p.b);
-        CG.Set_union (info.size);
-      END;
-    ELSIF (p.class = Class.cADDR) THEN
-      Expr.Compile (p.a);
-      Expr.Compile (p.b);
-      CG.Index_bytes (Target.Byte);
-    ELSE
-      Expr.Compile (p.a);
-      Expr.Compile (p.b);
-      CG.Add (CGType[p.class]);
+        CG.Index_bytes (Target.Byte);
+    | Class.cINT =>
+        Expr.Compile (p.a);
+        Expr.Compile (p.b);
+        CG.Add (Target.Integer.cg_type);
+    | Class.cREAL, Class.cLONG, Class.cEXTND =>
+        Expr.Compile (p.a);
+        Expr.Compile (p.b);
+        CG.Add (FPType[p.class]);
     END;
   END Compile;
 

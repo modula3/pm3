@@ -254,7 +254,7 @@ PROCEDURE PrepLV (p: P) =
         ELSE
           CG.Load_addr_of (t1, field.offset, info.alignment);
         END;
-        AssignStmt.Emit (field.type, z.val);
+        AssignStmt.DoEmit (field.type, z.val);
       END;
     END;
 
@@ -271,10 +271,10 @@ PROCEDURE CompileLV (p: P) =
   BEGIN
     IF (p.is_const) THEN
       EVAL Type.CheckInfo (p.type, info);
-      offset := Module.Allocate (info.size, info.alignment, "*record*");
-      PrepLiteral (p, p.tipe);
-      GenLiteral (p, offset, p.tipe);
-      CG.Load_addr_of (Module.GlobalData (NIL), offset, info.alignment);
+      offset := Module.Allocate (info.size, info.alignment, TRUE, "*record*");
+      PrepLiteral (p, p.tipe, TRUE);
+      GenLiteral (p, offset, p.tipe, TRUE);
+      CG.Load_addr_of (Module.GlobalData (TRUE), offset, info.alignment);
     ELSE
       CG.Push (p.tmp);
       DEC (p.tmp_cnt);
@@ -321,7 +321,7 @@ PROCEDURE GenFPLiteral (p: P;  buf: M3Buf.T) =
     M3Buf.PutChar (buf, '>');
   END GenFPLiteral;
 
-PROCEDURE PrepLiteral (p: P;   <*UNUSED*> type: Type.T) =
+PROCEDURE PrepLiteral (p: P;   <*UNUSED*> type: Type.T;  is_const: BOOLEAN) =
   VAR e: Expr.T;  field: Field.Info;
   BEGIN
     <* ASSERT p.map # NIL *> (* must already be checked *)
@@ -330,13 +330,14 @@ PROCEDURE PrepLiteral (p: P;   <*UNUSED*> type: Type.T) =
         e := Expr.ConstValue (z.val);  <* ASSERT e # NIL *>
         IF NOT Expr.IsZeroes (e) THEN
           Field.Split (z.field, field);
-          Expr.PrepLiteral (e, field.type);
+          Expr.PrepLiteral (e, field.type, is_const);
         END;
       END;
     END;
   END PrepLiteral;
 
-PROCEDURE GenLiteral (p: P;  offset: INTEGER;  <*UNUSED*> type: Type.T) =
+PROCEDURE GenLiteral (p: P;  offset: INTEGER;  <*UNUSED*> type: Type.T;
+                      is_const: BOOLEAN) =
   VAR e: Expr.T;  field: Field.Info;
   BEGIN
     <* ASSERT p.map # NIL *> (* must already be checked *)
@@ -345,7 +346,7 @@ PROCEDURE GenLiteral (p: P;  offset: INTEGER;  <*UNUSED*> type: Type.T) =
         e := Expr.ConstValue (z.val);  <* ASSERT e # NIL *>
         IF NOT Expr.IsZeroes (e) THEN
           Field.Split (z.field, field);
-          Expr.GenLiteral (e, offset + field.offset, field.type);
+          Expr.GenLiteral (e, offset + field.offset, field.type, is_const);
         END;
       END;
     END;

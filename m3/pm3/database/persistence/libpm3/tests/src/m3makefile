@@ -1,0 +1,4 @@
+LINK=["g++"]
+import("libpm3")
+implementation("Main")
+program("Test")

@@ -20,7 +20,7 @@ CONST
 
 CONST
   CGType = ARRAY [0..3] OF CG.Type {
-             CG.Type.Int, CG.Type.Reel, CG.Type.LReel, CG.Type.XReel };
+             CG.Type.Void, CG.Type.Reel, CG.Type.LReel, CG.Type.XReel };
 
 TYPE
   P = ExprRep.Tabc BRANDED "MultiplyExpr.T" OBJECT
@@ -71,13 +71,13 @@ PROCEDURE Check (p: P;  VAR cs: Expr.CheckState) =
     ta := Type.Base (Expr.TypeOf (p.a));
     tb := Type.Base (Expr.TypeOf (p.b));
     IF    (tb = Int.T)   AND (ta = Int.T)   THEN
-      p.class := cINT;  INC (cs.int_ops);
+      p.class := cINT;
     ELSIF (tb = Reel.T)  AND (ta = Reel.T)  THEN
-      p.class := cREAL;  INC (cs.fp_ops);
+      p.class := cREAL;
     ELSIF (tb = LReel.T) AND (ta = LReel.T) THEN
-      p.class := cLONG;  INC (cs.fp_ops);
+      p.class := cLONG;
     ELSIF (tb = EReel.T) AND (ta = EReel.T) THEN
-      p.class := cEXTND;  INC (cs.fp_ops);
+      p.class := cEXTND;
     ELSIF (ta = ErrType.T) OR (tb = ErrType.T) THEN
       p.class := cINT; (* there's already an error *)
       ta := ErrType.T;
@@ -113,7 +113,11 @@ PROCEDURE Prep (p: P) =
 PROCEDURE Compile (p: P) =
   VAR size: INTEGER;  info: Type.Info;
   BEGIN
-    IF (p.class # cSET) THEN
+    IF (p.class = cINT) THEN
+      Expr.Compile (p.a);
+      Expr.Compile (p.b);
+      CG.Multiply (Target.Integer.cg_type);
+    ELSIF (p.class # cSET) THEN
       Expr.Compile (p.a);
       Expr.Compile (p.b);
       CG.Multiply (CGType [p.class]);

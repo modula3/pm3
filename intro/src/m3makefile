@@ -23,10 +23,10 @@ HtmlTextFile("dupl.txt")
 "<H1>PM3: The Modula-3 distribution of Ecole Polytechnique de Montreal",CR,
 "</H1>",CR,
 "<P>The subpackages contained in PM3 are located in <A HREF=\"",
-    lookup("TARGET_PKG_USE",DOC_TO_PKG_USE),"\">",CR,
-    lookup("TARGET_PKG_USE",DOC_TO_PKG_USE),"</A>",CR,
+    PKG_USE,"\">",CR,
+    PKG_USE,"</A>",CR,
 "Pointers to the relevant documentation may be found in the <TT>intro</TT>",CR,
-"subpackage <A HREF=\"",DOC_TO_PKG_USE,SL,"intro",SL,"src",SL,"index.html",
+"subpackage <A HREF=\"",PKG_USE,SL,"intro",SL,"src",SL,"index.html",
     "\">[intro to pm3]</A>",CR,
 "</BODY>",CR,
 "</HTML>",CR)

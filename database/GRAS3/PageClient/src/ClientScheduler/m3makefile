@@ -14,7 +14,7 @@ interface		("InternalScheduledClientPage")
 % *** scheduled client file ***
 Module			("BaseScheduledClientFile")
 interface		("InternalBaseScheduledClientFile")
-table			("ScheduledClientPage", "Cardinal", "ScheduledClientPage")
+transientTable		("ScheduledClientPage", "Cardinal", "ScheduledClientPage")
 Module			("ScheduledClientFile")
 interface		("InternalScheduledClientFile")
 
@@ -24,7 +24,7 @@ module			("CallbackClient")
 % *** scheduled client ressource ***
 Module			("BaseScheduledClientRessource")
 interface		("InternalBaseScheduledClientRessource")
-table			("ScheduledClientFile", "Text", "ScheduledClientFile")
+transientTable		("ScheduledClientFile", "Text", "ScheduledClientFile")
 Module			("ScheduledClientRessource")
 interface		("InternalScheduledClientRessource")
 Module			("LocalResourceSystem")

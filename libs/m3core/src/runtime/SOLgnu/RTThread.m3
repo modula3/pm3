@@ -2,15 +2,14 @@
 (* All rights reserved.                                       *)
 (* See the file COPYRIGHT for a full description.             *)
 (*                                                            *)
-(* Last modified on Mon Nov 21 13:12:29 PST 1994 by kalsow    *)
+(* Last modified on Wed Jul 30 13:55:56 EST 1997 by hosking   *)
+(*      modified on Mon Nov 21 13:12:29 PST 1994 by kalsow    *)
 (*      modified on Wed Dec 23 17:24:49 PST 1992 by jdd       *)
 (*      modified on Thu Nov 12 15:56:32 PST 1992 by muller    *)
 
-UNSAFE MODULE RTThread;
+UNSAFE MODULE RTThread EXPORTS RTThread, RTHooks;
 
-IMPORT Usignal, Unix, Umman, RTMisc, Word;
-FROM Uucontext IMPORT sigset_t;
-FROM Uframe IMPORT struct_frame_star;
+IMPORT Uframe, Usignal, Unix, Umman, Uucontext, RTMisc, Word;
 
 PROCEDURE SP (READONLY s: State): ADDRESS =
   BEGIN
@@ -71,27 +70,26 @@ PROCEDURE UpdateStateForNewSP (VAR s: State; offset: INTEGER) =
   END UpdateStateForNewSP;
 
 PROCEDURE UpdateFrameForNewSP (a: ADDRESS; offset: INTEGER) =
+  VAR f := LOOPHOLE(a, Uframe.struct_frame_star);
   BEGIN
-    INC(LOOPHOLE(a, struct_frame_star).fr_savfp, offset);
-    LOOPHOLE(a, struct_frame_star).fr_savpc := 0;
+    INC (f.fr_savfp, offset);
+    f.fr_savpc := 0;
   END UpdateFrameForNewSP;
 
 (*------------------------------------ manipulating the SIGVTALRM handler ---*)
 
 VAR
-  ThreadSwitchSignal: sigset_t;
+  ThreadSwitchSignal: Uucontext.sigset_t;
 
 PROCEDURE setup_sigvtalrm (handler: Usignal.SignalHandler) =
-  VAR sv, osv: Usignal.struct_sigaction;
+  VAR sv, osv: Usignal.struct_sigaction;  i: INTEGER;
   BEGIN
     sv.sa_handler := handler;
-    sv.sa_flags   := Word.Or(Usignal.SA_RESTART, Usignal.SA_SIGINFO);
-    WITH i = Usignal.sigemptyset(sv.sa_mask) DO
+    sv.sa_flags   := Word.Or (Usignal.SA_RESTART, Usignal.SA_SIGINFO);
+    i := Usignal.sigemptyset (sv.sa_mask);
     <* ASSERT i = 0 *>
-    END;
-    WITH i = Usignal.sigaction (Usignal.SIGVTALRM, sv, osv) DO
-      <* ASSERT i = 0 *>
-    END;
+    i := Usignal.sigaction (Usignal.SIGVTALRM, sv, osv);
+    <* ASSERT i = 0 *>
   END setup_sigvtalrm;
 
 PROCEDURE allow_sigvtalrm () =
@@ -108,6 +106,33 @@ PROCEDURE disallow_sigvtalrm () =
     END;
   END disallow_sigvtalrm;
 
+(*--------------------------------------------- exception handling support --*)
+
+PROCEDURE GetCurrentHandlers (): ADDRESS=
+  BEGIN
+    RETURN handlerStack;
+  END GetCurrentHandlers;
+
+PROCEDURE SetCurrentHandlers (h: ADDRESS)=
+  BEGIN
+    handlerStack := h;
+  END SetCurrentHandlers;
+
+(*RTHooks.PushEFrame*)
+PROCEDURE PushEFrame (frame: ADDRESS) =
+  TYPE Frame = UNTRACED REF RECORD next: ADDRESS END;
+  VAR f := LOOPHOLE (frame, Frame);
+  BEGIN
+    f.next := handlerStack;
+    handlerStack := f;
+  END PushEFrame;
+
+(*RTHooks.PopEFrame*)
+PROCEDURE PopEFrame (frame: ADDRESS) =
+  BEGIN
+    handlerStack := frame;
+  END PopEFrame;
+
 BEGIN
   WITH i = Usignal.sigemptyset(ThreadSwitchSignal) DO
     <* ASSERT i = 0 *>
@@ -116,5 +141,3 @@ BEGIN
     <* ASSERT i = 0 *>
   END;
 END RTThread.
-
-

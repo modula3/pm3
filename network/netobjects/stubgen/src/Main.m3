@@ -8,7 +8,7 @@ MODULE Main;
    "M3ToolFrame".  
    Each interface given on the command line is processed, and
    stubs are generated for all the network objects it defines
-   that cn legitimately be marshalled.
+   that can legitimately be marshalled.
 *)
 
 IMPORT Process, RTCollector;

@@ -11,7 +11,7 @@ MODULE EqualExpr;
 IMPORT M3, M3ID, CG, Expr, ExprRep, Type, Procedure, TargetMap;
 IMPORT Bool, Int, Reel, LReel, EReel, SetExpr, Variable;
 IMPORT IntegerExpr, ReelExpr, EnumExpr, AddressExpr, UserProc;
-IMPORT ProcExpr, ProcType, TextExpr, Error;
+IMPORT ProcExpr, ProcType, TextExpr, Error, M3WString;
 IMPORT RecordType, ArrayType, Field, Value, M3String, Textt;
 IMPORT NamedExpr, QualifyExpr, OpenArrayType, Target, TInt;
 
@@ -22,8 +22,14 @@ TYPE
   Kind = {SimpleScalar, SimpleStruct, Complex};
 
 TYPE
+  Op = [ CG.Cmp.EQ .. CG.Cmp.NE ];
+
+CONST
+  OpName = ARRAY Op OF TEXT { "\'=\'", "\'#\'" };
+
+TYPE
   P = ExprRep.Tabc BRANDED "EqualExpr.P" OBJECT
-        eq     : BOOLEAN;
+        op     : Op;
         kind   : Kind;
         tmp    : CG.Val;
       OVERRIDES
@@ -48,38 +54,22 @@ TYPE
         note_write   := ExprRep.NotWritable;
       END;
 
-CONST
-  OpName = ARRAY BOOLEAN OF TEXT { "\'#\'", "\'=\'" };
-
-PROCEDURE NewEQ (a, b: Expr.T): Expr.T =
+PROCEDURE New (a, b: Expr.T;  op: Op): Expr.T =
   VAR p: P;
   BEGIN
     p := NEW (P);
     ExprRep.Init (p);
     p.a      := a;
     p.b      := b;
-    p.eq     := TRUE;
+    p.op     := op;
     p.type   := Bool.T;
     p.kind   := Kind.SimpleScalar;
     p.tmp    := NIL;
     RETURN p;
-  END NewEQ;
-
-PROCEDURE NewNE (a, b: Expr.T): Expr.T =
-  VAR p: P;
-  BEGIN
-    p := NEW (P);
-    ExprRep.Init (p);
-    p.a      := a;
-    p.b      := b;
-    p.eq     := FALSE;
-    p.type   := Bool.T;
-    p.kind   := Kind.SimpleScalar;
-    RETURN p;
-  END NewNE;
+  END New;
 
 PROCEDURE Check (p: P;  VAR cs: Expr.CheckState) =
-  VAR ta, tb: Type.T;  str: M3String.T;
+  VAR ta, tb: Type.T;  str: M3String.T;  wstr: M3WString.T;
   BEGIN
     Expr.TypeCheck (p.a, cs);
     Expr.TypeCheck (p.b, cs);
@@ -87,11 +77,12 @@ PROCEDURE Check (p: P;  VAR cs: Expr.CheckState) =
     tb := Type.Base (Expr.TypeOf (p.b));
     IF (ta = NIL) OR (tb = NIL)
       OR NOT (Type.IsAssignable (ta, tb) OR Type.IsAssignable (tb, ta)) THEN
-      p.type := Expr.BadOperands (OpName[p.eq], ta, tb);
+      p.type := Expr.BadOperands (OpName[p.op], ta, tb);
     END;
     p.kind := Classify (ta, tb);
     IF (p.kind = Kind.SimpleScalar) AND ((ta = Textt.T) OR (tb = Textt.T)) THEN
-      IF TextExpr.Split (p.a, str) OR TextExpr.Split (p.b, str) THEN
+      IF TextExpr.Split8 (p.a, str) OR TextExpr.Split16 (p.a, wstr)
+      OR TextExpr.Split8 (p.b, str) OR TextExpr.Split16 (p.b, wstr) THEN
         Error.Warn (1,"comparing pointers, use Text.Equal to compare strings");
       END;
     END;
@@ -146,14 +137,16 @@ PROCEDURE SimpleStructType (READONLY info: Type.Info): BOOLEAN =
   END SimpleStructType;
 
 PROCEDURE FindCompareType (size, align: INTEGER): CG.Type =
+  CONST Z = ARRAY [0..3] OF CG.Type { CG.Type.Word64, CG.Type.Word32,
+                                      CG.Type.Word16, CG.Type.Word8 };
+  VAR t: CG.Type;
   BEGIN
-    FOR i := LAST (TargetMap.Int_types) TO FIRST (TargetMap.Int_types) BY -1 DO
-      WITH z = TargetMap.Int_types[i] DO
-        IF (z.align = align)
-          AND (size MOD z.size = 0)
-          AND (TargetMap.CG_Base [z.cg_type] = CG.Type.Word) THEN
-          RETURN z.cg_type;
-        END;
+    FOR i := FIRST (Z) TO LAST (Z) DO
+      t := Z[i];
+      IF (align = TargetMap.CG_Align [t])
+        AND (size MOD TargetMap.CG_Size [t] = 0)
+        AND (Target.Word.size >= TargetMap.CG_Size [t]) THEN
+        RETURN t;
       END;
     END;
     RETURN CG.Type.Void;
@@ -163,7 +156,7 @@ PROCEDURE EqCheck (a: P;  e: Expr.T;  x: M3.EqAssumption): BOOLEAN =
   BEGIN
     TYPECASE e OF
     | NULL => RETURN FALSE;
-    | P(b) => RETURN (a.eq = b.eq)
+    | P(b) => RETURN (a.op = b.op)
                  AND Expr.IsEqual (a.a, b.a, x)
                  AND Expr.IsEqual (a.b, b.b, x);
     ELSE      RETURN FALSE;
@@ -195,10 +188,7 @@ PROCEDURE Compile (p: P) =
     IF (p.kind = Kind.SimpleScalar) THEN
       Expr.Compile (p.a);
       Expr.Compile (p.b);
-      IF (p.eq)
-        THEN CG.Eq (Type.CGType (t));
-        ELSE CG.Ne (Type.CGType (t));
-      END;
+      CG.Compare (Type.CGType (t), p.op);
     ELSIF (p.kind = Kind.SimpleStruct) THEN
       CompileSolidUnrolled (p);
     ELSE
@@ -231,12 +221,9 @@ PROCEDURE CompileSolidUnrolled (p: P) =
       CG.Load_indirect (cmp_type, i * chunk_size, chunk_size);
       CG.Push (xb);
       CG.Load_indirect (cmp_type, i * chunk_size, chunk_size);
-      IF (p.eq) THEN
-        CG.Eq (CG.Type.Word);
-        IF (i > 0) THEN CG.And () END;
-      ELSE
-        CG.Ne (CG.Type.Word);
-        IF (i > 0) THEN CG.Or () END;
+      CG.Compare (Target.Word.cg_type, p.op);
+      IF (i > 0) THEN
+        IF (p.op = CG.Cmp.EQ) THEN  CG.And ();  ELSE  CG.Or ();  END;
       END;
     END;
 
@@ -259,17 +246,7 @@ PROCEDURE PrepBR (p: P;  true, false: CG.Label;  freq: CG.Frequency) =
     IF (p.kind = Kind.SimpleScalar) THEN
       Expr.Compile (p.a);
       Expr.Compile (p.b);
-      IF (true # CG.No_label) THEN
-        IF (p.eq)
-          THEN CG.If_eq (true, info.stk_type, freq);
-          ELSE CG.If_ne (true, info.stk_type, freq);
-        END;
-      ELSE (* true = CG.No_label *)
-        IF (p.eq)
-          THEN CG.If_ne (false, info.stk_type, freq);
-          ELSE CG.If_eq (false, info.stk_type, freq);
-        END;
-      END;
+      CG.If_then (info.stk_type, p.op, true, false, freq);
       RETURN;
  
     (************ better to generate "If_eq" than  "eq; if_true" 
@@ -285,10 +262,7 @@ PROCEDURE PrepBR (p: P;  true, false: CG.Label;  freq: CG.Frequency) =
     ELSIF (info.class = Type.Class.Set) THEN
       Expr.Compile (p.a);
       Expr.Compile (p.b);
-      IF (p.eq)
-        THEN CG.Set_eq (info.size);
-        ELSE CG.Set_ne (info.size);
-      END;
+      CG.Set_compare (info.size, p.op);
       IF (true = CG.No_label)
         THEN CG.If_false (false, freq);
         ELSE CG.If_true (true, freq);
@@ -296,7 +270,7 @@ PROCEDURE PrepBR (p: P;  true, false: CG.Label;  freq: CG.Frequency) =
       RETURN;
 
     ELSIF (info.class = Type.Class.Procedure) OR ProcType.Is (tb) THEN
-      IF (p.eq)
+      IF (p.op = CG.Cmp.EQ)
         THEN CompileProcs (p, true, false, freq);
         ELSE CompileProcs (p, false, true, freq);
       END;
@@ -306,31 +280,23 @@ PROCEDURE PrepBR (p: P;  true, false: CG.Label;  freq: CG.Frequency) =
        OR (info.class = Type.Class.OpenArray) THEN
       Expr.Compile (p.a);  xa := CG.Pop ();
       Expr.Compile (p.b);  xb := CG.Pop ();
-      IF (p.eq) THEN
-        IF (false = CG.No_label) THEN
-          skip := CG.Next_label ();
-          CompileTest (xa, xb, ta, tb, skip, CG.Always - freq);
-          CG.Jump (true);
-          CG.Set_label (skip);
-        ELSE
-          CompileTest (xa, xb, ta, tb, false, freq);
-        END;
-      ELSE (*NOT p.eq => swap true and false labels *)
-        IF (true = CG.No_label) THEN
-          skip := CG.Next_label ();
-          CompileTest (xa, xb, ta, tb, skip, CG.Always - freq);
-          CG.Jump (false);
-          CG.Set_label (skip);
-        ELSE
-          CompileTest (xa, xb, ta, tb, true, freq);
-        END;
+      IF (p.op = CG.Cmp.NE) THEN  (* swap true and false labels *)
+        skip := true;  true := false;  false := skip;
+      END;
+      IF (false = CG.No_label) THEN
+        skip := CG.Next_label ();
+        CompileTest (xa, xb, ta, tb, skip, CG.Always - freq);
+        CG.Jump (true);
+        CG.Set_label (skip);
+      ELSE
+        CompileTest (xa, xb, ta, tb, false, freq);
       END;
       CG.Free (xa);
       CG.Free (xb);
 
     ELSE 
       (* typechecking removed the other cases. *)
-      EVAL Expr.BadOperands (OpName[p.eq], ta, tb);
+      EVAL Expr.BadOperands (OpName[p.op], ta, tb);
     END;
   END PrepBR;
 
@@ -339,7 +305,7 @@ PROCEDURE CompileProcs (p: P;  true, false: CG.Label;  freq: CG.Frequency) =
     procA, procB : Value.T;
     classA, classB: [0..2];
     t1, t2 : CG.Val;
-    skip, no_closure: CG.Label;
+    skip, no_closure, nope: CG.Label;
   BEGIN
     (* first we classify the two arguments:
          class 0: NIL, global proc, or non-formal variable => no frame pointer
@@ -373,10 +339,7 @@ PROCEDURE CompileProcs (p: P;  true, false: CG.Label;  freq: CG.Frequency) =
       4 => (* 1, 1 *)
            Expr.Compile (p.a);
            Expr.Compile (p.b);
-           IF (true = CG.No_label)
-             THEN CG.If_ne (false, CG.Type.Addr, freq);
-             ELSE CG.If_eq (true, CG.Type.Addr, freq);
-           END;
+           CG.If_then (CG.Type.Addr, CG.Cmp.EQ, true, false, freq);
 
     | 1 => (* 0, 1 => never equal *)
            (* constant FALSE *)
@@ -387,49 +350,38 @@ PROCEDURE CompileProcs (p: P;  true, false: CG.Label;  freq: CG.Frequency) =
 
     | 2 => (* 0, 2 *)
            skip := CG.Next_label ();
+           nope := skip;  IF (true = CG.No_label) THEN nope := false; END;
            Expr.Compile (p.b);
            t1 := CG.Pop ();
-           IF (true = CG.No_label)
-             THEN CG.If_closure (t1, false, CG.No_label, CG.Always - freq);
-             ELSE CG.If_closure (t1, skip, CG.No_label, CG.Always - freq);
-           END;
+           CG.If_closure (t1, nope, CG.No_label, CG.Always - freq);
            Expr.Compile (p.a);
            CG.Push (t1);
-           IF (true = CG.No_label)
-             THEN CG.If_ne (false, CG.Type.Addr, freq);
-             ELSE CG.If_eq (true, CG.Type.Addr, freq);
-           END;
+           CG.If_then (CG.Type.Addr, CG.Cmp.EQ, true, false, freq);
            CG.Set_label (skip);
            CG.Free (t1);
 
     | 5 => (* 1, 2 *)
            skip := CG.Next_label ();
+           nope := skip;  IF (true = CG.No_label) THEN nope := false; END;
            Expr.Compile (p.b);
            t1 := CG.Pop ();
-           IF (true = CG.No_label)
-             THEN CG.If_closure (t1, CG.No_label, false, freq);
-             ELSE CG.If_closure (t1, CG.No_label, skip, CG.Always - freq);
-           END;
+           CG.If_closure (t1, CG.No_label, nope, freq);
            Expr.Compile (p.a);
            CG.Push (t1);
            CG.Closure_proc ();
-           IF (true = CG.No_label)
-             THEN CG.If_ne (false, CG.Type.Addr, freq);
-             ELSE CG.If_ne (skip, CG.Type.Addr, CG.Always - freq);
-           END;
+           CG.If_compare (CG.Type.Addr, CG.Cmp.NE, nope, freq);
            Procedure.LoadStaticLink (procA);
            CG.Push (t1);
            CG.Closure_frame ();
-           IF (true = CG.No_label)
-             THEN CG.If_ne (false, CG.Type.Addr, freq);
-             ELSE CG.If_eq (true, CG.Type.Addr, freq);
-           END;
+           CG.If_then (CG.Type.Addr, CG.Cmp.EQ, true, false, freq);
            CG.Set_label (skip);
            CG.Free (t1);
 
     | 8 => (* 2, 2 *)
            no_closure := CG.Next_label (2);
            skip := no_closure + 1;
+           nope := skip;  IF (true = CG.No_label) THEN nope := false; END;
+
            Expr.Compile (p.a);
            t1 := CG.Pop ();
            Expr.Compile (p.b);
@@ -438,43 +390,28 @@ PROCEDURE CompileProcs (p: P;  true, false: CG.Label;  freq: CG.Frequency) =
            CG.If_closure (t1, CG.No_label, no_closure, CG.Maybe);
            (* A is a closure... *)
 
-           IF (true = CG.No_label)
-             THEN CG.If_closure (t2, false, CG.No_label, CG.Always - freq);
-             ELSE CG.If_closure (t2, skip, CG.No_label, CG.Always - freq);
-           END;
+           CG.If_closure (t2, nope, CG.No_label, CG.Always - freq);
 
            (* both A and B are closures *)
            CG.Push (t1);
            CG.Closure_proc ();
            CG.Push (t2);
            CG.Closure_proc ();
-           IF (true = CG.No_label)
-             THEN CG.If_ne (false, CG.Type.Addr, CG.Always - freq);
-             ELSE CG.If_ne (skip, CG.Type.Addr, CG.Always - freq);
-           END;
+           CG.If_compare (CG.Type.Addr, CG.Cmp.NE, nope, CG.Always - freq);
            CG.Push (t1);
            CG.Closure_frame ();
            CG.Push (t2);
            CG.Closure_frame ();
-           IF (true = CG.No_label)
-             THEN CG.If_ne (false, CG.Type.Addr, CG.Always - freq);
-             ELSE CG.If_ne (skip, CG.Type.Addr, CG.Always - freq);
-           END;
+           CG.If_compare (CG.Type.Addr, CG.Cmp.NE, nope, CG.Always - freq);
 
            (* A is not a closure *)
            CG.Set_label (no_closure);
-           IF (true = CG.No_label)
-             THEN CG.If_closure (t2, false, CG.No_label, CG.Always - freq);
-             ELSE CG.If_closure (t2, skip, CG.No_label, CG.Always - freq);
-           END;
+           CG.If_closure (t2, nope, CG.No_label, CG.Always - freq);
 
            (* neither A nor B is a closure *)
            CG.Push (t1);
            CG.Push (t2);
-           IF (true = CG.No_label)
-             THEN CG.If_ne (false, CG.Type.Addr, freq);
-             ELSE CG.If_eq (true, CG.Type.Addr, freq);
-           END;
+           CG.If_then (CG.Type.Addr, CG.Cmp.EQ, true, false, freq);
            CG.Set_label (skip);
            CG.Free (t1);
            CG.Free (t2);
@@ -521,13 +458,13 @@ PROCEDURE CompileTest (x1, x2 : CG.Val;
     ELSIF (u1_info.class = Type.Class.Set) THEN
       CG.Push (x1);
       IF (u1_info.size <= Target.Integer.size) THEN
-        CG.Load_indirect (CG.Type.Word, 0, Target.Integer.size);
+        CG.Load_indirect (Target.Word.cg_type, 0, Target.Integer.size);
       END;
       CG.Push (x2);
       IF (u1_info.size <= Target.Integer.size) THEN
-        CG.Load_indirect (CG.Type.Word, 0, Target.Integer.size);
+        CG.Load_indirect (Target.Word.cg_type, 0, Target.Integer.size);
       END;
-      CG.Set_eq (u1_info.size);
+      CG.Set_compare (u1_info.size, CG.Cmp.EQ);
       CG.If_false (false, freq);
 
     ELSIF (u1_info.class = Type.Class.Procedure)
@@ -537,7 +474,7 @@ PROCEDURE CompileTest (x1, x2 : CG.Val;
       CG.Load_indirect (CG.Type.Addr, 0, Target.Address.size);
       CG.Push (x2);
       CG.Load_indirect (CG.Type.Addr, 0, Target.Address.size);
-      CG.If_ne (false, CG.Type.Addr, freq);
+      CG.If_compare (CG.Type.Addr, CG.Cmp.NE, false, freq);
 
     ELSE (* simple scalars *)
       EVAL Type.CheckInfo (t1, u1_info);  (* can't ignore BITS FOR *)
@@ -548,7 +485,7 @@ PROCEDURE CompileTest (x1, x2 : CG.Val;
       CG.Push (x2);
       CG.Boost_alignment (u2_info.alignment);
       CG.Load_indirect (u2_info.stk_type, 0, u2_info.size);
-      CG.If_ne (false, u1_info.stk_type, freq);
+      CG.If_compare (u1_info.stk_type, CG.Cmp.NE, false, freq);
     END;
   END CompileTest;
 
@@ -587,7 +524,7 @@ PROCEDURE GenShapeCheck (p1, p2 : CG.Val;
       ELSE
         CG.Load_integer (Type.Number (i2));
       END;
-      CG.If_ne (false, CG.Type.Int, freq);
+      CG.If_compare (Target.Integer.cg_type, CG.Cmp.NE, false, freq);
 
       IF NOT ArrayType.Split (e1, i1, e1) THEN RETURN END;
       IF NOT ArrayType.Split (e2, i2, e2) THEN RETURN END;
@@ -647,10 +584,10 @@ PROCEDURE GenOpenValueCheck (t1: Type.T;  p1, p2: CG.Val;
     FOR i := 0 TO d1-1 DO
       CG.Push (p1);
       CG.Open_size (i);
-      IF (i # 0) THEN CG.Multiply (CG.Type.Int) END;
+      IF (i # 0) THEN CG.Multiply (Target.Integer.cg_type) END;
     END;
     CG.Load_intt (1);
-    CG.Subtract (CG.Type.Int);
+    CG.Subtract (Target.Integer.cg_type);
     cnt := CG.Pop_temp ();
 
     top := CG.Next_label (2);
@@ -680,14 +617,14 @@ PROCEDURE GenOpenValueCheck (t1: Type.T;  p1, p2: CG.Val;
     (* decrement the count *)
     CG.Push (cnt);
     CG.Load_integer (TInt.One);
-    CG.Subtract (CG.Type.Int);
+    CG.Subtract (Target.Integer.cg_type);
     CG.Store_temp (cnt);
 
     (* test for completion *)
     CG.Set_label (top+1);
     CG.Push (cnt);
     CG.Load_integer (TInt.Zero);
-    CG.If_ge (top, CG.Type.Int, CG.Likely);
+    CG.If_compare (Target.Integer.cg_type, CG.Cmp.GE, top, CG.Likely);
 
     CG.Free (cnt);
   END GenOpenValueCheck;
@@ -730,14 +667,14 @@ PROCEDURE GenFixedValueCheck (t1, i1, e1: Type.T;  p1, p2: CG.Val;
     (* decrement the count *)
     CG.Push (cnt);
     CG.Load_integer (TInt.One);
-    CG.Subtract (CG.Type.Int);
+    CG.Subtract (Target.Integer.cg_type);
     CG.Store_temp (cnt);
 
     (* test for completion *)
     CG.Set_label (top+1);
     CG.Push (cnt);
     CG.Load_integer (TInt.Zero);
-    CG.If_ge (top, CG.Type.Int, CG.Likely);
+    CG.If_compare (Target.Integer.cg_type, CG.Cmp.GE, top, CG.Likely);
 
     CG.Free (cnt);
   END GenFixedValueCheck;
@@ -796,7 +733,7 @@ PROCEDURE CompileSolid (p1, p2: CG.Val;  t1, t2: Type.T;
         CG.Load_indirect (cmp_type, i * chunk_size, chunk_size);
         CG.Push (p2);
         CG.Load_indirect (cmp_type, i * chunk_size, chunk_size);
-        CG.If_ne (false, CG.Type.Word, freq);
+        CG.If_compare (Target.Word.cg_type, CG.Cmp.NE, false, freq);
       END;
 
     ELSE
@@ -819,19 +756,19 @@ PROCEDURE CompileSolid (p1, p2: CG.Val;  t1, t2: Type.T;
       CG.Load_indirect (cmp_type, 0, chunk_size);
 
       (* do the comparison *)
-      CG.If_ne (false, CG.Type.Word, freq);
+      CG.If_compare (Target.Word.cg_type, CG.Cmp.NE, false, freq);
 
       (* decrement the count *)
       CG.Push (cnt);
       CG.Load_integer (TInt.One);
-      CG.Subtract (CG.Type.Int);
+      CG.Subtract (Target.Integer.cg_type);
       CG.Store_temp (cnt);
 
       (* test for completion *)
       CG.Set_label (top+1);
       CG.Push (cnt);
       CG.Load_integer (TInt.Zero);
-      CG.If_ge (top, CG.Type.Int, CG.Likely);
+      CG.If_compare (Target.Integer.cg_type, CG.Cmp.GE, top, CG.Likely);
 
       CG.Free (cnt);
     END;
@@ -885,7 +822,7 @@ PROCEDURE Fold (p: P): Expr.T =
       OR AddressExpr.Compare (e1, e2, s)
       OR SetExpr.Compare (e1, e2, s)
       OR ProcExpr.Compare (e1, e2, s) THEN
-      RETURN Bool.Map[(p.eq) = (s = 0)];
+      RETURN Bool.Map[(p.op = CG.Cmp.EQ) = (s = 0)];
     END;
     RETURN NIL;
   END Fold;

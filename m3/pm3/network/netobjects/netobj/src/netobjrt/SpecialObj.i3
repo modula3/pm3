@@ -18,7 +18,7 @@ INTERFACE SpecialObj;
 IMPORT NetObj, Fingerprint, SpaceID, StubLib, Transport, Thread, WireRep;
 
 TYPE
-  FpTower = REF ARRAY OF Fingerprint.T;
+  FpTower = <*TRANSIENT*> REF ARRAY OF Fingerprint.T;
 
 (* A "Fingerprint" is a hashed representation of a Modula-3 type. 
    Every network object type can be represented by such a hash. The 

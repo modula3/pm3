@@ -8,6 +8,9 @@
 
 import ("formsvbt")
 
+source ("cube-assignment.tex")
+source ("cube-solution.tex")
+
 module          ("R4")
 module          ("R4x4")
 module          ("Cube")
@@ -17,5 +20,5 @@ resource        ("cube.fv")
 bundle          ("CubeBundle")
 
 Program         ("Cube")
-ManPage         ("Cube", 1)
+ManPage         ("Cube","1")
 

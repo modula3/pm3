@@ -66,6 +66,7 @@ PROCEDURE Check (p: P;  VAR cs: Stmt.CheckState) =
     minStep,  maxStep  : Target.Int;
     newMin,   newMax   : Target.Int;
     zz                 : Scope.T;
+    errored            : BOOLEAN := FALSE;
   BEGIN
     Expr.TypeCheck (p.from, cs);
     Expr.TypeCheck (p.limit, cs);
@@ -78,15 +79,19 @@ PROCEDURE Check (p: P;  VAR cs: Stmt.CheckState) =
       (* already an error... *)
       tFrom := ErrType.T;
       tTo := ErrType.T;
+      errored := TRUE;
     ELSIF EnumType.Is (tFrom) THEN
       IF NOT Type.IsEqual (tFrom, tTo, NIL) THEN
         Error.Msg ("\'from\' and \'to\' expressions are incompatible");
+        errored := TRUE;
       END;
     ELSIF (tFrom # Int.T) OR (tTo # Int.T) THEN
       Error.Msg("\'from\' and \'to\' expressions must be compatible ordinals");
+      errored := TRUE;
     END;
     IF  NOT Type.IsSubtype (tStep, Int.T) THEN
       Error.Msg ("\'by\' expression must be an integer");
+      errored := TRUE;
     END;
 
     (* set the type of the control variable *)
@@ -111,6 +116,7 @@ PROCEDURE Check (p: P;  VAR cs: Stmt.CheckState) =
       (* warning suggested by Ernst A. Heinz <heinze@ira.uka.de>
          to catch typos. (March 19, 1995) *)
       Error.Warn (1, "zero \'by\' value in FOR loop");
+      errored := TRUE;
     END;
 
     (* try to tighten up the range of the new index variable *)
@@ -135,12 +141,9 @@ PROCEDURE Check (p: P;  VAR cs: Stmt.CheckState) =
     END;
     Variable.SetBounds (p.var, newMin, newMax);
 
-    IF TInt.LT (newMax, newMin) THEN
+    IF NOT errored AND TInt.LT (newMax, newMin) THEN
       Error.Warn (1, "FOR loop body is unreachable (empty range)");
     END;
-
-    INC (cs.int_ops);
-    (* wimp out and assume that the index variable could overflow... *)
 
     zz := Scope.Push (p.scope);
       Scope.TypeCheck (p.scope, cs);
@@ -224,14 +227,14 @@ PROCEDURE Compile (p: P): Stmt.Outcomes =
       IF Type.IsEqual (type, Int.T, NIL) THEN
         (* use the user's variable *)
         index_copy := FALSE;
-        Variable.CGName (p.var, index, offset);
+        Variable.LocalCGName (p.var, index, offset);
         <*ASSERT offset = 0*>
       ELSE
         (* declare a fresh local variable for the index *)
         (* 'cause small variables may overflow at the end of their ranges *)
         index_copy := TRUE;
         index := CG.Declare_local (M3ID.NoID, Target.Integer.size,
-                                 Target.Integer.align, CG.Type.Int,
+                                 Target.Integer.align, Target.Integer.cg_type,
                                  Type.GlobalUID (Int.T), in_memory := FALSE,
                                  up_level := FALSE, f := CG.Always);
       END;
@@ -248,7 +251,7 @@ PROCEDURE Compile (p: P): Stmt.Outcomes =
       IF (limit = NIL) THEN
         (* declare the local variable *)
         to := CG.Declare_local (M3ID.NoID, Target.Integer.size,
-                                Target.Integer.align, CG.Type.Int,
+                                Target.Integer.align, Target.Integer.cg_type,
                                 Type.GlobalUID (Int.T), in_memory := FALSE,
                                 up_level := FALSE, f := CG.Maybe);
         CG.Push (t_to);
@@ -259,7 +262,7 @@ PROCEDURE Compile (p: P): Stmt.Outcomes =
       IF (step = NIL) THEN
         (* declare the local variable *)
         by := CG.Declare_local (M3ID.NoID, Target.Integer.size,
-                                Target.Integer.align, CG.Type.Int,
+                                Target.Integer.align, Target.Integer.cg_type,
                                 Type.GlobalUID (Int.T), in_memory := FALSE,
                                 up_level := FALSE, f := CG.Maybe);
         CG.Push (t_by);
@@ -302,7 +305,7 @@ PROCEDURE Compile (p: P): Stmt.Outcomes =
         THEN CG.Load_integer (step_val);
         ELSE CG.Load_int (by);
       END;
-      CG.Add (CG.Type.Int);
+      CG.Add (Target.Integer.cg_type);
       CG.Store_int (index);
 
       (* generate the loop test *)
@@ -315,8 +318,8 @@ PROCEDURE Compile (p: P): Stmt.Outcomes =
           ELSE CG.Load_int (to);
         END;
         IF TInt.LE (TInt.Zero, step_val)
-          THEN CG.If_le (l_top, CG.Type.Int, CG.Likely);
-          ELSE CG.If_ge (l_top, CG.Type.Int, CG.Likely);
+          THEN CG.If_compare (Target.Integer.cg_type, CG.Cmp.LE, l_top, CG.Likely);
+          ELSE CG.If_compare (Target.Integer.cg_type, CG.Cmp.GE, l_top, CG.Likely);
         END;
       ELSIF TInt.LE (TInt.Zero, step_min) THEN
         (* positive, variable step value *)
@@ -325,7 +328,7 @@ PROCEDURE Compile (p: P): Stmt.Outcomes =
           THEN CG.Load_integer (limit_val);
           ELSE CG.Load_int (to);
         END;
-        CG.If_le (l_top, CG.Type.Int, CG.Likely);
+        CG.If_compare (Target.Integer.cg_type, CG.Cmp.LE, l_top, CG.Likely);
       ELSIF TInt.LT (step_max, TInt.Zero) THEN
         (* negative, variable step value *)
         CG.Load_int (index);
@@ -333,18 +336,18 @@ PROCEDURE Compile (p: P): Stmt.Outcomes =
           THEN CG.Load_integer (limit_val);
           ELSE CG.Load_int (to);
         END;
-        CG.If_ge (l_top, CG.Type.Int, CG.Likely);
+        CG.If_compare (Target.Integer.cg_type, CG.Cmp.GE, l_top, CG.Likely);
       ELSE (* variable step value *)
         l_less := CG.Next_label (2);
         CG.Load_int (by);
         CG.Load_integer (TInt.Zero);
-        CG.If_lt (l_less, CG.Type.Int, CG.Likely);
+        CG.If_compare (Target.Integer.cg_type, CG.Cmp.LT, l_less, CG.Likely);
         CG.Load_int (index);
         IF (limit # NIL)
           THEN CG.Load_integer (limit_val);
           ELSE CG.Load_int (to);
         END;
-        CG.If_le (l_top, CG.Type.Int, CG.Likely);
+        CG.If_compare (Target.Integer.cg_type, CG.Cmp.LE, l_top, CG.Likely);
         CG.Jump (l_less+1);
         CG.Set_label (l_less);
         CG.Load_int (index);
@@ -352,7 +355,7 @@ PROCEDURE Compile (p: P): Stmt.Outcomes =
           THEN CG.Load_integer (limit_val);
           ELSE CG.Load_int (to);
         END;
-        CG.If_ge (l_top, CG.Type.Int, CG.Likely);
+        CG.If_compare (Target.Integer.cg_type, CG.Cmp.GE, l_top, CG.Likely);
         CG.Set_label (l_less+1);
       END;
 

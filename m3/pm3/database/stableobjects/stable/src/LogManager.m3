@@ -236,6 +236,7 @@ PROCEDURE Recoverable (lm: Default; nm: Pathname.T): BOOLEAN =
 
 PROCEDURE EmptyLog (lm: Default; nm: Pathname.T): BOOLEAN
   RAISES {OSError.E} =
+  VAR log: TEXT;
   BEGIN
     IF NOT lm.recoverable(nm) THEN
       RAISE OSError.E(
@@ -243,9 +244,8 @@ PROCEDURE EmptyLog (lm: Default; nm: Pathname.T): BOOLEAN
                 Atom.FromText(
                   "no checkpointfile for log in " & nm)));
     END;
-    WITH logNm = lm.logfn(nm) DO
-      RETURN NOT TestFile(logNm) OR FS.Status(logNm).size = 0
-    END;
+    log := lm.logfn(nm);
+    RETURN (NOT TestFile(log)) OR (FS.Status(log).size = 0);
   END EmptyLog;
 
 PROCEDURE Dispose (lm: Default; nm: Pathname.T) RAISES {OSError.E} =

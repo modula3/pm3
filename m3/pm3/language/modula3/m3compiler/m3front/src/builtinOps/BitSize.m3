@@ -33,13 +33,13 @@ PROCEDURE Fold (ce: CallExpr.T): Expr.T =
     RETURN DoFold (ce.args[0], 1);
   END Fold;
 
-PROCEDURE DoCheck (name: TEXT;  ce: CallExpr.T;  VAR cs: Expr.CheckState) =
+PROCEDURE DoCheck (name: TEXT;  ce: CallExpr.T;
+                   <*UNUSED*> VAR cs: Expr.CheckState) =
   VAR t: Type.T;   e := ce.args[0];  info: Type.Info;
   BEGIN
     IF Expr.IsDesignator (e) THEN
       (* ok *)
       t := Type.CheckInfo (Expr.TypeOf (e), info);
-      IF (info.class = Type.Class.OpenArray) THEN  INC (cs.int_ops);  END;
     ELSIF TypeExpr.Split (e, t) THEN
       IF OpenArrayType.Is (t) THEN
         Error.Txt (name, "argument cannot be an open array type");
@@ -85,21 +85,21 @@ PROCEDURE DoCompile (e: Expr.T;  unit: INTEGER) =
     FOR i := 0 TO OpenArrayType.OpenDepth (t) - 1 DO
       CG.Push (t_array);
       CG.Open_size (i);
-      IF (i # 0) THEN CG.Multiply (CG.Type.Int) END;
+      IF (i # 0) THEN CG.Multiply (Target.Integer.cg_type) END;
     END;
     CG.Free (t_array);
 
     sz := OpenArrayType.EltPack (t);
     IF (sz MOD unit) = 0 THEN
       CG.Load_intt (sz DIV unit);
-      CG.Multiply (CG.Type.Int);
+      CG.Multiply (Target.Integer.cg_type);
     ELSE (* array elements aren't "unit"-aligned *)
       CG.Load_intt (sz);
-      CG.Multiply (CG.Type.Int);
+      CG.Multiply (Target.Integer.cg_type);
       CG.Load_intt (unit - 1);
-      CG.Add (CG.Type.Int);
+      CG.Add (Target.Integer.cg_type);
       CG.Load_intt (unit);
-      CG.Div (CG.Type.Int, CG.Sign.Positive, CG.Sign.Positive);
+      CG.Div (Target.Integer.cg_type, CG.Sign.Positive, CG.Sign.Positive);
     END;
   END DoCompile;
 
@@ -134,6 +134,7 @@ PROCEDURE Initialize () =
                                  CallExpr.NotBoolean,
                                  CallExpr.NotBoolean,
                                  Fold,
+                                 CallExpr.NoBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

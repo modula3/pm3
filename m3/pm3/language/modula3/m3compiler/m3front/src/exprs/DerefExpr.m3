@@ -65,12 +65,15 @@ PROCEDURE TypeOf (p: P): Type.T =
   END TypeOf;
 
 PROCEDURE Check (p: P;  VAR cs: Expr.CheckState) =
-  VAR ta, target: Type.T;
+  VAR tx, ta, target: Type.T;  err0, err1, warn: INTEGER;
   BEGIN
+    Error.Count (err0, warn);
     Expr.TypeCheck (p.a, cs);
-    ta := Type.Base (Expr.TypeOf (p.a));
+    tx := Expr.TypeOf (p.a);
+    Error.Count (err1, warn);
+    ta := Type.Base (tx);
     target := NIL;
-    IF (ta = ErrType.T) THEN
+    IF ((tx = NIL) OR (tx = ErrType.T)) AND (err0 # err1) THEN
       (* already an error, don't generate any more *)
       target := ErrType.T;
     ELSIF NOT RefType.Split (ta, target) THEN

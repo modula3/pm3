@@ -19,8 +19,6 @@ IMPORT SeqM3AST_AS_Enum_id, SeqM3AST_AS_Fields,
        SeqM3AST_AS_Qual_used_id, SeqM3AST_AS_TYPE_SPEC, M3CTypesMisc;
 IMPORT M3CBackEnd,M3CBackEnd_C;
 
-<* FATAL StubUtils.Error *>
-
 REVEAL Handle = Public BRANDED OBJECT
      netobjTypeSpec: M3AST_AS.TYPE_SPEC;
      wrTypeSpec: M3AST_AS.TYPE_SPEC := NIL;
@@ -131,7 +129,7 @@ PROCEDURE ProcessNetObj(h: Handle;
       | Type.Opaque =>
         StubUtils.Message("WARNING.  This type equivalent to " &
           "NetObj.T.\n       No stubs generated: default stubs exist.");
-      ELSE RAISE StubUtils.Error("Run time error -- shouldn't occur");
+      ELSE StubUtils.Die("AstToType.ProcessNetObj: unsupported type");
       END;
       RETURN 0;
     ELSE
@@ -154,6 +152,7 @@ PROCEDURE InitAstTable(astTable: RefRefTbl.T) =
     EVAL astTable.put(M3CStdTypes.Untraced_Root(),
                       Type.untracedRoot);
     EVAL astTable.put(M3CStdTypes.Char(), Type.char);
+    EVAL astTable.put(M3CStdTypes.WideChar(), Type.widechar);
     EVAL astTable.put(M3CStdTypes.Text(), Type.text);
     EVAL astTable.put(M3CStdTypes.Cardinal(), Type.cardinal);
     EVAL astTable.put(M3CStdTypes.Boolean(), Type.boolean);
@@ -200,6 +199,7 @@ PROCEDURE ProcessM3Type(h: Handle; m3type: M3AST_AS.M3TYPE): Type.T =
           |  M3AST_AS.LongReal_type => t := Type.longreal;
           |  M3AST_AS.Extended_type => t := Type.extended;
           |  M3AST_AS.Integer_type => t := Type.integer;
+          |  M3AST_AS.WideChar_type => t := Type.widechar;
           |  M3AST_AS.Null_type => t := Type.null;
           |  M3AST_AS.RefAny_type => t := Type.refany;
           |  M3AST_AS.Address_type => t := Type.address;
@@ -297,7 +297,7 @@ PROCEDURE ProcessM3Type(h: Handle; m3type: M3AST_AS.M3TYPE): Type.T =
                        ProcessM3Type(h, ref.as_type);
                 |  M3AST_AS.Object_type (ob) => 
                   t := ProcessObject(h, ob, branded, brandName, trace);
-                ELSE RAISE StubUtils.Error("Runtime error -- shouldn't occur");
+                ELSE StubUtils.Die("AstToType.ProcessTypeSpec: unrecognized reference type");
                 END;
               END;
           |  M3AST_AS.Opaque_type (o) => 
@@ -351,7 +351,7 @@ PROCEDURE ProcessM3Type(h: Handle; m3type: M3AST_AS.M3TYPE): Type.T =
                  | M3AST_AS.F_Readonly_id => formals[i].mode := 
                      Type.Mode.Readonly;
                  ELSE
-                   RAISE StubUtils.Error("Run time error -- shouldn't occur");
+                   StubUtils.Die("AstToType.ProcessTypeSpec: unrecognized parameter mode");
                  END;
                  formals[i].outOnly := FALSE;
                    (* Change to depend on  <*OUTPUT*> *)

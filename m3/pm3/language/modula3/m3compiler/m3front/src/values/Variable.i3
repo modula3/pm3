@@ -37,8 +37,8 @@ PROCEDURE Load       (t: T);
 PROCEDURE LoadLValue (t: T);
 PROCEDURE SetLValue  (t: T);
 
-PROCEDURE CGName (t: T;  VAR unit: CG.Var;  VAR offset: INTEGER);
-(* return the back-end address of the variable. *)
+PROCEDURE LocalCGName (t: T;  VAR unit: CG.Var;  VAR offset: INTEGER);
+(* return the back-end address of the non-imported variable 't'. *)
 
 PROCEDURE NeedGlobalInit (t: T): BOOLEAN;
 PROCEDURE InitGlobal (t: T);
@@ -49,5 +49,7 @@ PROCEDURE ParseTrace (): Tracer.T;
 PROCEDURE BindTrace  (t: T;  x: Tracer.T);
 PROCEDURE CheckTrace (x: Tracer.T;  VAR cs: Value.CheckState);
 PROCEDURE ScheduleTrace (t: T);
+
+PROCEDURE Reset ();
 
 END Variable.

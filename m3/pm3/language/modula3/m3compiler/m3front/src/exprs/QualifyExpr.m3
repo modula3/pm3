@@ -315,12 +315,12 @@ PROCEDURE Compile (p: P) =
         Type.Compile (p.holder);
         Type.Compile (p.objType);
         Method.SplitX (p.obj, method);
-        Type.LoadInfo (p.objType, M3RT.TC_defaultMethods, addr := TRUE);
+        Type.LoadInfo (p.objType, M3RT.OTC_defaultMethods, addr := TRUE);
         obj_offset := ObjectType.MethodOffset (p.holder);
         IF (obj_offset >= 0) THEN
           INC (method.offset, obj_offset);
         ELSE
-          Type.LoadInfo (p.holder, M3RT.TC_methodOffset);
+          Type.LoadInfo (p.holder, M3RT.OTC_methodOffset);
           CG.Index_bytes (Target.Byte);
         END;
         CG.Boost_alignment (Target.Address.align);
@@ -342,8 +342,8 @@ PROCEDURE Compile (p: P) =
         IF (obj_offset >= 0) THEN
           INC (field.offset, obj_offset);
         ELSE
-          CG.Check_nil ();
-          Type.LoadInfo (p.holder, M3RT.TC_dataOffset);
+          CG.Check_nil (CG.RuntimeError.BadMemoryReference);
+          Type.LoadInfo (p.holder, M3RT.OTC_dataOffset);
           CG.Index_bytes (Target.Byte);
         END;
         CG.Add_offset (field.offset);
@@ -359,7 +359,7 @@ PROCEDURE Compile (p: P) =
         IF (obj_offset >= 0) THEN
           INC (method.offset, obj_offset);
         ELSE
-          Type.LoadInfo (p.holder, M3RT.TC_methodOffset);
+          Type.LoadInfo (p.holder, M3RT.OTC_methodOffset);
           CG.Index_bytes (Target.Byte);
         END;
         CG.Boost_alignment (Target.Address.align);
@@ -387,8 +387,8 @@ PROCEDURE CompileLV (p: P) =
         IF (obj_offset >= 0) THEN
           INC (field.offset, obj_offset);
         ELSE
-          CG.Check_nil ();
-          Type.LoadInfo (p.holder, M3RT.TC_dataOffset);
+          CG.Check_nil (CG.RuntimeError.BadMemoryReference);
+          Type.LoadInfo (p.holder, M3RT.OTC_dataOffset);
           CG.Index_bytes (Target.Byte);
         END;
         CG.Add_offset (field.offset);

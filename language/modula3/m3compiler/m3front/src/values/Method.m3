@@ -100,15 +100,28 @@ PROCEDURE ResolveDefault (t: T) =
     END;
   END ResolveDefault;
 
-PROCEDURE IsEqual (va, vb: Value.T;  x: Type.Assumption): BOOLEAN =
+PROCEDURE IsEqualList (a, b: Value.T;  x: Type.Assumption;
+                       types: BOOLEAN): BOOLEAN =
+  BEGIN
+    WHILE (a # NIL) AND (b # NIL) DO
+      IF NOT IsEqual (a, b, x, types) THEN RETURN FALSE END;
+      a := a.next;  b := b.next;
+    END;
+    RETURN (a = NIL) AND (b = NIL);
+  END IsEqualList;
+
+PROCEDURE IsEqual (va, vb: Value.T;  x: Type.Assumption; types: BOOLEAN): BOOLEAN =
   VAR a: T := va;  b: T := vb;
   BEGIN
+    IF (a = NIL) OR (b = NIL) OR (a.name # b.name) OR (a.override # b.override) THEN
+      RETURN FALSE;
+    END;
+    IF NOT types THEN RETURN TRUE; END;
+
+    (* now, we'll do the harder type-based checks... *)
     ResolveDefault (a);
     ResolveDefault (b);
-    RETURN (a # NIL) AND (b # NIL)
-       AND (a.name = b.name)
-       AND (a.override = b.override)
-       AND Type.IsEqual (a.signature, b.signature, x)
+    RETURN Type.IsEqual (a.signature, b.signature, x)
        AND (Value.Base (a.dfault) = Value.Base (b.dfault)) (*CHEAT, BUG!*);
   END IsEqual;
 

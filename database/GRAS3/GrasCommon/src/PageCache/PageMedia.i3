@@ -7,8 +7,11 @@ INTERFACE PageMedia;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:28  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:44  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:28  hosking
+    Import of GRAS3 1.1
 
     Revision 1.1  1996/01/31 10:04:53  rbnix
     	Initial version for subsystem PageCache.
@@ -28,7 +31,8 @@ INTERFACE PageMedia;
 
 IMPORT BasePageMedia AS Super;
 IMPORT
-  PageHandle;
+  PageHandle,
+  PageData;
 
 
 <* PRAGMA SPEC *>
@@ -42,19 +46,21 @@ IMPORT
 TYPE
   T                     = Super.T OBJECT
     METHODS
-      loadData		(        handle		:PageHandle.T) := NIL;
+      loadData		(         handle         :PageHandle.T;
+                         VAR      data           :PageData.T) := NIL;
         <*
           SPEC
-          MODIFIES handle.data
-          ENSURES handle.data' = storage[handle.pageNo]
+          MODIFIES data
+          ENSURES data' = storage[handle.pageNo]
         *>
 
-      dropData		(        handle		:PageHandle.T) := NIL;
+      dropData		(         handle         :PageHandle.T;
+                         READONLY data           :PageData.T) := NIL;
         <*
           SPEC
-          REQUIRES handle.isChanged <==> (handle.data # storage[handle.pageNo])
+          REQUIRES handle.isChanged <==> (data # storage[handle.pageNo])
           MODIFIES storage[handle.pageNo]
-          ENSURE storage[handle.pageNo]' = handle.data
+          ENSURES storage[handle.pageNo]' = data
         *>
     END;
       

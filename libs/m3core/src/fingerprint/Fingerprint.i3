@@ -63,6 +63,10 @@ PROCEDURE Equal(READONLY fp1, fp2: T): BOOLEAN;
 PROCEDURE Hash(READONLY fp: T): INTEGER;
 (* Return a hash code for "fp". *)
 
+PROCEDURE Compare(fp1, fp2: T): [-1..1];
+(* Return -1 if "fp1" occurs before "fp2", 0 if "Equal(fp1, fp2)", +1 if
+   "fp1" occurs after "fp2" in lexicographic order. *)
+
 END Fingerprint.
 
 (* <H4> The probabilistic guarantee. </H4>

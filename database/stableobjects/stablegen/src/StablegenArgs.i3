@@ -20,6 +20,6 @@ PROCEDURE Get(VAR object: Type.Qid; VAR reveal, impl, rep: TEXT)
    interface containing the most specific revealation of
    "object". "rep" is the name of the instatiated "StableRep" generic
    module. The exception is raised if the parameters are unusable
-   (i.e. invalid or ``-help'') *)
+   (i.e., invalid or ``-help'') *)
   
 END StablegenArgs.

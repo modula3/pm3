@@ -9,7 +9,7 @@
 MODULE ConcatExpr;
 
 IMPORT CG, Expr, ExprRep, Type, Textt, Procedure, Target;
-IMPORT TextExpr, AssignStmt, Host, Narrow, Runtime, Error;
+IMPORT TextExpr, AssignStmt, Host, NarrowExpr, RunTyme, Error;
 
 TYPE
   P = ExprRep.Tab BRANDED "ConcatExpr.P" OBJECT
@@ -58,8 +58,8 @@ PROCEDURE Check (p: P;  VAR cs: Expr.CheckState) =
     tb := Type.Base (Expr.TypeOf (p.b));
 
     IF Type.IsAssignable (Textt.T, ta) AND Type.IsAssignable (Textt.T, tb) THEN
-      AssignStmt.Check (Textt.T, p.a, cs);
-      AssignStmt.Check (Textt.T, p.b, cs);
+      p.a := CheckArg (Textt.T, ta, p.a, cs);
+      p.b := CheckArg (Textt.T, tb, p.b, cs);
     ELSE
       p.type := Expr.BadOperands ("\'&\'", ta, tb);
     END;
@@ -69,8 +69,21 @@ PROCEDURE Check (p: P;  VAR cs: Expr.CheckState) =
       EVAL Fold (p); (* try folding all concatenations *)
     END;
 
-    IF (p.folded # NIL) THEN Expr.TypeCheck (p.folded, cs) END;
+    IF (p.folded # NIL) THEN
+      Expr.TypeCheck (p.folded, cs);
+    END;
   END Check;
+
+PROCEDURE CheckArg (tlhs, trhs: Type.T;  e: Expr.T;
+                    VAR cs: Expr.CheckState): Expr.T =
+  BEGIN
+    AssignStmt.Check (tlhs, e, cs);
+    IF Host.doNarrowChk AND NOT Type.IsSubtype (trhs, tlhs) THEN
+      e := NarrowExpr.New (e, tlhs);
+      Expr.TypeCheck (e, cs);
+    END;
+    RETURN e;
+  END CheckArg;
 
 PROCEDURE Prep (p: P) =
   VAR proc: Procedure.T;
@@ -80,24 +93,20 @@ PROCEDURE Prep (p: P) =
     ELSE
       Expr.Prep (p.a);
       Expr.Prep (p.b);
-      proc := Runtime.LookUpProc (Runtime.Hook.Concat);
+      proc := RunTyme.LookUpProc (RunTyme.Hook.Concat);
       Procedure.StartCall (proc);
       IF Target.DefaultCall.args_left_to_right THEN
         Expr.Compile (p.a);
-        IF Host.doNarrowChk THEN Narrow.Emit (Textt.T, Expr.TypeOf (p.a)) END;
         CG.Pop_param (CG.Type.Addr);
         Expr.Compile (p.b);
-        IF Host.doNarrowChk THEN Narrow.Emit (Textt.T, Expr.TypeOf (p.b)) END;
         CG.Pop_param (CG.Type.Addr);
       ELSE
         Expr.Compile (p.b);
-        IF Host.doNarrowChk THEN Narrow.Emit (Textt.T, Expr.TypeOf (p.b)) END;
         CG.Pop_param (CG.Type.Addr);
         Expr.Compile (p.a);
-        IF Host.doNarrowChk THEN Narrow.Emit (Textt.T, Expr.TypeOf (p.a)) END;
         CG.Pop_param (CG.Type.Addr);
       END;
-      p.tmp := Procedure.EmitCall (proc);
+      p.tmp := Procedure.EmitValueCall (proc);
     END;
   END Prep;
 

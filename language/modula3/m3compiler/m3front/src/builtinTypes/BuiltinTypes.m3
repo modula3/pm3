@@ -8,8 +8,9 @@
 
 MODULE BuiltinTypes;
 
-IMPORT Int, Card, Bool, Reel, LReel, EReel, CChar, Addr;
+IMPORT Int, Card, Bool, Reel, LReel, EReel, Charr, Addr;
 IMPORT Null, Reff, Textt, Mutex, ErrType, ObjectRef, ObjectAdr;
+IMPORT WCharr, ReffTransient, ObjectTransient;
 
 
 PROCEDURE Initialize () =
@@ -23,14 +24,17 @@ PROCEDURE Initialize () =
     Reel.Initialize ();
     LReel.Initialize ();
     EReel.Initialize ();
-    CChar.Initialize ();
+    Charr.Initialize ();
     Null.Initialize ();
     Addr.Initialize ();
     Reff.Initialize ();
+    ReffTransient.Initialize ();
     ObjectRef.Initialize ();
     ObjectAdr.Initialize ();
+    ObjectTransient.Initialize ();
     Textt.Initialize ();
     Mutex.Initialize ();
+    WCharr.Initialize ();
   END Initialize;
 
 BEGIN

@@ -10,7 +10,7 @@ INTERFACE OpenArrayType;
 
 IMPORT Type, CG;
 
-PROCEDURE New (element: Type.T): Type.T;
+PROCEDURE New (transient: BOOLEAN; element: Type.T): Type.T;
 
 PROCEDURE Is (t: Type.T): BOOLEAN;
 (* Return TRUE iff 't' is an open array type *)

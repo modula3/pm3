@@ -7,8 +7,11 @@ MODULE GraphEventHandler;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:32  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:46  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:32  hosking
+    Import of GRAS3 1.1
 
     Revision 1.1  1997/11/12 15:23:57  roland
     Specialized event handler subsystem for PersistentGraphs
@@ -19,8 +22,7 @@ MODULE GraphEventHandler;
 *)
 (***************************************************************************)
 
-IMPORT Trigger, TriggerStorage, Action, Event, ContextSet, Node,
-       Transaction;
+IMPORT Trigger, TriggerStorage, Action, Event, ContextSet, Node, Txn;
 IMPORT EventHandler AS Super;
 IMPORT EventHandlerClass, GraphTriggerStorage, GraphActivatedActions;
 
@@ -44,7 +46,8 @@ PROCEDURE NewTransactionUnit (eh: T; tu: CARDINAL) =
     WHILE tu > LAST(eh.aa^) DO
       VAR
         len := NUMBER(eh.aa^);
-        n   := NEW(REF ARRAY OF EventHandlerClass.ActionStorage, 2 * len);
+        n   := NEW(<*TRANSIENT*> REF ARRAY OF EventHandlerClass.ActionStorage,
+                   2 * len);
       BEGIN
         SUBARRAY(n^, 0, len) := eh.aa^;
         FOR i := len TO 2 * len - 1 DO
@@ -63,7 +66,7 @@ PROCEDURE NewTransactionUnit (eh: T; tu: CARDINAL) =
 
 PROCEDURE NotifyNodeDeletion (eh   : T;
                               tu   : CARDINAL;
-                              level: Transaction.Level;
+                              level: Txn.Level;
                               node : Node.T             ) =
   BEGIN
     NARROW(eh.aa^[tu][Trigger.CouplingMode.Immediate],

@@ -20,6 +20,12 @@ PROCEDURE Init () =
     CL_frame  := CL_proc   + AP;   (* : ADDRESS *)
     CL_SIZE   := CL_frame  + AP;
 
+    (* exception descriptors *)
+    ED_uid      := 0;                (* : INTEGER (ExceptionUID) *)
+    ED_name     := ED_uid + IP;      (* : ADDRESS (String) *)
+    ED_implicit := ED_name + AP;     (* : INTEGER (boolean) *)
+    ED_SIZE     := ED_implicit + IP;
+
     (* exception scope descriptors *)
     EX_class       := 0;                   (* : CHAR(HandlerClass)*)
     EX_outermost   := EX_class + CP;       (* : CHAR(BOOLEAN)     *)
@@ -32,9 +38,16 @@ PROCEDURE Init () =
     EX_SIZE        := EX_offset + IP;
 
     (* exception info record *)
-    EI_exception   := 0;                   (* : ADDRESS *)
-    EI_arg         := EI_exception + AP;   (* : ADDRESS *)
-    EI_SIZE        := EI_arg + AP;
+    EA_exception   := 0;                   (* : ADDRESS *)
+    EA_arg         := EA_exception + AP;   (* : ADDRESS *)
+    EA_module      := EA_arg + AP;         (* : ADDRESS *)
+    EA_line        := EA_module + AP;      (* : INTEGER *)
+    EA_pc          := EA_line + IP;        (* : ADDRESS *)
+    EA_info0       := EA_pc + AP;          (* : ADDRESS *)
+    EA_info1       := EA_info0 + AP;       (* : ADDRESS *)
+    EA_un_except   := EA_info1 + AP;       (* : ADDRESS *)
+    EA_un_arg      := EA_un_except + AP;   (* : ADDRESS *)
+    EA_SIZE        := EA_un_arg + AP;
 
     (* all exception frames  (== all of a RaisesNone frame) *)
     EF_next        := 0;                   (* : ADDRESS *)
@@ -43,9 +56,8 @@ PROCEDURE Init () =
 
     (* Except, ExceptElse, and Finally  frames *)
     EF1_handles    := EF_SIZE;             (* : ADDRESS *)
-    EF1_exception  := EF1_handles + AP;    (* : ADDRESS *)
-    EF1_arg        := EF1_exception + AP;  (* : ADDRESS *)
-    EF1_jmpbuf     := RoundUp (EF1_arg + AP, Target.Jumpbuf_align);
+    EF1_info       := EF1_handles + AP;    (* : RTException.Activation *)
+    EF1_jmpbuf     := RoundUp (EF1_info + EA_SIZE, Target.Jumpbuf_align);
                                            (* : jmp_buf *)
     EF1_SIZE       := EF1_jmpbuf + Target.Jumpbuf_size;
     EF1_ALIGN      := MAX (Target.Address.align, Target.Jumpbuf_align);
@@ -53,7 +65,8 @@ PROCEDURE Init () =
     (* FinallyProc frames *)
     EF2_handler    := EF_SIZE;            (* : ADDRESS (PROC) *)
     EF2_frame      := EF2_handler + AP;   (* : ADDRESS *)
-    EF2_SIZE       := EF2_frame + AP;
+    EF2_info       := EF2_frame + AP;     (* : ADDRESS *)
+    EF2_SIZE       := EF2_info + AP;
 
     (* Raises frames *)
     EF3_raises     := EF_SIZE;            (* : ADDRESS *)
@@ -65,32 +78,35 @@ PROCEDURE Init () =
 
     (* typecell offsets *)
     TC_typecode       := 0;                      (* : INTEGER *)
-    TC_lastSubTypeTC  := TC_typecode       + IP; (* : INTEGER *)
-    TC_selfID         := TC_lastSubTypeTC  + IP; (* : INTEGER *)
+    TC_selfID         := TC_typecode       + IP; (* : INTEGER *)
     TC_fp             := TC_selfID         + IP; (* : 64-bit fingerprint *)
-    TC_traced         := TC_fp             + 64; (* : BOOLEAN *)
-    TC_dataOffset     := TC_traced         + IP; (* : INTEGER *)
-    TC_dataSize       := TC_dataOffset     + IP; (* : INTEGER *)
-    TC_dataAlignment  := TC_dataSize       + IP; (* : INTEGER *)
-    TC_methodOffset   := TC_dataAlignment  + IP; (* : INTEGER *)
-    TC_methodSize     := TC_methodOffset   + IP; (* : INTEGER *)
-    TC_nDimensions    := TC_methodSize     + IP; (* : INTEGER *)
-    TC_elementSize    := TC_nDimensions    + IP; (* : INTEGER *)
-    TC_defaultMethods := TC_elementSize    + IP; (* : ADDRESS *)
-    TC_type_map       := TC_defaultMethods + AP; (* : ADDRESS *)
+    TC_traced         := TC_fp             + 64; (* : BYTE = ORD (BOOLEAN) *)
+    TC_kind           := TC_traced         + 8;  (* : BYTE = ORD (TypeKind) *)
+    TC_link_state     := TC_kind           + 8;  (* : BYTE *)
+    TC_dataAlignment  := TC_link_state     + 8;  (* : BYTE *)
+    TC_dataSize       := TC_traced         + IP; (* : INTEGER *)
+    TC_type_map       := TC_dataSize       + IP; (* : ADDRESS *)
     TC_gc_map         := TC_type_map       + AP; (* : ADDRESS *)
     TC_type_desc      := TC_gc_map         + AP; (* : ADDRESS *)
     TC_initProc       := TC_type_desc      + AP; (* : PROC()  *)
-    TC_linkProc       := TC_initProc       + AP; (* : PROC()  *)
-    TC_parentID       := TC_linkProc       + AP; (* : INTEGER *)
-    TC_parent         := TC_parentID       + IP; (* : ADDRESS *)
-    TC_children       := TC_parent         + AP; (* : ADDRESS *)
-    TC_sibling        := TC_children       + AP; (* : ADDRESS *)
-    TC_brand          := TC_sibling        + AP; (* : ADDRESS *)
+    TC_brand          := TC_initProc       + AP; (* : ADDRESS *)
     TC_name           := TC_brand          + AP; (* : ADDRESS *)
     TC_next           := TC_name           + AP; (* : ADDRESS *)
     TC_SIZE           := TC_next           + AP;
     TC_ALIGN          := MAX (Target.Address.align, Target.Integer.align);
+
+    OTC_parentID       := TC_SIZE;                 (* : INTEGER *)
+    OTC_linkProc       := OTC_parentID       + IP; (* : PROC()  *)
+    OTC_dataOffset     := OTC_linkProc       + AP; (* : INTEGER *)
+    OTC_methodOffset   := OTC_dataOffset     + IP; (* : INTEGER *)
+    OTC_methodSize     := OTC_methodOffset   + IP; (* : INTEGER *)
+    OTC_defaultMethods := OTC_methodSize     + IP; (* : ADDRESS *)
+    OTC_parent         := OTC_defaultMethods + AP; (* : ADDRESS *)
+    OTC_SIZE           := OTC_parent         + AP;
+
+    ATC_nDimensions    := TC_SIZE;                (* : INTEGER *)
+    ATC_elementSize    := ATC_nDimensions   + IP; (* : INTEGER *)
+    ATC_SIZE           := ATC_elementSize   + IP;
 
     RV_lhs_id  := 0;                  (* : INTEGER *)
     RV_rhs_id  := RV_lhs_id + IP;     (* : INTEGER *)
@@ -112,15 +128,25 @@ PROCEDURE Init () =
     MI_try_scopes     := MI_proc_info + AP;      (* : ADDRESS *)
     MI_var_map        := MI_try_scopes + AP;     (* : ADDRESS *)
     MI_gc_map         := MI_var_map + AP;        (* : ADDRESS *)
-    MI_link           := MI_gc_map + AP;         (* : ADDRESS *)
-    MI_main           := MI_link + AP;           (* : ADDRESS *)
-    MI_SIZE           := MI_main + AP;
+    MI_imports        := MI_gc_map + AP;         (* : ADDRESS *)
+    MI_link_state     := MI_imports + AP;        (* : INTEGER *)
+    MI_binder         := MI_link_state + IP;     (* : PROC()  *)
+    MI_SIZE           := MI_binder + AP;
+
+    (* offsets and size of an RT0.ImportInfo record *)
+    II_import := 0;               (* : ADDRESS (ModulePtr) *)
+    II_binder := II_import + AP;  (* : ADDRESS (Binder)    *)
+    II_next   := II_binder + AP;  (* : ADDRESS (ImportPtr) *)
+    II_SIZE   := II_next + AP;
 
     (* offsets and size of an RT0.ProcInfo record *)
-    PI_proc      := 0;                (*: ADDRESS *)
-    PI_name      := PI_proc + AP;     (*: ADDRESS *)
-    PI_export    := PI_name + AP;     (*: ADDRESS *)
-    PI_SIZE      := PI_export + AP;
+    PI_proc   := 0;               (* : ADDRESS *)
+    PI_name   := PI_proc + AP;    (* : ADDRESS *)
+    PI_SIZE   := PI_name + AP;
+
+    (* offsets in a MUTEX method list *)
+    MUTEX_acquire := 0 * AP;          (*: PROC() *)
+    MUTEX_release := 1 * AP;          (*: PROC() *)
   END Init;
 
 PROCEDURE RoundUp (a, b: INTEGER): INTEGER =

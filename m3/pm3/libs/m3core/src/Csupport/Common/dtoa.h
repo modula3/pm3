@@ -265,8 +265,8 @@ extern double rnd_prod(double, double), rnd_quot(double, double);
 #define Kmax 15
 
 #ifdef __cplusplus
-extern "C" double strtod(const char *s00, char **se);
-extern "C" char *dtoa(double d, int mode, int ndigits,
+extern "C" double m3_strtod(const char *s00, char **se);
+extern "C" char *m3_dtoa(double d, int mode, int ndigits,
                         int *decpt, int *sign, char **rve);
 #endif
 
@@ -1114,7 +1114,7 @@ static double tinytens[] = { 1e-16, 1e-32 };
 #endif
 
  double
-strtod
+m3_strtod
 #ifdef KR_headers
         (s00, se) CONST char *s00; char **se;
 #else
@@ -1783,7 +1783,7 @@ quorem
 
 
 /*
-char *dtoa (d, mode, ndigits, decpt, sign, rve)
+char *m3_dtoa (d, mode, ndigits, decpt, sign, rve)
  double d; int mode, ndigits, *decpt, *sign; char **rve;
 {
   char *res = (char*) ecvt (d, ndigits, decpt, sign);
@@ -1794,7 +1794,7 @@ char *dtoa (d, mode, ndigits, decpt, sign, rve)
 */
 
  char *
-dtoa
+m3_dtoa
 #ifdef KR_headers
         (d, mode, ndigits, decpt, sign, rve)
         double d; int mode, ndigits, *decpt, *sign; char **rve;

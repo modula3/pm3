@@ -26,6 +26,14 @@ VAR
 CONST
   CL_marker_value = -1;
 
+(*------------------------------------------------------ exception values ---*)
+
+VAR
+  ED_uid      : CARDINAL;  (* : INTEGER (ExceptionUID) *)
+  ED_name     : CARDINAL;  (* : ADDRESS (String) *)
+  ED_implicit : CARDINAL;  (* : INTEGER (boolean) *)
+  ED_SIZE     : CARDINAL;
+
 (*------------------------------------------------------ exception support --*)
 (* Exception scope descriptors for systems with stack walkers. *)
 
@@ -46,10 +54,17 @@ VAR
   EX_offset      : CARDINAL; (* : INTEGER           *)
   EX_SIZE        : CARDINAL;
 
-VAR
-  EI_exception   : CARDINAL; (* : ADDRESS *)
-  EI_arg         : CARDINAL; (* : ADDRESS *)
-  EI_SIZE        : CARDINAL;
+VAR (* RTException.Activation *)
+  EA_exception   : CARDINAL; (* : ADDRESS *)
+  EA_arg         : CARDINAL; (* : ADDRESS *)
+  EA_module      : CARDINAL; (* : ADDRESS *)
+  EA_line        : CARDINAL; (* : INTEGER *)
+  EA_pc          : CARDINAL; (* : ADDRESS *)
+  EA_info0       : CARDINAL; (* : ADDRESS *)
+  EA_info1       : CARDINAL; (* : ADDRESS *)
+  EA_un_except   : CARDINAL; (* : ADDRESS *)
+  EA_un_arg      : CARDINAL; (* : ADDRESS *)
+  EA_SIZE        : CARDINAL;
 
 (*------------------------------------------------------- exception frames --*)
 (* Explicit exception frames for systems without stack walkers.  *)
@@ -61,8 +76,7 @@ VAR (* all frames  (== all of a RaisesNone frame) *)
 
 VAR (* Except, ExceptElse, and Finally  frames *)
   EF1_handles    : CARDINAL;  (* : ADDRESS *)
-  EF1_exception  : CARDINAL;  (* : ADDRESS *)
-  EF1_arg        : CARDINAL;  (* : ADDRESS *)
+  EF1_info       : CARDINAL;  (* : RTException.Activation *)
   EF1_jmpbuf     : CARDINAL;  (* : jmp_buf *)
   EF1_SIZE       : CARDINAL;
   EF1_ALIGN      : CARDINAL;  (* because of the jmp_buf alignment... *)
@@ -70,6 +84,7 @@ VAR (* Except, ExceptElse, and Finally  frames *)
 VAR (* FinallyProc frames *)
   EF2_handler    : CARDINAL;  (* : ADDRESS (PROC) *)
   EF2_frame      : CARDINAL;  (* : ADDRESS *)
+  EF2_info       : CARDINAL;  (* : ADDRESS *)
   EF2_SIZE       : CARDINAL;
 
 VAR (* Raises frames *)
@@ -83,34 +98,43 @@ VAR (* Lock frames *)
 (*---------------------------------------------------- runtime type system --*)
 (* Reference types are represented by global variables call "typecells". *)
 
+TYPE
+  TypeKind = { Unknown, Ref, Obj, Array };
+  TraceKind = { Untraced, Traced, Transient };
+
 VAR (* typecell offsets *)
   TC_typecode       : CARDINAL; (* : INTEGER *)
-  TC_lastSubTypeTC  : CARDINAL; (* : INTEGER *)
   TC_selfID         : CARDINAL; (* : INTEGER *)
   TC_fp             : CARDINAL; (* : 64-bit fingerprint *)
-  TC_traced         : CARDINAL; (* : BOOLEAN *)
-  TC_dataOffset     : CARDINAL; (* : INTEGER *)
+  TC_traced         : CARDINAL; (* : BYTE = ORD (BOOLEAN) *)
+  TC_kind           : CARDINAL; (* : BYTE = ORD (TypeKind) *)
+  TC_link_state     : CARDINAL; (* : BYTE *)
+  TC_dataAlignment  : CARDINAL; (* : BYTE *)
   TC_dataSize       : CARDINAL; (* : INTEGER *)
-  TC_dataAlignment  : CARDINAL; (* : INTEGER *)
-  TC_methodOffset   : CARDINAL; (* : INTEGER *)
-  TC_methodSize     : CARDINAL; (* : INTEGER *)
-  TC_nDimensions    : CARDINAL; (* : INTEGER *)
-  TC_elementSize    : CARDINAL; (* : INTEGER *)
-  TC_defaultMethods : CARDINAL; (* : ADDRESS *)
   TC_type_map       : CARDINAL; (* : ADDRESS *)
   TC_gc_map         : CARDINAL; (* : ADDRESS *)
   TC_type_desc      : CARDINAL; (* : ADDRESS *)
   TC_initProc       : CARDINAL; (* : PROC()  *)
-  TC_linkProc       : CARDINAL; (* : PROC()  *)
-  TC_parentID       : CARDINAL; (* : INTEGER *)
-  TC_parent         : CARDINAL; (* : ADDRESS *)
-  TC_children       : CARDINAL; (* : ADDRESS *)
-  TC_sibling        : CARDINAL; (* : ADDRESS *)
   TC_brand          : CARDINAL; (* : ADDRESS *)
   TC_name           : CARDINAL; (* : ADDRESS *)
   TC_next           : CARDINAL; (* : ADDRESS *)
   TC_SIZE           : CARDINAL;
   TC_ALIGN          : CARDINAL;
+
+VAR (* OBJECT typecells *)
+  OTC_parentID       : CARDINAL; (* : INTEGER *)
+  OTC_linkProc       : CARDINAL; (* : PROC()  *)
+  OTC_dataOffset     : CARDINAL; (* : INTEGER *)
+  OTC_methodOffset   : CARDINAL; (* : INTEGER *)
+  OTC_methodSize     : CARDINAL; (* : INTEGER *)
+  OTC_defaultMethods : CARDINAL; (* : ADDRESS *)
+  OTC_parent         : CARDINAL; (* : ADDRESS *)
+  OTC_SIZE           : CARDINAL;
+
+VAR (* REF ARRAY typecells *)
+  ATC_nDimensions    : CARDINAL; (* : INTEGER *)
+  ATC_elementSize    : CARDINAL; (* : INTEGER *)
+  ATC_SIZE           : CARDINAL;
 
 VAR (* opaque revelations *)
   RV_lhs_id         : CARDINAL; (* : INTEGER *)
@@ -137,15 +161,21 @@ VAR (* offsets and size of an RT0.ModuleInfo record *)
   MI_try_scopes     : CARDINAL; (* : ADDRESS *)
   MI_var_map        : CARDINAL; (* : ADDRESS *)
   MI_gc_map         : CARDINAL; (* : ADDRESS *)
-  MI_link           : CARDINAL; (* : ADDRESS *)
-  MI_main           : CARDINAL; (* : ADDRESS *)
+  MI_imports        : CARDINAL; (* : ADDRESS *)
+  MI_link_state     : CARDINAL; (* : INTEGER *)
+  MI_binder         : CARDINAL; (* : PROC()  *)
   MI_SIZE           : CARDINAL;
 
+VAR (* offsets and size of an RT0.ImportInfo record *)
+  II_import : CARDINAL;  (* : ADDRESS (ModulePtr) *)
+  II_binder : CARDINAL;  (* : ADDRESS (Binder)    *)
+  II_next   : CARDINAL;  (* : ADDRESS (ImportPtr) *)
+  II_SIZE   : CARDINAL;
+
 VAR (* offsets and size of an RT0.ProcInfo record *)
-  PI_proc       : CARDINAL; (*: ADDRESS *)
-  PI_name       : CARDINAL; (*: ADDRESS *)
-  PI_export     : CARDINAL; (*: ADDRESS *)
-  PI_SIZE       : CARDINAL;
+  PI_proc   : CARDINAL; (* : ADDRESS *)
+  PI_name   : CARDINAL; (* : ADDRESS *)
+  PI_SIZE   : CARDINAL;
 
 (*----------------------------------------------------------- ref headers ---*)
 
@@ -156,6 +186,10 @@ CONST (* bit offsets and sizes of the fields within a REF's header word *)
 CONST (* builtin, constant typecodes *)
   NULL_typecode = 0;
   TEXT_typecode = 1;
+
+VAR (* offsets in a MUTEX method list *)
+  MUTEX_acquire : CARDINAL; (*: PROC() *)
+  MUTEX_release : CARDINAL; (*: PROC() *)
 
 (*-------------------------------------------------------- initialization ---*)
 

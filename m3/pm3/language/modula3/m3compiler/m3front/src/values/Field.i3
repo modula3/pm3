@@ -16,6 +16,7 @@ TYPE
     offset : INTEGER;  (* bit offset from beginning of record *)
     type   : Type.T;
     dfault : Expr.T;
+    transient : BOOLEAN;
   END;
 
 PROCEDURE New (READONLY info: Info): Value.T;
@@ -30,6 +31,14 @@ PROCEDURE Split (field: Value.T;  VAR info: Info);
 PROCEDURE EmitDeclaration (field: Value.T);
 (* emit the C struct member or bit-field for 'field' *)
 
-PROCEDURE IsEqual (va, vb: Value.T;  x: Type.Assumption): BOOLEAN;
+PROCEDURE IsEqualList (va, vb: Value.T;  x: Type.Assumption;
+                       types: BOOLEAN): BOOLEAN;
+(* Returns "TRUE" if the two lists of values represented by "va" and "vb"
+   have the same length and for each pair of values "a" and "b",
+   "IsEqual(a, b, x, types)" returns "TRUE".  Otherwise, returns "FALSE". *)
+
+PROCEDURE IsEqual (va, vb: Value.T;  x: Type.Assumption;  types: BOOLEAN): BOOLEAN;
+(* If "types" is "FALSE", only the surface syntax (name & field index) are
+   checked.  Otherwise, the field types and default values are checked too. *)
 
 END Field.

@@ -7,8 +7,11 @@ INTERFACE EntryPort;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:27  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:43  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:27  hosking
+    Import of GRAS3 1.1
 
     Revision 1.9  1997/03/20 16:43:29  renehuel
     These files implement the new gras nameserver.
@@ -67,7 +70,8 @@ INTERFACE EntryPort;
  ressources shares the attributes baseName, access.
  | ------------------------------------------------------------------------
  *)
-IMPORT Pathname, TextSeq, Thread, NetObj, PageFile, Access, Termination,
+IMPORT Pathname, TextTransientSeq AS TextSeq, Thread, NetObj, PageFile,
+       Access, Termination,
        CommunicationPort, CallbackPort, ClientInfo, ClientInfoSeq;
 
 TYPE

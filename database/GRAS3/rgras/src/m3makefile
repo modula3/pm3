@@ -1,5 +1,3 @@
-m3_option("-g -keep")
-
 % CM3 or SRC ?
 CM3 = "cm3"
 SRC = "src"
@@ -7,7 +5,7 @@ PM3 = "pm3"
 
 % Build options
 if not defined("COMPILER")
-  COMPILER = SRC
+  COMPILER = PM3
 end
 
 import("HiGRAS")

@@ -67,8 +67,8 @@ PROCEDURE Start ();
 (* begin the construction of a description *)
 
 PROCEDURE Finish (a, b, c, d: TEXT := NIL): INTEGER;
-(* finish the description, allocate global space for it and emit it.  Returns
-   the global offset of the generated map *)
+(* finish the description, allocate global constant space for it and emit it.
+   Returns the offset of the generated map in the global constant pool. *)
 
 PROCEDURE AddO (o: Op;  type: M3.Type): BOOLEAN;
 (* add operator 'o' to the current description.  If 'type' has already been

@@ -372,6 +372,8 @@ PROCEDURE PutText (o: T; t: TEXT; font: FBE.Font) RAISES {FBE.Failed} =
         c := Text.GetChar(t, i);
         IF c = '\n' THEN
           NewLine(o);
+        ELSIF c = '\r' THEN
+          (* ignore incoming carriage return characters *)
         ELSE
           IF o.nChars = 0 THEN
             (* Need to remember start point. *)
@@ -397,6 +399,8 @@ PROCEDURE PutChar (o: T; c: CHAR; font: FBE.Font) RAISES {FBE.Failed} =
       IF NOT o.prologWritten THEN WriteProlog(o); END;
       IF c = '\n' THEN
         NewLine(o);
+      ELSIF c = '\r' THEN
+        (* ignore incoming carriage return characters *)
       ELSE
         IF myFont # o.charFont OR o.nChars > MaxChars THEN FlushText(o); END;
         IF o.nChars = 0 THEN

@@ -7,8 +7,11 @@ MODULE VirtualResourceSystem;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:37  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:48  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:37  hosking
+    Import of GRAS3 1.1
 
     Revision 1.15  1998/07/29 15:11:19  roland
     Increase the default stack size at login time.
@@ -76,7 +79,8 @@ MODULE VirtualResourceSystem;
  (PageCache.BeginAccess / PageCache.EndAccess).
  | ------------------------------------------------------------------------
  *)
-IMPORT Pathname, TextSeq, Thread, NetObj, Config, PageCache, PageFile,
+IMPORT Pathname, TextTransientSeq AS TextSeq,
+       Thread, NetObj, Config, PageCache, PageFile,
        ErrorSupport, EntryPort, ClientInfoSeq, NameServer;
 IMPORT RuleEngine, Process;
 IMPORT LocalResourceSystem;

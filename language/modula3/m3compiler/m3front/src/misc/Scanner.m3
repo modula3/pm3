@@ -2,15 +2,12 @@
 (* All rights reserved.                                          *)
 (* See the file COPYRIGHT for a full description.                *)
 
-(* File: Scanner.m3                                              *)
-(* Last modified on Tue Jan 31 08:12:36 PST 1995 by kalsow       *)
-(*      modified on Sat Mar 16 00:25:08 1991 by muller           *)
-(*      modified on Fri Oct 19 10:52:56 1990 by nr@princeton.edu *)
+(* portions Copyright 1996-2000, Critical Mass, Inc.             *)
 
 UNSAFE MODULE Scanner;
 
-IMPORT Text, File, OSError, TextIntTbl;
-IMPORT M3, M3ID, Error, M3String, Token;
+IMPORT Text, Fmt, File, OSError, TextIntTbl, Word;
+IMPORT M3, M3ID, Error, M3String, M3WString, Token;
 IMPORT Target, TInt, TWord, TFloat, Host, M3Buf;
 
 CONST
@@ -287,13 +284,25 @@ PROCEDURE DoFail (msg: TEXT;  stop: TK) =
       | TK.tIDENT =>
           Error.ID (cur.id, t);
       | TK.tTEXTCONST =>
-          Error.Txt (M3String.ToText (cur.str), t);
+          Error.Txt ("\"" & M3String.ToText (cur.str) & "\"", t);
+      | TK.tWTEXTCONST =>
+          Error.Txt (M3WString.ToLiteral (cur.wstr), t);
       | TK.tREALCONST, TK.tLONGREALCONST, TK.tEXTENDEDCONST =>
           Error.Txt ("<float>", t);
-      | TK.tCARDCONST, TK.tCHARCONST =>
+      | TK.tCARDCONST =>
           IF TInt.ToInt (cur.int, i)
             THEN Error.Int (i, t);
             ELSE Error.Txt ("<integer>", t);
+          END;
+      | TK.tCHARCONST =>
+          IF TInt.ToInt (cur.int, i)
+            THEN Error.Txt (CharLiteral (i), t);
+            ELSE Error.Txt ("<char>", t);
+          END;
+      | TK.tWCHARCONST =>
+          IF TInt.ToInt (cur.int, i)
+            THEN Error.Txt (CharLiteral (i), t);
+            ELSE Error.Txt ("<wide-char>", t);
           END;
       ELSE (* no extra info *)
           Error.Msg (t);
@@ -307,11 +316,27 @@ PROCEDURE DoFail (msg: TEXT;  stop: TK) =
     IF (cur.token = stop) THEN accepted := 1; END;
   END DoFail;
 
+PROCEDURE CharLiteral (c: INTEGER): TEXT =
+  VAR lit: TEXT := "";
+  BEGIN
+    IF    (c = ORD ('\n')) THEN  lit := "'\\n' = ";
+    ELSIF (c = ORD ('\t')) THEN  lit := "'\\t' = ";
+    ELSIF (c = ORD ('\r')) THEN  lit := "'\\r' = ";
+    ELSIF (c = ORD ('\f')) THEN  lit := "'\\f' = ";
+    ELSIF (c = ORD ('\\')) THEN  lit := "'\\\\' = ";
+    ELSIF (c = ORD ('\'')) THEN  lit := "'\\\'' = ";
+    ELSIF (c = ORD ('\"')) THEN  lit := "'\\\"' = ";
+    ELSIF (ORD (' ') <= c) AND (c <= ORD ('~')) THEN
+      lit := "'" & Text.FromChar (VAL (c, CHAR)) & "' = ";
+    END;
+    RETURN lit & "16_" & Fmt.Int (c, 16);
+  END CharLiteral;
+
 CONST
   Restart = Token.Set {
     TK.tEOF, TK.tSEMI, TK.tINLINE, TK.tEXTERNAL, TK.tASSERT,
     TK.tUNUSED, TK.tOBSOLETE, TK.tTRACE, TK.tCALLCONV,
-    TK.tFATAL,  TK.tBEGIN, TK.tCASE, TK.tCONST,
+    TK.tFATAL,  TK.tIMPLICIT, TK.tDEBUG, TK.tBEGIN, TK.tCASE, TK.tCONST,
     TK.tELSE, TK.tELSIF, TK.tEVAL, TK.tEXCEPT, TK.tEXCEPTION,
     TK.tEXIT, TK.tEXPORTS, TK.tFINALLY, TK.tFOR, TK.tFROM,
     TK.tGENERIC, TK.tIF, TK.tIMPORT, TK.tINTERFACE,
@@ -365,6 +390,14 @@ PROCEDURE GetToken () =
       | 'a'..'z', 'A'..'Z' =>
           (* scan an identifier *)
           len := 0;
+          IF (ch = 'W') THEN
+            (* check for a wide-char or wide-text literal *)
+            GetCh ();
+            IF    (ch = '\'') THEN  ScanChar (wide := TRUE);  RETURN;
+            ELSIF (ch = '\"') THEN  ScanWideText ();          RETURN;
+            ELSE                    buf[0] := 'W';  len := 1;
+            END;
+          END;
           WHILE (AlphaNumerics[ch]) DO
             buf [len] := ch;  INC (len);
 	    GetCh ();
@@ -383,9 +416,9 @@ PROCEDURE GetToken () =
           END;
           RETURN;
 
-      | '0'..'9' => ScanNumber ();                             RETURN;
-      | '\''     => ScanChar ();                               RETURN;
-      | '\"'     => ScanText ();                               RETURN;
+      | '0'..'9' => ScanNumber ();                          RETURN;
+      | '\''     => ScanChar (wide := FALSE);               RETURN;
+      | '\"'     => ScanText ();                            RETURN;
       | '+'      => cur.token := TK.tPLUS;       GetCh ();  RETURN;
       | '-'      => cur.token := TK.tMINUS;      GetCh ();  RETURN;
       | '/'      => cur.token := TK.tSLASH;      GetCh ();  RETURN;
@@ -579,10 +612,11 @@ PROCEDURE ScanNumber () =
 
   END ScanNumber;
 
-PROCEDURE ScanChar () =
+PROCEDURE ScanChar (wide: BOOLEAN) =
+  CONST Tok = ARRAY BOOLEAN OF TK { TK.tCHARCONST, TK.tWCHARCONST };
   VAR val := 0;
   BEGIN
-    cur.token := TK.tCHARCONST;
+    cur.token := Tok[wide];
     cur.int   := TInt.Zero;
     GetCh ();
     IF (ch = '\'') THEN
@@ -601,7 +635,8 @@ PROCEDURE ScanChar () =
       ELSIF (ch = '\\') THEN  val := ORD ('\\');   GetCh ();
       ELSIF (ch = '\'') THEN  val := ORD ('\'');   GetCh ();
       ELSIF (ch = '\"') THEN  val := ORD ('\"');   GetCh ();
-      ELSIF (OctalDigits[ch]) THEN  val := GetOctalChar ();
+      ELSIF (ch = 'x')  THEN  GetCh ();  val := GetHexChar (wide);
+      ELSIF (OctalDigits[ch]) THEN  val := GetOctalChar (wide);
       ELSE  Error.Msg ("unknown escape sequence in character literal");
       END;
     ELSIF (ch = EOFChar) THEN
@@ -656,7 +691,8 @@ PROCEDURE ScanText () =
         ELSIF (ch = '\\') THEN Stuff ('\\');  GetCh ();
         ELSIF (ch = '\'') THEN Stuff ('\'');  GetCh ();
         ELSIF (ch = '\"') THEN Stuff ('\"');  GetCh ();
-        ELSIF (OctalDigits[ch]) THEN Stuff (VAL (GetOctalChar (), CHAR));
+        ELSIF (ch = 'x')  THEN GetCh ();  Stuff (VAL (GetHexChar (FALSE), CHAR));
+        ELSIF (OctalDigits[ch]) THEN Stuff (VAL (GetOctalChar (FALSE), CHAR));
         ELSE  Error.Msg ("unknown escape sequence in text literal");
         END;
       ELSIF (ch = EOFChar) THEN
@@ -674,25 +710,120 @@ PROCEDURE ScanText () =
     END;
   END ScanText;
 
-PROCEDURE GetOctalChar (): INTEGER =
-  VAR value: INTEGER;
+PROCEDURE ScanWideText () =
+  VAR
+    res: M3WString.T := NIL;
+    i: INTEGER := 0;
+    wbuf: ARRAY [0..127] OF M3WString.Char;
+  PROCEDURE Stuff (c: INTEGER) =
+    BEGIN
+      c := Word.And (c, 16_ffff);
+      IF (i = NUMBER (wbuf)) THEN
+        IF (res = NIL)
+          THEN res := M3WString.FromStr (wbuf);
+          ELSE res := M3WString.Concat (res, M3WString.FromStr (wbuf));
+        END;
+        i := 0;
+      END;
+      wbuf[i] := c;  INC (i);
+    END Stuff;
   BEGIN
-    <* ASSERT OctalDigits[ch] *>
-    value := ORD (ch) - ORD ('0');
-    GetCh ();
-    IF  NOT (OctalDigits[ch]) THEN BadOctal (); RETURN value END;
-    value := value * 8 + ORD (ch) - ORD ('0');
-    GetCh ();
-    IF  NOT (OctalDigits[ch]) THEN BadOctal (); RETURN value END;
-    value := value * 8 + ORD (ch) - ORD ('0');
-    GetCh ();
+    cur.token := TK.tWTEXTCONST;
+    GetCh (); (* opening quote *)
+    LOOP
+      IF (ch = '\"') THEN
+        GetCh ();
+        EXIT;
+      ELSIF (ch = '\n') OR (ch = '\r') OR (ch = '\f') THEN
+        Error.Msg ("end-of-line encountered in wide text literal");
+        EXIT;
+      ELSIF (ch = '\\') THEN
+        GetCh ();
+        IF    (ch = 'n') THEN  Stuff (ORD ('\n'));  GetCh ();
+        ELSIF (ch = 't') THEN  Stuff (ORD ('\t'));  GetCh ();
+        ELSIF (ch = 'r') THEN  Stuff (ORD ('\r'));  GetCh ();
+        ELSIF (ch = 'f') THEN  Stuff (ORD ('\f'));  GetCh ();
+        ELSIF (ch = '\\') THEN Stuff (ORD ('\\'));  GetCh ();
+        ELSIF (ch = '\'') THEN Stuff (ORD ('\''));  GetCh ();
+        ELSIF (ch = '\"') THEN Stuff (ORD ('\"'));  GetCh ();
+        ELSIF (ch = 'x')  THEN GetCh ();  Stuff (GetHexChar (wide := TRUE));
+        ELSIF (OctalDigits[ch]) THEN Stuff (GetOctalChar (wide := TRUE));
+        ELSE  Error.Msg ("unknown escape sequence in wide text literal");
+        END;
+      ELSIF (ch = EOFChar) THEN
+        Error.Msg ("EOF encountered in wide text literal");
+        EXIT;
+      ELSE (* a simple character *)
+        Stuff (ORD (ch));
+        GetCh ();
+      END;
+    END;
+    IF (res = NIL)
+      THEN cur.wstr := M3WString.FromStr (wbuf, i);
+      ELSE cur.wstr := M3WString.Concat (res, M3WString.FromStr (wbuf, i));
+    END;
+  END ScanWideText;
+
+PROCEDURE GetOctalChar (wide: BOOLEAN): INTEGER =
+  VAR value: INTEGER := 0;
+  BEGIN
+    IF NOT GetOctalDigit (wide, value) THEN RETURN value; END;
+    IF NOT GetOctalDigit (wide, value) THEN RETURN value; END;
+    IF NOT GetOctalDigit (wide, value) THEN RETURN value; END;
+    IF wide THEN
+      IF NOT GetOctalDigit (wide, value) THEN RETURN value; END;
+      IF NOT GetOctalDigit (wide, value) THEN RETURN value; END;
+      IF NOT GetOctalDigit (wide, value) THEN RETURN value; END;
+    END;
     RETURN value;
   END GetOctalChar;
 
-PROCEDURE BadOctal () =
+PROCEDURE GetOctalDigit (wide: BOOLEAN;  VAR value: INTEGER): BOOLEAN =
+  CONST Bad = ARRAY BOOLEAN OF TEXT {
+     "octal character constant must have 3 digits",
+     "wide octal character constant must have 6 digits" };
   BEGIN
-    Error.Msg ("octal character constant must have 3 digits");
-  END BadOctal;
+    IF OctalDigits[ch] THEN
+      value := value * 8 + ORD (ch) - ORD ('0');
+      GetCh ();
+      RETURN TRUE;
+    ELSE
+      Error.Msg (Bad[wide]);
+      RETURN FALSE;
+    END;
+  END GetOctalDigit;
+
+PROCEDURE GetHexChar (wide: BOOLEAN): INTEGER =
+  VAR value: INTEGER := 0;
+  BEGIN
+    IF NOT GetHexDigit (wide, value) THEN RETURN value; END;
+    IF NOT GetHexDigit (wide, value) THEN RETURN value; END;
+    IF wide THEN
+      IF NOT GetHexDigit (wide, value) THEN RETURN value; END;
+      IF NOT GetHexDigit (wide, value) THEN RETURN value; END;
+    END;
+    RETURN value;
+  END GetHexChar;
+
+PROCEDURE GetHexDigit (wide: BOOLEAN;  VAR value: INTEGER): BOOLEAN =
+  CONST Bad = ARRAY BOOLEAN OF TEXT {
+     "hex character constant must have 2 digits",
+     "wide hex character constant must have 4 digits" };
+  VAR x: INTEGER;
+  BEGIN
+    IF  NOT (HexDigits[ch]) THEN
+      Error.Msg (Bad[wide]);  RETURN FALSE;
+    ELSIF ('0' <= ch) AND (ch <= '9') THEN
+      x := ORD (ch) - ORD ('0');
+    ELSIF ('a' <= ch) AND (ch <= 'f') THEN
+      x := ORD (ch) - ORD ('a') + 10;
+    ELSIF ('A' <= ch) AND (ch <= 'F') THEN
+      x := ORD (ch) - ORD ('A') + 10;
+    END;
+    value := value * 16 + x;
+    GetCh ();
+    RETURN TRUE;
+  END GetHexDigit;
 
 PROCEDURE ScanComment () =
   VAR nest, save: INTEGER; start: INTEGER;

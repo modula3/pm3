@@ -3,8 +3,8 @@
 (* See the file COPYRIGHT for a full description. *)
 (* Last modified on Sat Sep  4 21:46:59 PDT 1993 by detlefs *)
 
-GENERIC MODULE SetDef(Elem, ElemSet, ElemRefTable);
-(* WHERE "ElemSet = Set(Elem)" and "ElemRefTable = Table(Elem, Refany)". *)
+GENERIC MODULE SetDef(Elem, ElemSet, ElemRefTable, Ref);
+(* WHERE "ElemSet = Set(Elem)" and "ElemRefTable = Table(Elem, Ref)". *)
 
 REVEAL
   T = Public BRANDED OBJECT
@@ -52,7 +52,7 @@ PROCEDURE Copy(s: T): ElemSet.T =
   END Copy;
 
 PROCEDURE Member(s: T; e: Elem.T): BOOLEAN =
-  VAR dummy: REFANY; BEGIN
+  VAR dummy: Ref.T; BEGIN
     RETURN s.t.get(e, dummy)
   END Member;
 
@@ -60,7 +60,7 @@ PROCEDURE Insert(s: T; e: Elem.T): BOOLEAN =
   BEGIN RETURN s.t.put(e, NIL) END Insert;
 
 PROCEDURE Delete(s: T; e: Elem.T): BOOLEAN =
-  VAR dummy: REFANY; BEGIN
+  VAR dummy: Ref.T; BEGIN
     RETURN s.t.delete(e, dummy)
   END Delete;
 
@@ -107,7 +107,7 @@ PROCEDURE IntersectionD(s1: T; s2: ElemSet.T): ElemSet.T =
           tNew := NEW(ElemRefTable.Default).init(s2.size());
           iter := s2.iterate();
           e: Elem.T;
-          dummy: REFANY;
+          dummy: Ref.T;
       BEGIN
         WHILE iter.next(e) DO
           IF tOld.get(e, dummy) THEN EVAL tNew.put(e, NIL) END (* IF *)
@@ -126,7 +126,7 @@ PROCEDURE Iterate(s: T): ElemSet.Iterator =
   END Iterate;
 
 PROCEDURE Next(iter: Iterator; VAR e: Elem.T): BOOLEAN =
-  VAR dummy: REFANY; BEGIN
+  VAR dummy: Ref.T; BEGIN
     RETURN iter.tIter.next(e, dummy)
   END Next;
     

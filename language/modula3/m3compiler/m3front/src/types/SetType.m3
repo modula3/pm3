@@ -73,9 +73,10 @@ PROCEDURE Check (p: P) =
     p.info.isEmpty   := FALSE;
     p.info.isSolid   := TRUE;
     p.info.hash      := Word.Times (811, info.hash);
+    p.info.isTransient := TRUE;
     IF (p.info.size <= Target.Integer.size) THEN
-      p.info.mem_type := CG.Type.Word;
-      p.info.stk_type := CG.Type.Word;
+      p.info.mem_type := Target.Word.cg_type;
+      p.info.stk_type := Target.Word.cg_type;
     END;
   END Check;
 
@@ -111,7 +112,7 @@ PROCEDURE InitCoster (<*UNUSED*> p: P; <*UNUSED*> zeroed: BOOLEAN): INTEGER =
   END InitCoster;
 
 PROCEDURE GenMap (<*UNUSED*> p: P; offset, size: INTEGER;
-                  <*UNUSED*> refs_only: BOOLEAN) =
+                  <*UNUSED*> refs_only, transient: BOOLEAN) =
   BEGIN
     TipeMap.Add (offset, TipeMap.Op.Set_1, size DIV Target.Byte);
   END GenMap;

@@ -141,14 +141,14 @@ PROCEDURE IsZeroes (p: P): BOOLEAN =
     RETURN Expr.IsZeroes (p.expr);
   END IsZeroes;
 
-PROCEDURE PrepLiteral (p: P;  type: Type.T) =
+PROCEDURE PrepLiteral (p: P;  type: Type.T;  is_const: BOOLEAN) =
   BEGIN
-    Expr.PrepLiteral (p.expr, type);
+    Expr.PrepLiteral (p.expr, type, is_const);
   END PrepLiteral;
 
-PROCEDURE GenLiteral (p: P;  offset: INTEGER;  type: Type.T) =
+PROCEDURE GenLiteral (p: P;  offset: INTEGER;  type: Type.T;  is_const: BOOLEAN) =
   BEGIN
-    Expr.GenLiteral (p.expr, offset, type);
+    Expr.GenLiteral (p.expr, offset, type, is_const);
   END GenLiteral;
 
 PROCEDURE NoteWrites (p: P) =

@@ -50,13 +50,14 @@ PROCEDURE Init () =
       vec := Usignal.struct_sigaction{
                sa_handler := newHandler, 
                sa_mask := Usignal.empty_sigset_t,
-               sa_flags := Usignal.SA_RESTART,
+               sa_flags := Word.Or(Usignal.SA_RESTART, Usignal.SA_NODEFER),
                sa_restorer := NIL};
       ovec: Usignal.struct_sigaction;
       ret, tmp: Ctypes.int;
 
     BEGIN
-      vec.sa_mask.val[0] := Word.LeftShift(1, Usignal.SIGVTALRM - 1);
+      vec.sa_mask.val[0] := Word.Or(Word.LeftShift(1, Usignal.SIGVTALRM - 1),
+                                    Word.LeftShift(1, Usignal.SIGINT - 1));
       tmp := Usignal.SA_RESTART;
       ret := Usignal.sigaction(Usignal.SIGSEGV, ADR(vec), ADR(ovec));
       <* ASSERT ret = 0 *>
@@ -100,11 +101,28 @@ PROCEDURE Init () =
    RTHeapRep.Fault is not able to handle the fault, it invokes the previous
    action. *)
 
+TYPE
+  PageFaultError = RECORD
+    protection: BITS  1 FOR BOOLEAN;
+    write:      BITS  1 FOR BOOLEAN;
+    user:       BITS  1 FOR BOOLEAN;
+    reserved:   BITS  1 FOR BOOLEAN;
+    unused:     BITS 28 FOR BOOLEAN;
+  END;
+
 PROCEDURE Fault (sig : Ctypes.int;
                  scp : Usignal.struct_sigcontext;
                  code: Ctypes.int) =
+  VAR
+    mode: RTHeapRep.Mode;
+    error := LOOPHOLE(scp.err, PageFaultError);
   BEGIN
-    IF RTHeapRep.Fault(LOOPHOLE(scp.cr2, ADDRESS)) THEN
+    IF error.write THEN
+      mode := RTHeapRep.Mode.ReadWrite;
+    ELSE
+      mode := RTHeapRep.Mode.ReadOnly;
+    END;
+    IF RTHeapRep.Fault(LOOPHOLE(scp.cr2, ADDRESS), mode) THEN
       RETURN;
     END;
     IF defaultActionSIGSEGV = Usignal.SIG_IGN THEN RETURN; END;
@@ -149,7 +167,7 @@ PROCEDURE Core (             sig : Ctypes.int;
 PROCEDURE TimeUsed (): REAL =
   VAR usage: Uresource.struct_rusage;
   BEGIN
-    VAR ret := Uresource.getrusage(Uresource.RUSAGE_SELF, ADR(usage));
+    VAR ret := Uresource.getrusage(Uresource.RUSAGE_SELF, usage);
     BEGIN
       <* ASSERT ret # -1 *>
     END;

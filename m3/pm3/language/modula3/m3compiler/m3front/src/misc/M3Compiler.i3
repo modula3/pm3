@@ -8,38 +8,17 @@
 
 INTERFACE M3Compiler;
 
-(* This module defines the front-end interface of the Modula-3
-   compiler.  The compiler is a monitor -- only one compilation
-   can be active at a time.
+(* This module defines the environment object passed to
+   the Modula-3 compiler.
 *)
 
 IMPORT File, Fingerprint;
 IMPORT M3ID, M3CG;
 
-EXCEPTION
-  FrontError;
-
-PROCEDURE ParseImports (READONLY input : SourceFile;
-                                 env   : Environment): IDList;
-(* Returns the names of the interfaces directly imported by 'input'. *)
-
-PROCEDURE Compile (READONLY input    : SourceFile;
-                            env      : Environment;
-                   READONLY options  : ARRAY OF TEXT): BOOLEAN RAISES {FrontError};
-
-(* Reads and compiles a Modula-3 unit from "input".
-   Evironmental queries and reports are made through "env".
-   The listing and diagnostic options of the compiler are set by "options".
-   Returns "TRUE" iff the compilation succeeded with no errors.
-   It is the caller's responsibility to initialize the Target interface
-   prior to calling Compile. *)
-
-PROCEDURE GetImports (interface: REFANY): IDList;
-
 TYPE
   TypeID     = INTEGER;  (* A compiler generated type id. *)
   SourceFile = RECORD  name: TEXT;  contents: File.T  END;
-  IDList     = REF RECORD interface: M3ID.T;  next: IDList  END;
+  ImplList   = REF RECORD  impl: M3ID.T;  next: ImplList;  END;
 
 TYPE
   Environment = OBJECT METHODS
@@ -76,15 +55,17 @@ TYPE
 
     note_type (type: TypeID;  imported: BOOLEAN);
 
-    init_code_generator (): M3CG.T RAISES {FrontError};
+    init_code_generator (): M3CG.T;
 
     note_webinfo (t: TEXT);
+
+    get_implementations (interface: M3ID.T): ImplList;
   END;
 
 END M3Compiler.
 
 (* The compiler makes all environmental queries and reports through
-   the "env" parameter:
+   its environment parameter:
 
      "report_error" is called to report error and warning messages.
 
@@ -130,31 +111,5 @@ END M3Compiler.
      until after type checking.
 *)
 
-(* The recognized options are:
-
-     -v             verbose mode
-     -g             generate debugging information
-     -S             don't generate version stamps
-     -wX            print warnings at level "X" and above
-     -w             don't print warnings  == -w99
-     -Z             generate line-based profiling.
-     -En            die on the "n-th" error message.
-     -NoChecks      disable all runtime checks
-     -NoAsserts     disable <*ASSERT*> checks
-     -NoNarrowChk   disable narrow checks
-     -NoRangeChk    disable subscript and range checks
-     -NoReturnChk   disable checks for functions that fail to return values
-     -NoCaseChk     disable checks for unhandled CASE selectors
-     -NoTypecaseChk disable checks for unhandled TYPECASE selectors
-     -NoNilChk      disable explicit NIL checks
-     -NoRaisesChk   disable checks for unhandled exceptions
-     -InitFloats    initialize all floating point values to zero
-     -vsdebug       generate a trace of the fingerprint computations
-     -builtins      "compile" and emit the builtin symbols
-     -times         print the elapsed time profile
-     -load_map      generate the load map comment in the output
-     -No_load_map   don't generate the load map comment in the output
-*)
-
-
+ 
 

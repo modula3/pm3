@@ -15,7 +15,7 @@
 
 *)
 
-GENERIC INTERFACE Table(Key, Value);
+GENERIC INTERFACE Table(Super, Key, Value);
 (* Where "Key.T" and "Value.T" are types that are not open array types, both
    "Key" and "Value" contain
 
@@ -42,12 +42,12 @@ GENERIC INTERFACE Table(Key, Value);
 IMPORT Word;
 
 CONST
-  Brand = "(Table " & Key.Brand & " " & Value.Brand & ")";
+  Brand = "(" & Super.Brand & " Table " & Key.Brand & " " & Value.Brand & ")";
   DefaultBrand = "(Default " & Brand & ")";
   (* A "Table.Default" is revealed to have the brand "DefaultBrand". *)
 
 TYPE
-  T = OBJECT METHODS
+  T = Super.T OBJECT METHODS
     get(READONLY k: Key.T; VAR v: Value.T): BOOLEAN;
     put(READONLY k: Key.T; READONLY v: Value.T): BOOLEAN;
     delete(READONLY k: Key.T; VAR v: Value.T): BOOLEAN;
@@ -55,6 +55,7 @@ TYPE
     iterate(): Iterator
   END;
   Iterator = OBJECT METHODS
+    init(): Iterator;
     next(VAR k: Key.T; VAR v: Value.T): BOOLEAN
   END;
   Default <: T OBJECT METHODS
@@ -116,6 +117,9 @@ END Table.
    without setting "k" or "v".  It is a checked runtime error to call
    "next" after it has returned "FALSE".  The client must ensure that
    while an iterator is in use, the parent table is not modified.
+   "i" may be reset to iterate over all the values of a table by
+   reinitializing it with "init".   "tbl.iterate()" is equivalent to
+   "NEW(Iterator).init()".
 
    The type "Default" is an implementation of "T" using chained
    hashing.  The methods specific to an object "dflt" of type

@@ -22,7 +22,10 @@ CONST
   AdrPerPage      = RTMachine.AdrPerHeapPage;      (* addresses per page *)
   LogAdrPerPage   = RTMachine.LogAdrPerHeapPage;
 
-TYPE Page = [0 .. Word.Divide(-1, AdrPerPage)];
+TYPE
+  Page = [0 .. Word.Divide(-1, AdrPerPage)];
+  Byte = BITS 8 FOR [0..16_FF];
+  PageData = ARRAY [0..BytesPerPage-1] OF Byte;
 
 (* The collector supports the use of VM protection to achieve incremental,
    generational collection.  This is not possible on all architectures, and
@@ -31,7 +34,9 @@ TYPE Page = [0 .. Word.Divide(-1, AdrPerPage)];
    this architecture.  VM is TRUE for the DS3100, whose implementation you
    might use as a reference. *)
 
-CONST VM = RTMachine.VMHeap;
+CONST
+  VM = RTMachine.VMHeap;
+  AtomicWrappers = RTMachine.AtomicWrappers;
 
 (* None of the procedures below will be called if VM is FALSE.  The
    descriptions given for each assume that VM is TRUE. *)

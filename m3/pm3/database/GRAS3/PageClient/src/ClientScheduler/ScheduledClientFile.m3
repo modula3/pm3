@@ -8,8 +8,11 @@ EXPORTS ScheduledClientFile, InternalScheduledClientFile;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:37  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:48  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:37  hosking
+    Import of GRAS3 1.1
 
     Revision 1.6  1997/04/24 12:12:34  roland
     Added parameter (access) mode for opening a remote file. If a resource
@@ -62,6 +65,7 @@ REVEAL
       getPage		:= GetPage;
 
       commitTransaction	:= CommitTransaction;
+      chainTransaction	:= ChainTransaction;
       abortTransaction	:= AbortTransaction;
 
       releaseCallback	:= ReleaseCallback;
@@ -155,6 +159,26 @@ PROCEDURE CommitTransaction	(         self		:T) RAISES {FatalError} =
   END CommitTransaction;
 
 
+PROCEDURE ChainTransaction	(	  self		:T) RAISES {FatalError} =
+  VAR
+    pageNo			:CARDINAL;
+    page			:ScheduledClientPage.T;
+    i				:ScheduledClientPageTbl.Iterator;
+  BEGIN
+    TRY
+      i := self.pages.iterate ();
+      WHILE i.next (pageNo, page) DO
+        page.chainTransaction ()
+      END
+    EXCEPT
+      ScheduledClientPage.FatalError(info) =>
+      RAISE FatalError(ErrorSupport.Propagate(
+                           "ScheduledClientFile.ChainTransaction",
+                           "ScheduledClientPage.FatalError", info));
+    END;
+  END ChainTransaction;
+
+
 PROCEDURE AbortTransaction	(         self		:T) RAISES {FatalError}=
   VAR
     pageNo			:CARDINAL;
@@ -217,7 +241,7 @@ PROCEDURE PropagateCallback	(         self		:T;
 
 
 PROCEDURE DropData		(         self		:T;
-                                          handle	:PageHandle.T)
+                                          handle        :PageHandle.T)
   RAISES {FatalError} =
   VAR
     page			:ScheduledClientPage.T;

@@ -7,8 +7,11 @@ INTERFACE ScheduledClientPage;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:37  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:48  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:37  hosking
+    Import of GRAS3 1.1
 
     Revision 1.2  1996/11/18 17:51:47  roland
     ASSERTs and FATALs (mostly) replaced by exception handling.
@@ -36,12 +39,15 @@ CONST
 TYPE
   T			<: Public;
 
-  Public		= OBJECT
+  Public		= <*TRANSIENT*> ROOT OBJECT
     METHODS
-      readAccess	() :PageHandle.T
+      peekAccess	() :PageHandle.T
+			RAISES {FatalError};
+      
+      readAccess	(VAR pageAge: CARDINAL) :PageHandle.T
 			RAISES {Access.Locked, FatalError};
       
-      writeAccess	() :PageHandle.T
+      writeAccess	(VAR pageAge: CARDINAL) :PageHandle.T
 			RAISES {Access.Locked, FatalError};
     END;
 

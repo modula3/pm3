@@ -7,7 +7,7 @@
 (*                                                               *)
 (* Enhanced by Peter Klein (pk@i3.informatik.rwth-aachen.de) to  *)
 (* parse procedure signatures and connect procedure declarations *)
-(* in interfaces with their implmentations. -  Mar 7, 1995       *)
+(* in interfaces with their implementations. - Mar 7, 1995       *)
 
 MODULE Main;
 
@@ -117,8 +117,10 @@ TYPE
 CONST
   INTEGER_UID = 16_195c2a74;
   REFANY_UID  = 16_1c1c45e6;
+  TREFANY_UID = 16_51e4b739;
   ADDRESS_UID = 16_08402063;
   ROOT_UID    = 16_9d8fb489;
+  TROOT_UID   = 16_a973d3a6;
   UNROOT_UID  = 16_898ea789;
   NULL_UID    = 16_48ec756e;
 
@@ -639,7 +641,12 @@ PROCEDURE ScanWebInfo (VAR s: ScanState;  buf: Buf.T) =
           uid := ReadUID (buf, cur);
           NoteType (s, uid, buf, start, cur_unit, c);
           NoteSubtype (s, uid, REFANY_UID);
-      | 'U', 'V' =>
+      | 'p' =>
+          start := cur-1;
+          uid := ReadUID (buf, cur);
+          NoteType (s, uid, buf, start, cur_unit, c);
+          NoteSubtype (s, uid, TREFANY_UID);
+      | 'U', 'V', 'v' =>
           start := cur-1;
           uid := ReadUID (buf, cur);
           super := ReadUID (buf, cur);
@@ -850,11 +857,14 @@ CONST
     & "?9ee024e3 EXTENDED\n"
     & "?48ec756e NULL\n"
     & "?1c1c45e6 REFANY\n"
+    & "?51e4b739 TRANSIENT-REFANY\n"
     & "?00000000 VOID\n"
     & "V9d8fb489 00000000 0 0 0 4\n" (* ROOT = OBJECT END *)
     & "E9d8fb489 ROOT\n"
     & "U898ea789 00000000 0 0 0 4\n" (* UNTRACED ROOT = UNTRACED OBJECT END *)
     & "E898ea789 UNTRACED-ROOT\n"
+    & "va973d3a6 00000000 0 0 0 4\n" (* <*TRANSIENT*> ROOT *)
+    & "Ea973d3a6 TRANSIENT-ROOT\n"
     & "Y50f86574 1c1c45e6\n" (* TEXT <: REFANY *)
     & "E50f86574 TEXT\n"
     & "Y1541f475 9d8fb489\n" (* MUTEX <: ROOT *)
@@ -869,6 +879,8 @@ PROCEDURE AddBuiltinTypes (VAR s: ScanState) =
     NoteSubtype (s, UNROOT_UID, ADDRESS_UID); (* UNTRACED-ROOT <: ADDRESS *)
     NoteSubtype (s, ROOT_UID,   REFANY_UID);  (* ROOT <: REFANY *)
     NoteSubtype (s, NULL_UID,   REFANY_UID);  (* NULL <: REFANY *)
+    NoteSubtype (s, TREFANY_UID,REFANY_UID);  (* TRANSIENT-REFANY <: REFANY *)
+    NoteSubtype (s, TROOT_UID,  TREFANY_UID); (* TRANSIENT-ROOT <: TRANSIENT-REFANY *)
     (*** too messy for the current data structures ****************
     NoteSubtype (s, NULL_UID,   ADDRESS_UID); (* NULL <: ADDRESS *)
     ***************************************************************)
@@ -2146,7 +2158,7 @@ TYPE
   END;
 
   ObjInfo = RECORD
-    traced  : BOOLEAN := FALSE;
+    traced, transient: BOOLEAN := FALSE;
     fields  : ObjEntryQueue;
     methods : ObjEntryQueue;
     names   : TextRefTbl.T := NIL;
@@ -2208,8 +2220,9 @@ PROCEDURE ExtractObject (t: Type;  VAR info: ObjInfo) =
     start := t.start;
     IF (start >= eof) THEN RETURN END;
     ch := defn [start]; INC (start);
-    IF (ch # 'U') AND (ch # 'V') THEN RETURN END;
+    IF (ch # 'U') AND (ch # 'V') AND (ch # 'v') THEN RETURN END;
     IF (ch = 'V') THEN info.traced := TRUE END;
+    IF (ch = 'v') THEN info.traced := TRUE; info.transient := TRUE END;
 
     EVAL ReadUID (defn, start); (* self *)
     EVAL ReadUID (defn, start); (* super type *)
@@ -2280,7 +2293,8 @@ PROCEDURE FormatObject (READONLY info: ObjInfo;  wx: Wx.T) =
   BEGIN
     fmt.putText ("  ");
     fmt.begin (2);
-    IF (NOT info.traced) THEN fmt.putText ("UNTRACED "); END;
+    IF (NOT info.traced) THEN fmt.putText ("UNTRACED ROOT "); END;
+    IF (info.transient) THEN fmt.putText ("<*TRANSIENT*> ROOT "); END;
     fmt.putText ("OBJECT");
     fmt.newLine ();
     IF (info.fields.head # NIL) THEN
@@ -2387,7 +2401,7 @@ PROCEDURE GenTypeHeader (t: Type;  mode: INTEGER;  pref: TEXT;  wx: Wx.T) =
       Out (wx, "  <A HREF=\"/O", uid, "\">[expanded view]</A>\n");
     END;
     IF (mode # 2) THEN
-      IF (t.class = 'V') OR (t.class = 'U') OR
+      IF (t.class = 'V') OR (t.class = 'U') OR (t.class = 'v') OR
         ((t.class = 'Y') AND TranslateOpaque (t.uid, u)) THEN
         Out (wx, "  <A HREF=\"/Q", uid, "\">[flat view]</A>\n");
       END;
@@ -2557,13 +2571,15 @@ PROCEDURE GenTypeExpr (defn     : Buf.T;
                  fmt.putText (")");
                END;
              fmt.end ();
-        | 'O', 'P' => (* untraced ref *)
+        | 'O', 'P', 'p' => (* untraced/traced/transient ref *)
              EVAL ReadUID (defn, start);
              a := ReadUID (defn, start);
              id := ReadBrand (defn, start);
              fmt.begin (2);
                IF (ch = 'O') THEN
                  fmt.putText ("UNTRACED ");
+               ELSIF (ch = 'p') THEN
+                 fmt.putText ("<*TRANSIENT*> ");
                END;
                IF (id # NIL) THEN
                  fmt.break ();
@@ -2636,7 +2652,7 @@ PROCEDURE GenTypeExpr (defn     : Buf.T;
              fmt.break ();
              fmt.putText (id);
              IF (count > 0) THEN fmt.putText (", "); END;
-        | 'U', 'V' => (* untraced obj, obj *)
+        | 'U', 'V', 'v' => (* untraced obj, obj, transient obj *)
              a := ReadUID (defn, start); (* self *)
              b := ReadUID (defn, start); (* super type *)
              c := ReadInt (defn, start); (* # fields *)
@@ -2657,7 +2673,8 @@ PROCEDURE GenTypeExpr (defn     : Buf.T;
                    fmt.newLine (-2);
                  END;
                ELSE
-                 IF (ch = 'U') THEN fmt.putText ("UNTRACED "); END;
+                 IF (ch = 'U') THEN fmt.putText ("UNTRACED ROOT "); END;
+                 IF (ch = 'v') THEN fmt.putText ("<*TRANSIENT*> ROOT "); END;
                END;
                IF (id # NIL) THEN
                  fmt.break ();
@@ -2812,7 +2829,8 @@ PROCEDURE GenTypeName (uid      : INTEGER;
 
 PROCEDURE IsRef (t: Type): BOOLEAN =
   BEGIN
-    RETURN (t.class = 'P') OR (t.class = 'V')
+    RETURN (t.class = 'P') OR (t.class = 'p')
+        OR (t.class = 'V') OR (t.class = 'v')
         OR (t.class = 'O') OR (t.class = 'U')
         OR (t.class = 'Y');
   END IsRef;

@@ -7,7 +7,7 @@
 
 MODULE QCode;
 
-IMPORT M3ID;
+IMPORT Quake;
 
 REVEAL
   Stream = Stream_ BRANDED OBJECT OVERRIDES
@@ -44,7 +44,7 @@ PROCEDURE Patch (s: Stream;  pc: INTEGER;  op: Op;  a: INTEGER) =
     WITH i = s.instrs[pc] DO  i.op := op;  i.a := a;  END;
   END Patch;
 
-PROCEDURE AddProc (s: Stream;  nm: M3ID.T): INTEGER =
+PROCEDURE AddProc (s: Stream;  nm: Quake.ID): INTEGER =
   BEGIN
     IF (s.procs = NIL) OR (s.n_procs >= NUMBER (s.procs^)) THEN
       ExpandProcs (s);

@@ -22,9 +22,9 @@ CONST
   LogMapGrain = Log [MapGrain];
 
 TYPE
-  Map     = REF ARRAY OF Word.T;
-  IntList = REF ARRAY OF INTEGER;
-  WRList  = REF ARRAY OF WeakRef.T;
+  Map     = <*TRANSIENT*> REF ARRAY OF Word.T;
+  IntList = <*TRANSIENT*> REF ARRAY OF INTEGER;
+  WRList  = <*TRANSIENT*> REF ARRAY OF WeakRef.T;
 
 TYPE
   Visitor = RTHeapMap.Visitor OBJECT

@@ -36,7 +36,7 @@ REVEAL
     compile     ();
     initCost    (zeroed: BOOLEAN): INTEGER;
     initValue   (zeroed: BOOLEAN);
-    mapper      (offset, size: INTEGER; refs: BOOLEAN);
+    mapper      (offset, size: INTEGER; refs, transient: BOOLEAN);
     gen_desc    ();
     fprint      (VAR x: M3.FPInfo);
   END;
@@ -53,8 +53,9 @@ PROCEDURE NoSubtypes (a, b: TT): BOOLEAN;
 PROCEDURE InitToZeros (t: TT;  zeroed: BOOLEAN);
 (* == initialize Size(t) bits to zero *)
 
-PROCEDURE GenRefMap (t: TT;  offset, size: INTEGER;  refs_only: BOOLEAN);
-(* == TypeMap.Add (offset, Op.{Untraced}Ref, 0) *)
+PROCEDURE GenRefMap (t: TT;  offset, size: INTEGER;
+                     refs_only, transient: BOOLEAN);
+(* == TypeMap.Add (offset, Op.{Untraced|Transient}Ref, 0) *)
 
 PROCEDURE GenRefDesc (t: TT);
 (* == TypeDesc.AddO (Op.{Untraced}Ref); TypeDesc.AddI (UID(t)) *)

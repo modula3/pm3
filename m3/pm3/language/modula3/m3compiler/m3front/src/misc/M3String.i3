@@ -27,8 +27,9 @@ PROCEDURE ToText (t: T): TEXT;
 PROCEDURE Put (wr: M3Buf.T;  t: T);
 (* writes the string on the writer *)
 
-PROCEDURE Init_chars (offset: INTEGER;  t: T);
-(* initializes the current variable at 'offset' with the characters of 't'. *)
+PROCEDURE Init_chars (offset: INTEGER;  t: T;  is_const: BOOLEAN);
+(* initializes the current variable at 'offset' in the global
+   data or constant pool with the characters of 't'. *)
 
 PROCEDURE Length (t: T): INTEGER;
 (* returns the length of the string *)

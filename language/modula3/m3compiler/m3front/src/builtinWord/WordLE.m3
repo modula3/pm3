@@ -24,7 +24,7 @@ PROCEDURE Compile (ce: CallExpr.T) =
   BEGIN
     Expr.Compile (ce.args[0]);
     Expr.Compile (ce.args[1]);
-    CG.Le (CG.Type.Word);
+    CG.Compare (Target.Word.cg_type, CG.Cmp.LE);
   END Compile;
 
 PROCEDURE PrepBR (ce: CallExpr.T;  true, false: CG.Label;  freq: CG.Frequency)=
@@ -33,10 +33,7 @@ PROCEDURE PrepBR (ce: CallExpr.T;  true, false: CG.Label;  freq: CG.Frequency)=
     Expr.Prep (ce.args[1]);
     Expr.Compile (ce.args[0]);
     Expr.Compile (ce.args[1]);
-    IF (true # CG.No_label)
-      THEN CG.If_le (true, CG.Type.Word, freq);
-      ELSE CG.If_gt (false, CG.Type.Word, freq);
-    END;
+    CG.If_then (Target.Word.cg_type, CG.Cmp.LE, true, false, freq);
   END PrepBR;
 
 PROCEDURE Fold (ce: CallExpr.T): Expr.T =
@@ -65,6 +62,7 @@ PROCEDURE Initialize () =
                                  PrepBR,
                                  CallExpr.NoBranch,
                                  Fold,
+                                 CallExpr.NoBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

@@ -8,11 +8,11 @@
 
 MODULE Textt;
 
-IMPORT Reff, Tipe;
+IMPORT ObjectRef, Tipe;
 
 PROCEDURE Initialize () =
   BEGIN
-    T := Tipe.DefineOpaque ("TEXT", Reff.T);
+    T := Tipe.DefineOpaque ("TEXT", ObjectRef.T);
   END Initialize;
 
 BEGIN

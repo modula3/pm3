@@ -4,38 +4,26 @@
 %
 % Last modified on Thu Feb 23 14:02:51 PST 1995 by kalsow
 
-before_do_m3_hooks()
-
-local src = ""
-local obj = ""
-local pgm = ""
-local ret = 0
-
-src = path_of ("report_coverage.c")
-obj = "report_coverage" & NAMING_CONVENTIONS[13] % .o
-
 if defined ("_all")
+  local src = path_of ("report_coverage.c")
+  local obj = "report_coverage" & ".o"
+  local toss = 0
   if stale (obj, src)
-    ret = m3_compile_c(src,obj,[])
-    if not equal(ret, 0) error("command failed with error code: ", ret) end
+    toss = compile_c (src, obj, [], FALSE, TRUE)
   end
+  LibdExport (obj)
 end
-LibdExport (obj)
-
-src = path_of ("analyze_coverage.c")
-obj = "analyze_coverage" & NAMING_CONVENTIONS[13] % .o
-pgm = program_name("analyze_coverage") % .exe
 
 if defined ("_all")
+  local src = path_of ("analyze_coverage.c")
+  local obj = "analyze_coverage.o"
+  local pgm = program_name ("analyze_coverage")
+  local toss = 0
   if stale (pgm, src)
-    ret = m3_compile_c(src,obj,[".." & SL & "src"])
-    if not equal(ret, 0) error("command failed with error code: ", ret) end
-    ret = m3_link(pgm,[obj],[])
-    if not equal(ret, 0) error("command failed with error code: ", ret) end
+    toss = compile_c (src, obj, [], FALSE, TRUE)
+    toss = m3_link (pgm, [ "-I" & path_of ("") ], obj, SYSTEM_LIBS{"LIBC"}, FALSE)
   end
+  BindExport (pgm)
 end
-BindExport (pgm)
 
-ManPage ("analyze_coverage", 1)
-
-OtherPackage("coverage")
+ManPage ("analyze_coverage","1")

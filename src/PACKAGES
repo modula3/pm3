@@ -55,9 +55,6 @@ PkgInfo("m3coco","language/parsing","","m3coco",tProg,"T",2,[],["ALL"],[],
 PkgInfo("tempfiles","libs","","tempfiles",tLib,"T",2,[],["ALL"],[],
     "Library to build tempfiles")
 
-PkgInfo("m3config",".","","m3-base",tLib,"",2,[],["ALL"],[],
-    "Quake templates and default bin, lib, pkg... locations for m3build")
-
 PkgInfo("sgml","text/sgmltools","","sgml",tLib,"T",2,[],["ALL"],[],
     "SGML/XML parsing library")
 
@@ -106,9 +103,6 @@ PkgInfo("m3back","language/modula3/m3compiler","","m3back",tLib,"T",3,[],
     ["LINUXLIBC6", "LINUXELF", "NT386"],[],
     "Linux ELF and Windows/NT x86 back-ends")
 
-PkgInfo("m3driver","language/modula3/m3compiler","","m3driver",tLib,"T",3,[],
-    ["ALL"],[],"Modula-3 compiler driver")
-
 PkgInfo("m3staloneback","language/modula3/m3compiler","","m3staloneback",tLib,
     "T",3,[],["ALL"],["M3STALONEBACK"],
     "Standalone back-end program like m3cc that uses m3back, used for testing")
@@ -120,8 +114,17 @@ PkgInfo("m3loader","language/modula3/m3compiler","","m3loader",tLib,"T",3,
 PkgInfo("m3quake","language","","m3quake",tLib,"T",3,[],["ALL"],[],
     "The quake interpreter used by m3build")
 
-PkgInfo("m3templates","language/modula3/m3compiler","","m3templates",tLib,"T",
-    3,[],["ALL"],[],"Quake builtin functions for m3build")
+PkgInfo("m3cggen","language/modula3/m3compiler","","m3cggen",tLib,"T",3,[],
+    ["ALL"],[],"Generate a C .h file from an M3CG_Binary")
+
+PkgInfo("m3cgcat","language/modula3/m3compiler","","m3cgcat",tLib,"T",3,[],
+    ["ALL"],[],"Output an M3CG file in ASCII/binary")
+
+PkgInfo("libcm3","language/modula3/m3compiler","","m3-base",tLib,"T",
+    3,[],["ALL"],[],"The CM3 compiler as a library")
+
+PkgInfo("cm3","language/modula3/m3compiler","","m3-base",tLib,"T",3,[],
+    ["ALL"],[],"The CM3 compiler")
 
 PkgInfo("m3build","language/modula3/m3compiler","","m3-base",tLib,"T",3,[],
     ["ALL"],[],"The Modula-3 compiler")
@@ -159,6 +162,9 @@ PkgInfo("m3totex","language/modula3/m3tools","","m3totex",tProg,"T",3,[],
 PkgInfo("set","libs","","set",tLib,"T",3,[],["ALL"],[],
     "A simple, generic Set interface.")
 
+PkgInfo("bag","libs","","bag",tLib,"T",3,[],["ALL"],[],
+    "A simple, generic Bag interface.")
+
 PkgInfo("digraph","libs","","digraph",tLib,"T",3,[],["ALL"],[],
     "A directed graph type, generic over the types labeling nodes and edges")
 
@@ -184,6 +190,15 @@ PkgInfo("web","network/www","","web",tLib,"T",3,[],["ALL"],[],
     "library for retrieving documents from the World Wide Web using an " &
     "http proxy server.")
 
+PkgInfo("m3scanner","language/modula3/m3tools","","m3scanner",tLib,"T",3,[],
+    ["ALL"],[],"Simple Modula-3 lexical token scanner")
+
+PkgInfo("m3tools","language/modula3/m3compiler","","m3tools",tLib,"T",3,[],
+    ["ALL"],[],"Modula-3 toolkit")
+
+PkgInfo("m3tk-misc","language/modula3/m3tools","","m3tk-misc",tLib,"T",3,[],
+    ["ALL"],[],"Modula-3 abstract syntax tree (AST) miscellany")
+
 PkgInfo("m3tk","language/modula3/m3tools","","m3tk",tLib,"T",3,[],["ALL"],
     [],"Modula-3 abstract syntax tree (AST) toolkit")
 
@@ -199,6 +214,73 @@ PkgInfo("stubgen","network/netobjects","","netobj",tProg,"",3,[],["ALL"],[],
     "Network objects stub generator, needed to compile programs using " &
     "network objects")
 
+PkgInfo("netobj","network/netobjects","","netobj",tLib,"T",3,[],["ALL"],[],
+    "The network objects runtime library")
+
+PkgInfo("embutils","network/sharedobjects","","embutils",tLib,"T",3,[],["ALL"],
+    [],"A Modula-3 object for which we want to have proxy")
+
+PkgInfo("debug","network/sharedobjects","","debug",tLib,"T",3,[],["ALL"],[],
+    "An object for maintaining a trace of program flow")
+
+PkgInfo("listfuncs","network/sharedobjects","","listfuncs",tLib,"T",3,[],
+    ["ALL"],[],"Extended operations for generic lists")
+
+PkgInfo("events","network/sharedobjects","","events",tLib,"T",3,[],["ALL"],[],
+    "An events library")
+
+PkgInfo("rdwr","network/sharedobjects","","rdwr",tLib,"T",3,[],["ALL"],[],
+    "Linked Rd/Wr pairs")
+
+PkgInfo("sharedobj","network/sharedobjects","","sharedobj",tLib,"T",3,[],
+    ["ALL"],[],"The shared objects runtime library")
+
+PkgInfo("sharedobjgen","network/sharedobjects","","sharedobjgen",tProg,"",3,[],
+    ["ALL"],[],"Shared objects stub generator, needed to compile programs "
+    & "using shared objects")
+
+PkgInfo("daemon","database/GRAS3/Tools","","pm3",tLib,"T",3,[],["ALL"],[],
+    "Basic procedure to fork daemon processes")
+
+PkgInfo("GrasCommon","database/GRAS3","","pm3",tLib,"T",3,[],["ALL"],[],
+    "Common GRAS3 library components")
+
+PkgInfo("GrasParams","database/GRAS3/Tools","","pm3",tLib,"T",3,[],["ALL"],[],
+    "Utilities for reading GRAS3 configuration options")
+
+PkgInfo("PageServer","database/GRAS3","","pm3",tProg,"T",3,[],["ALL"],[],
+    "GRAS3 transactional page server")
+
+PkgInfo("RuleEngine","database/GRAS3","","pm3",tLib,"T",3,[],["ALL"],[],
+    "GRAS3 rule engine")
+
+PkgInfo("PageClient","database/GRAS3","","pm3",tLib,"T",3,[],["ALL"],[],
+    "GRAS3 client interface to the transactional page server")
+
+PkgInfo("ServerShutdown","database/GRAS3","","pm3",tProg,"T",3,[],["ALL"],[],
+    "Shut down idle page server")
+
+PkgInfo("GrasNameServer","database/GRAS3","","pm3",tProg,"T",3,[],["ALL"],[],
+    "GRAS3 name server")
+
+PkgInfo("libpm3","database/persistence","","pm3",tLib,"T",3,[],["ALL"],[],
+    "Default libpm3 implementation using GRAS3")
+
+PkgInfo("primes","database/persistence","","pm3",tProg,"T",3,[],["ALL"],[],
+    "A simple persistent application that generates prime numbers")
+
+PkgInfo("OO7","database/persistence/OO7","","pm3",tLib,"T",3,[],["ALL"],[],
+    "OO7 benchmark schema")
+
+PkgInfo("gendb","database/persistence/OO7","","pm3",tProg,"T",3,[],["ALL"],[],
+    "OO7 database generator")
+
+PkgInfo("bench","database/persistence/OO7","","pm3",tProg,"T",3,[],["ALL"],[],
+    "OO7 benchmark operations and driver")
+
+PkgInfo("multi","database/persistence/OO7","","pm3",tProg,"T",3,[],["ALL"],[],
+    "Multi-user OO7 benchmark operations and driver")
+
 PkgInfo("stable","database/stableobjects","","stable",tLib,"T",3,[],["ALL"],
     [],"A library providing log-based persistent objects")
 
@@ -206,7 +288,7 @@ PkgInfo("stablegen","database/stableobjects","","stable",tProg,"",3,[],
     ["ALL"],[],"Stub generator to make the use of the stable library " &
     "much easier")
 
-PkgInfo("X11","graphics/gr-libs","","X11",tLib,"T",3,[],["ALL"],["X11"],
+PkgInfo("X11R4","graphics/gr-libs","","X11R4",tLib,"T",3,[],["ALL"],["X11"],
     "Modula-3 interface to the X library")
 
 PkgInfo("PEX","graphics/gr-libs","","PEX",tLib,"T",3,[],["ALL"],["DECPEX"],
@@ -220,9 +302,6 @@ PkgInfo("motif","graphics/gr-libs","","motif",tLib,"T",3,[],["ALL"],["MOTIF"],
 
 PkgInfo("tetris","graphics/games","","tetris",tProg,"T",3,[],["ALL"],["X11"],
     "Modula-3 version of Tetris")
-
-PkgInfo("columns","graphics/games","","columns",tProg,"T",3,[],["ALL"],[],
-    "Modula-3 version of the PC game, columns")
 
 PkgInfo("ui","graphics/gr-libs","","ui",tLib,"T",3,[],["ALL"],[],
     "This library, ui, implements the Trestle window-system toolkit")
@@ -249,9 +328,6 @@ PkgInfo("m3markup","language/modula3/m3tools","","m3markup",tLib,"T",3,[],
 PkgInfo("m3tohtmlf","language/modula3/m3tools","","m3tohtmlf",tProg,"T",3,[],
     ["ALL"],[],"Convert one Modula-3 source to an HTML file")
 
-PkgInfo("tcpextras","network/tcplibs","","tcpextras",tLib,"T",3,[],["ALL"],
-    [],"Additions to the tcp library")
-
 PkgInfo("m3browser","language/modula3/m3tools","","m3browser",tProg,"T",3,[],
   ["ALL"],["POSIX"],
   "HTTP server that provides WWW browsing of the installed Modula-3 system")
@@ -267,6 +343,9 @@ PkgInfo("dpsslides","graphics/displayps","","dpsslides",tProg,"T",3,[],
 
 PkgInfo("vbtkit","graphics/gr-libs","","vbtkit",tLib,"T",3,[],["ALL"],[],
     "Large collection of useful window widgets")
+
+PkgInfo("columns","graphics/games","","columns",tProg,"T",3,[],["ALL"],[],
+    "Modula-3 version of the PC game, columns")
 
 PkgInfo("fours","graphics/games","","fours",tProg,"T",3,[],["ALL"],[],
     "Modula-3 variants of the PC game, tetris")
@@ -457,6 +536,9 @@ PkgInfo("gnuemacs","language/modula3/m3tools","","gnuemacs",tProg,"T",3,[],
     "A library of useful E-lisp code for Modual-3-mode in " &
     "gnuemacs, also a program to build Modula-3 tags")
 
+PkgInfo("http","network/www","","http",tLib,"T",3,[],["ALL"],[],
+    "Library for hypertext transfer protocol (HTTP)")
+
 PkgInfo("webvbt","network/www","","webvbt",tLib,"T",3,[],["ALL"],[],
     "A library for displaying HTML pages inside a VBT")
 
@@ -489,9 +571,6 @@ PkgInfo("buildlectern","graphics/lecternpkg","","lectern",tProg,"",3,
 
 PkgInfo("editlectern","graphics/lecternpkg","","lectern",tProg,"",3,[],
     ["ALL"],[],"Program for editing lectern documents")
-
-PkgInfo("http","network/www","","http",tLib,"T",3,[],["ALL"],[],
-    "Library for hypertext transfer protocol (HTTP)")
 
 PkgInfo("webcat","network/www","","webcat",tProg,"T",3,[],["ALL"],[],
     "Program that takes a URL and prints out the web document")

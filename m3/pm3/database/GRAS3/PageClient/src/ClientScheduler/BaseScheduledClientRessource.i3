@@ -7,8 +7,11 @@ INTERFACE BaseScheduledClientRessource;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:36  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:47  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:36  hosking
+    Import of GRAS3 1.1
 
     Revision 1.11  1997/06/13 11:55:11  rbnix
     	Adapted to unified path handling of
@@ -84,7 +87,8 @@ INTERFACE BaseScheduledClientRessource;
   this point only flat transactions are provided.
  | ------------------------------------------------------------------------
  *)
-IMPORT Pathname, TextSeq, PageFile, Access, Transaction, ClientInfoSeq;
+IMPORT Pathname, TextTransientSeq AS TextSeq, PageFile, Access, Txn,
+       ClientInfoSeq;
 
 IMPORT AtomList;
 
@@ -92,7 +96,7 @@ TYPE
   T <: Public;
 
   Public =
-    OBJECT
+    <*TRANSIENT*> ROOT OBJECT
     METHODS
       (* resource administration *)
       init (baseName    : Pathname.T;
@@ -135,9 +139,10 @@ TYPE
       (* transaction support *)
       startTransaction  () RAISES {FatalError};
       commitTransaction () RAISES {NotInTransaction, FatalError};
+      chainTransaction () RAISES {NotInTransaction, FatalError};
       abortTransaction  () RAISES {NotInTransaction, FatalError};
 
-      getTransactionLevel  (): Transaction.Level;
+      getTransactionLevel  (): Txn.Level;
       getTransactionNumber (): CARDINAL;
 
       (* other stuff *)

@@ -9,7 +9,6 @@
 INTERFACE CG;
 
 IMPORT Target, M3CG, M3;
-FROM M3Compiler IMPORT FrontError;
 
 (*
 This interface provides a single front-end specific veneer over
@@ -33,6 +32,9 @@ TYPE (* see M3CG for the interpretation of these types *)
   TypeUID     = M3CG.TypeUID;
   Label       = M3CG.Label;
   Frequency   = M3CG.Frequency;
+  Cmp         = M3CG.CompareOp;
+  Cvt         = M3CG.ConvertOp;
+  RuntimeError = M3CG.RuntimeError;
   CallingConvention = M3CG.CallingConvention;
 
 CONST (* see M3CG for the interpretation of these values *)
@@ -47,7 +49,7 @@ CONST (* see M3CG for the interpretation of these values *)
 VAR (* maximum possible machine alignment *)
   Max_alignment: CARDINAL;
 
-PROCEDURE Init () RAISES {FrontError};
+PROCEDURE Init ();
 (* creates a fresh, initialized code generator *)
 
 (*----------------------------------------------------------- ID counters ---*)
@@ -96,15 +98,17 @@ PROCEDURE Declare_packed  (t: TypeUID;  s: Size;  base: TypeUID);
 PROCEDURE Declare_record (t: TypeUID;  s: Size;  n_fields: INTEGER);
 PROCEDURE Declare_field (n: Name;  o: Offset;  s: Size;  t: TypeUID);
 
-PROCEDURE Declare_global_field (n: Name;  o: Offset;  s: Size;  t: TypeUID);
-PROCEDURE Emit_global_record (s: Size);
+PROCEDURE Declare_global_field (n: Name;  o: Offset;  s: Size;  t: TypeUID;
+                                is_const: BOOLEAN);
+PROCEDURE Emit_global_record (s: Size;  is_const: BOOLEAN);
 
 PROCEDURE Declare_set (t, domain: TypeUID;  s: Size);
 
 PROCEDURE Declare_subrange (t, domain: TypeUID;  READONLY min, max: Target.Int;
                    s: Size);
 
-PROCEDURE Declare_pointer (t, target: TypeUID;  brand: TEXT;  traced: BOOLEAN);
+PROCEDURE Declare_pointer (t, target: TypeUID;  brand: TEXT;
+                           traced, transient: BOOLEAN);
 
 PROCEDURE Declare_indirect (target: TypeUID): TypeUID;
 (* an automatically dereferenced pointer! (WITH variables, VAR formals, ...) *)
@@ -115,8 +119,10 @@ PROCEDURE Declare_proctype (t: TypeUID; n_formals: INTEGER;
 PROCEDURE Declare_formal (n: Name;  t: TypeUID);
 PROCEDURE Declare_raises (n: Name);
 
-PROCEDURE Declare_object (t, super: TypeUID;  brand: TEXT;  traced: BOOLEAN;
-                 n_fields, n_methods, n_overrides: INTEGER;  field_size: Size);
+PROCEDURE Declare_object (t, super: TypeUID;  brand: TEXT;
+                          traced, transient: BOOLEAN;
+                          n_fields, n_methods, n_overrides: INTEGER;
+                          field_size: Size);
 PROCEDURE Declare_method (n: Name;  signature: TypeUID;  dfault: M3.Expr);
 PROCEDURE Declare_override (n: Name;  dfault: M3.Expr);
 PROCEDURE Declare_opaque (t, super: TypeUID);
@@ -170,11 +176,12 @@ PROCEDURE Import_global (n: Name;  s: Size;  a: Alignment;
                          t: Type;  m3t: TypeUID): Var;
 (* imports the specified global variable. *)
 
-PROCEDURE Declare_segment (n: Name;  m3t: TypeUID): Var;
+PROCEDURE Declare_segment (n: Name;  m3t: TypeUID;  is_const: BOOLEAN): Var;
 PROCEDURE Bind_segment (seg: Var;  s: Size;  a: Alignment;  t: Type;
-                        exported, init: BOOLEAN);
+                        exported, init, is_const: BOOLEAN);
 (* Together Declare_segment and Bind_segment accomplish what
-   Declare_global does, but Declare_segment gives the front-end a
+   Declare_global("is_const = FALSE") or Declare_constant("is_const=TRUE")
+   does, but Declare_segment gives the front-end a
    handle on the variable before its size, type, or initial values
    are known.  Every declared segment must be bound exactly once. *)
 
@@ -248,36 +255,36 @@ PROCEDURE Begin_init (v: Var);
 PROCEDURE End_init (v: Var);
 (* must precede and follow any init calls *)
 
-PROCEDURE Init_int  (o: Offset;  s: Size;  READONLY value: Target.Int);
-PROCEDURE Init_intt (o: Offset;  s: Size;  value: INTEGER);
+PROCEDURE Init_int  (o: Offset;  s: Size;  READONLY value: Target.Int;  is_const: BOOLEAN);
+PROCEDURE Init_intt (o: Offset;  s: Size;  value: INTEGER;  is_const: BOOLEAN);
 (* initializes the integer static variable at 'ADR(v)+offset' with
    the 's' low order bits of 'value' *)
 
-PROCEDURE Init_proc (o: Offset;  value: Proc);
+PROCEDURE Init_proc (o: Offset;  value: Proc;  is_const: BOOLEAN);
 (* initializes the static variable at 'ADR(v)+o' with the address
    of procedure 'value'. *)
 
-PROCEDURE Init_label (o: Offset;  value: Label);
+PROCEDURE Init_label (o: Offset;  value: Label;  is_const: BOOLEAN);
 (* initializes the static variable at 'ADR(v)+o' with the address
    of the label 'value'.  *)
 
-PROCEDURE Init_var (o: Offset;  value: Var;  bias: Offset);
+PROCEDURE Init_var (o: Offset;  value: Var;  bias: Offset;  is_const: BOOLEAN);
 (* initializes the static variable at 'ADR(v)+o' with the address
    of 'value+bias'.  *)
 
-PROCEDURE Init_offset (o: Offset;  var: Var);
+PROCEDURE Init_offset (o: Offset;  var: Var;  is_const: BOOLEAN);
 (* initializes the static variable at 'ADR(v)+o' with the integer
    frame offset of the local variable 'var'. *)
 
-PROCEDURE Init_chars (o: Offset;  value: TEXT);
+PROCEDURE Init_chars (o: Offset;  value: TEXT;  is_const: BOOLEAN);
 (* initializes the static variable at 'ADR(v)+offset' with the characters
    of 'value' *)
 
-PROCEDURE Init_float (o: Offset;  READONLY f: Target.Float);
+PROCEDURE Init_float (o: Offset;  READONLY f: Target.Float;  is_const: BOOLEAN);
 (* initializes the static variable at 'ADR(v)+offset' with the
    floating point value 'f' *)
 
-PROCEDURE EmitText (t: TEXT): INTEGER;
+PROCEDURE EmitText (t: TEXT;  is_const: BOOLEAN): INTEGER;
 (* Emits the zero terminated string and returns its global offset. *)
 
 (*------------------------------------------------------------ procedures ---*)
@@ -346,20 +353,20 @@ PROCEDURE Jump (l: Label);
 (* GOTO l *)
 
 PROCEDURE If_true  (l: Label;  f: Frequency);
-(* tmp := s0.I; pop; IF (tmp # 0) GOTO l *)
+(* tmp := s0.I32; pop; IF (tmp # 0) GOTO l *)
 
 PROCEDURE If_false (l: Label;  f: Frequency);
-(* tmp := s0.I; pop; IF (tmp = 0) GOTO l *)
+(* tmp := s0.I32; pop; IF (tmp = 0) GOTO l *)
 
-PROCEDURE If_eq (l: Label;  t: ZType;  f: Frequency); (*== eq(t); if_true(l) *)
-PROCEDURE If_ne (l: Label;  t: ZType;  f: Frequency); (*== ne(t); if_true(l) *)
-PROCEDURE If_gt (l: Label;  t: ZType;  f: Frequency); (*== gt(t); if_true(l) *)
-PROCEDURE If_ge (l: Label;  t: ZType;  f: Frequency); (*== ge(t); if_true(l) *)
-PROCEDURE If_lt (l: Label;  t: ZType;  f: Frequency); (*== lt(t); if_true(l) *)
-PROCEDURE If_le (l: Label;  t: ZType;  f: Frequency); (*== le(t); if_true(l) *)
+PROCEDURE If_compare (t: ZType;  op: Cmp;  l: Label;  f: Frequency);
+(*== compare(t, op); if_true(l) *)
+
+PROCEDURE If_then (t: ZType;  op: Cmp;  true, false: Label;  f: Frequency);
+(*== IF (true # No_Label) THEN  compare(t, op); if_true(true)
+                          ELSE  compare(t, op); if_false(false)*)
 
 PROCEDURE Case_jump (READONLY labels: ARRAY OF Label);
-(* tmp := s0.I; pop; GOTO labels[tmp]  (NOTE: no range checking on s0.I) *)
+(* tmp := s0.I32; pop; GOTO labels[tmp]  (NOTE: no range checking on s0.I32) *)
 
 PROCEDURE Exit_proc (t: Type);
 (* Returns s0.t if the stack is non-empty, otherwise returns no value. *)
@@ -423,18 +430,8 @@ PROCEDURE Load_addr (v: Var;  o: Offset := 0);
 PROCEDURE Store (v: Var;  o: Offset;  s: Size;  a: Alignment;  t: Type);
 (* Mem [ ADR(v) + o : s ] := s0.t ; pop *)
 
-PROCEDURE Store_ref (v: Var;  o: Offset := 0);
-(* == store (v, o, Target.Address.size, Target.Address.align, Type.Addr),
-          but also does reference counting *)
-
 PROCEDURE Store_indirect (t: Type;  o: Offset;  s: Size);
 (* Mem [s1.A + o : s] := s0.t ; pop (2) *)
-
-PROCEDURE Store_ref_indirect (o: Offset;  var: BOOLEAN);
-  (* == store_indirect(Type.Addr, o, Target.Address.size);
-     but also does reference counting.  If "var" is true, then reference
-     counting depends on whether the effective address is in the heap or
-     stack. *)
 
 PROCEDURE Store_int (v: Var;  o: Offset := 0);
 (* == Store (v, o, Target.Integer.size, Target.Integer.align, Type.Int) *)
@@ -457,12 +454,9 @@ PROCEDURE Load_float   (READONLY f: Target.Float); (*push ; s0.t := f *)
    does the unsigned comparison or arithmetic, but the operators
    and the result are of type Integer *)
    
-PROCEDURE Eq        (t: ZType);  (* s1.I := (s1.t = s0.t)  ; pop *)
-PROCEDURE Ne        (t: ZType);  (* s1.I := (s1.t # s0.t)  ; pop *)
-PROCEDURE Gt        (t: ZType);  (* s1.I := (s1.t > s0.t)  ; pop *)
-PROCEDURE Ge        (t: ZType);  (* s1.I := (s1.t >= s0.t) ; pop *)
-PROCEDURE Lt        (t: ZType);  (* s1.I := (s1.t < s0.t)  ; pop *)
-PROCEDURE Le        (t: ZType);  (* s1.I := (s1.t <= s0.t) ; pop *)
+PROCEDURE Compare   (t: ZType; op: Cmp);
+  (* s1.I32 := (s1.t op s0.t)  ; pop *)
+
 PROCEDURE Add       (t: AType);  (* s1.t := s1.t + s0.t ; pop *)
 PROCEDURE Subtract  (t: AType);  (* s1.t := s1.t - s0.t ; pop *)
 PROCEDURE Multiply  (t: AType);  (* s1.t := s1.t * s0.t ; pop *)
@@ -471,10 +465,7 @@ PROCEDURE Negate    (t: AType);  (* s0.t := - s0.t *)
 PROCEDURE Abs       (t: AType);  (* s0.t := ABS (s0.t) (noop on Words) *)
 PROCEDURE Max       (t: ZType);  (* s1.t := MAX (s1.t, s0.t) ; pop *)
 PROCEDURE Min       (t: ZType);  (* s1.t := MIN (s1.t, s0.t) ; pop *)
-PROCEDURE Round     (t: RType);  (* s0.I := ROUND (s0.t) *)
-PROCEDURE Trunc     (t: RType);  (* s0.I := TRUNC (s0.t) *)
-PROCEDURE Floor     (t: RType);  (* s0.I := FLOOR (s0.t) *)
-PROCEDURE Ceiling   (t: RType);  (* s0.I := CEILING (s0.t) *)
+PROCEDURE Cvt_int   (t: RType;  op: Cvt);  (* s0.I := op (s0.t) *)
 PROCEDURE Cvt_float (t: AType;  u: RType);   (* s0.u := FLOAT (s0.t, u) *)
 PROCEDURE Div       (t: IType;  a, b: Sign); (* s1.t := s1.t DIV s0.t;pop*)
 PROCEDURE Mod       (t: IType;  a, b: Sign); (* s1.t := s1.t MOD s0.t;pop*)
@@ -491,13 +482,8 @@ PROCEDURE Set_union          (s: Size);  (* s2.B := s1.B + s0.B ; pop(3) *)
 PROCEDURE Set_difference     (s: Size);  (* s2.B := s1.B - s0.B ; pop(3) *)
 PROCEDURE Set_intersection   (s: Size);  (* s2.B := s1.B * s0.B ; pop(3) *)
 PROCEDURE Set_sym_difference (s: Size);  (* s2.B := s1.B / s0.B ; pop(3) *)
-PROCEDURE Set_member         (s: Size);  (* s1.I := (s0.I IN s1.B); pop *)
-PROCEDURE Set_eq             (s: Size);  (* s1.I := (s1.B = s0.B); pop *)
-PROCEDURE Set_ne             (s: Size);  (* s1.I := (s1.B # s0.B); pop *)
-PROCEDURE Set_lt             (s: Size);  (* s1.I := (s1.B < s0.B); pop *)
-PROCEDURE Set_le             (s: Size);  (* s1.I := (s1.B <= s0.B); pop *)
-PROCEDURE Set_gt             (s: Size);  (* s1.I := (s1.B > s0.B); pop *)
-PROCEDURE Set_ge             (s: Size);  (* s1.I := (s1.B >= s0.B); pop *)
+PROCEDURE Set_member         (s: Size);  (* s1.I32 := (s0.I IN s1.B); pop *)
+PROCEDURE Set_compare        (s: Size;  op: Cmp);  (* s1.I := (s1.B op s0.B); pop *)
 PROCEDURE Set_singleton      (s: Size);  (* s1.A [s0.I] := 1; pop(2) *)
 PROCEDURE Set_range          (s: Size);  (* s2.A[s1.I..s0.I] := 1; pop(3)
                                              --- S2.A must be forced *)
@@ -562,33 +548,29 @@ PROCEDURE Loophole (from, two: Type);
 
 (*------------------------------------------------ traps & runtime checks ---*)
 
-PROCEDURE Assert_fault   ();
-PROCEDURE Narrow_fault   ();
-PROCEDURE Return_fault   ();
-PROCEDURE Case_fault     ();
-PROCEDURE Typecase_fault ();
+PROCEDURE Abort (code: RuntimeError);
 (* Abort *)
 
-PROCEDURE Check_nil ();
-(* IF (s0.A = NIL) THEN Abort *)
+PROCEDURE Check_nil (code: RuntimeError);
+(* IF (s0.A = NIL) THEN abort(code) *)
 
-PROCEDURE Check_lo (READONLY i: Target.Int);
-(* IF (s0.I < i) THEN Abort *)
+PROCEDURE Check_lo (READONLY i: Target.Int;  code: RuntimeError);
+(* IF (s0.I < i) THEN abort(code) *)
 
-PROCEDURE Check_hi (READONLY i: Target.Int);
-(* IF (i < s0.I) THEN Abort *)
+PROCEDURE Check_hi (READONLY i: Target.Int;  code: RuntimeError);
+(* IF (i < s0.I) THEN abort(code) *)
 
-PROCEDURE Check_range (READONLY a, b: Target.Int);
-(* IF (s0.I < a) OR (b < s0.I) THEN Abort *)
+PROCEDURE Check_range (READONLY a, b: Target.Int;  code: RuntimeError);
+(* IF (s0.I < a) OR (b < s0.I) THEN abort(code) *)
 
-PROCEDURE Check_index ();
-(* IF NOT (0 <= s1.I < s0.I) THEN Abort END; pop *)
+PROCEDURE Check_index (code: RuntimeError);
+(* IF NOT (0 <= s1.I < s0.I) THEN abort(code) END; pop *)
 
-PROCEDURE Check_eq ();
-(* IF (s0.I # s1.I) THEN Abort;  Pop (2) *)
+PROCEDURE Check_eq (code: RuntimeError);
+(* IF (s0.I # s1.I) THEN abort(code);  Pop (2) *)
 
 PROCEDURE Check_byte_aligned ();
-(* IF (s0.A is not byte-aligned) THEN Abort *)
+(* IF unaligned(s0.A) THEN abort(RuntimeError.UnalignedAddress); *)
 
 (*---------------------------------------------------- address arithmetic ---*)
 
@@ -634,7 +616,7 @@ PROCEDURE GCD (a, b: INTEGER): INTEGER;
           Pop_param ();  -or-  Pop_struct();
 
       <evaluate the address of the procedure to call>
-      Call_indirect (t, cc);
+      Gen_Call_indirect (t, cc);
 *)
 
 PROCEDURE Start_call_direct (p: Proc;  lev: INTEGER;  t: Type);
@@ -647,9 +629,10 @@ PROCEDURE Call_direct (p: Proc;  t: Type);
 PROCEDURE Start_call_indirect (t: Type;  cc: CallingConvention);
 (* begin an indirect procedure call that will return a value of type 't'. *)
 
-PROCEDURE Call_indirect (t: Type;  cc: CallingConvention);
+PROCEDURE Gen_Call_indirect (t: Type;  cc: CallingConvention);
 (* call the procedure whose address is in s0.A and pop s0.  The
-   procedure returns a value of type t. *)
+   procedure returns a value of type t.   Note: may also generate
+   NIL checking code.  *)
 
 PROCEDURE Pop_param (t: Type);
 (* pop s0.t and make it the "next" parameter in the current call *)
@@ -705,7 +688,7 @@ PROCEDURE Closure_frame ();
 
 (*----------------------------------------------------------------- misc. ---*)
 
-PROCEDURE Comment (offset: INTEGER;  a, b, c, d: TEXT := NIL);
+PROCEDURE Comment (offset: INTEGER;  is_const: BOOLEAN;  a, b, c, d: TEXT := NIL);
 (* annotate the output with a&b&c&d as a comment *)
 
 END CG.

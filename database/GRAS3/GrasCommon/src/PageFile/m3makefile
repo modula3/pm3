@@ -4,6 +4,6 @@ Module("PageFile")
 
 Module("BufferedPageFile")
 module("NumberedPage")
-sequence("NumberedPage", "NumberedPage")
+transientSequence("NumberedPage", "NumberedPage")
 
 Module("PageFileSystem")

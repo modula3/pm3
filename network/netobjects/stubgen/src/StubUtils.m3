@@ -9,14 +9,20 @@
 
 MODULE StubUtils;
 
-IMPORT Atom, Fmt, Thread, Stdio, Protocol, Wr;
+IMPORT Atom, Fmt, Thread, Stdio, Protocol, Process, Wr;
 
 <* FATAL Thread.Alerted, Wr.Failure *>
 
 PROCEDURE Message(text: TEXT) =
   BEGIN
-    Wr.PutText(stubchatter, "stubgen: " & text & "\n")
+    Wr.PutText(stubchatter, "stubgen: " & text & Wr.EOL)
   END Message;
+
+PROCEDURE Die(text: TEXT) =
+  BEGIN
+    Message ("INTERNAL ERROR: " & text);
+    Process.Exit (1);
+  END Die;
 
 PROCEDURE SetPerfMon(flag: BOOLEAN) =
   BEGIN
@@ -25,7 +31,7 @@ PROCEDURE SetPerfMon(flag: BOOLEAN) =
 
 PROCEDURE FileName(typeName: Atom.T): TEXT =
   BEGIN
-    RETURN Atom.ToText(typeName) & "_v" & Fmt.Int(Protocol.Version);
+    RETURN Atom.ToText(typeName) & "_v" & Fmt.Int(Protocol.version);
   END FileName;
 
 BEGIN

@@ -10,6 +10,7 @@ module ("Type")
 interface ("TypeRep")
 
 module ("ArrayType")
+module ("Brand")
 module ("EnumType")
 module ("NamedType")
 module ("ObjectType")

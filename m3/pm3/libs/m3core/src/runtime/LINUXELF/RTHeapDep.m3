@@ -8,7 +8,7 @@
 UNSAFE MODULE RTHeapDep;
 
 IMPORT RT0u, RTMachine, RTHeapRep, RTCollectorSRC;
-IMPORT Cstdlib, Ctypes, Umman, Unix, Uresource, Usignal, Utypes, Word;
+IMPORT Cstdlib, Ctypes, Umman, Unix, Uresource, Usignal, Utime, Utypes, Word;
 
 VAR
   initialized                           := FALSE;
@@ -48,9 +48,11 @@ PROCEDURE Init () =
     VAR
       newHandler := LOOPHOLE(Fault,Usignal.SignalActionHandler);
       vec := Usignal.struct_sigaction{
-               sa_handler := newHandler, sa_mask :=
-               Word.LeftShift(1, Usignal.SIGVTALRM - 1), 
-               sa_flags := Usignal.SA_RESTART,
+               sa_handler := newHandler,
+               sa_mask :=
+                   Word.Or(Word.LeftShift(1, Usignal.SIGVTALRM - 1),
+                           Word.LeftShift(1, Usignal.SIGINT - 1)),
+               sa_flags := Word.Or(Usignal.SA_RESTART, Usignal.SA_NODEFER),
                sa_restorer := NIL};
       ovec: Usignal.struct_sigaction;
       ret, tmp: Ctypes.int;
@@ -144,17 +146,20 @@ PROCEDURE Core (             sig : Ctypes.int;
 (* System-call faults are handled in RTHeapDepC.c *)
 
 PROCEDURE TimeUsed (): REAL =
-  VAR usage: Uresource.struct_rusage;
+  VAR
+    usage: Uresource.struct_rusage;
+    ret := Uresource.getrusage(Uresource.RUSAGE_SELF, usage);
   BEGIN
-    VAR ret := Uresource.getrusage(Uresource.RUSAGE_SELF, ADR(usage));
-    BEGIN
-      <* ASSERT ret # -1 *>
-    END;
-    RETURN (FLOAT(usage.ru_utime.tv_sec)
-              + FLOAT(usage.ru_utime.tv_usec) / 1000000.0)
-             + (FLOAT(usage.ru_utime.tv_sec)
-                  + FLOAT(usage.ru_utime.tv_usec) / 1000000.0);
+    <* ASSERT ret # -1 *>
+    RETURN TimevalSecs(usage.ru_utime) + TimevalSecs(usage.ru_stime);
   END TimeUsed;
+
+PROCEDURE TimevalSecs(READONLY t: Utime.struct_timeval): REAL =
+  (* Return the number of seconds represented by "t" as a floating-
+     point number. *)
+  BEGIN
+    RETURN FLOAT(t.tv_sec) + (FLOAT(t.tv_usec) / 1.0e6)
+  END TimevalSecs;
 
 PROCEDURE VMFaultTime (): REAL =
   BEGIN

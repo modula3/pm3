@@ -7,7 +7,8 @@
 
 MODULE NetObjMon;
    
-IMPORT NetObj, NGCMonitor, Fmt, Params, Process, RefList, Thread;
+IMPORT NetObj, NGCMonitor, Fmt, Params, Process, RefTransientList AS RefList,
+       Thread;
 
 TYPE
   TT = T OBJECT OVERRIDES
@@ -29,7 +30,7 @@ PROCEDURE Register () =
     END;
   END Register;
 
-PROCEDURE Dump(<*UNUSED*>m: TT) : REFANY =
+PROCEDURE Dump(<*UNUSED*>m: TT) : <*TRANSIENT*> REFANY =
   BEGIN
     RETURN NGCMonitor.MonitorDump();
   END Dump;

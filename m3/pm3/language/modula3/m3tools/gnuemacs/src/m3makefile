@@ -7,27 +7,29 @@
 %      modified on Mon Jan 18 19:09:20 PST 1993 by muller
 
 
-if equal (TARGET, "LINUX") or equal (TARGET, "LINUXELF") or
-    equal(TARGET, "LINUXLIBC6")
+if SYSTEM_LIBS contains "LEX-YACC"
+  if equal (TARGET, "HPPA")
+    include_dir ("lex-yacc-HPPA")
+  else
+    include_dir ("lex-yacc")
+  end
+else if SYSTEM_LIBS contains "FLEX-BISON"
   include_dir ("flex-bison")
 else
-  include_dir ("lex-yacc")
-end
+  error ("Unable to build m3tags without Lex&Yacc or Flex&Bison libraries.")
+end end
 
-% source    ("parse.lex")
-% source    ("parse.yacc")
-import_lib("c", "/lib")
+source    ("parse.lex")
+source    ("parse.yacc")
 c_source  ("m3tags")
 h_source  ("hash")
-ManPage   ("m3tags", 1)
 import("m3doc")
 HtmlFile("index")
+ManPage   ("m3tags","1")
+C_program ("m3tags")
 
 CompiledGnuemacs ("m3tags")
 CompiledGnuemacs ("modula3")
 CompiledGnuemacs ("ispell19-3.0")
 % CompiledGnuemacs ("m3-debug")
 % CompiledGnuemacs ("shell-compile")
-
-C_program ("m3tags")
-

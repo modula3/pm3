@@ -24,10 +24,11 @@ TYPE
         first: RTHeapRep.Page := RTHeapRep.Nil;
         nb   : CARDINAL       := 1;
         desc := RTHeapRep.Desc{
-                  space := RTHeapRep.Space.Unallocated, generation :=
-                  RTHeapRep.Generation.Younger, pure := FALSE, note :=
-                  RTHeapRep.Note.Allocated, gray := FALSE, protected :=
-                  FALSE, continued := FALSE};
+                  space := RTHeapRep.Space.Unallocated,
+                  generation := RTHeapRep.Generation.Younger,
+                  pure := FALSE, note := RTHeapRep.Note.Allocated,
+                  gray := FALSE, mode := RTHeapRep.Mode.ReadWrite,
+                  continued := FALSE, resident := TRUE, dirty := TRUE};
       END;
 
 END RTHeapEvent.

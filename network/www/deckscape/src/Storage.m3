@@ -10,7 +10,6 @@ IMPORT Atom, DeckVBT, DocVBT, Env, FileRd, FileWr, FreeDocVBT, OSError, Rd,
 
 <*FATAL ANY*>
 
-
 PROCEDURE Restore (): WorkspaceVBT.T =
   VAR
     w        := WorkspaceVBT.New();
@@ -18,7 +17,7 @@ PROCEDURE Restore (): WorkspaceVBT.T =
     filename : TEXT;
   VAR rd: Rd.T;
   BEGIN
-    IF home = NIL THEN RETURN w END;
+    IF home = NIL THEN RETURN w; END;
     filename := home & "/.deckscape";
     TRY rd := FileRd.Open(filename) EXCEPT OSError.E => RETURN w END;
     Wr.PutText(
@@ -125,13 +124,14 @@ PROCEDURE RestoreDeck (list: RefList.T): DeckVBT.T =
     RETURN deckVBT
   END RestoreDeck;
 
+
 PROCEDURE Save (v: WorkspaceVBT.T) =
   VAR
     deckList := WorkspaceVBT.GetDecks(v);
     home     := Env.Get("HOME");
   BEGIN
     IF home # NIL THEN
-      WITH wr = FileWr.Open(home & "/.deckscape") DO
+      VAR wr := FileWr.Open(home & "/.deckscape"); BEGIN
         WHILE deckList # NIL DO
           SaveDeck(wr, deckList.head);
           deckList := deckList.tail;

@@ -7,8 +7,11 @@ MODULE ITCFile EXPORTS ITCFile, InternalITCFile;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:28  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:45  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:28  hosking
+    Import of GRAS3 1.1
 
     Revision 1.10  1998/03/17 14:14:06  kluck
     Necessary adaptions to use local graphs. (MK)
@@ -152,8 +155,8 @@ MODULE ITCFile EXPORTS ITCFile, InternalITCFile;
  | ------------------------------------------------------------------------
  *)
 IMPORT VirtualRemoteFile, VirtualLocalFile, VirtualFile;
-IMPORT Word, Pathname, PageFile, PageFileSystem, Access, VirtualPage,
-       VirtualResource, Transaction, DataPage, SystemPage, ErrorSupport;
+IMPORT Word, Pathname, PageFile, PageData, PageFileSystem, Access, VirtualPage,
+       VirtualResource, Txn, DataPage, SystemPage, ErrorSupport;
 IMPORT Trigger, Action, ContextSet, VirtualPageEventPattern,
        VirtualPageEvent, RuleEngine, EventType;
 
@@ -226,7 +229,7 @@ REVEAL
 PROCEDURE CommitAction (<* UNUSED *> event  : VirtualPageEvent.T;
                         <* UNUSED *> context: ContextSet.T;
                         <* UNUSED *> local  : BOOLEAN;
-                                     data   : REFANY              ) =
+                                     data   : <*TRANSIENT*> REFANY) =
   BEGIN
     WITH file = NARROW(data, T) DO
       LOCK file.cacheMutex DO
@@ -240,7 +243,7 @@ PROCEDURE CommitAction (<* UNUSED *> event  : VirtualPageEvent.T;
 PROCEDURE AbortAction (<* UNUSED *> event  : VirtualPageEvent.T;
                        <* UNUSED *> context: ContextSet.T;
                        <* UNUSED *> local  : BOOLEAN;
-                                    data   : REFANY              ) =
+                                    data   : <*TRANSIENT*> REFANY) =
   BEGIN
     WITH file = NARROW(data, T) DO
       LOCK file.cacheMutex DO ClearCache(file) END;
@@ -250,7 +253,7 @@ PROCEDURE AbortAction (<* UNUSED *> event  : VirtualPageEvent.T;
 PROCEDURE BeginAction (<* UNUSED*>  event  : VirtualPageEvent.T;
                        <* UNUSED *> context: ContextSet.T;
                        <* UNUSED *> local  : BOOLEAN;
-                                    data   : REFANY              ) =
+                                    data   : <*TRANSIENT*> REFANY) =
   BEGIN
     WITH file = NARROW(data, T) DO
       LOCK file.cacheMutex DO
@@ -262,7 +265,7 @@ PROCEDURE BeginAction (<* UNUSED*>  event  : VirtualPageEvent.T;
 PROCEDURE RemoteCommitAction (<* UNUSED *> event  : VirtualPageEvent.T;
                               <* UNUSED *> context: ContextSet.T;
                               <* UNUSED *> local  : BOOLEAN;
-                                           data   : REFANY              ) =
+                                           data   : <*TRANSIENT*> REFANY) =
   BEGIN
     WITH file = NARROW(data, T) DO
       LOCK file.cacheMutex DO
@@ -337,7 +340,7 @@ PROCEDURE Open (file    : T;
         action := NEW(Action.Local).init(CommitAction);
         VirtualPageEventPattern.SetResource(pattern, resource);
         VirtualPageEventPattern.SetPreEvent(pattern, TRUE);
-        VirtualPageEventPattern.SetLevel(pattern, Transaction.TopLevel);
+        VirtualPageEventPattern.SetLevel(pattern, Txn.TopLevel);
         trigger := Trigger.Create(pattern, action, coupling, 0, inh, perm);
         file.commitTrigger := RuleEngine.RegisterTrigger(
                                 trigger, RuleEngine.Interest.Self, file);
@@ -347,7 +350,7 @@ PROCEDURE Open (file    : T;
         action := NEW(Action.Local).init(BeginAction);
         VirtualPageEventPattern.SetResource(pattern, resource);
         VirtualPageEventPattern.SetPreEvent(pattern, FALSE);
-        VirtualPageEventPattern.SetLevel(pattern, Transaction.TopLevel);
+        VirtualPageEventPattern.SetLevel(pattern, Txn.TopLevel);
         trigger := Trigger.Create(pattern, action, coupling, 0, inh, perm);
         file.beginTrigger := RuleEngine.RegisterTrigger(
                                trigger, RuleEngine.Interest.Self, file);
@@ -413,6 +416,7 @@ PROCEDURE SplitPage (    file              : T;
                      VAR oldPage           : DataPage.T;
                      VAR newPage1, newPage2: DataPage.T  )
   RAISES {Access.Locked, InternalError} =
+  VAR data: PageData.T;
   BEGIN
     (* get pointer to source page *)
     oldPage := file.vfile.getPage(oldpno);
@@ -425,7 +429,8 @@ PROCEDURE SplitPage (    file              : T;
       (* copy old page data; it might be discarded by the calling
          procedures *)
       TRY
-        file.splitMergeBuffer1.putAll(oldPage.getAll());
+        oldPage.getAll(data);
+        file.splitMergeBuffer1.putAll(data);
       EXCEPT
         VirtualPage.FatalError (info) =>
           RAISE InternalError(
@@ -446,6 +451,7 @@ PROCEDURE MergePage (    file                  : T;
                      VAR newPage               : DataPage.T;
                      VAR oldPage1, oldPage2    : DataPage.T  )
   RAISES {Access.Locked, InternalError} =
+  VAR data: PageData.T;
   BEGIN
     (* get source pages *)
     oldPage1 := file.vfile.getPage(oldPage1No);
@@ -466,9 +472,11 @@ PROCEDURE MergePage (    file                  : T;
     (* copy old page data; it might be discarded by the calling
        procedures *)
     TRY
-      file.splitMergeBuffer1.putAll(oldPage1.getAll());
+      oldPage1.getAll(data);
+      file.splitMergeBuffer1.putAll(data);
       oldPage1 := file.splitMergeBuffer1;
-      file.splitMergeBuffer2.putAll(oldPage2.getAll());
+      oldPage2.getAll(data);
+      file.splitMergeBuffer2.putAll(data);
       oldPage2 := file.splitMergeBuffer2;
     EXCEPT
       VirtualPage.FatalError (info) =>
@@ -485,11 +493,13 @@ PROCEDURE MergePage (    file                  : T;
 PROCEDURE CopyPage (file: T; oldPageNo: CARDINAL; newPageNo: CARDINAL)
   RAISES {Access.Locked, InternalError} =
   VAR op, np: VirtualPage.T;
+      data: PageData.T;
   BEGIN
     op := file.vfile.getPage(oldPageNo);
     np := file.vfile.getPage(newPageNo);
     TRY
-      np.putAll(op.getAll());
+      op.getAll(data);
+      np.putAll(data);
     EXCEPT
       VirtualPage.FatalError (info) =>
         RAISE InternalError(

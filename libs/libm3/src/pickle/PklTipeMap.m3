@@ -1,5 +1,4 @@
-(*                            -*- Mode: Modula-3 -*- 
- * 
+(* 
  * For information about this program, contact Blair MacIntyre            
  * (bm@cs.columbia.edu) or Steven Feiner (feiner@cs.columbia.edu)         
  * at the Computer Science Dept., Columbia University,                    
@@ -10,24 +9,6 @@
  *
  * This file is released under the same conditions as Pickle.m3. See COPYRIGHT.
  * 
- * Author          : Blair MacIntyre
- * Created On      : Fri Jul 21 21:52:08 1995
- * Last Modified By: Blair MacIntyre
- * Last Modified On: Fri Jul 11 13:06:17 1997
- * Update Count    : 48
- * 
- * $Source$
- * $Date$
- * $Author$
- * $Revision$
- * 
- * $Log$
- * Revision 1.1  1998/02/26 16:37:34  dagenais
- * Enhanced pickler which allows communicating pickles between machines
- * with different endianess.
- *
- * 
- * HISTORY
  *)
 
 UNSAFE MODULE PklTipeMap;
@@ -111,7 +92,8 @@ CONST
     "Int_1", "Int_2", "Int_4", "Int_8",     (* 1, 2, 4, or 8 byte signed integer *)
     "Word_1", "Word_2", "Word_4", "Word_8", (* 1, 2, 4, or 8 byte unsigned integer *)
     "Int_Field", "Word_Field",          (* signed or unsigned bit field *)
-    "Set"                             (* bit set *)
+    "Set",                             (* bit set *)
+    "TransientRef"			 (* transient ref *)
   };
 
 PROCEDURE VisitRead(v: ReadVisitor; field: ADDRESS; kind: RTTypeMap.Kind) =
@@ -130,7 +112,8 @@ CONST
     RTTypeMap.Kind.Word_1, RTTypeMap.Kind.Word_2, RTTypeMap.Kind.Word_4, 
     RTTypeMap.Kind.Word_8,
     RTTypeMap.Kind.Int_Field, RTTypeMap.Kind.Word_Field,
-    RTTypeMap.Kind.Set
+    RTTypeMap.Kind.Set,
+    RTTypeMap.Kind.TransientRef
   };
 
 PROCEDURE Write (v: ConvertPacking.WriteVisitor; r: REFANY; tc: TypeCode; 

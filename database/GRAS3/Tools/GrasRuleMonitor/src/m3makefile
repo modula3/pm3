@@ -1,8 +1,7 @@
 import("HiGRAS")
 import("formsvbt")
 import("mgkit")
-
-include_pkg("GrasParams")
+import("GrasParams")
 
 resource("MonitorPanel.fv")
 resource("MonitorView.fv")

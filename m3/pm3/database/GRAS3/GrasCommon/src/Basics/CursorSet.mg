@@ -6,8 +6,11 @@ GENERIC MODULE CursorSet(Element);
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:27  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:43  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:27  hosking
+    Import of GRAS3 1.1
 
     Revision 1.7  1998/01/21 14:15:21  roland
     Debugging code added (in comments).
@@ -40,7 +43,7 @@ TYPE
              END;
 
   Node =                         (* a set element: *)
-    BRANDED REF NodeInfo;
+    <*TRANSIENT*> BRANDED REF NodeInfo;
 
 
 REVEAL

@@ -201,7 +201,7 @@ char *tokenp, *argv[];
   
   { char *t, **a;
 
-    for (t = tokenp, a = argv; t; t++, a++) {
+    for (t = tokenp, a = argv; *t; t++, a++) {
       if (A_TOKEN_PTR(*t)) {
         MAKE_READABLE(*a);
       }

@@ -15,11 +15,10 @@ export_interface("Transport")
 export_interface("DirtyElem")
 export_interface("SpaceID")
 
-%option("standalone","T")
-
+build_standalone()
 module ("NMonRegistrySvr")
 implementation ("NetObjDaemon")
 
-ManPage("netobjd", 1)
+ManPage("netobjd","1")
 
 Program("netobjd")

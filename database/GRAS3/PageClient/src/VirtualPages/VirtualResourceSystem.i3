@@ -7,8 +7,11 @@ INTERFACE VirtualResourceSystem;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:37  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:48  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:37  hosking
+    Import of GRAS3 1.1
 
     Revision 1.7  1997/03/21 17:04:47  roland
     Adapted to changed Config. Login parameters are all optional except
@@ -51,7 +54,8 @@ INTERFACE VirtualResourceSystem;
  Currently only the persistent = remote part of resources is served.
  | ------------------------------------------------------------------------
  *)
-IMPORT Pathname, TextSeq, AtomList, PageFile, ClientInfoSeq;
+IMPORT Pathname, TextTransientSeq AS TextSeq,
+       AtomList, PageFile, ClientInfoSeq;
 
 
 PROCEDURE Login (root      : Pathname.T;

@@ -11,28 +11,27 @@ IMPORT Wr, Thread, Fmt, Text, Stdio, IntIntTbl;
 IMPORT M3ID, M3CG, M3CG_Ops, Target, TargetMap;
 
 FROM M3CG IMPORT Name, ByteOffset, CallingConvention;
-FROM M3CG IMPORT ByteSize, Alignment, Frequency;
-FROM M3CG IMPORT Var, Proc, Label, Sign;
+FROM M3CG IMPORT ByteSize, Alignment, Frequency, RuntimeError;
+FROM M3CG IMPORT Var, Proc, Label, Sign, CompareOp, ConvertOp;
 FROM M3CG IMPORT Type, ZType, AType, RType, IType, MType;
 
 TYPE (* stack data types *)
-  ST = { Addr, Word, Int, Reel, LReel, XReel, Void,
+  ST = { Addr, Int32, Int64, Reel, LReel, XReel, Void,
          IType, RType, AType,
          Any, Missing, DontCare, Match };
 
-CONST
-  T_to_ST = ARRAY Type OF ST {
-    ST.Addr, ST.Int (*ST.Word*), ST.Int,
-    ST.Reel, ST.LReel, ST.XReel,
-    ST.Int, ST.Int, ST.Int, ST.Int,  (* Int_? *)
-    ST.Int, ST.Int, ST.Int, ST.Int,  (* Word_? *)
-    ST.Addr, (*Struct*)
+VAR (* CONST after "begin_unit" call *)
+  T_to_ST := ARRAY Type OF ST {
+    ST.Int32, ST.Int32, ST.Int32, ST.Int32,  (* Word8, Int8, Word16, Int16 *)
+    ST.Int32, ST.Int32, ST.Int64, ST.Int64,  (* Word32, Int32, Word64, Int64 *)
+    ST.Reel, ST.LReel, ST.XReel,             (* Reel, LReel, XReel *)
+    ST.Addr, ST.Addr,                        (* Addr, Struct *)
     ST.Void
   };
 
 CONST
   ST_name = ARRAY ST OF TEXT {
-    "Addr ", "Word ", "Int ", "Real ", "LReal ", "ExReal ", "Void ",
+    "Addr ", "Int32", "Int64", "Real ", "LReal ", "ExReal ", "Void ",
     "W,I ", "R,L,E ", "W,I,R,L,E ",
     "any ", "", "", "<=match "
   };
@@ -92,30 +91,18 @@ TYPE
         jump := jump;
         if_true  := if_true;
         if_false := if_false;
-        if_eq := if_eq;
-        if_ne := if_ne;
-        if_gt := if_gt;
-        if_ge := if_ge;
-        if_lt := if_lt;
-        if_le := if_le;
+        if_compare := if_compare;
         case_jump := case_jump;
         exit_proc := exit_proc;
         load  := load;
         store := store;
-        store_ref := store_ref;
         load_address := load_address;
         load_indirect := load_indirect;
         store_indirect := store_indirect;
-        store_ref_indirect := store_ref_indirect;
         load_nil      := load_nil;
         load_integer  := load_integer;
         load_float    := load_float;
-        eq       := eq;
-        ne       := ne;
-        gt       := gt;
-        ge       := ge;
-        lt       := lt;
-        le       := le;
+        compare  := compare;
         add      := add;
         subtract := subtract;
         multiply := multiply;
@@ -126,22 +113,14 @@ TYPE
         abs      := abs;
         max      := max;
         min      := min;
-        round    := round;
-        trunc    := trunc;
-        floor    := floor;
-        ceiling  := ceiling;
+        cvt_int  := cvt_int;
         cvt_float := cvt_float;
         set_union          := set_union;
         set_difference     := set_difference;
         set_intersection   := set_intersection;
         set_sym_difference := set_sym_difference;
         set_member         := set_member;
-        set_eq       := set_eq;
-        set_ne       := set_ne;
-        set_gt       := set_gt;
-        set_ge       := set_ge;
-        set_lt       := set_lt;
-        set_le       := set_le;
+        set_compare  := set_compare;
         set_range    := set_range;
         set_singleton := set_singleton;
         not := not;
@@ -154,6 +133,8 @@ TYPE
         rotate       := rotate;
         rotate_left  := rotate_left;
         rotate_right := rotate_right;
+        widen := widen;
+        chop := chop;
         extract := extract;
         extract_n := extract_n;
         extract_mn := extract_mn;
@@ -167,11 +148,7 @@ TYPE
         zero := zero;
         zero_n := zero_n;
         loophole := loophole;
-        assert_fault := assert_fault;
-        narrow_fault := narrow_fault;
-        return_fault := return_fault;
-        case_fault := case_fault;
-        typecase_fault := typecase_fault;
+        abort := abort;
         check_nil := check_nil;
         check_lo := check_lo;
         check_hi := check_hi;
@@ -227,22 +204,17 @@ PROCEDURE Stack_Get (self: U;  depth: INTEGER): ST =
   END Stack_Get;
 
 PROCEDURE IsOK (need, got, prev: ST): BOOLEAN =
-  CONST
-    min_IType = T_to_ST [FIRST (IType)];
-    max_IType = T_to_ST [LAST  (IType)];
-    min_RType = T_to_ST [FIRST (RType)];
-    max_RType = T_to_ST [LAST  (RType)];
-    min_AType = T_to_ST [FIRST (AType)];
-    max_AType = T_to_ST [LAST  (AType)];
-    min_Type  = T_to_ST [FIRST (Type)];
-    max_Type  = T_to_ST [LAST  (Type)];
   BEGIN
     CASE need OF
+    | ST.IType =>
+        RETURN (T_to_ST [FIRST (IType)] <= got) AND (got <= T_to_ST [LAST (IType)]);
+    | ST.RType =>
+        RETURN (T_to_ST [FIRST (RType)] <= got) AND (got <= T_to_ST [LAST (RType)]);
+    | ST.AType =>
+        RETURN (T_to_ST [FIRST (AType)] <= got) AND (got <= T_to_ST [LAST (AType)]);
+    | ST.Any =>
+        RETURN (T_to_ST [FIRST (Type)]  <= got) AND (got <= T_to_ST [LAST (Type)]);
     | ST.Void     => RETURN (got = ST.Missing);
-    | ST.IType    => RETURN (min_IType <= got) AND (got <= max_IType);
-    | ST.RType    => RETURN (min_RType <= got) AND (got <= max_RType);
-    | ST.AType    => RETURN (min_AType <= got) AND (got <= max_AType);
-    | ST.Any      => RETURN (min_Type  <= got) AND (got <= max_Type);
     | ST.DontCare => RETURN TRUE;
     | ST.Match    => RETURN got = prev;
     ELSE             RETURN (got = need);
@@ -267,11 +239,11 @@ PROCEDURE Stack_Pop (self: U;  a, b, c, d: ST) =
       (* no error *)
     ELSE
       PutErr (self, "bad stack:  expected [ ",
-        ST_Name (a, a) & ST_Name (b, a)
-          & ST_Name (c, b) & ST_Name (d, c),
-        "] got [ " &
-        ST_Name (s0, s0) & ST_Name (s1, s0)
-          & ST_Name (s2, s1) & ST_Name (s3, s2) & "]");
+        ST_Name (a, a) & " " & ST_Name (b, a) & " "
+        & ST_Name (c, b) & " " & ST_Name (d, c),
+        " ] got [ " &
+        ST_Name (s0, s0) & " " & ST_Name (s1, s0) & " "
+          & ST_Name (s2, s1) & " " & ST_Name (s3, s2) & " ]");
     END;
     IF    (d # ST.DontCare) THEN DEC (self.top_of_stack, 4)
     ELSIF (c # ST.DontCare) THEN DEC (self.top_of_stack, 3)
@@ -363,6 +335,12 @@ PROCEDURE set_error_handler (self: U;  p: M3CG_Ops.ErrorHandler) =
 PROCEDURE begin_unit (self: U;  optimize : INTEGER) =
   (* called before any other method to initialize the compilation unit *)
   BEGIN
+    IF Target.Integer.size # 32 THEN
+      (* fix the mapping of stack types *)
+      FOR i := FIRST (T_to_ST) TO LAST (T_to_ST) DO
+        IF T_to_ST[i] = ST.Int32 THEN T_to_ST[i] := ST.Int64; END;
+      END;
+    END;
     self.s_empty ();
     self.child.begin_unit (optimize);
   END begin_unit;
@@ -638,87 +616,42 @@ PROCEDURE jump (self: U; l: Label) =
     self.child.jump (l);
   END jump;
 
-PROCEDURE if_true  (self: U; l: Label;  f: Frequency) =
-  (* IF (s0.I # 0) GOTO l ; pop *)
+PROCEDURE if_true  (self: U;  t: IType;  l: Label;  f: Frequency) =
+  (* IF (s0.t # 0) GOTO l ; pop *)
   BEGIN
-    self.s_pop (ST.Int);
+    self.s_pop (T_to_ST[t]);
     IF (self.clean_jumps) THEN self.s_empty () END;
     CheckLabel (self, l);
-    self.child.if_true (l, f);
+    self.child.if_true (t, l, f);
   END if_true;
 
-PROCEDURE if_false (self: U; l: Label;  f: Frequency) =
-  (* IF (s0.I = 0) GOTO l ; pop *)
+PROCEDURE if_false (self: U;  t: IType;  l: Label;  f: Frequency) =
+  (* IF (s0.t = 0) GOTO l ; pop *)
   BEGIN
-    self.s_pop (ST.Int);
+    self.s_pop (T_to_ST[t]);
     IF (self.clean_jumps) THEN self.s_empty () END;
     CheckLabel (self, l);
-    self.child.if_false (l, f);
+    self.child.if_false (t, l, f);
   END if_false;
 
-PROCEDURE if_eq (self: U;  l: Label;  t: ZType;  f: Frequency) =
-  (* IF (s1.t = s0.t) GOTO l ; pop(2) *)
+PROCEDURE if_compare (self: U;  t: ZType;  op: CompareOp;  l: Label; f: Frequency) =
+  (* IF (s1.t op s0.t) GOTO l ; pop(2) *)
   BEGIN
     self.s_pop (T_to_ST [t], ST.Match);
     IF (self.clean_jumps) THEN self.s_empty () END;
     CheckLabel (self, l);
-    self.child.if_eq (l, t, f);
-  END if_eq;
+    self.child.if_compare (t, op, l, f);
+  END if_compare;
 
-PROCEDURE if_ne (self: U;  l: Label;  t: ZType;  f: Frequency) =
-  (* IF (s1.t # s0.t) GOTO l ; pop(2) *)
+PROCEDURE case_jump (self: U;  t: IType;  READONLY labels: ARRAY OF Label) =
+  (* "GOTO labels[s0.t] ; pop" with no range checking on s0.t *)
   BEGIN
-    self.s_pop (T_to_ST [t], ST.Match);
-    IF (self.clean_jumps) THEN self.s_empty () END;
-    CheckLabel (self, l);
-    self.child.if_ne (l, t, f);
-  END if_ne;
-
-PROCEDURE if_gt (self: U;  l: Label;  t: ZType;  f: Frequency) =
-  (* IF (s1.t > s0.t) GOTO l ; pop(2) *)
-  BEGIN
-    self.s_pop (T_to_ST [t], ST.Match);
-    IF (self.clean_jumps) THEN self.s_empty () END;
-    CheckLabel (self, l);
-    self.child.if_gt (l, t, f);
-  END if_gt;
-
-PROCEDURE if_ge (self: U;  l: Label;  t: ZType;  f: Frequency) =
-  (* IF (s1.t >= s0.t) GOTO l ; pop(2) *)
-  BEGIN
-    self.s_pop (T_to_ST [t], ST.Match);
-    IF (self.clean_jumps) THEN self.s_empty () END;
-    CheckLabel (self, l);
-    self.child.if_ge (l, t, f);
-  END if_ge;
-
-PROCEDURE if_lt (self: U;  l: Label;  t: ZType;  f: Frequency) =
-  (* IF (s1.t < s0.t) GOTO l ; pop(2) *)
-  BEGIN
-    self.s_pop (T_to_ST [t], ST.Match);
-    IF (self.clean_jumps) THEN self.s_empty () END;
-    CheckLabel (self, l);
-    self.child.if_lt (l, t, f);
-  END if_lt;
-
-PROCEDURE if_le (self: U;  l: Label;  t: ZType;  f: Frequency) =
-  (* IF (s1.t <= s0.t) GOTO l ; pop(2) *)
-  BEGIN
-    self.s_pop (T_to_ST [t], ST.Match);
-    IF (self.clean_jumps) THEN self.s_empty () END;
-    CheckLabel (self, l);
-    self.child.if_le (l, t, f);
-  END if_le;
-
-PROCEDURE case_jump (self: U; READONLY labels: ARRAY OF Label) =
-  (* "GOTO labels[s0.I] ; pop" with no range checking on s0.I *)
-  BEGIN
-    self.s_pop (ST.Int);
+    self.s_pop (T_to_ST[t]);
     IF (self.clean_jumps) THEN self.s_empty () END;
     FOR i := FIRST (labels) TO LAST (labels) DO
       CheckLabel (self, labels [i]);
     END;
-    self.child.case_jump (labels);
+    self.child.case_jump (t, labels);
   END case_jump;
 
 PROCEDURE exit_proc (self: U; t: Type) =
@@ -731,28 +664,63 @@ PROCEDURE exit_proc (self: U; t: Type) =
 
 (*------------------------------------------------------------ load/store ---*)
 
-PROCEDURE load  (self: U;  v: Var;  o: ByteOffset;  t: MType) =
+TYPE ZMap = ARRAY ZType OF BOOLEAN;
+TYPE MMap = ARRAY MType OF BOOLEAN;
+
+CONST
+  LegalLoad = ARRAY MType, ZType OF BOOLEAN {
+  (*               W32   I32   W64   I64   Reel  LReel XReel Addr *)
+(* Word8  *) ZMap{ TRUE ,TRUE ,TRUE ,TRUE ,FALSE,FALSE,FALSE,FALSE },
+(* Int8   *) ZMap{ TRUE ,TRUE ,TRUE ,TRUE ,FALSE,FALSE,FALSE,FALSE },
+(* Word16 *) ZMap{ TRUE ,TRUE ,TRUE ,TRUE ,FALSE,FALSE,FALSE,FALSE },
+(* Int16  *) ZMap{ TRUE ,TRUE ,TRUE ,TRUE ,FALSE,FALSE,FALSE,FALSE },
+(* Word32 *) ZMap{ TRUE ,TRUE ,TRUE ,TRUE ,FALSE,FALSE,FALSE,FALSE },
+(* Int32  *) ZMap{ TRUE ,TRUE ,TRUE ,TRUE ,FALSE,FALSE,FALSE,FALSE },
+(* Word64 *) ZMap{ FALSE,FALSE,TRUE ,TRUE ,FALSE,FALSE,FALSE,FALSE },
+(* Int64  *) ZMap{ FALSE,FALSE,TRUE ,TRUE ,FALSE,FALSE,FALSE,FALSE },
+(* Reel   *) ZMap{ FALSE,FALSE,FALSE,FALSE,TRUE ,FALSE,FALSE,FALSE },
+(* LReel  *) ZMap{ FALSE,FALSE,FALSE,FALSE,FALSE,TRUE ,FALSE,FALSE },
+(* XReel  *) ZMap{ FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE ,FALSE },
+(* Addr   *) ZMap{ FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE  }
+  };
+
+CONST
+  LegalStore = ARRAY ZType, MType OF BOOLEAN {
+  (*      Word8 Int8  W16   I16   W32   I32   W64   I64   Reel  LReel XReel Addr *)
+(* Word32 *)
+    MMap{ TRUE ,TRUE ,TRUE ,TRUE ,TRUE ,TRUE ,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE },
+(* Int32  *)
+    MMap{ TRUE ,TRUE ,TRUE ,TRUE ,TRUE ,TRUE ,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE },
+(* Word64 *)
+    MMap{ TRUE ,TRUE ,TRUE ,TRUE ,TRUE ,TRUE ,TRUE ,TRUE ,FALSE,FALSE,FALSE,FALSE },
+(* Int64  *)
+    MMap{ TRUE ,TRUE ,TRUE ,TRUE ,TRUE ,TRUE ,TRUE ,TRUE ,FALSE,FALSE,FALSE,FALSE },
+(* Reel   *)
+    MMap{ FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE ,FALSE,FALSE,FALSE },
+(* LReel  *)
+    MMap{ FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE ,FALSE,FALSE },
+(* XReel  *)
+    MMap{ FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE ,FALSE },
+(* Addr   *)
+    MMap{ FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE  }
+  };
+
+PROCEDURE load  (self: U;  v: Var;  o: ByteOffset;  t: MType;  u: ZType) =
   BEGIN
     CheckVar (self, v);
-    self.s_push (t);
-    self.child.load (v, o, t);
+    IF NOT LegalLoad [t, u] THEN PutErr (self, "illegal load conversion"); END;
+    self.s_push (u);
+    self.child.load (v, o, t, u);
   END load;
 
-PROCEDURE store  (self: U;  v: Var;  o: ByteOffset;  t: MType) =
+PROCEDURE store  (self: U;  v: Var;  o: ByteOffset;  t: ZType;  u: MType) =
   BEGIN
     CheckVar (self, v);
+    IF NOT LegalStore [t, u] THEN PutErr (self, "illegal store conversion"); END;
     self.s_pop (T_to_ST [t]);
     IF (self.clean_stores) THEN self.s_empty () END;
-    self.child.store (v, o, t);
+    self.child.store (v, o, t, u);
   END store;
-
-PROCEDURE store_ref (self: U;  v: Var;  o: ByteOffset) =
-  BEGIN
-    CheckVar (self, v);
-    self.s_pop (ST.Addr);
-    IF (self.clean_stores) THEN self.s_empty () END;
-    self.child.store_ref (v, o);
-  END store_ref;
 
 PROCEDURE load_address (self: U;  v: Var;  o: ByteOffset) =
   BEGIN
@@ -761,28 +729,21 @@ PROCEDURE load_address (self: U;  v: Var;  o: ByteOffset) =
     self.child.load_address (v, o);
   END load_address;
 
-PROCEDURE load_indirect (self: U;  o: ByteOffset;  t: MType) =
+PROCEDURE load_indirect (self: U;  o: ByteOffset;  t: MType;  u: ZType) =
   BEGIN
+    IF NOT LegalLoad [t, u] THEN PutErr (self, "illegal load conversion"); END;
     self.s_pop (ST.Addr);
-    self.s_push (t);
-    self.child.load_indirect (o, t);
+    self.s_push (u);
+    self.child.load_indirect (o, t, u);
   END load_indirect;
 
-PROCEDURE store_indirect (self: U;  o: ByteOffset;  t: MType) =
+PROCEDURE store_indirect (self: U;  o: ByteOffset;  t: ZType;  u: MType) =
   BEGIN
+    IF NOT LegalStore [t, u] THEN PutErr (self, "illegal store conversion"); END;
     self.s_pop (T_to_ST [t], ST.Addr);
     IF (self.clean_stores) THEN self.s_empty () END;
-    self.child.store_indirect (o, t);
+    self.child.store_indirect (o, t, u);
   END store_indirect;
-
-
-PROCEDURE store_ref_indirect (self: U;  o: ByteOffset;  var: BOOLEAN) =
-  BEGIN
-    self.s_pop (ST.Addr, ST.Addr);
-    IF (self.clean_stores) THEN self.s_empty () END;
-    self.child.store_ref_indirect (o, var);
-  END store_ref_indirect;
-
 
 (*-------------------------------------------------------------- literals ---*)
 
@@ -793,21 +754,23 @@ PROCEDURE load_nil (self: U) =
     self.child.load_nil ();
   END load_nil;
 
-PROCEDURE load_integer  (self: U;  READONLY i: Target.Int) =
-  (* push ; s0.I := i *)
-  BEGIN
-    self.s_push (Type.Int);
-    self.child.load_integer (i);
-  END load_integer;
-
-PROCEDURE load_float    (self: U;  READONLY f: Target.Float) =
-  (* push ; s0.t := f *)
-  CONST FType = ARRAY Target.Precision OF Type
-                { Type.Reel, Type.LReel, Type.XReel };
-  VAR t := FType [f.pre];
+PROCEDURE load_integer  (self: U;  t: IType;  READONLY i: Target.Int) =
+  (* push ; s0.t := i *)
   BEGIN
     self.s_push (t);
-    self.child.load_float (f);
+    self.child.load_integer (t, i);
+  END load_integer;
+
+PROCEDURE load_float    (self: U;  t: RType;  READONLY f: Target.Float) =
+  (* push ; s0.t := f *)
+  CONST FType = ARRAY Target.Precision OF RType
+                { Type.Reel, Type.LReel, Type.XReel };
+  BEGIN
+    IF t # FType [f.pre] THEN
+      PutErr (self, "floating-point literal doesn't match type");
+    END;
+    self.s_push (t);
+    self.child.load_float (t, f);
   END load_float;
 
 (*------------------------------------------------------------ arithmetic ---*)
@@ -826,47 +789,12 @@ PROCEDURE Unary (self: U;  lhs, rhs: Type) =
     self.s_push (lhs);
   END Unary;
 
-PROCEDURE eq (self: U;  t: ZType) =
-  (* s1.I := (s1.t = s0.t)  ; pop *)
+PROCEDURE compare (self: U;  t: ZType;  u: IType;  op: CompareOp) =
+  (* s1.u := (s1.t op s0.t)  ; pop *)
   BEGIN
-    Binary (self, Type.Int, t);
-    self.child.eq (t);
-  END eq;
-
-PROCEDURE ne (self: U;  t: ZType) =
-  (* s1.I := (s1.t # s0.t)  ; pop *)
-  BEGIN
-    Binary (self, Type.Int, t);
-    self.child.ne (t);
-  END ne;
-
-PROCEDURE gt (self: U;  t: ZType) =
-  (* s1.I := (s1.t > s0.t)  ; pop *)
-  BEGIN
-    Binary (self, Type.Int, t);
-    self.child.gt (t);
-  END gt;
-
-PROCEDURE ge (self: U;  t: ZType) =
-  (* s1.I := (s1.t >= s0.t) ; pop *)
-  BEGIN
-    Binary (self, Type.Int, t);
-    self.child.ge (t);
-  END ge;
-
-PROCEDURE lt (self: U;  t: ZType) =
-  (* s1.I := (s1.t < s0.t)  ; pop *)
-  BEGIN
-    Binary (self, Type.Int, t);
-    self.child.lt (t);
-  END lt;
-
-PROCEDURE le (self: U;  t: ZType) =
-  (* s1.I := (s1.t <= s0.t) ; pop *)
-  BEGIN
-    Binary (self, Type.Int, t);
-    self.child.le (t);
-  END le;
+    Binary (self, u, t);
+    self.child.compare (t, u, op);
+  END compare;
 
 PROCEDURE add (self: U;  t: AType) =
   (* s1.t := s1.t + s0.t ; pop *)
@@ -940,39 +868,17 @@ PROCEDURE min      (self: U;  t: ZType) =
     self.child.min (t);
   END min;
 
-PROCEDURE round    (self: U;  t: RType) =
-  (* s0.I := ROUND (s0.t) *)
+PROCEDURE cvt_int    (self: U;  t: RType;  u: IType;  op: ConvertOp) =
+  (* s0.u := op (s0.t) *)
   BEGIN
-    Unary (self, Type.Int, t);
-    self.child.round (t);
-  END round;
-
-PROCEDURE trunc    (self: U;  t: RType) =
-  (* s0.I := TRUNC (s0.t) *)
-  BEGIN
-    Unary (self, Type.Int, t);
-    self.child.trunc (t);
-  END trunc;
-
-PROCEDURE floor    (self: U;  t: RType) =
-  (* s0.I := FLOOR (s0.t) *)
-  BEGIN
-    Unary (self, Type.Int, t);
-    self.child.floor (t);
-  END floor;
-
-PROCEDURE ceiling  (self: U;  t: RType) =
-  (* s0.I := CEILING (s0.t) *)
-  BEGIN
-    Unary (self, Type.Int, t);
-    self.child.ceiling (t);
-  END ceiling;
+    Unary (self, u, t);
+    self.child.cvt_int (t, u, op);
+  END cvt_int;
 
 PROCEDURE cvt_float    (self: U;  t: AType;  u: RType) =
   (* s0.u := FLOAT (s0.t, u) *)
   BEGIN
-    self.s_pop (T_to_ST [t]);
-    self.s_push (u);
+    Unary (self, u, t);
     self.child.cvt_float (t, u);
   END cvt_float;
 
@@ -1006,191 +912,169 @@ PROCEDURE set_sym_difference (self: U;  s: ByteSize) =
     self.child.set_sym_difference (s);
   END set_sym_difference;
 
-PROCEDURE set_member       (self: U;  s: ByteSize) =
-  (* s1.I := (s0.I IN s1.B) ; pop *)
+PROCEDURE set_member (self: U;  s: ByteSize;  t: IType) =
+  (* s1.t := (s0.t IN s1.B) ; pop *)
   BEGIN
-    self.s_pop (ST.Int, ST.Addr);
-    self.s_push (Type.Int);
-    self.child.set_member (s);
+    self.s_pop (T_to_ST[t], ST.Addr);
+    self.s_push (t);
+    self.child.set_member (s, t);
   END set_member;
 
-PROCEDURE set_eq       (self: U;  s: ByteSize) =
-  (* s1.I := (s1.B = s0.B)  ; pop *)
+PROCEDURE set_compare (self: U;  s: ByteSize;  op: CompareOp;  t: IType) =
+  (* s1.t := (s1.B op s0.B)  ; pop *)
   BEGIN
-    Binary (self, Type.Int, Type.Addr);
-    self.child.set_eq (s);
-  END set_eq;
+    Binary (self, t, Type.Addr);
+    self.child.set_compare (s, op, t);
+  END set_compare;
 
-PROCEDURE set_ne (self: U;  s: ByteSize) =
-  (* s1.I := (s1.B # s0.B)  ; pop *)
+PROCEDURE set_range (self: U;  s: ByteSize;  t: IType) =
+  (* s2.A [s1.t .. s0.t] := 1's; pop(3)*)
   BEGIN
-    Binary (self, Type.Int, Type.Addr);
-    self.child.set_ne (s);
-  END set_ne;
-
-PROCEDURE set_gt (self: U;  s: ByteSize) =
-  (* s1.I := (s1.B > s0.B)  ; pop *)
-  BEGIN
-    Binary (self, Type.Int, Type.Addr);
-    self.child.set_gt (s);
-  END set_gt;
-
-PROCEDURE set_ge (self: U;  s: ByteSize) =
-  (* s1.I := (s1.B >= s0.B) ; pop *)
-  BEGIN
-    Binary (self, Type.Int, Type.Addr);
-    self.child.set_ge (s);
-  END set_ge;
-
-PROCEDURE set_lt (self: U;  s: ByteSize) =
-  (* s1.I := (s1.B < s0.B)  ; pop *)
-  BEGIN
-    Binary (self, Type.Int, Type.Addr);
-    self.child.set_lt (s);
-  END set_lt;
-
-PROCEDURE set_le (self: U;  s: ByteSize) =
-  (* s1.I := (s1.B <= s0.B) ; pop *)
-  BEGIN
-    Binary (self, Type.Int, Type.Addr);
-    self.child.set_le (s);
-  END set_le;
-
-PROCEDURE set_range (self: U;  s: ByteSize) =
-  (* s2.A [s1.I .. s0.I] := 1's; pop(3)*)
-  BEGIN
-    self.s_pop (ST.Int, ST.Int, ST.Addr);
-    self.child.set_range (s);
+    self.s_pop (T_to_ST[t], T_to_ST[t], ST.Addr);
+    self.child.set_range (s, t);
   END set_range;
 
-PROCEDURE set_singleton (self: U;  s: ByteSize) =
-  (* s1.A [s0.I] := 1; pop(2) *)
+PROCEDURE set_singleton (self: U;  s: ByteSize;  t: IType) =
+  (* s1.A [s0.t] := 1; pop(2) *)
   BEGIN
-    self.s_pop (ST.Int, ST.Addr);
-    self.child.set_singleton (s);
+    self.s_pop (T_to_ST[t], ST.Addr);
+    self.child.set_singleton (s, t);
   END set_singleton;
 
 (*------------------------------------------------- Word.T bit operations ---*)
 
-PROCEDURE not (self: U) =
-  (* s0.I := Word.Not (s0.I) *)
+PROCEDURE not (self: U;  t: IType) =
+  (* s0.t := Word.Not (s0.t) *)
   BEGIN
-    Unary (self, Type.Int, Type.Int);
-    self.child.not ();
+    Unary (self, t, t);
+    self.child.not (t);
   END not;
 
-PROCEDURE and (self: U) =
-  (* s1.I := Word.And (s1.I, s0.I) ; pop *)
+PROCEDURE and (self: U;  t: IType) =
+  (* s1.t := Word.And (s1.t, s0.t) ; pop *)
   BEGIN
-    Binary (self, Type.Int, Type.Int);
-    self.child.and ();
+    Binary (self, t, t);
+    self.child.and (t);
   END and;
 
-PROCEDURE or  (self: U) =
-  (* s1.I := Word.Or  (s1.I, s0.I) ; pop *)
+PROCEDURE or  (self: U;  t: IType) =
+  (* s1.t := Word.Or  (s1.t, s0.t) ; pop *)
   BEGIN
-    Binary (self, Type.Int, Type.Int);
-    self.child.or ();
+    Binary (self, t, t);
+    self.child.or (t);
   END or;
 
-PROCEDURE xor (self: U) =
-  (* s1.I := Word.Xor (s1.I, s0.I) ; pop *)
+PROCEDURE xor (self: U;  t: IType) =
+  (* s1.t := Word.Xor (s1.t, s0.t) ; pop *)
   BEGIN
-    Binary (self, Type.Int, Type.Int);
-    self.child.xor ();
+    Binary (self, t, t);
+    self.child.xor (t);
   END xor;
 
-PROCEDURE shift        (self: U) =
-  (* s1.I := Word.Shift  (s1.I, s0.I) ; pop *)
+PROCEDURE shift (self: U;  t: IType) =
+  (* s1.t := Word.Shift  (s1.t, s0.t) ; pop *)
   BEGIN
-    Binary (self, Type.Int, Type.Int);
-    self.child.shift ();
+    Binary (self, t, t);
+    self.child.shift (t);
   END shift;
 
-PROCEDURE shift_left   (self: U) =
-  (* s1.I := Word.Shift  (s1.I, s0.I) ; pop *)  
+PROCEDURE shift_left (self: U;  t: IType) =
+  (* s1.t := Word.Shift  (s1.t, s0.t) ; pop *)  
   BEGIN
-    Binary (self, Type.Int, Type.Int);
-    self.child.shift_left ();
+    Binary (self, t, t);
+    self.child.shift_left (t);
   END shift_left;
 
-PROCEDURE shift_right  (self: U) =
-  (* s1.I := Word.Shift  (s1.I, -s0.I) ; pop *)
+PROCEDURE shift_right  (self: U;  t: IType) =
+  (* s1.t := Word.Shift  (s1.t, -s0.t) ; pop *)
   BEGIN
-    Binary (self, Type.Int, Type.Int);
-    self.child.shift_right ();
+    Binary (self, t, t);
+    self.child.shift_right (t);
   END shift_right;
 
-PROCEDURE rotate       (self: U) =
-  (* s1.I := Word.Rotate (s1.I, s0.I) ; pop *)
+PROCEDURE rotate (self: U;  t: IType) =
+  (* s1.t := Word.Rotate (s1.t, s0.t) ; pop *)
   BEGIN
-    Binary (self, Type.Int, Type.Int);
-    self.child.rotate ();
+    Binary (self, t, t);
+    self.child.rotate (t);
   END rotate;
 
-PROCEDURE rotate_left  (self: U) =
-  (* s1.I := Word.Rotate (s1.I, s0.I) ; pop *)
+PROCEDURE rotate_left  (self: U;  t: IType) =
+  (* s1.t := Word.Rotate (s1.t, s0.t) ; pop *)
   BEGIN
-    Binary (self, Type.Int, Type.Int);
-    self.child.rotate_left ();
+    Binary (self, t, t);
+    self.child.rotate_left (t);
   END rotate_left;
 
-PROCEDURE rotate_right (self: U) =
-  (* s1.I := Word.Rotate (s1.I, -s0.I) ; pop *)
+PROCEDURE rotate_right (self: U;  t: IType) =
+  (* s1.t := Word.Rotate (s1.t, -s0.t) ; pop *)
   BEGIN
-    Binary (self, Type.Int, Type.Int);
-    self.child.rotate_right ();
+    Binary (self, t, t);
+    self.child.rotate_right (t);
   END rotate_right;
 
-PROCEDURE extract (self: U;  sign: BOOLEAN) =
-  (* s2.I := Word.Extract(s2.I, s1.I, s0.I);
+PROCEDURE widen (self: U;  sign: BOOLEAN) =
+  (* s0.I64 := s0.I32;  IF sign THEN Sign-extend s0;  *)
+  BEGIN
+    self.s_pop (ST.Int32);
+    self.s_push (Type.Int64);
+    self.child.widen (sign);
+  END widen;
+
+PROCEDURE chop (self: U) =
+  (* s0.I32 := Word.And (s0.I64, 16_ffffffff);  *)
+  BEGIN
+    self.s_pop (ST.Int64);
+    self.s_push (Type.Int32);
+    self.child.chop ();
+  END chop;
+
+PROCEDURE extract (self: U;  t: IType;  sign: BOOLEAN) =
+  (* s2.t := Word.Extract(s2.t, s1.t, s0.t);
      IF sign THEN SignExtend s2 END; pop(2) *)
   BEGIN
-    self.s_pop (ST.Int, ST.Int, ST.Int);
-    self.s_push (Type.Int);
-    self.child.extract (sign);
+    self.s_pop (T_to_ST[t], T_to_ST[t], T_to_ST [t]);
+    self.s_push (t);
+    self.child.extract (t, sign);
   END extract;
 
-PROCEDURE extract_n (self: U;  sign: BOOLEAN;  n: INTEGER) =
-  (* s1.I := Word.Extract(s1.I, s0.I, n);
+PROCEDURE extract_n (self: U;  t: IType;  sign: BOOLEAN;  n: INTEGER) =
+  (* s1.t := Word.Extract(s1.t, s0.t, n);
      IF sign THEN SignExtend s1 END; pop(1) *)
   BEGIN
-    self.s_pop (ST.Int, ST.Int);
-    self.s_push (Type.Int);
-    self.child.extract_n (sign, n);
+    Binary (self, t, t);
+    self.child.extract_n (t, sign, n);
   END extract_n;
 
-PROCEDURE extract_mn (self: U;  sign: BOOLEAN;  m, n: INTEGER) =
-  (* s0.I := Word.Extract(s0.I, m, n);
+PROCEDURE extract_mn (self: U;  t: IType;  sign: BOOLEAN;  m, n: INTEGER) =
+  (* s0.t := Word.Extract(s0.t, m, n);
      IF sign THEN SignExtend s0 END; *)
   BEGIN
-    self.s_pop (ST.Int);
-    self.s_push (Type.Int);
-    self.child.extract_mn (sign, m, n);
+    Unary (self, t, t);
+    self.child.extract_mn (t, sign, m, n);
   END extract_mn;
 
-PROCEDURE insert  (self: U) =
-  (* s3.I := Word.Insert (s3.I, s2.I, s1.I, s0.I) ; pop(3) *)
+PROCEDURE insert  (self: U;  t: IType) =
+  (* s3.t := Word.Insert (s3.t, s2.t, s1.t, s0.t) ; pop(3) *)
   BEGIN
-    self.s_pop (ST.Int, ST.Int, ST.Int, ST.Int);
-    self.s_push (Type.Int);
-    self.child.insert ();
+    self.s_pop (T_to_ST[t], T_to_ST[t], T_to_ST[t], T_to_ST[t]);
+    self.s_push (t);
+    self.child.insert (t);
   END insert;
 
-PROCEDURE insert_n  (self: U;  n: INTEGER) =
-  (* s2.I := Word.Insert (s2.I, s1.I, s0.I, n) ; pop(2) *)
+PROCEDURE insert_n  (self: U;  t: IType;  n: INTEGER) =
+  (* s2.t := Word.Insert (s2.t, s1.t, s0.t, n) ; pop(2) *)
   BEGIN
-    self.s_pop (ST.Int, ST.Int, ST.Int);
-    self.s_push (Type.Int);
-    self.child.insert_n (n);
+    self.s_pop (T_to_ST[t], T_to_ST[t], T_to_ST[t]);
+    self.s_push (t);
+    self.child.insert_n (t, n);
   END insert_n;
 
-PROCEDURE insert_mn  (self: U;  m, n: INTEGER) =
-  (* s1.I := Word.Insert (s1.I, s0.I, m, n) ; pop(2) *)
+PROCEDURE insert_mn  (self: U;  t: IType;  m, n: INTEGER) =
+  (* s1.t := Word.Insert (s1.t, s0.t, m, n) ; pop(2) *)
   BEGIN
-    self.s_pop (ST.Int, ST.Int);
-    self.s_push (Type.Int);
-    self.child.insert_mn (m, n);
+    Binary (self, t, t);
+    self.child.insert_mn (t, m, n);
   END insert_mn;
 
 (*------------------------------------------------ misc. stack/memory ops ---*)
@@ -1211,11 +1095,11 @@ PROCEDURE pop  (self: U;  t: Type) =
     self.child.pop (t);
   END pop;
 
-PROCEDURE copy_n (self: U;  t: MType;  overlap: BOOLEAN) =
-  (* Mem[s2.A:s0.I] := Mem[s1.A:s0.I]; pop(3)*)
+PROCEDURE copy_n (self: U;  u: IType;  t: MType;  overlap: BOOLEAN) =
+  (* Mem[s2.A:s0.t] := Mem[s1.A:s0.t]; pop(3)*)
   BEGIN
-    self.s_pop (ST.Int, ST.Addr, ST.Addr);
-    self.child.copy_n (t, overlap);
+    self.s_pop (T_to_ST[u], ST.Addr, ST.Addr);
+    self.child.copy_n (u, t, overlap);
   END copy_n;
 
 PROCEDURE copy (self: U;  n: INTEGER;  t: MType;  overlap: BOOLEAN) =
@@ -1225,11 +1109,11 @@ PROCEDURE copy (self: U;  n: INTEGER;  t: MType;  overlap: BOOLEAN) =
     self.child.copy (n, t, overlap);
   END copy;
 
-PROCEDURE zero_n (self: U;  t: MType) =
-  (* Mem[s1.A:s0.I] := 0; pop(2) *)
+PROCEDURE zero_n (self: U;  u: IType;  t: MType) =
+  (* Mem[s1.A:s0.u] := 0; pop(2) *)
   BEGIN
-    self.s_pop (ST.Int, ST.Addr);
-    self.child.zero_n (t);
+    self.s_pop (T_to_ST[u], ST.Addr);
+    self.child.zero_n (u, t);
   END zero_n;
 
 PROCEDURE zero (self: U;  n: INTEGER;  t: MType) =
@@ -1251,80 +1135,53 @@ PROCEDURE loophole (self: U;  from, two: ZType) =
 
 (*------------------------------------------------ traps & runtime checks ---*)
 
-PROCEDURE assert_fault (self: U) =
+PROCEDURE abort (self: U;  code: RuntimeError) =
   BEGIN
     self.s_empty ();
-    self.child.assert_fault ();
-  END assert_fault;
+    self.child.abort (code);
+  END abort;
 
-PROCEDURE narrow_fault (self: U) =
-  BEGIN
-    self.child.narrow_fault ();
-  END narrow_fault;
-
-PROCEDURE return_fault (self: U) =
-  BEGIN
-    self.s_empty ();
-    self.child.return_fault ();
-  END return_fault;
-
-PROCEDURE case_fault (self: U) =
-  BEGIN
-    self.s_empty ();
-    self.child.case_fault ();
-  END case_fault;
-
-PROCEDURE typecase_fault (self: U) =
-  (* Abort *)
-  BEGIN
-    self.s_empty ();
-    self.child.typecase_fault ();
-  END typecase_fault;
-
-PROCEDURE check_nil (self: U) =
-  (* IF (s0.A = NIL) THEN Abort *)
+PROCEDURE check_nil (self: U;  code: RuntimeError) =
+  (* IF (s0.A = NIL) THEN abort(code) *)
   BEGIN
     self.s_pop (ST.Addr);
     self.s_push (Type.Addr);
-    self.child.check_nil ();
+    self.child.check_nil (code);
   END check_nil;
 
-PROCEDURE check_lo (self: U;  READONLY i: Target.Int) =
-  (* IF (s0.I < i) THEN Abort *)
+PROCEDURE check_lo (self: U;  t: IType;  READONLY i: Target.Int;  code: RuntimeError) =
+  (* IF (s0.t < i) THEN abort(code) *)
   BEGIN
-    self.s_pop (ST.Int);
-    self.s_push (Type.Int);
-    self.child.check_lo (i);
+    Unary (self, t,  t);
+    self.child.check_lo (t, i, code);
   END check_lo;
 
-PROCEDURE check_hi (self: U;  READONLY i: Target.Int) =
-  (* IF (i < s0.I) THEN Abort *)
+PROCEDURE check_hi (self: U;  t: IType;  READONLY i: Target.Int;  code: RuntimeError) =
+  (* IF (i < s0.t) THEN abort(code) *)
   BEGIN
-    self.s_pop (ST.Int);
-    self.s_push (Type.Int);
-    self.child.check_hi (i);
+    Unary (self, t, t);
+    self.child.check_hi (t, i, code);
   END check_hi;
 
-PROCEDURE check_range (self: U;  READONLY a, b: Target.Int) =
-  (* IF (s0.I < a) OR (b < s0.I) THEN Abort *)
+PROCEDURE check_range (self: U;  t: IType;  READONLY a, b: Target.Int;  code: RuntimeError) =
+  (* IF (s0.t < a) OR (b < s0.t) THEN abort(code) *)
   BEGIN
-    self.s_pop (ST.Int);
-    self.s_push (Type.Int);
-    self.child.check_range (a, b);
+    Unary (self, t, t);
+    self.child.check_range (t, a, b, code);
   END check_range;
 
-PROCEDURE check_index (self: U) =
+PROCEDURE check_index (self: U;  t: IType;  code: RuntimeError) =
+  (* IF NOT (0 <= s1.t < s0.t) THEN abort(code) END; pop *)
   BEGIN
-    self.s_pop (ST.Int, ST.Int);
-    self.s_push (Type.Int);
-    self.child.check_index ();
+    Binary (self, t, t);
+    self.child.check_index (t, code);
   END check_index;
 
-PROCEDURE check_eq (self: U) =
-  (* IF (s0.I # s1.I) THEN Abort;  Pop (2) *)
+PROCEDURE check_eq (self: U;  t: IType;  code: RuntimeError) =
+  (* IF (s0.I # s1.I) THEN abort(code);  Pop (2) *)
   BEGIN
-    self.s_pop (ST.Int, ST.Int);
-    self.child.check_eq ();
+    self.s_pop (T_to_ST[t], T_to_ST[t]);
+    self.child.check_eq (t, code);
   END check_eq;
 
 (*---------------------------------------------------- address arithmetic ---*)
@@ -1337,12 +1194,12 @@ PROCEDURE add_offset (self: U; i: INTEGER) =
     self.child.add_offset (i);
   END add_offset;
 
-PROCEDURE index_address (self: U;  size: INTEGER) =
-  (* s1.A := s1.A + s0.I * size ; pop *)
+PROCEDURE index_address (self: U;  t: IType;  size: INTEGER) =
+  (* s1.A := s1.A + s0.t * size ; pop *)
   BEGIN
-    self.s_pop (ST.Int, ST.Addr);
+    self.s_pop (T_to_ST[t], ST.Addr);
     self.s_push (Type.Addr);
-    self.child.index_address (size);
+    self.child.index_address (t, size);
   END index_address;
 
 (*------------------------------------------------------- procedure calls ---*)

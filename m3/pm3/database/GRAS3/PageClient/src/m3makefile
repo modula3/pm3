@@ -1,5 +1,3 @@
-m3_option("-g")
-
 import("set")
 import("GrasCommon")
 import("RuleEngine")

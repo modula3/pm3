@@ -16,6 +16,9 @@ VAR (*READONLY*) out, err: T;
 PROCEDURE New(wr: Wr.T; width: CARDINAL:=75): T;
 (* A new Formatter.T based on wr. *)
 
+PROCEDURE UnderlyingWr (swr: T): Wr.T;
+(* Returns the writer that is connected to the output of swr. *)
+
 PROCEDURE Beg(swr: T; indent: INTEGER:=0; loud:=FALSE);
 (* Formatter.Begin(out, indent) *)
 

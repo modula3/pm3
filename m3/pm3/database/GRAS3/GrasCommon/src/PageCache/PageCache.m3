@@ -7,8 +7,11 @@ MODULE PageCache EXPORTS PageCache, InternalPageCache;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:27  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:44  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:27  hosking
+    Import of GRAS3 1.1
 
     Revision 1.9  1998/09/14 08:14:25  roland
     Modified code to remove compiler warnings.
@@ -230,13 +233,12 @@ PROCEDURE GetFreePage	(        newHandle	:PageHandle.T) =
   VAR
     oldHandle		:PageHandle.T;
   BEGIN
-    <* ASSERT (newHandle.getPage () = NIL) *>
+    <* ASSERT NOT newHandle.isLoad () *>
 
     IF newHandle.getList () = NIL THEN
       (* drop data from old handle *)
       oldHandle := A1in.getTail ();
-      NARROW (oldHandle.getMedia (), PageMedia.T).dropData (oldHandle);
-      oldHandle.unmarkChanges ();
+      oldHandle.dropData ();
 
       (* oldHandle may be get obsolete by RemovePage while dropData *)
       IF oldHandle.isLoad () THEN
@@ -261,8 +263,7 @@ PROCEDURE GetFreePage	(        newHandle	:PageHandle.T) =
       <* ASSERT (newHandle.getList () = A1out) *>
       (* drop data from old handle *)
       oldHandle := Am.getTail ();
-      NARROW (oldHandle.getMedia (), PageMedia.T).dropData (oldHandle);
-      oldHandle.unmarkChanges ();
+      oldHandle.dropData ();
 
       (* oldHandle may be get obsolete by RemovePage while dropData *)
       IF oldHandle.isLoad () THEN
@@ -341,13 +342,14 @@ PROCEDURE GetPageCopy	(        oldHandle,
       GetFreePage (newHandle);
       newHandle.setMedia (oldHandle.getMedia ());
       newHandle.setPageNo (oldHandle.getPageNo ());
-      NARROW (newHandle.getMedia (), PageMedia.T).loadData (newHandle);
-
+      newHandle.loadData ();
+      newHandle.markChanged ();
+      
     ELSE
       IF oldHandle.isChanged () THEN
         page := oldHandle.getPage ();
         GetFreePage (newHandle);
-        BasePageHandle.T.putData (newHandle, page.getAll ());
+        BasePageHandle.T.putData (newHandle, page.data);
 
       ELSE
         WITH oldList = NARROW (oldHandle.getList (), ObjectList.T) DO
@@ -355,8 +357,7 @@ PROCEDURE GetPageCopy	(        oldHandle,
           newHandle.setPage (oldHandle.getPage ());
 
           (* release page of old handle *)
-          NARROW (oldHandle.getMedia (), PageMedia.T).dropData (oldHandle);
-          oldHandle.unmarkChanges ();
+          oldHandle.dropData ();
 
           (* oldHandle may be get obsolete by RemovePage while dropData *)
           IF oldHandle.isLoad () THEN
@@ -419,7 +420,7 @@ PROCEDURE GetPage	(         pageNo	:CARDINAL;
 
 PROCEDURE InsertPage    (         pageNo        :CARDINAL;
                                   media		:PageMedia.T;
-                         READONLY data		:PageData.T) :PageHandle.T =
+                         READONLY data		:PageData.Part) :PageHandle.T =
   BEGIN
     <* ASSERT (cacheMutex.user = Thread.Self ()) *>
 
@@ -436,7 +437,7 @@ PROCEDURE InsertPage    (         pageNo        :CARDINAL;
 
   
 PROCEDURE ReInsertPage	(         handle	:PageHandle.T;
-                         READONLY data		:PageData.T) =
+                         READONLY data		:PageData.Part) =
   BEGIN
     <* ASSERT (cacheMutex.user = Thread.Self ()) *>
 
@@ -468,10 +469,17 @@ PROCEDURE LoadPage	(        handle		:PageHandle.T) =
     <* ASSERT (cacheMutex.user = Thread.Self ()) *>
 
     GetFreePage (handle);
-    NARROW (handle.getMedia (), PageMedia.T).loadData (handle);
-    handle.unmarkChanges ();
+    handle.loadData();
   END LoadPage;
   
+
+PROCEDURE AssignPage	(	 handle		:PageHandle.T) =
+  BEGIN
+    <* ASSERT (cacheMutex.user = Thread.Self ()) *>
+
+    GetFreePage (handle);
+  END AssignPage; 
+
 
 PROCEDURE FlushPages	(        media		:PageMedia.T) =
   VAR
@@ -481,9 +489,8 @@ PROCEDURE FlushPages	(        media		:PageMedia.T) =
     EVAL i.init (A1in);
     handle := i.next ();
     WHILE handle # NIL DO
-      IF (handle.getMedia () = media) AND (handle.isChanged ()) THEN
-        media.dropData (handle);
-        handle.unmarkChanges ();
+      IF (handle.getMedia () = media) THEN
+        handle.dropData ();
       END;
       handle := i.next ();
     END;
@@ -491,9 +498,8 @@ PROCEDURE FlushPages	(        media		:PageMedia.T) =
     EVAL i.init (Am);
     handle := i.next ();
     WHILE handle # NIL DO
-      IF (handle.getMedia () = media) AND (handle.isChanged ()) THEN
-        media.dropData (handle);
-        handle.unmarkChanges ();
+      IF (handle.getMedia () = media) THEN
+        handle.dropData ();
       END;
       handle := i.next ();
     END;

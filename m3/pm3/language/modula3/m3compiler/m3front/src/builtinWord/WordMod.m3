@@ -8,7 +8,7 @@
 
 MODULE WordMod;
 
-IMPORT CG, CallExpr, Expr, ExprRep, Procedure, ProcType;
+IMPORT CG, CallExpr, Expr, ExprRep, Procedure, ProcType, TInt;
 IMPORT Int, IntegerExpr, WordPlus, Value, Formal, Target, TWord;
 
 VAR Z: CallExpr.MethodList;
@@ -24,7 +24,8 @@ PROCEDURE Compile (ce: CallExpr.T) =
   BEGIN
     Expr.Compile (ce.args[0]);
     Expr.Compile (ce.args[1]);
-    CG.Mod (CG.Type.Word, Expr.GetSign (ce.args[0]), Expr.GetSign (ce.args[1]));
+    CG.Mod (Target.Word.cg_type, Expr.GetSign (ce.args[0]),
+                                 Expr.GetSign (ce.args[1]));
   END Compile;
 
 PROCEDURE Fold (ce: CallExpr.T): Expr.T =
@@ -35,6 +36,20 @@ PROCEDURE Fold (ce: CallExpr.T): Expr.T =
       ELSE RETURN NIL;
     END;
   END Fold;
+
+PROCEDURE GetBounds (ce: CallExpr.T;  VAR min, max: Target.Int) =
+  VAR min_b, max_b: Target.Int;
+  BEGIN
+    Expr.GetBounds (ce.args[1], min_b, max_b);
+    IF TInt.LT (min_b, TInt.Zero) OR TInt.LT (max_b, TInt.Zero) THEN
+      (* almost anything is possible *)
+      min := Target.Integer.min;
+      max := Target.Integer.max;
+    ELSE
+      min := TInt.Zero;
+      TWord.Subtract (max_b, TInt.One, max);
+    END;
+  END GetBounds;
 
 PROCEDURE Initialize () =
   VAR
@@ -53,6 +68,7 @@ PROCEDURE Initialize () =
                                  CallExpr.NotBoolean,
                                  CallExpr.NotBoolean,
                                  Fold,
+                                 GetBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

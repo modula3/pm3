@@ -8,7 +8,7 @@
 
 INTERFACE Module;
 
-IMPORT M3ID, Type, Value, Scope, CG, M3Compiler;
+IMPORT M3ID, Type, Value, Scope, CG;
 
 TYPE T <: Value.T;
 
@@ -28,28 +28,32 @@ PROCEDURE IsSafe (): BOOLEAN;
 PROCEDURE IsInterface (): BOOLEAN;
 PROCEDURE IsExternal (): BOOLEAN;
 
-PROCEDURE GetImports(t: T): M3Compiler.IDList;
-
 PROCEDURE ExportScope (t: T): Scope.T;
 
 PROCEDURE Current (): T;
 
 PROCEDURE Name (t: T): M3ID.T;
-PROCEDURE Prefix (t: T): TEXT;
 (* t = NIL => use Current *)
 
-PROCEDURE CurrentCounter (): ARRAY [0..4] OF CHAR;
-PROCEDURE SetCurrentCounter (c: ARRAY [0..4] OF CHAR);
+PROCEDURE GetNextCounter (VAR c: ARRAY [0..4] OF CHAR);
+(* Return the next counter value for the current module and
+   increment the counter. *)
 
-PROCEDURE Allocate (size, align: INTEGER;
+PROCEDURE Allocate (size, align: INTEGER;  is_const: BOOLEAN;
                     tag: TEXT := NIL;  id: M3ID.T := M3ID.NoID): INTEGER;
 (* allocate 'size' bits of space with the specified alignment
-   in the current module's global data segment.  Return the
+   in the current module's global data or constant segment.  Return the
    bit offset of allocated data. *)
 
-PROCEDURE GlobalData (t: T): CG.Var;
-(* returns 't's global data segment.  If 't' is NIL, returns the
-   current module's global dat segment.  *)
+PROCEDURE GlobalData (is_const: BOOLEAN): CG.Var;
+(* returns the current module's global data segment.  *)
+
+PROCEDURE LoadGlobalAddr (t: T;  offset: INTEGER;  is_const: BOOLEAN);
+(* generate code to load the address of 't's global data + 'offset'. *)
+
+PROCEDURE ImportInterface (t: T);
+(* generate the structures that force "t" to be imported and initialized at
+   link time. *)
 
 PROCEDURE GetTypeInfo (t: T): Type.ModuleInfo;
 (* return the global type info for module 't' *)

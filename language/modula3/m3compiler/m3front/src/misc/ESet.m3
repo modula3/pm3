@@ -192,20 +192,15 @@ PROCEDURE Declare (t: T) =
     END;
 
     (* allocate the space *)
-    t.offset := Module.Allocate (n * Target.Address.pack, Target.Address.align,
-                                 "*exception list*");
-    (********************************
-    type := CG.Declare_vector (n, CG.Builtin_ADDRESS, Target.Address.pack);
-    CG.Declare_global_field ("_eset", t.offset, n * Target.Address.pack, type);
-    **********************************)
+    t.offset := Module.Allocate (n * Target.Integer.pack, Target.Integer.align,
+                                 TRUE, "*exception list*");
 
     (* initialize the list *)
     e := t.elts;  n := t.offset;
     WHILE (e # NIL) DO
       IF (e.except # NIL) THEN
-        CG.Init_var (n, Scope.ToUnit (e.except),
-                      Exceptionz.CGOffset (e.except));
-        INC (n, Target.Address.pack);
+        CG.Init_intt (n, Target.Integer.size, Exceptionz.UID (e.except), TRUE);
+        INC (n, Target.Integer.pack);
       END;
       e := e.next;
     END;
@@ -228,7 +223,7 @@ PROCEDURE GetAddress (t: T;  VAR base: CG.Var;  VAR offset: INTEGER) =
     ELSE
       t := LookUp (t);
       Declare (t);
-      base := Module.GlobalData (NIL);
+      base := Module.GlobalData (is_const := TRUE);
       offset := t.offset;
     END;
   END GetAddress;
@@ -354,7 +349,8 @@ PROCEDURE CheckUnused (t: T) =
   VAR save := Scanner.offset;  e := t.elts;
   BEGIN
     WHILE (e # NIL) DO
-      IF (e.except # NIL) AND (NOT e.used) THEN
+      IF (e.except # NIL) AND (NOT e.used)
+        AND (NOT Exceptionz.IsImplicit (e.except)) THEN
         Scanner.offset := e.origin;
         Error.Warn (1, "exception is never raised: "
           & Value.GlobalName (e.except, dots := TRUE, with_module := TRUE));
@@ -452,6 +448,7 @@ PROCEDURE CheckRaise (VAR cs: M3.CheckState;  v: Value.T): TEXT =
     IF CheckTList (cs.ok_to_raise, v) THEN RETURN NIL END;
     cs.raises_others := TRUE;
     IF CheckTList (cs.no_error, v) THEN RETURN NIL END;
+    IF Exceptionz.IsImplicit (v) THEN RETURN NIL END;
     RETURN Value.GlobalName (v, dots := TRUE, with_module := TRUE);
   END CheckRaise;
 

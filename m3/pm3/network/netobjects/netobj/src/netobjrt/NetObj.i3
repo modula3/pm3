@@ -12,19 +12,19 @@
    program containing the network object is called the <I>owner</I>.  The
    client and owner can be running on different machines or in different
    address spaces on the same machine.
-<SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>network object</SPAN>
-</SPAN>
+   <SPAN CLASS=INDEX.MARK>
+   <SPAN CLASS=INDEX.KEY>network object</SPAN>
+   </SPAN>
 
-<SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>network object</SPAN>
-<SPAN CLASS=INDEX.KEY>client</SPAN>
-</SPAN>
+   <SPAN CLASS=INDEX.MARK>
+   <SPAN CLASS=INDEX.KEY>network object</SPAN>
+   <SPAN CLASS=INDEX.KEY>client</SPAN>
+   </SPAN>
 
-<SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>network object</SPAN>
-<SPAN CLASS=INDEX.KEY>owner</SPAN>
-</SPAN>
+   <SPAN CLASS=INDEX.MARK>
+   <SPAN CLASS=INDEX.KEY>network object</SPAN>
+   <SPAN CLASS=INDEX.KEY>owner</SPAN>
+   </SPAN>
 *)
 
 (* This is the primary public interface for using network objects.
@@ -36,14 +36,14 @@
    as an address space, although the design does not 
    preclude the implementation of a program instance by a
    suite of address spaces.<SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>program instance</SPAN>
-</SPAN>
+   <SPAN CLASS=INDEX.KEY>program instance</SPAN>
+   </SPAN>
 
 
    An <I>agent</I><SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>agent</SPAN>
-</SPAN>
- is a program that provides a table that
+   <SPAN CLASS=INDEX.KEY>agent</SPAN>
+   </SPAN>
+   is a program that provides a table that
    maps names to network objects.  Any program can be an agent, but every
    machine has a particular default agent.  Owners typically make 
    network objects available to clients by inserting them 
@@ -57,29 +57,29 @@ INTERFACE NetObj;
 IMPORT Atom, AtomList, Thread;
 
 TYPE
-  T <: ROOT;
-  Address <: REFANY;
+  T <: <*TRANSIENT*> ROOT;
+  Address <: <*TRANSIENT*> REFANY;
 
 (* "NetObj.T" is the root type of all network objects.
    A "NetObj.Address" designates a program instance.
-<SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>NetObj.T</SPAN>
-<SPAN CLASS=INDEX.TEXT><TT>NetObj.T</TT></SPAN>
-</SPAN>
-<SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>NetObj.Address</SPAN>
-<SPAN CLASS=INDEX.TEXT><TT>NetObj.Address</TT></SPAN>
-</SPAN>
+   <SPAN CLASS=INDEX.MARK>
+   <SPAN CLASS=INDEX.KEY>NetObj.T</SPAN>
+   <SPAN CLASS=INDEX.TEXT><TT>NetObj.T</TT></SPAN>
+   </SPAN>
+   <SPAN CLASS=INDEX.MARK>
+   <SPAN CLASS=INDEX.KEY>NetObj.Address</SPAN>
+   <SPAN CLASS=INDEX.TEXT><TT>NetObj.Address</TT></SPAN>
+   </SPAN>
 *)
 
 PROCEDURE Locate (host: TEXT): Address
     RAISES {Invalid, Error, Thread.Alerted};
 (* Return an address for the standard agent at the machine whose
    human-sensible name is "host".
-<SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>NetObj.Locate</SPAN>
-<SPAN CLASS=INDEX.TEXT><TT>NetObj.Locate</TT></SPAN>
-</SPAN>
+   <SPAN CLASS=INDEX.MARK>
+   <SPAN CLASS=INDEX.KEY>NetObj.Locate</SPAN>
+   <SPAN CLASS=INDEX.TEXT><TT>NetObj.Locate</TT></SPAN>
+   </SPAN>
 *)
 
 (* The naming convention used by "Locate" is system-dependent.  For 
@@ -103,10 +103,10 @@ PROCEDURE Export(
    agent whose address is "where", or by the default agent for the local
    machine if "where = NIL".  This can be used with "obj=NIL" to
    remove an entry from the table.
-<SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>NetObj.Export</SPAN>
-<SPAN CLASS=INDEX.TEXT><TT>NetObj.Export</TT></SPAN>
-</SPAN>
+   <SPAN CLASS=INDEX.MARK>
+   <SPAN CLASS=INDEX.KEY>NetObj.Export</SPAN>
+   <SPAN CLASS=INDEX.TEXT><TT>NetObj.Export</TT></SPAN>
+   </SPAN>
 *)
 
 PROCEDURE Import(name: TEXT; where: Address := NIL): T
@@ -115,10 +115,10 @@ PROCEDURE Import(name: TEXT; where: Address := NIL): T
    agent whose address is "where", or by the default agent for the local
    machine if "where = NIL".  "Import" returns "NIL" if "table"
    contains no entry for "name".
-<SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>NetObj.Import</SPAN>
-<SPAN CLASS=INDEX.TEXT><TT>NetObj.Import</TT></SPAN>
-</SPAN>
+   <SPAN CLASS=INDEX.MARK>
+   <SPAN CLASS=INDEX.KEY>NetObj.Import</SPAN>
+   <SPAN CLASS=INDEX.TEXT><TT>NetObj.Import</TT></SPAN>
+   </SPAN>
 *)
     
 EXCEPTION
@@ -133,19 +133,20 @@ VAR (*CONST*)
 END NetObj.
 
 (*
-<SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>NetObj.Error</SPAN>
-<SPAN CLASS=INDEX.TEXT><TT>NetObj.Error</TT></SPAN>
-</SPAN>
+  <SPAN CLASS=INDEX.MARK>
+  <SPAN CLASS=INDEX.KEY>NetObj.Error</SPAN>
+  <SPAN CLASS=INDEX.TEXT><TT>NetObj.Error</TT></SPAN>
+  </SPAN>
    The exception "NetObj.Error" indicates possible failures in a remote 
    method invocation.  Every remote method should therefore include
    "NetObj.Error" in its raises clause.  If "NetObj.Error" is not raised,
    then the invocation completed successfully.  If it is raised, it may
    or may not have completed successfully.  It is possible that an
    <I>orphaned</I> remote invocation continued to execute at the owner,
-   while the client raised "NetObj.Error".<SPAN CLASS=INDEX.MARK>
-<SPAN CLASS=INDEX.KEY>orphan computation</SPAN>
-</SPAN>
+   while the client raised "NetObj.Error".
+   <SPAN CLASS=INDEX.MARK>
+   <SPAN CLASS=INDEX.KEY>orphan computation</SPAN>
+   </SPAN>
 
 
    The first atom in the argument to "NetObj.Error" explains the

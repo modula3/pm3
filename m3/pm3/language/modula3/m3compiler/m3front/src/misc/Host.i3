@@ -26,8 +26,6 @@ VAR (* misc. options *)
   init_floats   : BOOLEAN := FALSE; (* initialize all floats to zero *)
   vs_debug      : BOOLEAN := FALSE; (* print version stamp debugging *)
   load_map      : BOOLEAN := TRUE;  (* print unit's load map as a comment *)
-  ext_direct    : BOOLEAN := TRUE;  (* call external procedure directly? *)
-  all_direct    : BOOLEAN := FALSE; (* call all procedures directly? *)
   stack_walker  : BOOLEAN := TRUE;  (* use the Target specified stack walker *)
 
   nested_calls : BOOLEAN := FALSE;
@@ -59,6 +57,8 @@ VAR (* runtime checks *)
   doAsserts   : BOOLEAN := TRUE;
   doNilChk    : BOOLEAN := TRUE;
   doRaisesChk : BOOLEAN := TRUE;
+  doProcChk   : BOOLEAN := FALSE;
+  doDebugs    : BOOLEAN := TRUE;
 
 VAR
   new_adr      : BOOLEAN := FALSE;  (* TRUE =>  "ADR (t: T): UNTRACED REF T" *)

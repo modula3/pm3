@@ -7,8 +7,8 @@
 
 INTERFACE QVal;
 
-IMPORT M3ID, M3Buf, QValue, QVTbl, QVSeq;
-FROM Quake IMPORT Error, Machine;
+IMPORT M3Buf, QValue, QVTbl, QVSeq;
+FROM Quake IMPORT Error, Machine, ID;
 
 TYPE
   T = QValue.T;
@@ -17,7 +17,7 @@ PROCEDURE ToTag   (m: Machine; READONLY t: T): TEXT           RAISES {Error};
 PROCEDURE ToBool  (m: Machine; READONLY t: T): BOOLEAN        RAISES {Error};
 PROCEDURE ToInt   (m: Machine; READONLY t: T): INTEGER        RAISES {Error};
 PROCEDURE ToText  (m: Machine; READONLY t: T): TEXT           RAISES {Error};
-PROCEDURE ToID    (m: Machine; READONLY t: T): M3ID.T         RAISES {Error};
+PROCEDURE ToID    (m: Machine; READONLY t: T): ID             RAISES {Error};
 PROCEDURE ToTable (m: Machine; READONLY t: T): QVTbl.T        RAISES {Error};
 PROCEDURE ToArray (m: Machine; READONLY t: T): QVSeq.T        RAISES {Error};
 PROCEDURE ToProc  (m: Machine; READONLY t: T): QValue.Proc    RAISES {Error};

@@ -7,8 +7,19 @@
 
 INTERFACE TryStmt;
 
-IMPORT Stmt;
+IMPORT Stmt, CG;
 
 PROCEDURE Parse (): Stmt.T;
+
+PROCEDURE InHandler (): BOOLEAN;
+(* Returns "TRUE" if we're currently typechecking the body of a handler *)
+
+PROCEDURE LoadInfoPtr ();
+(* Load the address of the RT0.RaiseActivation record passed
+   to the handler that's currently being compiled. *)
+
+PROCEDURE PushHandler (info: CG.Var;  offset: INTEGER;   direct: BOOLEAN);
+PROCEDURE PopHandler ();
+(* Records the entry & exit from handler code *)
 
 END TryStmt.

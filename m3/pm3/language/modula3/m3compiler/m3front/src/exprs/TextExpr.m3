@@ -9,11 +9,12 @@
 MODULE TextExpr;
 
 IMPORT M3, CG, Expr, ExprRep, M3String, Textt, Type, M3Buf;
-IMPORT Target, Module, M3RT;
+IMPORT Target, Module, M3RT, M3WString, RunTyme, Procedure;
 
 TYPE
   P = Expr.T OBJECT
-        value : M3String.T;
+        value8  : M3String.T;
+        value16 : M3WString.T;
       OVERRIDES
         typeOf       := ExprRep.NoType;
         check        := ExprRep.NoCheck;
@@ -39,54 +40,85 @@ TYPE
 TYPE
   LiteralTable = REF ARRAY OF INTEGER;
 
-VAR nextID      : INTEGER := 0;
-VAR literals    : LiteralTable := NIL;
-VAR global_data : CG.Var := NIL;
+VAR nextID        : INTEGER := 0;
+VAR global_consts : CG.Var  := NIL;
+VAR literals      : LiteralTable := NIL;
+VAR lit_methods   : INTEGER := -1;
 
 PROCEDURE Reset () =
   BEGIN
     nextID := 0;
-    global_data := NIL;
+    global_consts := NIL;
+    lit_methods := -1;
     (* literals := NIL; *)
     IF (literals # NIL) THEN
       FOR i := FIRST (literals^) TO LAST (literals^) DO literals[i] := 0; END;
     END;
   END Reset;
 
-PROCEDURE New (value: M3String.T): Expr.T =
+PROCEDURE New8 (value: M3String.T): Expr.T =
   VAR p := NEW (P);
   BEGIN
     ExprRep.Init (p);
-    p.value   := value;
+    p.value8  := value;
+    p.value16 := NIL;
     p.type    := Textt.T;
     p.checked := TRUE;
     RETURN p;
-  END New;
+  END New8;
+
+PROCEDURE New16 (value: M3WString.T): Expr.T =
+  VAR p := NEW (P);
+  BEGIN
+    ExprRep.Init (p);
+    p.value8  := NIL;
+    p.value16 := value;
+    p.type    := Textt.T;
+    p.checked := TRUE;
+    RETURN p;
+  END New16;
 
 PROCEDURE EqCheck (a: P;  e: Expr.T;  <*UNUSED*> x: M3.EqAssumption): BOOLEAN =
   BEGIN
     TYPECASE e OF
     | NULL => RETURN FALSE;
-    | P(b) => RETURN (a.value = b.value);
+    | P(b) => RETURN (a.value8 = b.value8) AND (a.value16 = b.value16);
     ELSE      RETURN FALSE;
     END;
   END EqCheck;
 
 PROCEDURE SetUID (p: P): INTEGER =
   VAR
-    Header_offset  := 0;
-    Pointer_offset := Header_offset  + Target.Address.pack;
-    Length_offset  := Pointer_offset + Target.Address.pack;
-    Chars_offset   := Length_offset  + Target.Integer.pack;
+    Header_offset := 0;
+    Method_offset := Header_offset + Target.Address.pack;
+    Length_offset := Method_offset + Target.Address.pack;
+    Chars_offset  := Length_offset + Target.Integer.pack;
   VAR
-    uid  := M3String.GetUID (p.value);
-    len  : INTEGER;
-    x    : INTEGER;
+    uid     : INTEGER;
+    len     : INTEGER;
+    x       : INTEGER;
+    width   : INTEGER;
+    cnt     : INTEGER;
   BEGIN
     (* assign this value a unique ID *)
-    IF (uid < 0) THEN
-      uid := nextID;  INC (nextID);
-      M3String.SetUID (p.value, uid);
+    IF p.value8 # NIL THEN
+      width := Target.Char.size;
+      len   := M3String.Length (p.value8);
+      cnt   := len;
+      uid   := M3String.GetUID (p.value8);
+      IF (uid < 0) THEN
+        uid := nextID;  INC (nextID);
+        M3String.SetUID (p.value8, uid);
+      END;
+    ELSE
+      width := Target.Int16.size;
+      len   := M3WString.Length (p.value16);
+      cnt   := - len;
+      uid   := M3WString.GetUID (p.value16);
+      IF (uid < 0) THEN
+        uid := nextID;  INC (nextID);
+        M3WString.SetUID (p.value16, uid);
+      END;
     END;
 
     (* make sure there's room in the table *)
@@ -95,26 +127,46 @@ PROCEDURE SetUID (p: P): INTEGER =
     x := literals [uid];
     IF (x # 0) THEN RETURN uid END;
 
-    IF (global_data = NIL) THEN
-      global_data := Module.GlobalData (NIL);
+    IF (global_consts = NIL) THEN
+      global_consts := Module.GlobalData (is_const := TRUE);
+      lit_methods := BuildMethodList ();
     END;
 
-    len := M3String.Length (p.value) + 1;
-
-    (* allocate the variable *)
-    x := Module.Allocate (Chars_offset + len * Target.Char.size,
-                           Target.Address.align, "*TEXT literal*");
+    (* allocate the variable with room for the trailing null character *)
+    x := Module.Allocate (Chars_offset + (len+1) * width,
+                           Target.Address.align, TRUE, "*TEXT literal*");
     literals[uid] := x;
- 
+
     (* initialize the variable *)
     CG.Init_intt (x+Header_offset + M3RT.RH_typecode_offset,
-                  M3RT.RH_typecode_size, M3RT.TEXT_typecode);
-    CG.Init_var  (x+Pointer_offset, global_data, x+Chars_offset);
-    CG.Init_intt (x+Length_offset, Target.Integer.size, len);
-    M3String.Init_chars (x+Chars_offset, p.value);
+                  M3RT.RH_typecode_size, M3RT.TEXT_typecode, is_const := TRUE);
+    CG.Init_var  (x+Method_offset, global_consts, lit_methods, is_const := TRUE);
+    CG.Init_intt (x+Length_offset, Target.Integer.size, cnt, is_const := TRUE);
+    IF (p.value8 # NIL)
+      THEN M3String.Init_chars (x+Chars_offset, p.value8, TRUE);
+      ELSE M3WString.Init_chars (x+Chars_offset, p.value16, TRUE);
+    END;
 
     RETURN uid;
   END SetUID;
+
+PROCEDURE BuildMethodList (): INTEGER =
+  TYPE
+    Methods = [RunTyme.Hook.TextLitInfo .. RunTyme.Hook.TextLitGetWideChars];
+  VAR offs: INTEGER;
+  BEGIN
+    IF lit_methods >= 0 THEN RETURN lit_methods; END;
+
+    lit_methods := Module.Allocate (NUMBER (Methods) * Target.Address.size,
+                     Target.Address.align, TRUE, "TEXT literal methods");
+    offs := lit_methods;
+    FOR i := FIRST (Methods) TO LAST (Methods) DO
+      CG.Init_proc (offs, Procedure.CGName (RunTyme.LookUpProc (i)), TRUE);
+      INC (offs, Target.Address.size);
+    END;
+
+    RETURN lit_methods;
+  END BuildMethodList;
 
 PROCEDURE ExpandLiterals () =
   VAR new: LiteralTable;
@@ -131,33 +183,50 @@ PROCEDURE ExpandLiterals () =
 PROCEDURE Compile (p: P) =
   VAR uid := SetUID (p);
   BEGIN
-    CG.Load_addr_of (global_data, literals[uid] + Target.Address.pack,
+    CG.Load_addr_of (global_consts, literals[uid] + Target.Address.pack,
                      Target.Address.align);
   END Compile;
 
-PROCEDURE Split (e: Expr.T;  VAR value: M3String.T): BOOLEAN =
+PROCEDURE Split8 (e: Expr.T;  VAR value: M3String.T): BOOLEAN =
   BEGIN
     TYPECASE e OF
     | NULL => RETURN FALSE;
-    | P(p) => value := p.value;  RETURN TRUE;
+    | P(p) => value := p.value8;  RETURN (p.value8 # NIL);
     ELSE      RETURN FALSE;
     END;
-  END Split;
+  END Split8;
+
+PROCEDURE Split16 (e: Expr.T;  VAR value: M3WString.T): BOOLEAN =
+  BEGIN
+    TYPECASE e OF
+    | NULL => RETURN FALSE;
+    | P(p) => value := p.value16;  RETURN (p.value16 # NIL);
+    ELSE      RETURN FALSE;
+    END;
+  END Split16;
 
 PROCEDURE Cat (a, b: Expr.T;  VAR c: Expr.T): BOOLEAN =
-  VAR sa, sb: M3String.T;
+  VAR sa, sb: M3String.T;  wa, wb: M3WString.T;
   BEGIN
     TYPECASE a OF
     | NULL => RETURN FALSE;
-    | P(p) => sa := p.value;
+    | P(p) => sa := p.value8;  wa := p.value16;
     ELSE      RETURN FALSE;
     END;
     TYPECASE b OF
     | NULL => RETURN FALSE;
-    | P(p) => sb := p.value;
+    | P(p) => sb := p.value8;  wb := p.value16;
     ELSE      RETURN FALSE;
     END;
-    c := New (M3String.Concat (sa, sb));
+    IF (sa # NIL) AND (sb # NIL) THEN
+      c := New8 (M3String.Concat (sa, sb));
+    ELSIF (wa # NIL) AND (wb # NIL) THEN
+      c := New16 (M3WString.Concat (wa, wb));
+    ELSIF (sa # NIL) THEN  (* wb # NIL *)
+      c := New16 (M3WString.Concat (M3WString.Add (M3String.ToText (sa)), wb));
+    ELSE (*wa # NIL  AND  sb # NIL*)
+      c := New16 (M3WString.Concat (wa, M3WString.Add (M3String.ToText (sb))));
+    END;
     RETURN TRUE;
   END Cat;
 
@@ -168,22 +237,33 @@ PROCEDURE IsZeroes (<*UNUSED*>p: P): BOOLEAN =
 
 PROCEDURE GenFPLiteral (p: P;  buf: M3Buf.T) =
   BEGIN
-    M3Buf.PutText (buf, "TEXT<");
-    M3Buf.PutInt  (buf, M3String.Length (p.value));
-    M3Buf.PutChar (buf, ',');
-    M3String.Put  (buf, p.value);
-    M3Buf.PutChar (buf, '>');
+    IF (p.value8 # NIL) THEN
+      M3Buf.PutText (buf, "TEXT8<");
+      M3Buf.PutInt  (buf, M3String.Length (p.value8));
+      M3Buf.PutChar (buf, ',');
+      M3String.Put  (buf, p.value8);
+      M3Buf.PutChar (buf, '>');
+    ELSE
+      M3Buf.PutText (buf, "TEXT16<");
+      M3Buf.PutInt  (buf, M3WString.Length (p.value16));
+      M3Buf.PutChar (buf, ',');
+      M3WString.PutLiteral (buf, p.value16);
+      M3Buf.PutChar (buf, '>');
+    END;
   END GenFPLiteral;
 
-PROCEDURE PrepLiteral (p: P;  <*UNUSED*>type: Type.T) =
+PROCEDURE PrepLiteral (p: P;  <*UNUSED*> type: Type.T;
+                              <*UNUSED*> is_const: BOOLEAN) =
   BEGIN
     EVAL SetUID (p);
   END PrepLiteral;
 
-PROCEDURE GenLiteral (p: P;  offset: INTEGER;  <*UNUSED*>type: Type.T) =
+PROCEDURE GenLiteral (p: P;  offset: INTEGER;  <*UNUSED*>type: Type.T;
+                      is_const: BOOLEAN) =
   VAR uid := SetUID (p);
   BEGIN
-    CG.Init_var (offset, global_data, literals[uid] + Target.Address.pack);
+    CG.Init_var (offset, global_consts, literals[uid] + Target.Address.pack,
+                 is_const);
   END GenLiteral;
 
 BEGIN

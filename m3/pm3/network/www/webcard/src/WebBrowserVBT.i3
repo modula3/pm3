@@ -2,7 +2,6 @@
 (* Distributed only by permission.                            *)
 (*                                                            *)
 (* Last modified on Mon Aug 19 21:59:54 PDT 1996 by mhb       *)
-<*PRAGMA LL*>
 
 INTERFACE WebBrowserVBT;
 

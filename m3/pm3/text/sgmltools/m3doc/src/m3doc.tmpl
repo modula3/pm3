@@ -5,9 +5,10 @@ end
 
 htmlFiles = []
 derivedHtmlFiles = {}
-no_extension = [NAMING_CONVENTIONS[17]]
+no_extension = []
 dtdDir = PKG_USE & SL & "sgml" & SL & "src" & SL & "dtd"
 
+PLATFORM_SUPPORTS_LATEX = lookup("PLATFORM_SUPPORTS_LATEX",FALSE)
 if PLATFORM_SUPPORTS_LATEX 
   docExt = ".ps"
 else
@@ -44,7 +45,7 @@ readonly proc HtmlFile (nm) is
       end
     end
     deriveds(fn,no_extension) % empty extension
-    _install_file(fn,dest,"0644","T")
+    _install_file(fn,dest,"0644",TRUE)
   end
 end
 
@@ -55,7 +56,7 @@ readonly proc HtmlTextFile (nm) is
     if defined("_all")
       htmlFiles += src_file
     end
-    _install_file(nm,dest,"0644","")
+    _install_file(nm,dest,"0644",FALSE)
   end
 end
 
@@ -89,13 +90,13 @@ readonly proc HtmlUnit(nm,ext) is
       end
     end
     deriveds(fn,no_extension)
-    _install_file(fn,dest,"0644","T")
+    _install_file(fn,dest,"0644",TRUE)
   end
 end
 
 proc m3doc_hook() is
-  if callSgmlConv checkExec(sgmlConvCmd,[],".") end
-  if callM3Sgml checkExec(m3SgmlCmd,[],".") end
+  if callSgmlConv exec(sgmlConvCmd) end
+  if callM3Sgml exec(m3SgmlCmd) end
 end
 
 add_m3_hook(m3doc_hook)
@@ -123,16 +124,16 @@ readonly proc HtmlRoot (nm) is
 
         if defined("M3DOC_PREFIX") linearCmd += ["-prefix",M3DOC_PREFIX] end
 
-        checkExec(linearCmd,[],".")
+        exec(linearCmd)
 
         if PLATFORM_SUPPORTS_LATEX
-          checkExec([BIN_USE & SL & "sgmlconv", "-report", "-htmltex", 
-              "-dtd", dtdDir, tmp1,tmp2], [],".")
-          checkExec(["latex", tmp2],[],".")
-          checkExec(["makeindex", nm],[],".")
-          checkExec(["latex", tmp2],[],".")
-          checkExec(["latex", tmp2],[],".")
-          checkExec(["dvips", "-o", fn, tmp3],[],".")
+          exec([BIN_USE & SL & "sgmlconv", "-report", "-htmltex", 
+              "-dtd", dtdDir, tmp1,tmp2])
+          exec(["latex", tmp2])
+          exec(["makeindex", nm])
+          exec(["latex", tmp2])
+          exec(["latex", tmp2])
+          exec(["dvips", "-o", fn, tmp3])
           delete_file(tmp1)
           delete_file(tmp2)
           delete_file(tmp3)
@@ -145,7 +146,7 @@ readonly proc HtmlRoot (nm) is
       end
     end
     deriveds(fn,no_extension)
-    _install_file(fn,dest,"0644","T")
+    _install_file(fn,dest,"0644",TRUE)
   end
 end
 

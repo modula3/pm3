@@ -6,8 +6,8 @@
 %      modified on Wed Aug 17 15:08:24 PDT 1994 by kalsow
 %      modified on Mon May 04 14:52:49 PDT 1992 by muller
 
-if PLATFORM_SUPPORTS_X
-  import ("X11")
+if SYSTEM_LIBS contains "X11"
+  import ("X11R4")
   implementation ("Main")
   Program ("tetris")
   ManPage ("tetris",6)

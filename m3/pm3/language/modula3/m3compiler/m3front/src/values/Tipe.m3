@@ -8,7 +8,7 @@
 
 MODULE Tipe;
 
-IMPORT M3, M3ID, CG, Value, ValueRep, Scope, Error, OpaqueType, WebInfo;
+IMPORT M3, M3ID, CG, Value, ValueRep, Scope, OpaqueType, WebInfo;
 IMPORT Token, Type, Decl, Scanner, NamedType, RefType, ObjectType;
 FROM Scanner IMPORT GetToken, Fail, Match, MatchID, cur;
 
@@ -36,13 +36,6 @@ TYPE
 PROCEDURE Parse (READONLY att: Decl.Attributes) =
   VAR t: T;  id: M3ID.T;
   BEGIN
-    IF att.isInline THEN Error.Msg ("a type cannot be inline"); END;
-    IF att.isExternal THEN
-      Error.Msg ("a type cannot be external");
-    ELSIF att.callingConv # NIL THEN
-      Error.Msg ("a type does not have a calling convention");
-    END;
-
     Match (Token.T.tTYPE);
 
     WHILE (cur.token = Token.T.tIDENT) DO

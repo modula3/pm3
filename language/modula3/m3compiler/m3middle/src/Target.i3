@@ -35,22 +35,52 @@ VAR (*CONST*)
 
 TYPE (* machine supported types *)
   CGType = {
-    Addr,    (* addresses *)
-    Word,    (* the machine's most natural, unsigned integer type *)
-    Int,     (* the machine's most natural, signed integer type   *)
-    Reel,    (* single precision reals *)
-    LReel,   (* double precision reals *)
-    XReel,   (* extended precision reals *)
-    Int_A,   (* the smallest signed integer type (usually 8 bits) *)
-    Int_B,   (* a larger signed integer  (usually 16 bits) *)
-    Int_C,   (* a larger signed integer  (usually 32 bits) *)
-    Int_D,   (* the largest signed integer  (usually 32 or 64 bits) *)
-    Word_A,  (* the smallest unsigned integer type (usually 8 bits) *)
-    Word_B,  (* a larger unsigned integer  (usually 16 bits) *)
-    Word_C,  (* a larger unsigned integer  (usually 32 bits) *)
-    Word_D,  (* the largest unsigned integer  (usually 32 or 64 bits) *)
-    Struct,  (* a block of memory *)
-    Void     (* not-a-type *)
+    Word8,  Int8,    (* 8-bit, unsigned & signed integer *)
+    Word16, Int16,   (* 16-bit, unsigned & signed integer *)
+    Word32, Int32,   (* 32-bit, unsigned & signed integer *)
+    Word64, Int64,   (* 64-bit, unsigned & signed integer *)
+    Reel,            (* single precision reals *)
+    LReel,           (* double precision reals *)
+    XReel,           (* extended precision reals *)
+    Addr,            (* addresses *)
+    Struct,          (* a block of memory *)
+    Void             (* not-a-type *)
+  };
+
+CONST
+  TypeNames = ARRAY CGType OF TEXT {
+    "Word.8",  "Int.8",
+    "Word.16", "Int.16",
+    "Word.32", "Int.32",
+    "Word.64", "Int.64",
+    "Reel", "LReel", "XReel",
+    "Addr",
+    "Struct",
+    "Void"
+  };
+
+CONST
+  SignedType = ARRAY CGType OF BOOLEAN {
+     FALSE, TRUE,  FALSE, TRUE,  (* Word8 .. Int16 *)
+     FALSE, TRUE,  FALSE, TRUE,  (* Word32 .. Int64 *)
+     TRUE,  TRUE,  TRUE,         (* Reel .. XReel *)
+     FALSE, FALSE, FALSE         (* Addr .. Void *)
+  };
+
+CONST
+  OrdinalType = ARRAY CGType OF BOOLEAN {
+    TRUE,  TRUE,  TRUE,  TRUE,   (* Word.8, Int.8, Word.16, Int.16 *)
+    TRUE,  TRUE,  TRUE,  TRUE,   (* Word.32, Int.32, Word.64, Int.64 *)
+    FALSE, FALSE, FALSE,         (* Reel, LReel, XReel *)
+    TRUE,  FALSE, FALSE          (* Addr, Struct, Void *)
+  };
+
+CONST
+  FloatType = ARRAY CGType OF BOOLEAN {
+    FALSE, FALSE, FALSE, FALSE,  (* Word.8, Int.8, Word.16, Int.16 *)
+    FALSE, FALSE, FALSE, FALSE,  (* Word.32, Int.32, Word.64, Int.64 *)
+    TRUE,  TRUE,  TRUE,          (* Reel, LReel, XReel *)
+    FALSE, FALSE, FALSE          (* Addr, Struct, Void *)
   };
 
 (*-------------------------------------------------------- integer values ---*)
@@ -108,20 +138,20 @@ TYPE
 VAR (*CONST*)
   Address   : Int_type;
   Integer   : Int_type;
+  Word      : Int_type;
   Real      : Float_type;
   Longreal  : Float_type;
   Extended  : Float_type;
-  Int_A     : Int_type;
-  Int_B     : Int_type;
-  Int_C     : Int_type;
-  Int_D     : Int_type;
-  Word_A    : Int_type;
-  Word_B    : Int_type;
-  Word_C    : Int_type;
-  Word_D    : Int_type;
+  Int8      : Int_type;
+  Int16     : Int_type;
+  Int32     : Int_type;
+  Int64     : Int_type;
+  Word8     : Int_type;
+  Word16    : Int_type;
+  Word32    : Int_type;
+  Word64    : Int_type;
   Void      : Int_type;
   Char      : Int_type;
-
 
 VAR (*CONST*) (* sorted list of supported machine alignments *)
   Alignments: ARRAY [0..3] OF CARDINAL;
@@ -148,7 +178,7 @@ PROCEDURE ConventionFromID (id: INTEGER): CallingConvention;
 
 
 (*
-  name => the name recognized in an &lt;*EXTERNAL*> pragma, or as a prefix
+  name => the name recognized in an <*EXTERNAL*> pragma, or as a prefix
           to a PROCEDURE declaration. 
 
   m3cg_id => tag used to indicate convention to the back end.

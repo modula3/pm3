@@ -16,7 +16,7 @@ Stack("Card", "Cardinal")
 Stack("CardStack", "CardStack")
 CursorList("Card", "Cardinal")
 CursorSet("Card", "Cardinal")
-Sequence("Card", "Cardinal")
+TransientSequence("Card", "Cardinal")
 Relation("Card", "Cardinal", "Cardinal", "CardSet", "CardSet")
 
 Module ("Type")

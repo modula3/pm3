@@ -7,7 +7,7 @@
 
 MODULE LecternDoc;
 
-IMPORT Rd, Text, TextF (* for ReadText *), Thread, Wr;
+IMPORT Rd, Text, Text8, Thread, Wr;
 
 CONST
   Signature = "lect";
@@ -84,11 +84,11 @@ PROCEDURE ReadText(rd: Rd.T): TEXT RAISES { Rd.Failure, Thread.Alerted,
                                             Rd.EndOfFile, NotLectern } =
   VAR
     len := ReadInt4(rd);
-    t: TEXT;
+    t: Text8.T;
   BEGIN
     IF len < 0 OR len > 100000 THEN RAISE NotLectern END;
-    t := TextF.New(len);
-    IF Rd.GetSub(rd, SUBARRAY(t^, 0, len)) # len THEN RAISE NotLectern END;
+    t := Text8.Create(len);
+    IF Rd.GetSub(rd, SUBARRAY(t.contents^, 0, len)) # len THEN RAISE NotLectern END;
     RETURN t
   END ReadText;
 

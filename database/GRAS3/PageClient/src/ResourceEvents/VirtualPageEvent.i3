@@ -7,8 +7,11 @@ INTERFACE VirtualPageEvent;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:37  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:48  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:37  hosking
+    Import of GRAS3 1.1
 
     Revision 1.1  1997/10/31 14:14:18  roland
     Subsystem introduces event and pattern types for virtual resources.
@@ -16,15 +19,16 @@ INTERFACE VirtualPageEvent;
 *)
 (***************************************************************************)
 
-IMPORT Event, Transaction;
+IMPORT Event, Txn;
 FROM EventType IMPORT Mismatch, Unknown;
 
-TYPE Operation = {Begin, Commit, Abort, RemoteCommit};
+TYPE Operation = {Begin, Commit, Chain, Abort, RemoteCommit};
 
 CONST
   EventTypeName = ARRAY Operation OF
                     TEXT{
-                    "VPBegin", "VPCommit", "VPAbort", "VPRemoteCommit"};
+                    "VPBegin", "VPCommit", "VPChain", "VPAbort",
+                    "VPRemoteCommit"};
   (* VirtualPageEvents are declared in EventTypes.i3 with these names. *)
 
 CONST
@@ -38,7 +42,7 @@ CONST
 TYPE
   T = Event.T;
     (** VirtualPageEvents have the following attributes:
-        1) VPBegin, VPCommit, VPAbort
+        1) VPBegin, VPCommit, VPChain, VPAbort
           resourceName,
           resource    : the resource to which the operation was applied
                         and its name.
@@ -57,17 +61,22 @@ PROCEDURE SignalBegin (transUnit   : CARDINAL;
                        resourceName: TEXT;
                        resource    : REFANY;
                        isPreEvent  : BOOLEAN;
-                       level       : Transaction.Level);
+                       level       : Txn.Level);
 PROCEDURE SignalCommit (transUnit   : CARDINAL;
                         resourceName: TEXT;
                         resource    : REFANY;
                         isPreEvent  : BOOLEAN;
-                        level       : Transaction.Level);
+                        level       : Txn.Level);
+PROCEDURE SignalChain  (transUnit   : CARDINAL;
+                        resourceName: TEXT;
+                        resource    : REFANY;
+                        isPreEvent  : BOOLEAN;
+                        level       : Txn.Level);
 PROCEDURE SignalAbort (transUnit   : CARDINAL;
                        resourceName: TEXT;
                        resource    : REFANY;
                        isPreEvent  : BOOLEAN;
-                       level       : Transaction.Level);
+                       level       : Txn.Level);
 PROCEDURE SignalRemoteCommit (transUnit   : CARDINAL;
                               resourceName: TEXT;
                               resource    : REFANY    );
@@ -75,7 +84,7 @@ PROCEDURE SignalRemoteCommit (transUnit   : CARDINAL;
 
 
 (* Queries for event attributes.  Note that RemoteCommit events are always
-   post events and their level is always Transaction.TopLevel.  GRAS will
+   post events and their level is always Txn.TopLevel.  GRAS will
    always supply the resource and the resource name, only if events of
    other clients are monitored, the reference to the resource will be lost
    during transfer.  A RemoteCommit event is treated as a local event.  The
@@ -83,7 +92,7 @@ PROCEDURE SignalRemoteCommit (transUnit   : CARDINAL;
 PROCEDURE GetOperation (ev: T): Operation RAISES {Unknown};
 PROCEDURE GetResourceName (ev: T): TEXT RAISES {Mismatch, Unknown};
 PROCEDURE GetIsPreEvent (ev: T): BOOLEAN RAISES {Mismatch, Unknown};
-PROCEDURE GetLevel (ev: T): Transaction.Level RAISES {Mismatch, Unknown};
+PROCEDURE GetLevel (ev: T): Txn.Level RAISES {Mismatch, Unknown};
 PROCEDURE GetResource (ev: T): REFANY RAISES {Mismatch, Unknown};
 
 END VirtualPageEvent.

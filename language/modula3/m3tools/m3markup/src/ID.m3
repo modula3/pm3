@@ -7,7 +7,7 @@
 
 UNSAFE MODULE ID;
 
-IMPORT Wx, TextF, Word, Cstring, Ctypes, ASCII;
+IMPORT Wx, Text8, Word, Cstring, Ctypes, ASCII;
 
 CONST
   MaxLength   = 8192 - BYTESIZE(ADDRESS) (* allocator goo *);
@@ -39,8 +39,8 @@ VAR
 
 (*-------------------------------------------------------------- exported ---*)
 
-PROCEDURE Add (x: TEXT): T =
-  VAR t := FromStr (x^, LAST (x^));
+PROCEDURE Add (x: Text8.T): T =
+  VAR t := FromStr (x.contents^, LAST (x.contents^));
   BEGIN
     IF (ids[t].text = NIL) THEN ids[t].text := x; END;
     RETURN t;
@@ -101,7 +101,7 @@ PROCEDURE FromStr (READONLY buf: ARRAY OF CHAR;  length: INTEGER): T =
   END FromStr;
 
 PROCEDURE ToText (t: T): TEXT =
-  VAR ptr: StrPtr;  len: INTEGER;  x: TEXT;
+  VAR ptr: StrPtr;  len: INTEGER;  x: TEXT;  y: Text8.T;
   BEGIN
     <*ASSERT t < next_t*>
     IF (t = NoID) THEN RETURN NIL END;
@@ -109,8 +109,9 @@ PROCEDURE ToText (t: T): TEXT =
     IF (x = NIL) THEN
       ptr := ids[t].start;
       len := Cstring.strlen (LOOPHOLE (ptr, Ctypes.char_star));
-      x   := TextF.New (len);
-      EVAL Cstring.memcpy (ADR (x[0]), ptr, len+1);
+      y   := Text8.Create (len);
+      x   := y;
+      EVAL Cstring.memcpy (ADR (y.contents[0]), ptr, len+1);
       ids[t].text := x;
     END;
     RETURN x;

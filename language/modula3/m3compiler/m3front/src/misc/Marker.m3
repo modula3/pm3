@@ -3,15 +3,14 @@
 (* See the file COPYRIGHT for a full description.              *)
 (*                                                             *)
 (* File: Marker.m3                                             *)
-(* Last modified on Sat Apr 20 17:42:33 PDT 1996 by heydon     *)
-(*      modified on Tue Jun 20 09:14:19 PDT 1995 by kalsow     *)
+(* Last modified on Tue Jun 20 09:14:19 PDT 1995 by kalsow     *)
 (* Last modified on Fri Jun 16 17:35:38 PDT 1995 by ericv      *)
 (*      modified on Fri Feb 15 03:21:08 PST 1991 by muller     *)
 
 MODULE Marker;
 
 IMPORT CG, Error, Type, Variable, ProcType, ESet, Expr, AssignStmt;
-IMPORT M3ID, M3RT, Target, Module, Runtime, Procedure, Host;
+IMPORT M3ID, M3RT, Target, Module, RunTyme, Procedure, Host;
 
 TYPE
   Kind = { zFINALLY, zFINALLYPROC, zLOCK, zEXIT, zTRY, zTRYELSE,
@@ -183,11 +182,11 @@ PROCEDURE PushFrame (frame: CG.Var;  class: M3RT.HandlerClass) =
       CG.Load_addr_of (frame, 0, Target.Address.align);
       CG.Store_addr (stack);
     ELSE
-      push := Runtime.LookUpProc (Runtime.Hook.PushEFrame);
+      push := RunTyme.LookUpProc (RunTyme.Hook.PushEFrame);
       Procedure.StartCall (push);
       CG.Load_addr_of (frame, 0, Target.Address.align);
       CG.Pop_param (CG.Type.Addr);
-      EVAL Procedure.EmitCall (push);
+      Procedure.EmitCall (push);
     END;
   END PushFrame;
 
@@ -199,11 +198,11 @@ PROCEDURE PopFrame (frame: CG.Var) =
       CG.Load_addr (frame, M3RT.EF_next);
       CG.Store_addr (stack);
     ELSE
-      pop := Runtime.LookUpProc (Runtime.Hook.PopEFrame);
+      pop := RunTyme.LookUpProc (RunTyme.Hook.PopEFrame);
       Procedure.StartCall (pop);
       CG.Load_addr (frame, M3RT.EF_next);
       CG.Pop_param (CG.Type.Addr);
-      EVAL Procedure.EmitCall (pop);
+      Procedure.EmitCall (pop);
     END;
   END PopFrame;
 
@@ -216,14 +215,26 @@ PROCEDURE GetFrameStack (): CG.Var =
   END GetFrameStack;
 
 PROCEDURE SetLock (acquire: BOOLEAN;  var: CG.Var;  offset: INTEGER) =
-  CONST Hook = ARRAY BOOLEAN OF Runtime.Hook { Runtime.Hook.Unlock,
-                                               Runtime.Hook.Lock };
-  VAR proc := Runtime.LookUpProc (Hook [acquire]);
+  VAR method_offset: INTEGER;
   BEGIN
-    Procedure.StartCall (proc);
-    CG.Load_addr (var, offset);
+    IF acquire
+      THEN method_offset := M3RT.MUTEX_acquire;
+      ELSE method_offset := M3RT.MUTEX_release;
+    END;
+
+    CG.Start_call_indirect (CG.Type.Void, Target.DefaultCall);
+
+    CG.Load_addr (var, offset); (* mutext object *)
     CG.Pop_param (CG.Type.Addr);
-    EVAL Procedure.EmitCall (proc);
+
+    CG.Load_addr (var, offset); (* mutex object *)
+    CG.Boost_alignment (Target.Address.align);
+    CG.Load_indirect (CG.Type.Addr, 0, Target.Address.size);  (* method list *)
+    CG.Boost_alignment (Target.Address.align);
+    CG.Load_indirect (CG.Type.Addr, method_offset, Target.Address.size); (* proc *)
+    CG.Boost_alignment (Target.Address.align);
+
+    CG.Gen_Call_indirect (CG.Type.Void, Target.DefaultCall);    
   END SetLock;
 
 PROCEDURE CallFinallyHandler (info: CG.Var;
@@ -237,7 +248,7 @@ PROCEDURE CallFinallyHandler (info: CG.Var;
       CG.Load_addr (info, M3RT.EF2_frame);
       CG.Pop_static_link ();
       CG.Load_addr (info, M3RT.EF2_handler);
-      CG.Call_indirect (CG.Type.Void, Target.DefaultCall);
+      CG.Gen_Call_indirect (CG.Type.Void, Target.DefaultCall);
     END;
   END CallFinallyHandler;
 
@@ -246,7 +257,8 @@ PROCEDURE CaptureState (frame: CG.Var;  handler: CG.Label) =
   BEGIN
     IF (setjmp = NIL) THEN
       setjmp := CG.Import_procedure (M3ID.Add (Target.Setjmp), 1,
-                                     CG.Type.Int, Target.DefaultCall, new);
+                                     Target.Integer.cg_type,
+                                     Target.DefaultCall, new);
       IF (new) THEN
         EVAL CG.Declare_param (M3ID.Add ("jmpbuf"), Target.Jumpbuf_size,
                                Target.Address.align, CG.Type.Struct, 0,
@@ -254,10 +266,10 @@ PROCEDURE CaptureState (frame: CG.Var;  handler: CG.Label) =
                                f := CG.Never);
       END;
     END;
-    CG.Start_call_direct (setjmp, 0, CG.Type.Int);
+    CG.Start_call_direct (setjmp, 0, Target.Integer.cg_type);
     CG.Load_addr_of (frame, M3RT.EF1_jmpbuf, Target.Jumpbuf_align);
     CG.Pop_param (CG.Type.Addr);
-    CG.Call_direct (setjmp, CG.Type.Int);
+    CG.Call_direct (setjmp, Target.Integer.cg_type);
     CG.If_true (handler, CG.Never);
   END CaptureState;
 
@@ -265,7 +277,7 @@ PROCEDURE CaptureState (frame: CG.Var;  handler: CG.Label) =
 
 PROCEDURE ExitOK (): BOOLEAN =
   BEGIN
-    FOR i := tos - 1 TO 0 BY -1 DO
+    FOR i := tos - 1 TO 0 BY  -1 DO
       WITH z = stack[i] DO
         IF (z.kind = Kind.zTRYELSE) THEN
           Error.Warn (1, "EXIT will be caught by TRY EXCEPT ELSE clause");
@@ -279,7 +291,7 @@ PROCEDURE ExitOK (): BOOLEAN =
 
 PROCEDURE ReturnOK (): BOOLEAN =
   BEGIN
-    FOR i := tos - 1 TO 0 BY -1 DO
+    FOR i := tos - 1 TO 0 BY  -1 DO
       WITH z = stack[i] DO
         IF (z.kind = Kind.zTRYELSE) THEN
           Error.Warn (1, "RETURN will be caught by TRY EXCEPT ELSE clause");
@@ -372,7 +384,7 @@ PROCEDURE EmitExit2 () =
         | Kind.zTRYELSE, Kind.zFINALLY =>
             PopFrame (z.info);
             CG.Load_intt (Exit_exception);
-            CG.Store_int (z.info, M3RT.EF1_exception);
+            CG.Store_int (z.info, M3RT.EF1_info + M3RT.EA_exception);
             CG.Jump (z.stop);
             EXIT;
         | Kind.zFINALLYPROC =>
@@ -493,11 +505,11 @@ PROCEDURE EmitReturn (expr: Expr.T;  fromFinally: BOOLEAN) =
             EVAL Type.CheckInfo (z.type, ret_info);
             AssignStmt.PrepForEmit (z.type, expr, initializing := TRUE);
             CG.Load_addr_of (z.tmp_result, 0, ret_info.alignment);
-            AssignStmt.Emit (z.type, expr);
+            AssignStmt.DoEmit (z.type, expr);
           ELSIF is_large OR NOT simple THEN
             AssignStmt.PrepForEmit (z.type, expr, initializing := FALSE);
             Variable.LoadLValue (z.variable);
-            AssignStmt.Emit (z.type, expr);
+            AssignStmt.DoEmit (z.type, expr);
           ELSE
             Expr.Prep (expr);
           END;
@@ -546,7 +558,7 @@ PROCEDURE EmitReturn (expr: Expr.T;  fromFinally: BOOLEAN) =
             CG.Exit_proc (CG.Type.Struct);
           END;
         ELSIF simple THEN
-          AssignStmt.EmitCheck (z.type, expr);
+          AssignStmt.DoEmitCheck (z.type, expr);
           CG.Exit_proc (Type.CGType (z.type));
         ELSE (* small scalar return value *)
           Variable.Load (z.variable);
@@ -602,13 +614,13 @@ PROCEDURE EmitReturn2 (): INTEGER =
         | Kind.zTRYELSE =>
             PopFrame (z.info);
             CG.Load_nil ();  (* the current "RETURN" exception is lost *)
-            CG.Store_addr (z.info, M3RT.EF1_exception);
+            CG.Store_addr (z.info, M3RT.EF1_info + M3RT.EA_exception);
             CG.Jump (z.stop);
             EXIT;
         | Kind.zFINALLY =>
             PopFrame (z.info);
             CG.Load_intt (Return_exception);
-            CG.Store_int (z.info, M3RT.EF1_exception);
+            CG.Store_int (z.info, M3RT.EF1_info + M3RT.EA_exception);
             CG.Jump (z.stop);
             EXIT;
         | Kind.zFINALLYPROC =>
@@ -640,7 +652,7 @@ PROCEDURE EmitScopeTable (): INTEGER =
     e_base: CG.Var;
     e_offset: INTEGER;
   BEGIN
-    IF (f = NIL) OR (NOT Target.Has_stack_walker) THEN RETURN 0 END;
+    IF (f = NIL) OR (NOT Target.Has_stack_walker) THEN RETURN -1; END;
 
     (* make sure that all the exception lists were declared *)
     WHILE (f # NIL) DO
@@ -650,27 +662,27 @@ PROCEDURE EmitScopeTable (): INTEGER =
 
     (* declare space for the table *)
     size := n_frames * M3RT.EX_SIZE;
-    base := Module.Allocate (size, Align, "*exception scopes*");
-    CG.Comment (base, "exception scopes");
+    base := Module.Allocate (size, Align, TRUE, "*exception scopes*");
+    CG.Comment (base, TRUE, "exception scopes");
 
     (* fill in the table *)
     f := all_frames;
     x := base;
     WHILE (f # NIL) DO
-      CG.Init_intt  (x + M3RT.EX_class, Target.Char.size, RT_Kind [f.kind]);
+      CG.Init_intt  (x + M3RT.EX_class, Target.Char.size, RT_Kind [f.kind], TRUE);
       IF (f.outermost) THEN
-        CG.Init_intt  (x + M3RT.EX_outermost, Target.Char.size, ORD(TRUE));
+        CG.Init_intt  (x + M3RT.EX_outermost, Target.Char.size, ORD(TRUE), TRUE);
       END;
       IF (f.next = NIL) THEN
-        CG.Init_intt  (x + M3RT.EX_end_of_list, Target.Char.size, ORD(TRUE));
+        CG.Init_intt  (x + M3RT.EX_end_of_list, Target.Char.size, ORD(TRUE), TRUE);
       END;
-      CG.Init_label (x + M3RT.EX_start, f.start);
-      CG.Init_label (x + M3RT.EX_stop, f.stop);
-      IF (f.info # NIL) THEN CG.Init_offset (x + M3RT.EX_offset, f.info) END;
+      CG.Init_label (x + M3RT.EX_start, f.start, TRUE);
+      CG.Init_label (x + M3RT.EX_stop, f.stop, TRUE);
+      IF (f.info # NIL) THEN CG.Init_offset (x + M3RT.EX_offset, f.info, TRUE) END;
       IF (f.e_set # NIL) THEN
         ESet.GetAddress (f.e_set, e_base, e_offset);
         IF (e_base # NIL) OR (e_offset # 0) THEN
-          CG.Init_var (x + M3RT.EX_excepts, e_base, e_offset);
+          CG.Init_var (x + M3RT.EX_excepts, e_base, e_offset, TRUE);
         END;
       END;
       INC (x, M3RT.EX_SIZE);
@@ -680,18 +692,25 @@ PROCEDURE EmitScopeTable (): INTEGER =
     RETURN base;
   END EmitScopeTable;
 
-PROCEDURE EmitExceptionTest (signature: Type.T) =
+PROCEDURE EmitExceptionTest (signature: Type.T;  need_value: BOOLEAN): CG.Val =
   VAR
-    ex := ProcType.Raises (signature);
     i: INTEGER;
+    value  : CG.Val := NIL;
+    result := ProcType.CGResult (signature);
+    (** ex := ProcType.Raises (signature); **)
   BEGIN
-    IF NOT Target.Has_stack_walker THEN RETURN END;
-    IF ESet.RaisesNone (ex) THEN RETURN END;
+    IF need_value THEN value := CaptureResult (result); END;
+
+    IF NOT Target.Has_stack_walker THEN  RETURN value;  END;
+
+    (** nope -- any procedure could raise an <*IMPLICIT*> exception 
+    IF ESet.RaisesNone (ex) THEN  RETURN value;  END;
+    ***)
 
     (* scan the frame stack looking for the first active handler *)
     i := tos - 1;
     LOOP
-      IF (i < 0) THEN RETURN END;
+      IF (i < 0) THEN  RETURN value;  END;
       WITH z = stack[i] DO
         CASE z.kind OF
         | Kind.zTRYELSE     => EXIT;
@@ -701,17 +720,41 @@ PROCEDURE EmitExceptionTest (signature: Type.T) =
         | Kind.zEXIT        => (* ignore *)
         | Kind.zTRY         => EXIT;
         | Kind.zRAISES      => (* ignore *)
-        | Kind.zPROC        => RETURN;  (* didn't find any relevent handlers *)
+        | Kind.zPROC        => RETURN value;  (* no relevent handlers *)
         END;
       END;
       DEC (i);
     END;
 
+    IF NOT need_value THEN
+      value := CaptureResult (result);
+    END;
+
     (* generate the conditional branch to the handler *)
-    CG.Load_addr (stack[i].info, M3RT.EI_exception);
+    CG.Load_addr (stack[i].info, M3RT.EA_exception);
     CG.Load_nil ();
-    CG.If_ne (stack[i].stop, CG.Type.Addr, CG.Never);
+    CG.If_compare (CG.Type.Addr, CG.Cmp.NE, stack[i].stop, CG.Never);
+
+    IF NOT need_value AND (value # NIL) THEN
+      CG.Push (value);
+      CG.Free (value);
+      value := NIL;
+    END;
+
+    RETURN value;
   END EmitExceptionTest;
+
+PROCEDURE CaptureResult (result: CG.Type): CG.Val =
+  BEGIN
+    IF (result = CG.Type.Void) THEN
+      RETURN NIL;
+    ELSIF (result # CG.Type.Struct) THEN
+      RETURN CG.Pop ();
+    ELSE
+      CG.Discard (result);
+      RETURN NIL;
+    END;
+  END CaptureResult;
 
 PROCEDURE NextHandler (VAR(*OUT*) handler: CG.Label;
                        VAR(*OUT*) info: CG.Var): BOOLEAN =

@@ -2,8 +2,8 @@ import("HiGRAS")
 import("formsvbt")
 import("tempfiles")
 
-include_pkg("DaVinci")
-include_pkg("GrasParams")
+import("DaVinci")
+import("GrasParams")
 
 resource("SelectionPanel.fv")
 resource("Selection.xbm")

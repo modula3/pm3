@@ -7,8 +7,11 @@ GENERIC MODULE PriorityQueue(Element);
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:27  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:43  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:27  hosking
+    Import of GRAS3 1.1
 
     Revision 1.1  1997/10/31 14:08:26  roland
     New generic implementations for PriorityQueues. New templates and a new
@@ -19,7 +22,7 @@ GENERIC MODULE PriorityQueue(Element);
 
 CONST InitialSize = 20;
 
-TYPE PriorityQueueArray = REF ARRAY OF Element.T;
+TYPE PriorityQueueArray = <*TRANSIENT*> REF ARRAY OF Element.T;
 
 REVEAL
   T = Public BRANDED OBJECT

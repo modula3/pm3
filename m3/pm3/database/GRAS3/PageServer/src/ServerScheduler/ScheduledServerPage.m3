@@ -7,8 +7,11 @@ MODULE ScheduledServerPage;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:39  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:49  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:39  hosking
+    Import of GRAS3 1.1
 
     Revision 1.19  1998/05/19 10:21:57  roland
     Typos and "'" removed from error messages.
@@ -119,7 +122,7 @@ IMPORT
   ErrorSupport,
   Page, PageData,
   PageHandle, PageCache,
-  PageLock, Access, Transaction,
+  PageLock, Access, Txn,
   CommunicationEntry, CommunicationSeqSupport,
   ServedClient,
   BaseScheduledServerFile, InternalBaseScheduledServerFile, ServerLockTable,
@@ -350,13 +353,13 @@ PROCEDURE GetData	(         self		:T;
                        Variant.TestServerScheduler THEN
                       Journal.Add ("ScheduledServerPage.PropagateData (" &
                         "client = " & otherClient.getID () &
-                        ", end = Transaction.End.No" &
+                        ", end = Txn.End.No" &
                         ", entries = " & CommunicationSeqSupport.Fmt (
                             otherClient.getPropagationData (),GetFileName) & ")");
                     END;          
                       
                     otherClient.getCallbackPort ().propagateData (
-                                    Transaction.End.No,
+                                    Txn.End.No,
                                     otherClient.getPropagationData ());
                     otherClient.clearPropagationData ();
                     self.lockTable.put (otherClient, PageLock.Mode.C);
@@ -404,7 +407,13 @@ PROCEDURE GetData	(         self		:T;
 
     IF transferData THEN
       page := NEW (Page.T);
-      page.putData (self.handle.getAll ());
+      PROCEDURE GetAll(READONLY data: PageData.T) =
+        BEGIN
+          page.data := data;
+        END GetAll;
+      BEGIN
+        self.handle.getAll (GetAll);
+      END;
       pageAge := self.pageAge;
     ELSE
       page := NIL;
@@ -425,7 +434,7 @@ END GetFileName;
 
 PROCEDURE CheckData	(         self		:T;
                                   client	:ServedClient.T;
-                                  end		:Transaction.End;
+                                  end		:Txn.End;
                          READONLY entry		:CommunicationEntry.T)
 			RAISES {Access.Invalid} =
   BEGIN
@@ -458,14 +467,14 @@ PROCEDURE CheckData	(         self		:T;
 
       | PageLock.Mode.C =>
         IF entry.page # NIL THEN
-          IF end # Transaction.End.Commit THEN
-            RAISE Access.Invalid ("Putting pages only at commit time")
+          IF end # Txn.End.Commit AND end # Txn.End.Chain THEN
+            RAISE Access.Invalid ("Putting pages only at commit/chain time")
           END;
           IF entry.pageAge # client.getTransactionNumber () THEN
             RAISE Access.Invalid ("Age of page and transaction differs");
           END
         ELSE
-          IF (end # Transaction.End.No) THEN
+          IF (end # Txn.End.No) THEN
             RAISE Access.Invalid ("Downgrading X- to C-lock only in transactions")
           END
         END;
@@ -474,13 +483,17 @@ PROCEDURE CheckData	(         self		:T;
         IF entry.page # NIL THEN
           RAISE Access.Invalid ("Downgrades to O-locks cannot transfer data")
         END;
-        IF end = Transaction.End.Commit THEN
+        IF end = Txn.End.Commit THEN
           (* maybe there is a transfer X -> C with page in this sequence *)
           (*
           RAISE Access.Invalid (
               "Downgrading X-locks with commit requires page transfer \n(entry =" &
                 CommunicationEntry.Fmt (entry, GetFileName) & ")");
           *)
+        ELSIF end = Txn.End.Chain THEN
+          RAISE Access.Invalid (
+                    "Downgrading X-locks with chain requires page transfer \n(entry =" &
+                    CommunicationEntry.Fmt (entry, GetFileName) & ")");
         END;
       END
     END;
@@ -495,7 +508,7 @@ PROCEDURE CheckData	(         self		:T;
 
 PROCEDURE PutData	(         self		:T;
                                   client	:ServedClient.T;
-                                  end		:Transaction.End;
+                                  end		:Txn.End;
                          READONLY entry		:CommunicationEntry.T) =
   VAR
     otherClient		:ServedClient.T;
@@ -520,7 +533,7 @@ PROCEDURE PutData	(         self		:T;
 
     | PageLock.Mode.X =>
       IF entry.page # NIL THEN
-        <* ASSERT (end = Transaction.End.Commit) *>
+        <* ASSERT (end = Txn.End.Commit) *>
         <* ASSERT (entry.lock = PageLock.Mode.C) *>
         self.pageAge := entry.pageAge;
 
@@ -531,11 +544,11 @@ PROCEDURE PutData	(         self		:T;
             self.handle.setMedia (temporaryMedia);
           END;
         END;
-        self.handle.putData (entry.page.getAll ());
+        self.handle.putData (entry.page.data);
       ELSE
         (* This case is not handled by checkData anymore. So we should ignore
            it here, too. Server will complain about remaining X-locks later.  *)
-        IF end = Transaction.End.Commit THEN
+        IF end = Txn.End.Commit THEN
           RETURN;
         END;
       END;
@@ -569,10 +582,16 @@ PROCEDURE Relocate	(         self		:T) =
   BEGIN
     WITH
       persistentMedia = self.file.getPersistentMedia (),
-      temporaryMedia = self.file.getTemporaryMedia ()
-    DO
+      temporaryMedia = self.file.getTemporaryMedia () DO
+
       (* get page data *)
-      pageData := self.handle.getAll ();
+      PROCEDURE GetAll(READONLY data: PageData.T) =
+        BEGIN
+          pageData := data;
+        END GetAll;
+      BEGIN
+        self.handle.getAll (GetAll);
+      END;
 
       (* release temporary stuff *)
       temporaryMedia.freePageNo (self.handle.getPageNo ());

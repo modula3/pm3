@@ -18,14 +18,14 @@ CC = [ "/bin/cc", "-ieee_with_no_inexact", "-c" ]
 LINK = [ "/bin/cc", "-ieee_with_no_inexact" ]
 MAKELIB = [ "/bin/ar", "crusl" ]
 MAKESHLIB = ["/usr/bin/ld", "-shared", "-expect_unresolved", "end" ,"-o"]
-ASM = [ LIB_USE & "/as", "-o"]         % Assembler
+ASM = [ LIB_USE & "/as", "-oldas", "-o"]         % Assembler
 FIXOBJ = [ LIB_USE & "/fixobj" ]
 
-OPT_FLAG = "-O"
+OPT_FLAG = "-O1"
 BOPT_FLAG = "-O2"
-DEBUG_FLAG = "-g3"
+DEBUG_FLAG = "-g"
 STATIC_FLAG = "-non_shared"
-LINK_suffix = ["-ldnet_stub", "-lm"]     % Tail of the link command
+LINK_suffix = ["-ldnet_stub", "-lm", "-lexc"]     % Tail of the link command
 % Do we need "-call_shared" or is it the default
 RPATH_FLAG = "-rpath"
 RPATH_prefix = ""

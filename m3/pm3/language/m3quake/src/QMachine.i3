@@ -6,27 +6,46 @@
 
 INTERFACE QMachine;
 
-IMPORT Wr, M3ID, QValue, QCode;
-FROM Quake IMPORT Machine, Error;
+IMPORT Thread, Wr, QValue, QCode;
+FROM Quake IMPORT Machine, Error, ID, IDMap;
 
 REVEAL
   T <: T_;
 TYPE
   T = Machine;
-  T_ = OBJECT METHODS
-    init     (writer: Wr.T): T;
-    evaluate (s: QCode.Stream)                                RAISES {Error};
-    get      (nm: M3ID.T;  VAR(*OUT*) val: QValue.T): BOOLEAN RAISES {Error};
-    put      (nm: M3ID.T; READONLY val: QValue.T; 
-              readonly: BOOLEAN := FALSE)                     RAISES {Error};
-    lookup   (nm: M3ID.T): QValue.Binding                     RAISES {Error};
-    push     (READONLY val: QValue.T)                         RAISES {Error};
-    pop      (VAR(*OUT*) val: QValue.T)                       RAISES {Error};
-    error    (msg: TEXT)                                      RAISES {Error};
-    cleanup  ()                                               RAISES {Error};
-    call     (proc: QValue.Proc; args: REF ARRAY OF QValue.T; 
-              isFunc: BOOLEAN)                                RAISES {Error};
-    cur_wr   (): Wr.T;
+  T_ = OBJECT
+    map: IDMap := NIL; (* READONLY *)
+  METHODS
+    init      (map: IDMap): T;
+    evaluate  (s: QCode.Stream)                     RAISES {Error, Thread.Alerted};
+    put       (nm: ID;  READONLY val: QValue.T)                RAISES {Error};
+    get       (nm: ID;  VAR(*OUT*) val: QValue.T): BOOLEAN;
+    lookup    (nm: ID): QValue.Binding;
+    push      (READONLY val: QValue.T);
+    pop       (VAR(*OUT*) val: QValue.T)                       RAISES {Error};
+    error     (msg: TEXT)                                      RAISES {Error};
+    cleanup   ()                                               RAISES {Error};
+    include   (file: TEXT)                          RAISES {Error, Thread.Alerted};
+    normalize (prefix, path: TEXT): TEXT                       RAISES {Error};
+    start_call(READONLY proc: QValue.T)                        RAISES {Error};
+    call_proc (n_args: INTEGER;  isFunc: BOOLEAN)   RAISES {Error, Thread.Alerted};
+    cp_if     (src, dest: TEXT)                                RAISES {Error};
+    make_dir  (dir: TEXT)                                      RAISES {Error};
+    cur_file  (): TEXT;
+    cur_path  (): TEXT;
+    cur_wr    (): Wr.T;
+    set_wr    (wr: Wr.T);
+    exec_echo (b: BOOLEAN): BOOLEAN;
   END;
+
+PROCEDURE PushBool (t: T;  b: BOOLEAN);
+PROCEDURE PushText (t: T;  s: TEXT);
+PROCEDURE PushInt  (t: T;  i: INTEGER);
+PROCEDURE PushID   (t: T;  x: ID);
+
+PROCEDURE PopBool (t: T): BOOLEAN    RAISES {Error};
+PROCEDURE PopText (t: T): TEXT       RAISES {Error};
+PROCEDURE PopInt  (t: T): INTEGER    RAISES {Error};
+PROCEDURE PopID   (t: T): ID         RAISES {Error};
 
 END QMachine.

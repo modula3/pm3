@@ -7,84 +7,125 @@
 
 MODULE Main;
 
-IMPORT Text, TextList, M3Config, Stdio, Wr, OSError;
-IMPORT Process, ASCII, Thread, Params, Pathname;
-IMPORT Quake, M3File, TempFiles, Env, FileWr, BldQuake;
-
-CONST
-  SL         = M3Config.PATH_SEP;
-  M3_VERSION = "PM3 Version " & M3Config.M3_VERSION &
-               " (" & M3Config.M3_VERSION_DATE & ")";
-
-TYPE
-  DefineList = REF RECORD
-    next   : DefineList;
-    symbol : TEXT;
-    value  : TEXT;
-  END;
+IMPORT Text, TextList, Wr, OSError, Env, RTutils, RTCollector;
+IMPORT Process, Thread, Params, Pathname, RTCollectorSRC, MxConfig;
+IMPORT Quake, M3Timers, Utils, RTParams, Makefile;
+IMPORT Builder, M3Build, Dirs, M3Options, Msg, WebFile, Arg, TextTextTbl;
 
 VAR
-  default_template_dir := M3Config.PKG_USE &SL& "m3config" &SL& "src";
-  template_dir    : TEXT := NIL;
-  template        : TEXT := NIL;
-  build_dir       : TEXT := NIL;
-  start_dir       : TEXT := ".";
-  base            : TEXT := NIL;
-  parent          : TEXT := NIL;
-  package_dir     : TEXT := NIL;
-  package         : TEXT := NIL;
-  show_hidden     : TEXT := "";
-  query           : TEXT := NIL;
-  quake_preloads  : TextList.T := NIL;
-  quake_defines   : DefineList := NIL;
-  units           : TextList.T;
-  verbose         : BOOLEAN := FALSE;
-  quiet           : BOOLEAN := FALSE;
+  config          : TEXT          := NIL;
+  makefile        : TEXT          := NIL;
+  build_dir       : TEXT          := NIL;
+  mach            : Quake.Machine := NIL;
+  template_dir    : TEXT          := NIL;
+  template        : TEXT          := NIL;
+  start_dir       : TEXT          := ".";
+  quake_preloads  : TextList.T    := NIL;
+  args            : Arg.List      := Arg.NewList ();
+  defs            : TextTextTbl.T := NIL;
   
-
-PROCEDURE Out (a, b, c, d: TEXT := NIL) =
-  <*FATAL Wr.Failure, Thread.Alerted*>
-  VAR wr := Stdio.stdout;
+PROCEDURE DoIt () =
   BEGIN
-    IF (a # NIL) THEN Wr.PutText (wr, a); END;
-    IF (b # NIL) THEN Wr.PutText (wr, b); END;
-    IF (c # NIL) THEN Wr.PutText (wr, c); END;
-    IF (d # NIL) THEN Wr.PutText (wr, d); END;
-  END Out;
+    RTCollectorSRC.DisableVM ();
+    IF RTParams.IsPresent ("verbose") THEN
+      Msg.SetLevel (Msg.Level.Verbose);
+      M3Timers.Start ();
+    END;
+    IF RTParams.IsPresent ("debug") THEN
+      Msg.SetLevel (Msg.Level.Debug);
+      M3Timers.Start();
+    END;
+    Process.RegisterExitor (CleanUp);
 
-PROCEDURE Err (a, b: TEXT := NIL) =
-  BEGIN
-    Out ("\nm3where: ", a, b, "\n");
-    Process.Exit (1);
-  END Err;
+    config := MxConfig.FindFile();
+    IF (config = NIL) THEN
+      Msg.FatalError (NIL, "unable to locate configuration file, \"",
+                      MxConfig.Filename, "\"");
+    END;
 
-PROCEDURE PrintUsage () =
-  BEGIN
-    Out ("usage: m3where [options] [units]\n");
-    Out ("  -b <dir>   build with template <dir> in directory <dir>\n");
-    Out ("               (default='", build_dir, "')\n");
-    Out ("  -d <dir>   start in directory <dir> (default='", start_dir,"')\n");
-    Out ("  -F <file>  prepend the quake code in <file>\n");
-    Out ("  -T <dir>   use templates in directory <dir>\n");
-    Out ("               (default='", default_template_dir, "')\n");
-    Out ("  -q         quiet\n");
-    Out ("  -v         verbose\n");
-    Out ("  -help      print this messsage\n");
-    Out ("  -version   print version\n");
-    Out ("  -<arg>     pass -<arg> to quake\n");
-    Out ("  -h         show hidden\n");
-    Out ("  <unit>     call quake with each unit\n");
-    Out ("\n");
-  END PrintUsage;
+    mach := M3Build.NewMachine ();
+    TRY
+      TRY
+        (* figure out what we're trying to do *)
+        VAR
+          name, val: TEXT;
+          iter := defs.iterate();
+        BEGIN
+          WHILE iter.next(name, val) DO
+            Quake.Define(mach, name, val);
+          END;
+        END;
+
+        (* define the site configuration *)
+        Msg.Verbose ("EVAL (\"", config, "\")");
+        Quake.Run (mach, config);
+
+        (* -- disabled 
+        CheckExpire (Quake.LookUp (mach, "INSTALL_KEY"));
+        *)
+
+        (* figure out where we are and get where we want to be *)
+        build_dir := Quake.LookUp (mach, "BUILD_DIR");
+        IF (build_dir = NIL) THEN
+          Msg.FatalError (NIL, "configuration file didn't specify BUILD_DIR");
+        END;
+        Dirs.SetUp (build_dir);
+
+        (* define the "builtin" quake functions *)
+        M3Build.SetUp (mach, Dirs.package, Dirs.to_package,
+                       Pathname.Last (Dirs.derived));
+
+        (* add the user defined preloads *)
+        VAR load := quake_preloads;
+        BEGIN
+          WHILE (load # NIL) DO
+            Msg.Verbose ("EVAL (\"", load.head, "\")");
+            Quake.Run (mach, load.head);
+            load := load.tail;
+          END;
+        END;
+
+        (* what does the user want us to do? *)
+        makefile := Makefile.Build (args, Dirs.to_source);
+
+        (* and finally, do it *)
+        IF (makefile # NIL) THEN
+          Msg.Verbose ("EVAL (\"", makefile, "\")");
+          M3Build.Run (mach, Pathname.Join (Dirs.derived, makefile, NIL));
+        END;
+
+      FINALLY
+        (* free any temp files & garbage *)
+        Quake.Done (mach);
+        mach := NIL;
+      END;
+
+    EXCEPT
+    | Quake.Error(msg) =>
+      IF NOT M3Build.done THEN
+        Msg.Error (NIL, msg);
+        M3Options.exit_code := 2;
+      END;
+    | Thread.Alerted =>
+      Msg.FatalError (NIL, "interrupted");
+    END;
+
+    IF M3Options.exit_code # 0 THEN
+      Msg.Out("Fatal Error: package build failed", Wr.EOL);
+    END;
+    Process.Exit (M3Options.exit_code);
+  END DoIt;
 
 PROCEDURE ParseCommandLine () =
   VAR i := 1;  n := Params.Count;  arg: TEXT;
   BEGIN
+    defs := Makefile.ScanCommandLine();
+    Arg.Append (args, "-find");
+    M3Options.major_mode := M3Options.Mode.Find;
     WHILE (i < n) DO
       arg := Params.Get (i);
       IF Text.Equal (arg, "-b") THEN
         INC (i);  IF (i >= n) THEN EXIT END;  arg := Params.Get (i);
-        build_dir := arg;
         template  := arg;
       ELSIF Text.Equal (arg, "-T") THEN
         INC (i);  IF (i >= n) THEN EXIT END;  arg := Params.Get (i);
@@ -95,276 +136,69 @@ PROCEDURE ParseCommandLine () =
       ELSIF Text.Equal (arg, "-d") THEN
         INC (i);  IF (i >= n) THEN EXIT END;  arg := Params.Get (i);
         start_dir := arg;
-      ELSIF Text.Equal (arg, "-q") THEN
-        quiet := TRUE;   verbose := FALSE;
-      ELSIF Text.Equal (arg, "-v") THEN
-        quiet := FALSE;  verbose := TRUE;
-      ELSIF Text.Equal (arg, "-version") THEN
-        Out ("m3where: ", M3_VERSION, "\n");
-        Process.Exit (0);
-      ELSIF Text.Equal (arg, "-h") THEN
-        show_hidden := "show_hidden";
-      ELSIF Text.Equal (arg, "-help") THEN
-        PrintUsage ();
-        Process.Exit (0);
-      ELSIF Text.Equal (arg, "-?") THEN
-        PrintUsage ();
-        Process.Exit (0);
-      ELSIF Text.Equal (Text.Sub (arg, 0, 2), "-D") THEN
-        AddDefine (Text.Sub (arg, 2));
-      ELSIF Text.GetChar (arg, 0) = '-' THEN
-        PrintUsage ();
-        Err ("unrecognized option: ", arg);
       ELSE
-        units := TextList.Cons (arg, units);
+        Arg.Append (args, arg);
       END;
       INC (i);
     END;
     quake_preloads := TextList.ReverseD (quake_preloads);
-    units := TextList.ReverseD (units);
   END ParseCommandLine;
-
-PROCEDURE AddDefine (defn: TEXT) =
-  VAR sym, val: TEXT;  eq := Text.FindChar (defn, '=');
-  BEGIN
-    IF (eq < 0) THEN
-      sym := defn;
-      val := defn;
-    ELSIF (eq = 0) THEN
-      (* no name => ignore it *)
-      RETURN;
-    ELSE
-      sym := Text.Sub (defn, 0, eq);
-      val := Text.Sub (defn, eq+1);
-    END;
-    quake_defines := NEW (DefineList, next := quake_defines,
-                          symbol := sym, value := val);
-  END AddDefine;
 
 PROCEDURE ChDir (dir: TEXT) =
   BEGIN
     TRY
       Process.SetWorkingDirectory (dir);
     EXCEPT OSError.E =>
-      Err ("unable to move to directory: ", dir);
+      Msg.FatalError (NIL, "m3build: unable to move to directory: ", dir);
     END;
   END ChDir;
 
-PROCEDURE GotoInitialDirectory () =
+(*------------------------------------------------- process shutdown ---*)
+
+PROCEDURE CleanUp () =
   BEGIN
-    ChDir (start_dir);
-    TRY
-      start_dir := Process.GetWorkingDirectory ();
-    EXCEPT OSError.E =>
-      Err ("unable to get full directory path: ", start_dir);
-    END;
-    base   := Pathname.Last (start_dir);
-    parent := Pathname.Prefix (start_dir);
-  END GotoInitialDirectory;
-
-PROCEDURE GotoBuildDir (dir: TEXT) =
-  BEGIN
-    IF M3File.IsDirectory (dir) THEN
-      IF NOT quiet THEN Out ("--- searching in ", dir, " ---\n"); END;
-      ChDir (dir);
-    ELSE
-      Err ("cannot locate build directory ", template);
-    END;
-  END GotoBuildDir;
-
-PROCEDURE PathEQ (a, b: TEXT): BOOLEAN =
-  VAR
-    len := Text.Length (a);
-    ac, bc: CHAR;
-  BEGIN
-    IF (len # Text.Length (b)) THEN RETURN FALSE; END;
-    FOR i := 0 TO len - 1 DO
-      ac := ASCII.Upper [Text.GetChar (a, i)];
-      bc := ASCII.Upper [Text.GetChar (b, i)];
-      IF ac # bc THEN RETURN FALSE; END;
-    END;
-    RETURN TRUE;
-  END PathEQ;
-
-PROCEDURE GotoDerivedDirectory () =
-  BEGIN
-    IF PathEQ (base, "src") THEN
-      package_dir := parent;
-      GotoBuildDir (".." & SL & build_dir);
-    ELSIF PathEQ (base, build_dir) THEN
-      package_dir := parent;
-    ELSE
-      package_dir := start_dir;
-      GotoBuildDir (build_dir);
-    END;
-    package := Pathname.Last (package_dir);
-  END GotoDerivedDirectory;
-
-PROCEDURE CheckForExportsfile () =
-  <*FATAL OSError.E*>
-  BEGIN
-    IF NOT M3File.IsReadable (".M3EXPORTS") THEN
-      Err ("missing .M3EXPORTS file in " & Process.GetWorkingDirectory());
-    END;
-  END CheckForExportsfile;
-
-PROCEDURE BuildQuery () =
-  VAR
-    wr: Wr.T;
-  BEGIN
-    query := TempFiles.Get(Env.Get("TEMP"),"m3","qk");
-    TempFiles.Note(query);
-    TRY
-      wr := FileWr.Open(query);
-
-      Wr.PutText(wr,"%% ");
-      FOR i := 0 TO Params.Count - 1 DO
-        Wr.PutText(wr,Params.Get(i) & " ");
-      END;
-      Wr.PutText(wr,"\n");
-
-      IF units = NIL THEN
-        Wr.PutText(wr,"enum_units (\"" & show_hidden & "\")\n");
-      ELSE
-        WHILE units # NIL DO
-          Wr.PutText(wr,"find_unit (\"" & units.head & "\", \"" & show_hidden &
-              "\")\n");
-          units := units.tail;
-        END;
-      END;
-      Wr.Close(wr);
-    EXCEPT ELSE
-      Err("writing query in " & query);
-    END;
-  END BuildQuery;
-
-PROCEDURE QDefine (m: Quake.Machine;  sym, val: TEXT) RAISES {Quake.Error} =
-  BEGIN
-    IF (verbose) THEN Out (sym, " = ", val, "\n") END;
-    Quake.Define (m, sym, val);
-  END QDefine;
-
-PROCEDURE QRun (m: Quake.Machine;  file: TEXT) RAISES {Quake.Error} =
-  BEGIN
-    IF (verbose) THEN Out ("EVAL (", file, ")\n") END;
-    Quake.RunSourceFile (m, file);
-  END QRun;
-
-PROCEDURE RunQuake () =
-  VAR
-    mach : BldQuake.T;
-    defn : DefineList;
-    load : TextList.T;
-  BEGIN
-    TRY
-      mach := NEW(BldQuake.T).init(Stdio.stdout, package, package_dir, 
-                                   build_dir);
+    IF (mach # NIL) THEN
       TRY
-        (* preload the environment *)
-        IF (quiet) THEN QDefine (mach, "_quiet", "TRUE"); END;
-        QDefine (mach, "PACKAGE_DIR", package_dir);
-        QDefine (mach, "PACKAGE", package);
-        QDefine (mach, "BUILD_DIR", build_dir);
-        QRun (mach, template_dir &SL& template);
-
-        (* add the user defined symbols *)
-        defn := quake_defines;
-        WHILE (defn # NIL) DO
-          QDefine (mach, defn.symbol, defn.value);
-          defn := defn.next;
-        END;
-
-        (* add the user defined preloads *)
-        load := quake_preloads;
-        WHILE (load # NIL) DO
-          QRun (mach, load.head);
-          load := load.tail;
-        END;
-
-        (* setup *)
-        mach.setup();
-
-        (* run the user's shipfile *)
-        QRun (mach, ".M3EXPORTS");
-        QRun (mach, query);
-      FINALLY
-        (* free any temp files & garbage *)
         Quake.Done (mach);
-      END;
-
-    EXCEPT Quake.Error(msg) =>
-      Err ("quake error: ", msg);
-    END;
-  END RunQuake;
-
-PROCEDURE FindTemplateDir()=
-  VAR 
-    m3_template := Env.Get("M3_TEMPLATE_DIR");
-    path        : TEXT;
-    subpath     : TEXT;
-    nextsep     : INTEGER := 0;
-    prevsep     : INTEGER := 0;
-    sep         : CHAR;
-  BEGIN
-    IF m3_template # NIL THEN
-      template_dir := m3_template;
-    ELSE
-      path := Env.Get("PATH");
-      IF Text.Equal(M3Config.OS_TYPE, "POSIX") THEN
-        sep := ':';
-      ELSIF Text.Equal(M3Config.OS_TYPE, "WIN32") THEN
-        sep := ';';
-      ELSE
-        Err("FindTemplate does not know how to handle OS_TYPE: ", 
-            M3Config.OS_TYPE);
-      END;
-      REPEAT
-        nextsep := Text.FindChar(path, sep, prevsep + 1);
-        IF nextsep # -1 THEN
-          subpath := Text.Sub(path, prevsep, nextsep - prevsep - 1);
-        ELSE
-          subpath := Text.Sub(path, prevsep);
-        END;
-        IF M3File.IsReadable(subpath & template) THEN
-          template_dir := subpath;
-          RETURN;
-        END;
-        prevsep := nextsep;
-      UNTIL prevsep = -1;
-      IF template_dir = NIL THEN
-        template_dir := default_template_dir;
+        mach := NIL;
+      EXCEPT Quake.Error (msg) =>
+        Msg.Error (NIL, msg);
       END;
     END;
-  END FindTemplateDir;
+    
+    WebFile.Dump ();
+    Builder.CleanUp ();
+    M3Timers.Stop ();
+    Utils.RemoveTempFiles ();
+    Dirs.CleanUp ();
 
-PROCEDURE FindTemplate()=
-  VAR 
-    m3_template := Env.Get("M3_TEMPLATE");
-  BEGIN
-    IF m3_template # NIL THEN
-      template     := Pathname.Last(m3_template);
-    ELSE
-      template     := M3Config.BUILD_DIR;
+    IF (M3Options.heap_stats) THEN
+      RTutils.Heap (suppressZeros := TRUE,
+                    presentation := RTutils.HeapPresentation.ByNumber);
+      RTCollector.Collect ();
+      RTutils.Heap (suppressZeros := TRUE,
+                    presentation := RTutils.HeapPresentation.ByNumber);
     END;
-    build_dir    := template;
-  END FindTemplate;
+  END CleanUp;
 
 BEGIN
   ParseCommandLine ();
+
   IF template = NIL THEN
-    FindTemplate();
+    template := Env.Get("M3_TEMPLATE");
   END;
+  IF template # NIL THEN
+    MxConfig.Filename := template;
+  END;
+
   IF template_dir = NIL THEN
-    FindTemplateDir();
+    template_dir := Env.Get("M3_TEMPLATE_DIR");
   END;
-  GotoInitialDirectory ();
-  GotoDerivedDirectory ();
-
-  IF NOT Pathname.Absolute(template_dir) THEN
-    template_dir := package_dir & SL & build_dir & SL & template_dir;
+  IF template_dir # NIL THEN
+    MxConfig.DefaultPath := template_dir;
   END;
 
-  CheckForExportsfile ();
-  BuildQuery ();
-  RunQuake();
+  ChDir (start_dir);
+
+  DoIt();
 END Main.

@@ -108,11 +108,13 @@ PROCEDURE Init (v: T; scrollable := TRUE): T =
     v := TextEditVBT.T.init (v, scrollable);
     v.inputReady := NEW (Thread.Condition);
     v.rd := NEW (Reader, v := v, lo := 0, cur := 0, hi := 0, st := 0,
-                 buff := NEW (REF ARRAY OF CHAR, TerminalReaderBuffSize),
+                 buff := NEW (<*TRANSIENT*> REF ARRAY OF CHAR,
+                              TerminalReaderBuffSize),
                  closed := FALSE, seekable := FALSE, intermittent := TRUE);
     v.wr :=
       NEW (Writer, v := v, lo := 0, cur := 0, hi := TerminalWriterBuffSize,
-           st := 0, buff := NEW (REF ARRAY OF CHAR, TerminalWriterBuffSize),
+           st := 0, buff := NEW (<*TRANSIENT*> REF ARRAY OF CHAR,
+                                 TerminalWriterBuffSize),
            closed := FALSE, seekable := FALSE, buffered := TRUE);
     v.lastReader := NIL;
     v.terminated := FALSE;

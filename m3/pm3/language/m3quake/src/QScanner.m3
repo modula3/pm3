@@ -7,8 +7,8 @@
 
 MODULE QScanner;
 
-IMPORT File, OSError;
-IMPORT M3ID, M3File, QToken;
+IMPORT File, OSError, Text;
+IMPORT M3File, Quake, QToken, QIdent;
 (** IMPORT Stdio, Wr, Fmt; **)
 
 TYPE
@@ -16,14 +16,16 @@ TYPE
 
 REVEAL
   T = T_ BRANDED OBJECT
+    map     : Quake.IDMap := NIL;
     char    : CHAR;
     curLine : INTEGER := 0;
     cursor  : INTEGER := 0;
-    length  : INTEGER := 0;
+    buflen  : INTEGER := 0;
     buffer  : REF ARRAY OF CHAR := NIL;
   OVERRIDES
-    init := Init;
-    next := Next;
+    init     := Init;
+    initText := InitText;
+    next     := Next;
   END;
 
 CONST
@@ -31,12 +33,9 @@ CONST
 
 VAR
   init_done    := FALSE;
-  min_keyword  : M3ID.T;
-  max_keyword  : M3ID.T;
-  keywords     : ARRAY [0..31] OF TK;
   AlphaNumeric := ARRAY CHAR OF BOOLEAN { FALSE, .. };
 
-PROCEDURE Init (t: T;  f: File.T): T =
+PROCEDURE Init (t: T;  f: File.T;  map: Quake.IDMap): T =
   VAR status: File.Status;
   BEGIN
     IF NOT init_done THEN InitTables () END;
@@ -45,23 +44,48 @@ PROCEDURE Init (t: T;  f: File.T): T =
     TRY
       status := f.status ();
       t.buffer := NEW (REF ARRAY OF CHAR, MAX (0, status.size) + 1);
-      t.length := M3File.Read (f, t.buffer^, status.size);
-      IF (t.length # status.size) THEN RETURN NIL; END;
-      t.buffer [t.length] := EOFChar;
+      t.buflen := M3File.Read (f, t.buffer^, status.size);
+      IF (t.buflen # status.size) THEN RETURN NIL; END;
+      t.buffer [t.buflen] := EOFChar;
     EXCEPT OSError.E => RETURN NIL;
     END;
 
+    t.map     := map;
     t.token   := TK.Unknown;
     t.line    := 0;
     t.char    := ' ';
     t.curLine := 1;
     t.cursor  := 0;
-    t.length  := NUMBER (t.buffer^);
+    t.start   := 0;
+    t.length  := 0;
+    t.buflen  := NUMBER (t.buffer^);
+    
     RETURN t;
   END Init;
 
+PROCEDURE InitText (t: T;  txt: TEXT;  map: Quake.IDMap): T =
+  BEGIN
+    IF NOT init_done THEN InitTables () END;
+
+    t.buflen := Text.Length (txt);
+    t.buffer := NEW (REF ARRAY OF CHAR, t.buflen + 1);
+    Text.SetChars (t.buffer^, txt);
+    t.buffer [t.buflen] := EOFChar;
+
+    t.map     := map;
+    t.token   := TK.Unknown;
+    t.line    := 0;
+    t.char    := ' ';
+    t.curLine := 1;
+    t.cursor  := 0;
+    t.start   := 0;
+    t.length  := 0;
+    t.buflen  := NUMBER (t.buffer^);
+    
+    RETURN t;
+  END InitText;
+
 PROCEDURE InitTables () =
-  VAR id: M3ID.T;  ids: ARRAY [TK.And .. TK.Return] OF M3ID.T;
   BEGIN
     WhiteSpace [' ']  := TRUE;
     WhiteSpace ['\n'] := TRUE;
@@ -73,21 +97,6 @@ PROCEDURE InitTables () =
     FOR c := 'a' TO 'z' DO AlphaNumeric [c] := TRUE END;
     FOR c := 'A' TO 'Z' DO AlphaNumeric [c] := TRUE END;
     FOR c := '0' TO '9' DO AlphaNumeric [c] := TRUE END;
-
-    (* build the keyword map *)
-    min_keyword := LAST (M3ID.T);
-    max_keyword := FIRST (M3ID.T);
-    FOR tk := TK.And TO TK.Return DO
-      id := M3ID.Add (QToken.Name [tk]);
-      ids [tk] := id;
-      min_keyword := MIN (min_keyword, id);
-      max_keyword := MAX (min_keyword, id);
-    END;
-    <*ASSERT max_keyword - min_keyword < NUMBER (keywords)*>
-    FOR i := FIRST (keywords) TO LAST (keywords) DO keywords[i] := TK.Name END;
-    FOR tk := TK.And TO TK.Return DO
-      keywords [ids[tk] - min_keyword] := tk;
-    END;
 
     init_done := TRUE;
   END InitTables;
@@ -113,6 +122,7 @@ PROCEDURE Next (t: T) =
 
       (* remember where this token starts *)
       t.line := t.curLine;
+      t.start := t.cursor - 1;
 
       CASE t.char OF
       | '%' => (* Single-line comment *)
@@ -121,40 +131,42 @@ PROCEDURE Next (t: T) =
 
       | '/' => (* C-style comment *)
           NextChar (t);
-          IF (t.char # '*') THEN t.token := TK.Unknown; RETURN; END;
+          IF (t.char # '*') THEN  t.token := TK.Unknown;  EXIT;  END;
           NextChar (t);
           SkipComment (t);
 
-      | '"'                         => ReadString (t);    RETURN;
-      | '0' .. '9'                  => ReadCardinal (t);  RETURN;
-      | 'a' .. 'z', 'A' .. 'Z', '_' => ReadName (t);      RETURN;
+      | '"'                         => ReadString (t);    EXIT;
+      | '0' .. '9'                  => ReadCardinal (t);  EXIT;
+      | 'a' .. 'z', 'A' .. 'Z', '_' => ReadName (t);      EXIT;
 
         (* It's punctuation *)
-      | '$'     => t.token := TK.Dollar;     NextChar (t);  RETURN;
-      | '&'     => t.token := TK.Ampersand;  NextChar (t);  RETURN;
-      | '('     => t.token := TK.LParen;     NextChar (t);  RETURN;
-      | ')'     => t.token := TK.RParen;     NextChar (t);  RETURN;
-      | '+'     => t.token := TK.Plus;       NextChar (t);  RETURN;
-      | ','     => t.token := TK.Comma;      NextChar (t);  RETURN;
-      | ':'     => t.token := TK.Colon;      NextChar (t);  RETURN;
-      | '<'     => t.token := TK.Less;       NextChar (t);  RETURN;
-      | '='     => t.token := TK.Equal;      NextChar (t);  RETURN;
-      | '>'     => t.token := TK.Greater;    NextChar (t);  RETURN;
-      | '@'     => t.token := TK.At;         NextChar (t);  RETURN;
-      | '['     => t.token := TK.LSquare;    NextChar (t);  RETURN;
-      | ']'     => t.token := TK.RSquare;    NextChar (t);  RETURN;
-      | '{'     => t.token := TK.LBrace;     NextChar (t);  RETURN;
-      | '}'     => t.token := TK.RBrace;     NextChar (t);  RETURN;
-      | EOFChar => t.token := TK.EOF;                       RETURN;
+      | '$'     => t.token := TK.Dollar;     NextChar (t);  EXIT;
+      | '&'     => t.token := TK.Ampersand;  NextChar (t);  EXIT;
+      | '('     => t.token := TK.LParen;     NextChar (t);  EXIT;
+      | ')'     => t.token := TK.RParen;     NextChar (t);  EXIT;
+      | '+'     => t.token := TK.Plus;       NextChar (t);  EXIT;
+      | ','     => t.token := TK.Comma;      NextChar (t);  EXIT;
+      | ':'     => t.token := TK.Colon;      NextChar (t);  EXIT;
+      | '<'     => t.token := TK.Less;       NextChar (t);  EXIT;
+      | '='     => t.token := TK.Equal;      NextChar (t);  EXIT;
+      | '>'     => t.token := TK.Greater;    NextChar (t);  EXIT;
+      | '@'     => t.token := TK.At;         NextChar (t);  EXIT;
+      | '['     => t.token := TK.LSquare;    NextChar (t);  EXIT;
+      | ']'     => t.token := TK.RSquare;    NextChar (t);  EXIT;
+      | '{'     => t.token := TK.LBrace;     NextChar (t);  EXIT;
+      | '}'     => t.token := TK.RBrace;     NextChar (t);  EXIT;
+      | EOFChar => t.token := TK.EOF;                       EXIT;
 
-      ELSE  t.token := TK.Unknown; RETURN;
+      ELSE  t.token := TK.Unknown; EXIT;
       END;
-    END;
+    END; (* LOOP *)
+
+    t.length := t.cursor - t.start - 1;
   END Next;
 
 PROCEDURE NextChar (t: T) =
   BEGIN
-    IF (t.cursor <= t.length) THEN
+    IF (t.cursor <= t.buflen) THEN
       t.char := t.buffer [t.cursor];
       INC (t.cursor);
       IF (t.char = '\n') THEN INC (t.curLine) END;
@@ -215,23 +227,22 @@ PROCEDURE ReadString (t: T) =
       END;
     END;
 
-    t.string := M3ID.FromStr (SUBARRAY (t.buffer^, start,
-                                        NUMBER(t.buffer^)-start),
-                               next - start);
+    t.string := t.map.str2id (SUBARRAY (t.buffer^, start, next - start));
     t.token  := TK.String;
   END ReadString;
 
 PROCEDURE ReadName (t: T) =
-  VAR start := t.cursor;  id: M3ID.T;
+  VAR start := t.cursor;  id: Quake.ID;
   BEGIN
     WHILE AlphaNumeric [t.char] DO NextChar (t); END;
-    id := M3ID.FromStr (SUBARRAY (t.buffer^, start-1, t.cursor-start));
+    id := t.map.str2id (SUBARRAY (t.buffer^, start-1, t.cursor-start));
     t.string := id;
     t.token  := TK.Name;
-    IF (min_keyword <= id) AND (id <= max_keyword) THEN
-      t.token := keywords [id - min_keyword];
+    IF (t.map.min_keyword <= id) AND (id <= t.map.max_keyword) THEN
+      t.token := t.map.keywords [id - t.map.min_keyword];
     END;
   END ReadName;
 
 BEGIN
+  InitTables ();
 END QScanner.

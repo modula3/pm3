@@ -66,6 +66,8 @@ IMPORT TextConv, ObCommand, SynWr, Text, Fmt, ObTree, ObLib;
         SynWr.Text(swr, "L" & Fmt.Int(node.index));
     | ObTree.IdePlaceGlobal(node) =>
         SynWr.Text(swr, "G" & Fmt.Int(node.index));
+    ELSE
+      <*ASSERT FALSE*>  (*shouldn't happen*)
     END;
     SynWr.End(swr);
   END PrintIdePlace;
@@ -113,6 +115,7 @@ IMPORT TextConv, ObCommand, SynWr, Text, Fmt, ObTree, ObLib;
       | 2 => res := "\"" & res;
       | 3 => res := "^" & res;
       | 0 => res := "~" & res;
+      ELSE <*ASSERT FALSE*> (* can't happen! *)
       END;
       decoration := (decoration-1) DIV 4;
       IF decoration = 0 THEN EXIT END;
@@ -143,6 +146,7 @@ IMPORT TextConv, ObCommand, SynWr, Text, Fmt, ObTree, ObLib;
         RETURN "L" & Fmt.Int(node.index);
     | ObTree.IdePlaceGlobal(node) =>
          RETURN "L" & Fmt.Int(node.index);
+    ELSE <*ASSERT FALSE*> (* shouldn't happen *)
     END;
   END FmtIdePlace;
 
@@ -156,7 +160,8 @@ IMPORT TextConv, ObCommand, SynWr, Text, Fmt, ObTree, ObLib;
     RETURN text;
   END FmtIde;
 
-  PROCEDURE PrintTermBinding(swr: SynWr.T; rec: BOOLEAN; binding: ObTree.TermBinding; 
+  PROCEDURE PrintTermBinding(swr: SynWr.T; <*UNUSED*>rec: BOOLEAN; 
+                             binding: ObTree.TermBinding; 
     libEnv: ObLib.Env; env: ObTree.Env; depth: INTEGER)  =
   (* -- The env stuff is correct for sequential bindings, not for recursive
      ones *)
@@ -206,7 +211,8 @@ IMPORT TextConv, ObCommand, SynWr, Text, Fmt, ObTree, ObLib;
     END;
   END PrintSerialized;
 
-  PROCEDURE PrintObjFields(swr: SynWr.T; fields: ObTree.TermObjFields; libEnv: ObLib.Env; env: ObTree.Env; 
+  PROCEDURE PrintObjFields(swr: SynWr.T; fields: ObTree.TermObjFields; 
+                           libEnv: ObLib.Env; env: ObTree.Env; 
     depth: INTEGER)  =
   VAR sep: TEXT;
   BEGIN
@@ -350,7 +356,8 @@ IMPORT TextConv, ObCommand, SynWr, Text, Fmt, ObTree, ObLib;
     SynWr.Text(swr, ObTree.FmtReal(real));
   END PrintReal;
 
-  PROCEDURE PrintSignature(swr: SynWr.T; term: ObTree.Term; libEnv: ObLib.Env;
+  PROCEDURE PrintSignature(swr: SynWr.T; term: ObTree.Term; 
+                           <*UNUSED*>libEnv: ObLib.Env;
                       env: ObTree.Env)  =
   VAR newEnv: ObTree.Env;
   BEGIN
@@ -367,7 +374,8 @@ IMPORT TextConv, ObCommand, SynWr, Text, Fmt, ObTree, ObLib;
     | ObTree.TermMeth(node) =>
 	  SynWr.Beg(swr);
 	    SynWr.Beg(swr, 2);
-              SynWr.Text(swr, "meth(");
+              IF node.update THEN SynWr.Text(swr, "umeth("); 
+              ELSE SynWr.Text(swr, "meth("); END;
 	      newEnv := PrintIdeList(swr, node.binders, env);
               SynWr.Text(swr, ")...end");
 	    SynWr.End(swr);
@@ -506,7 +514,8 @@ IMPORT TextConv, ObCommand, SynWr, Text, Fmt, ObTree, ObLib;
         SynWr.Beg(swr);
 	  SynWr.Beg(swr, 2);
 	    SynWr.Beg(swr, 4);
-              SynWr.Text(swr, "meth(");
+              IF node.update THEN SynWr.Text(swr, "umeth("); 
+              ELSE SynWr.Text(swr, "meth("); END;
 	      newEnv := PrintIdeList(swr, node.binders, env);
               SynWr.Text(swr, ") ");
 	    SynWr.End(swr);
@@ -533,6 +542,56 @@ IMPORT TextConv, ObCommand, SynWr, Text, Fmt, ObTree, ObLib;
 	SynWr.Break(swr);
 	  PrintTermList(swr, node.objs, libEnv, env, depth);
           SynWr.Char(swr, ')');
+	SynWr.End(swr);
+    | ObTree.TermNotify(node) =>
+        IF depth<=0 THEN SynWr.Text(swr, "..."); RETURN END;
+	SynWr.Beg(swr, 2);
+	  SynWr.Text(swr, "notify ");
+	SynWr.Break(swr);
+	  PrintTerm(swr, node.obj, libEnv, env, depth);
+	  SynWr.Char(swr, ' ');
+	SynWr.Break(swr);
+	  SynWr.Text(swr, " with ");
+	SynWr.Break(swr);
+	  PrintTerm(swr, node.withObj, libEnv, env, depth);
+	SynWr.End(swr);
+    | ObTree.TermPickler(node) =>
+        IF depth<=0 THEN SynWr.Text(swr, "..."); RETURN END;
+	SynWr.Beg(swr, 2);
+	  SynWr.Text(swr, "setpickler(");
+	SynWr.Break(swr);
+	  PrintTerm(swr, node.obj, libEnv, env, depth);
+	  SynWr.Text(swr, ", ");
+	SynWr.Break(swr);
+	  PrintTerm(swr, node.pklIn, libEnv, env, depth);
+	  SynWr.Text(swr, ", ");
+	SynWr.Break(swr);
+	  PrintTerm(swr, node.pklOut, libEnv, env, depth);
+          SynWr.Char(swr, ')');
+	SynWr.End(swr);
+    | ObTree.TermReplicate(node) =>
+        IF depth<=0 THEN SynWr.Text(swr, "..."); RETURN END;
+	SynWr.Beg(swr, 2);
+	  SynWr.Text(swr, "replicate(");
+	SynWr.Break(swr);
+	  PrintTermList(swr, node.args, libEnv, env, depth);
+          SynWr.Char(swr, ')');
+	SynWr.End(swr);
+    | ObTree.TermRemote(node) =>
+        IF depth<=0 THEN SynWr.Text(swr, "..."); RETURN END;
+	SynWr.Beg(swr, 2);
+	  SynWr.Text(swr, "remote(");
+	SynWr.Break(swr);
+	  PrintTerm(swr, node.obj, libEnv, env, depth);
+	  SynWr.Char(swr, ')');
+	SynWr.End(swr);
+    | ObTree.TermSimple(node) =>
+        IF depth<=0 THEN SynWr.Text(swr, "..."); RETURN END;
+	SynWr.Beg(swr, 2);
+	  SynWr.Text(swr, "simple(");
+	SynWr.Break(swr);
+	  PrintTerm(swr, node.obj, libEnv, env, depth);
+	  SynWr.Char(swr, ')');
 	SynWr.End(swr);
     | ObTree.TermRedirect(node) =>
         IF depth<=0 THEN SynWr.Text(swr, "..."); RETURN END;
@@ -796,7 +855,7 @@ IMPORT TextConv, ObCommand, SynWr, Text, Fmt, ObTree, ObLib;
     END;
   END PrintTerm; 
 
-  PROCEDURE PrintVarIndex(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL)  =
+  PROCEDURE PrintVarIndex(self: ObCommand.T; arg: TEXT; <*UNUSED*>data: REFANY:=NIL)  =
     BEGIN
       IF Text.Equal(arg, "!") OR Text.Equal(arg, "?") THEN
 	SynWr.Text(SynWr.out, self.name & " {On Off} is ");
@@ -812,7 +871,7 @@ IMPORT TextConv, ObCommand, SynWr, Text, Fmt, ObTree, ObLib;
       END;
     END PrintVarIndex;
 
-  PROCEDURE PrintVariant(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL)  =
+  PROCEDURE PrintVariant(self: ObCommand.T; arg: TEXT; <*UNUSED*>data: REFANY:=NIL)  =
     BEGIN
       IF Text.Equal(arg, "!") OR Text.Equal(arg, "?") THEN
 	SynWr.Text(SynWr.out , self.name & " {On Off} is ");
@@ -828,7 +887,7 @@ IMPORT TextConv, ObCommand, SynWr, Text, Fmt, ObTree, ObLib;
       END;
     END PrintVariant;
 
-  PROCEDURE PrintAlphaDecor(self: ObCommand.T; arg: TEXT; data: REFANY:=NIL)  =
+  PROCEDURE PrintAlphaDecor(self: ObCommand.T; arg: TEXT; <*UNUSED*>data: REFANY:=NIL)  =
     BEGIN
       IF Text.Equal(arg, "!") OR Text.Equal(arg, "?") THEN
 	SynWr.Text(SynWr.out , self.name & " {On Off} is ");

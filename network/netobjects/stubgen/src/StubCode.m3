@@ -10,9 +10,10 @@
 MODULE StubCode;
 
 IMPORT Atom, CodeForType, FileWr, Fmt, Formatter, IntfStubCode, RefList,
-       ModuleStubCode, OSError, Protocol, AtomRefTbl, StubUtils, Type, Wr;
+       ModuleStubCode, OSError, Protocol, AtomRefTransientTbl AS AtomRefTbl,
+       StubUtils, Type, Wr;
 
-<* FATAL OSError.E, Wr.Failure, StubUtils.Error *>
+<* FATAL OSError.E, Wr.Failure *>
 
 VAR netobjName:= NEW(Type.Qid);
 
@@ -164,7 +165,7 @@ PROCEDURE SigBrandsOK(sig: Type.Signature): BOOLEAN =
             INC(n);
           END;
         ELSE
-          RAISE StubUtils.Error("Run time error -- shouldn't occur");
+          StubUtils.Die("StubCode.BuildMethods: non-object has methods");
         END;
       END;
     END BuildMethods;
@@ -181,13 +182,15 @@ PROCEDURE SigBrandsOK(sig: Type.Signature): BOOLEAN =
      ModuleStubCode.Dispatcher(modWr, t, typeName, methods, 
                                returnCodes);
      ModuleStubCode.OwnerStubs(modWr, t, methods, lastNewMethod);
-     Formatter.PutText(modWr, "BEGIN\n");
+     Formatter.PutText(modWr, "BEGIN");
+     Formatter.PutText(modWr, Wr.EOL);
      Formatter.PutText(modWr, "  StubLib.Register(TYPECODE(");
      Formatter.PutText(modWr, 
                 CodeForType.ToText(t) & "), " &
-                Fmt.Int(Protocol.Version) & ", " &
+                Fmt.Int(Protocol.version) & ", " &
                 "TYPECODE(Surrogate_" & Atom.ToText(typeName));
-     Formatter.PutText(modWr, "), Invoke);\n");
+     Formatter.PutText(modWr, "), Invoke);");
+     Formatter.PutText(modWr, Wr.EOL);
 
     END Body;
 

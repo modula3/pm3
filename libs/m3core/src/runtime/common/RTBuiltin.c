@@ -52,6 +52,7 @@ typedef struct {
     _ADDRESS     try_scopes;
     _ADDRESS     var_map;
     _ADDRESS     gc_map;
+    _ADDRESS     import_info;
     _PROC        link;
     _PROC        main;
   } _MODULE_INFO;
@@ -66,12 +67,14 @@ struct _IR_ {
   _TYPECELL    refany;
   _TYPECELL    address;
   _TYPECELL    null;
+  _TYPECELL    transient_root;
+  _TYPECELL    transient_refany; 
 };
 
 /*------------------------------------------------------------------------*/
 
 #define SELF MI_M3_BUILTIN
-struct _IR_ SELF = {
+static struct _IR_ SELF = {
 
   /*--------- module_info -----------------*/
   {
@@ -84,6 +87,7 @@ struct _IR_ SELF = {
   0,                    /* try_scopes */
   0,                    /* var_map */
   0,                    /* gc_map */
+  0,                    /* import_info */
   0,                    /* link */
   0                     /* main */
   },
@@ -195,14 +199,58 @@ struct _IR_ SELF = {
     0, 0, 0,     /* parent, children, sibling */
     0,           /* brand */
     "NULL",      /* name */
-    0            /* next */
+    &SELF.transient_root /* next */
+  },
+
+  /*--------- transient root -----------------*/
+  /* FP ("$objecttransient") ==> 16_d43028af7d43fb09 => 16_a973d3a6 = -1452026970 */
+  { 0, 0,        /* typecode */
+    -1452026970, /* selfID */
+    { 0xd4, 0x30, 0x28, 0xaf, 0x7d, 0x43, 0xfb, 0x09 },    /* fingerprint */
+    3,           /* traced, transient */
+    0, WSZ, WSZ, /* data offset, size, alignment */
+    0, WSZ,      /* method offset, size */
+    0, 0,        /* nDimensions, elementSize */
+    0,           /* default methods */
+    0,           /* type map */
+    0,           /* gc map */
+    0,           /* type desc */
+    0,           /* initProc */
+    0,           /* linkProc */
+    0,           /* parent ID */
+    0, 0, 0,     /* parent, children, sibling */
+    0,           /* brand */
+    "TRANSIENT ROOT", /* name */
+    &SELF.transient_refany /* next */
+  },
+
+  /*--------- transient refany -----------------*/
+  /* FP ("$refanytransient") ==> 16_28671e147983a92d => 16_51e4b739 = 1373943609 */
+  { 0, 0,        /* typecode */
+    1373943609,   /* selfID */
+    { 0x28, 0x67, 0x1e, 0x14, 0x79, 0x83, 0xa9, 0x2d },	/* fingerprint */
+    3,           /* traced, transient */
+    0, WSZ, WSZ, /* data offset, size, alignment */
+    0, 0,        /* method offset, size */
+    0, 0,        /* nDimensions, elementSize */
+    0,           /* default methods */
+    0,           /* type map */
+    0,           /* gc map */
+    0,           /* type desc */
+    0,           /* initProc */
+    0,           /* linkProc */
+    0,           /* parent ID */
+    0, 0, 0,     /* parent, children, sibling */
+    0,           /* brand */
+    "TRANSIENT REFANY", /* name */
+    0 /* next */
   }
 
 };
 
+/*------------------------------------------------------------------------*/
 
-
-
-
-
-
+void* I_M3_BUILTIN ()
+{
+  return &SELF;
+}

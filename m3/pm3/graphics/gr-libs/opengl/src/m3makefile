@@ -5,8 +5,8 @@
 /* Last modified on Wed Oct 11 14:00:40 PDT 1995 by najork                   */
 /*       Created on Fri Oct  2 16:04:26 PDT 1995 by najork                   */
 
-if PLATFORM_SUPPORTS_OPENGL
-  import_OpenGL()
+if SYSTEM_LIBS contains "OPENGL"
+  import_sys_lib ("OPENGL")
   include_dir (OS_TYPE)
   Library ("opengl")
 end

@@ -1,21 +1,29 @@
-(* Copyright (C) 1996, Critical Mass, Inc.   All rights reserved.            *)
+(* Copyright (C) 1996-2000, Critical Mass, Inc.   All rights reserved.  *)
+(* See file COPYRIGHT-CMASS for details.                                *)
+(*                                                                      *)
+(* Dr. Hans-Walter Latz, 24.10.1996: added support for non-US keyboards *)
 
 MODULE WinKey;
 
-IMPORT Word, VBT;
+IMPORT Word, VBT, WinDef;
 IMPORT KeyboardKey AS KK, Latin1Key AS LK, WinUser AS WU;
 
 PROCEDURE Translate (vk: [0 .. 255]): VBT.KeySym =
   VAR
-    shifted   := Word.And (WU.GetKeyState (WU.VK_SHIFT), 16_8000) # 0;
+    shifted   := Word.And (WU.GetKeyState (WU.VK_SHIFT  ), 16_8000) # 0;
+    alt       := Word.And (WU.GetKeyState (WU.VK_CONTROL), 16_8000) # 0;
+    control   := Word.And (WU.GetKeyState (WU.VK_MENU   ), 16_8000) # 0;
     caps_lock := Word.And (WU.GetKeyState (WU.VK_CAPITAL), 16_0001) # 0;
+    ksym      : VBT.KeySym := XX;
   BEGIN
-    IF (shifted # caps_lock)
-      THEN RETURN Map [vk].shifted;
-      ELSE RETURN Map [vk].normal;
+    IF    alt AND control     THEN ksym :=  Map[vk].altgr;
+    ELSIF alt                 THEN ksym :=  Map[vk].alt;
+    ELSIF control             THEN ksym :=  Map[vk].control;
+    ELSIF shifted # caps_lock THEN ksym :=  Map[vk].shifted;
     END;
+    IF ksym = XX THEN ksym := Map[vk].normal; END;
+    RETURN ksym;
   END Translate;
-
 
 CONST
   XX = KK.VoidSymbol;
@@ -25,10 +33,13 @@ TYPE
     win_key : [0..255];
     normal  : [0..16_FFFFFF];
     shifted : [0..16_FFFFFF];
+    control : [0..16_FFFFFF] := XX;
+    alt     : [0..16_FFFFFF] := XX;
+    altgr   : [0..16_FFFFFF] := XX;
   END;
-
-CONST
-  Map = ARRAY [0..255] OF KD {
+  
+VAR
+  Map := ARRAY [0..255] OF KD {
   (* 00 *) KD{ 16_00,           XX,              XX               },
   (* 01 *) KD{ WU.VK_LBUTTON,   XX,              XX               },
   (* 02 *) KD{ WU.VK_RBUTTON,   XX,              XX               },
@@ -302,9 +313,38 @@ CONST
   (* FF *) KD{ 16_FF,           XX,              XX               }
   };
 
+PROCEDURE MapChar(c: [0..255]) =
+  VAR
+    shift, control, alt: BOOLEAN;
+    data: WinDef.SHORT;
+    vk: [0..255];
+  BEGIN
+    (* get the virtual key data *)
+    data := WU.VkKeyScan (VAL (c, CHAR));
+    IF data = 16_FFFF THEN RETURN; END; (* 'c' can't be entered on Keyboard *)
+  
+    (* extract the interesting fields *)
+    vk      := Word.And (data, 16_00FF);
+    shift   := Word.And (data, 16_0100) # 0;
+    control := Word.And (data, 16_0200) # 0;
+    alt     := Word.And (data, 16_0400) # 0;
+  
+    (* store the characters data in the map *)
+    IF    alt AND control THEN Map[vk].altgr   := c;
+    ELSIF alt             THEN Map[vk].alt     := c;
+    ELSIF control         THEN Map[vk].control := c;
+    ELSIF shift           THEN Map[vk].shifted := c;
+    ELSE                       Map[vk].normal  := c;
+    END;
+  END MapChar;
+
 BEGIN
+  (* get key codes / shift modes for standard printable ASCII chars *)
+  FOR c :=  32 TO 127 DO  MapChar(c);  END;
+    
+  (* get key codes / shift modes for printable international chars *)
+  FOR c := 160 TO 255 DO  MapChar(c);  END;
+
   (* verify that the Windows mapping didn't change... *)
-  FOR i := FIRST (Map) TO LAST (Map) DO
-    <* ASSERT Map[i].win_key = i *>
-  END;
+  FOR i := FIRST (Map) TO LAST (Map) DO  <* ASSERT Map[i].win_key = i *>  END;
 END WinKey.

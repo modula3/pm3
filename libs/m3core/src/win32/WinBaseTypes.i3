@@ -19,7 +19,7 @@ TYPE
   BYTE = Ctypes.unsigned_char;
   CCHAR = Ctypes.char;
   DWORD = Ctypes.unsigned_long;
-  HANDLE = Ctypes.void_star;
+  HANDLE = Ctypes.void_star;  (*** should be <: ADDRESS ***)
   INT = Ctypes.int;
   LONG = Ctypes.long;
   LPBOOL = UNTRACED REF BOOL;
@@ -28,6 +28,7 @@ TYPE
   LPINT = UNTRACED REF Ctypes.int;
   LPLONG = UNTRACED REF Ctypes.long;
   LPVOID = Ctypes.void_star;
+  LPCVOID = Ctypes.void_star;
   LPWORD = UNTRACED REF WORD;
   PBOOL = UNTRACED REF BOOL;
   PBYTE = UNTRACED REF BYTE;
@@ -51,29 +52,5 @@ TYPE
   (* !!!  Name clash with Modula-3 builtin.  FLOAT -> WFLOAT *)
   WFLOAT = Ctypes.float;
   WORD = Ctypes.unsigned_short;
-
-(*
-(* Types use for passing & returning polymorphic values *)
-TYPE
-  WPARAM = UINT;
-  LPARAM = LONG;
-  LRESULT = LONG;
-
-TYPE
-  ATOM = WORD;
-
-  HANDLE = Ctypes.void_star;
-  PHANDLE = UNTRACED REF HANDLE;
-  SPHANDLE = UNTRACED REF HANDLE;
-  LPHANDLE = UNTRACED REF HANDLE;
-  HGLOBAL = HANDLE;
-  HLOCAL = HANDLE;
-  GLOBALHANDLE = HANDLE;
-  LOCALHANDLE = HANDLE;
-
-  PROC = PROCEDURE ();
-  NEARPROC = PROCEDURE ();
-  FARPROC = PROCEDURE ();
-*)
 
 END WinBaseTypes.

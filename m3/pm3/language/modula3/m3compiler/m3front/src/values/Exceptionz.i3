@@ -18,7 +18,9 @@ PROCEDURE ArgByReference (type: Type.T): BOOLEAN;
 
 PROCEDURE EmitRaise (t: Value.T;  arg: Expr.T);
 
-PROCEDURE CGOffset (t: Value.T): INTEGER;
+PROCEDURE UID (t: Value.T): INTEGER;
+
+PROCEDURE IsImplicit (t: Value.T): BOOLEAN;
 
 PROCEDURE AddFPSetTag (t: Value.T;  VAR x: M3.FPInfo): CARDINAL;
 (* called for RAISES sets, doesn't include the interface record offset *)

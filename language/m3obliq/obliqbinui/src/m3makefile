@@ -11,4 +11,4 @@ import("obliq")
 implementation("Main")
 
 Program("obliq-ui")
-ManPage("obliq-ui", 1)
+ManPage("obliq-ui","1")

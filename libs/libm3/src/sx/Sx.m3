@@ -130,8 +130,9 @@ REVEAL
 *)
 
 TYPE
-  MList = REF RECORD
+  MList = <*TRANSIENT*> REF RECORD
                 ch  : CHAR;
+                <*TRANSIENT*>
                 m   : ReadMacro;
                 next: MList       := NIL
               END;
@@ -294,8 +295,8 @@ CONST MAXLEN = 4000;
 
 VAR
   Reader := NEW (RefArrayReader, mu := NEW (MUTEX),
-                 buff := NEW (REF ARRAY OF CHAR, MAXLEN), lo := 0, st := 0,
-                 seekable := TRUE, intermittent := FALSE);
+                 buff := NEW (<*TRANSIENT*> REF ARRAY OF CHAR, MAXLEN),
+                 lo := 0, st := 0, seekable := TRUE, intermittent := FALSE);
 
 PROCEDURE Init (rd: RefArrayReader): RefArrayReader =
   BEGIN
@@ -633,13 +634,21 @@ PROCEDURE SetReadMacro (s: Syntax; ch: CHAR; m: ReadMacro) =
       IF ch IN NOREADMACROS THEN RAISE SetReadMacroError END;
       IF ch IN s.map THEN
         IF m = NIL THEN
-          s.map := s.map - SET OF CHAR {ch};
+          VAR tmp := SET OF CHAR {ch};
+          BEGIN
+            (* Win32 code generator bug *)
+            s.map := s.map - tmp;
+          END;
           remove (s.mlist)
         ELSE
           Syn (s, ch).m := m
         END
       ELSIF m # NIL THEN
-        s.map := s.map + SET OF CHAR {ch};
+        VAR tmp := SET OF CHAR {ch};
+        BEGIN
+          (* Win32 code generator bug *)
+          s.map := s.map + tmp;
+        END;
         s.mlist :=
           NEW (MList, ch := ch, m := m, next := s.mlist)
       END

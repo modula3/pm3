@@ -3,8 +3,7 @@
 (* See the file COPYRIGHT for a full description.              *)
 
 (* File: New.m3                                                *)
-(* Last Modified On Tue Jan 23 11:09:31 PST 1996 By najork     *)
-(*      Modified On Tue Jun 20 08:30:57 PDT 1995 By kalsow     *)
+(* Last Modified On Tue Jun 20 08:30:57 PDT 1995 By kalsow     *)
 (*      Modified On Thu Jun 15 12:45:06 PDT 1995 By ericv      *)
 (*      Modified On Fri Jan 25 08:10:52 1991 By muller         *)
 
@@ -14,7 +13,7 @@ IMPORT CG, CallExpr, Expr, ExprRep, Type, Procedure, Error;
 IMPORT RefType, ObjectType, OpaqueType, KeywordExpr, Value;
 IMPORT Field, Method, Int, ProcType, AssignStmt, OpenArrayType;
 IMPORT Scope, RecordType, TypeExpr, Null, Revelation, Target;
-IMPORT M3ID, M3RT, Runtime, ErrType;
+IMPORT M3ID, M3RT, RunTyme, ErrType;
 
 VAR Z: CallExpr.MethodList;
 
@@ -68,8 +67,8 @@ PROCEDURE CheckRef (r: Type.T;  ce: CallExpr.T;  VAR cs: Expr.CheckState) =
     info : Type.Info;
   BEGIN
     IF (r = NIL) THEN
-      Error.Msg("cannot NEW a variable of type REFANY, ADDRESS, or NULL");
-      RETURN;
+     Error.Msg("cannot NEW a variable of type REFANY, ADDRESS, or NULL");
+     RETURN;
     END;
     r := Type.CheckInfo (r, info);
     base := Type.Base (r);
@@ -157,7 +156,8 @@ PROCEDURE CheckObject (t: Type.T;  ce: CallExpr.T;  VAR cs: Expr.CheckState): Ty
         IF (newType = NIL) THEN
           fields := Scope.PushNew (FALSE, M3ID.NoID); Scope.PopNew ();
           overrides := Scope.PushNew (FALSE, M3ID.NoID); Scope.PopNew ();
-          newType := ObjectType.New (t, info.isTraced, NIL, fields, overrides);
+          newType := ObjectType.New (t, info.isTraced, info.isTransient, NIL,
+                                     fields, overrides);
         END;
         zz := Scope.Push (overrides);
           method.name      := key;
@@ -246,8 +246,10 @@ PROCEDURE Gen (ce: CallExpr.T) =
   END Gen;
 
 PROCEDURE GenRef (t, r: Type.T;  ce: CallExpr.T) =
-  CONST PHook = ARRAY BOOLEAN OF Runtime.Hook { Runtime.Hook.NewUntracedRef,
-                                                Runtime.Hook.NewTracedRef };
+  TYPE TT = ARRAY BOOLEAN OF RunTyme.Hook;
+  CONST PHook = ARRAY BOOLEAN OF TT
+    { TT { RunTyme.Hook.NewUntracedRef, RunTyme.Hook.NewUntracedRef  },
+      TT { RunTyme.Hook.NewTracedRef,   RunTyme.Hook.NewTransientRef } };
   VAR
     base   := Type.Base (r);
     fields : Value.T;
@@ -259,32 +261,34 @@ PROCEDURE GenRef (t, r: Type.T;  ce: CallExpr.T) =
     r := Type.CheckInfo (r, r_info);
 
     IF (r_info.class = Type.Class.OpenArray) THEN
-      GenOpenArray (t, t_info.isTraced, r_info, ce);
+      GenOpenArray (t, t_info.isTraced, t_info.isTransient, r_info, ce);
 
     ELSIF RecordType.Split (base, fields) THEN
-      GenRecord (t, base, t_info.isTraced, r_info, ce);
+      GenRecord (t, base, t_info.isTraced, t_info.isTransient, r_info, ce);
 
     ELSE
-      proc := Runtime.LookUpProc (PHook [t_info.isTraced]);
+      proc := RunTyme.LookUpProc (PHook [t_info.isTraced, t_info.isTransient]);
       Procedure.StartCall (proc);
       Type.LoadInfo (t, -1);
       CG.Pop_param (CG.Type.Addr);
-      ce.tmp := Procedure.EmitCall (proc);
+      ce.tmp := Procedure.EmitValueCall (proc);
       ce.align := r_info.alignment;
     END;
   END GenRef;
 
-PROCEDURE GenOpenArray (t: Type.T;  traced: BOOLEAN;
+PROCEDURE GenOpenArray (t: Type.T;  traced, transient: BOOLEAN;
                         READONLY r_info: Type.Info;  ce: CallExpr.T) =
-  CONST PHook = ARRAY BOOLEAN OF Runtime.Hook { Runtime.Hook.NewUntracedArray,
-                                                Runtime.Hook.NewTracedArray };
+  TYPE TT = ARRAY BOOLEAN OF RunTyme.Hook;
+  CONST PHook = ARRAY BOOLEAN OF TT
+    { TT { RunTyme.Hook.NewUntracedArray, RunTyme.Hook.NewUntracedArray  },
+      TT { RunTyme.Hook.NewTracedArray,   RunTyme.Hook.NewTransientArray } };
   VAR
     n := LAST (ce.args^); (* number of open dimensions *)
     sizes := CG.Declare_temp (Target.Address.pack + (n+1)*Target.Integer.pack,
                               Target.Address.align, CG.Type.Struct,
                               in_memory := TRUE);
     offset: INTEGER;
-    proc := Runtime.LookUpProc (PHook [traced]);
+    proc := RunTyme.LookUpProc (PHook [traced, transient]);
   BEGIN
     (* initialize the pointer to the array sizes *)
     CG.Load_addr_of (sizes, M3RT.OA_size_1, Target.Address.align);
@@ -316,30 +320,32 @@ PROCEDURE GenOpenArray (t: Type.T;  traced: BOOLEAN;
       Type.LoadInfo (t, -1);
       CG.Pop_param (CG.Type.Addr);
     END;
-    ce.tmp := Procedure.EmitCall (proc);
+    ce.tmp := Procedure.EmitValueCall (proc);
     ce.align := r_info.alignment;
 
     CG.Free_temp (sizes);
   END GenOpenArray;
 
-PROCEDURE GenRecord (t, r: Type.T;  traced: BOOLEAN;
+PROCEDURE GenRecord (t, r: Type.T;  traced, transient: BOOLEAN;
                      READONLY r_info: Type.Info;  ce: CallExpr.T) =
-  CONST PHook = ARRAY BOOLEAN OF Runtime.Hook { Runtime.Hook.NewUntracedRef,
-                                                Runtime.Hook.NewTracedRef };
+  TYPE TT = ARRAY BOOLEAN OF RunTyme.Hook;
+  CONST PHook = ARRAY BOOLEAN OF TT
+    { TT { RunTyme.Hook.NewUntracedRef, RunTyme.Hook.NewUntracedRef  },
+      TT { RunTyme.Hook.NewTracedRef,   RunTyme.Hook.NewTransientRef } };
   VAR
     key: M3ID.T;
     value: Expr.T;
     field: Field.Info;
     v: Value.T;
     align := r_info.alignment;
-    proc := Runtime.LookUpProc (PHook [traced]);
+    proc := RunTyme.LookUpProc (PHook [traced, transient]);
     b: BOOLEAN;
   BEGIN
     (* allocate the record's storage *)
     Procedure.StartCall (proc);
     Type.LoadInfo (t, -1);
     CG.Pop_param (CG.Type.Addr);
-    ce.tmp := Procedure.EmitCall (proc);
+    ce.tmp := Procedure.EmitValueCall (proc);
     ce.align := align;
 
     (* do the user specified initialization *)
@@ -351,13 +357,15 @@ PROCEDURE GenRecord (t, r: Type.T;  traced: BOOLEAN;
       CG.Push (ce.tmp);
       CG.Boost_alignment (align);
       CG.Add_offset (field.offset);
-      AssignStmt.Emit (field.type, value);
+      AssignStmt.DoEmit (field.type, value);
     END;
   END GenRecord;
 
 PROCEDURE GenObject (t: Type.T;  ce: CallExpr.T) =
-  CONST PHook = ARRAY BOOLEAN OF Runtime.Hook { Runtime.Hook.NewUntracedObj,
-                                                Runtime.Hook.NewTracedRef };
+  TYPE TT = ARRAY BOOLEAN OF RunTyme.Hook;
+  CONST PHook = ARRAY BOOLEAN OF TT
+    { TT { RunTyme.Hook.NewUntracedObj, RunTyme.Hook.NewUntracedObj  },
+      TT { RunTyme.Hook.NewTracedRef,   RunTyme.Hook.NewTransientRef } };
   VAR
     key: M3ID.T;
     value: Expr.T;
@@ -371,13 +379,13 @@ PROCEDURE GenObject (t: Type.T;  ce: CallExpr.T) =
     b: BOOLEAN;
   BEGIN
     t := Type.CheckInfo (t, info);
-    proc := Runtime.LookUpProc (PHook [info.isTraced]);
+    proc := RunTyme.LookUpProc (PHook [info.isTraced, info.isTransient]);
 
     (* allocate the object's storage *)
     Procedure.StartCall (proc);
     Type.LoadInfo (t, -1);
     CG.Pop_param (CG.Type.Addr);
-    ce.tmp := Procedure.EmitCall (proc);
+    ce.tmp := Procedure.EmitValueCall (proc);
     ce.align := info.alignment;
 
     (* do the user specified initialization *)
@@ -392,12 +400,12 @@ PROCEDURE GenObject (t: Type.T;  ce: CallExpr.T) =
         IF (obj_offset >= 0) THEN
           INC (field.offset, obj_offset);
         ELSE
-          Type.LoadInfo (visible, M3RT.TC_dataOffset);
+          Type.LoadInfo (visible, M3RT.OTC_dataOffset);
           CG.Index_bytes (Target.Byte);
         END;
         CG.Add_offset (field.offset);
         CG.Boost_alignment (obj_align);
-        AssignStmt.Emit (field.type, value);
+        AssignStmt.DoEmit (field.type, value);
       END;
     END;
   END GenObject;
@@ -428,6 +436,7 @@ PROCEDURE Initialize () =
                                  CallExpr.NotBoolean,
                                  CallExpr.NotBoolean,
                                  CallExpr.NoValue,
+                                 CallExpr.NoBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

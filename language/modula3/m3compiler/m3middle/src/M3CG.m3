@@ -71,12 +71,7 @@ REVEAL
     jump := jump;
     if_true := if_true;
     if_false := if_false;
-    if_eq := if_eq; 
-    if_ne := if_ne; 
-    if_gt := if_gt; 
-    if_ge := if_ge; 
-    if_lt := if_lt; 
-    if_le := if_le; 
+    if_compare := if_compare; 
     case_jump := case_jump;
     exit_proc := exit_proc;
     load := load;
@@ -84,17 +79,10 @@ REVEAL
     load_indirect := load_indirect;
     store := store;
     store_indirect := store_indirect;
-    store_ref := store_ref;
-    store_ref_indirect := store_ref_indirect;
     load_nil := load_nil;                           
     load_integer := load_integer; 
-    load_float := load_float; 
-    eq := eq;        
-    ne := ne;        
-    gt := gt;        
-    ge := ge;        
-    lt := lt;        
-    le := le;        
+    load_float := load_float;
+    compare := compare;
     add := add;       
     subtract := subtract;  
     multiply := multiply;  
@@ -102,11 +90,8 @@ REVEAL
     negate := negate;    
     abs := abs;       
     max := max;       
-    min := min;       
-    round := round;     
-    trunc := trunc;     
-    floor := floor;     
-    ceiling := ceiling;   
+    min := min;
+    cvt_int := cvt_int;
     cvt_float := cvt_float; 
     div := div;     
     mod := mod;     
@@ -115,12 +100,7 @@ REVEAL
     set_intersection := set_intersection;
     set_sym_difference := set_sym_difference;
     set_member := set_member;
-    set_eq := set_eq;  
-    set_ne := set_ne;  
-    set_lt := set_lt;  
-    set_le := set_le;  
-    set_gt := set_gt;  
-    set_ge := set_ge;  
+    set_compare := set_compare;
     set_range := set_range;
     set_singleton := set_singleton;
     not := not;  
@@ -132,7 +112,9 @@ REVEAL
     shift_right := shift_right;   
     rotate := rotate;        
     rotate_left := rotate_left;   
-    rotate_right := rotate_right;  
+    rotate_right := rotate_right;
+    widen := widen;
+    chop := chop;
     extract := extract;
     extract_n := extract_n;
     extract_mn := extract_mn;
@@ -146,11 +128,7 @@ REVEAL
     zero_n := zero_n;
     zero := zero;
     loophole := loophole;
-    assert_fault := assert_fault;
-    narrow_fault := narrow_fault;
-    return_fault := return_fault;
-    case_fault := case_fault;
-    typecase_fault := typecase_fault;
+    abort := abort;
     check_nil := check_nil;
     check_lo := check_lo;
     check_hi := check_hi;
@@ -362,9 +340,9 @@ PROCEDURE import_global (xx: T;  n: Name;  s: ByteSize;  a: Alignment;
     RETURN xx.child.import_global (n, s, a, t, m3t);
   END import_global;
 
-PROCEDURE declare_segment (xx: T;  n: Name;  m3t: TypeUID): Var =
+PROCEDURE declare_segment (xx: T;  n: Name;  m3t: TypeUID; is_const: BOOLEAN): Var =
   BEGIN
-    RETURN xx.child.declare_segment (n, m3t);
+    RETURN xx.child.declare_segment (n, m3t, is_const);
   END declare_segment;
 
 PROCEDURE bind_segment (xx: T;  seg: Var;  s: ByteSize;  a: Alignment;
@@ -512,49 +490,24 @@ PROCEDURE jump (xx: T; l: Label) =
     xx.child.jump (l);
   END jump;
 
-PROCEDURE if_true (xx: T; l: Label;  f: Frequency) =
+PROCEDURE if_true (xx: T;  t: IType;  l: Label;  f: Frequency) =
   BEGIN
-    xx.child.if_true (l, f);
+    xx.child.if_true (t, l, f);
   END if_true;
 
-PROCEDURE if_false (xx: T; l: Label;  f: Frequency) =
+PROCEDURE if_false (xx: T;  t: IType;  l: Label;  f: Frequency) =
   BEGIN
-    xx.child.if_false (l, f);
+    xx.child.if_false (t, l, f);
   END if_false;
 
-PROCEDURE if_eq (xx: T;  l: Label;  t: ZType;  f: Frequency) =
+PROCEDURE if_compare (xx: T;  t: ZType;  op: CompareOp;  l: Label;  f: Frequency) =
   BEGIN
-    xx.child.if_eq (l, t, f);
-  END if_eq;
+    xx.child.if_compare (t, op, l, f);
+  END if_compare;
 
-PROCEDURE if_ne (xx: T;  l: Label;  t: ZType;  f: Frequency) =
+PROCEDURE case_jump (xx: T;  t: IType;  READONLY labels: ARRAY OF Label) =
   BEGIN
-    xx.child.if_ne (l, t, f);
-  END if_ne;
-
-PROCEDURE if_gt (xx: T;  l: Label;  t: ZType;  f: Frequency) =
-  BEGIN
-    xx.child.if_gt (l, t, f);
-  END if_gt;
-
-PROCEDURE if_ge (xx: T;  l: Label;  t: ZType;  f: Frequency) =
-  BEGIN
-    xx.child.if_ge (l, t, f);
-  END if_ge;
-
-PROCEDURE if_lt (xx: T;  l: Label;  t: ZType;  f: Frequency) =
-  BEGIN
-    xx.child.if_lt (l, t, f);
-  END if_lt;
-
-PROCEDURE if_le (xx: T;  l: Label;  t: ZType;  f: Frequency) =
-  BEGIN
-    xx.child.if_le (l, t, f);
-  END if_le;
-
-PROCEDURE case_jump (xx: T; READONLY labels: ARRAY OF Label) =
-  BEGIN
-    xx.child.case_jump (labels);
+    xx.child.case_jump (t, labels);
   END case_jump;
 
 PROCEDURE exit_proc (xx: T;  t: Type) =
@@ -564,40 +517,30 @@ PROCEDURE exit_proc (xx: T;  t: Type) =
 
 (*------------------------------------------------------------ load/store ---*)
 
-PROCEDURE load (xx: T;  v: Var;  o: ByteOffset;  t: MType) =
+PROCEDURE load (xx: T;  v: Var;  o: ByteOffset;  t: MType;  u: ZType) =
   BEGIN
-    xx.child.load (v, o, t);
+    xx.child.load (v, o, t, u);
   END load;
 
-PROCEDURE store (xx: T;  v: Var;  o: ByteOffset;  t: MType) =
+PROCEDURE store (xx: T;  v: Var;  o: ByteOffset;  t: ZType;  u: MType) =
   BEGIN
-    xx.child.store (v, o, t);
+    xx.child.store (v, o, t, u);
   END store;
-
-PROCEDURE store_ref (xx: T;  v: Var;  o: ByteOffset) =
-  BEGIN
-    xx.child.store_ref (v, o);
-  END store_ref;
 
 PROCEDURE load_address (xx: T;  v: Var;  o: ByteOffset) =
   BEGIN
     xx.child.load_address (v, o);
   END load_address;
 
-PROCEDURE load_indirect (xx: T;  o: ByteOffset;  t: MType) =
+PROCEDURE load_indirect (xx: T;  o: ByteOffset;  t: MType;  u: ZType) =
   BEGIN
-    xx.child.load_indirect (o, t);
+    xx.child.load_indirect (o, t, u);
   END load_indirect;
 
-PROCEDURE store_indirect (xx: T;  o: ByteOffset;  t: MType) =
+PROCEDURE store_indirect (xx: T;  o: ByteOffset;  t: ZType;  u: MType) =
   BEGIN
-    xx.child.store_indirect (o, t);
+    xx.child.store_indirect (o, t, u);
   END store_indirect;
-
-PROCEDURE store_ref_indirect (xx: T;  o: ByteOffset;  var: BOOLEAN) =
-  BEGIN
-    xx.child.store_ref_indirect (o, var);
-  END store_ref_indirect;
 
 (*-------------------------------------------------------------- literals ---*)
 
@@ -606,47 +549,22 @@ PROCEDURE load_nil (xx: T) =
     xx.child.load_nil ();
   END load_nil;
 
-PROCEDURE load_integer (xx: T;  READONLY i: Target.Int) =
+PROCEDURE load_integer (xx: T;  t: IType;  READONLY i: Target.Int) =
   BEGIN
-    xx.child.load_integer (i);
+    xx.child.load_integer (t, i);
   END load_integer;
 
-PROCEDURE load_float (xx: T;  READONLY f: Target.Float) =
+PROCEDURE load_float (xx: T;  t: RType;  READONLY f: Target.Float) =
   BEGIN
-    xx.child.load_float (f);
+    xx.child.load_float (t, f);
   END load_float;
 
 (*------------------------------------------------------------ arithmetic ---*)
 
-PROCEDURE eq (xx: T;  t: ZType) =
+PROCEDURE compare (xx: T;  t: ZType;  u: IType;  op: CompareOp) =
   BEGIN
-    xx.child.eq (t);
-  END eq;
-
-PROCEDURE ne (xx: T;  t: ZType) =
-  BEGIN
-    xx.child.ne (t);
-  END ne;
-
-PROCEDURE gt (xx: T;  t: ZType) =
-  BEGIN
-    xx.child.gt (t);
-  END gt;
-
-PROCEDURE ge (xx: T;  t: ZType) =
-  BEGIN
-    xx.child.ge (t);
-  END ge;
-
-PROCEDURE lt (xx: T;  t: ZType) =
-  BEGIN
-    xx.child.lt (t);
-  END lt;
-
-PROCEDURE le (xx: T;  t: ZType) =
-  BEGIN
-    xx.child.le (t);
-  END le;
+    xx.child.compare (t, u, op);
+  END compare;
 
 PROCEDURE add (xx: T;  t: AType) =
   BEGIN
@@ -698,25 +616,10 @@ PROCEDURE min (xx: T;  t: ZType) =
     xx.child.min (t);
   END min;
 
-PROCEDURE round (xx: T;  t: RType) =
+PROCEDURE cvt_int (xx: T;  t: RType;  u: IType;  op: ConvertOp) =
   BEGIN
-    xx.child.round (t);
-  END round;
-
-PROCEDURE trunc (xx: T;  t: RType) =
-  BEGIN
-    xx.child.trunc (t);
-  END trunc;
-
-PROCEDURE floor (xx: T;  t: RType) =
-  BEGIN
-    xx.child.floor (t);
-  END floor;
-
-PROCEDURE ceiling (xx: T;  t: RType) =
-  BEGIN
-    xx.child.ceiling (t);
-  END ceiling;
+    xx.child.cvt_int (t, u, op);
+  END cvt_int;
 
 PROCEDURE cvt_float (xx: T;  t: AType;  u: RType) =
   BEGIN
@@ -745,131 +648,116 @@ PROCEDURE set_sym_difference (xx: T;  s: ByteSize) =
     xx.child.set_sym_difference (s);
   END set_sym_difference;
 
-PROCEDURE set_member (xx: T;  s: ByteSize) =
+PROCEDURE set_member (xx: T;  s: ByteSize;  t: IType) =
   BEGIN
-    xx.child.set_member (s);
+    xx.child.set_member (s, t);
   END set_member;
 
-PROCEDURE set_eq (xx: T;  s: ByteSize) =
+PROCEDURE set_compare (xx: T;  s: ByteSize;  op: CompareOp;  t: IType) =
   BEGIN
-    xx.child.set_eq (s);
-  END set_eq;
+    xx.child.set_compare (s, op, t);
+  END set_compare;
 
-PROCEDURE set_ne (xx: T;  s: ByteSize) =
+PROCEDURE set_range (xx: T;  s: ByteSize;  t: IType) =
   BEGIN
-    xx.child.set_ne (s);
-  END set_ne;
-
-PROCEDURE set_gt (xx: T;  s: ByteSize) =
-  BEGIN
-    xx.child.set_gt (s);
-  END set_gt;
-
-PROCEDURE set_ge (xx: T;  s: ByteSize) =
-  BEGIN
-    xx.child.set_ge (s);
-  END set_ge;
-
-PROCEDURE set_lt (xx: T;  s: ByteSize) =
-  BEGIN
-    xx.child.set_lt (s);
-  END set_lt;
-
-PROCEDURE set_le (xx: T;  s: ByteSize) =
-  BEGIN
-    xx.child.set_le (s);
-  END set_le;
-
-PROCEDURE set_range (xx: T;  s: ByteSize) =
-  BEGIN
-    xx.child.set_range (s);
+    xx.child.set_range (s, t);
   END set_range;
 
-PROCEDURE set_singleton (xx: T;  s: ByteSize) =
+PROCEDURE set_singleton (xx: T;  s: ByteSize;  t: IType) =
   BEGIN
-    xx.child.set_singleton (s);
+    xx.child.set_singleton (s, t);
   END set_singleton;
 
 (*------------------------------------------------- Word.T bit operations ---*)
 
-PROCEDURE not (xx: T) =
+PROCEDURE not (xx: T;  t: IType) =
   BEGIN
-    xx.child.not ();
+    xx.child.not (t);
   END not;
 
-PROCEDURE and (xx: T) =
+PROCEDURE and (xx: T;  t: IType) =
   BEGIN
-    xx.child.and ();
+    xx.child.and (t);
   END and;
 
-PROCEDURE or (xx: T) =
+PROCEDURE or (xx: T;  t: IType) =
   BEGIN
-    xx.child.or ();
+    xx.child.or (t);
   END or;
 
-PROCEDURE xor (xx: T) =
+PROCEDURE xor (xx: T;  t: IType) =
   BEGIN
-    xx.child.xor ();
+    xx.child.xor (t);
   END xor;
 
-PROCEDURE shift (xx: T) =
+PROCEDURE shift (xx: T;  t: IType) =
   BEGIN
-    xx.child.shift ();
+    xx.child.shift (t);
   END shift;
 
-PROCEDURE shift_left (xx: T) =
+PROCEDURE shift_left (xx: T;  t: IType) =
   BEGIN
-    xx.child.shift_left ();
+    xx.child.shift_left (t);
   END shift_left;
 
-PROCEDURE shift_right (xx: T) =
+PROCEDURE shift_right (xx: T;  t: IType) =
   BEGIN
-    xx.child.shift_right ();
+    xx.child.shift_right (t);
   END shift_right;
 
-PROCEDURE rotate (xx: T) =
+PROCEDURE rotate (xx: T;  t: IType) =
   BEGIN
-    xx.child.rotate ();
+    xx.child.rotate (t);
   END rotate;
 
-PROCEDURE rotate_left (xx: T) =
+PROCEDURE rotate_left (xx: T;  t: IType) =
   BEGIN
-    xx.child.rotate_left ();
+    xx.child.rotate_left (t);
   END rotate_left;
 
-PROCEDURE rotate_right (xx: T) =
+PROCEDURE rotate_right (xx: T;  t: IType) =
   BEGIN
-    xx.child.rotate_right ();
+    xx.child.rotate_right (t);
   END rotate_right;
 
-PROCEDURE extract (xx: T;  sign: BOOLEAN) =
+PROCEDURE widen (xx: T;  sign: BOOLEAN) =
   BEGIN
-    xx.child.extract (sign);
+    xx.child.widen (sign);
+  END widen;
+
+PROCEDURE chop (xx: T) =
+  BEGIN
+    xx.child.chop ();
+  END chop;
+
+PROCEDURE extract (xx: T;  t: IType;  sign: BOOLEAN) =
+  BEGIN
+    xx.child.extract (t, sign);
   END extract;
 
-PROCEDURE extract_n (xx: T;  sign: BOOLEAN;  n: INTEGER) =
+PROCEDURE extract_n (xx: T;  t: IType;  sign: BOOLEAN;  n: INTEGER) =
   BEGIN
-    xx.child.extract_n (sign, n);
+    xx.child.extract_n (t, sign, n);
   END extract_n;
 
-PROCEDURE extract_mn (xx: T;  sign: BOOLEAN;  m, n: INTEGER) =
+PROCEDURE extract_mn (xx: T;  t: IType;  sign: BOOLEAN;  m, n: INTEGER) =
   BEGIN
-    xx.child.extract_mn (sign, m, n);
+    xx.child.extract_mn (t, sign, m, n);
   END extract_mn;
 
-PROCEDURE insert (xx: T) =
+PROCEDURE insert (xx: T;  t: IType) =
   BEGIN
-    xx.child.insert ();
+    xx.child.insert (t);
   END insert;
 
-PROCEDURE insert_n (xx: T;  n: INTEGER) =
+PROCEDURE insert_n (xx: T;  t: IType;  n: INTEGER) =
   BEGIN
-    xx.child.insert_n (n);
+    xx.child.insert_n (t, n);
   END insert_n;
 
-PROCEDURE insert_mn (xx: T;  m, n: INTEGER) =
+PROCEDURE insert_mn (xx: T;  t: IType;  m, n: INTEGER) =
   BEGIN
-    xx.child.insert_mn (m, n);
+    xx.child.insert_mn (t, m, n);
   END insert_mn;
 
 (*------------------------------------------------ misc. stack/memory ops ---*)
@@ -884,9 +772,9 @@ PROCEDURE pop (xx: T;  t: Type) =
     xx.child.pop (t);
   END pop;
 
-PROCEDURE copy_n (xx: T;  t: MType;  overlap: BOOLEAN) =
+PROCEDURE copy_n (xx: T;  u: IType;  t: MType;  overlap: BOOLEAN) =
   BEGIN
-    xx.child.copy_n (t, overlap);
+    xx.child.copy_n (u, t, overlap);
   END copy_n;
 
 PROCEDURE copy (xx: T;  n: INTEGER;  t: MType;  overlap: BOOLEAN) =
@@ -894,9 +782,9 @@ PROCEDURE copy (xx: T;  n: INTEGER;  t: MType;  overlap: BOOLEAN) =
     xx.child.copy (n, t, overlap);
   END copy;
 
-PROCEDURE zero_n (xx: T;  t: MType) =
+PROCEDURE zero_n (xx: T;  u: IType;  t: MType) =
   BEGIN
-    xx.child.zero_n (t);
+    xx.child.zero_n (u, t);
   END zero_n;
 
 PROCEDURE zero (xx: T;  n: INTEGER;  t: MType) =
@@ -913,59 +801,42 @@ PROCEDURE loophole (xx: T;  from, two: ZType) =
 
 (*------------------------------------------------ traps & runtime checks ---*)
 
-PROCEDURE assert_fault (xx: T) =
+PROCEDURE abort (xx: T;  code: RuntimeError) =
   BEGIN
-    xx.child.assert_fault ();
-  END assert_fault;
+    xx.child.abort (code);
+  END abort;
 
-PROCEDURE narrow_fault (xx: T) =
+PROCEDURE check_nil (xx: T;  code: RuntimeError) =
   BEGIN
-    xx.child.narrow_fault ();
-  END narrow_fault;
-
-PROCEDURE return_fault (xx: T) =
-  BEGIN
-    xx.child.return_fault ();
-  END return_fault;
-
-PROCEDURE case_fault (xx: T) =
-  BEGIN
-    xx.child.case_fault ();
-  END case_fault;
-
-PROCEDURE typecase_fault (xx: T) =
-  BEGIN
-    xx.child.typecase_fault ();
-  END typecase_fault;
-
-PROCEDURE check_nil (xx: T) =
-  BEGIN
-    xx.child.check_nil ();
+    xx.child.check_nil (code);
   END check_nil;
 
-PROCEDURE check_lo (xx: T;  READONLY i: Target.Int) =
+PROCEDURE check_lo (xx: T;  t: IType;  READONLY i: Target.Int;
+                    code: RuntimeError) =
   BEGIN
-    xx.child.check_lo (i);
+    xx.child.check_lo (t, i, code);
   END check_lo;
 
-PROCEDURE check_hi (xx: T;  READONLY i: Target.Int) =
+PROCEDURE check_hi (xx: T;  t: IType;  READONLY i: Target.Int;
+                    code: RuntimeError) =
   BEGIN
-    xx.child.check_hi (i);
+    xx.child.check_hi (t, i, code);
   END check_hi;
 
-PROCEDURE check_range (xx: T;  READONLY a, b: Target.Int) =
+PROCEDURE check_range (xx: T;  t: IType;  READONLY a, b: Target.Int;
+                       code: RuntimeError) =
   BEGIN
-    xx.child.check_range (a, b);
+    xx.child.check_range (t, a, b, code);
   END check_range;
 
-PROCEDURE check_index (xx: T) =
+PROCEDURE check_index (xx: T;  t: IType;  code: RuntimeError) =
   BEGIN
-    xx.child.check_index ();
+    xx.child.check_index (t, code);
   END check_index;
 
-PROCEDURE check_eq (xx: T) =
+PROCEDURE check_eq (xx: T;  t: IType;  code: RuntimeError) =
   BEGIN
-    xx.child.check_eq ();
+    xx.child.check_eq (t, code);
   END check_eq;
 
 (*---------------------------------------------------- address arithmetic ---*)
@@ -975,9 +846,9 @@ PROCEDURE add_offset (xx: T; i: INTEGER) =
     xx.child.add_offset (i);
   END add_offset;
 
-PROCEDURE index_address (xx: T;  size: INTEGER) =
+PROCEDURE index_address (xx: T;  t: IType;  size: INTEGER) =
   BEGIN
-    xx.child.index_address (size);
+    xx.child.index_address (t, size);
   END index_address;
 
 (*------------------------------------------------------- procedure calls ---*)

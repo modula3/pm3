@@ -139,18 +139,14 @@ PROCEDURE SetImage (cube: T; dblBuffer: BOOLEAN; w: REAL) =
   VAR dx, dy, rx, lx, by, ty: REAL; dom: Rect.T;
   BEGIN
     LOCK cube.mu DO
-      cube.doubleBuffer := dblBuffer;
-      IF cube.offscreen # NIL THEN
-        Trestle.Delete(cube.offscreen)
-      ELSIF dblBuffer THEN
-        cube.offscreen := NEW(VBT.Leaf);
-      END;
       dom := VBT.Domain (cube.vbt);
+      cube.doubleBuffer := dblBuffer;
       IF dblBuffer THEN
         VAR
           trsl := Trestle.ScreenOf(cube.vbt, Point.Origin).trsl;
           st := VBT.ScreenTypeOf(cube.vbt);
         BEGIN
+          cube.offscreen := NEW(VBT.Leaf);
           IF trsl # NIL AND st # NIL THEN
             Trestle.Attach(cube.offscreen, trsl);
             Trestle.InstallOffscreen(
@@ -159,6 +155,9 @@ PROCEDURE SetImage (cube: T; dblBuffer: BOOLEAN; w: REAL) =
             dom := VBT.Domain(cube.offscreen)
           END;
         END;
+      ELSE (* NOT dblBuffer *)
+        IF cube.offscreen # NIL THEN Trestle.Delete(cube.offscreen) END;
+        cube.offscreen := NIL;
       END;
       InitCRM (cube.imageCRM);
       IF Rect.IsEmpty (dom) THEN RETURN END;
@@ -262,6 +261,15 @@ PROCEDURE CopyToVisibleBuffer (cube: T) =
     VBT.Sync (cube.vbt);
     pixmap.free ();
   END CopyToVisibleBuffer;
+
+(**
+PROCEDURE PrintRect (tag: TEXT;  READONLY r: Rect.T) =
+  BEGIN
+    IO.Put (tag & " = ["
+            & Fmt.Int (r.west) & ".." & Fmt.Int (r.east) & " x "
+            & Fmt.Int (r.north) & ".." & Fmt.Int (r.south) & "]\n");
+  END PrintRect;
+**)
 
 PROCEDURE InitObject (VAR obj: Object) =
   BEGIN

@@ -2,8 +2,7 @@
 % All rights reserved.
 % See the file COPYRIGHT for a full description.
 %
-% Last modified on Tue Mar  5 11:46:27 PST 1996 by heydon
-%      modified on Tue Jan 24 08:29:28 PST 1995 by kalsow
+% Last modified on Tue Jan 24 08:29:28 PST 1995 by kalsow
 %      modified on Fri May  7 17:38:10 PDT 1993 by muller
 %      modified on Wed May  5 11:53:58 PDT 1993 by mjordan
 
@@ -34,7 +33,6 @@ readonly _FloatPieces = {
   "NEXT"       : _float_be,
   "NT386"      : _float_le,
   "NT386GNU"   : _float_le,
-  "NetBSDi386" : _float_le,
   "OKI"        : _float_le,
   "SEQUENT"    : _float_le,
   "SOLgnu"     : _float_be,
@@ -44,7 +42,9 @@ readonly _FloatPieces = {
   "SUN386"     : [ "IEEE", "IEEE-le", "SUN386" ],
   "Tru64v5"    : _float_le,
   "UMAX"       : _float_le,
-  "VAX"        : [ "VAX" ]
+  "VAX"        : [ "VAX" ],
+  "I386_DARWIN": _float_le, % FIXME: is this correct?
+  "PPC_DARWIN" : _float_be  % FIXME: is this correct?
 }
 
 if _FloatPieces contains TARGET

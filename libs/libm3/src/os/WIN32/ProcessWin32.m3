@@ -2,17 +2,18 @@
 (* All rights reserved.                                        *)
 (* See the file COPYRIGHT for a full description.              *)
 (*                                                             *)
-(* Portions Copyright 1996, Critical Mass, Inc.                *)
+(* Portions Copyright 1996-2000, Critical Mass, Inc.           *)
+(* See file COPYRIGHT-CMASS for details.                       *)
 (*                                                             *)
-(* Last modified on Thu May  2 15:18:05 PDT 1996 by heydon     *)
-(*      modified on Tue Dec 20 08:43:00 PST 1994 by kalsow     *)
+(* Last modified on Tue Dec 20 08:43:00 PST 1994 by kalsow     *)
 (*      modified on Wed Sep 22 11:52:08 PDT 1993 by mcjones    *)
 (* Written by Mick Jordan, Winter-Spring 1993                  *)
 
 UNSAFE MODULE ProcessWin32 EXPORTS Process;
 
-IMPORT File, FileWin32, M3toC, OSError, OSErrorWin32, Pathname,
+IMPORT File, FileWin32, LazyConsole, M3toC, OSError, OSErrorWin32, Pathname,
   RTProcess, Text, WinDef, WinNT, WinBase, Word;
+(* IMPORT RTIO; *)
 
 REVEAL T = BRANDED OBJECT 
     waitOk := TRUE;
@@ -31,7 +32,7 @@ PROCEDURE Create(
   : T RAISES {OSError.E} =
   VAR
     t := NEW(T);
-    cmdLine := ConvertArgs(cmd, params);
+    cmdLine : WinNT.LPCSTR;
     lpEnvironment: WinDef.LPVOID := NIL;
     wdAddr: WinNT.LPSTR := NIL;
     startupInfo := WinBase.STARTUPINFO{
@@ -50,27 +51,33 @@ PROCEDURE Create(
       hStdError     := PrepHandle (stderr)};
   BEGIN
     TRY
+      IF cmd # NIL AND Text.GetChar(cmd, 0) = '`' THEN
+        cmdLine := ConvertArgsQ(Text.Sub(cmd, 1), params);
+      ELSE
+        cmdLine := ConvertArgs(cmd, params);
+      END;
       IF env # NIL THEN lpEnvironment := ADR(ConvertEnv(env)[0]) END;
-      IF wd # NIL THEN wdAddr := M3toC.TtoS(wd) END;
+      IF wd # NIL THEN wdAddr := M3toC.SharedTtoS(wd) END;
       IF WinBase.CreateProcess(
-    	   lpApplicationName := NIL,
-    	   lpCommandLine := cmdLine,
-    	   lpProcessAttributes := NIL,
-    	   lpThreadAttributes := NIL,
-    	   bInheritHandles := 1,
-    	   dwCreationFlags := WinBase.NORMAL_PRIORITY_CLASS,
-    	   lpEnvironment := lpEnvironment,
-    	   lpCurrentDirectory := wdAddr,
-    	   lpStartupInfo := ADR(startupInfo),
-    	   lpProcessInformation := ADR(t.info)) = 0
+           lpApplicationName := NIL,
+           lpCommandLine := cmdLine,
+           lpProcessAttributes := NIL,
+           lpThreadAttributes := NIL,
+           bInheritHandles := 1,
+           dwCreationFlags := WinBase.NORMAL_PRIORITY_CLASS,
+           lpEnvironment := lpEnvironment,
+           lpCurrentDirectory := wdAddr,
+           lpStartupInfo := ADR(startupInfo),
+           lpProcessInformation := ADR(t.info)) = 0
       THEN
         OSErrorWin32.Raise()
-      END
+      END;
     FINALLY
       (* close the local copy of any duplicated handles *)
       CloseHandle (startupInfo.hStdInput);
       CloseHandle (startupInfo.hStdOutput);
-      CloseHandle (startupInfo.hStdError)
+      CloseHandle (startupInfo.hStdError);
+      IF wd # NIL THEN M3toC.FreeSharedS(wd, wdAddr); END;
     END;
     RETURN t
   END Create;
@@ -99,18 +106,19 @@ PROCEDURE CloseHandle (h: WinNT.HANDLE)
 
 PROCEDURE ConvertArgs(cmd: Pathname.T; READONLY params: ARRAY OF TEXT)
   : WinNT.LPCSTR =
+  CONST Q = "\"";
   VAR
     l, k := 0;
     result: REF ARRAY OF CHAR;
-    cmdL := Text.Length(cmd);
+    cmdL := Text.Length(cmd)+2;
   BEGIN
     INC(l, cmdL+1);
     FOR i := 0 TO NUMBER(params)-1 DO
       INC(l, Text.Length(params[i])+1)
     END;
     result := NEW(REF ARRAY OF CHAR, l+1);
-    k := l; l := 0; result[l] := '\000';
-    Text.SetChars(result^, cmd); 
+    k := l; l := 0; result[k] := '\000';
+    Text.SetChars(result^, Q & cmd & Q);
     INC(l, cmdL); result[l] := ' '; INC(l);
     FOR i := 0 TO NUMBER(params)-1 DO
       Text.SetChars(SUBARRAY(result^, l, k-l), params[i]);
@@ -119,6 +127,39 @@ PROCEDURE ConvertArgs(cmd: Pathname.T; READONLY params: ARRAY OF TEXT)
     END;
     RETURN ADR(result[0])
   END ConvertArgs;
+
+PROCEDURE ConvertArgsQ(cmd: Pathname.T; READONLY params: ARRAY OF TEXT)
+  : WinNT.LPCSTR =
+  CONST Q = "\"";
+  VAR
+    l, k := 0;
+    result: REF ARRAY OF CHAR;
+    cmdL := Text.Length(cmd)+2;
+  BEGIN
+    INC(l, cmdL+1);
+    FOR i := 0 TO NUMBER(params)-1 DO
+      INC(l, Text.Length(params[i])+3)
+    END;
+    result := NEW(REF ARRAY OF CHAR, l+1);
+    k := l; l := 0; result[k] := '\000';
+    Text.SetChars(result^, Q & cmd & Q);
+    INC(l, cmdL); result[l] := ' '; INC(l);
+    FOR i := 0 TO NUMBER(params)-1 DO
+      Text.SetChars(SUBARRAY(result^, l, k-l), Q & params[i] & Q);
+      INC(l, Text.Length(params[i])+2);
+      result[l] := ' '; INC(l)
+    END;
+    (*
+    FOR i := FIRST(result^) TO LAST(result^) DO
+      RTIO.PutChar(result^[i]);
+      RTIO.Flush();
+    END;
+    RTIO.PutChar('\r');
+    RTIO.PutChar('\n');
+    RTIO.Flush();
+    *)
+    RETURN ADR(result[0])
+  END ConvertArgsQ;
 
 PROCEDURE ConvertEnv(env: REF ARRAY OF TEXT): REF ARRAY OF CHAR =
   VAR k: CARDINAL; chars: REF ARRAY OF CHAR;
@@ -146,20 +187,18 @@ PROCEDURE Wait(p: T): ExitCode =
   BEGIN
     IF NOT p.waitOk THEN RAISE WaitAlreadyCalled END;
     p.waitOk := FALSE;
-
     TRY
       IF WinBase.WaitForSingleObject(p.info.hProcess, WinBase.INFINITE) #
-         WinBase.WAIT_OBJECT_0 THEN RAISE InternalError 
+	 WinBase.WAIT_OBJECT_0 THEN RAISE InternalError 
       END;
       IF WinBase.GetExitCodeProcess(p.info.hProcess, ADR(status)) = 0 THEN
-        error := WinBase.GetLastError();
-        RAISE InternalError
+	error := WinBase.GetLastError();
+	RAISE InternalError
       END;
     FINALLY
-      CloseHandle(p.info.hProcess) ;
-      CloseHandle(p.info.hThread) ;
+      TRY CloseHandle(p.info.hProcess) EXCEPT ELSE END;
+      TRY CloseHandle(p.info.hThread) EXCEPT ELSE END;
     END;
-
     RETURN Word.And(status, LAST(ExitCode))
   END Wait;
 
@@ -192,14 +231,15 @@ VAR
 PROCEDURE GetFileHandle(hd: WinDef.DWORD; ds: FileWin32.DirectionSet): File.T =
   VAR h := WinBase.GetStdHandle(hd);
   BEGIN
-    IF (h = NIL)
-      OR (h = LOOPHOLE (WinBase.INVALID_HANDLE_VALUE, WinDef.HANDLE)) THEN
-      RETURN NIL;
+    IF (h # NIL)
+      AND (h # LOOPHOLE (WinBase.INVALID_HANDLE_VALUE, WinDef.HANDLE)) THEN
+      TRY RETURN FileWin32.New(h, ds)
+      EXCEPT OSError.E => (* not available *)
+      END;
     END;
-    TRY RETURN FileWin32.New(h, ds)
-    EXCEPT OSError.E => (* not available *)
-    END;
-    RETURN NIL;
+    (* if we can't get the standard handles, we might be a GUI program
+       so we'll lazily allocate a console if needed. *)
+    RETURN LazyConsole.New (hd, ds);
   END GetFileHandle;
 
 PROCEDURE GetStandardFileHandles(VAR stdin, stdout, stderr: File.T) =
@@ -208,30 +248,40 @@ PROCEDURE GetStandardFileHandles(VAR stdin, stdout, stderr: File.T) =
   END GetStandardFileHandles;
 
 PROCEDURE GetWorkingDirectory(): Pathname.T RAISES {OSError.E} =
-  PROCEDURE DoIt(VAR chars: ARRAY OF CHAR): INTEGER RAISES {OSError.E} =
-    BEGIN
-      WITH rc = WinBase.GetCurrentDirectory(NUMBER(chars), ADR(chars[0])) DO
-        IF rc = 0 THEN OSErrorWin32.Raise() END;
-        RETURN rc
-      END
-    END DoIt;
-  VAR chars: ARRAY [0..63] OF CHAR; rc := DoIt(chars);
+  VAR chars: ARRAY [0..63] OF CHAR; rc := SetCWD(chars);
   BEGIN
     IF rc < NUMBER(chars) THEN
       RETURN Text.FromChars(SUBARRAY(chars, 0, rc))
     END;
     WITH refChars = NEW(REF ARRAY OF CHAR, rc+1) DO
-      rc := DoIt(refChars^);
+      rc := SetCWD(refChars^);
       IF rc > NUMBER(refChars^) THEN RAISE InternalError END;
       RETURN Text.FromChars(SUBARRAY(refChars^, 0, rc))
     END
  END GetWorkingDirectory;
 
+PROCEDURE SetCWD(VAR chars: ARRAY OF CHAR): INTEGER RAISES {OSError.E} =
+  VAR rc := WinBase.GetCurrentDirectory(NUMBER(chars), ADR(chars[0]));
+  BEGIN
+    IF rc <= 0 THEN OSErrorWin32.Raise() END;
+    IF (1 < rc) AND (rc <= NUMBER(chars))
+      AND (chars[rc-1] = '\134')
+      AND (chars[rc-2] # ':')
+      AND (chars[rc-2] # '\134') THEN
+      DEC(rc);   (* delete the trailing backslash *)
+    END;
+    RETURN rc
+  END SetCWD;
+
 PROCEDURE SetWorkingDirectory(path: Pathname.T) RAISES {OSError.E}=
+  VAR fname := M3toC.SharedTtoS(path);  err: INTEGER;
   BEGIN 
-    IF WinBase.SetCurrentDirectory(M3toC.TtoS(path)) = 0 THEN
-      OSErrorWin32.Raise()
-    END
+    IF WinBase.SetCurrentDirectory(fname) = 0 THEN
+      err := WinBase.GetLastError();
+      M3toC.FreeSharedS(path, fname);
+      OSErrorWin32.Raise0(err);
+    END;
+    M3toC.FreeSharedS(path, fname);
   END SetWorkingDirectory;
 
 BEGIN

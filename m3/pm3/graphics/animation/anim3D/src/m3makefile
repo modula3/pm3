@@ -10,7 +10,7 @@ import ("vbtkit")
 
 Interface ("X_PEX_Base")
 Interface ("X_PEX_BaseProxy")
-if PLATFORM_SUPPORTS_X and PLATFORM_SUPPORTS_DECPEX
+if SYSTEM_LIBS contains "X11" and SYSTEM_LIBS contains "DECPEX"
   include_dir ("x-pex")
 else
   include_dir ("no-x-pex")
@@ -18,7 +18,7 @@ end
 
 Interface ("X_OpenGL_Base")
 Interface ("X_OpenGL_BaseProxy")
-if PLATFORM_SUPPORTS_X and PLATFORM_SUPPORTS_OPENGL
+if SYSTEM_LIBS contains "X11" and SYSTEM_LIBS contains "OPENGL"
   include_dir ("x-opengl")
 else
   include_dir ("no-x-opengl")
@@ -26,7 +26,7 @@ end
 
 Interface ("Win_OpenGL_Base")
 Interface ("Win_OpenGL_BaseProxy")
-if equal (OS_TYPE, "WIN32") and PLATFORM_SUPPORTS_OPENGL
+if equal (OS_TYPE, "WIN32") and SYSTEM_LIBS contains "OPENGL"
   include_dir ("win-opengl")
 else
   include_dir ("no-win-opengl")
@@ -84,7 +84,7 @@ interface ("GraphicsBasePrivate")
 
 /*** Property Related Stuff ***/
 
-Module    ("PropList")
+List ("Prop", "Prop")
 
 /*** Animation Handle ***/
 

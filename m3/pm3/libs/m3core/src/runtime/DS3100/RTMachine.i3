@@ -80,7 +80,7 @@ CONST
   (* Indicates whether this platform supports the stack walking functions
      defined in the "RTStack" interface. *)
 
-TYPE FrameInfo = RECORD pc, sp: ADDRESS END;
+TYPE FrameInfo = RECORD pc, sp, unwind: ADDRESS END;
 
 END RTMachine.
 

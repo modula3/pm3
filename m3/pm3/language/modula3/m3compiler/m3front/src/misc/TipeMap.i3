@@ -20,15 +20,16 @@ TYPE
  (*26*) Array_1, Array_2, Array_3, Array_4, Array_5, Array_6, Array_7, Array_8,
  (*34*) Skip_1,  Skip_2,  Skip_3,  Skip_4,  Skip_5,  Skip_6,  Skip_7,  Skip_8,
  (*42*) SkipF_1, SkipF_2, SkipF_3, SkipF_4, SkipF_5, SkipF_6, SkipF_7, SkipF_8,
- (*50*) SkipB_1, SkipB_2, SkipB_3, SkipB_4, SkipB_5, SkipB_6, SkipB_7, SkipB_8
+ (*50*) SkipB_1, SkipB_2, SkipB_3, SkipB_4, SkipB_5, SkipB_6, SkipB_7, SkipB_8,
+ (*58*) TransientRef
    };
 
 PROCEDURE Start ();
 (* begin the construction of a map *)
 
 PROCEDURE Finish (a, b, c, d: TEXT := NIL): INTEGER;
-(* finish the map, allocate global space for it and emit it.  Returns
-   the global offset of the generated map *)
+(* finish the map, allocate global constant space for it and emit it.  Returns
+   the offset of the generated map in the global constant pool. *)
 
 PROCEDURE Add (offset: INTEGER;  o: Op;  arg: INTEGER);
 (* add '(o, arg)' as the description for the bits

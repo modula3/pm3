@@ -8,8 +8,11 @@ EXPORTS BaseScheduledClientFile, InternalBaseScheduledClientFile;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:36  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:47  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:36  hosking
+    Import of GRAS3 1.1
 
     Revision 1.16  1998/01/21 14:11:05  roland
     Method baseName now in public interface.
@@ -83,8 +86,8 @@ EXPORTS BaseScheduledClientFile, InternalBaseScheduledClientFile;
 IMPORT
   Pathname,
   Page,
-  PageFile, BufferedPageFile, PageFileSystem,
-  Access, PageLock, Transaction,
+  PageFile, PageFileSystem,
+  Access, PageLock, Txn,
   RemoteFile,
   OriginalMedia, ShadowMedia,
   BaseScheduledClientRessource, InternalBaseScheduledClientRessource,
@@ -95,8 +98,8 @@ REVEAL
     ressource			:BaseScheduledClientRessource.T;
     originalMedia		:OriginalMedia.T;
     shadowMedia			:ShadowMedia.T;
-    shadowName			:Pathname.T;
-    baseName			:Pathname.T;
+    <*TRANSIENT*> shadowName	:Pathname.T;
+    <*TRANSIENT*> baseName	:Pathname.T;
 
   OVERRIDES
     open			:= Open;
@@ -157,7 +160,7 @@ PROCEDURE Open			(         self		:T;
                              temporary := TRUE);
       (* make sure shadow path exists *)
       PageFileSystem.MakePath(Pathname.Prefix(self.shadowName));
-      shadowFile := NEW (BufferedPageFile.T).init (self.shadowName, new := TRUE);
+      shadowFile := NEW (PageFile.T).init (self.shadowName, new := TRUE);
       shadowFile.open ();
       self.shadowMedia := NEW (ShadowMedia.T).init (shadowFile);
     END;
@@ -279,7 +282,7 @@ PROCEDURE GetAccessMode		(         self		:T) :Access.Mode =
   END GetAccessMode;
 
   
-PROCEDURE GetTransactionLevel	(         self		:T) :Transaction.Level =
+PROCEDURE GetTransactionLevel	(         self		:T) :Txn.Level =
   BEGIN
     RETURN self.ressource.getTransactionLevel ();
   END GetTransactionLevel;

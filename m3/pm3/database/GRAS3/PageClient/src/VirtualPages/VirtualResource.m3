@@ -7,8 +7,11 @@ MODULE VirtualResource EXPORTS VirtualResource, InternalVirtualResource;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:37  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:48  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:37  hosking
+    Import of GRAS3 1.1
 
     Revision 1.22  1998/08/27 12:27:22  roland
     When copyinf files, make sure the path for the destination exists.
@@ -124,12 +127,13 @@ MODULE VirtualResource EXPORTS VirtualResource, InternalVirtualResource;
 
  | ------------------------------------------------------------------------
  *)
-IMPORT Pathname, TextSeq, Text;
-IMPORT PageFile, PageFileSystem, PageCache, Access, Transaction,
+IMPORT Pathname, TextTransientSeq AS TextSeq, Text;
+IMPORT PageFile, PageFileSystem, PageCache, Access, Txn,
        VirtualPageEvent, ScheduledClientRessource, ScheduledClientFile,
        BaseScheduledClientRessource, ErrorSupport, ClientInfoSeq,
        ScheduledClientFileTblStack, ScheduledClientFileTbl,
-       InternalBaseScheduledClientFile, TextSetDef, TextSet, RuleEngine;
+       InternalBaseScheduledClientFile, TextTransientSetDef AS TextSetDef,
+       TextTransientSet AS TextSet, RuleEngine;
 
 REVEAL
   T =
@@ -154,6 +158,7 @@ REVEAL
 
       beginTransaction    := BeginTransaction;
       commitTransaction   := CommitTransaction;
+      chainTransaction    := ChainTransaction;
       abortTransaction    := AbortTransaction;
       getTransactionLevel := GetTransactionLevel;
 
@@ -283,6 +288,7 @@ PROCEDURE CommitTransaction (self: T)
            list below.  If the entry was the last entry in the stack, all
            files in the list have to be closed. *)
         MergeOrClose(self);
+
       EXCEPT
       | ScheduledClientRessource.NotInTransaction =>
           RAISE NotInTransaction;
@@ -299,6 +305,35 @@ PROCEDURE CommitTransaction (self: T)
       self.ruleEngineId, self.scheduledRessource.getBaseName(), self,
       isPreEvent := FALSE, level := GetTransactionLevel(self) + 1);
   END CommitTransaction;
+
+
+PROCEDURE ChainTransaction (self: T)
+  RAISES {NotInTransaction, FatalError} =
+  BEGIN
+    VirtualPageEvent.SignalChain(
+      self.ruleEngineId, self.scheduledRessource.getBaseName(), self,
+      isPreEvent := TRUE, level := GetTransactionLevel(self));
+    PageCache.BeginAccess();
+    TRY
+      TRY
+        self.scheduledRessource.chainTransaction();
+
+      EXCEPT
+      | ScheduledClientRessource.NotInTransaction =>
+          RAISE NotInTransaction;
+      | ScheduledClientRessource.FatalError (info) =>
+          RAISE FatalError(ErrorSupport.Propagate(
+                             "VirtualResource.ChainTransaction",
+                             "ScheduledClientRessource.FatalError", info));
+      END;
+    FINALLY
+      PageCache.EndAccess();
+    END;
+    RuleEngine.NotifyChainTransaction(self.ruleEngineId);
+    VirtualPageEvent.SignalChain(
+      self.ruleEngineId, self.scheduledRessource.getBaseName(), self,
+      isPreEvent := FALSE, level := GetTransactionLevel(self));
+  END ChainTransaction;
 
 
 PROCEDURE AbortTransaction (self: T)
@@ -355,8 +390,8 @@ PROCEDURE AbortTransaction (self: T)
   END AbortTransaction;
 
 
-PROCEDURE GetTransactionLevel (self: T): Transaction.Level =
-  VAR level: Transaction.Level;
+PROCEDURE GetTransactionLevel (self: T): Txn.Level =
+  VAR level: Txn.Level;
   BEGIN
     PageCache.BeginAccess();
     level := self.scheduledRessource.getTransactionLevel();
@@ -1004,7 +1039,7 @@ PROCEDURE MergeOrClose (self: T) RAISES {FatalError} =
 
 
 TYPE
-  TextSetList = REF RECORD
+  TextSetList = <*TRANSIENT*> REF RECORD
                       set : TextSet.T;
                       next: TextSetList;
                     END;

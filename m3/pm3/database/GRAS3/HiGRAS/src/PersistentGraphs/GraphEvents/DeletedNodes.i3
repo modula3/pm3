@@ -7,8 +7,11 @@ INTERFACE DeletedNodes;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:32  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:46  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:32  hosking
+    Import of GRAS3 1.1
 
     Revision 1.1  1997/11/12 15:23:48  roland
     Specialized event handler subsystem for PersistentGraphs
@@ -19,7 +22,7 @@ INTERFACE DeletedNodes;
 *)
 (***************************************************************************)
 
-IMPORT Node, Transaction;
+IMPORT Node, Txn;
 
 (* DeletedNodes store information about deleted Nodes for a
    GraphActivatedActions.T.  A deleted node is characterized by a node, a
@@ -34,13 +37,13 @@ TYPE
     METHODS
       init (): T;
 
-      insert (node: Node.T; level: Transaction.Level; timestamp: CARDINAL);
+      insert (node: Node.T; level: Txn.Level; timestamp: CARDINAL);
               (* insert (node, level, timestamp) in set *)
 
       clear ();
              (* clear set *)
 
-      killTransaction (level: Transaction.Level);
+      killTransaction (level: Txn.Level);
                        (* remove all deleted nodes with a higher or equal
                           transaction level *)
 

@@ -37,6 +37,7 @@ PROCEDURE Check (p: P) =
     p.info.isEmpty   := FALSE;
     p.info.isSolid   := TRUE;
     p.info.hash      := 4;
+    p.info.isTransient := TRUE;
   END Check;
 
 PROCEDURE Compiler (<*UNUSED*> p: P) =
@@ -57,7 +58,7 @@ PROCEDURE FPrinter (<*UNUSED*>t: Type.T;  VAR x: M3.FPInfo) =
 
 PROCEDURE GenMap (<*UNUSED*> p: P;
                   <*UNUSED*> offset, size: INTEGER;
-                  <*UNUSED*> refs_only: BOOLEAN) =
+                  <*UNUSED*> refs_only, transient: BOOLEAN) =
   BEGIN
     (* generate nothing *)
   END GenMap;

@@ -42,7 +42,7 @@ CONST Brand = "ConvertPacking 1.0";
 TYPE
   T <: Public;
 
-  Public = OBJECT METHODS
+  Public = <*TRANSIENT*> ROOT OBJECT METHODS
     init(typecode: INTEGER; from: RTPacking.T; local: RTPacking.T; 
          VAR (*OUT*) nDim, fromEltPack, toEltPack: INTEGER): T RAISES {Error};
     getDim(VAR (*OUT*) nDim, fromEltPack, toEltPack: INTEGER);
@@ -78,7 +78,7 @@ TYPE
 *)
 
 TYPE ReadVisitor <: RVPublic;
-     RVPublic = OBJECT METHODS 
+     RVPublic = <*TRANSIENT*> ROOT OBJECT METHODS 
        readData(VAR data: ARRAY OF CHAR) RAISES
         {Rd.EndOfFile, Rd.Failure, Thread.Alerted};
        skipData(length: INTEGER) RAISES
@@ -93,7 +93,7 @@ TYPE ReadVisitor <: RVPublic;
    over. *)
 
 TYPE WriteVisitor <: WVPublic;
-     WVPublic = OBJECT METHODS 
+     WVPublic = <*TRANSIENT*> ROOT OBJECT METHODS 
        writeData(VAR data: ARRAY OF CHAR) RAISES
         {Wr.Failure, Thread.Alerted};
        skipData(length: INTEGER) RAISES

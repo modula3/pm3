@@ -81,7 +81,7 @@ PROCEDURE Compile (ce: CallExpr.T) =
       ELSE
         Error.Warn (2, "result of NUMBER too large");
         CG.Load_integer (Target.Integer.max);
-        CG.Check_hi (TInt.Zero);
+        CG.Check_hi (TInt.Zero, CG.RuntimeError.ValueOutOfRange);
       END;
     END;
   END Compile;
@@ -131,6 +131,7 @@ PROCEDURE Initialize () =
                                  CallExpr.NotBoolean,
                                  CallExpr.NotBoolean,
                                  Fold,
+                                 CallExpr.NoBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

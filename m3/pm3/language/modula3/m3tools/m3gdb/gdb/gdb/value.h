@@ -70,6 +70,7 @@ struct value
     CORE_ADDR frame_addr;
 
     /* Type of the value.  */
+    char m3_uid [9];
     struct type *type;
 
     /* If a value represents a C++ object, then the `type' field gives

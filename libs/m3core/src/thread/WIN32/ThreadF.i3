@@ -7,24 +7,20 @@
 
 INTERFACE ThreadF;
 
-(*--------------------------------------------- exception handling support --*)
-
-PROCEDURE GetCurrentHandlers(): ADDRESS;
-(* == RETURN WinBase.TlsGetValue(handlersIndex) *)
-
-PROCEDURE SetCurrentHandlers(h: ADDRESS);
-(* == WinBase.TlsSetValue(handlersIndex, h) *)
-
 (*--------------------------------------------- garbage collector support ---*)
 
 PROCEDURE SuspendOthers ();
-(* Suspend all threads except the caller's *)
+(* Suspend all threads except the caller's.  NOTE: Once the other threads
+   are suspended, the remaining thread cannot use any of the synchronization
+   operations (Signal, Wait, Broadcast, Pause).  Otherwise, it may deadlock
+   with one of the suspended threads (by trying to acquire the internal
+   lock "cm"). *)
 
 PROCEDURE ResumeOthers ();
 (* Resume the threads suspended by "SuspendOthers" *)
 
 PROCEDURE ProcessStacks (p: PROCEDURE (start, stop: ADDRESS));
-(* Apply p to each thread stack, with start and stop being the limits
+(* Apply p to each thread stack, with [start..stop] being the limits
    of the stack.  All other threads must be suspended.  ProcessStacks
    exists solely for the garbage collector.  *)
 

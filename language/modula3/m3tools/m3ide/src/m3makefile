@@ -2,7 +2,6 @@
 
 import("libm3")
 import("formsvbt")
-import("m3config")
 import("m3doc")
 
 implementation("Main")

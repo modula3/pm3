@@ -33,9 +33,14 @@ VAR pFifo: TEXT := NIL;
 
 PROCEDURE CreateFifo(p: TEXT) RAISES {OSError.E} =
   CONST Mode = Unix.fifo_special + Unix.MROWNER + Unix.MWOWNER;
+  VAR
+    p_str := M3toC.SharedTtoS(p);
+    result: INTEGER;
   BEGIN
     <* ASSERT pFifo=NIL *>
-    IF Unix.mknod(M3toC.TtoS(p), Mode, Utypes.makedev(0,0)) < 0 THEN
+    result := Unix.mknod(p_str, Mode, Utypes.makedev(0,0));
+    M3toC.FreeSharedS(p, p_str);
+    IF result < 0 THEN
       OSErrorPosix.Raise();
     END;
     pFifo := p;

@@ -8,8 +8,11 @@ EXPORTS BaseScheduledServerResource, InternalBaseScheduledServerResource;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:38  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:49  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:38  hosking
+    Import of GRAS3 1.1
 
     Revision 1.8  1997/06/13 16:13:01  roland
     Temporary path of a resource must always be created.
@@ -75,7 +78,7 @@ EXPORTS BaseScheduledServerResource, InternalBaseScheduledServerResource;
  *)
 IMPORT
   Pathname,
-  TextSeq,
+  TextTransientSeq AS TextSeq,
   PageFile,
   Access, PageLock,
   ServedClient,
@@ -83,6 +86,7 @@ IMPORT
 
 REVEAL
   T			= Internal BRANDED OBJECT
+      <*TRANSIENT*>
       baseName		:Pathname.T;
       access		:Access.Mode;
 

@@ -390,7 +390,7 @@ PROCEDURE IsMsgURL (w: Window; VAR url: TEXT): BOOLEAN =
 
 PROCEDURE OnShowEntire(fv: FormsVBT.T;
                       <*UNUSED*> name: TEXT;
-                      arg: REFANY;
+                      <*UNUSED*> arg: REFANY;
                       <*UNUSED*> ticks: VBT.TimeStamp) =
     (* LL = VBT.mu *)
   BEGIN
@@ -399,7 +399,7 @@ PROCEDURE OnShowEntire(fv: FormsVBT.T;
 
 PROCEDURE OnShowBrief(fv: FormsVBT.T;
                       <*UNUSED*> name: TEXT;
-                      arg: REFANY;
+                      <*UNUSED*> arg: REFANY;
                       <*UNUSED*> ticks: VBT.TimeStamp) =
     (* LL = VBT.mu *)
   BEGIN

@@ -93,6 +93,12 @@ struct general_symbol_info
 	    char *demangled_name;
 	  }
 	cplus_specific;
+
+	struct m3_specific         /* For Modula-3 */
+        {
+          char *demangled_name;
+        } m3_specific;
+
 	struct chill_specific	/* For Chill */
 	  {
 	    char *demangled_name;
@@ -136,6 +142,10 @@ extern CORE_ADDR symbol_overlayed_address (CORE_ADDR, asection *);
 #define SYMBOL_CPLUS_DEMANGLED_NAME(symbol)	\
   (symbol)->ginfo.language_specific.cplus_specific.demangled_name
 
+/* ----- Modula-3 */
+#define SYMBOL_M3_DEMANGLED_NAME(symbol)        \
+  (symbol)->ginfo.language_specific.m3_specific.demangled_name
+
 /* Macro that initializes the language dependent portion of a symbol
    depending upon the language for the symbol. */
 
@@ -148,6 +158,10 @@ extern CORE_ADDR symbol_overlayed_address (CORE_ADDR, asection *);
       {									\
 	SYMBOL_CPLUS_DEMANGLED_NAME (symbol) = NULL;			\
       }									\
+    else if (SYMBOL_LANGUAGE (symbol) == language_m3)                   \
+      {                                                                 \
+        SYMBOL_M3_DEMANGLED_NAME (symbol) = NULL;                       \
+      }                                                                 \
     else if (SYMBOL_LANGUAGE (symbol) == language_chill)		\
       {									\
 	SYMBOL_CHILL_DEMANGLED_NAME (symbol) = NULL;			\
@@ -208,6 +222,24 @@ extern CORE_ADDR symbol_overlayed_address (CORE_ADDR, asection *);
 	  }								\
       }									\
     if (demangled == NULL						\
+	&& (SYMBOL_LANGUAGE (symbol) == language_m3			\
+	    || SYMBOL_LANGUAGE (symbol) == language_auto))		\
+      {									\
+	demangled =							\
+	  m3_demangle (SYMBOL_NAME (symbol));				\
+	if (demangled != NULL)						\
+	  {								\
+	    SYMBOL_LANGUAGE (symbol) = language_m3;			\
+	    SYMBOL_M3_DEMANGLED_NAME (symbol) = 			\
+	      obsavestring (demangled, strlen (demangled), (obstack));	\
+	    xfree (demangled);						\
+	  }								\
+	else								\
+	  {								\
+	    SYMBOL_M3_DEMANGLED_NAME (symbol) = NULL;			\
+	  }								\
+      }									\
+    if (demangled == NULL						\
 	&& (SYMBOL_LANGUAGE (symbol) == language_chill			\
 	    || SYMBOL_LANGUAGE (symbol) == language_auto))		\
       {									\
@@ -231,12 +263,15 @@ extern CORE_ADDR symbol_overlayed_address (CORE_ADDR, asection *);
    for that symbol.  If no demangled name exists, returns NULL. */
 
 #define SYMBOL_DEMANGLED_NAME(symbol)					\
-  (SYMBOL_LANGUAGE (symbol) == language_cplus				\
-   || SYMBOL_LANGUAGE (symbol) == language_java				\
-   ? SYMBOL_CPLUS_DEMANGLED_NAME (symbol)				\
-   : (SYMBOL_LANGUAGE (symbol) == language_chill			\
-      ? SYMBOL_CHILL_DEMANGLED_NAME (symbol)				\
-      : NULL))
+  (SYMBOL_LANGUAGE (symbol) == language_m3                              \
+   ? SYMBOL_M3_DEMANGLED_NAME (symbol)                                  \
+   : (SYMBOL_LANGUAGE (symbol) == language_cplus                        \
+      ? SYMBOL_CPLUS_DEMANGLED_NAME (symbol)                            \
+      : (SYMBOL_LANGUAGE (symbol) == language_java                      \
+         ? SYMBOL_CPLUS_DEMANGLED_NAME (symbol)                         \
+         : (SYMBOL_LANGUAGE (symbol) == language_chill                  \
+            ? SYMBOL_CHILL_DEMANGLED_NAME (symbol)                      \
+            : NULL))))
 
 #define SYMBOL_CHILL_DEMANGLED_NAME(symbol)				\
   (symbol)->ginfo.language_specific.chill_specific.demangled_name
@@ -683,6 +718,9 @@ struct symbol
 
     /* Data type of value */
 
+    /* ----- Modula-3 */
+    char m3_uid[9];
+
     struct type *type;
 
     /* Name space code.  */
@@ -727,7 +765,9 @@ struct symbol
 
 #define SYMBOL_NAMESPACE(symbol)	(symbol)->namespace
 #define SYMBOL_CLASS(symbol)		(symbol)->aclass
-#define SYMBOL_TYPE(symbol)		(symbol)->type
+#define SET_SYMBOL_TYPE(symbol)		(symbol)->type
+#define SYMBOL_TYPE(symbol)		((symbol)->type ? (symbol)->type : \
+                 ((symbol)->type = m3_resolve_type ((symbol)->m3_uid)))
 #define SYMBOL_LINE(symbol)		(symbol)->line
 #define SYMBOL_BASEREG(symbol)		(symbol)->aux_value.basereg
 #define SYMBOL_ALIASES(symbol)		(symbol)->aliases
@@ -1386,6 +1426,9 @@ extern void clear_symtab_users (void);
 
 extern enum language deduce_language_from_filename (char *);
 
+/* ----- Modula-3 */
+extern char * m3_demangle (char *);
+  
 /* symtab.c */
 
 extern int in_prologue (CORE_ADDR pc, CORE_ADDR func_start);

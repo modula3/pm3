@@ -1,0 +1,3 @@
+import("libpm3")
+implementation("Main")
+Program("Primes")

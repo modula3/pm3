@@ -24,7 +24,7 @@ TYPE
           millimeters: REAL
         END;
 
-CONST 
+CONST
   Shadows = TRUE;
 
 REVEAL
@@ -295,7 +295,6 @@ PROCEDURE PaintView (v: T) =
     END;
   END PaintView;
 
-
 PROCEDURE PaintViewWithShadows (v: T) =
   VAR
     dom   : Rect.T;
@@ -325,7 +324,70 @@ PROCEDURE PaintViewWithShadows (v: T) =
       r, stripe);
     VBT.PaintTint(v, r, v.shadow.bg);
   END PaintViewWithShadows;
-  
+
+(*  
+PROCEDURE PaintViewWithShadows (v: T) =
+  VAR
+    dom   : Rect.T;
+    stripe: Rect.T;
+  BEGIN
+    dom := VBT.Domain(v);
+    stripe := ComputeStripe(v, dom);
+    
+    (* paint scroll *)
+    PaintShadow(v, dom, inwards := TRUE, raised := FALSE);
+    
+    (* paint stripe *)
+    PaintShadow(v, stripe, inwards := FALSE, raised := TRUE);
+  END PaintViewWithShadows;
+
+PROCEDURE PaintShadow (         v                : T;
+                       READONLY rect             : Rect.T;
+                                inwards          : BOOLEAN;
+                                raised           : BOOLEAN ) =
+  VAR
+    top, bottom, front: PaintOp.T;
+    in, out: Rect.T;
+  BEGIN
+    IF (inwards) THEN
+      out := rect;
+      in := rect;
+      INC(in.west, ShadowSize);
+      DEC(in.east, ShadowSize);
+      INC(in.north, ShadowSize);
+      DEC(in.south, ShadowSize);
+    ELSE
+      in := rect;
+      out := rect;
+      DEC(out.west, ShadowSize);
+      INC(out.east, ShadowSize);
+      DEC(out.north, ShadowSize);
+      INC(out.south, ShadowSize);
+    END;
+    IF (raised) THEN
+      top := ScrollShadow.light;
+      bottom := ScrollShadow.dark;
+      front := ScrollShadow.fg;
+    ELSE
+      top := ScrollShadow.dark;
+      bottom := ScrollShadow.light;
+      front := ScrollShadow.bg;
+    END;
+    VBT.PaintTint(v,
+                  Rect.FromEdges(out.west, in.west, out.north, out.south), top);
+    VBT.PaintTint(v,
+                  Rect.FromEdges(in.west, out.east, out.north, in.north), top);
+    VBT.PaintTrapezoid(v, Rect.Full, Trapezoid.FromTriangle(
+                                         Rect.NorthEast(in), Rect.NorthEast(out),
+                                         Point.T{out.east, in.north}), bottom);
+    VBT.PaintTint(v,
+                  Rect.FromEdges(in.east, out.east, in.north, out.south), bottom);
+    VBT.PaintTrapezoid(v, Rect.Full, Trapezoid.FromEdges(
+                                         in.south, in.west, in.east, out.south,
+                                         out.west, in.east), bottom);
+    VBT.PaintTexture(v, in, front, Pixmap.Solid);
+  END PaintShadow;
+*)  
   
 PROCEDURE PaintViewAsBefore (v: T) =
   VAR
@@ -737,8 +799,8 @@ CONST
   DefaultMinStripeLen = 4.0;
 
 VAR
-  globalLock: MUTEX;
-  graphicsInited: BOOLEAN;
+  globalLock: MUTEX := NEW (MUTEX);
+  graphicsInited: BOOLEAN := FALSE;
   Cursors: ARRAY State, Axis.T OF Cursor.T;
   ScrollPixmap: ARRAY Axis.T OF Pixmap.T;
   
@@ -788,7 +850,5 @@ PROCEDURE XCLoad (state: State; axis: Axis.T; cursor: TEXT) =
   END XCLoad;
 
 BEGIN
-  graphicsInited := FALSE;
-  globalLock := NEW(MUTEX);
 END ScrollerVBTClass.
 

@@ -7,8 +7,11 @@ MODULE ActivatedActions;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:40  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:50  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:40  hosking
+    Import of GRAS3 1.1
 
     Revision 1.2  1998/01/21 14:07:54  roland
     Bugfixes in KillTransaction. ClientMap and LevelMap were mixed up.
@@ -60,7 +63,7 @@ PROCEDURE Store (aa      : Default;
                  level   : CARDINAL;
                  priority: CARDINAL;
                  act     : Action.T;
-                 userdata: REFANY        ) =
+                 userdata: <*TRANSIENT*> REFANY        ) =
   VAR aact: ActiveAction.T;
     hl, hc: CARDINAL;
   BEGIN
@@ -125,7 +128,7 @@ PROCEDURE Get (    aa      : Default;
                VAR context : ContextSet.T;
                VAR level   : CARDINAL;
                VAR action  : Action.T;
-               VAR userdata: REFANY        ): BOOLEAN =
+               VAR userdata: <*TRANSIENT*> REFANY        ): BOOLEAN =
   BEGIN
     RETURN GetNextFromQueue(
              aa, event, context, level, action, userdata);
@@ -152,7 +155,7 @@ PROCEDURE GetNextFromQueue (    aa      : Default;
                             VAR context : ContextSet.T;
                             VAR level   : CARDINAL;
                             VAR action  : Action.T;
-                            VAR userdata: REFANY        ): BOOLEAN =
+                            VAR userdata: <*TRANSIENT*> REFANY ): BOOLEAN =
   VAR
     act      : ActiveAction.T;
     hlev, hcl: CARDINAL;

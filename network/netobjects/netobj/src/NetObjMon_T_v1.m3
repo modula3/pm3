@@ -3,15 +3,15 @@
 
 MODULE NetObjMon_T_v1 EXPORTS NetObjMon, NetObjMon_T_v1, NetObjMonInit;
 
-IMPORT RefList, Wr, Thread, StubLib, NetObj, Rd, NetObjMon;
+IMPORT RefTransientList AS RefList, Wr, Thread, StubLib, NetObj, Rd, NetObjMon;
 CONST Protocol: StubLib.StubProtocol = 1;
 
 TYPE
       Methods = {dumpNames, dump};
       ReturnCodes = {OK};
 
-  PROCEDURE Surrogate_dump(self: NetObjMon.T): REFANY RAISES {NetObj.Error,
-      Thread.Alerted} =
+  PROCEDURE Surrogate_dump(self: NetObjMon.T): <*TRANSIENT*> REFANY
+    RAISES {NetObj.Error, Thread.Alerted} =
 
     VAR reuse := FALSE;
         rep: StubLib.DataRep;

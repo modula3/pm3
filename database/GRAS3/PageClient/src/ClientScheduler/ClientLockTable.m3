@@ -7,8 +7,11 @@ MODULE ClientLockTable;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:36  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:47  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:36  hosking
+    Import of GRAS3 1.1
 
     Revision 1.5  1997/03/18 15:24:49  roland
     Bugfix in Expand: newtable and newlast have to be initialized in for loop.
@@ -34,19 +37,19 @@ MODULE ClientLockTable;
 
 
 IMPORT Fmt;
-IMPORT Transaction, PageLock, ClientLockEntry;
+IMPORT Txn, PageLock, ClientLockEntry;
 
 
 CONST NullEntry = ClientLockEntry.T{PageLock.Mode.O, NIL};
 
 TYPE
-  LockTable = REF ARRAY OF ClientLockEntry.T;
-  History = REF ARRAY OF Transaction.Level;
+  LockTable = <*TRANSIENT*> REF ARRAY OF ClientLockEntry.T;
+  History = <*TRANSIENT*> REF ARRAY OF Txn.Level;
 
 REVEAL
   T = Public BRANDED OBJECT
-        size: Transaction.Level;  (* table size *)
-        top: Transaction.Level;  (* highest index with lock #
+        size: Txn.Level;  (* table size *)
+        top: Txn.Level;  (* highest index with lock #
                                     PageLock.Mode.O in table or 0 *)
         last: History;           (* last[i] is the highest index j with
                                     lock # PageLock.Mode.O and j<=i or 0 *)
@@ -66,11 +69,11 @@ REVEAL
  | --- support functions --------------------------------------------------
  *)
 
-PROCEDURE Expand (self: T; level: Transaction.Level) =
+PROCEDURE Expand (self: T; level: Txn.Level) =
   VAR
     newtable: LockTable;
     newlast : History;
-    newsize : Transaction.Level;
+    newsize : Txn.Level;
   BEGIN
     IF self.size < level THEN
       newsize := MAX(level, 2 * self.size);
@@ -80,7 +83,7 @@ PROCEDURE Expand (self: T; level: Transaction.Level) =
       SUBARRAY(newlast^, 0, self.size) := self.last^;
       FOR i := self.size TO newsize -1 DO
         newtable[i] := NullEntry;
-        newlast[i] := Transaction.EnvelopeLevel;
+        newlast[i] := Txn.EnvelopeLevel;
       END;
       self.table := newtable;
       self.last := newlast;
@@ -97,19 +100,19 @@ PROCEDURE Init (self: T): T =
     self.size := 10;
     self.table := NEW(LockTable, self.size);
     self.last := NEW(History, self.size);
-    FOR i := Transaction.EnvelopeLevel TO self.size-1 DO
+    FOR i := Txn.EnvelopeLevel TO self.size-1 DO
       self.table[i] := NullEntry;
-      self.last[i] := Transaction.EnvelopeLevel;
+      self.last[i] := Txn.EnvelopeLevel;
     END;
-    self.top := Transaction.EnvelopeLevel;
+    self.top := Txn.EnvelopeLevel;
     RETURN self;
   END Init;
 
 
 PROCEDURE PutEntry (self : T;
-                    level: Transaction.Level;
+                    level: Txn.Level;
                     entry: ClientLockEntry.T  ) =
-  VAR lev: Transaction.Level;
+  VAR lev: Txn.Level;
   BEGIN
     IF self.size - 1 < level THEN Expand(self, level + 1); END;
 
@@ -125,12 +128,12 @@ PROCEDURE PutEntry (self : T;
       (* This must be a none O-Lock *)
       self.last[level] := level;
     ELSIF level = self.top AND entry.lock = PageLock.Mode.O THEN
-      IF level # Transaction.EnvelopeLevel THEN
+      IF level # Txn.EnvelopeLevel THEN
         (* this is a pop-operation; set top to most recent none O-Lock *)
         self.top := self.last[self.top - 1];
       END;
     ELSIF level < self.top AND entry.lock = PageLock.Mode.O THEN
-      IF self.last[level] = level AND level # Transaction.EnvelopeLevel THEN
+      IF self.last[level] = level AND level # Txn.EnvelopeLevel THEN
         (* last-pointers must be adapted to most recent none O-Lock *)
         lev := level;
         WHILE self.last[lev] = level DO
@@ -157,7 +160,7 @@ PROCEDURE PutEntry (self : T;
   END PutEntry;
 
 
-PROCEDURE GetEntry (self: T; level: Transaction.Level): ClientLockEntry.T =
+PROCEDURE GetEntry (self: T; level: Txn.Level): ClientLockEntry.T =
   BEGIN
     IF self.top < level THEN
       RETURN NullEntry
@@ -168,8 +171,8 @@ PROCEDURE GetEntry (self: T; level: Transaction.Level): ClientLockEntry.T =
 
 
 PROCEDURE GetLastEntry (    self       : T;
-                            searchLevel: Transaction.Level;
-                        VAR lastLevel  : Transaction.Level  ):
+                            searchLevel: Txn.Level;
+                        VAR lastLevel  : Txn.Level  ):
   ClientLockEntry.T =
   BEGIN
     IF searchLevel >= self.top THEN
@@ -183,11 +186,11 @@ PROCEDURE GetLastEntry (    self       : T;
 
 
 PROCEDURE Exists (self       : T;
-                  searchLevel: Transaction.Level;
+                  searchLevel: Txn.Level;
                   lock       : PageLock.ClientMode): BOOLEAN =
   BEGIN
     IF searchLevel > self.top THEN searchLevel := self.top; END;
-    WHILE searchLevel > Transaction.EnvelopeLevel
+    WHILE searchLevel > Txn.EnvelopeLevel
             AND self.table[searchLevel].lock # lock DO
       DEC(searchLevel)
     END;
@@ -200,7 +203,7 @@ PROCEDURE FmtTable (self: T): TEXT =
   BEGIN
     text := "[\n index = 0, entry = (" & ClientLockEntry.Fmt(self.table[0])
               & ")";
-    FOR lev := Transaction.EnvelopeLevel + 1 TO self.top DO
+    FOR lev := Txn.EnvelopeLevel + 1 TO self.top DO
       text := text & " index = " & Fmt.Int(lev) & ", entry = ("
                 & ClientLockEntry.Fmt(self.table[lev]) & ")";
     END;

@@ -59,14 +59,14 @@ PROCEDURE Compile (ce: CallExpr.T) =
 
     IF (info.stk_type = CG.Type.Addr)
       THEN CG.Index_bytes (Target.Byte);  check := 0;
-      ELSE CG.Add (CG.Type.Int);
+      ELSE CG.Add (Target.Integer.cg_type);
     END;
 
     CASE check OF
     | 0 => (* no range checking *)
-    | 1 => CG.Check_lo (bmin);
-    | 2 => CG.Check_hi (bmax);
-    | 3 => CG.Check_range (bmin, bmax);
+    | 1 => CG.Check_lo (bmin, CG.RuntimeError.ValueOutOfRange);
+    | 2 => CG.Check_hi (bmax, CG.RuntimeError.ValueOutOfRange);
+    | 3 => CG.Check_range (bmin, bmax, CG.RuntimeError.ValueOutOfRange);
     END;
 
     CG.Store_indirect (info.stk_type, 0, info.size);
@@ -87,6 +87,7 @@ PROCEDURE Initialize () =
                                  CallExpr.NotBoolean,
                                  CallExpr.NotBoolean,
                                  CallExpr.NoValue,
+                                 CallExpr.NoBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

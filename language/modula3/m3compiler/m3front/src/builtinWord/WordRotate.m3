@@ -44,7 +44,8 @@ PROCEDURE CompileL (ce: CallExpr.T) =
   BEGIN
     <* ASSERT b *>
     Expr.Compile (ce.args[0]);
-    CheckExpr.Emit (ce.args[1], TInt.Zero, max);
+    CheckExpr.EmitChecks (ce.args[1], TInt.Zero, max,
+                          CG.RuntimeError.ValueOutOfRange);
     CG.Rotate_left ();
   END CompileL;
 
@@ -53,7 +54,8 @@ PROCEDURE CompileR (ce: CallExpr.T) =
   BEGIN
     <* ASSERT b *>
     Expr.Compile (ce.args[0]);
-    CheckExpr.Emit (ce.args[1], TInt.Zero, max);
+    CheckExpr.EmitChecks (ce.args[1], TInt.Zero, max,
+                          CG.RuntimeError.ValueOutOfRange);
     CG.Rotate_right ();
   END CompileR;
 
@@ -139,6 +141,7 @@ PROCEDURE Initialize () =
                                  CallExpr.NotBoolean,
                                  CallExpr.NotBoolean,
                                  Fold,
+                                 CallExpr.NoBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));
@@ -156,6 +159,7 @@ PROCEDURE Initialize () =
                                  CallExpr.NotBoolean,
                                  CallExpr.NotBoolean,
                                  FoldL,
+                                 CallExpr.NoBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));
@@ -173,6 +177,7 @@ PROCEDURE Initialize () =
                                  CallExpr.NotBoolean,
                                  CallExpr.NotBoolean,
                                  FoldR,
+                                 CallExpr.NoBounds,
                                  CallExpr.IsNever, (* writable *)
                                  CallExpr.IsNever, (* designator *)
                                  CallExpr.NotWritable (* noteWriter *));

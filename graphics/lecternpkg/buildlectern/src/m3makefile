@@ -14,12 +14,6 @@ import         ("images")
 
 import         ("mtex") /* for manpage */
 
-if defined("AT_SRC") m3_option("-O") end
-if defined("AT_SRC")
-  m3_option    ("-g3")
-end
-m3_option      ("-X0@-NoChecks@")
-
 interface      ("BBox")
 sequence       ("BBox", "BBox")
 module         ("FromPS")
@@ -30,7 +24,7 @@ resource       ("rot270.ps")
 resource       ("rot90.ps")
 bundle         ("FromPSBundle")
 Module         ("OSUtils")
-include_dir(OS_TYPE) /* for system-specific part of OSUtils */
+include_dir (OS_TYPE) /* for system-specific part of OSUtils */
 Module         ("LGM")
 interface      ("Cscale")
 c_source       ("Cscale")

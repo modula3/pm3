@@ -390,7 +390,7 @@ PROCEDURE GenIndexedBranch (p: P;  l_min, l_max: INTEGER;
     IF (l_min # 0) THEN
       (* translate  [l_min .. l_max] => [0 .. l_max - l_min] *)
       CG.Load_intt (l_min);
-      CG.Subtract (CG.Type.Int);
+      CG.Subtract (Target.Integer.cg_type);
     END;
 
     (* range check the index expression *)
@@ -401,7 +401,7 @@ PROCEDURE GenIndexedBranch (p: P;  l_min, l_max: INTEGER;
       x := CG.Pop ();
       CG.Push (x);
       CG.Load_intt (l_max - l_min);
-      CG.If_gt (l_else, CG.Type.Int, CG.Never);
+      CG.If_compare (Target.Integer.cg_type, CG.Cmp.GT, l_else, CG.Never);
       CG.Push (x);
       CG.Free (x);
     ELSIF TInt.LE (e_max, L_max) THEN
@@ -409,7 +409,7 @@ PROCEDURE GenIndexedBranch (p: P;  l_min, l_max: INTEGER;
       x := CG.Pop ();
       CG.Push (x);
       CG.Load_integer (TInt.Zero);
-      CG.If_lt (l_else, CG.Type.Int, CG.Never);
+      CG.If_compare (Target.Integer.cg_type, CG.Cmp.LT, l_else, CG.Never);
       CG.Push (x);
       CG.Free (x);
     ELSE
@@ -417,10 +417,10 @@ PROCEDURE GenIndexedBranch (p: P;  l_min, l_max: INTEGER;
       x := CG.Pop ();
       CG.Push (x);
       CG.Load_integer (TInt.Zero);
-      CG.If_lt (l_else, CG.Type.Int, CG.Never);
+      CG.If_compare (Target.Integer.cg_type, CG.Cmp.LT, l_else, CG.Never);
       CG.Push (x);
       CG.Load_intt (l_max - l_min);
-      CG.If_gt (l_else, CG.Type.Int, CG.Never);
+      CG.If_compare (Target.Integer.cg_type, CG.Cmp.GT, l_else, CG.Never);
       CG.Push (x);
       CG.Free (x);
     END;
@@ -442,7 +442,7 @@ PROCEDURE GenIndexedBranch (p: P;  l_min, l_max: INTEGER;
     IF (p.hasElse) THEN
       oc := oc + Stmt.Compile (p.elseBody);
     ELSIF (NOT p.complete) AND (Host.doCaseChk) THEN
-      CG.Case_fault ();
+      CG.Abort (CG.RuntimeError.UnhandledCase);
     END;
 
     CG.Set_label (l_end);
@@ -478,11 +478,11 @@ PROCEDURE GenIfTable (p: P): Stmt.Outcomes =
       IF TInt.LT (next, t.min) THEN
         CG.Push (x);
         CG.Load_integer (t.min);
-        CG.If_lt (l_else, CG.Type.Int, CG.Never);
+        CG.If_compare (Target.Integer.cg_type, CG.Cmp.LT, l_else, CG.Never);
       END;
       CG.Push (x);
       CG.Load_integer (t.max);
-      CG.If_le (l_bodies + t.body, CG.Type.Int, CG.Maybe);
+      CG.If_compare (Target.Integer.cg_type, CG.Cmp.LE, l_bodies+t.body, CG.Maybe);
       IF NOT TInt.Add (t.max, TInt.One, next) THEN
         IF (t.greater # NIL) THEN Error.Msg ("case label too large") END;
         next := t.max;
@@ -505,7 +505,7 @@ PROCEDURE GenIfTable (p: P): Stmt.Outcomes =
     IF (p.hasElse) THEN
       oc := oc + Stmt.Compile (p.elseBody);
     ELSIF (NOT p.complete) AND (Host.doCaseChk) THEN
-      CG.Case_fault ();
+      CG.Abort (CG.RuntimeError.UnhandledCase);
     END;
 
     CG.Set_label (l_end);

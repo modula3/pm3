@@ -7,8 +7,11 @@ MODULE BasePageHandle EXPORTS BasePageHandle, InternalBasePageHandle;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:27  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:44  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:27  hosking
+    Import of GRAS3 1.1
 
     Revision 1.4  1996/03/08 10:29:45  rbnix
     	PageHandles are now tagged by an internal id. Therefore the
@@ -49,13 +52,15 @@ REVEAL
       isLoad		:= IsLoad;
 
       isChanged		:= IsChanged;
-      unmarkChanges	:= UnmarkChanges;
+      markChanged	:= MarkChanged;
+      unmarkChanges     := UnmarkChanges;
 
       setPage		:= SetPage;
       getPage		:= GetPage;
 
       putData		:= PutData;
       getData		:= GetData;
+      putAll		:= PutAll;
       getAll		:= GetAll;
       copyData		:= CopyData;
 
@@ -88,6 +93,12 @@ PROCEDURE IsChanged	(        self		:T) :BOOLEAN =
   BEGIN
     RETURN (self.changed);
   END IsChanged;
+
+
+PROCEDURE MarkChanged	(        self		:T) =
+  BEGIN
+    self.changed := TRUE;
+  END MarkChanged;
 
 
 PROCEDURE UnmarkChanges	(        self		:T) =
@@ -126,9 +137,18 @@ PROCEDURE GetData	(         self		:T;
   END GetData;
 
 
-PROCEDURE GetAll	(         self		:T) :PageData.T =
+PROCEDURE PutAll	(         self		:T;
+                                  unswizzler    :PageData.Unswizzler) =
   BEGIN
-    RETURN self.page.getAll ();
+    unswizzler(self.page.data);
+    self.changed := TRUE;
+  END PutAll;
+
+
+PROCEDURE GetAll	(         self		:T;
+                                  swizzler      :PageData.Swizzler) =
+  BEGIN
+    swizzler(self.page.data);
   END GetAll;
 
 
@@ -140,7 +160,7 @@ PROCEDURE CopyData	(         self		:T;
     self.page.copyData (source, destination, length);
     self.changed := TRUE;
   END CopyData;
-  
+
 
 PROCEDURE Fmt		(         self		:T) :TEXT =
   BEGIN

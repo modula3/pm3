@@ -17,7 +17,7 @@
     the same type.
 
     The "Equal0()" test returns "TRUE", if the passed object has the
-    same values as an object just after static initialisations (i.e.
+    same values as an object just after static initialisations (i.e.,
     it equals an object returned by "NEW(TestObj.T)").
 
     There are two modification procedures "Modify1()" and "Modify2()"

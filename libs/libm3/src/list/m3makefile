@@ -15,12 +15,20 @@ HtmlGenericInterface("ListSort")
 
 template ("list")
 
-List ("Atom", "Atom")
 List ("Int",  "Integer")
 List ("Ref",  "Refany")
 List ("Text", "Text")
 
-List_sort ("Atom", "Atom")
+TransientList ("Atom", "Atom")
+TransientList ("IntTransient",  "Integer")
+TransientList ("RefTransient",  "RefanyTransient")
+TransientList ("TextTransient", "Text")
+
 List_sort ("Int",  "Integer")
 List_sort ("Ref",  "Refany")
 List_sort ("Text", "Text")
+
+TransientList_sort ("Atom", "Atom")
+TransientList_sort ("IntTransient",  "Integer")
+TransientList_sort ("RefTransient",  "RefanyTransient")
+TransientList_sort ("TextTransient", "Text")

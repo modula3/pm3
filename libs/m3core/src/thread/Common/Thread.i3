@@ -10,9 +10,9 @@
 INTERFACE Thread;
 
 TYPE
-  T <: ROOT;
+  T <: <*TRANSIENT*> ROOT;
   Mutex = MUTEX;
-  Condition <: ROOT;
+  Condition <: <*TRANSIENT*> ROOT;
 
 (* A "Thread.T" is a handle on a thread.  A "Mutex" is locked by some
    thread, or unlocked.  A "Condition" is a set of waiting threads.  A
@@ -20,7 +20,7 @@ TYPE
    is empty.  It is a checked runtime error to pass the "NIL" "Mutex",
    "Condition", or "T" to any procedure in this interface. *)
 
-TYPE Closure = OBJECT METHODS apply(): REFANY END;
+TYPE Closure = <*TRANSIENT*> ROOT OBJECT METHODS apply(): REFANY END;
 
 PROCEDURE Fork(cl: Closure): T;
 (* Return a handle on a newly-created thread executing "cl.apply()". *)
@@ -56,6 +56,10 @@ PROCEDURE Pause(n: LONGREAL);
 
 PROCEDURE Self(): T;
 (* Return the handle of the calling thread. *)
+
+<*IMPLICIT*>
+EXCEPTION Aborted;
+(* Used to signal transaction abort. *)
 
 EXCEPTION Alerted;
 (* Used to approximate asynchronous interrupts. *)

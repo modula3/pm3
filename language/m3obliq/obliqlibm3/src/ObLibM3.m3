@@ -4,7 +4,7 @@
 MODULE ObLibM3;
 IMPORT SynLocation, Text, ObLib, ObValue, Obliq, Rd, Wr, Process, FloatMode,
   Thread, Stdio, Pipe, FileRd, FileWr, OSError, Fmt, Lex, TextRd, TextWr, 
-  Convert, NetObj, Pickle, Word;
+  NetObj, Pickle, Word, SharedObj, Random;
 
   VAR setupDone := FALSE;
 
@@ -25,6 +25,7 @@ IMPORT SynLocation, Text, ObLib, ObValue, Obliq, Rd, Wr, Process, FloatMode,
     SetupWord();
     SetupPickle();
     SetupProc();
+    SetupRandom();
   END Setup;
 
 (* ============ "rd" package ============ *)
@@ -52,8 +53,8 @@ TYPE
     ELSE RETURN FALSE END;
   END IsRd;
 
-  PROCEDURE CopyRd(self: ObValue.ValAnything; tbl: ObValue.Tbl;
-    loc: SynLocation.T): ObValue.ValAnything RAISES {ObValue.Error} =
+  PROCEDURE CopyRd(self: ObValue.ValAnything; <*UNUSED*>tbl: ObValue.Tbl;
+                   <*UNUSED*>loc: SynLocation.T): ObValue.ValAnything =
   BEGIN
     RETURN self;
   END CopyRd;
@@ -103,7 +104,7 @@ TYPE
   END SetupRd;
 
   PROCEDURE EvalRd(self: PackageRd; opCode: ObLib.OpCode; 
-      arity: ObLib.OpArity; READONLY args: ObValue.ArgArray; 
+                   <*UNUSED*>arity: ObLib.OpArity; READONLY args: ObValue.ArgArray; 
       temp: BOOLEAN; loc: SynLocation.T)
       : ObValue.Val RAISES {ObValue.Error, ObValue.Exception} =
     VAR rd1: Rd.T; text1: TEXT; int1: INTEGER; fileSys1: ObValue.ValFileSystem;
@@ -116,133 +117,207 @@ TYPE
             RETURN rdEofFailureException;
         | RdCode.New => 
             TYPECASE args[1] OF | ObValue.ValText(node) => text1:=node.text;
-            ELSE ObValue.BadArgType(1, "text", self.name, opCode.name, loc); END;
+            ELSE
+              ObValue.BadArgType(1, "text", self.name, opCode.name, loc); 
+              <*ASSERT FALSE*>
+            END;
             rd1 := TextRd.New(text1);
-            RETURN NEW(ValRd, what:="<a reader>", picklable:=FALSE, rd:=rd1);
+            RETURN NEW(ValRd, what:="<a reader>", tag:="Reader", picklable:=FALSE, rd:=rd1);
        | RdCode.Stdin => 
-            RETURN NEW(ValRd, what:="<stdin reader>", picklable:=FALSE, 
+            RETURN NEW(ValRd, what:="<stdin reader>", tag:="Reader", picklable:=FALSE, 
               rd:=Stdio.stdin);
        | RdCode.Open => 
             TYPECASE args[1] OF | ObValue.ValFileSystem(node) => fileSys1:=node;
-            ELSE ObValue.BadArgType(1, "file system", self.name, opCode.name, loc); END;
+            ELSE 
+              ObValue.BadArgType(1, "file system", self.name, opCode.name, 
+                                 loc); 
+              <*ASSERT FALSE*>
+            END;
             TYPECASE args[2] OF | ObValue.ValText(node) => text1:=node.text;
-            ELSE ObValue.BadArgType(2, "text", self.name, opCode.name, loc); END;
+            ELSE
+              ObValue.BadArgType(2, "text", self.name, opCode.name, loc); 
+              <*ASSERT FALSE*>
+            END;
             rd1 := fileSys1.remote.OpenRead(text1);
             RETURN NEW(ValRd, what:="<'" & text1 & "' reader>", 
+                       tag := "Reader",
                        picklable:=FALSE, rd:=rd1);
         | RdCode.GetChar => 
             TYPECASE args[1] OF | ValRd(node) => rd1 := node.rd;
-            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); END;
+            ELSE
+              ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); 
+              <*ASSERT FALSE*>
+            END;
             IF Rd.Closed(rd1) THEN
               ObValue.BadArgVal(1, "non-closed", self.name, opCode.name, loc);
+              <*ASSERT FALSE*>
             END;
             RETURN NEW(ObValue.ValChar, char:=Rd.GetChar(rd1));
         | RdCode.Eof => 
             TYPECASE args[1] OF | ValRd(node) => rd1 := node.rd;
-            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); END;
+            ELSE 
+              ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); 
+              <*ASSERT FALSE*>
+            END;
             IF Rd.Closed(rd1) THEN
               ObValue.BadArgVal(1, "non-closed", self.name, opCode.name, loc);
+              <*ASSERT FALSE*>
             END;
 	    IF Rd.EOF(rd1) THEN RETURN true ELSE RETURN false END;
         | RdCode.UnGetChar => 
             TYPECASE args[1] OF | ValRd(node) => rd1 := node.rd;
-            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); END;
+            ELSE 
+              ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); 
+              <*ASSERT FALSE*>
+            END;
             IF Rd.Closed(rd1) THEN
               ObValue.BadArgVal(1, "non-closed", self.name, opCode.name, loc);
+              <*ASSERT FALSE*>
             END;
             Rd.UnGetChar(rd1);
             RETURN ObValue.valOk;
         | RdCode.CharsReady => 
             TYPECASE args[1] OF | ValRd(node) => rd1 := node.rd;
-            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); END;
+            ELSE 
+              ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); 
+              <*ASSERT FALSE*>
+            END;
             IF Rd.Closed(rd1) THEN
               ObValue.BadArgVal(1, "non-closed", self.name, opCode.name, loc);
+              <*ASSERT FALSE*>
             END;
             RETURN NEW(ObValue.ValInt, int:=Rd.CharsReady(rd1), temp:=temp);
         | RdCode.GetText => 
             TYPECASE args[1] OF | ValRd(node) => rd1 := node.rd;
-            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); END;
+            ELSE 
+              ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); 
+              <*ASSERT FALSE*>
+            END;
             TYPECASE args[2] OF | ObValue.ValInt(node) => int1 := node.int;
-            ELSE ObValue.BadArgType(2, "int", self.name, opCode.name, loc); END;
+            ELSE
+              ObValue.BadArgType(2, "int", self.name, opCode.name, loc); 
+              <*ASSERT FALSE*>
+            END;
             IF Rd.Closed(rd1) THEN
               ObValue.BadArgVal(1, "non-closed", self.name, opCode.name, loc);
+              <*ASSERT FALSE*>
             END;
             IF int1<0 THEN
-              ObValue.BadArgVal(2, "non-negative", self.name, opCode.name, loc);
+              ObValue.BadArgVal(2, "non-negative", self.name, opCode.name,loc);
+              <*ASSERT FALSE*>
             END;
             RETURN ObValue.NewText(Rd.GetText(rd1, int1));
         | RdCode.GetLine => 
             TYPECASE args[1] OF | ValRd(node) => rd1 := node.rd;
-            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); END;
+            ELSE
+              ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); 
+              <*ASSERT FALSE*>
+            END;
             IF Rd.Closed(rd1) THEN
               ObValue.BadArgVal(1, "non-closed", self.name, opCode.name, loc);
+              <*ASSERT FALSE*>
             END;
             RETURN ObValue.NewText(Rd.GetLine(rd1));
         | RdCode.Index => 
             TYPECASE args[1] OF | ValRd(node) => rd1 := node.rd;
-            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); END;
+            ELSE 
+              ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); 
+              <*ASSERT FALSE*>
+            END;
             IF Rd.Closed(rd1) THEN
               ObValue.BadArgVal(1, "non-closed", self.name, opCode.name, loc);
+              <*ASSERT FALSE*>
             END;
             RETURN NEW(ObValue.ValInt, int:=Rd.Index(rd1), temp:=temp);
         | RdCode.Length => 
             TYPECASE args[1] OF | ValRd(node) => rd1 := node.rd;
-            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); END;
+            ELSE 
+              ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); 
+              <*ASSERT FALSE*>
+            END;
             IF Rd.Closed(rd1) THEN
               ObValue.BadArgVal(1, "non-closed", self.name, opCode.name, loc);
+              <*ASSERT FALSE*>
             END;
             IF Rd.Intermittent(rd1) THEN
-              ObValue.BadArgVal(1,"non-intermittent",self.name,opCode.name,loc);
+              ObValue.BadArgVal(1,"non-intermittent",self.name,
+                                opCode.name,loc);
+              <*ASSERT FALSE*>
             END;
             RETURN NEW(ObValue.ValInt, int:=Rd.Length(rd1), temp:=temp);
         | RdCode.Seek => 
             TYPECASE args[1] OF | ValRd(node) => rd1 := node.rd;
-            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); END;
+            ELSE 
+              ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); 
+              <*ASSERT FALSE*>            
+            END;
             TYPECASE args[2] OF | ObValue.ValInt(node) => int1 := node.int;
-            ELSE ObValue.BadArgType(2, "int", self.name, opCode.name, loc); END;
+            ELSE 
+              ObValue.BadArgType(2, "int", self.name, opCode.name, loc); 
+              <*ASSERT FALSE*>
+            END;
             IF Rd.Closed(rd1) THEN
               ObValue.BadArgVal(1, "non-closed", self.name, opCode.name, loc);
+              <*ASSERT FALSE*>
             END;
             IF NOT Rd.Seekable(rd1) THEN
               ObValue.BadArgVal(1, "seekable", self.name, opCode.name, loc);
+              <*ASSERT FALSE*>
             END;
             IF int1<0 THEN
-              ObValue.BadArgVal(2, "non-negative", self.name, opCode.name, loc);
+              ObValue.BadArgVal(2,"non-negative", self.name, opCode.name, loc);
+              <*ASSERT FALSE*>
             END;
             Rd.Seek(rd1, int1);
             RETURN ObValue.valOk;
         | RdCode.Close => 
             TYPECASE args[1] OF | ValRd(node) => rd1 := node.rd;
-            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); END;
+            ELSE 
+              ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); 
+              <*ASSERT FALSE*>
+            END;
             Rd.Close(rd1);
             RETURN ObValue.valOk;
         | RdCode.Intermittent => 
             TYPECASE args[1] OF | ValRd(node) => rd1 := node.rd;
-            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); END;
+            ELSE 
+              ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); 
+              <*ASSERT FALSE*>
+            END;
 	    IF Rd.Intermittent(rd1) THEN RETURN true ELSE RETURN false END;
         | RdCode.Seekable => 
             TYPECASE args[1] OF | ValRd(node) => rd1 := node.rd;
-            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); END;
+            ELSE 
+              ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); 
+              <*ASSERT FALSE*>
+            END;
 	    IF Rd.Seekable(rd1) THEN RETURN true ELSE RETURN false END;
         | RdCode.Closed => 
             TYPECASE args[1] OF | ValRd(node) => rd1 := node.rd;
-            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); END;
+            ELSE 
+              ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); 
+              <*ASSERT FALSE*>
+            END;
 	    IF Rd.Closed(rd1) THEN RETURN true ELSE RETURN false END;
         ELSE
-          ObValue.BadOp(self.name, opCode.name, loc);
+          ObValue.BadOp(self.name, opCode.name, loc);<*ASSERT FALSE*>
         END;
       EXCEPT
       | Rd.Failure, ObValue.ServerError =>
           ObValue.RaiseException(rdFailureException, 
                                self.name & "_" & opCode.name, loc);
+          <*ASSERT FALSE*>
       | Rd.EndOfFile => 
           ObValue.RaiseException(rdEofFailureException,
                                self.name & "_" & opCode.name, loc);
+          <*ASSERT FALSE*>
       | Thread.Alerted =>
           ObValue.RaiseException(ObValue.threadAlerted, 
                                self.name&"_"&opCode.name, loc);
+          <*ASSERT FALSE*>
       | NetObj.Error(atoms) =>
           ObValue.RaiseNetException(self.name&"_"&opCode.name, atoms, loc);
+          <*ASSERT FALSE*>
       END;
     END EvalRd;
 
@@ -271,8 +346,8 @@ TYPE
     ELSE RETURN FALSE END;
   END IsWr;
 
-  PROCEDURE CopyWr(self: ObValue.ValAnything; tbl: ObValue.Tbl;
-    loc: SynLocation.T): ObValue.ValAnything RAISES {ObValue.Error} =
+  PROCEDURE CopyWr(self: ObValue.ValAnything; <*UNUSED*>tbl: ObValue.Tbl;
+                   <*UNUSED*>loc: SynLocation.T): ObValue.ValAnything =
   BEGIN
     RETURN self;
   END CopyWr;
@@ -316,7 +391,7 @@ TYPE
   END SetupWr;
 
   PROCEDURE EvalWr(self: PackageWr; opCode: ObLib.OpCode; 
-      arity: ObLib.OpArity; READONLY args: ObValue.ArgArray; 
+                   <*UNUSED*>arity: ObLib.OpArity; READONLY args: ObValue.ArgArray; 
       temp: BOOLEAN; loc: SynLocation.T)
       : ObValue.Val RAISES {ObValue.Error, ObValue.Exception} =
     VAR wr1: Wr.T; text1: TEXT; char1: CHAR; int1: INTEGER;
@@ -328,127 +403,130 @@ TYPE
             RETURN wrFailureException;
         | WrCode.New =>
             wr1 := TextWr.New();
-            RETURN NEW(ValWr, what:="<a writer>", 
+            RETURN NEW(ValWr, what:="<a writer>", tag:="Writer", 
                 picklable:=FALSE, wr:=wr1);
         | WrCode.Stdout => 
-            RETURN NEW(ValWr, what:="<stdout writer>", 
+            RETURN NEW(ValWr, what:="<stdout writer>", tag:="Writer", 
               picklable:=FALSE, wr:=Stdio.stdout);
         | WrCode.Stderr => 
-            RETURN NEW(ValWr, what:="<stderr writer>", 
+            RETURN NEW(ValWr, what:="<stderr writer>", tag:="Writer", 
               picklable:=FALSE, wr:=Stdio.stderr);
         | WrCode.Open => 
             TYPECASE args[1] OF | ObValue.ValFileSystem(node) => fileSys1:=node;
-            ELSE ObValue.BadArgType(1, "file system", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "file system", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             TYPECASE args[2] OF | ObValue.ValText(node) => text1:=node.text;
-            ELSE ObValue.BadArgType(2, "text", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(2, "text", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             wr1 := fileSys1.remote.OpenWrite(text1);
-            RETURN NEW(ValWr, what:="<'" & text1 & "' writer>", 
+            RETURN NEW(ValWr, what:="<'" & text1 & "' writer>", tag:="Writer", 
                        picklable:=FALSE, wr:=wr1);
         | WrCode.OpenAppend => 
             TYPECASE args[1] OF | ObValue.ValFileSystem(node) => fileSys1:=node;
-            ELSE ObValue.BadArgType(1, "file system", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "file system", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             TYPECASE args[2] OF | ObValue.ValText(node) => text1:=node.text;
-            ELSE ObValue.BadArgType(2, "text", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(2, "text", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             wr1 := fileSys1.remote.OpenAppend(text1);
-            RETURN NEW(ValWr, what:="<'" & text1 & "' writer>", 
+            RETURN NEW(ValWr, what:="<'" & text1 & "' writer>", tag:="Writer", 
                        picklable:=FALSE, wr:=wr1);
        | WrCode.ToText =>
             TYPECASE args[1] OF | ValWr(node) => wr1 := node.wr;
-            ELSE ObValue.BadArgType(1, "wr", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "wr", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             TYPECASE wr1 OF
             | TextWr.T(wr) =>
                 RETURN ObValue.NewText(TextWr.ToText(wr));
             ELSE
               ObValue.BadArgVal(1, "locally produced by wr_new", self.name, 
-                              opCode.name, loc);
+                              opCode.name, loc);<*ASSERT FALSE*>
             END;
         | WrCode.PutChar => 
             TYPECASE args[1] OF | ValWr(node) => wr1 := node.wr;
-            ELSE ObValue.BadArgType(1, "wr", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "wr", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             TYPECASE args[2] OF | ObValue.ValChar(node) => char1 := node.char;
-            ELSE ObValue.BadArgType(2, "char", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(2, "char", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             IF Wr.Closed(wr1) THEN
-              ObValue.BadArgVal(1, "non-closed", self.name, opCode.name, loc);
+              ObValue.BadArgVal(1, "non-closed", self.name, opCode.name, loc);<*ASSERT FALSE*>
             END;
             Wr.PutChar(wr1, char1);
             RETURN ObValue.valOk;
         | WrCode.PutText => 
             TYPECASE args[1] OF | ValWr(node) => wr1 := node.wr;
-            ELSE ObValue.BadArgType(1, "wr", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "wr", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             TYPECASE args[2] OF | ObValue.ValText(node) => text1:=node.text;
-            ELSE ObValue.BadArgType(2, "text", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(2, "text", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             IF Wr.Closed(wr1) THEN
-              ObValue.BadArgVal(1, "non-closed", self.name, opCode.name, loc);
+              ObValue.BadArgVal(1, "non-closed", self.name, opCode.name, loc);<*ASSERT FALSE*>
             END;
             Wr.PutText(wr1, text1);
             RETURN ObValue.valOk;
         | WrCode.Flush => 
             TYPECASE args[1] OF | ValWr(node) => wr1 := node.wr;
-            ELSE ObValue.BadArgType(1, "wr", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "wr", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             IF Wr.Closed(wr1) THEN
-              ObValue.BadArgVal(1, "non-closed", self.name, opCode.name, loc);
+              ObValue.BadArgVal(1, "non-closed", self.name, opCode.name, loc);<*ASSERT FALSE*>
             END;
             Wr.Flush(wr1);
             RETURN ObValue.valOk;
         | WrCode.Index => 
             TYPECASE args[1] OF | ValWr(node) => wr1 := node.wr;
-            ELSE ObValue.BadArgType(1, "wr", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "wr", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             IF Wr.Closed(wr1) THEN
-              ObValue.BadArgVal(1, "non-closed", self.name, opCode.name, loc);
+              ObValue.BadArgVal(1, "non-closed", self.name, opCode.name, loc);<*ASSERT FALSE*>
             END;
             RETURN NEW(ObValue.ValInt, int:=Wr.Index(wr1), temp:=temp);
         | WrCode.Length => 
             TYPECASE args[1] OF | ValWr(node) => wr1 := node.wr;
-            ELSE ObValue.BadArgType(1, "wr", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "wr", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             IF Wr.Closed(wr1) THEN
-              ObValue.BadArgVal(1, "non-closed", self.name, opCode.name, loc);
+              ObValue.BadArgVal(1, "non-closed", self.name, opCode.name, loc);<*ASSERT FALSE*>
             END;
             RETURN NEW(ObValue.ValInt, int:=Wr.Length(wr1), temp:=temp);
         | WrCode.Seek => 
             TYPECASE args[1] OF | ValWr(node) => wr1 := node.wr;
-            ELSE ObValue.BadArgType(1, "wr", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "wr", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             TYPECASE args[2] OF | ObValue.ValInt(node) => int1 := node.int;
-            ELSE ObValue.BadArgType(2, "int", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(2, "int", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             IF Wr.Closed(wr1) THEN
-              ObValue.BadArgVal(1, "non-closed", self.name, opCode.name, loc);
+              ObValue.BadArgVal(1, "non-closed", self.name, opCode.name, loc);<*ASSERT FALSE*>
             END;
             IF NOT Wr.Seekable(wr1) THEN
-              ObValue.BadArgVal(1, "seekable", self.name, opCode.name, loc);
+              ObValue.BadArgVal(1, "seekable", self.name, opCode.name, loc);<*ASSERT FALSE*>
             END;
             IF int1<0 THEN
-              ObValue.BadArgVal(2, "non-negative", self.name, opCode.name, loc);
+              ObValue.BadArgVal(2, "non-negative", self.name, opCode.name, loc);<*ASSERT FALSE*>
             END;
             Wr.Seek(wr1, int1);
             RETURN ObValue.valOk;
         | WrCode.Close => 
             TYPECASE args[1] OF | ValWr(node) => wr1 := node.wr;
-            ELSE ObValue.BadArgType(1, "wr", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "wr", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             Wr.Close(wr1);
             RETURN ObValue.valOk;
         | WrCode.Buffered => 
             TYPECASE args[1] OF | ValWr(node) => wr1 := node.wr;
-            ELSE ObValue.BadArgType(1, "wr", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "wr", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
 	    IF Wr.Buffered(wr1) THEN RETURN true ELSE RETURN false END;
         | WrCode.Seekable => 
             TYPECASE args[1] OF | ValWr(node) => wr1 := node.wr;
-            ELSE ObValue.BadArgType(1, "wr", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "wr", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
 	    IF Wr.Seekable(wr1) THEN RETURN true ELSE RETURN false END;
         | WrCode.Closed => 
             TYPECASE args[1] OF | ValWr(node) => wr1 := node.wr;
-            ELSE ObValue.BadArgType(1, "wr", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "wr", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
 	    IF Wr.Closed(wr1) THEN RETURN true ELSE RETURN false END;
         ELSE
-          ObValue.BadOp(self.name, opCode.name, loc);
+          ObValue.BadOp(self.name, opCode.name, loc);<*ASSERT FALSE*>
         END;
       EXCEPT
       | Wr.Failure, ObValue.ServerError =>
           ObValue.RaiseException(wrFailureException, 
                                self.name & "_" & opCode.name, loc);
+          <*ASSERT FALSE*>
       | Thread.Alerted =>
           ObValue.RaiseException(ObValue.threadAlerted, 
                                self.name&"_"&opCode.name, loc);
+          <*ASSERT FALSE*>
       | NetObj.Error(atoms) =>
           ObValue.RaiseNetException(self.name&"_"&opCode.name, atoms, loc);
+          <*ASSERT FALSE*>
       END;
     END EvalWr;
 
@@ -498,7 +576,7 @@ TYPE
   END SetupLex;
 
   PROCEDURE EvalLex(self: PackageLex; opCode: ObLib.OpCode; 
-      arity: ObLib.OpArity; READONLY args: ObValue.ArgArray; 
+                    <*UNUSED*>arity: ObLib.OpArity; READONLY args: ObValue.ArgArray; 
       temp: BOOLEAN; loc: SynLocation.T)
       : ObValue.Val RAISES {ObValue.Error, ObValue.Exception} =
     VAR text1: TEXT; rd1: Rd.T;
@@ -509,49 +587,52 @@ TYPE
             RETURN lexFailureException;
         | LexCode.Scan => 
             TYPECASE args[1] OF | ValRd(node) => rd1 := node.rd;
-            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             TYPECASE args[2] OF | ObValue.ValText(node) => text1:=node.text;
-            ELSE ObValue.BadArgType(2, "text", self.name, opCode.name, loc) END;
+            ELSE ObValue.BadArgType(2, "text", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             RETURN ObValue.NewText(Lex.Scan(rd1, CharSet(text1)));
         | LexCode.Skip => 
             TYPECASE args[1] OF | ValRd(node) => rd1 := node.rd;
-            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             TYPECASE args[2] OF | ObValue.ValText(node) => text1:=node.text;
-            ELSE ObValue.BadArgType(2, "text", self.name, opCode.name, loc) END;
+            ELSE ObValue.BadArgType(2, "text", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             Lex.Skip(rd1, CharSet(text1));
             RETURN ObValue.valOk;
         | LexCode.Match => 
             TYPECASE args[1] OF | ValRd(node) => rd1 := node.rd;
-            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             TYPECASE args[2] OF | ObValue.ValText(node) => text1:=node.text;
-            ELSE ObValue.BadArgType(2, "text", self.name, opCode.name, loc) END;
+            ELSE ObValue.BadArgType(2, "text", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             Lex.Match(rd1, text1);
             RETURN ObValue.valOk;
         | LexCode.Bool => 
             TYPECASE args[1] OF | ValRd(node) => rd1 := node.rd;
-            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
 	    IF Lex.Bool(rd1) THEN RETURN true ELSE RETURN false END;
         | LexCode.Int => 
             TYPECASE args[1] OF | ValRd(node) => rd1 := node.rd;
-            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             RETURN NEW(ObValue.ValInt, int:=Lex.Int(rd1, 10), temp:=temp);
         | LexCode.Real => 
             TYPECASE args[1] OF | ValRd(node) => rd1 := node.rd;
-            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             RETURN NEW(ObValue.ValReal, real:=Lex.LongReal(rd1), temp:=temp);
         ELSE
-          ObValue.BadOp(self.name, opCode.name, loc);
+          ObValue.BadOp(self.name, opCode.name, loc);<*ASSERT FALSE*>
         END;
       EXCEPT 
-      | Lex.Error, Convert.Failed, FloatMode.Trap =>
+      | Lex.Error, FloatMode.Trap =>
           ObValue.RaiseException(lexFailureException, 
                                self.name & "_" & opCode.name, loc);
+          <*ASSERT FALSE*>
       | Rd.Failure =>
           ObValue.RaiseException(rdFailureException, 
                                self.name & "_" & opCode.name, loc);
+          <*ASSERT FALSE*>
       | Thread.Alerted =>
           ObValue.RaiseException(ObValue.threadAlerted, 
                                self.name&"_"&opCode.name, loc);
+          <*ASSERT FALSE*>
       END;
     END EvalLex;
 
@@ -606,39 +687,39 @@ TYPE
   END SetupFmt;
 
   PROCEDURE EvalFmt(self: PackageFmt; opCode: ObLib.OpCode; 
-      arity: ObLib.OpArity; READONLY args: ObValue.ArgArray; 
-      temp: BOOLEAN; loc: SynLocation.T)
-      : ObValue.Val RAISES {ObValue.Error, ObValue.Exception} =
+                    <*UNUSED*>arity: ObLib.OpArity; READONLY args: ObValue.ArgArray; 
+                    <*UNUSED*>temp: BOOLEAN; loc: SynLocation.T)
+      : ObValue.Val RAISES {ObValue.Error} =
     VAR text1: TEXT; bool1: BOOLEAN; int1: INTEGER; real1: LONGREAL;
     BEGIN
         CASE NARROW(opCode, FmtOpCode).code OF
         | FmtCode.PadLft => 
             TYPECASE args[1] OF | ObValue.ValText(node) => text1 := node.text;
-            ELSE ObValue.BadArgType(1, "text", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "text", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             TYPECASE args[2] OF | ObValue.ValInt(node) => int1 := node.int;
-            ELSE ObValue.BadArgType(2, "int", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(2, "int", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             RETURN ObValue.NewText(Fmt.Pad(text1, int1, ' ', Fmt.Align.Left));
         | FmtCode.PadRht => 
             TYPECASE args[1] OF | ObValue.ValText(node) => text1 := node.text;
-            ELSE ObValue.BadArgType(1, "text", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "text", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             TYPECASE args[2] OF | ObValue.ValInt(node) => int1 := node.int;
-            ELSE ObValue.BadArgType(2, "int", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(2, "int", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             RETURN ObValue.NewText(Fmt.Pad(text1, int1, ' ', Fmt.Align.Right));
         | FmtCode.Bool => 
             TYPECASE args[1] OF | ObValue.ValBool(node) => bool1 := node.bool;
-            ELSE ObValue.BadArgType(1, "bool", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "bool", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             IF bool1 THEN RETURN ObValue.NewText("true");
 	    ELSE RETURN ObValue.NewText("false"); END;
         | FmtCode.Int => 
             TYPECASE args[1] OF | ObValue.ValInt(node) => int1 := node.int;
-            ELSE ObValue.BadArgType(1, "int", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "int", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             RETURN ObValue.NewText(Fmt.Int(int1));
         | FmtCode.Real => 
             TYPECASE args[1] OF | ObValue.ValReal(node) => real1 := node.real;
-            ELSE ObValue.BadArgType(1, "real", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "real", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             RETURN ObValue.NewText(Fmt.LongReal(real1, literal:=TRUE));
         ELSE
-          ObValue.BadOp(self.name, opCode.name, loc);
+          ObValue.BadOp(self.name, opCode.name, loc);<*ASSERT FALSE*>
         END;
     END EvalFmt;
 
@@ -684,55 +765,55 @@ TYPE
   END SetupWord;
 
   PROCEDURE EvalWord(self: PackageWord; opCode: ObLib.OpCode; 
-      arity: ObLib.OpArity; READONLY args: ObValue.ArgArray; 
-      temp: BOOLEAN; loc: SynLocation.T)
-      : ObValue.Val RAISES {ObValue.Error, ObValue.Exception} =
+                     <*UNUSED*>arity: ObLib.OpArity; READONLY args: ObValue.ArgArray; 
+                     <*UNUSED*>temp: BOOLEAN; loc: SynLocation.T)
+      : ObValue.Val RAISES {ObValue.Error} =
     VAR int1, int2: INTEGER;
     BEGIN
         CASE NARROW(opCode, WordOpCode).code OF
         | WordCode.Not => 
             TYPECASE args[1] OF | ObValue.ValInt(node) => int1 := node.int;
-            ELSE ObValue.BadArgType(1, "int", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "int", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             RETURN Obliq.NewInt(Word.Not (int1));
         | WordCode.And => 
             TYPECASE args[1] OF | ObValue.ValInt(node) => int1 := node.int;
-            ELSE ObValue.BadArgType(1, "int", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "int", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             TYPECASE args[2] OF | ObValue.ValInt(node) => int2 := node.int;
-            ELSE ObValue.BadArgType(2, "int", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(2, "int", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             RETURN Obliq.NewInt(Word.And (int1, int2));
         | WordCode.Or => 
             TYPECASE args[1] OF | ObValue.ValInt(node) => int1 := node.int;
-            ELSE ObValue.BadArgType(1, "int", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "int", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             TYPECASE args[2] OF | ObValue.ValInt(node) => int2 := node.int;
-            ELSE ObValue.BadArgType(2, "int", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(2, "int", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             RETURN Obliq.NewInt(Word.Or (int1, int2));
         | WordCode.Xor => 
             TYPECASE args[1] OF | ObValue.ValInt(node) => int1 := node.int;
-            ELSE ObValue.BadArgType(1, "int", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "int", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             TYPECASE args[2] OF | ObValue.ValInt(node) => int2 := node.int;
-            ELSE ObValue.BadArgType(2, "int", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(2, "int", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             RETURN Obliq.NewInt(Word.Xor (int1, int2));
         | WordCode.Shift => 
             TYPECASE args[1] OF | ObValue.ValInt(node) => int1 := node.int;
-            ELSE ObValue.BadArgType(1, "int", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "int", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             TYPECASE args[2] OF | ObValue.ValInt(node) => int2 := node.int;
-            ELSE ObValue.BadArgType(2, "int", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(2, "int", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             RETURN Obliq.NewInt(Word.Shift (int1, int2));
         | WordCode.Rotate => 
             TYPECASE args[1] OF | ObValue.ValInt(node) => int1 := node.int;
-            ELSE ObValue.BadArgType(1, "int", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(1, "int", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             TYPECASE args[2] OF | ObValue.ValInt(node) => int2 := node.int;
-            ELSE ObValue.BadArgType(2, "int", self.name, opCode.name, loc); END;
+            ELSE ObValue.BadArgType(2, "int", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
             RETURN Obliq.NewInt(Word.Rotate (int1, int2));
         ELSE
-          ObValue.BadOp(self.name, opCode.name, loc);
+          ObValue.BadOp(self.name, opCode.name, loc);<*ASSERT FALSE*>
         END;
     END EvalWord;
 
 
 (* ============ "pickle" package ============ *)
 
-CONST CurrentPickleVersion = 1;
+CONST CurrentPickleVersion = 2;
 TYPE PickleVersion = 
   BRANDED "ObliqPickleVersion" OBJECT version: INTEGER END;
 
@@ -776,8 +857,8 @@ TYPE
   END SetupPickle;
 
   PROCEDURE EvalPickle(self: PackagePickle; opCode: ObLib.OpCode; 
-      arity: ObLib.OpArity; READONLY args: ObValue.ArgArray; 
-      temp: BOOLEAN; loc: SynLocation.T)
+                       <*UNUSED*>arity: ObLib.OpArity; READONLY args: ObValue.ArgArray; 
+                       <*UNUSED*>temp: BOOLEAN; loc: SynLocation.T)
       : ObValue.Val RAISES {ObValue.Error, ObValue.Exception} =
     VAR wr1: Wr.T; rd1: Rd.T;
     BEGIN
@@ -787,14 +868,14 @@ TYPE
           RETURN pickleFailureException;
       | PickleCode.Write => 
           TYPECASE args[1] OF | ValWr(node) => wr1 := node.wr;
-          ELSE ObValue.BadArgType(1, "wr", self.name, opCode.name, loc); END;
+          ELSE ObValue.BadArgType(1, "wr", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
           Pickle.Write(wr1, NEW(PickleVersion, version:=CurrentPickleVersion));
           Pickle.Write(wr1, 
             ObValue.CopyValToLocal(args[2], ObValue.NewTbl(), loc));
           RETURN ObValue.valOk;
       | PickleCode.Read => 
           TYPECASE args[1] OF | ValRd(node) => rd1 := node.rd;
-          ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); END;
+          ELSE ObValue.BadArgType(1, "rd", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
           TYPECASE Pickle.Read(rd1) OF
           | PickleVersion(p) =>
             IF p.version # CurrentPickleVersion THEN 
@@ -805,22 +886,31 @@ TYPE
           RETURN 
             ObValue.CopyLocalToVal(Pickle.Read(rd1), ObValue.NewTbl(), loc);
       ELSE
-        ObValue.BadOp(self.name, opCode.name, loc);
+        ObValue.BadOp(self.name, opCode.name, loc);<*ASSERT FALSE*>
       END;
       EXCEPT
       | Pickle.Error =>
           ObValue.RaiseException(pickleFailureException, opCode.name, loc);
+          <*ASSERT FALSE*>
       | Wr.Failure =>
           ObValue.RaiseException(wrFailureException, opCode.name, loc);
+          <*ASSERT FALSE*>
       | Rd.Failure =>
           ObValue.RaiseException(rdFailureException, opCode.name, loc);
+          <*ASSERT FALSE*>
       | Rd.EndOfFile => 
           ObValue.RaiseException(rdEofFailureException, opCode.name, loc);
+          <*ASSERT FALSE*>
       | Thread.Alerted =>
           ObValue.RaiseException(ObValue.threadAlerted, 
                                self.name&"_"&opCode.name, loc);
+          <*ASSERT FALSE*>
       | NetObj.Error(atoms) =>
           ObValue.RaiseNetException(self.name&"_"&opCode.name, atoms, loc);
+          <*ASSERT FALSE*>
+      | SharedObj.Error(atoms) =>
+          ObValue.RaiseSharedException(self.name&"_"&opCode.name, atoms, loc);
+          <*ASSERT FALSE*>
       END;
     END EvalPickle;
 
@@ -847,10 +937,10 @@ TYPE
     ELSE RETURN FALSE END;
   END IsProc;
 
-  PROCEDURE CopyProc(self: ObValue.ValAnything; tbl: ObValue.Tbl;
+  PROCEDURE CopyProc(<*UNUSED*>self: ObValue.ValAnything; <*UNUSED*>tbl: ObValue.Tbl;
     loc: SynLocation.T): ObValue.ValAnything RAISES {ObValue.Error} =
   BEGIN
-    ObValue.RaiseError("Cannot copy processes", loc);
+    ObValue.RaiseError("Cannot copy processes", loc);<*ASSERT FALSE*>
   END CopyProc;
 
   PROCEDURE NewProcOC(name: TEXT; arity: INTEGER; code: ProcCode)
@@ -879,7 +969,7 @@ TYPE
   END SetupProc;
 
   PROCEDURE EvalProc(self: PackageProc; opCode: ObLib.OpCode; 
-      arity: ObLib.OpArity; READONLY args: ObValue.ArgArray; 
+                     <*UNUSED*>arity: ObLib.OpArity; READONLY args: ObValue.ArgArray; 
       temp: BOOLEAN; loc: SynLocation.T)
       : ObValue.Val RAISES {ObValue.Error, ObValue.Exception} =
     TYPE Texts = REF ARRAY OF TEXT;
@@ -895,25 +985,28 @@ TYPE
       | ProcCode.New => 
           TYPECASE args[1] OF 
           | ObValue.ValProcessor(node) => processor1:=node;
-          ELSE ObValue.BadArgType(1, "processor", self.name, opCode.name, loc); END;
+          ELSE ObValue.BadArgType(1, "processor", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
           IF processor1 # ObValue.localProcessor THEN
             ObValue.BadArgVal(1, "the local processor", self.name, opCode.name, loc);
+            <*ASSERT FALSE*>
           END;
           TYPECASE args[2] OF 
           | ObValue.ValArray(node) => array1:=node.remote.Obtain();
-          ELSE ObValue.BadArgType(2, "array", self.name, opCode.name, loc); END;
+          ELSE ObValue.BadArgType(2, "array", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
           TYPECASE args[3] OF | ObValue.ValBool(node) => bool1:=node.bool;
-          ELSE ObValue.BadArgType(3, "bool", self.name, opCode.name, loc); END;
+          ELSE ObValue.BadArgType(3, "bool", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
           size := NUMBER(array1^);
           IF size=0 THEN
-            ObValue.BadArgVal(2, "non-empty", self.name, opCode.name, loc);
+            ObValue.BadArgVal(2, "non-empty", self.name, opCode.name, loc);<*ASSERT FALSE*>
           END;
           texts := NEW(Texts, size);
           FOR i := 0 TO size-1 DO
             TYPECASE array1^[i] OF
             | ObValue.ValText(node) => texts^[i] := node.text;
             ELSE 
-              ObValue.BadArgType(2, "array(text)", self.name, opCode.name,loc);
+              ObValue.BadArgType(2, "array(text)", self.name,
+                                 opCode.name,loc);
+              <*ASSERT FALSE*>
             END;
           END;
           Pipe.Open((*out*)stdinR, (*out*)stdinW);
@@ -938,35 +1031,39 @@ TYPE
           ELSE
             stderrRd := NEW(FileRd.T).init(stderrR);
           END;
-          RETURN NEW(ValProc, what:="<a process>",  picklable:=FALSE, 
+          RETURN NEW(ValProc, what:="<a process>", tag:="Process",
+                     picklable:=FALSE, 
             proc:=proc,
             in := 
-              NEW(ValWr, what:="<a process stdin writer>", picklable:=FALSE, 
+              NEW(ValWr, what:="<a process stdin writer>",
+                  tag:="Writer", picklable:=FALSE, 
                 wr:=stdinWr), 
             out := 
-              NEW(ValRd, what:="<a process stdout reader>", picklable:=FALSE, 
-                rd := stdoutRd),
+              NEW(ValRd, what:="<a process stdout reader>", 
+                  tag:="Reader",picklable:=FALSE, 
+                  rd := stdoutRd),
             err := 
-              NEW(ValRd, what:="<a process stderr reader>", picklable:=FALSE, 
-                rd := stderrRd));
+              NEW(ValRd, what:="<a process stderr reader>",
+                  tag:="Reader", picklable:=FALSE, 
+                  rd := stderrRd));
       | ProcCode.In => 
           TYPECASE args[1] OF | ValProc(node) => proc1 := node;
-          ELSE ObValue.BadArgType(1, "process", self.name, opCode.name, loc); 
+          ELSE ObValue.BadArgType(1, "process", self.name, opCode.name, loc); <*ASSERT FALSE*>
           END;
           RETURN proc1.in;
       | ProcCode.Out => 
           TYPECASE args[1] OF | ValProc(node) => proc1 := node;
-          ELSE ObValue.BadArgType(1, "process", self.name, opCode.name, loc); 
+          ELSE ObValue.BadArgType(1, "process", self.name, opCode.name, loc); <*ASSERT FALSE*>
           END;
           RETURN proc1.out;
       | ProcCode.Err => 
           TYPECASE args[1] OF | ValProc(node) => proc1 := node;
-          ELSE ObValue.BadArgType(1, "process", self.name, opCode.name, loc); 
+          ELSE ObValue.BadArgType(1, "process", self.name, opCode.name, loc); <*ASSERT FALSE*>
           END;
           RETURN proc1.err;
       | ProcCode.Complete => 
           TYPECASE args[1] OF | ValProc(node) => proc1 := node;
-          ELSE ObValue.BadArgType(1, "process", self.name, opCode.name, loc); 
+          ELSE ObValue.BadArgType(1, "process", self.name, opCode.name, loc); <*ASSERT FALSE*>
           END;
           int := Process.Wait(proc1.proc);
           Wr.Close(proc1.in.wr);
@@ -976,25 +1073,25 @@ TYPE
       | ProcCode.Filter => 
           TYPECASE args[1] OF 
           | ObValue.ValProcessor(node) => processor1:=node;
-          ELSE ObValue.BadArgType(1, "processor", self.name, opCode.name, loc); END;
+          ELSE ObValue.BadArgType(1, "processor", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
           IF processor1 # ObValue.localProcessor THEN
-            ObValue.BadArgVal(1, "the local processor", self.name, opCode.name, loc);
+            ObValue.BadArgVal(1, "the local processor", self.name, opCode.name, loc);<*ASSERT FALSE*>
           END;
           TYPECASE args[2] OF 
           | ObValue.ValArray(node) => array1:=node.remote.Obtain();
-          ELSE ObValue.BadArgType(2, "array", self.name, opCode.name, loc); END;
+          ELSE ObValue.BadArgType(2, "array", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
           TYPECASE args[3] OF | ObValue.ValText(node) => text1:=node.text;
-          ELSE ObValue.BadArgType(3, "text", self.name, opCode.name, loc); END;
+          ELSE ObValue.BadArgType(3, "text", self.name, opCode.name, loc); <*ASSERT FALSE*>END;
           size := NUMBER(array1^);
           IF size=0 THEN
-            ObValue.BadArgVal(2, "non-empty", self.name, opCode.name, loc);
+            ObValue.BadArgVal(2, "non-empty", self.name, opCode.name, loc);<*ASSERT FALSE*>
           END;
           texts := NEW(Texts, size);
           FOR i := 0 TO size-1 DO
             TYPECASE array1^[i] OF
             | ObValue.ValText(node) => texts^[i] := node.text;
             ELSE ObValue.BadArgType(2, "array(text)", self.name, 
-                   opCode.name, loc);
+                   opCode.name, loc);<*ASSERT FALSE*>
             END;
           END;
           Pipe.Open((*out*)stdinR, (*out*)stdinW);
@@ -1024,26 +1121,95 @@ TYPE
           RETURN ObValue.NewObject(
             NEW(ObValue.ObjFieldValue, 
               label:="r",
-              val:=NEW(ValRd, what:="<a pipe reader>", picklable:=FALSE, 
-                  rd:=rd1),
+              val:=NEW(ValRd, what:="<a pipe reader>", tag:="Reader",
+                       picklable:=FALSE, rd:=rd1),
               rest:=NEW(ObValue.ObjFieldValue(
                 label:="w",
-                val:=NEW(ValWr, what:="<a pipe writer>", picklable:=FALSE, 
+                val:=NEW(ValWr, what:="<a pipe writer>",
+                     tag:="Writer", picklable:=FALSE, 
                   wr:=wr1),
                 rest:=NIL)));
             );
  *)
        ELSE
-        ObValue.BadOp(self.name, opCode.name, loc);
+        ObValue.BadOp(self.name, opCode.name, loc);<*ASSERT FALSE*>
       END;
       EXCEPT
       | Rd.Failure, Wr.Failure, Thread.Alerted, OSError.E =>
-          ObValue.RaiseError(self.name&"_"&opCode.name, loc);
+          ObValue.RaiseError(self.name&"_"&opCode.name, loc);<*ASSERT FALSE*>
       | NetObj.Error(atoms) =>
               ObValue.RaiseNetException(
-                               self.name&"_"&opCode.name, atoms, loc);
+                               self.name&"_"&opCode.name, atoms, loc);<*ASSERT FALSE*>
       END;
     END EvalProc;
+
+(* ============ "random" package ============ *)
+
+TYPE
+  RandomCode = {Int, Real};
+
+  RandomOpCode =  
+    ObLib.OpCode OBJECT
+        code: RandomCode;
+      END;
+    
+  PackageRandom = 
+    ObLib.T OBJECT
+      OVERRIDES
+        Eval:=EvalRandom;
+      END;
+
+  PROCEDURE NewRandomOC(name: TEXT; arity: INTEGER; code: RandomCode)
+    : RandomOpCode =
+  BEGIN
+    RETURN NEW(RandomOpCode, name:=name, arity:=arity, code:=code);
+  END NewRandomOC;
+
+  PROCEDURE SetupRandom() =
+  TYPE OpCodes = ARRAY OF ObLib.OpCode;
+  VAR opCodes: REF OpCodes;
+  BEGIN
+    opCodes := NEW(REF OpCodes, NUMBER(RandomCode));
+    opCodes^ :=
+      OpCodes{
+      NewRandomOC("int",  2, RandomCode.Int),
+      NewRandomOC("real", 2, RandomCode.Real)
+      };
+    ObLib.Register(
+      NEW(PackageRandom, name:="random", opCodes:=opCodes));
+  END SetupRandom;
+
+  PROCEDURE EvalRandom(self: PackageRandom; opCode: ObLib.OpCode; 
+                       <*UNUSED*>arity: ObLib.OpArity; READONLY args: ObValue.ArgArray; 
+                       <*UNUSED*>temp: BOOLEAN; loc: SynLocation.T)
+      : ObValue.Val RAISES {ObValue.Error} =
+    VAR real1, real2: LONGREAL; int1, int2: INTEGER;
+    BEGIN
+      CASE NARROW(opCode, RandomOpCode).code OF
+      | RandomCode.Int => 
+          TYPECASE args[1] OF | ObValue.ValInt(node) => int1:=node.int;
+          ELSE ObValue.BadArgType(1, "int", self.name, opCode.name, loc); <*ASSERT FALSE*> END;
+          TYPECASE args[2] OF | ObValue.ValInt(node) => int2:=node.int;
+          ELSE ObValue.BadArgType(2, "int", self.name, opCode.name, loc); <*ASSERT FALSE*> END;
+          LOCK randomMu DO
+            RETURN Obliq.NewInt(random.integer(int1,int2))
+          END;
+      | RandomCode.Real => 
+          TYPECASE args[1] OF | ObValue.ValReal(node) => real1:=node.real;
+          ELSE ObValue.BadArgType(1, "real", self.name, opCode.name, loc); <*ASSERT FALSE*> END;
+          TYPECASE args[2] OF | ObValue.ValReal(node) => real2:=node.real;
+          ELSE ObValue.BadArgType(2, "real", self.name, opCode.name, loc); <*ASSERT FALSE*> END;
+          LOCK randomMu DO
+            RETURN Obliq.NewReal(random.longreal(real1,real2))
+          END;
+      ELSE
+        ObValue.BadOp(self.name, opCode.name, loc);<*ASSERT FALSE*> 
+      END;
+    END EvalRandom;
+
+VAR 
+  randomMu := NEW(MUTEX);
+  random := NEW(Random.Default).init();
 
 BEGIN
 END ObLibM3.

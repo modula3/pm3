@@ -7,8 +7,11 @@ MODULE SimpleMedia;
     $Revision$
     $Date$
     $Log$
-    Revision 1.1  2003/03/27 15:25:28  hosking
-    Initial revision
+    Revision 1.2  2003/04/08 21:56:44  hosking
+    Merge of PM3 with Persistent M3 and CM3 release 5.1.8
+
+    Revision 1.1.1.1  2003/03/27 15:25:28  hosking
+    Import of GRAS3 1.1
 
     Revision 1.2  1996/03/08 10:31:38  rbnix
     	In procedure DropData the usage of a local variable data is
@@ -25,6 +28,7 @@ MODULE SimpleMedia;
 
 IMPORT
   PageHandle,
+  PageData,
   PageFile;
 
 
@@ -60,19 +64,21 @@ PROCEDURE GetFile	(         self		:T) : PageFile.T =
 
 
 PROCEDURE LoadData	(         self		:T;
-                                  handle	:PageHandle.T) =
+                                  handle        :PageHandle.T;
+                         VAR      data          :PageData.T) =
   BEGIN
-    handle.putData (self.file.getData (handle.getPageNo ()));
+    self.file.getData (handle.getPageNo (), data);
   END LoadData;
 
 
-PROCEDURE DropData	(         self		:T;
-                                  handle	:PageHandle.T) =
+PROCEDURE DropData 	(         self	 	:T;
+                                  handle        :PageHandle.T;
+                         READONLY data          :PageData.T) =
   BEGIN
     IF handle.isChanged () THEN
-      self.file.putData (handle.getPageNo (), handle.getAll ());
+      self.file.putData (handle.getPageNo (), data);
     END;
-  END DropData;
+  END DropData; 
 
 
 BEGIN

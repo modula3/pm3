@@ -86,19 +86,10 @@ PROCEDURE Pop (s: Set) =
     top := s;
   END Pop;
 
-PROCEDURE Parse (READONLY att: Decl.Attributes) =
+PROCEDURE Parse (<*UNUSED*> READONLY att: Decl.Attributes) =
   TYPE TK = Token.T;
   VAR id, id2: M3ID.T;  loc: INTEGER;
   BEGIN
-    IF att.isInline   THEN Error.Msg ("a revelation cannot be inline"); END;
-    IF att.isObsolete THEN Error.Msg ("a revelation cannot be obsolete"); END;
-    IF att.isUnused   THEN Error.Msg ("a revelation cannot be unused"); END;
-    IF att.isExternal THEN
-      Error.Msg ("a revelation cannot be external");
-    ELSIF att.callingConv # NIL THEN
-      Error.Msg ("a revelation does not have a calling convention");
-    END;
-
     Match (TK.tREVEAL);
     WHILE (cur.token = TK.tIDENT) DO
       id2 := M3ID.NoID;
@@ -265,7 +256,11 @@ PROCEDURE HashInsert (s: Set;  l: List) =
 PROCEDURE DoCheck0 (t: T) =
   BEGIN
     Scanner.offset := t.origin;
-    t.rhs := Type.Check (t.rhs);
+    EVAL Type.Check (t.rhs);
+    (** t.rhs := Type.Check (t.rhs);  -- we don't want to save the
+      checked RHS, otherwise if the RHS is a named type we'll miss
+      the check below which requires a full revelation to have a
+      branded constructor. **)
     t.lhs := Type.Check (t.lhs);
   END DoCheck0;
 
@@ -531,8 +526,8 @@ PROCEDURE Declare (s: Set;  VAR full_info, partial_info: INTEGER) =
       END;
     END;
 
-    full_info := 0;
-    partial_info := 0;
+    full_info := -1;
+    partial_info := -1;
     IF (n_full > 0) THEN
       full_info := GenList (s, n_full, TRUE);
     END;
@@ -544,7 +539,7 @@ PROCEDURE Declare (s: Set;  VAR full_info, partial_info: INTEGER) =
 PROCEDURE GenList (s: Set;  cnt: INTEGER;  eq: BOOLEAN): INTEGER =
   VAR
     base := Module.Allocate (cnt * M3RT.RV_SIZE + Target.Integer.size,
-                             Target.Integer.align, "revelations");
+                             Target.Integer.align, TRUE, "revelations");
     offs := base;
     iter : Iterator;
     l    : List;
@@ -554,9 +549,9 @@ PROCEDURE GenList (s: Set;  cnt: INTEGER;  eq: BOOLEAN): INTEGER =
       l := iter.cur;
       IF (l.local) AND (l.ident.equal = eq) THEN
         CG.Init_intt (offs + M3RT.RV_lhs_id, Target.Integer.size,
-                      Type.GlobalUID (l.ident.lhs));
+                      Type.GlobalUID (l.ident.lhs), TRUE);
         CG.Init_intt (offs + M3RT.RV_rhs_id, Target.Integer.size,
-                      Type.GlobalUID (l.ident.rhs));
+                      Type.GlobalUID (l.ident.rhs), TRUE);
         INC (offs, M3RT.RV_SIZE);
       END;
     END;

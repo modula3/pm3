@@ -2,7 +2,8 @@
 (* All rights reserved.                                        *)
 (* See the file COPYRIGHT for a full description.              *)
 (*                                                             *)
-(* Last modified on Mon Oct 31 15:00:39 PST 1994 by kalsow     *)
+(* Last modified on Wed Jul 30 13:55:56 EST 1997 by hosking    *)
+(*      modified on Mon Oct 31 15:00:39 PST 1994 by kalsow     *)
 (*      modified on Sat Jun 27 15:27:28 PDT 1992 by muller     *)
 
 INTERFACE Udir;
