@@ -29,6 +29,8 @@ IGNORE CASE
 
 PRODUCTIONS
 
+Fortran95 = xExecutableProgram .
+
 (* Compilation unit productions *)
 
 (* 2.1 High level syntax *)
@@ -887,33 +889,33 @@ PRODUCTIONS
           (* R707 *)
           xLevel2Expr =
             [ xLevel2Expr xAddOp ] xAddOperand |
-            xSign xAddOperand .   % We need to distinguish unary operators
+            xSign xAddOperand .   (* We need to distinguish unary operators *)
           xUFExpr = xUFTerm | xSign xUFTerm | xUFExpr xAddOp xUFTerm .
 
           (* R708-710 defined in source form *)
 
           (* R711 *)
-          xLevel3Expr: [ xLevel3Expr xConcatOp ] xLevel2Expr .
-          xCExpr: [ xCExpr xConcatOp ] xCPrimary .
+          xLevel3Expr = [ xLevel3Expr xConcatOp ] xLevel2Expr .
+          xCExpr = [ xCExpr xConcatOp ] xCPrimary .
 
           (* R712 defined in source form *)
 
           (* R713 *)
-          xLevel4Expr: [xLevel3Expr xRelOp] xLevel3Expr .
+          xLevel4Expr = [xLevel3Expr xRelOp] xLevel3Expr .
 
           (* R714 defined in source form *)
 
           (* R715 *)
-          xAndOperand: [xNotOp] xLevel4Expr .
+          xAndOperand = [xNotOp] xLevel4Expr .
 
           (* R716 *)
-          xOrOperand: [xOrOperand xAndOp] xAndOperand .
+          xOrOperand = [xOrOperand xAndOp] xAndOperand .
 
           (* R717 *)
-          xEquivOperand: [xEquivOperand xOrOp] xOrOperand .
+          xEquivOperand = [xEquivOperand xOrOp] xOrOperand .
 
           (* R718 *)
-          xLevel5Expr: [xLevel5Expr xEquivOp] xEquivOperand .
+          xLevel5Expr = [xLevel5Expr xEquivOp] xEquivOperand .
 
           (* R719-722 defined in source form *)
 
@@ -931,7 +933,7 @@ PRODUCTIONS
           (* R725-R734 chain rule deleted *)
 
           (* R735 *)
-          Assignment Statement[23]
+          (* Assignment Statement[23] *)
           xAssignmentStmt =
             xLblDef xName "%" xDataRef
               [ "(" xSectionSubscriptList ")" [ xSubstringRange ] ]
@@ -1676,7 +1678,7 @@ PRODUCTIONS
             xLblDef "end" "subroutine" [ xEndName ] xEOS .
 
           (* R1225 *)
-          Entry Statement[14]
+          (* Entry Statement[14] *)
           xEntryStmt =
             xLblDef "entry" xEntryName "(" xSubroutinePars ")"
               "result" "(" xName ")" xEOS .
@@ -1696,7 +1698,7 @@ PRODUCTIONS
            * function definition.
            *)
           xStmtFunctionStmt = xLblDef xName xStmtFunctionRange .
-          xStmtFunctionRange = "(" ")" "=" xExpr xEOS .
+(*        xStmtFunctionRange = "(" ")" "=" xExpr xEOS .  *)
           xStmtFunctionRange = "(" xSFDummyArgNameList ")" "=" xExpr xEOS .
           xSFDummyArgNameList =
             xSFDummyArgName | xSFDummyArgNameList "," xSFDummyArgName .
