@@ -71,7 +71,6 @@ PROCEDURE AdvanceToBlankLine (VAR s: State) =
       END
     UNTIL blank OR s.eof;
   END AdvanceToBlankLine;
-************)
 
 PROCEDURE Prog (VAR s: State): BOOLEAN =
   VAR

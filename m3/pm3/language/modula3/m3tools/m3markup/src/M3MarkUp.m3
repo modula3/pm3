@@ -21,11 +21,11 @@ CONST
   End_Ref         = "\">";
 
 VAR
-  Start_Exporters = "<A HREF=\"/4";
-  Start_Interface = "<A HREF=\"/3";
-  Start_Exporter  = "<A HREF=\"/S";
-  Start_Type      = "<A HREF=\"/L";
-  Start_Header    = "<A NAME=\"";
+  Start_Exporters := "<A HREF=\"/4";
+  Start_Interface := "<A HREF=\"/3";
+  Start_Exporter  := "<A HREF=\"/S";
+  Start_Type      := "<A HREF=\"/L";
+  Start_Header    := "<A NAME=\"";
 
 TYPE
   TK = M3Token.T;
