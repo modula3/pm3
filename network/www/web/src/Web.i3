@@ -23,30 +23,33 @@ TYPE T <: ROOT;
    "Setup(NIL)". *)
 
 CONST
-  DefaultProxyHost   = "http://www-proxy.pa.dec.com:8080/";
-  DefaultNoProxyList = "src-www,.dec.com";
-  
+  DefaultProxyHost   = NIL;
+  (* At SRC, set it to "http://www-proxy.pa.dec.com:8080/" instead *)
+  DefaultNoProxyList = "";
+  (*  At SRC, set it to "src-www,.dec.com" instead *)
+
 PROCEDURE Setup (proxyURL, noProxyList: TEXT := NIL): T
-  RAISES {Error};
-(* Return a data type representing an http proxy server. *)
+   RAISES {Error};
+  (* Return a data type representing an http proxy server. *)
 
-(* "proxyURL" is the url for the proxy server; it should have the format:
-|      http://hostname.blah.blah.blah:8080/
-   If "proxyURL" is "NIL", it defaults to the environment variable
-   "http_proxy".  If "http_proxy" is empty or undefined, "proxyURL"
-   defaults to "DefaultProxy".
+  (* "proxyURL" is the url for the proxy server; it should have the format:
+  |      http://hostname.blah.blah.blah:8080/
+     If "proxyURL" is "NIL", it defaults to the environment variable
+    "http_proxy".  If "http_proxy" is empty or undefined, "proxyURL"
+     defaults to "DefaultProxyHost".  If "DefaultProxyHost" is NIL, 
+     no proxy is used.
 
-   "noProxyList" specifies a set of domains for which the proxy should not
-   be consulted; the format is a comma-separated list of domain names, with
-   optional port.  If "noProxyList" is NIL, it defaults to the environment
-   variable "no_proxy".  If "no_proxy" is empty or undefined, "noProxyList"
-   defaults to "DefaultNoProxyList".
+     "noProxyList" specifies a set of domains for which the proxy should not
+     be consulted; the format is a comma-separated list of domain names, with
+     optional port.  If "noProxyList" is NIL, it defaults to the environment
+     variable "no_proxy".  If "no_proxy" is empty or undefined, "noProxyList"
+     defaults to "DefaultNoProxyList".  If "DefaultNoProxyList" is the empty 
+     string, the proxy will be consulted for every URL.
 
    Details about proxies are at:
 |      http://info.cern.ch/hypertext/WWW/Daemon/User/Proxies/ProxyClients.html
 
    "Setup" raises "Error" if "proxyURL" is not in a valid format. *)
-
 
 CONST 
   DefaultRequestFields = ARRAY [0 .. 0] OF TEXT{"Accept: */*"};

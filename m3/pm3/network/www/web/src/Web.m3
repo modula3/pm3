@@ -66,19 +66,23 @@ PROCEDURE OpenTCPConnect (server: T; VAR url: TEXT): TCP.T
     channel         : TCP.T;
     host                         := server.host;
     port                         := server.port;
-    noProxy                      := server.noProxy;
-    list            : TextList.T;
+    list                         := server.noProxy;
     urlHost, urlPath: TEXT       := NIL;
     urlPort         : INTEGER    := 80;
   BEGIN
     URLHostPort(url, urlHost, urlPort, urlPath);
-    list := server.noProxy;
-    WHILE list # NIL DO
-      IF NoProxyMatch(urlHost, Pop(list)) THEN
-        host := urlHost;
-        port := urlPort;
-        noProxy := NIL;
-        url := urlPath;
+
+    IF server.host = NIL THEN
+      host := urlHost;
+      port := urlPort;
+      url := urlPath;
+    ELSE
+      WHILE list # NIL DO
+        IF NoProxyMatch(urlHost, Pop(list)) THEN
+          host := urlHost;
+          port := urlPort;
+          url := urlPath;
+        END;
       END;
     END;
 
@@ -134,9 +138,15 @@ PROCEDURE Setup (proxyURL, noProxyList: TEXT := NIL): T RAISES {Error} =
   BEGIN
     IF proxyURL = NIL THEN
       proxyURL := Env.Get(ProxyVar);
-      IF proxyURL = NIL THEN proxyURL := DefaultProxyHost; END;
     END;
-    URLHostPort(proxyURL, server.host, server.port, garbage);
+    IF proxyURL = NIL THEN 
+      proxyURL := DefaultProxyHost; 
+    END;
+    IF proxyURL = NIL THEN
+      server.host := NIL;
+    ELSE
+      URLHostPort(proxyURL, server.host, server.port, garbage);
+    END;
 
     IF noProxyList = NIL THEN
       noProxy := Env.Get(NoProxyVar);
