@@ -23,17 +23,20 @@
 # spread out over the entire source repository.
 
 pm3		m3/pm3
-#m3build2	m3/pkg/SRC-m3/m3build2
-#m3driver	m3/pkg/SRC-m3/m3driver
+language	m3/pm3/language
+m3quake		m3/pm3/language/m3quake
+modula3		m3/pm3/language/modula3
+m3compiler	m3/pm3/language/modula3/m3compiler
+m3driver	m3/pm3/language/modula3/m3compiler/m3driver
 m3front		m3/pm3/language/modula3/m3compiler/m3front
-#m3linker	m3/pkg/SRC-m3/m3linker
-#m3middle	m3/pkg/SRC-m3/m3middle
-#m3quake		m3/pkg/SRC-m3/m3quake
-#m3ship2		m3/pkg/SRC-m3/m3ship2
-#m3templates	m3/pkg/SRC-m3/m3templates
-#m3where2	m3/pkg/SRC-m3/m3where2
-#m3core		m3/pkg/SRC-m3/m3core
-#m3gdb		m3/pkg/gnu/m3gdb
+m3linker	m3/pm3/language/modula3/m3compiler/m3linker
+m3middle	m3/pm3/language/modula3/m3compiler/m3middle
+m3templates	m3/pm3/language/modula3/m3compiler/m3templates
+m3build		m3/pm3/language/modula3/m3compiler/m3build
+m3ship		m3/pm3/language/modula3/m3compiler/m3ship2
+m3where		m3/pm3/language/modula3/m3compiler/m3where2
+m3gdb		m3/pm3/language/modula3/m3tools/m3gdb
+libm3		m3/pm3/libs/libm3
+m3core		m3/pm3/libs/m3core
 #ui		m3/pkg/SRC-m3/ui
-#libm3		m3/pkg/SRC-m3/libm3
 #set		m3/pkg/SRC-m3/set
