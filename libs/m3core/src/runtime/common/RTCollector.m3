@@ -3440,7 +3440,7 @@ PROCEDURE RefSanityCheck (<*UNUSED*>v: RTHeapMap.Visitor;  cp  : ADDRESS) =
           IF desc[p - p0].resident AND desc[p - p0].mode # Mode.NoAccess THEN
             VAR tc := h.typecode;
             BEGIN
-              <* ASSERT (0 < tc AND tc < RTType.MaxTypecode())
+              <* ASSERT (0 <= tc AND tc <= RTType.MaxTypecode())
                         OR tc = Fill_1_type
                         OR tc = Fill_N_type *>
             END
@@ -3469,7 +3469,7 @@ PROCEDURE ProtectedOlderRefSanityCheck (<*UNUSED*> v  : RTHeapMap.Visitor;
           IF desc[p - p0].mode # Mode.NoAccess THEN
             VAR tc := h.typecode;
             BEGIN
-              <* ASSERT (0 < tc AND tc < RTType.MaxTypecode())
+              <* ASSERT (0 <= tc AND tc <= RTType.MaxTypecode())
                         OR tc = Fill_1_type
                         OR tc = Fill_N_type *>
             END
