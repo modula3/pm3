@@ -632,7 +632,8 @@ loop_stmt:
     ;
 
 raise_stmt:
-      Raise AO expr 
+      Raise AO qqid
+    | Raise AO qqid Lparen expr Z Rparen
     ;
 
 repeat_stmt:
@@ -1487,7 +1488,7 @@ Modifies:      MODIFIES { PK ("MODIFIES");} NPS ;
 Pred:          PRED { PK ("PRED");} NPS ;
 Protect:       PROTECT { PK ("PROTECT");} NPS ;
 Requires:      REQUIRES { PK ("REQUIRES");} NPS ;
-/* special ESC functions -- they not no special treatment
+/* special ESC functions -- they do not need special treatment
 Concat:        CONCAT { PK ("CONCAT");} NPS ;
 Delete:        DELETE { PK ("DELETE");} NPS ;
 Insert:        INSERT { PK ("INSERT");} NPS ;
